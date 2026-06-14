@@ -1,3 +1,108 @@
-# git-policy
+# git-policy.md — מדיניות Git וקומיטים
 
-> TBD — placeholder file. Content will be split out from the main CLAUDE.md later.
+> חלק מ-Engineering OS. נטען מתוך [`CLAUDE.md`](../CLAUDE.md).
+>
+> **מתי לגשת לקובץ הזה:**
+> - בכל אינטראקציה עם הריפו — ניהול branches.
+> - בשלב 9 ב-workflow — לכתיבת קומיט לפי הפורמט (`<commit_protocol>`).
+> - לפני מיזוג ל-main, force-push, או מחיקת branch — דורש אישור משתמש.
+> - לפני כל פעולה הרסנית/בלתי-הפיכה (`<safety>`).
+
+---
+
+## GitHub — מדיניות ריפו
+
+**סטטוס: ✅ מחובר**
+
+- **תפקיד:** ניהול הריפו — קוד, branches, PRs, קומיטים, היסטוריה.
+- **מתי:** בכל אינטראקציה עם הריפו.
+
+### כלל branch
+
+`main` יציב בלבד. **branch פעיל אחד בלבד** מלבד main בכל זמן נתון. כל פיצ'ר =
+branch חדש.
+
+הסיבה: ריבוי branches פעילים מקשה על מעקב מצב ומגדיל סיכוני קונפליקט.
+
+### מיזוג ל-main
+
+מיזוג מתבצע **רק** אחרי:
+
+1. שכל ה-`<definition_of_done>` (ראה [`quality-gates.md`](./quality-gates.md)) מתקיים.
+2. **אישור מפורש של המשתמש** — אל תמזג ל-main על דעת עצמך, אף אם כל הבדיקות עברו.
+
+---
+
+## <safety>
+
+בקש אישור לפני פעולות שקשה להפוך או שמשפיעות על מערכות משותפות:
+
+- מיזוג ל-main (תמיד דורש אישור מפורש)
+- מחיקת קבצים/branches, `DROP TABLE`, `rm -rf`
+- `git push --force`, `git reset --hard`, תיקון קומיטים שפורסמו
+- פריסה לפרודקשן, שליחת הודעות, שינוי תשתית משותפת
+
+פעולות מקומיות והפיכות (עריכת קבצים, הרצת טסטים) — בצע ישירות בלי לשאול.
+
+</safety>
+
+---
+
+## <commit_protocol>
+
+פורמט: conventional commits (`feat:`, `fix:`, `chore:`, `refactor:` …). קומיטים
+קטנים ואטומיים.
+
+כל קומיט מתעד **באופן מדויק**, על בסיס הבדיקות שבוצעו ב-
+[`quality-gates.md`](./quality-gates.md) › `<pre_commit_review>`, כדי שנדע בדיוק
+לאן לחזור אם הקוד נשבר. השתמש בפורמט הקבוע הבא:
+
+<commit_format>
+```
+<type>: <כותרת קצרה>
+
+✅ עובד:
+- <מה עובד> — <הוכחה: הכלי + התוצאה, למשל "Playwright login.spec 3/3 ✓">
+
+❌ לא עובד / הוגבל:
+- <מה לא עובד> — <סיבה או "לא מומש">
+
+🔄 השתנה:
+- <קבצים/מודולים שנגעת בהם>
+
+📌 נשאר לעשות:
+- <משימות פתוחות שנוצרו בנקודה זו>
+
+🧪 בדיקות:
+- <רשימת הבדיקות שהורצו והתוצאה, לפי הקונקטורים>
+```
+</commit_format>
+
+כלל: כל שורה תחת "עובד" / "לא עובד" חייבת להיתמך בהוכחה מבדיקה (tests / logs /
+UI / API דרך הקונקטור המתאים). קומיט בלי הוכחות — אינו תקף.
+
+<example>
+```
+feat: add email/password login flow
+
+✅ עובד:
+- התחברות עם credentials תקינים → redirect ל-dashboard — Playwright login.spec 3/3 ✓
+- session נשמר ב-DB — אומת ב-query מול Supabase
+
+❌ לא עובד / הוגבל:
+- reset password — לא מומש עדיין
+
+🔄 השתנה:
+- auth/login.ts, auth/session.ts, login.test.ts
+
+📌 נשאר לעשות:
+- לממש reset password
+- להוסיף rate-limiting להתחברות
+
+🧪 בדיקות:
+- Playwright login.spec: 3/3 ✓
+- Supabase query: session row נוצר ✓
+```
+</example>
+
+</commit_protocol>
