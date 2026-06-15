@@ -235,3 +235,9 @@ async def _log_shadow(features: dict, prod_label: str) -> None:
 Write a test that asserts the production prediction is returned even when the shadow model raises an exception. Assert that shadow logs are emitted for every request. Assert that shadow inference does not increase p99 latency beyond an acceptable threshold.
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [Scikit-Learn Docs](https://scikit-learn.org/stable/) — classical ML algorithms
+- [HuggingFace Docs](https://huggingface.co/docs) — transformer models and datasets
+- [MLflow Docs](https://mlflow.org/docs/latest/) — experiment tracking and model registry
+- [Google ML Crash Course](https://developers.google.com/machine-learning/crash-course) — ML fundamentals

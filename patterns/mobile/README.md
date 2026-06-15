@@ -253,3 +253,9 @@ export async function checkAndPromptUpdate() {
 
 **Testing:**
 Publish to the `staging` channel and install via TestFlight / internal track. Verify the update banner appears and reloading lands on the correct version (`Updates.updateId`). Test the rollback path by publishing a known-good update to the `rollback` channel and promoting it to `production`.
+
+## Official References
+- [Expo Docs](https://docs.expo.dev) — React Native development platform
+- [React Native Docs](https://reactnative.dev/docs/getting-started) — core mobile framework
+- [Expo Router Docs](https://docs.expo.dev/router/introduction/) — file-based mobile navigation
+- [React Native Paper](https://reactnativepaper.com) — Material Design components for React Native

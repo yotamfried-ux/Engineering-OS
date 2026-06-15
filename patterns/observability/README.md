@@ -243,3 +243,10 @@ groups:
 Replay synthetic traffic with a controlled error rate in a staging environment. Assert that the fast-burn alert fires when the error rate exceeds the threshold for the required duration. Assert it resolves when the error rate drops. Validate runbook URLs are reachable.
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [OpenTelemetry Docs](https://opentelemetry.io/docs/) — observability instrumentation standard
+- [Prometheus Docs](https://prometheus.io/docs/introduction/overview/) — metrics collection and alerting
+- [Grafana Docs](https://grafana.com/docs/) — visualization and alerting platform
+- [Sentry Docs](https://docs.sentry.io) — error tracking and performance monitoring
+- [Google SRE Book — Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/) — monitoring philosophy

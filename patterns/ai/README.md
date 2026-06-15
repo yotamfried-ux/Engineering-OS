@@ -367,3 +367,10 @@ def analyze_review(review_text: str, max_retries: int = 2) -> ProductReview:
 
 **Testing:**
 Unit-test the validation + retry loop by mocking the client to return an invalid JSON string on the first call and a valid one on the second. Assert the function succeeds and the retry counter incremented. Test the failure path by always returning invalid JSON and asserting `ValueError` is raised after `max_retries`.
+
+## Official References
+- [Anthropic Docs](https://docs.anthropic.com) — Claude API documentation
+- [OpenAI Docs](https://platform.openai.com/docs) — GPT API documentation
+- [LangChain Docs](https://python.langchain.com/docs/introduction/) — LLM application framework
+- [LangGraph Docs](https://langchain-ai.github.io/langgraph/) — stateful agent workflows
+- [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic's agent design guide
