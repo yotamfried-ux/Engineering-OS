@@ -1,3 +1,0 @@
-# mobile-apps
-
-> TBD
