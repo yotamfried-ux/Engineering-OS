@@ -82,6 +82,11 @@ export MEILI_HOST=http://localhost:7700
 - [Vector Search](https://www.meilisearch.com/docs/learn/ai_powered_search/getting_started_with_ai_search) — hybrid semantic + keyword search setup
 - [API Keys](https://www.meilisearch.com/docs/reference/api/keys) — scoped key management for production
 
+## Common Pitfalls
+- **Master key vs. API keys** — never expose the master key client-side; generate scoped API keys with specific actions (`search`, `addDocuments`) and target index names for use in browser and mobile code.
+- **Indexing is asynchronous** — `addDocuments()` returns a task object; documents are not immediately searchable. Await `task.waitForTask()` in tests, or poll the task status endpoint in production workflows.
+- **RAM is the primary scaling constraint** — Meilisearch loads its index into memory for fast search; monitor RAM usage as document count grows and size your instance accordingly.
+
 ## Examples
 1. **Documentation site search:** Run docs-scraper to crawl Markdown/HTML pages → documents land in Meilisearch → add a `<SearchModal>` triggered by `Cmd+K` using the JS client → search feels instant because queries resolve locally or at a PoP in ~5ms.
 2. **Blog/content search:** Index posts with `title`, `content`, `tags`, and `publishedAt` fields → set `filterableAttributes: ["tags"]` → users can search by keyword and filter by tag in a single query with no additional backend logic.

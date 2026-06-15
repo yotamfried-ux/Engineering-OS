@@ -81,6 +81,11 @@ export GF_SERVER_ROOT_URL=https://grafana.yourdomain.com
 - [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/) — alert rules, notification policies, and contact points
 - [PromQL Guide](https://prometheus.io/docs/prometheus/latest/querying/basics/) — query language for Prometheus metrics
 
+## Common Pitfalls
+- **Grafana is not a data store** — deleting a Grafana instance does not delete your metrics or logs; but losing Grafana config (dashboards, alert rules) without a backup means rebuilding from scratch; use the Terraform provider or dashboard JSON export for GitOps.
+- **Panel query performance** — PromQL queries with high-cardinality label selectors (e.g., querying all pods without a service filter) can overload Prometheus; use `rate()` over `irate()` for smoother graphs and always filter by relevant labels.
+- **Alert rule state is stored in Grafana** — if Grafana restarts during an alert, state may reset and re-fire; set `for` duration (e.g., `for: 5m`) on all alert rules to avoid flapping alerts from transient spikes.
+
 ## Examples
 1. **Kubernetes cluster monitoring:** Install `kube-prometheus-stack` via Helm → Prometheus scrapes all pod metrics automatically → Grafana is pre-configured with node, pod, and namespace dashboards → add a custom alert on `container_memory_usage_bytes > 90%` with PagerDuty routing — full stack monitoring with no manual config.
 2. **Log-based error tracking with Loki:** Application outputs JSON logs → Promtail/Alloy ships logs to Loki → Grafana Explore uses LogQL `{service="api"} |= "ERROR"` to filter → create a dashboard panel showing error rate over time with a `count_over_time` metric extracted from log lines.

@@ -82,6 +82,11 @@ export POSTHOG_HOST=https://us.i.posthog.com  # or your self-hosted URL
 - [Feature Flags](https://posthog.com/docs/feature-flags) — rollout, targeting, and local evaluation
 - [Self-Hosting](https://posthog.com/docs/self-host) — Docker and Kubernetes deployment guides
 
+## Common Pitfalls
+- **Autocapture vs. explicit events** — PostHog's autocapture records clicks and pageviews automatically, but these events have unstable names that change with UI refactors; for reliable funnel analysis, always instrument explicit `posthog.capture()` calls for key actions.
+- **`identify()` should be called once per session after login** — calling it on every page load with the same user creates unnecessary noise; call it once after sign-in and once after sign-out (with `posthog.reset()`).
+- **Feature flag local evaluation requires a personal API key** — local evaluation (no network call) needs a server-side personal API key with the flags bootstrap; without it, every `isFeatureEnabled()` call is a network request, adding latency.
+
 ## Examples
 1. **Funnel drop-off analysis:** Instrument signup → onboarding step 1 → step 2 → first value event with `posthog.capture()` → build a funnel in PostHog → session recordings filtered to users who dropped off at step 2 reveal a confusing UI element → fix deployed behind a feature flag to 10% of users → funnel conversion tracked in real time.
 2. **Feature flag rollout:** New pricing page wrapped in `if posthog.isFeatureEnabled("new-pricing")` → roll out to 5% of users → monitor conversion rate and error tracking in PostHog — if both improve, increment rollout to 100% and archive the flag.

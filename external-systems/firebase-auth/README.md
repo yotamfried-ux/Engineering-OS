@@ -82,6 +82,7 @@ Set environment variables:
 - **Firestore security rules are enforced server-side** — a mistake in your rules can expose all data; always test rules in the Firebase Emulator before deploying to production.
 - **Phone auth costs money and requires Blaze plan** — do not assume phone auth is free; switch to Blaze (pay-as-you-go) before enabling it, or you will hit an error at runtime.
 - **`onAuthStateChanged` fires twice on page load** — first with `null` (checking auth state) then with the user object; guard your UI against the null flash by showing a loading spinner until the first non-null callback fires.
+- **Migrate passwords carefully** — if moving users from a custom auth system to Firebase, use `admin.auth().importUsers()` with the correct hash algorithm; mismatched parameters silently invalidate all imported passwords.
 
 ## Examples
 1. **Next.js full-stack auth:** Client signs in with `signInWithPopup(provider)` → gets ID token via `user.getIdToken()` → sends token in `Authorization` header → Next.js API route calls `admin.auth().verifyIdToken()` → sets a secure HttpOnly session cookie for subsequent requests.

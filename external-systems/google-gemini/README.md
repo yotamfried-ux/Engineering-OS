@@ -83,6 +83,11 @@ export GOOGLE_CLOUD_LOCATION=us-central1
 - [Vertex AI Gemini](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview) — enterprise GCP integration guide
 - [Models Overview](https://ai.google.dev/gemini-api/docs/models/gemini) — current model list with context windows and pricing
 
+## Common Pitfalls
+- **AI Studio vs. Vertex AI are different products** — AI Studio API keys do not work with the Vertex AI SDK and vice versa; choose one path and stick with it for a given project.
+- **File uploads are temporary** — files uploaded via `genai.upload_file()` expire after 48 hours; do not rely on file URIs across long-running pipelines without re-uploading.
+- **Token counting for multimodal input** — images, audio, and video count as tokens at rates that differ from text (e.g., one image frame at 258 tokens); always call `model.count_tokens()` on a sample before scaling a multimodal pipeline to avoid bill surprises.
+
 ## Examples
 1. **Full-codebase Q&A:** Upload entire repository as a ZIP via `genai.upload_file()` → pass the file reference to Gemini 2.5 Pro with a question about architecture → 1M context window ingests the whole codebase in one shot without chunking.
 2. **PDF document extraction:** Send a multi-page PDF invoice directly in the prompt → Gemini extracts structured fields (vendor, amounts, line items) and returns them as JSON — no OCR preprocessing needed.
