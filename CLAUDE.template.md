@@ -39,11 +39,23 @@ The OS defines the approved integrations, their capabilities, limitations, prici
 ### 3. Never design an architecture without checking `./engineering-os/docs/architecture-guides/`
 If a guide exists for the domain (web, API, AI, mobile, data, MCP) — follow it. If it conflicts with the task requirements, stop and discuss with the user before proceeding.
 
-### 4. Handle gaps explicitly, never silently
-If Engineering OS does not cover a topic:
-- State the gap explicitly: "Engineering OS has no entry for X."
-- Propose adding it to the OS after the task.
-- Use the closest analogous pattern in the OS until the gap is filled.
+### 4. Template or architecture doc gap → STOP, do not proceed
+
+If you search `./engineering-os/templates/` for the current project type and find nothing:
+- **Stop immediately.** Do not scaffold from general knowledge.
+- Say: `"Engineering OS has no template for [project type]. I cannot scaffold this project without one."`
+- Propose adding the template. Wait for user direction before writing any project structure.
+
+If you search `./engineering-os/docs/architecture-guides/` for the current domain and find nothing:
+- **Stop immediately.** Do not design an architecture from training data.
+- Say: `"Engineering OS has no architecture guide for [domain]. I cannot make a reliable design decision without one."`
+- Propose adding the guide. Wait for user direction before making any structural decisions.
+
+### 5. Pattern gap → proceed with the closest analogous, document the gap
+If a *code pattern* is missing from `./engineering-os/patterns/`:
+- State the gap: `"Engineering OS has no pattern for [X]. Using the closest analogous pattern: [Y]."`
+- Proceed with the closest analogous pattern.
+- Propose adding the missing pattern to the OS after the task.
 - Never silently fall back to general knowledge as if the OS didn't exist.
 
 ---
