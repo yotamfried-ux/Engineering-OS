@@ -60,6 +60,7 @@ export PADDLE_ENVIRONMENT=sandbox  # or production
 - **Paddle Retain** (dunning) is bundled for accounts above a revenue threshold; otherwise available as an add-on
 - Watch for: MoR fees are higher than raw Stripe, but eliminate the cost of managing tax registrations in each country — calculate total cost of ownership including tax compliance overhead before comparing
 - Payouts are monthly net of Paddle's fees and any tax collected
+- Check https://www.paddle.com/pricing for current rates — Paddle periodically adjusts fees for high-volume merchants
 
 ## Reference Repositories
 - [PaddleHQ/paddle-node-sdk](https://github.com/PaddleHQ/paddle-node-sdk) — official Node.js SDK for Paddle Billing
@@ -80,6 +81,8 @@ export PADDLE_ENVIRONMENT=sandbox  # or production
 - **Sandbox and production are separate environments** with separate API keys — never mix them; maintain separate environment variables for each.
 - **Webhook events may arrive out of order** — implement idempotent event processing keyed on the event ID; `subscription.updated` can arrive before `subscription.created` in rare cases under load.
 - **VAT number validation requires Billing v2** — if your B2B customers need to supply their VAT numbers for reverse charge, use Paddle Billing's built-in VAT validation field in the checkout config; this is not available in Classic.
+- **Trial periods must be set on the price** — trial configuration lives on the Paddle price object in the dashboard, not in the checkout call; set it before testing trial behavior end-to-end.
+- **Customer email is Paddle's to own** — because Paddle is the MoR, the legal billing relationship (invoices, tax documents) is between Paddle and your customer; design support flows with this in mind.
 
 ## Examples
 1. **EU SaaS subscription:** User selects a plan → Paddle.js overlay opens with VAT auto-detected from IP/billing address → Paddle collects and remits German VAT on your behalf → `subscription.created` webhook triggers account provisioning — no VAT registration in Germany needed.
