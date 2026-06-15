@@ -77,6 +77,8 @@ Use this template for reservation and scheduling platforms — appointment booki
 - [calcom/cal.com](https://github.com/calcom/cal.com) — Open-source scheduling platform; excellent reference for availability engine, calendar integrations, and booking state machine
 - [jitsi/jitsi-meet](https://github.com/jitsi/jitsi-meet) — Video conferencing scheduling integration patterns
 - [temporalio/samples-typescript](https://github.com/temporalio/samples-typescript) — Durable workflow patterns applicable to booking state machines with retries
+- [calcom/cal.com](https://github.com/calcom/cal.com) — open-source scheduling platform (Calendly alternative), 35k+ stars — **best pick**
+- [BolajiAyodeji/cal.com-api-tutorial](https://github.com/calcom/cal.com/tree/main/packages/embeds) — Cal.com embed SDK for adding scheduling to any app
 
 ## Official Documentation
 - [Google Calendar API](https://developers.google.com/calendar/api/guides/overview) — Events, push notifications, OAuth scopes

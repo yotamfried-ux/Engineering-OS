@@ -79,6 +79,10 @@ Use this template for data integration pipelines that move and transform data be
 - [airbytehq/airbyte](https://github.com/airbytehq/airbyte) — Open-source EL platform with 300+ connectors; study connector development for custom sources
 - [apache/airflow](https://github.com/apache/airflow) — Workflow orchestration; DAG patterns, dynamic task mapping, XCom for watermarks
 - [dagster-io/dagster](https://github.com/dagster-io/dagster) — Asset-based orchestration with lineage, partitions, and data quality checks built in
+- [meltano/meltano](https://github.com/meltano/meltano) — CLI-driven ELT with Singer ecosystem, config-as-code
+- [meltano/sdk](https://github.com/meltano/sdk) — Singer tap/target SDK for building custom ELT connectors
+- [dlt-hub/dlt](https://github.com/dlt-hub/dlt) — Python ELT library, no infrastructure required
+- [dlt-hub/verified-sources](https://github.com/dlt-hub/verified-sources) — 50+ maintained dlt source templates
 
 ## Official Documentation
 - [dbt Documentation](https://docs.getdbt.com/) — Incremental models, snapshots (SCD Type 2), generic tests, sources and freshness
