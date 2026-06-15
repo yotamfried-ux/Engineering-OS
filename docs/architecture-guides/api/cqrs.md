@@ -48,6 +48,7 @@ Excellent on the read side: query stores can be replicated, cached, or replaced 
 
 ## Reference Implementations
 - [gregoryyoung/m-r](https://github.com/gregoryyoung/m-r) — Greg Young's original minimal CQRS + Event Sourcing reference in C#
+- [kgrzybek/sample-dotnet-core-cqrs-api](https://github.com/kgrzybek/sample-dotnet-core-cqrs-api) — .NET CQRS + MediatR reference implementation
 - [dotnet/eShop](https://github.com/dotnet/eShop) — Microsoft's reference app using CQRS with MediatR and multiple read models
 - [oskardudycz/EventSourcing.NetCore](https://github.com/oskardudycz/EventSourcing.NetCore) — comprehensive .NET examples of CQRS + Event Sourcing patterns
 
@@ -55,6 +56,7 @@ Excellent on the read side: query stores can be replicated, cached, or replaced 
 - [Martin Fowler — CQRS](https://martinfowler.com/bliki/CQRS.html) — the canonical short introduction; also explains when NOT to use it
 - [Microsoft — CQRS pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs) — Azure Architecture Center guide with diagrams and implementation notes
 - [Greg Young — CQRS Documents](https://cqrs.files.wordpress.com/2010/11/cqrs_documents.pdf) — original detailed paper from the pattern's originator
+- [Event Sourcing Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing) — often paired with CQRS
 
 ## Related Architectures
 - See also: [Event-Driven Architecture](./event-driven.md) — CQRS write sides typically emit events that drive projections

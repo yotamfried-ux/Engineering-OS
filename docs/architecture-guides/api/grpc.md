@@ -51,12 +51,15 @@ Excellent. HTTP/2 multiplexing reduces connection overhead at high concurrency. 
 ## Reference Implementations
 - [grpc/grpc-go](https://github.com/grpc/grpc-go) — the Go implementation; most production-ready and idiomatic
 - [grpc/grpc](https://github.com/grpc/grpc) — core C library; underpins Python, C++, Ruby, PHP
+- [grpc/grpc/examples](https://github.com/grpc/grpc/tree/master/examples) — official gRPC examples in multiple languages
+- [GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) — polyglot gRPC in production microservices
 - [grpc-ecosystem/grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway) — generates a REST/JSON reverse proxy from proto annotations
 
 ## Official Sources
 - [grpc.io documentation](https://grpc.io/docs/) — official guides for all supported languages
 - [Protocol Buffers Language Guide](https://protobuf.dev/programming-guides/proto3/) — proto3 syntax and evolution rules
 - [gRPC HTTP/2 spec](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md) — wire protocol specification
+- [gRPC-Web Docs](https://grpc.io/docs/platforms/web/) — gRPC for browser clients
 
 ## Related Architectures
 - See also: [REST API](./rest.md) — simpler alternative for public or browser-facing APIs

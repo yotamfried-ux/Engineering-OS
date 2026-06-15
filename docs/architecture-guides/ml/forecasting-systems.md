@@ -50,11 +50,14 @@ Statistical models (per-series) scale trivially in parallel. Global deep learnin
 - [Nixtla/statsforecast](https://github.com/Nixtla/statsforecast) — fast, scalable statistical forecasting (ARIMA, ETS, Theta) in Python; excellent baseline and often competitive with deep learning
 - [Nixtla/neuralforecast](https://github.com/Nixtla/neuralforecast) — deep learning models (N-HiTS, TFT, PatchTST) with the same API as statsforecast; easy to compare
 - [facebook/prophet](https://github.com/facebook/prophet) — decomposable trend + seasonality model; great for business time series with holidays and changepoints
+- [unit8co/darts](https://github.com/unit8co/darts) — Darts: 20+ time series forecasting models in Python
 
 ## Official Sources
 - [Forecasting: Principles and Practice (Hyndman & Athanasopoulos)](https://otexts.com/fpp3/) — free online textbook; authoritative reference for statistical forecasting methods
 - [Temporal Fusion Transformer (Lim et al., 2021)](https://arxiv.org/abs/1912.09363) — architecture paper for the TFT model; covers multi-horizon probabilistic forecasting
 - [Nixtla documentation](https://nixtlaverse.nixtla.io/) — unified docs for statsforecast, neuralforecast, and mlforecast with benchmark comparisons
+- [Darts Docs](https://unit8co.github.io/darts/) — time series forecasting library
+- [Prophet Docs](https://facebook.github.io/prophet/docs/quick_start.html) — forecasting at scale
 
 ## Related Architectures
 - See also: [Batch Training](./batch-training.md)

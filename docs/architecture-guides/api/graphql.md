@@ -57,6 +57,7 @@ Scales horizontally like REST. The hidden scaling challenge is database load: co
 - [GraphQL specification](https://spec.graphql.org/) — the official language specification
 - [Apollo GraphQL documentation](https://www.apollographql.com/docs/) — the most comprehensive practical guide
 - [graphql.org/learn](https://graphql.org/learn/) — official introductory documentation
+- [Apollo Federation Docs](https://www.apollographql.com/docs/federation/) — schema composition for microservices
 
 ## Related Architectures
 - See also: [REST API](./rest.md) — simpler alternative for resource-oriented, public APIs

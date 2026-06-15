@@ -168,3 +168,12 @@ Consult this guide when starting a machine learning project or selecting tools f
 | Scikit-Learn | ✓ | ✓ (simple) | ✗ (single-node) |
 | MLflow | N/A | ✓ (MLflow Models) | N/A |
 | Kubeflow | ✗ | ✓ | ✓✓ |
+
+## Official Starter Templates
+
+| Framework | Starter Repository | Stars |
+|---|---|---|
+| PyTorch | [pytorch/examples](https://github.com/pytorch/examples) | 23k+ |
+| HuggingFace | [huggingface/transformers/examples](https://github.com/huggingface/transformers/tree/main/examples) | 140k+ |
+| MLflow | [mlflow/mlflow/examples](https://github.com/mlflow/mlflow/tree/master/examples) | 20k+ |
+| Scikit-Learn | [scikit-learn/scikit-learn/examples](https://github.com/scikit-learn/scikit-learn/tree/main/examples) | 60k+ |

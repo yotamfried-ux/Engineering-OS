@@ -51,6 +51,8 @@ Excellent. Kafka partitions enable linear throughput scaling. Consumer groups al
 
 ## Reference Implementations
 - [apache/kafka](https://github.com/apache/kafka) — the dominant event streaming platform for high-throughput pipelines
+- [confluentinc/examples](https://github.com/confluentinc/examples) — Confluent/Kafka event-driven architecture examples
+- [microsoft/eShopOnContainers](https://github.com/dotnet-architecture/eShopOnContainers) — event-driven microservices with event bus
 - [cloudevents/spec](https://github.com/cloudevents/spec) — CNCF standard envelope for events; ensures interoperability across brokers
 - [ThreeDotsLabs/watermill](https://github.com/ThreeDotsLabs/watermill) — Go library abstracting Kafka, RabbitMQ, SQL, and more behind one interface
 - [eventstore/EventStore](https://github.com/EventStore/EventStore) — purpose-built event store for event sourcing

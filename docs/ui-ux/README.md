@@ -263,6 +263,27 @@ Apple's official design guidelines for iOS, iPadOS, macOS, watchOS, and tvOS. Th
 
 ---
 
+## Official Resources
+
+### Design System Documentation
+- [Shadcn/UI](https://ui.shadcn.com) — copy-paste React components built on Radix UI + Tailwind
+- [Radix UI Primitives](https://www.radix-ui.com/primitives) — headless accessible UI primitives
+- [Tailwind UI](https://tailwindui.com) — official Tailwind CSS component library
+- [Material UI (MUI)](https://mui.com/material-ui/) — React components implementing Material Design
+- [Ant Design](https://ant.design/docs/react/introduce) — enterprise React design system
+- [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/) — Apple Human Interface Guidelines
+- [Material Design 3](https://m3.material.io) — Google's Material Design system
+
+### UX Research & Principles
+- [Laws of UX](https://lawsofux.com) — psychology principles applied to UX design
+- [Nielsen Norman Group](https://www.nngroup.com/articles/) — UX research and usability guidelines
+- [Refactoring UI](https://www.refactoringui.com) — practical UI design guide by Tailwind creators
+
+### Accessibility
+- [WCAG 2.1 Quick Reference](https://www.w3.org/WAI/WCAG21/quickref/) — web content accessibility guidelines
+- [WebAIM](https://webaim.org) — accessibility resources and testing tools
+- [a11y Project](https://www.a11yproject.com) — accessibility checklist and patterns
+
 ## Related Patterns
 
 - [frontend patterns](../../patterns/frontend/README.md)

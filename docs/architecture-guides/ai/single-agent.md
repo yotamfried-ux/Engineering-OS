@@ -47,10 +47,14 @@ Scales horizontally by stateless request parallelism. Context length is the hard
 ## Reference Implementations
 - [openai-cookbook](https://github.com/openai/openai-cookbook) — canonical patterns for single-turn and multi-turn prompt design
 - [anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook) — Anthropic-specific prompt engineering and system prompt patterns
+- [anthropics/anthropic-quickstarts](https://github.com/anthropics/anthropic-quickstarts) — official Anthropic agent quickstarts (customer support, computer use)
+- [openai/openai-cookbook](https://github.com/openai/openai-cookbook) — OpenAI agent patterns and examples
 
 ## Official Sources
 - [Anthropic Prompt Engineering Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview) — system prompts, roles, output control
 - [OpenAI Chat Completions API](https://platform.openai.com/docs/guides/text-generation) — message format and conversation structure
+- [Anthropic — Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic's guide to agent design patterns
+- [Anthropic Tool Use Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use) — tool use API reference
 
 ## Related Architectures
 - See also: [Tool-Calling Agent](./tool-calling-agent.md)

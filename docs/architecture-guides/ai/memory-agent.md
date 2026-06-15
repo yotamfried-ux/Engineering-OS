@@ -48,6 +48,8 @@ Vector DB (Pinecone, Weaviate, pgvector) scales reads well. Write contention is 
 - [Mem0](https://github.com/mem0ai/mem0) — drop-in memory layer for AI agents; handles all four memory types with a unified API
 - [LangGraph Memory Checkpointing](https://github.com/langchain-ai/langgraph) — built-in checkpointer for persisting graph state across runs; supports SQLite and PostgreSQL backends
 - [MemGPT / Letta](https://github.com/cpacker/MemGPT) — OS-inspired memory management with paging (active context ↔ archival storage)
+- [langchain-ai/langmem](https://github.com/langchain-ai/langmem) — LangMem: memory management SDK for AI agents
+- [mem0ai/mem0](https://github.com/mem0ai/mem0) — Mem0: persistent memory layer for AI apps
 
 ## Official Sources
 - [LangGraph Persistence Docs](https://langchain-ai.github.io/langgraph/concepts/persistence/) — checkpointers, thread state, memory stores

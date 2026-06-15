@@ -50,11 +50,13 @@ Retrieval must be sub-10 ms for hundreds of millions of items; this requires app
 - [microsoft/recommenders](https://github.com/microsoft/recommenders) — production-grade implementations of ALS, SAR, NCF, LightGBM rankers, and evaluation utilities; best single starting point
 - [pytorch/pytorch](https://github.com/pytorch/pytorch) — used for two-tower retrieval models and deep ranking networks
 - [facebookresearch/faiss](https://github.com/facebookresearch/faiss) — GPU-accelerated approximate nearest-neighbor search for embedding-based retrieval at scale
+- [google-research/google-research](https://github.com/google-research/google-research) — Google research recommendation implementations
 
 ## Official Sources
 - [Google ML Crash Course — Recommendations](https://developers.google.com/machine-learning/recommendation) — accessible end-to-end introduction to collaborative filtering and neural recommendations
 - [Meta's TWO-TOWER model paper (Yi et al., 2019)](https://arxiv.org/abs/1906.00091) — architecture behind YouTube/Google and many production retrieval systems
 - [FAISS documentation](https://faiss.ai/) — index types, GPU usage, and performance tuning for large-scale retrieval
+- [Microsoft Recommenders Docs](https://microsoft-recommenders.readthedocs.io) — collaborative filtering, content-based, hybrid
 
 ## Related Architectures
 - See also: [Batch Training](./batch-training.md)

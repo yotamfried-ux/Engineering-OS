@@ -51,6 +51,7 @@ Same horizontal/vertical scaling profile as a traditional monolith. Module isola
 
 ## Official Sources
 - [Martin Fowler — Modular Monolith](https://martinfowler.com/bliki/MonolithFirst.html) — foundational rationale
+- [Kamil Grzybek — Modular Monolith: A Primer](https://www.kamilgrzybek.com/blog/posts/modular-monolith-primer) — definitive article on modular monolith design
 - [Sam Newman — Monolith to Microservices](https://samnewman.io/books/monolith-to-microservices/) — covers modular monolith as a migration step
 - [dependency-cruiser docs](https://github.com/sverweij/dependency-cruiser#readme) — enforcing import rules in JS/TS monorepos
 

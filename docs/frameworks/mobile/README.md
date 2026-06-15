@@ -135,3 +135,12 @@ Consult this guide when starting a mobile project or evaluating whether to go cr
 | Team skill: JS/TS | ✓ | ✓ | ✗ | ✗ | ✗ |
 | Team skill: Dart | ✗ | ✗ | ✓ | ✗ | ✗ |
 | App Store compliant | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## Official Starter Templates
+
+| Framework | Starter Repository | Stars |
+|---|---|---|
+| Expo | [expo/expo/templates](https://github.com/expo/expo/tree/main/templates) | 36k+ |
+| React Native | [infinitered/ignite](https://github.com/infinitered/ignite) | 15k+ |
+| Flutter | [flutter/samples](https://github.com/flutter/samples) | 17k+ |
+| Expo (production) | [obytes/react-native-template-obytes](https://github.com/obytes/react-native-template-obytes) | 3k+ |

@@ -49,11 +49,14 @@ Partitioned Kafka topics allow horizontal scaling of consumers. Stateful aggrega
 - [River](https://github.com/online-ml/river) — Python library for online machine learning; incremental classifiers, regressors, drift detectors
 - [Faust](https://github.com/robinhood/faust) — Python stream processing library built on asyncio and Kafka; good for feature engineering pipelines
 - [bytewax](https://github.com/bytewax/bytewax) — Rust-backed Python stream processing with ML integration examples
+- [apache/flink-ml](https://github.com/apache/flink-ml) — Apache Flink ML for streaming machine learning
 
 ## Official Sources
 - [River Documentation](https://riverml.xyz/) — API reference, online learning concepts, and benchmarks
 - [Apache Kafka Documentation](https://kafka.apache.org/documentation/) — consumer groups, offsets, exactly-once semantics
 - [Faust Documentation](https://faust-streaming.github.io/faust/) — agents, tables, windowing
+- [Apache Flink ML Docs](https://nightlies.apache.org/flink/flink-ml-docs-stable/) — streaming ML documentation
+- [Kafka Streams Docs](https://kafka.apache.org/documentation/streams/) — stream processing for feature engineering
 
 ## Related Architectures
 - See also: [Online Learning](./online-learning.md)

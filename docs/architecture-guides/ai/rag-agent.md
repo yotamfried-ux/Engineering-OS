@@ -50,11 +50,15 @@ Vector search (HNSW, IVF) scales to hundreds of millions of vectors with systems
 - [langchain-ai/langchain](https://github.com/langchain-ai/langchain) — `create_retrieval_chain`, `RAGChain`, and vector store integrations; best starting point for standard RAG
 - [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) — adaptive RAG and corrective RAG patterns with graph-based control flow
 - [pydantic/pydantic-ai](https://github.com/pydantic/pydantic-ai) — typed RAG pattern with structured retrieval results
+- [langchain-ai/rag-from-scratch](https://github.com/langchain-ai/rag-from-scratch) — step-by-step RAG notebooks from naive to advanced
+- [anthropics/anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook) — Anthropic RAG and embeddings cookbook
 
 ## Official Sources
 - [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (Lewis et al., 2020)](https://arxiv.org/abs/2005.11401) — original RAG paper
 - [LangChain RAG tutorial](https://python.langchain.com/docs/tutorials/rag/) — end-to-end implementation with vector stores and retrievers
 - [pgvector README](https://github.com/pgvector/pgvector) — Postgres-native vector storage; good for teams already on Postgres
+- [Anthropic Embeddings Docs](https://docs.anthropic.com/en/docs/build-with-claude/embeddings) — using embeddings with Claude
+- [RAG Survey Paper](https://arxiv.org/abs/2312.10997) — "RAG for Large Language Models: A Survey"
 
 ## Related Architectures
 - See also: [Hybrid RAG](./hybrid-rag.md)

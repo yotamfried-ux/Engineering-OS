@@ -49,11 +49,13 @@ The human is the bottleneck. Mitigate by: (1) routing only genuinely risky actio
 - [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) — `interrupt()` primitive and `Command(resume=...)` for suspending and resuming agent graphs; the canonical HITL implementation for Python agents
 - [microsoft/autogen](https://github.com/microsoft/autogen) — `UserProxyAgent` with `human_input_mode="ALWAYS"` or `"TERMINATE"` for configurable human gating
 - [pydantic/pydantic-ai](https://github.com/pydantic/pydantic-ai) — agent run with `allow_ui_requests=True` for interactive confirmation flows
+- [langchain-ai/langgraph/examples/human_in_the_loop](https://github.com/langchain-ai/langgraph/blob/main/examples/human_in_the_loop/breakpoints.ipynb) — LangGraph HITL with breakpoints and human approval
 
 ## Official Sources
 - [LangGraph human-in-the-loop guide](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/) — comprehensive reference covering interrupt, approve/reject, edit, and multi-turn review patterns
 - [LangGraph persistence and checkpointing](https://langchain-ai.github.io/langgraph/concepts/persistence/) — how state is saved and restored across the human approval gap
 - [Anthropic responsible scaling policy](https://www.anthropic.com/responsible-scaling-policy) — context on why HITL is essential at higher capability levels
+- [Anthropic — Agentic Safety](https://docs.anthropic.com/en/docs/build-with-claude/agentic-and-tool-use/orchestration-and-parallelization) — safety in agentic systems
 
 ## Related Architectures
 - See also: [Planner/Executor](./planner-executor.md)

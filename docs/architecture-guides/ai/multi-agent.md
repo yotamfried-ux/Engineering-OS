@@ -49,11 +49,16 @@ Parallelism provides the main scaling lever; independent agents can run concurre
 - [microsoft/autogen](https://github.com/microsoft/autogen) — mature multi-agent conversation framework; study `GroupChat` for orchestrator patterns and `AssistantAgent`/`UserProxyAgent` roles
 - [crewAIInc/crewAI](https://github.com/crewAIInc/crewAI) — high-level crew abstraction with role-based agents, tasks, and process types (sequential, hierarchical)
 - [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) — graph-based multi-agent with typed state, conditional routing, and subgraph composition
+- [langchain-ai/langgraph/examples](https://github.com/langchain-ai/langgraph/tree/main/examples) — LangGraph multi-agent: supervisor, network, handoffs
+- [microsoft/autogen/python/samples](https://github.com/microsoft/autogen/tree/main/python/samples) — AutoGen multi-agent conversation samples
+- [crewAIInc/crewAI-examples](https://github.com/crewAIInc/crewAI-examples) — CrewAI role-based multi-agent examples
 
 ## Official Sources
 - [AutoGen documentation](https://microsoft.github.io/autogen/) — canonical reference for Microsoft's multi-agent framework including group chat patterns
 - [CrewAI documentation](https://docs.crewai.com/) — role, task, and crew concepts with examples
 - [LangGraph multi-agent tutorial](https://langchain-ai.github.io/langgraph/tutorials/multi_agent/multi-agent-collaboration/) — supervisor and collaboration patterns with code
+- [LangGraph Multi-Agent Docs](https://langchain-ai.github.io/langgraph/concepts/multi_agent/) — patterns: supervisor, collaborative, hierarchical
+- [AutoGen Docs](https://microsoft.github.io/autogen/) — Microsoft multi-agent framework documentation
 
 ## Related Architectures
 - See also: [ReAct Agent](./react-agent.md)

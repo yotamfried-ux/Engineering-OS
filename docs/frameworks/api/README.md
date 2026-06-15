@@ -187,3 +187,13 @@ Consult this guide when selecting an API framework for a new service or microser
 | ASP.NET Core | ✗ (C#) | ✓ (built-in) | ✓ | ✗ |
 | Go Fiber | ✗ (Go) | ✓ (swagger) | manual | ✗ |
 | tRPC | ✓ | ✗ (not REST) | ✓ (Zod) | ✓ |
+
+## Official Starter Templates
+
+| Framework | Starter Repository | Stars |
+|---|---|---|
+| FastAPI | [fastapi/full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template) | 30k+ |
+| NestJS | [nestjs/nest/sample](https://github.com/nestjs/nest/tree/master/sample) | 70k+ |
+| Hono | [honojs/hono/examples](https://github.com/honojs/hono/tree/main/examples) | 22k+ |
+| tRPC | [trpc/examples-next-prisma-starter](https://github.com/trpc/examples-next-prisma-starter) | 35k+ |
+| Go Fiber | [gofiber/recipes](https://github.com/gofiber/recipes) | 3k+ |

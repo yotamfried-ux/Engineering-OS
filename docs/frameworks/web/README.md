@@ -180,3 +180,15 @@ Consult this guide when choosing a web framework for a new project or evaluating
 | Laravel | ✓ | ✗ | ✗ | ✗ |
 | Rails | ✓ | ✗ | ✗ | ✗ |
 | Hono | ✓ | ✗ | ✗ | ✓ |
+
+## Official Starter Templates
+
+| Framework | Starter Repository | Stars |
+|---|---|---|
+| Next.js | [vercel/next.js/examples](https://github.com/vercel/next.js/tree/canary/examples) | 130k+ |
+| Next.js (T3) | [t3-oss/create-t3-app](https://github.com/t3-oss/create-t3-app) | 25k+ |
+| Remix | [remix-run/remix/templates](https://github.com/remix-run/remix/tree/main/templates) | 30k+ |
+| Nuxt | [nuxt/starter](https://github.com/nuxt/starter) | — |
+| SvelteKit | [sveltejs/kit/create-svelte](https://github.com/sveltejs/kit/tree/master/packages/create-svelte) | 20k+ |
+| Django | [wsvincent/django-starter-project](https://github.com/wsvincent/django-starter-project) | — |
+| Hono | [honojs/hono/examples](https://github.com/honojs/hono/tree/main/examples) | 22k+ |

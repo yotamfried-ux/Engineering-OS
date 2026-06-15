@@ -48,6 +48,7 @@ Excellent for write throughput — every device writes locally without coordinat
 - Optional server relay (y-websocket, Automerge sync server) for persistence and bootstrapping new peers
 
 ## Reference Implementations
+- [evoluhq/evolu](https://github.com/evoluhq/evolu) — Local-first platform for React Native with CRDT-based sync
 - [automerge/automerge](https://github.com/automerge/automerge) — production CRDT library with Rust core and JS/Swift bindings; used in Ink & Switch research and production apps
 - [yjs/yjs](https://github.com/yjs/yjs) — the most widely deployed CRDT library; powers collaborative features in many editors and tools
 - [electric-sql/electric](https://github.com/electric-sql/electric) — Postgres-to-SQLite local-first sync with CRDT-like guarantees; bridges relational data and local-first principles
@@ -57,6 +58,7 @@ Excellent for write throughput — every device writes locally without coordinat
 - [Ink & Switch — Local-first software](https://www.inkandswitch.com/local-first/) — the foundational essay defining the local-first philosophy and seven ideals
 - [Yjs documentation](https://docs.yjs.dev/) — authoritative guide to Yjs shared types, providers, and sync protocols
 - [Automerge documentation](https://automerge.org/docs/hello/) — getting-started guide and API reference for the Automerge CRDT library
+- [ElectricSQL Docs](https://electric-sql.com/docs) — local-first PostgreSQL sync
 - [Martin Kleppmann — CRDTs: The Hard Parts](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html) — essential talk on practical CRDT failure modes (anomalies, interleaving, intent preservation)
 
 ## Related Architectures

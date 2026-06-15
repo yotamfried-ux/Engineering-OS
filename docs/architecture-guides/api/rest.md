@@ -49,6 +49,8 @@ Scales horizontally with standard load balancing. Stateless request handling mea
 
 ## Reference Implementations
 - [gothinkster/realworld](https://github.com/gothinkster/realworld) — same REST API spec implemented in 100+ stacks; ideal for comparing idioms
+- [microsoft/api-guidelines](https://github.com/microsoft/api-guidelines) — Microsoft REST API Guidelines (production-grade)
+- [github/rest-api-description](https://github.com/github/rest-api-description) — GitHub REST API as a real-world REST reference
 - [encode/django-rest-framework](https://github.com/encode/django-rest-framework) — mature, well-documented REST framework for Python
 - [fastapi/fastapi](https://github.com/tiangolo/fastapi) — modern Python REST with automatic OpenAPI generation
 
@@ -56,6 +58,10 @@ Scales horizontally with standard load balancing. Stateless request handling mea
 - [OpenAPI Specification 3.1](https://spec.openapis.org/oas/v3.1.0) — the authoritative API contract standard
 - [RFC 9110 — HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110) — canonical HTTP method and status code definitions
 - [Stripe API Reference](https://stripe.com/docs/api) — industry benchmark for well-designed REST API ergonomics
+- [Roy Fielding's REST Dissertation](https://ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm) — original REST definition
+- [Microsoft REST API Guidelines](https://github.com/microsoft/api-guidelines/blob/vNext/azure/Guidelines.md) — production REST design rules
+- [RFC 7231 — HTTP/1.1 Semantics](https://tools.ietf.org/html/rfc7231) — HTTP semantics standard
+- [Google API Design Guide](https://cloud.google.com/apis/design) — Google's REST API patterns
 
 ## Related Architectures
 - See also: [GraphQL API](./graphql.md) — better for flexible querying and relationship-heavy data

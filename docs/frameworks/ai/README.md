@@ -167,3 +167,13 @@ Consult this guide before building an AI agent, RAG pipeline, or multi-agent sys
 | Production-ready | ✓ | partial | ✓ | partial | partial | ✓ | ✓ |
 | Multi-language | ✗ | ✗ | ✗ | ✗ | partial | ✓ | ✗ |
 | RAG built-in | partial | ✓ | ✗ | ✗ | ✗ | ✓ | ✓ |
+
+## Official Starter Templates
+
+| Framework | Starter Repository | Stars |
+|---|---|---|
+| LangGraph | [langchain-ai/langgraph/examples](https://github.com/langchain-ai/langgraph/tree/main/examples) | 13k+ |
+| LangChain | [langchain-ai/langchain/templates](https://github.com/langchain-ai/langchain/tree/master/templates) | 100k+ |
+| PydanticAI | [pydantic/pydantic-ai/examples](https://github.com/pydantic/pydantic-ai/tree/main/examples) | 8k+ |
+| CrewAI | [crewAIInc/crewAI-examples](https://github.com/crewAIInc/crewAI-examples) | 5k+ |
+| AutoGen | [microsoft/autogen/python/samples](https://github.com/microsoft/autogen/tree/main/python/samples) | 40k+ |

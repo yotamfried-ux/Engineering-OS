@@ -179,3 +179,12 @@ Consult this guide when designing a data pipeline, ETL/ELT workflow, or streamin
 | Local dev experience | moderate | excellent | excellent |
 | Self-host complexity | high | medium | low |
 | Managed cloud option | MWAA, Astro | Dagster+ | Prefect Cloud |
+
+## Official Starter Templates
+
+| Framework | Starter Repository | Stars |
+|---|---|---|
+| Dagster | [dagster-io/dagster/examples](https://github.com/dagster-io/dagster/tree/master/examples) | 12k+ |
+| Airflow | [apache/airflow/example_dags](https://github.com/apache/airflow/tree/main/airflow/example_dags) | 40k+ |
+| dbt | [dbt-labs/jaffle-shop](https://github.com/dbt-labs/jaffle-shop) | 3k+ |
+| Prefect | [PrefectHQ/prefect/examples](https://github.com/PrefectHQ/prefect/tree/main/examples) | 17k+ |

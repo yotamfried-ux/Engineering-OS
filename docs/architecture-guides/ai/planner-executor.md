@@ -49,11 +49,14 @@ The planning phase is a single serial call; the execution phase can be paralleli
 - [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) — `plan-and-execute` example in the LangGraph tutorials; uses graph nodes for plan, execute, and replan phases
 - [microsoft/autogen](https://github.com/microsoft/autogen) — planner-style patterns using `AssistantAgent` for planning and `UserProxyAgent` for execution
 - [crewAIInc/crewAI](https://github.com/crewAIInc/crewAI) — hierarchical process type implements a manager agent that plans and delegates to crew members
+- [langchain-ai/langgraph/examples/plan-and-execute](https://github.com/langchain-ai/langgraph/blob/main/examples/plan-and-execute/plan-and-execute.ipynb) — LangGraph plan-and-execute pattern
 
 ## Official Sources
 - [Plan-and-Solve Prompting (Wang et al., 2023)](https://arxiv.org/abs/2305.04091) — empirical study showing plan-first prompting outperforms CoT on multi-step reasoning
 - [LangGraph plan-and-execute tutorial](https://langchain-ai.github.io/langgraph/tutorials/plan-and-execute/plan-and-execute/) — step-by-step implementation guide
 - [LLM Compiler (Kim et al., 2023)](https://arxiv.org/abs/2312.04511) — parallel plan execution with DAG dependency tracking
+- [Plan-and-Solve Paper](https://arxiv.org/abs/2305.04091) — "Plan-and-Solve Prompting: Improving Zero-Shot Chain-of-Thought Reasoning"
+- [LangGraph How-Tos](https://langchain-ai.github.io/langgraph/how-tos/) — planning agent implementation guides
 
 ## Related Architectures
 - See also: [ReAct Agent](./react-agent.md)

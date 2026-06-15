@@ -50,11 +50,15 @@ Each path scales independently. Dense search scales with vector store capacity; 
 - [langchain-ai/langchain](https://github.com/langchain-ai/langchain) — `EnsembleRetriever` combines multiple retrievers with configurable weights; simplest path to hybrid retrieval
 - [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) — adaptive retrieval graphs that dynamically choose or combine retrieval strategies per query
 - [microsoft/graphrag](https://github.com/microsoft/graphrag) — hybrid retrieval combining vector search with knowledge graph traversal for complex reasoning
+- [qdrant/qdrant/examples](https://github.com/qdrant/qdrant/tree/master/examples) — Qdrant hybrid search (dense + sparse) examples
+- [cohere-ai/notebooks](https://github.com/cohere-ai/notebooks) — Cohere Rerank with hybrid retrieval notebooks
 
 ## Official Sources
 - [Reciprocal Rank Fusion (Cormack et al., 2009)](https://dl.acm.org/doi/10.1145/1571941.1572114) — original RRF paper; the canonical score fusion method
 - [Cohere Rerank documentation](https://docs.cohere.com/docs/reranking) — practical guide to cross-encoder re-ranking in hybrid pipelines
 - [Elasticsearch hybrid search guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/knn-search.html) — combining BM25 and kNN in a single query
+- [Pinecone — Hybrid Search](https://docs.pinecone.io/guides/data/understanding-hybrid-search) — hybrid search architecture guide
+- [Weaviate Hybrid Search Docs](https://weaviate.io/developers/weaviate/search/hybrid) — BM25 + vector hybrid retrieval
 
 ## Related Architectures
 - See also: [RAG Agent](./rag-agent.md)

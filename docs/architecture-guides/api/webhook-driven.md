@@ -50,11 +50,13 @@ Webhook delivery scales by parallelizing outbound HTTP workers, not by adding br
 - [svix/svix-webhooks](https://github.com/svix/svix-webhooks) — open-source webhook delivery service with retry, signing, and a developer portal
 - [hookdeck/hookdeck](https://github.com/hookdeck/hookdeck) — webhook gateway for receiving, routing, filtering, and replaying inbound webhooks
 - [stripe-samples/stripe-webhooks](https://github.com/stripe-samples/stripe-webhooks) — Stripe's official webhook verification and idempotency examples in multiple languages
+- [stripe/stripe-node/examples](https://github.com/stripe/stripe-node/blob/master/examples/webhook-signing.js) — Stripe webhook signature verification
 
 ## Official Sources
 - [Stripe Webhooks documentation](https://stripe.com/docs/webhooks) — the gold standard for production webhook design; covers signing, retries, idempotency, and testing
 - [GitHub Webhooks documentation](https://docs.github.com/en/webhooks) — comprehensive reference for event types, payload schemas, and HMAC-SHA256 verification
 - [Standard Webhooks specification](https://www.standardwebhooks.com/) — emerging interoperability standard for webhook signatures and delivery semantics
+- [Svix Docs](https://docs.svix.com) — webhook delivery as a service
 
 ## Related Architectures
 - See also: [Event-Driven Architecture (API layer)](./event-driven.md) — internal async event bus; webhooks are the external-facing projection of the same domain events

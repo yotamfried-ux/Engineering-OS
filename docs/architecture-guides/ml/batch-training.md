@@ -50,11 +50,15 @@ Scales vertically (larger GPU/TPU instances) and horizontally (distributed data-
 - [scikit-learn](https://github.com/scikit-learn/scikit-learn) — canonical batch training API (`fit`/`predict`); study `Pipeline` and `GridSearchCV` for production patterns
 - [pytorch/pytorch](https://github.com/pytorch/pytorch) — `DataLoader` + training loop; see PyTorch Lightning for a production-grade structure
 - [mlflow/mlflow](https://github.com/mlflow/mlflow) — experiment tracking, model registry, and deployment integration
+- [huggingface/transformers/examples](https://github.com/huggingface/transformers/tree/main/examples) — HuggingFace fine-tuning and training examples
+- [pytorch/examples](https://github.com/pytorch/examples) — PyTorch training examples (vision, NLP, generative)
 
 ## Official Sources
 - [scikit-learn user guide](https://scikit-learn.org/stable/user_guide.html) — comprehensive reference for classical ML batch training
 - [PyTorch training documentation](https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html) — gradient descent and training loop fundamentals
 - [MLflow documentation](https://mlflow.org/docs/latest/index.html) — end-to-end MLOps for batch training workflows
+- [HuggingFace Training Docs](https://huggingface.co/docs/transformers/training) — model training guide
+- [PyTorch Training Docs](https://pytorch.org/docs/stable/optim.html) — PyTorch optimization
 
 ## Related Architectures
 - See also: [Online Learning](./online-learning.md)
