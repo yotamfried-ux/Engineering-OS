@@ -78,6 +78,12 @@ export LEMONSQUEEZY_STORE_ID=your_store_id
 - [Checkout API](https://docs.lemonsqueezy.com/api/checkouts) — creating and customizing checkout sessions
 - [License Keys](https://docs.lemonsqueezy.com/help/selling/license-keys) — software licensing workflow
 
+## Common Pitfalls
+- **Always verify webhook signatures** — do not process `order_created` events without checking the `X-Signature` header; replay attacks are easy to execute against unverified endpoints.
+- **Variant IDs, not product IDs** — the checkout API takes a `variantId`, not a product ID; a product can have multiple variants (monthly vs. annual, different tiers), so map carefully in your database.
+- **Refund policy is Lemon Squeezy's call** — as MoR, Lemon Squeezy can issue refunds to comply with consumer protection law regardless of your own policy; build your fulfillment system to handle `order_refunded` events.
+- **Test in sandbox before going live** — Lemon Squeezy provides a test mode with test card numbers; always run a full checkout and webhook flow in test mode before switching to production keys.
+
 ## Examples
 1. **SaaS subscription:** Create a monthly subscription variant in the dashboard → server generates a checkout URL with the user's email pre-filled → after `subscription_created` webhook, provision access and store `lemon_squeezy_subscription_id` in your database → handle `subscription_cancelled` to revoke access.
 2. **One-time software license:** Product configured with license key generation → customer pays → `license_key_created` webhook fires → store the key → customer activates via your app calling the Lemon Squeezy License Activation API to validate and consume an activation slot.
