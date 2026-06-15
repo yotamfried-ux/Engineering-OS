@@ -88,6 +88,14 @@ Configuration notes:
 - [Multi-Agent Systems](https://langchain-ai.github.io/langgraph/concepts/multi_agent/) — supervisor and hierarchical architectures
 - [Persistence](https://langchain-ai.github.io/langgraph/concepts/persistence/) — checkpointing and memory
 
+## Common Pitfalls
+
+- **Missing `END` node causes `GraphRecursionError`:** If every conditional branch in your graph loops back to a previous node without ever routing to `END`, the graph runs until it hits the `recursion_limit` (default 25) and raises `GraphRecursionError`. Every conditional edges map must have at least one branch that returns `END`; verify with `graph.get_graph().print_ascii()` before running.
+- **State schema mismatch between node output and declared `TypedDict`:** Node functions must return a dict whose keys are a subset of the state schema. Returning keys that are not declared in the `TypedDict` causes silent data loss — the extra keys are dropped without an error. Define all state fields upfront and annotate them; use LangSmith traces to inspect what each node actually writes to state.
+- **`interrupt_before`/`interrupt_after` without a checkpointer:** Human-in-the-loop interrupts only work when the graph is compiled with a checkpointer (e.g., `MemorySaver` or `PostgresSaver`). Without a checkpointer, the interrupt fires but state is not persisted, so calling `graph.invoke` again with `Command(resume=...)` starts a fresh run instead of resuming from the paused point. Always compile with `checkpointer=` when using interrupts.
+- **Parallel branches writing to the same state key without a reducer:** When using `Send` or parallel branches that both update the same key, the last writer silently wins — earlier values are overwritten without warning. Define a reducer function (e.g., `Annotated[list[str], operator.add]`) on any state key that multiple branches may write to concurrently.
+- **`recursion_limit` too low for complex multi-agent graphs:** The default `recursion_limit=25` counts every node invocation, including repeated passes through hub nodes in multi-agent architectures. Deep graphs or long tool-call chains exhaust the limit and raise `GraphRecursionError` prematurely. Increase via `graph.invoke(input, config={"recursion_limit": 100})` and tune based on your graph's actual maximum depth.
+
 ## Examples
 1. **Code review agent:** Graph has nodes: `analyze_pr` → `run_linter` (tool) → `check_tests` (tool) → `write_review`; conditional edge after `analyze_pr` skips tools if the PR is too small; full audit trail in LangSmith.
 2. **Human-approval workflow:** Research agent gathers data → interrupts at `human_review` node → human reads summary and types "approve" or "revise: [feedback]" → agent resumes with the feedback in state.

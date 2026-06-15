@@ -90,6 +90,14 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...              # SERVER-SIDE ONLY — bypasses RL
 - [Local Development](https://supabase.com/docs/guides/local-development) — CLI-based workflow
 - [pgvector Guide](https://supabase.com/docs/guides/ai/vector-columns) — vector embeddings and similarity search
 
+## Common Pitfalls
+- **`service_role` key on the client:** Using the service role key in browser/client code bypasses RLS entirely, exposing all data to any user. Use the anon key on the client; reserve `service_role` exclusively for server-side code and Edge Functions.
+- **RLS enabled but no policies created:** Enabling RLS on a table without adding policies blocks all access (SELECT, INSERT, UPDATE, DELETE) for non-service-role callers. Every table needs at least one policy per operation you want to permit.
+- **`getSession()` called before auth listener is ready:** Calling `supabase.auth.getSession()` at module load time may return `null` if the auth state hasn't hydrated yet. Subscribe to `supabase.auth.onAuthStateChange()` instead and read the session from the event callback.
+- **Realtime not enabled per table:** Subscribing to `postgres_changes` silently receives no events if the table isn't added to the replication publication. Fix: run `ALTER PUBLICATION supabase_realtime ADD TABLE tablename;` or enable Realtime in the Table Editor.
+- **Connection pool exhaustion from serverless functions:** Each serverless invocation that opens a direct Postgres connection can exhaust `max_connections` under load. Use the pgBouncer connection string (port 6543) and append `?pgbouncer=true` to the connection string; set pool mode to transaction for serverless workloads.
+- **Edge Function cold start on first request:** Deno Edge Functions can take up to ~1 second on first invocation after inactivity. Pre-warm critical functions with scheduled pings, or design the caller to handle the latency for the first request.
+
 ## Examples
 1. **Auth-gated user data:** Enable RLS on `notes` table → policy `USING (auth.uid() = user_id)` → client reads `supabase.from('notes').select('*')` and only gets their own rows automatically.
 2. **Realtime collaboration:** Two users subscribe to the same Supabase channel with `presence` — each sees who else is viewing the document and their cursor positions with <100ms latency.

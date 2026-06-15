@@ -81,6 +81,13 @@ Configuration notes:
 - [Metadata Filtering](https://docs.pinecone.io/guides/data/filter-with-metadata) — filter syntax and best practices
 - [Hybrid Search](https://docs.pinecone.io/guides/data/understanding-hybrid-search) — dense+sparse configuration
 
+## Common Pitfalls
+- **Querying before index is ready:** A newly created index reports 0 vectors in `describe_index_stats()` until initialization completes. Poll `pc.describe_index("name").status.ready` and wait for `True` before upserting or querying.
+- **Dimension mismatch between index and embedding model:** Creating an index with `dimension=1536` and then upserting vectors from a different model raises a `ValueError`. Always create the index with the exact dimension output by your chosen embedding model; this cannot be changed after creation.
+- **`top_k` returns fewer results than expected:** If a namespace or the entire index contains fewer vectors than the requested `top_k`, Pinecone returns only what exists without an error. Check `describe_index_stats()` per-namespace count before assuming a retrieval bug.
+- **Metadata fields not indexed for filtering:** Pinecone only filters on metadata fields that were stored at upsert time; there is no schema-level declaration of filterable fields. If filter queries return unexpected results, verify that the metadata key exists on the vectors being queried.
+- **Starter (free) plan in production:** The Starter plan has no SLA, runs on shared infrastructure, has strict size limits (~100K vectors), and can be affected by noisy neighbors. Use a paid serverless or pod-based index for any production workload.
+
 ## Examples
 1. **RAG document store:** Chunk documents → embed with OpenAI → upsert with `doc_id` and `user_id` metadata → at query time, embed user question, filter by `user_id`, retrieve top-5 → pass retrieved text chunks to Claude as context.
 2. **Multi-tenant SaaS search:** Each customer's vectors stored in a dedicated namespace → queries always include the customer's namespace → complete data isolation with no separate index per customer.

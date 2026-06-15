@@ -88,6 +88,14 @@ export DD_ENV=production
 - [Log Management](https://docs.datadoghq.com/logs/) — ingestion, parsing, and alerting on logs
 - [Monitors & Alerting](https://docs.datadoghq.com/monitors/) — creating and managing alerts
 
+## Common Pitfalls
+- **Agent not reporting metrics:** The most common causes are an API key typo, a firewall blocking outbound port 443, or the agent process not running; diagnose with `datadog-agent status`, `datadog-agent configcheck`, and `datadog-agent diagnose` before making configuration changes.
+- **Custom metric cardinality explosion:** Each unique combination of tag values creates a separate metric time series; using high-cardinality tags like `user_id`, `request_id`, or `session_id` as metric labels can create millions of series and cause quota overages — put these values in log fields instead.
+- **Log parsing failures (grok patterns):** Logs that don't match the pipeline processor pattern are dropped or sent unparsed; use the Datadog grok parser debugger (Logs → Pipelines → Debug) and test against a real log sample before deploying a new pipeline.
+- **APM traces missing:** The tracer must be initialized before any framework or library imports; if `dd-trace` (or the OTel SDK) is required after Express/Fastify/etc. is loaded, the auto-instrumentation patches never apply — move the `require('dd-trace').init(...)` call to the very first line of the entrypoint.
+- **Public dashboard sharing exposes sensitive data:** Dashboards shared via a public link are visible to anonymous users with no authentication; use private sharing with an access-controlled link or scope dashboards to internal viewers only before sharing links externally.
+- **Log retention costs exceeding budget:** Log ingestion pricing is per GB and can grow unexpectedly at high log volume; set log exclusion filters to drop debug-level logs before they are indexed, and configure archive-to-S3 for long-term storage instead of paying for Datadog's premium retention tiers.
+
 ## Examples
 1. **Kubernetes APM:** Deploy Datadog Agent as a DaemonSet → inject `DD_AGENT_HOST` env var into pods → initialize `dd-trace` at app startup → distributed traces automatically propagate across microservices via HTTP headers → service map shows latency and error rates per service with click-through to individual traces.
 2. **SLO tracking:** Define a SLO monitor on P95 API latency < 200ms with a 99.9% 30-day target → Datadog tracks the error budget burn rate → alert fires when the budget is 50% consumed, giving the team time to react before the SLO is breached.

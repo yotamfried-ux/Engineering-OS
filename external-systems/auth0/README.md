@@ -83,6 +83,14 @@ Configuration notes:
 - [Actions](https://auth0.com/docs/customize/actions) — auth pipeline customization
 - [Organizations](https://auth0.com/docs/manage-users/organizations) — B2B multi-tenancy
 
+## Common Pitfalls
+- **Callback URL not whitelisted:** Users see a `redirect_uri_mismatch` error after login; the URL in the request must exactly match an entry in Auth0 Dashboard → Application → Allowed Callback URLs (including scheme, port, and path — wildcards are not supported).
+- **`audience` param missing from token request:** Access token is issued without API claims; always include the `audience` parameter when requesting tokens for M2M or API access, otherwise Auth0 issues an opaque token instead of a signed JWT.
+- **Using `id_token` to call APIs:** ID tokens are for verifying identity only, not for authorization; always use the `access_token` (with the correct `audience`) when calling your APIs.
+- **Silent authentication failing in Safari/Firefox:** ITP (Intelligent Tracking Prevention) blocks the third-party cookies that Auth0's iframe-based silent auth relies on; switch to refresh token rotation (`useRefreshTokens: true`) instead of silent auth.
+- **Role/permission claims missing from access token:** Namespaced custom claims (e.g., permissions) require a Post-Login Action that explicitly adds them to the token; the legacy Rules system is deprecated and should not be used for new implementations.
+- **Tenant architecture locked in early:** Choosing one tenant per environment vs. one tenant per customer has major long-term implications (billing, isolation, branding); decide before going to production — reversing this requires a full migration.
+
 ## Examples
 1. **B2B SaaS with SSO:** Use Auth0 Organizations — each customer org gets its own SAML connection to their IdP; login flow auto-selects the right connection based on email domain.
 2. **API protection:** Issue access tokens with audience set to your API identifier; validate with `express-oauth2-jwt-bearer`; gate endpoints by checking `permissions` claim in the token.

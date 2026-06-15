@@ -88,6 +88,13 @@ pip install langchain-chroma
 - [Embedding Functions](https://docs.trychroma.com/docs/embeddings/embedding-functions) — built-in integrations with OpenAI, Cohere, HuggingFace, and others
 - [Running Chroma in Client-Server Mode](https://docs.trychroma.com/production/chroma-server/client-server-mode) — deployment for production
 
+## Common Pitfalls
+- **Default in-memory client not persisted:** `chromadb.EphemeralClient()` stores data only in RAM — all collections and embeddings are lost on process restart. Use `chromadb.PersistentClient(path="./chroma_data")` for any data that needs to survive restarts.
+- **Embedding function mismatch between upsert and query:** Adding documents with one embedding model (e.g., `text-embedding-3-small`) and querying with another produces meaningless cosine similarity scores. Always use the same embedding function instance for both `collection.add()` and `collection.query()`.
+- **`collection.add()` with duplicate IDs silently upserts:** Chroma does not raise an error when you add a document with an ID that already exists — it overwrites the existing entry. Audit your ID generation strategy to avoid accidental overwrites.
+- **Not filtering by metadata with mixed document types:** When a collection contains documents from multiple sources or types, vector similarity alone may surface irrelevant results. Always add a `where` metadata filter (e.g., `{"source": "wiki"}`) to scope queries to the relevant subset.
+- **Large batch upserts timing out:** Sending thousands of documents in a single `collection.add()` call can time out or exhaust memory. Batch in chunks of ≤500 documents and upsert sequentially or with controlled concurrency.
+
 ## Examples
 1. **Local RAG prototype in 10 lines:** Load PDF → chunk text → `collection.add(documents=chunks, ids=ids)` → `collection.query(query_texts=[question])` → pass top-K results to LLM — no Docker, no API key for the vector store, no infra setup needed.
 2. **LangChain document QA:** `from langchain_chroma import Chroma` → `vectorstore = Chroma.from_documents(docs, OpenAIEmbeddings())` → `retriever = vectorstore.as_retriever()` → wire into `RetrievalQA` chain — Chroma is the default vector store in LangChain's quickstart guides.

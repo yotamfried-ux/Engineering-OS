@@ -86,6 +86,14 @@ Configuration notes:
 - [AutoGen Studio](https://microsoft.github.io/autogen/stable/user-guide/autogenstudio-user-guide/) — no-code interface guide
 - [Code Execution](https://microsoft.github.io/autogen/stable/user-guide/agentchat-user-guide/tutorial/code-execution.html) — safe sandboxing
 
+## Common Pitfalls
+
+- **Agent loops without a termination condition:** If no `is_termination_msg` function or `max_turns` / `max_round` limit is set, the agents converse indefinitely until the API rate limit, cost budget, or process timeout is hit. Always define a termination message pattern (e.g., `lambda x: "TERMINATE" in x.get("content", "")`) or set an explicit `max_turns` as a hard cap.
+- **`UserProxyAgent` with `human_input_mode="ALWAYS"` in production:** This mode blocks the process on `input()` waiting for keyboard input, which hangs any non-interactive server environment (CI, Docker, async workers). Set `human_input_mode="NEVER"` or `"TERMINATE"` in production; only use `"ALWAYS"` in interactive local sessions.
+- **LLM config caching returning stale responses when prompts change:** AutoGen's `cache_seed` in `llm_config` caches responses keyed by the full prompt. If you change the system prompt or tools but keep the same `cache_seed`, old cached responses are returned silently without hitting the model. Change or remove `cache_seed` whenever you modify prompts during development, or disable caching (`cache_seed=None`) for accuracy-sensitive runs.
+- **Nested chats losing message history:** When using `initiate_chats` or nested group chats, each sub-conversation gets its own message history by default. If a sub-agent needs context from the parent conversation, it must be explicitly injected via the initial message or a summary passed as the first message to the nested chat; it is not inherited automatically.
+- **Missing `max_consecutive_auto_reply` on `UserProxyAgent`:** Without this cap, a `UserProxyAgent` in `human_input_mode="NEVER"` will keep auto-replying to an assistant that loops (e.g., keeps asking for clarification). Set `max_consecutive_auto_reply=10` (or a suitable limit) to break the loop and surface the issue rather than burning tokens silently.
+
 ## Examples
 1. **Automated data analysis:** User proxy sends a CSV path and question → AssistantAgent writes Pandas/Matplotlib code → UserProxyAgent executes in Docker → AssistantAgent interprets the output → produces a written summary report.
 2. **Software development team:** Three agents: `Planner` (breaks task into subtasks), `Coder` (writes code), `Reviewer` (checks correctness and style) → GroupChat routes turns among them → Planner signals TERMINATE when all subtasks are verified.

@@ -85,6 +85,14 @@ export OPENAI_API_KEY=$MISTRAL_API_KEY
 - [Codestral](https://docs.mistral.ai/capabilities/code_generation/) — code generation and fill-in-the-middle guide
 - [Function Calling](https://docs.mistral.ai/capabilities/function_calling/) — tool use patterns
 
+## Common Pitfalls
+
+- **Using the OpenAI SDK without setting `base_url`:** Mistral's La Plateforme is OpenAI-compatible, but you must explicitly set `base_url="https://api.mistral.ai/v1"` when instantiating the OpenAI client. Forgetting this sends all requests to OpenAI's servers using your Mistral API key, which is rejected with a 401 auth error (or worse, silently charges your OpenAI account if the key happens to be valid there).
+- **`mistral-large` vs `mistral-large-latest` confusion:** `mistral-large-latest` is a floating alias that Mistral updates as new versions release; the specific model it points to can change without notice. For production workloads, pin to a dated snapshot ID (e.g., `mistral-large-2407`) to prevent silent behavior changes between releases. Use `latest` only during development.
+- **Function calling: not checking `finish_reason: "tool_calls"`:** When the model wants to invoke a function, it returns `finish_reason: "tool_calls"` with `tool_calls` populated in the message. If your loop checks only for the absence of `content` or exits after the first response, it skips tool execution entirely. Always branch on `finish_reason` and process all `tool_calls` before continuing.
+- **Sending non-code prompts to Codestral:** Codestral is a specialized model optimized for code generation and fill-in-the-middle tasks. It handles general text, but at noticeably lower quality than Command models or Mistral Large and at a different price point. Use Codestral only for coding tasks; route general reasoning or conversation to `mistral-large` or `mistral-small`.
+- **Streaming tool call argument reconstruction:** When streaming a function call response, the tool call arguments arrive across multiple chunks as `delta.tool_calls[n].function.arguments` fragments. Concatenating only the latest chunk's value instead of accumulating all chunks produces truncated or invalid JSON. Accumulate all argument deltas per tool call index and JSON-parse only after the stream ends.
+
 ## Examples
 1. **Multilingual customer support classification:** Use Mistral Small with JSON mode to classify incoming support tickets by language, topic, and urgency — at ~$0.10/1M tokens, can process millions of tickets cheaply without fine-tuning.
 2. **Local open-weight inference for privacy:** Pull Mixtral 8x7B via Ollama → run entirely on local GPU → customer PII never leaves the premises — suitable for legal, medical, or finance use cases with strict data-handling requirements.

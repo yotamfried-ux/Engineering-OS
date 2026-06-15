@@ -104,6 +104,13 @@ Configuration notes:
 - [Generative Search](https://weaviate.io/developers/weaviate/search/generative) — built-in RAG module
 - [Multi-tenancy](https://weaviate.io/developers/weaviate/manage-data/multi-tenancy) — tenant isolation guide
 
+## Common Pitfalls
+- **Starting import before schema is created:** If you insert objects without defining a collection schema first, Weaviate auto-creates one by inferring types from the data. Inferred types are often wrong (e.g., `text` instead of `int`), causing query errors later. Always define the schema explicitly before any imports.
+- **Vectorizer module not configured for a collection:** A collection created without a `vectorizer_config` stores objects with no vectors. Searches against it return random results. Specify `vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_openai()` (or another module) at collection creation time.
+- **Batch import without error handling:** Weaviate's batch importer silently drops objects that fail (e.g., due to schema mismatch or API key errors). Always inspect `response.errors` after each batch call and retry or log failed objects.
+- **Cross-references imported before referenced objects exist:** Inserting a cross-reference to an object that doesn't yet exist creates a dangling reference that won't resolve in queries. Import referenced objects (e.g., `Author`) before the objects that reference them (e.g., `Article`).
+- **Tenant not specified in multi-tenancy setup:** When multi-tenancy is enabled on a collection, all data operations require a `tenant` parameter. Omitting it raises a 422 error. Always scope reads and writes with `.with_tenant("tenant_id")` (v3) or the v4 tenant context.
+
 ## Examples
 1. **No-code RAG:** Define a collection with `text2vec-openai` and `generative-openai` → insert raw article text → call `generate.near_text("question", grouped_task="Answer based on these articles")` → Weaviate embeds, retrieves, and generates in one API call.
 2. **Knowledge graph with cross-references:** `Author` collection cross-references `Article` collection → query `Author` and traverse to their `articles` in a single GraphQL query — no join logic in application code.

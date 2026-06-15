@@ -102,6 +102,15 @@ Key configuration:
 - [Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code) — Claude Code CLI, hooks, MCP, slash commands
 - [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic's engineering guide: agent patterns, when to use multi-agent, orchestration
 
+## Common Pitfalls
+
+- **`system` as a message role:** Placing the system prompt as `{"role": "system", "content": "..."}` inside the `messages` array causes a validation error. The `system` field is a top-level parameter on the request, not a role — pass it as `system="..."` (Python) or `"system": "..."` at the request root.
+- **Missing `max_tokens`:** The Anthropic API has no default for `max_tokens`; omitting it returns an immediate 400 error. Always set it explicitly — use the model's maximum (e.g., 8192 for Sonnet) unless you have a specific budget reason to cap it lower.
+- **Passing `thinking` blocks back in the next turn:** Extended thinking responses contain `{"type": "thinking", ...}` content blocks. If you echo the full assistant message back as conversation history, the API rejects the `thinking` blocks. Strip them from the message history before the next request, or use the SDK helper that handles this automatically.
+- **`stop_reason: "tool_use"` not handled:** When the model wants to call a tool, it returns `stop_reason: "tool_use"` — the agent loop must extract the `tool_use` blocks, execute them, and send a new user message with `tool_result` blocks. If your loop exits on any non-`None` stop reason, tool calls are silently skipped and the agent never completes.
+- **Prompt caching on blocks under ~2048 tokens:** Adding `cache_control` to a content block shorter than the minimum cacheable size (~2048 tokens) is silently ignored — no error, no cache hit, and you're still paying the full input cost. Ensure your cached prefix (system prompt + documents) is well above this threshold before expecting savings.
+- **Vision URLs that are private or localhost:** When you pass an image as `{"type": "url", "url": "https://..."}`, Anthropic's servers must be able to fetch that URL. Private VPC URLs, signed S3 URLs that expire, or `localhost` addresses are unreachable and return a fetch error. Use base64-encoded image data instead for any non-public image source.
+
 ## Examples
 1. **Large document QA with caching:** Load a 150-page legal contract as a cached system prompt block → user asks multiple questions in the same session → 90% token cost reduction on subsequent queries vs. re-sending the document.
 2. **Multi-step code agent:** Claude receives a bug report → uses a `read_file` tool → `run_tests` tool → `edit_file` tool → iterates until tests pass → returns a summary with the diff applied.

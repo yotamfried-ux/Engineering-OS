@@ -84,6 +84,15 @@ Key configuration:
 - [Function Calling](https://platform.openai.com/docs/guides/function-calling) — tool use patterns
 - [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs) — guaranteed JSON Schema compliance
 
+## Common Pitfalls
+
+- **Rate limit 429 without exponential backoff:** Retrying immediately on a `RateLimitError` sends a burst of requests that worsens throttling and can escalate to account-level blocks. Implement exponential backoff with jitter (e.g., start at 1 s, double each attempt up to 60 s); the official Python SDK's `max_retries` parameter handles this automatically when set.
+- **Streaming and not consuming the full SSE stream:** If you break out of the stream iterator early (e.g., after extracting the first chunk), the underlying HTTP connection is left open and the connection pool fills up, causing new requests to hang. Always read until the stream emits `[DONE]`, or use the SDK's `.stream()` context manager which guarantees cleanup on exit.
+- **Sending `null` tool call results instead of an empty string:** When a tool execution returns nothing, sending `"content": null` in the `tool` role message violates the API's JSON schema and causes a 400 error. Use `"content": ""` (empty string) as the result when there is no meaningful return value.
+- **Context window exceeded without a truncation strategy:** Appending every assistant and user message indefinitely causes the messages array to exceed the model's context limit, resulting in a hard 400 error. Implement a sliding window (drop oldest messages) or summarization step before each call; check `usage.total_tokens` in the response to track proximity to the limit.
+- **Hardcoding floating model aliases like `gpt-4`:** Aliases such as `gpt-4` or `gpt-4-turbo` are periodically updated by OpenAI to point to newer underlying versions, changing behavior silently. Pin to a dated snapshot ID (e.g., `gpt-4o-2024-08-06`) in production; use the alias only in development where drifting behavior is acceptable.
+- **`temperature > 1` with Structured Outputs or JSON mode:** Temperatures above 1.0 increase randomness enough to destabilize constrained generation, causing the model to produce invalid JSON or ignore schema requirements even when JSON mode is explicitly enabled. Keep `temperature` at or below 1.0 for any structured output usage; prefer 0 for deterministic extraction tasks.
+
 ## Examples
 1. **RAG pipeline:** Chunk documents → embed with `text-embedding-3-small` → store in pgvector → at query time, embed the question, retrieve top-K chunks, include in GPT-4o context → stream the answer.
 2. **Structured data extraction:** Use Structured Outputs with a Pydantic model to extract invoice fields (vendor, amount, date, line items) from scanned PDF text with guaranteed schema compliance.

@@ -79,6 +79,14 @@ Configuration notes:
 - [Organizations](https://clerk.com/docs/organizations/overview) — multi-tenant RBAC setup
 - [Webhooks](https://clerk.com/docs/integrations/webhooks) — user event handling
 
+## Common Pitfalls
+- **Middleware not wrapping all routes:** Unauthenticated requests reach protected API routes because the middleware matcher only covers pages; `clerkMiddleware()` must be applied to every route that requires auth, including `/api/**` paths.
+- **`auth()` called outside request context:** Returns `null` or throws; `auth()` is only valid inside Server Components or Route Handlers — never call it at module scope in shared utility files that may execute outside a request.
+- **Webhook signature not verified:** Accepting unverified webhook payloads is a security hole; always verify the `svix-signature` header using the `Webhook` class from the `svix` package before processing any lifecycle event.
+- **Organization switcher not in root layout:** The active organization context is lost between page navigations if `<OrganizationSwitcher>` is placed inside a page rather than the root layout; mount it in `app/layout.tsx` to persist org context across routes.
+- **JWT template not set for Supabase:** Supabase RLS expects a JWT with `sub` mapped to the user ID and a specific `iss`/`role` structure; create a Clerk JWT template named `"supabase"` in the Clerk Dashboard with those exact claims, then pass it via `getToken({ template: "supabase" })`.
+- **Using deprecated `authMiddleware()`:** Clerk v5+ replaced `authMiddleware` with `clerkMiddleware()`; the old export still exists but no longer receives updates — migrate to avoid breaking changes in future releases.
+
 ## Examples
 1. **Protected dashboard:** Wrap `app/dashboard/layout.tsx` with server-side `auth()` check; redirect unauthenticated users to `/sign-in` via middleware matcher.
 2. **Organization-scoped data:** On API routes, read `auth().orgId` to scope database queries to the correct tenant — no manual tenant ID management needed.

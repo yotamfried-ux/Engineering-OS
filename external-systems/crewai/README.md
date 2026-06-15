@@ -97,6 +97,14 @@ Configuration notes:
 - [Memory](https://docs.crewai.com/concepts/memory) — short/long-term memory setup
 - [Flows](https://docs.crewai.com/concepts/flows) — event-driven orchestration for complex pipelines
 
+## Common Pitfalls
+
+- **Task with no `expected_output`:** Without a clear `expected_output` string, the assigned agent has no stopping criterion and may repeatedly attempt to refine or reformat its answer, burning extra LLM calls. Always provide a specific, concrete description of the expected output format so the agent knows when its response is complete.
+- **Tools returning non-string values:** CrewAI's tool execution pipeline expects every tool to return a plain string. Returning a dict, list, Pydantic model, or any other Python object causes a serialization error at runtime. Wrap all tool return values in `str()` or serialize to JSON string before returning; CrewAI does not auto-serialize.
+- **`Process.hierarchical` without a manager LLM set:** Hierarchical process requires a dedicated manager agent (or `manager_llm`) to delegate tasks dynamically. Omitting `manager_llm` when `process=Process.hierarchical` raises a `ValueError` at crew kickoff. Always pass `manager_llm="openai/gpt-4o"` (or equivalent) or define an explicit `manager_agent`.
+- **Agents sharing mutable state via Python globals:** In async or parallel crew configurations, agents may run concurrently in separate threads or coroutines. Storing intermediate results in module-level Python variables introduces race conditions where one agent's write overwrites another's. Use the `Task.output` return value and task context passing, or a thread-safe store, instead of globals.
+- **`verbose=True` in production:** Setting `verbose=True` on `Crew` or individual agents prints full prompt text, tool inputs/outputs, and intermediate reasoning to stdout. In production this can expose secrets injected into prompts (API keys, customer PII in tool results) in log aggregators. Set `verbose=False` in production and use structured observability (e.g., LangSmith or CrewAI+ monitoring) instead.
+
 ## Examples
 1. **Content marketing pipeline:** `ResearchAgent` uses SerperDev to find latest trends → `OutlineAgent` structures the article → `WriterAgent` drafts the piece → `EditorAgent` refines tone and grammar → output is a publish-ready blog post.
 2. **Competitor analysis:** Crew with roles: Market Analyst, Data Gatherer, Report Writer; each assigned web search tools; hierarchical process where a Manager LLM decides which agent gets each competitor to research; final crew output is a structured comparison table.

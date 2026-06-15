@@ -98,6 +98,13 @@ Configuration notes:
 - [Quantization](https://qdrant.tech/documentation/guides/quantization/) — memory reduction strategies
 - [Hybrid Search](https://qdrant.tech/documentation/concepts/hybrid-queries/) — dense + sparse fusion
 
+## Common Pitfalls
+- **Searching without `with_payload=True`:** By default, Qdrant search results do not include payload data. Pass `with_payload=True` (Python client) or `with_payload: true` (REST) in every query where you need to read document metadata or text.
+- **`hnsw_ef` set too low:** The `ef` parameter at search time controls the size of the candidate pool during HNSW traversal. Values below 64–128 noticeably reduce recall. Set `search_params=SearchParams(hnsw_ef=128)` on queries that require high accuracy.
+- **Uploading points without specifying vector name in named-vector collections:** If a collection is defined with named vectors (e.g., `title` and `body`), upserting a point without specifying the vector name defaults to `"default"`, which may not exist and causes dimension errors. Always pass `vectors={"title": embedding}` explicitly.
+- **Payload index not created before filtering:** Filtering on a payload field without a payload index causes Qdrant to scan every point (full scan), which is slow at scale. Create the index upfront: `client.create_payload_index("collection", "user_id", "keyword")`.
+- **Mixing gRPC and REST clients:** The gRPC client (port 6334) and the REST client (port 6333) are separate protocol bindings and not interchangeable within the same call chain. Pick one transport per service and configure it consistently.
+
 ## Examples
 1. **Per-user RAG:** Create payload index on `user_id` → at query time, filter `must: [{key: "user_id", match: {value: current_user}}]` → ensures users never see each other's documents without a separate collection per user.
 2. **Multi-lingual semantic search:** Store two named vectors per document — `en_embedding` and `native_embedding` — query against the named vector matching the user's language; single collection serves all languages.

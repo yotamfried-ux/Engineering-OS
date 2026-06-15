@@ -79,6 +79,14 @@ Key configuration:
 - [Webhooks](https://stripe.com/docs/webhooks) — event handling and signature verification
 - [Stripe CLI](https://stripe.com/docs/stripe-cli) — local development and webhook forwarding
 
+## Common Pitfalls
+- **Webhook signature not verified:** Accepting spoofed events is a critical security hole; always call `stripe.webhooks.constructEvent(rawBody, sig, secret)` using the raw unparsed request body — parsing JSON before verification will cause signature mismatch errors.
+- **Not handling idempotency:** Duplicate charges occur on network retry if you create a new PaymentIntent on each attempt; send an `Idempotency-Key` header (a stable UUID per logical operation) on all PaymentIntent create and confirm calls.
+- **Storing card data directly:** Handling raw card numbers directly violates PCI DSS; use Stripe Elements or the Payment Element to tokenize card data client-side — your server only ever sees a `PaymentMethod` ID, never the card number.
+- **Fulfilling orders on client redirect instead of webhook:** The redirect after payment can be missed (tab closed, network drop); always fulfill orders in the `payment_intent.succeeded` webhook handler, never in the client-side return URL handler alone.
+- **Subscription renewals not handled:** Listening only to `payment_intent.succeeded` misses renewal charges; subscribe to `invoice.payment_succeeded` and `invoice.payment_failed` to correctly track recurring billing and trigger dunning logic.
+- **Test-mode webhooks forwarded to production endpoint:** Using `stripe listen` in local dev without scoping to a test endpoint can accidentally forward real events; run `stripe listen --forward-to localhost:3000/api/webhooks` and confirm the webhook secret matches the CLI output, not the production dashboard secret.
+
 ## Examples
 1. **SaaS subscription:** Create a `Price` (monthly, $49/mo) → user checks out via Stripe Checkout → handle `customer.subscription.created` webhook to provision access → `invoice.payment_failed` triggers dunning emails.
 2. **E-commerce one-time payment:** Server creates PaymentIntent → client confirms with Elements → `payment_intent.succeeded` webhook triggers order fulfillment and shipping label generation.

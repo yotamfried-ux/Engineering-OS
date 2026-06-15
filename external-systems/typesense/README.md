@@ -91,6 +91,13 @@ export TYPESENSE_API_KEY=your_admin_key
 - [Vector Search](https://typesense.org/docs/26.0/api/vector-search.html) — hybrid semantic + keyword search setup
 - [Scoped API Keys](https://typesense.org/docs/guide/data-access-control.html) — multi-tenant access control
 
+## Common Pitfalls
+- **Indexing a field not in the collection schema:** By default (`add_fields_on_the_fly: false`), Typesense silently rejects documents containing fields not declared in the schema. If documents aren't appearing in search results, verify every field is listed in the collection definition or enable `add_fields_on_the_fly: true` to allow dynamic fields.
+- **`num_typos` too high on short or exact-match fields:** Setting `num_typos: 2` on fields like SKU codes, IDs, or order numbers causes false matches where unrelated values are returned. Use `num_typos: 0` for any field that requires exact matching.
+- **Not enabling `enable_nested_fields` for nested JSON:** Nested object paths (e.g., `address.city`) are not searchable or filterable unless `enable_nested_fields: true` is set on the collection. Without it, nested keys are silently ignored.
+- **API key with wrong permissions used for write operations:** Typesense API keys are scoped to specific actions. Using a search-only key for document imports or schema changes returns a 403. Create separate keys with `actions: ["documents:*"]` for write operations.
+- **Missing `sort_by` on numeric fields:** Without an explicit `sort_by` parameter, Typesense sorts by text relevance score, which produces unexpected ordering on numeric fields like price or date. Always specify `sort_by: "price:asc"` (or equivalent) when order matters.
+
 ## Examples
 1. **SaaS multi-tenant search:** Each tenant gets a scoped API key with a built-in filter `tenant_id:=<id>` — client-side search calls are automatically scoped without any backend proxy required, preventing cross-tenant data leakage.
 2. **E-commerce with facets:** Products indexed with `price`, `brand`, and `category` fields → frontend uses typesense-instantsearch-adapter to wire up Algolia UI components → switching from Algolia to Typesense Cloud required only changing the search client, not the UI components.

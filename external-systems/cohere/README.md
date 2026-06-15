@@ -89,6 +89,14 @@ pip install cohere
 - [Rerank Guide](https://docs.cohere.com/docs/reranking) — how to use Rerank in a retrieval pipeline
 - [RAG with Command R](https://docs.cohere.com/docs/retrieval-augmented-generation-rag) — grounded generation with citations
 
+## Common Pitfalls
+
+- **Using the `generate` endpoint for chat tasks:** The `co.generate()` endpoint is deprecated and produces single-turn completions without conversation memory or tool support. For any chat, multi-turn, or RAG use case, use `co.chat()` with the Command R/R+ models; `generate` will eventually be removed and already returns deprecation warnings.
+- **Sending connector/tool results in the wrong format:** When returning tool results back to the model in a multi-turn chat, the `tool_results` list must contain objects with `call` (the original tool call echoed back) and `outputs` (a list of dicts). Omitting `call` or passing a flat list of strings causes a validation error or silently causes the model to ignore the results.
+- **Confusing embedding models with generation models:** Cohere's Embed models (`embed-english-v3.0`) and Command models (`command-r`) are completely separate endpoints with separate billing. Sending a generation prompt to the embed endpoint (or vice versa) returns an error; always use `co.embed()` for vectors and `co.chat()` / `co.generate()` for text generation.
+- **RAG with `documents` that are too long:** The `documents` parameter in `co.chat()` is not a chunking system — each document string must already be a short, relevant passage. Passing full articles or pages causes the context window to overflow and degrades citation quality. Chunk and retrieve (then optionally rerank) before populating `documents`.
+- **Streaming without consuming all chunks:** Using `co.chat_stream()` and breaking out of the iterator before the stream ends leaves the HTTP connection in a half-closed state, leading to connection pool exhaustion under load. Always iterate to the final `StreamEnd` event or wrap the stream in a `try/finally` that fully drains it.
+
 ## Examples
 1. **RAG pipeline with reranking:** Query arrives → embed with `embed-english-v3.0` → retrieve top-50 chunks from pgvector → rerank to top-5 with `rerank-english-v3.0` → pass to Command R → response includes `citations` linking each answer sentence to the source document — no post-processing needed to attribute sources.
 2. **Enterprise knowledge base search:** Index internal wiki pages with Embed v3 → build a semantic search UI → Rerank re-scores keyword + semantic results in a single call → accuracy improvement of 15-20% over pure vector search on enterprise knowledge bases.
