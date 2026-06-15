@@ -274,3 +274,9 @@ async function requeueFromDlq(dlqJobId: string) {
 Configure a job to fail on every attempt. Assert it appears in the DLQ with the correct error message and original payload after all retries are exhausted. Assert that calling `requeueFromDlq` moves it back to the processing queue and removes it from the DLQ.
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [BullMQ Docs](https://docs.bullmq.io) — Redis-based job queue for Node.js
+- [Celery Docs](https://docs.celeryq.dev) — Python distributed task queue
+- [Temporal Docs](https://docs.temporal.io) — durable workflow execution engine
+- [Sidekiq Docs](https://github.com/sidekiq/sidekiq/wiki) — Ruby background job processing
