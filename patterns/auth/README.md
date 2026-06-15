@@ -244,3 +244,10 @@ export async function validateApiKey(raw: string, db: DB) {
 Test that generation produces unique values, validation rejects tampered and revoked keys, `lastUsedAt` is updated on success, and the raw key is not stored or returned after initial creation.
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [OAuth 2.0 RFC 6749](https://tools.ietf.org/html/rfc6749) — authorization framework standard
+- [PKCE RFC 7636](https://tools.ietf.org/html/rfc7636) — proof key for code exchange
+- [JWT RFC 7519](https://tools.ietf.org/html/rfc7519) — JSON Web Token standard
+- [Auth0 Docs](https://auth0.com/docs) — identity platform documentation
+- [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html) — security best practices

@@ -285,3 +285,10 @@ async function query(sql: string, params: unknown[]) {
 Load-test with concurrent requests to verify pool exhaustion produces a timeout error (not a hang). Assert that connections are always released by checking `pool.totalCount` after each test.
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [Prisma Docs](https://www.prisma.io/docs) — TypeScript ORM, migrations, type safety
+- [PostgreSQL Docs](https://www.postgresql.org/docs/) — PostgreSQL official reference
+- [Supabase RLS Docs](https://supabase.com/docs/guides/auth/row-level-security) — row-level security patterns
+- [Martin Fowler — Patterns of Enterprise Application Architecture](https://martinfowler.com/books/eaa.html) — database patterns
+- [Use The Index, Luke](https://use-the-index-luke.com) — SQL performance and indexing guide

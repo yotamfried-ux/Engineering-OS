@@ -48,6 +48,7 @@ Individual steps scale independently (parallelize non-dependent steps). The pipe
 ## Reference Implementations
 - [LangGraph](https://github.com/langchain-ai/langgraph) — graph-based orchestration; model workflow nodes as a directed graph with typed state
 - [Prefect](https://github.com/PrefectHQ/prefect) — general-purpose workflow engine usable for LLM pipelines with retry and observability built in
+- [langchain-ai/langgraph/examples](https://github.com/langchain-ai/langgraph/tree/main/examples) — LangGraph workflow examples: sequential, parallel, branching
 
 ## Official Sources
 - [LangGraph Conceptual Guide](https://langchain-ai.github.io/langgraph/concepts/) — nodes, edges, state, and checkpointing

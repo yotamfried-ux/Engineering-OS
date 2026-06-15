@@ -48,11 +48,15 @@ Stateless inference scales horizontally with container replicas. For batch jobs,
 - [timm (PyTorch Image Models)](https://github.com/huggingface/pytorch-image-models) — 700+ pre-trained models; the standard library for classification backbone selection
 - [Ultralytics YOLOv8 Classification](https://github.com/ultralytics/ultralytics) — classification mode with the same training/export API as detection
 - [torchvision](https://github.com/pytorch/vision) — canonical ResNet, EfficientNet, ViT implementations with pre-trained weights
+- [pytorch/vision/references/classification](https://github.com/pytorch/vision/tree/main/references/classification) — PyTorch image classification reference
+- [huggingface/transformers/examples/pytorch/image-classification](https://github.com/huggingface/transformers/tree/main/examples/pytorch/image-classification) — ViT image classification
 
 ## Official Sources
 - [timm Documentation](https://huggingface.co/docs/timm/) — model list, fine-tuning guide, feature extraction
 - [PyTorch Transfer Learning Tutorial](https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html) — step-by-step fine-tuning with ResNet
 - [Papers With Code — Image Classification](https://paperswithcode.com/task/image-classification) — ImageNet SOTA leaderboard
+- [PyTorch Vision Docs](https://pytorch.org/vision/stable/index.html) — torchvision models and transforms
+- [HuggingFace Image Classification](https://huggingface.co/docs/transformers/tasks/image_classification) — transformer-based image classification
 
 ## Related Architectures
 - See also: [Object Detection](./object-detection.md)

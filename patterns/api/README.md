@@ -321,3 +321,9 @@ throw new AppError('VALIDATION_FAILED', 'Invalid input', 400, validationDetails)
 Assert every error path returns the expected `code` and `statusCode`. Verify that unhandled exceptions return `INTERNAL_ERROR` without leaking details. Confirm `requestId` is always present.
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [Microsoft REST API Guidelines](https://github.com/microsoft/api-guidelines) — production REST design
+- [OpenAPI Specification](https://spec.openapis.org/oas/latest.html) — API description standard
+- [Zod Docs](https://zod.dev) — TypeScript schema validation for API contracts
+- [GraphQL Spec](https://spec.graphql.org) — GraphQL specification

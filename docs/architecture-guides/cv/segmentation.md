@@ -50,11 +50,13 @@ GPU-bound: Mask R-CNN runs at 5–15 FPS on a V100 at 1024 px. SAM ViT-H is ~2 F
 - [SAM 2](https://github.com/facebookresearch/sam2) — extends SAM to video; real-time mask propagation across frames
 - [Detectron2](https://github.com/facebookresearch/detectron2) — Mask R-CNN, Panoptic FPN; production-grade Pytorch framework
 - [MMSegmentation](https://github.com/open-mmlab/mmsegmentation) — semantic segmentation model zoo (DeepLab, SegFormer, PSPNet)
+- [ultralytics/ultralytics](https://github.com/ultralytics/ultralytics) — YOLO instance and semantic segmentation
 
 ## Official Sources
 - [SAM Paper and Demo](https://segment-anything.com/) — model cards, dataset (SA-1B), and interactive demo
 - [DeepLab v3+ Paper](https://arxiv.org/abs/1802.02611) — atrous convolution and ASPP for semantic segmentation
 - [Papers With Code — Segmentation](https://paperswithcode.com/task/semantic-segmentation) — SOTA leaderboard and dataset links
+- [Ultralytics Segmentation Docs](https://docs.ultralytics.com/tasks/segment/) — instance segmentation guide
 
 ## Related Architectures
 - See also: [Object Detection](./object-detection.md)

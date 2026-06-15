@@ -54,6 +54,8 @@ Edge: one compute unit (Jetson, NUC, or NVIDIA dGPU) per N cameras (N = 4–16 d
 - [Ultralytics Tracking Docs](https://docs.ultralytics.com/modes/track/) — real-time stream tracking with ByteTrack and BoT-SORT
 - [Supervision Documentation](https://supervision.roboflow.com/) — zone, line counter, tracker, and annotator APIs
 - [NVIDIA DeepStream Documentation](https://docs.nvidia.com/metropolis/deepstream/dev-guide/) — multi-stream, multi-model pipeline architecture
+- [Ultralytics Video Guide](https://docs.ultralytics.com/modes/predict/) — video inference documentation
+- [OpenCV VideoCapture Docs](https://docs.opencv.org/4.x/d8/dfe/classcv_1_1VideoCapture.html) — video capture and processing
 
 ## Related Architectures
 - See also: [Object Detection](./object-detection.md)

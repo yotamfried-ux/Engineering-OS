@@ -46,11 +46,15 @@ Inference scales horizontally with stateless model serving (REST, gRPC, batch). 
 - [scikit-learn examples](https://github.com/scikit-learn/scikit-learn/tree/main/examples/classification) — canonical binary and multi-class pipelines
 - [XGBoost](https://github.com/dmlc/xgboost) — gradient boosting; state of the art for tabular classification
 - [imbalanced-learn](https://github.com/scikit-learn-contrib/imbalanced-learn) — SMOTE, ADASYN, and other resampling strategies
+- [scikit-learn/scikit-learn/examples](https://github.com/scikit-learn/scikit-learn/tree/main/examples) — official scikit-learn classification examples
+- [huggingface/transformers/examples/pytorch/text-classification](https://github.com/huggingface/transformers/tree/main/examples/pytorch/text-classification) — NLP classification with transformers
 
 ## Official Sources
 - [scikit-learn Classification User Guide](https://scikit-learn.org/stable/supervised_learning.html#supervised-learning) — model comparison, metrics, and pipelines
 - [XGBoost Documentation](https://xgboost.readthedocs.io/) — binary/multi-class objectives, scale_pos_weight
 - [imbalanced-learn Documentation](https://imbalanced-learn.org/stable/) — resampling strategies and evaluation under imbalance
+- [Scikit-Learn Docs — Classification](https://scikit-learn.org/stable/supervised_learning.html) — classical ML classification algorithms
+- [HuggingFace Text Classification](https://huggingface.co/docs/transformers/tasks/sequence_classification) — transformer-based classification
 
 ## Related Architectures
 - See also: [Batch Training](./batch-training.md)

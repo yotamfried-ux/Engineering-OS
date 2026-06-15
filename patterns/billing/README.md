@@ -243,3 +243,9 @@ async function startTrial(customerId: string, priceId: string) {
 Use Stripe test clock to simulate time advancing. Test trial creation, `trial_will_end` email trigger, and both end-of-trial paths (payment success and no card on file).
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [Stripe Docs](https://stripe.com/docs) — payment processing documentation
+- [Stripe Billing Docs](https://stripe.com/docs/billing) — subscriptions and invoicing
+- [Lemon Squeezy Docs](https://docs.lemonsqueezy.com) — merchant of record billing
+- [Paddle Docs](https://developer.paddle.com/api-reference/overview) — EU VAT-compliant billing

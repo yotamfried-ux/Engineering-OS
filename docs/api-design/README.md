@@ -257,3 +257,26 @@ Header versioning is less visible than URL versioning and requires more explicit
 - **Leaking sensitive data in error messages or logs.** Echoing user-supplied input (email addresses, phone numbers, tokens) verbatim into error messages or structured logs creates a data-exposure risk. Sanitize before logging; reference fields by name, not value.
 
 - **Ignoring idempotency for non-idempotent operations.** POST endpoints that create resources should accept an idempotency key (e.g., `Idempotency-Key` header) so clients can safely retry on network failure without creating duplicate records. Without this, a timeout leaves the client unable to know whether the operation succeeded.
+
+## Official Standards & References
+
+### REST Standards
+- [Microsoft REST API Guidelines](https://github.com/microsoft/api-guidelines) — production-grade REST design rules
+- [Google API Design Guide](https://cloud.google.com/apis/design) — Google's API design patterns
+- [JSON:API Specification](https://jsonapi.org) — standardized JSON response format
+- [OpenAPI Specification](https://spec.openapis.org/oas/latest.html) — API description standard
+
+### GraphQL Standards
+- [GraphQL Specification](https://spec.graphql.org) — official specification
+- [Apollo Federation Docs](https://www.apollographql.com/docs/federation/) — schema composition
+
+### Authentication Standards
+- [OAuth 2.0 RFC 6749](https://tools.ietf.org/html/rfc6749) — authorization framework
+- [OAuth 2.0 PKCE RFC 7636](https://tools.ietf.org/html/rfc7636) — code flow for public clients
+- [OpenID Connect](https://openid.net/developers/how-connect-works/) — identity layer on OAuth 2.0
+- [JWT RFC 7519](https://tools.ietf.org/html/rfc7519) — JSON Web Token standard
+
+### Real-World API References
+- [Stripe API Docs](https://stripe.com/docs/api) — exemplary REST API design
+- [GitHub REST API Docs](https://docs.github.com/en/rest) — large-scale REST API reference
+- [Stripe API Versioning Blog](https://stripe.com/blog/api-versioning) — production versioning strategy

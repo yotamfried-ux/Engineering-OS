@@ -261,3 +261,10 @@ export async function verifyCode(phone: string, code: string): Promise<boolean> 
 Test successful verification deletes the Redis key. Test expired OTP returns false. Test wrong code increments failure counter. Test rate limiting blocks after N sends.
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [Resend Docs](https://resend.com/docs) — developer-first transactional email API
+- [Twilio Docs](https://www.twilio.com/docs) — SMS, voice, WhatsApp messaging API
+- [Pusher Docs](https://pusher.com/docs) — real-time WebSocket messaging
+- [Web Push RFC 8030](https://tools.ietf.org/html/rfc8030) — push notification standard
+- [Postmark Docs](https://postmarkapp.com/developer) — transactional email with delivery guarantees
