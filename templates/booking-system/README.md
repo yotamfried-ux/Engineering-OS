@@ -87,3 +87,5 @@ Use this template for reservation and scheduling platforms — appointment booki
 - [RFC 5545 — iCalendar](https://datatracker.ietf.org/doc/html/rfc5545) — iCal format specification for `.ics` generation
 - [Stripe Payment Intents](https://stripe.com/docs/payments/payment-intents) — Two-step capture for deposits and confirmations
 - [BullMQ Docs](https://docs.bullmq.io/) — Job scheduling, delayed jobs, repeatable jobs for reminders
+- [Cal.com Developer Docs](https://cal.com/docs/developing/local-development) — self-hosting and API
+- [Cal.com API Reference](https://cal.com/docs/api-reference/v2/introduction) — REST API for booking management

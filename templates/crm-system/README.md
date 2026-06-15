@@ -80,6 +80,8 @@ Use this template for a Customer Relationship Management platform where sales, s
 - [twentyhq/twenty](https://github.com/twentyhq/twenty) — Open-source CRM built with React and NestJS; excellent reference for data model and pipeline UI
 - [cortezaproject/corteza](https://github.com/cortezaproject/corteza) — Open-source low-code CRM/business platform with strong role/permission model
 - [frappe/crm](https://github.com/frappe/crm) — Open-source CRM by Frappe; clean pipeline and activity timeline implementation
+- [twentyhq/twenty](https://github.com/twentyhq/twenty) — open-source CRM built with React + NestJS + GraphQL, 7k+ stars — **best pick**
+- [erxes/erxes](https://github.com/erxes/erxes) — open-source CRM + marketing automation platform
 
 ## Official Documentation
 - [Gmail API Docs](https://developers.google.com/gmail/api/guides) — OAuth scopes, message threading, push notifications via Pub/Sub

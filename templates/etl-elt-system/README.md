@@ -93,3 +93,6 @@ Use this template for data integration pipelines that move and transform data be
 - [Airbyte Docs](https://docs.airbyte.com) — open-source ELT connectors and orchestration
 - [dbt Docs](https://docs.getdbt.com) — data transformation layer
 - [Apache Spark Docs](https://spark.apache.org/docs/latest/) — large-scale data processing
+- [Meltano Docs](https://docs.meltano.com) — CLI-driven ELT platform
+- [dlt Docs](https://dlthub.com/docs) — Python ELT library documentation
+- [Singer Specification](https://hub.meltano.com/singer/spec) — tap/target protocol standard
