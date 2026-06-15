@@ -64,6 +64,16 @@ Use this template for data integration pipelines that move and transform data be
 - [ ] Disaster recovery: document procedure to re-extract full history from each source; retention policy on source allows it
 - [ ] Data catalog updated automatically on schema change (DataHub lineage API, dbt docs publish)
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [airbytehq/airbyte](https://github.com/airbytehq/airbyte) | Open-source ELT platform with 300+ connectors to data warehouses | ✅ Best pick |
+| [dbt-labs/dbt-core](https://github.com/dbt-labs/dbt-core) | SQL-based data transformation with testing and documentation | |
+| [great-expectations/great_expectations](https://github.com/great-expectations/great_expectations) | Data quality validation and pipeline testing framework | |
+
+**Best Pick:** [airbytehq/airbyte](https://github.com/airbytehq/airbyte) — most complete ELT reference platform, 16k+ stars, 300+ source connectors, handles ingestion to any data warehouse
+
 ## Reference Repositories
 - [dbt-labs/jaffle-shop](https://github.com/dbt-labs/jaffle-shop) — Canonical dbt project showing staging/intermediate/mart conventions and testing patterns
 - [airbytehq/airbyte](https://github.com/airbytehq/airbyte) — Open-source EL platform with 300+ connectors; study connector development for custom sources

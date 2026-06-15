@@ -247,3 +247,10 @@ export async function rateLimitMiddleware(req, res, next) {
 
 **Testing:**
 Write a test that fires N+1 requests within the window and asserts the N+1th returns 429. Assert that the counter resets after the window elapses.
+
+## Official References
+- [OWASP Top 10](https://owasp.org/Top10/) — most critical web security risks
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org) — security implementation guides
+- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework) — security standards
+- [CSP Evaluator](https://csp-evaluator.withgoogle.com) — Content Security Policy testing tool
+- [Mozilla Web Security Guidelines](https://infosec.mozilla.org/guidelines/web_security) — server-side security

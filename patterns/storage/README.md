@@ -262,3 +262,9 @@ const bucket = new s3.Bucket(this, 'AssetsBucket', {
 Validate lifecycle rules with AWS CLI (`s3api get-bucket-lifecycle-configuration`). Spot-check that files older than the transition threshold show the expected storage class in S3 metadata.
 
 **Score:** TBD (see pattern-lifecycle.md)
+
+## Official References
+- [AWS S3 Docs](https://docs.aws.amazon.com/s3/) — object storage fundamentals
+- [Cloudflare R2 Docs](https://developers.cloudflare.com/r2/) — S3-compatible storage without egress fees
+- [Supabase Storage Docs](https://supabase.com/docs/guides/storage) — file storage with access control policies
+- [Presigned URL Pattern](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html) — secure direct uploads
