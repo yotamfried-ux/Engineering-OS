@@ -143,18 +143,47 @@
 | התגלה באג (פיתוח/פרודקשן); לפני שמנחשים מקור תקלה | [`core/debugging-policy.md`](./core/debugging-policy.md) | `<debug_loop>` |
 | לפני גישה לבאג מוכר (קריאה); תיעוד לקח/כשל (כתיבה); Post-Mortem; רמות ביטחון | [`core/learning-loop.md`](./core/learning-loop.md) | `<learning_loop>`, `<post_mortem>`, הבשלת ידע |
 | תבנית קוד: לפני הוספה/עדכון/הוצאה משימוש; הבנת ציון וסטטוס | [`core/pattern-lifecycle.md`](./core/pattern-lifecycle.md) | `<pattern_registry>`, `<scoring>`, `<lifecycle>` |
+| דירוג pattern בפועל — נוסחה, קריטריונים, מעבר ל-Active | [`core/scoring-guide.md`](./core/scoring-guide.md) | `<scoring_process>`, `<scoring_faq>`, `<pattern_scoring_checklist>` |
 | שתי הנחיות מתנגשות; לא ברור איזה כלל גובר; לפני עקיפת כלל כתוב | [`core/precedence.md`](./core/precedence.md) | `<precedence>`, `<conflict_procedure>` |
 | חיפוש דוגמאות; בחירת קונקטור; בחירה בין פלטפורמות; fallback; עדכון משתני סביבה | [`core/connector-policy.md`](./core/connector-policy.md) | `<information_sources>`, `<connectors>`, `<environment>` |
 | קונקטור לא עובד בקלוד; להוריד שרת MCP נקודתית לפרויקט | [`core/mcp-servers.md`](./core/mcp-servers.md) | טבלת שרתי ה-MCP, `claude mcp add` |
 
 ### שאר חלקי המערכת (לא נטענים אוטומטית — גש לפי הצורך)
 
-- [`patterns/`](./patterns/) — תבניות קוד מדורגות (api, auth, stripe, database, ui, ai-agents). מחזור חיים ודירוג: [`core/pattern-lifecycle.md`](./core/pattern-lifecycle.md).
-- [`templates/`](./templates/) — סקלטונים מלאים לפרויקטים (backend-services, frontend-apps, fullstack-saas, mobile-apps, microservices).
-- [`docs/`](./docs/) — תיעוד מאושר (official, reference-repos, architecture-guides, api-references).
-- [`lessons-learned/`](./lessons-learned/) — לקחים מרכזיים (bugs, postmortems, prevention-strategies).
-- [`failed-solutions/`](./failed-solutions/) — פתרונות שנוסו ונכשלו.
-- [`architecture-decisions/`](./architecture-decisions/) — ADRs.
-- [`external-systems/`](./external-systems/) — מערכות חיצוניות מלאות וריפו-ים מאושרים לאינטגרציה.
+**מתי להשתמש בכל שכבת ידע:**
+
+| שכבה | תוכן | מתי להשתמש |
+|---|---|---|
+| `patterns/` | תבניות קוד עם implementation מלא | כשצריך קוד מוכן לשימוש-חוזר עם security/testing מתועדים |
+| `templates/` | מפרט ארכיטקטורי + checklists | בתחילת פרויקט חדש לתכנון stack ורכיבים נדרשים |
+| `docs/architecture-guides/` | השוואות בין גישות ארכיטקטורליות | בהחלטות "monolith vs microservices", "REST vs GraphQL" וכו' |
+| `docs/official-docs/` | synopsis של תיעוד רשמי | בדיקה מהירה של API / framework ספציפי |
+| `external-systems/` | guide לאינטגרציה עם שירות חיצוני | כשמוסיפים שירות חיצוני — setup, auth, key objects |
+
+**תבניות ב-`patterns/` לפי תחום:**
+
+- [`patterns/api/`](./patterns/api/) — pagination, rate limiting, versioning, validation, error format
+- [`patterns/auth/`](./patterns/auth/) — JWT, OAuth 2.0, sessions, API keys
+- **[`patterns/authorization/`](./patterns/authorization/) — RBAC, ABAC, ReBAC, policy engines** ← חדש
+- [`patterns/billing/`](./patterns/billing/) — Stripe subscriptions, webhooks, metered billing, trials
+- [`patterns/database/`](./patterns/database/) — repository pattern, optimistic locking, soft delete, migrations, pooling
+- [`patterns/frontend/`](./patterns/frontend/) — Next.js App Router, optimistic updates, infinite scroll, forms
+- **[`patterns/infrastructure/`](./patterns/infrastructure/) — Terraform, Docker, Kubernetes, secrets management, Pulumi** ← חדש
+- [`patterns/observability/`](./patterns/observability/) — structured logging, tracing, health checks, SLO alerting
+- [`patterns/security/`](./patterns/security/) — input validation & sanitization, CORS, rate limiting, secrets
+- [`patterns/testing/`](./patterns/testing/) — test pyramid, AAA, factories, contract testing, regression tests
+- **[`patterns/ui/`](./patterns/ui/) — design tokens, component architecture, accessibility, data tables, theming** ← שלם כעת
+- [`patterns/ai/`](./patterns/ai/) — prompt chaining, tool use, RAG, streaming, structured output
+- [`patterns/ai-agents/`](./patterns/ai-agents/) — multi-agent, orchestration, tool-calling
+
+**שאר ספריות:**
+
+- [`lessons-learned/`](./lessons-learned/) — לקחים מתועדים: [`bugs/`](./lessons-learned/bugs/), [`postmortems/`](./lessons-learned/postmortems/), [`prevention-strategies/`](./lessons-learned/prevention-strategies/)
+- [`failed-solutions/`](./failed-solutions/) — פתרונות שנוסו ונכשלו — קרא לפני שמנסים גישה דומה
+- [`architecture-decisions/`](./architecture-decisions/) — ADRs — קרא לפני שמערערים החלטות ארכיטקטוריות קיימות
+- [`external-systems/`](./external-systems/) — מערכות חיצוניות מלאות וריפו-ים מאושרים לאינטגרציה
+
+> **הערת ניווט — Stripe:** ידע Stripe מפוצל ב-3 מקומות בכוונה. ראה [`patterns/stripe/`](./patterns/stripe/) להסבר מלא.
+> **הערת ניווט — Input Validation:** מופיע גם ב-`patterns/api/` (contract enforcement) וגם ב-`patterns/security/` (security boundary). הסבר בכל אחד מהם.
 
 ראה [`README.md`](./README.md) לחזון ולפילוסופיה המלאים.

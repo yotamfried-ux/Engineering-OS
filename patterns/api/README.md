@@ -6,6 +6,8 @@
 
 Patterns for building predictable, safe, and scalable APIs. Covers how to page through large datasets without inconsistency, protect endpoints from abuse, evolve APIs without breaking clients, validate incoming data at the boundary, and return errors in a machine-readable format.
 
+> **Navigation note — Input Validation:** This library contains a Request Validation pattern focused on API contract enforcement (schema shape, type coercion, stripping unknown fields, returning structured 400 errors). [`patterns/security/`](../security/README.md) contains a complementary Input Validation & Sanitization pattern focused on the security boundary: SQL injection, XSS, output encoding, and allowlist design. Apply both: the API pattern ensures data shape; the security pattern ensures safety. When in doubt: API pattern → "is this the right shape?"; Security pattern → "could this data be weaponized?"
+
 ---
 
 ## Pattern: Pagination (Cursor-based)
