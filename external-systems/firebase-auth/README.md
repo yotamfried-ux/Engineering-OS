@@ -81,6 +81,7 @@ Set environment variables:
 - **Custom claims are cached in the token** — after setting a custom claim via Admin SDK, the client must force-refresh the token (`user.getIdToken(true)`) to pick up the new claims; the old token remains valid until expiry.
 - **Firestore security rules are enforced server-side** — a mistake in your rules can expose all data; always test rules in the Firebase Emulator before deploying to production.
 - **Phone auth costs money and requires Blaze plan** — do not assume phone auth is free; switch to Blaze (pay-as-you-go) before enabling it, or you will hit an error at runtime.
+- **`onAuthStateChanged` fires twice on page load** — first with `null` (checking auth state) then with the user object; guard your UI against the null flash by showing a loading spinner until the first non-null callback fires.
 
 ## Examples
 1. **Next.js full-stack auth:** Client signs in with `signInWithPopup(provider)` → gets ID token via `user.getIdToken()` → sends token in `Authorization` header → Next.js API route calls `admin.auth().verifyIdToken()` → sets a secure HttpOnly session cookie for subsequent requests.

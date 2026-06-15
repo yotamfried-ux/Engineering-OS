@@ -78,6 +78,13 @@ export NEXT_PUBLIC_ALGOLIA_APP_ID=your_app_id
 - [InstantSearch React](https://www.algolia.com/doc/guides/building-search-ui/what-is-instantsearch/react/) — UI component library guide
 - [Relevance Tuning](https://www.algolia.com/doc/guides/managing-results/relevance-overview/) — custom ranking and business metrics
 
+## Common Pitfalls
+- **Never expose the Admin API Key client-side** — it has write access to your entire application; only the Search-Only API Key should appear in browser/mobile code.
+- **Index settings changes are not retroactive** — changing `searchableAttributes` or `attributesForFaceting` after indexing requires a full re-index to take effect on existing records.
+- **Record size limit is 10KB** — large documents (e.g., full article content) must be split into chunks before indexing; store the full document elsewhere and only index searchable fields + a reference ID.
+- **Facet counts are approximate on large result sets** — for exact facet counts, use `exhaustiveFacetsCount` mode (slower); understand this trade-off when displaying counts to users.
+- **Free tier operations reset monthly** — operations include both searches and record updates; heavy re-indexing (e.g., nightly full re-index) can burn through the free quota before the month ends.
+
 ## Examples
 1. **E-commerce product search:** Index product catalog with attributes `name`, `brand`, `price`, `category` → configure `attributesForFaceting` for brand and category → use React InstantSearch with `<RefinementList>` for sidebar filters and `<SortBy>` for price/popularity — all updates reflect in under 100ms.
 2. **Documentation search:** Crawl docs pages with Algolia Crawler → results appear in a `<SearchBox>` modal triggered by `Cmd+K` → queries resolve in ~20ms including network round-trip to the nearest edge PoP.

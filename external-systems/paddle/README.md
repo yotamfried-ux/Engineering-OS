@@ -72,6 +72,15 @@ export PADDLE_ENVIRONMENT=sandbox  # or production
 - [Paddle.js Checkout](https://developer.paddle.com/paddlejs/overview) — client-side checkout integration
 - [Migration from Classic](https://developer.paddle.com/classic/migration) — guide for moving from Paddle Classic to Billing v2
 
+## Common Pitfalls
+- **Classic vs. Billing v2 API are not compatible** — if you have a legacy Paddle Classic account, the new Billing v2 SDK will not work; check which product version your account uses before choosing the SDK.
+- **Verify webhook authenticity** — use `paddle.webhooks.unmarshal(rawBody, secretKey, signature)` before processing any event; do not process based on the body alone.
+- **Paddle is the seller** — as MoR, Paddle's name appears on customer invoices and bank statements, not yours; communicate this clearly so customers are not surprised by charges from "Paddle.net."
+- **Price IDs must be created in the Paddle dashboard** — you cannot create prices programmatically with a client-side key; prices and products are managed in the dashboard or via the Admin API with server-side credentials.
+- **Sandbox and production are separate environments** with separate API keys — never mix them; maintain separate environment variables for each.
+- **Webhook events may arrive out of order** — implement idempotent event processing keyed on the event ID; `subscription.updated` can arrive before `subscription.created` in rare cases under load.
+- **VAT number validation requires Billing v2** — if your B2B customers need to supply their VAT numbers for reverse charge, use Paddle Billing's built-in VAT validation field in the checkout config; this is not available in Classic.
+
 ## Examples
 1. **EU SaaS subscription:** User selects a plan → Paddle.js overlay opens with VAT auto-detected from IP/billing address → Paddle collects and remits German VAT on your behalf → `subscription.created` webhook triggers account provisioning — no VAT registration in Germany needed.
 2. **Dunning with Paddle Retain:** Payment fails on renewal → Paddle Retain automatically retries on a smart schedule and sends branded recovery emails → if subscriber cancels, cancellation survey data feeds into churn analysis in the dashboard.
