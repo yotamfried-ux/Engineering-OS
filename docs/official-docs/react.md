@@ -2,44 +2,51 @@
 
 ## Official Documentation
 **Primary:** https://react.dev/
+**API Reference:** https://react.dev/reference/react
 **GitHub:** https://github.com/facebook/react
 **Changelog:** https://github.com/facebook/react/blob/main/CHANGELOG.md
 
 ## Key Sections (Recommended Reading Order)
-1. [Learn React](https://react.dev/learn) — Start here: thinking in React, describing the UI, state, and effects. The new docs are far better than the old ones.
-2. [Describing the UI](https://react.dev/learn/describing-the-ui) — Components, JSX, props, conditional rendering, rendering lists.
-3. [Managing State](https://react.dev/learn/managing-state) — Lifting state up, reducer pattern, context, avoiding redundant state.
-4. [Escape Hatches](https://react.dev/learn/escape-hatches) — Refs, effects, custom hooks — and when NOT to use them.
-5. [Hooks Reference](https://react.dev/reference/react) — Complete API reference for all built-in hooks.
-6. [Server Components](https://react.dev/reference/rsc/server-components) — RSC architecture; read before using with Next.js App Router.
-7. [Suspense](https://react.dev/reference/react/Suspense) — Data fetching boundaries, lazy loading, streaming.
+
+1. [Learn React](https://react.dev/learn) — The new docs are significantly better than the old reactjs.org site; start here even if you already know React
+2. [Describing the UI](https://react.dev/learn/describing-the-ui) — Components, JSX, props, conditional rendering, rendering lists; foundational for all that follows
+3. [Adding Interactivity](https://react.dev/learn/adding-interactivity) — State, events, render cycle; why state triggers re-renders and how batching works
+4. [Managing State](https://react.dev/learn/managing-state) — Lifting state, derived state, `useReducer`; read before reaching for an external state library
+5. [Escape Hatches](https://react.dev/learn/escape-hatches) — Refs, effects, custom hooks — and when NOT to use them; the most misunderstood section
+6. [Hooks Reference](https://react.dev/reference/react/hooks) — Canonical API for all built-in hooks; bookmark this for argument/return-value lookups
+7. [Server Components (RSC)](https://react.dev/reference/rsc/server-components) — What runs on the server, what can't be done in an RSC, how they compose with Client Components
+8. [Suspense](https://react.dev/reference/react/Suspense) — Declarative loading states; works with `lazy()`, RSC data fetching, and streaming
+9. [useTransition](https://react.dev/reference/react/useTransition) — Marks state updates as non-urgent; the concurrent primitive behind smooth navigation and deferred rendering
+10. [React Compiler](https://react.dev/learn/react-compiler) — Automatic memoisation without `useMemo`/`useCallback`; read before manually optimising for performance
 
 ## Important APIs / Concepts
-- **useState** — Local component state; prefer multiple small state variables over one large object.
-- **useEffect** — Synchronize with external systems only; not for derived state or event responses.
-- **useReducer** — Complex state transitions with multiple sub-values; pairs well with useContext.
-- **useContext** — Avoid prop drilling; don't overuse — causes re-renders for all consumers.
-- **useMemo / useCallback** — Opt-in memoization; only add after profiling, not preemptively.
-- **useRef** — Mutable values that don't trigger re-renders; DOM node references.
-- **useTransition** — Mark non-urgent state updates; keeps UI responsive during slow renders.
-- **Server Components (RSC)** — Render on server with zero client JS; cannot use hooks or browser APIs.
-- **Suspense** — Declarative loading states; works with lazy(), data fetching in RSC, and streaming.
-- **Strict Mode** — Double-invokes effects/renders in dev to surface impure components; keep enabled.
+
+- **`useState`** — Local component state; updates are batched in React 18+; never mutate state directly
+- **`useEffect`** — Synchronises a component to an external system only; not for derived state or event handling; cleanup must undo the setup
+- **`useReducer`** — Complex state with structured transitions; prefer over multiple interdependent `useState` calls
+- **`useContext`** — Reads the nearest Provider value; every context change re-renders all consumers — split contexts by update frequency
+- **`useMemo` / `useCallback`** — Opt-in memoisation; only add after profiling, not pre-emptively; premature memoisation harms readability
+- **`useRef`** — Mutable value that does not trigger re-renders; also the way to hold DOM node references
+- **`useTransition` / `useDeferredValue`** — Concurrent mode primitives; keep the UI responsive during slow renders without debouncing timers
+- **`Strict Mode`** — Double-invokes renders and effects in development to surface impure code; always keep enabled
+- **`key` prop** — Tells React which list items changed; also forces a component remount when changed deliberately; never use array index on reorderable lists
 
 ## Common Patterns
+
 - Custom hooks — see [patterns/ui/README.md](../../patterns/ui/README.md)
 - State management with context + reducer — see [patterns/ui/README.md](../../patterns/ui/README.md)
 - Data fetching with Suspense — see [patterns/api/README.md](../../patterns/api/README.md)
 
 ## Related External Systems
+
 - Next.js (App Router + RSC integration) — see [external-systems/nextjs/README.md](../../external-systems/nextjs/README.md)
 
 ## Gotchas & Version Notes
-- React 19 (stable): `use()` hook, form Actions, `useOptimistic`, and `useFormStatus` are production-ready.
-- Effects run twice in Strict Mode (dev only) — cleanup functions must be correct, not a workaround.
-- RSC and client components cannot be mixed arbitrarily: RSC can import client components but not vice versa.
-- `useEffect` with an empty dependency array is not "run once" — it runs after every mount including StrictMode remounts.
-- Avoid placing derived values in state — compute them during render instead.
-- Key prop on lists must be stable and unique; using array index causes subtle bugs on reorder/delete.
-- Context does not prevent re-renders of children that don't consume it — split contexts by update frequency.
-- React DevTools Profiler is the correct tool for diagnosing render performance, not guesswork.
+
+- **React 18 batches all state updates** — including those inside `setTimeout` and native event handlers; this changed from React 17 where only React event handlers were batched
+- **React 19 removes `forwardRef`** — refs are now a regular prop; update component libraries before upgrading your React version
+- **`useEffect` runs twice in Strict Mode (dev only)** — cleanup functions must correctly undo the setup; missing cleanup causes race conditions in production
+- **RSC rules are strict** — Server Components cannot use hooks, state, or browser APIs; Client Components cannot be `async` functions; RSC can import Client Components but not vice versa
+- **`use client` / `use server` are directives, not imports** — they must be the literal first line of the file
+- **The new react.dev docs supersede the old reactjs.org site** — the old site is archived and may show outdated patterns (`componentDidMount`, class components, `getDerivedStateFromProps`)
+- **React Compiler is opt-in** — enable per-directory via `babel-plugin-react-compiler`; not yet production-stable for all codebases; verify against your bundler

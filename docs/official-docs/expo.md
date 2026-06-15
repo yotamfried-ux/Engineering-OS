@@ -2,45 +2,51 @@
 
 ## Official Documentation
 **Primary:** https://docs.expo.dev/
+**SDK API Reference:** https://docs.expo.dev/versions/latest/
 **GitHub:** https://github.com/expo/expo
-**Changelog:** https://github.com/expo/expo/blob/main/CHANGELOG.md
+**Changelog:** https://expo.dev/changelog
 
 ## Key Sections (Recommended Reading Order)
-1. [Get Started](https://docs.expo.dev/get-started/introduction/) — Project creation with `create-expo-app`, choosing between Expo Go and dev builds.
-2. [Expo Router](https://docs.expo.dev/router/introduction/) — File-based routing for native and web; the recommended navigation solution since SDK 50.
-3. [Development Builds](https://docs.expo.dev/develop/development-builds/introduction/) — Custom native builds for dev; required when adding native modules not in Expo Go.
-4. [EAS Build](https://docs.expo.dev/build/introduction/) — Cloud builds for iOS and Android; essential for CI/CD and App Store submission.
-5. [EAS Submit](https://docs.expo.dev/submit/introduction/) — Automated App Store and Google Play submission from CI.
-6. [EAS Update](https://docs.expo.dev/eas-update/introduction/) — OTA JavaScript bundle updates without App Store review.
-7. [Config Plugins](https://docs.expo.dev/config-plugins/introduction/) — Modify native projects (AndroidManifest, Info.plist) without ejecting.
-8. [Expo SDK API Reference](https://docs.expo.dev/versions/latest/) — All built-in modules (Camera, Location, Notifications, SecureStore, etc.).
-9. [Environment Variables](https://docs.expo.dev/guides/environment-variables/) — `.env` files with EAS, secrets in EAS Build vs. client-side vars.
+
+1. [Get Started](https://docs.expo.dev/get-started/introduction/) — `npx create-expo-app`, choosing between Expo Go and development builds; sets the mental model for the rest of the docs
+2. [Expo Router — Introduction](https://docs.expo.dev/router/introduction/) — File-based routing for native and web from one codebase; the recommended navigation approach since SDK 50
+3. [Expo Router — Layouts](https://docs.expo.dev/router/layouts/) — `_layout.tsx`, stack, tabs, modals, drawers; core patterns for every app shell
+4. [Development Builds](https://docs.expo.dev/develop/development-builds/introduction/) — Custom native builds required whenever a library includes native code not bundled in Expo Go
+5. [EAS Build](https://docs.expo.dev/build/introduction/) — Cloud build service for iOS and Android; covers `eas.json` profiles, credentials, and environment variables
+6. [EAS Submit](https://docs.expo.dev/submit/introduction/) — Automated App Store and Google Play submission from CI; read after EAS Build
+7. [EAS Update](https://docs.expo.dev/eas-update/introduction/) — Over-the-air JS bundle updates without a new store release; understand the channel/branch model before using
+8. [Config Plugins](https://docs.expo.dev/config-plugins/introduction/) — Modify `AndroidManifest.xml` and `Info.plist` without ejecting; required for any library with native setup steps
+9. [Expo SDK API Reference](https://docs.expo.dev/versions/latest/) — Every `expo-*` package documented; check here before installing a third-party library for a native capability
+10. [Environment Variables](https://docs.expo.dev/guides/environment-variables/) — `.env` files with EAS, `EXPO_PUBLIC_` prefix for client-side vars, secrets via EAS Secrets
 
 ## Important APIs / Concepts
-- **Expo Router** — File-based routing; `app/` directory mirrors URL structure for both native and web.
-- **EAS (Expo Application Services)** — Cloud platform for Build, Submit, and Update; configured via `eas.json`.
-- **Development Build** — A custom Expo Go variant that includes your project's native dependencies.
-- **Config Plugin** — A function that modifies `app.json`/`app.config.js` and native project files at build time.
-- **Managed Workflow** — Expo manages native code; no `android/` or `ios/` directories in source control.
-- **Bare Workflow** — Full native project exposure; needed for deep native customization.
-- **expo-modules-core** — Native module API for writing Kotlin/Swift modules that integrate with Expo.
-- **app.config.js** — Dynamic config; prefer over `app.json` when you need environment-based values.
-- **Prebuild** — `npx expo prebuild` generates native directories from config; run before bare workflow changes.
+
+- **`expo-router`** — File-system router; `app/` directory maps directly to routes for both native and web
+- **`_layout.tsx`** — Defines navigator wrappers (Stack, Tabs, Drawer) for a route segment; not a screen itself
+- **`Link` / `useRouter` / `useLocalSearchParams`** — Navigation primitives from `expo-router`; replace React Navigation's `useNavigation` in managed projects
+- **`ExpoConfig` (`app.json` / `app.config.js`)** — Central project manifest; controls bundle ID, permissions, plugins, and build settings
+- **Managed workflow** — Expo manages native projects; no `ios/` or `android/` folders in source control; Config Plugins handle customisation
+- **Bare workflow** — Full native projects checked in; more control, more maintenance; only choose this when Managed cannot satisfy a requirement
+- **EAS Build profiles** — `development`, `preview`, `production` defined in `eas.json`; development profile installs Expo Dev Client, not Expo Go
+- **`expo-modules-core`** — Native module API for writing Swift/Kotlin wrapped in a JS API; prefer over raw React Native native modules
 
 ## Common Patterns
+
 - File-based navigation with Expo Router — see [patterns/ui/README.md](../../patterns/ui/README.md)
 - Auth flow (login screens, protected routes) — see [patterns/auth/README.md](../../patterns/auth/README.md)
-- Push notifications setup — see [patterns/ui/README.md](../../patterns/ui/README.md)
+- Mobile app scaffold — see [templates/mobile-apps/README.md](../../templates/mobile-apps/README.md)
 
 ## Related External Systems
-- EAS Build / Submit — see [external-systems/expo/README.md](../../external-systems/expo/README.md)
+
+- see [external-systems/expo/README.md](../../external-systems/expo/README.md)
 
 ## Gotchas & Version Notes
-- Expo Go only supports modules included in the Expo SDK; any third-party native module requires a dev build.
-- `expo-router` v3+ requires SDK 50+; layout files (`_layout.tsx`) define navigator wrappers, not screens.
-- EAS Build uses separate `eas.json` profiles (`development`, `preview`, `production`); configure before first build.
-- OTA updates via EAS Update only push JS/assets — native code changes always require a new build.
-- iOS simulator builds cannot be submitted to App Store; use `eas build --platform ios` for archive builds.
-- `EXPO_PUBLIC_` prefix is required for environment variables accessible in client-side code.
-- Metro bundler is used by default; web support requires `@expo/webpack-config` or Metro web (SDK 50+).
-- New Architecture (Fabric + JSI) is opt-in per SDK; check individual library compatibility before enabling.
+
+- **Expo Go does not support custom native modules** — any library with a Config Plugin or native code requires a development build
+- **`EXPO_PUBLIC_` prefix is required** for environment variables accessible in JS; variables without it are build-time only and not embedded in the bundle
+- **`expo install` instead of `npm install`** — automatically pins the correct version of Expo SDK packages; using `npm install` directly can create silent version mismatches
+- **Config Plugins run at `expo prebuild` time, not at runtime** — changes take effect only after regenerating/rebuilding the native project
+- **EAS Update channels are tied to build profiles** — a production build only receives updates from the `production` channel by default; misconfiguring this silently serves wrong bundles
+- **`expo-router` version must match the Expo SDK version** — check the compatibility table in the Router docs before upgrading either independently
+- **New Architecture (Fabric + JSI) is enabled by default in SDK 51+** — some third-party libraries are not yet compatible; check `reactnative.directory` for flags before enabling
+- **OTA updates via EAS Update push JS/assets only** — native code changes always require a new binary build and store submission
