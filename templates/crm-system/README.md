@@ -90,3 +90,5 @@ Use this template for a Customer Relationship Management platform where sales, s
 - [Microsoft Graph Mail API](https://learn.microsoft.com/en-us/graph/api/resources/mail-api-overview) — Outlook email sync, delta queries
 - [Nylas Email API](https://developer.nylas.com/docs/email/) — Unified email API abstracting Gmail and Outlook
 - [TanStack Table](https://tanstack.com/table/latest/docs/introduction) — Headless table with sorting, filtering, virtualization for contact lists
+- [Twenty CRM Docs](https://twenty.com/developers) — open-source CRM developer documentation
+- [HubSpot CRM API](https://developers.hubspot.com/docs/api/crm/crm-overview) — industry-standard CRM API reference
