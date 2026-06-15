@@ -44,6 +44,12 @@
 - see [patterns/ai-agents/README.md](../../patterns/ai-agents/README.md)
 - see [patterns/ai/README.md](../../patterns/ai/README.md)
 
+## Related Anthropic Repositories
+
+- [anthropics/anthropic-quickstarts](https://github.com/anthropics/anthropic-quickstarts) — full starter apps (customer support agent, computer use, financial analyst) → [reference-repositories/anthropic-quickstarts.md](./anthropic-quickstarts.md)
+- [anthropics/courses](https://github.com/anthropics/courses) — structured 5-course curriculum (fundamentals → agents) → [reference-repositories/anthropic-courses.md](./anthropic-courses.md)
+- [anthropics/prompt-eng-interactive-tutorial](https://github.com/anthropics/prompt-eng-interactive-tutorial) — 10-chapter interactive prompt engineering course
+
 ## Related Architectures
 
 - see [docs/architecture-guides/ai/](../architecture-guides/ai/)

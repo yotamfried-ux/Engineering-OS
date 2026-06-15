@@ -18,7 +18,12 @@
 7. [Vision (Image Input)](https://docs.anthropic.com/en/docs/build-with-claude/vision) — `image` content blocks (base64 or URL); supported formats, size limits, and resolution pricing
 8. [Extended Thinking](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking) — `thinking` content blocks; `budget_tokens` controls reasoning depth; when traces are visible vs. hidden
 9. [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/build-with-claude/mcp) — How Claude connects to external tools via MCP servers; read before `core/mcp-servers.md`
-10. [Rate Limits & Errors](https://docs.anthropic.com/en/api/errors) — Error types, 429 handling, `overloaded_error`, per-model tier limits
+10. [Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) — Async batch requests processed within 24h at 50% cost reduction; use for evaluation runs, bulk classification, nightly jobs
+11. [Files API](https://docs.anthropic.com/en/docs/build-with-claude/files) — Upload a PDF or file once, get back a `file_id`, reference it across multiple requests without re-uploading; 30-day TTL
+12. [Embeddings (Voyage AI)](https://docs.anthropic.com/en/docs/build-with-claude/embeddings) — Anthropic's recommended embedding provider (Voyage AI); model IDs, dimension sizes, and RAG integration patterns
+13. [Text Editor Tool](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/text-editor-tool) — Built-in tool (`text_editor_20250124`) for reading and editing files; use in agentic coding workflows instead of building a custom file tool
+14. [Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code) — Complete reference for Claude Code CLI: hooks, MCP server configuration, slash commands, settings, IDE integrations
+15. [Rate Limits & Errors](https://docs.anthropic.com/en/api/errors) — Error types, 429 handling, `overloaded_error`, per-model tier limits
 
 ## Important APIs / Concepts
 
@@ -29,6 +34,16 @@
 - **`betas` header (`anthropic-beta`)** — Gates preview features (e.g. extended output, interleaved thinking); check per-feature docs for the required value
 - **`max_tokens`** — Required field with no default; set explicitly on every request
 - **`cache_read_input_tokens`** — Field in `usage` response object; monitor this to verify caching is actually hitting
+
+## Official Learning Resources
+
+| Resource | Format | What You Learn |
+|---|---|---|
+| [anthropics/courses](https://github.com/anthropics/courses) | Jupyter notebooks (5 courses) | API fundamentals → prompt engineering → tool use → multi-agent → real-world prompting |
+| [anthropics/prompt-eng-interactive-tutorial](https://github.com/anthropics/prompt-eng-interactive-tutorial) | 10-chapter interactive notebooks | Basic prompts → CoT → few-shot → role prompting → avoiding hallucinations → tool prompting |
+| [anthropics/anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook) | Jupyter notebooks | Tool use, vision, caching, computer use, multi-agent, evaluation, MCP |
+| [anthropics/anthropic-quickstarts](https://github.com/anthropics/anthropic-quickstarts) | Full starter apps | Customer support agent, computer use demo, financial data analyst |
+| [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) | Engineering blog post | When to use agents vs. simple prompts, orchestration patterns, safety |
 
 ## Common Patterns
 

@@ -78,16 +78,29 @@ Key configuration:
 - Watch for: large context usage (200K context at Sonnet rates can be expensive per call)
 
 ## Reference Repositories
-- [anthropics/anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook) — official examples: tool use, RAG, vision, caching, agents
+- [anthropics/anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook) — official examples: tool use, RAG, vision, caching, agents, evaluation
+- [anthropics/anthropic-quickstarts](https://github.com/anthropics/anthropic-quickstarts) — full starter apps: customer support agent, computer use demo, financial analyst
+- [anthropics/courses](https://github.com/anthropics/courses) — official Anthropic curriculum: API fundamentals, prompt engineering, tool use, multi-agent, real-world prompting
+- [anthropics/prompt-eng-interactive-tutorial](https://github.com/anthropics/prompt-eng-interactive-tutorial) — 10-chapter interactive prompt engineering course (Jupyter notebooks)
 - [anthropics/anthropic-sdk-python](https://github.com/anthropics/anthropic-sdk-python) — Python SDK with full type annotations
-- [anthropics/anthropic-sdk-typescript](https://github.com/anthropics/anthropic-sdk-typescript) — TypeScript SDK
+- [anthropics/anthropic-sdk-typescript](https://github.com/anthropics/anthropic-sdk-typescript) — TypeScript/Node.js SDK
 
 ## Official Documentation
 - [Anthropic Docs](https://docs.anthropic.com) — complete API and model reference
-- [Tool Use Guide](https://docs.anthropic.com/en/docs/build-with-claude/tool-use) — agentic tool calling patterns
-- [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — caching setup and cost impact
-- [Model Context Protocol](https://docs.anthropic.com/en/docs/mcp) — MCP server integration
-- [Computer Use](https://docs.anthropic.com/en/docs/build-with-claude/computer-use) — GUI automation beta
+- [Models Overview](https://docs.anthropic.com/en/docs/about-claude/models/overview) — current model IDs, context windows, capabilities (always verify IDs here)
+- [Tool Use Guide](https://docs.anthropic.com/en/docs/build-with-claude/tool-use) — agentic tool calling, parallel tools, multi-turn loops
+- [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — cache_control breakpoints, 90% cost reduction on repeated large contexts
+- [Streaming](https://docs.anthropic.com/en/docs/build-with-claude/streaming) — SSE event types, reconstructing tool call arguments from stream
+- [Vision](https://docs.anthropic.com/en/docs/build-with-claude/vision) — image content blocks (base64 or URL), size limits, supported formats
+- [Extended Thinking](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking) — thinking content blocks, budget_tokens, visible reasoning traces
+- [Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) — async batch requests for high-volume workloads at 50% cost reduction
+- [Files API](https://docs.anthropic.com/en/docs/build-with-claude/files) — upload PDFs and files once, reference by file_id across multiple requests
+- [Embeddings](https://docs.anthropic.com/en/docs/build-with-claude/embeddings) — using third-party embeddings (Voyage AI) alongside Claude for RAG
+- [Text Editor Tool](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/text-editor-tool) — built-in tool for reading and editing code files in agentic workflows
+- [Model Context Protocol](https://docs.anthropic.com/en/docs/build-with-claude/mcp) — MCP server integration
+- [Computer Use](https://docs.anthropic.com/en/docs/build-with-claude/computer-use) — GUI automation via screenshot → action loop
+- [Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code) — Claude Code CLI, hooks, MCP, slash commands
+- [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic's engineering guide: agent patterns, when to use multi-agent, orchestration
 
 ## Examples
 1. **Large document QA with caching:** Load a 150-page legal contract as a cached system prompt block → user asks multiple questions in the same session → 90% token cost reduction on subsequent queries vs. re-sending the document.
