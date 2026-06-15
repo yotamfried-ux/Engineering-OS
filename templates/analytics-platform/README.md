@@ -63,6 +63,16 @@ Use this template for data analytics platforms where business users, analysts, a
 - [ ] BI tool upgraded in a test environment before production; dashboard regressions checked
 - [ ] Disaster recovery: warehouse point-in-time recovery tested; dbt project in version control is source of truth
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [apache/superset](https://github.com/apache/superset) | Apache Superset: enterprise BI platform, 65k+ stars | ✅ Best pick |
+| [metabase/metabase](https://github.com/metabase/metabase) | Open-source BI and analytics tool, no-code + SQL | |
+| [PostHog/posthog](https://github.com/PostHog/posthog) | Open-source product analytics with session recording, feature flags | |
+
+**Best Pick:** [apache/superset](https://github.com/apache/superset) — Most complete reference for analytics platform: SQL editor, dashboards, RBAC, and wide data source support
+
 ## Reference Repositories
 - [dbt-labs/jaffle-shop](https://github.com/dbt-labs/jaffle-shop) — Reference dbt project showing staging/intermediate/mart layer pattern
 - [apache/superset](https://github.com/apache/superset) — Open-source BI tool with RBAC, SQL Lab, and dashboard builder
@@ -74,3 +84,6 @@ Use this template for data analytics platforms where business users, analysts, a
 - [Snowflake Row Access Policies](https://docs.snowflake.com/en/user-guide/security-row-using) — Policy-based row filtering at query time
 - [Cube.dev Documentation](https://cube.dev/docs) — Semantic layer, caching, RBAC, API for embedded analytics
 - [Dagster Documentation](https://docs.dagster.io/) — Data orchestration with asset-based lineage and dbt integration
+- [Apache Superset Docs](https://superset.apache.org/docs/intro) — BI platform documentation
+- [ClickHouse Docs](https://clickhouse.com/docs) — Columnar analytics database
+- [Grafana Docs](https://grafana.com/docs/) — Visualization and alerting

@@ -65,6 +65,16 @@ Use this template for internal backoffice and operations tools — platforms whe
 - [ ] Monitoring: admin 5xx rate, bulk job queue depth, slow queries > 2 s
 - [ ] Disaster recovery drill: restore audit log from backup; verify append-only constraint
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [refinedev/refine](https://github.com/refinedev/refine) | Open-source Retool/internal tool framework: data grids, CRUD, auth, any data source | ✅ Best pick |
+| [marmelab/react-admin](https://github.com/marmelab/react-admin) | React Admin framework with 250+ components for data-driven apps | |
+| [shadcn-ui/ui](https://github.com/shadcn-ui/ui) | shadcn/ui dashboard example as a starting point | |
+
+**Best Pick:** [refinedev/refine](https://github.com/refinedev/refine) — 30k+ stars, enterprise features (RBAC, audit log, data providers), actively maintained
+
 ## Reference Repositories
 - [refinedev/refine](https://github.com/refinedev/refine) — Open-source React admin framework; data providers, CRUD, auth integration
 - [marmelab/react-admin](https://github.com/marmelab/react-admin) — Mature React admin framework with extensive component library and data provider pattern
@@ -75,3 +85,4 @@ Use this template for internal backoffice and operations tools — platforms whe
 - [TanStack Table](https://tanstack.com/table/latest/docs/introduction) — Server-side pagination, sorting, filtering for custom admin tables
 - [Tremor Components](https://www.tremor.so/docs/getting-started/installation) — Charts and KPI card components for React dashboards
 - [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/policies/access/) — Zero-trust access for internal tools
+- [React Admin Docs](https://marmelab.com/react-admin/documentation.html) — Data-driven admin framework with 250+ components

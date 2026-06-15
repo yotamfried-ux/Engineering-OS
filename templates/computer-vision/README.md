@@ -64,6 +64,16 @@ Use this template for systems that process images or video — object detection,
 - [ ] Monitoring: inference latency, error rate, and throughput tracked per endpoint
 - [ ] Auto-scaling policy accounts for GPU availability, not just CPU
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [ultralytics/ultralytics](https://github.com/ultralytics/ultralytics) | YOLO11 + YOLO10: detection, tracking, segmentation, classification in one package | ✅ Best pick |
+| [roboflow/notebooks](https://github.com/roboflow/notebooks) | End-to-end CV notebooks: data prep, training, deployment across models | |
+| [open-mmlab/mmdetection](https://github.com/open-mmlab/mmdetection) | Modular detection framework, 300+ supported algorithms | |
+
+**Best Pick:** [ultralytics/ultralytics](https://github.com/ultralytics/ultralytics) — Simplest API, 40k+ stars, covers all CV tasks (detection, segmentation, classification, tracking) in one package
+
 ## Reference Repositories
 
 - [ultralytics/ultralytics](https://github.com/ultralytics/ultralytics) — YOLOv8/v11 training, fine-tuning, and export
@@ -77,3 +87,4 @@ Use this template for systems that process images or video — object detection,
 - [Ultralytics Docs](https://docs.ultralytics.com) — YOLO training, export, deployment
 - [Albumentations Docs](https://albumentations.ai/docs/) — augmentation pipeline reference
 - [ONNX Runtime Docs](https://onnxruntime.ai/docs/) — cross-platform inference optimization
+- [Roboflow Docs](https://docs.roboflow.com) — dataset management and model deployment

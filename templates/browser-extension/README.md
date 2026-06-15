@@ -63,6 +63,16 @@ Use this template for Chrome and Firefox extensions built on Manifest V3. Suited
 - [ ] Automated publish via Chrome Web Store API in CI (optional; requires API key in secret manager)
 - [ ] Firefox Add-ons submission prepared separately if cross-browser support required
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [PlasmoHQ/plasmo](https://github.com/PlasmoHQ/plasmo) | Browser extension framework (React-first, hot reload, multi-browser) | ✅ Best pick |
+| [wxt-dev/wxt](https://github.com/wxt-dev/wxt) | Modern browser extension framework (Vite-based, TypeScript, auto-imports) | |
+| [GoogleChrome/chrome-extensions-samples](https://github.com/GoogleChrome/chrome-extensions-samples) | Official Chrome extension samples by Google | |
+
+**Best Pick:** [PlasmoHQ/plasmo](https://github.com/PlasmoHQ/plasmo) — 9k+ stars, best DX, handles manifest generation automatically, React-native workflow
+
 ## Reference Repositories
 - [wxt-dev/wxt](https://github.com/wxt-dev/wxt) — Modern Vite-based extension framework with HMR, TypeScript, and MV3 support
 - [PlasmoHQ/plasmo](https://github.com/PlasmoHQ/plasmo) — Extension framework with React, automated store publishing, CSUI for shadow DOM injection
@@ -73,3 +83,4 @@ Use this template for Chrome and Firefox extensions built on Manifest V3. Suited
 - [Chrome Web Store Publish Guide](https://developer.chrome.com/docs/webstore/publish) — Submission, review, and update process
 - [Firefox Extension Workshop](https://extensionworkshop.com/documentation/develop/) — Firefox-specific MV3 differences and Add-ons store publishing
 - [web-ext CLI](https://extensionworkshop.com/documentation/develop/web-ext-technical-reference/) — Build, lint, run, and sign Firefox extensions
+- [Plasmo Docs](https://docs.plasmo.com) — Browser extension framework documentation

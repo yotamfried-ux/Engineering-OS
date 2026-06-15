@@ -48,6 +48,8 @@ Stateless per-turn; scales horizontally. Parallel tool calls reduce wall-clock l
 - [pydantic/pydantic-ai](https://github.com/pydantic/pydantic-ai) — idiomatic Python tool definitions with full type inference; best-in-class schema generation from function signatures
 - [langchain-ai/langchain](https://github.com/langchain-ai/langchain) — `bind_tools` on any ChatModel; study `ToolMessage` flow in `langchain_core`
 - [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) — `ToolNode` for executing tool calls inside a stateful graph; handles parallel calls automatically
+- [anthropics/anthropic-quickstarts](https://github.com/anthropics/anthropic-quickstarts) — Official Anthropic agent quickstarts with tool use
+- [openai/openai-cookbook/examples/orchestrating_agents](https://github.com/openai/openai-cookbook/tree/main/examples/orchestrating_agents.ipynb) — OpenAI tool-calling orchestration patterns
 
 ## Official Sources
 - [Anthropic tool use docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use) — canonical reference for Claude's tool use API including parallel calls and streaming

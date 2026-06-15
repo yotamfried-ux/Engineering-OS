@@ -64,6 +64,16 @@ Use this template for systems driven by schedules, events, or external triggers 
 - [ ] Schedule runs validated in staging before production cutover
 - [ ] Runbook documented: how to manually trigger, retry, and cancel jobs
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [temporalio/samples-python](https://github.com/temporalio/samples-python) | Temporal workflow samples in Python | ✅ Best pick |
+| [n8n-io/n8n](https://github.com/n8n-io/n8n) | Open-source workflow automation platform (self-hostable Zapier alternative) | |
+| [prefecthq/prefect/examples](https://github.com/PrefectHQ/prefect/tree/main/examples) | Prefect automation flow examples | |
+
+**Best Pick:** [temporalio/samples-python](https://github.com/temporalio/samples-python) — production-grade, fault-tolerant, reliable workflows with durable execution and replay built in
+
 ## Reference Repositories
 
 - [taskforcesh/bullmq](https://github.com/taskforcesh/bullmq) — job queue with examples for queues, workers, schedulers
@@ -72,8 +82,9 @@ Use this template for systems driven by schedules, events, or external triggers 
 
 ## Official Documentation
 
+- [Temporal Docs](https://docs.temporal.io) — durable workflow execution
+- [n8n Docs](https://docs.n8n.io) — workflow automation platform
 - [BullMQ Docs](https://docs.bullmq.io) — queues, workers, schedulers, DLQ
-- [Temporal Docs](https://docs.temporal.io) — durable workflows, activities, schedules
 - [Inngest Docs](https://www.inngest.com/docs) — event-driven background jobs
 - [Svix Docs](https://docs.svix.com) — managed webhook delivery and verification
 - [Celery Docs](https://docs.celeryq.dev) — Python distributed task queue

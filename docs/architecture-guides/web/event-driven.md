@@ -48,11 +48,14 @@ Connection count is the primary constraint. A single Node.js or Go server handle
 - [EventSource API (MDN)](https://github.com/whatwg/html) — SSE is part of the HTML living standard; trivial to consume natively in browsers
 - [supabase/realtime](https://github.com/supabase/realtime) — Elixir WebSocket server that broadcasts Postgres changes to clients; good reference for DB-to-client event pipeline
 - [posthog/posthog](https://github.com/PostHog/posthog) — open-source product analytics that uses SSE for live event streaming to the dashboard
+- [dotnet-architecture/eShopOnContainers](https://github.com/dotnet-architecture/eShopOnContainers) — event-driven microservices reference with event bus integration and pub/sub patterns
 
 ## Official Sources
 - [MDN — Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) — authoritative browser API reference with reconnection and last-event-id semantics
 - [MDN — WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) — full browser WebSocket interface documentation
 - [WHATWG HTML Living Standard — EventSource](https://html.spec.whatwg.org/multipage/server-sent-events.html) — the canonical SSE specification
+- [Martin Fowler — Event-Driven Architecture](https://martinfowler.com/articles/201701-event-driven.html) — taxonomy of event notification, event-carried state transfer, and event sourcing
+- [Kafka Documentation](https://kafka.apache.org/documentation/) — distributed event streaming platform underpinning most backend event buses
 
 ## Related Architectures
 - See also: [Event-Driven Architecture (API layer)](../api/event-driven.md) — backend broker pattern that produces the events this layer consumes

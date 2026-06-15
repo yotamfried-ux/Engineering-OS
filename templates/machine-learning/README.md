@@ -65,6 +65,16 @@ Use this template for systems that train, evaluate, and serve ML models — from
 - [ ] Monitoring: input distribution, output distribution, latency, and error rate tracked
 - [ ] Rollback procedure: previous model version can be swapped in under 5 minutes
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [huggingface/transformers/examples](https://github.com/huggingface/transformers/tree/main/examples) | Official HuggingFace examples for fine-tuning, training, inference | ✅ Best pick |
+| [pytorch/examples](https://github.com/pytorch/examples) | Official PyTorch examples for vision, NLP, generative models | |
+| [mlflow/mlflow/examples](https://github.com/mlflow/mlflow/tree/master/examples) | MLflow experiment tracking + model registry examples | |
+
+**Best Pick:** [huggingface/transformers/examples](https://github.com/huggingface/transformers/tree/main/examples) — official, covers all major ML tasks (classification, NER, summarization, translation, fine-tuning), actively maintained
+
 ## Reference Repositories
 
 - [Lightning-AI/pytorch-lightning](https://github.com/Lightning-AI/pytorch-lightning) — training loop best practices, multi-GPU
@@ -74,7 +84,9 @@ Use this template for systems that train, evaluate, and serve ML models — from
 ## Official Documentation
 
 - [PyTorch Docs](https://pytorch.org/docs/stable/index.html) — core API, DataLoader, distributed training
+- [HuggingFace Docs](https://huggingface.co/docs/transformers) — transformers library documentation
 - [Hugging Face Docs](https://huggingface.co/docs) — Transformers, Datasets, Trainer, Hub
+- [MLflow Docs](https://mlflow.org/docs/latest/index.html) — experiment tracking and model registry
 - [Weights & Biases Docs](https://docs.wandb.ai) — experiment tracking, sweeps, artifacts
 - [ONNX Runtime Docs](https://onnxruntime.ai/docs/) — model optimization and inference
 - [Optuna Docs](https://optuna.readthedocs.io) — hyperparameter tuning API

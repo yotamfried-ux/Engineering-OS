@@ -56,6 +56,7 @@ Excellent theoretical ceiling; each service scales independently. In practice, t
 - [Martin Fowler — Microservices](https://martinfowler.com/articles/microservices.html) — the defining article
 - [Kubernetes documentation](https://kubernetes.io/docs/home/) — the de facto orchestration platform
 - [OpenTelemetry docs](https://opentelemetry.io/docs/) — observability instrumentation standard
+- [microservices.io](https://microservices.io) — pattern catalog by Chris Richardson covering decomposition, data, and communication patterns
 
 ## Related Architectures
 - See also: [Modular Monolith](./modular-monolith.md) — the recommended prerequisite before splitting

@@ -50,6 +50,8 @@ Scales well horizontally as long as tenant data is properly partitioned. Schema-
 - [supabase/supabase](https://github.com/supabase/supabase) — uses Postgres RLS for tenant isolation; excellent reference for shared-schema multi-tenancy
 - [maybe-finance/maybe](https://github.com/maybe-finance/maybe) — open-source Rails SaaS with multi-tenant patterns
 - [calcom/cal.com](https://github.com/calcom/cal.com) — large open-source SaaS with organization-level multi-tenancy on Next.js + Prisma
+- [boxyhq/saas-starter-kit](https://github.com/boxyhq/saas-starter-kit) — multi-tenant SaaS with team workspaces, SAML SSO, and audit logs
+- [vercel/nextjs-subscription-payments](https://github.com/vercel/nextjs-subscription-payments) — Stripe subscriptions + Supabase multi-tenant reference on Next.js
 
 ## Official Sources
 - [Postgres Row Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) — the primary enforcement mechanism for shared-schema multi-tenancy

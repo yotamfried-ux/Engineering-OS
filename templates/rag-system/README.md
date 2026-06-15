@@ -70,12 +70,24 @@ Use this template for Retrieval-Augmented Generation systems that answer questio
 - [ ] Evaluation run in CI on golden dataset; fail build if RAGAS metrics drop below baseline
 - [ ] Monitoring: retrieval latency, LLM latency, answer rejection rate, feedback score trend
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [langchain-ai/rag-from-scratch](https://github.com/langchain-ai/rag-from-scratch) | LangChain's step-by-step RAG implementation notebooks | ✅ Best pick |
+| [anthropics/anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook) | Anthropic RAG patterns and embeddings cookbook | |
+| [run-llama/llama_index/examples](https://github.com/run-llama/llama_index/tree/main/examples) | LlamaIndex RAG examples with multiple vector stores | |
+
+**Best Pick:** [langchain-ai/rag-from-scratch](https://github.com/langchain-ai/rag-from-scratch) — comprehensive, covers naive to advanced RAG patterns step-by-step with runnable notebooks
+
 ## Reference Repositories
 - [langchain-ai/rag-from-scratch](https://github.com/langchain-ai/rag-from-scratch) — LangChain's official RAG tutorial notebooks covering naive to advanced patterns
 - [run-llama/llama_index](https://github.com/run-llama/llama_index) — LlamaIndex framework; strong on document parsing and query pipeline composition
 - [explodinggradients/ragas](https://github.com/explodinggradients/ragas) — RAG evaluation framework with faithfulness, relevance, and context metrics
 
 ## Official Documentation
+- [LangChain RAG Docs](https://python.langchain.com/docs/tutorials/rag/) — retrieval-augmented generation tutorial
+- [Anthropic Embeddings Docs](https://docs.anthropic.com/en/docs/build-with-claude/embeddings) — using embeddings with Claude
 - [OpenAI Embeddings Guide](https://platform.openai.com/docs/guides/embeddings) — Embedding models, dimensions, use cases, chunking recommendations
 - [pgvector README](https://github.com/pgvector/pgvector) — PostgreSQL vector extension: index types, distance functions, approximate search
 - [Qdrant Documentation](https://qdrant.tech/documentation/) — Vector store with payload filtering, collections, snapshots

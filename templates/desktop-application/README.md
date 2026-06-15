@@ -61,6 +61,16 @@ Use this template for cross-platform desktop apps built with Electron or Tauri. 
 - [ ] Rollback plan: keep previous version on update channel until stable confirmation
 - [ ] Crash reporting DSN points to production project
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [tauri-apps/create-tauri-app](https://github.com/tauri-apps/create-tauri-app) | Tauri 2.0 CLI scaffolding tool, Rust backend + any JS frontend | ✅ Best pick |
+| [electron/electron-quick-start](https://github.com/electron/electron-quick-start) | Official Electron minimal starter | |
+| [tauri-apps/tauri/examples](https://github.com/tauri-apps/tauri/tree/dev/examples) | Official Tauri examples with different frontend frameworks | |
+
+**Best Pick:** [tauri-apps/create-tauri-app](https://github.com/tauri-apps/create-tauri-app) — Smaller bundle than Electron, better security model, modern Tauri 2.0 with official CLI scaffolding
+
 ## Reference Repositories
 - [electron/electron-quick-start](https://github.com/electron/electron-quick-start) — Minimal Electron boilerplate to understand main/renderer split
 - [tauri-apps/tauri](https://github.com/tauri-apps/tauri) — Official Tauri repo with examples and plugin ecosystem

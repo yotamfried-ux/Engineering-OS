@@ -67,6 +67,16 @@ Use this template for a two-sided platform connecting buyers and sellers (or pro
 - [ ] Payout schedule and commission rate confirmed in Stripe dashboard
 - [ ] Monitoring alert: failed payouts, dispute spike, checkout error rate > 0.5%
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [medusajs/medusa](https://github.com/medusajs/medusa) | Open-source composable commerce platform with marketplace support | ✅ Best pick |
+| [saleor/saleor](https://github.com/saleor/saleor) | GraphQL-first e-commerce platform with multi-vendor support | |
+| [vendure-ecommerce/vendure](https://github.com/vendure-ecommerce/vendure) | TypeScript headless commerce with plugin system | |
+
+**Best Pick:** [medusajs/medusa](https://github.com/medusajs/medusa) — Most active, modern stack, REST + admin UI included, designed for composable commerce
+
 ## Reference Repositories
 - [vercel/commerce](https://github.com/vercel/commerce) — Next.js commerce starter with multi-provider support; study the cart and checkout patterns
 - [medusajs/medusa](https://github.com/medusajs/medusa) — Open-source commerce engine; well-structured order and payment abstractions
@@ -74,6 +84,7 @@ Use this template for a two-sided platform connecting buyers and sellers (or pro
 
 ## Official Documentation
 - [Stripe Connect Overview](https://stripe.com/docs/connect) — Multi-party payments, accounts, transfers, payouts
+- [Medusa Docs](https://docs.medusajs.com) — Composable commerce framework documentation
 - [Stripe Connect Charges Guide](https://stripe.com/docs/connect/charges) — Destination charges vs. separate charges and transfers
 - [Stripe Identity](https://stripe.com/docs/identity) — User identity verification for KYC
 - [Algolia InstantSearch](https://www.algolia.com/doc/guides/building-search-ui/what-is-instantsearch/js/) — Faceted search UI components

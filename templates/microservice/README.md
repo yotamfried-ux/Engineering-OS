@@ -63,6 +63,16 @@ Use this template for a single-responsibility backend service deployed independe
 - [ ] Runbook linked from service README: how to scale, restart, roll back
 - [ ] Alerts configured: error rate > 1%, p99 latency > SLO, DLQ depth > 0
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) | 11-service polyglot e-commerce app on Kubernetes with gRPC, tracing | ✅ Best pick |
+| [dotnet/eShop](https://github.com/dotnet/eShop) | Microsoft's reference microservices app with .NET, CQRS, event bus | |
+| [open-telemetry/opentelemetry-demo](https://github.com/open-telemetry/opentelemetry-demo) | Microservices demo built to showcase observability (OpenTelemetry) | |
+
+**Best Pick:** [GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) — Official Google reference, most comprehensive, covers production patterns with Kubernetes and Istio
+
 ## Reference Repositories
 - [GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) — Complete polyglot microservices sample with Kubernetes and Istio
 - [nestjs/nest](https://github.com/nestjs/nest) — Node.js framework with first-class microservice transport (gRPC, Redis, Kafka)
@@ -73,3 +83,6 @@ Use this template for a single-responsibility backend service deployed independe
 - [gRPC Documentation](https://grpc.io/docs/) — Protocol Buffers, service definitions, deadlines, streaming
 - [Kubernetes Patterns](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) — Deployment, HPA, PDB, rolling updates
 - [Pact Contract Testing](https://docs.pact.io/) — Consumer-driven contract tests for service APIs
+- [Microservices.io](https://microservices.io) — Chris Richardson's microservices pattern catalog
+- [Martin Fowler — Microservices](https://martinfowler.com/articles/microservices.html) — Defining article on microservices architecture
+- [Kubernetes Docs](https://kubernetes.io/docs/home/) — Container orchestration reference

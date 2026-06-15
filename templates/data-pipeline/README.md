@@ -64,6 +64,16 @@ Use this template for systems that ingest data from multiple sources, transform 
 - [ ] Warehouse partitioning and clustering configured for cost optimization
 - [ ] Data retention and deletion policy implemented (GDPR / CCPA compliance)
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [dagster-io/dagster/examples](https://github.com/dagster-io/dagster/tree/master/examples) | Official Dagster examples with assets, sensors, schedules | ✅ Best pick |
+| [apache/airflow/example_dags](https://github.com/apache/airflow/tree/main/airflow/example_dags) | Official Apache Airflow example DAGs | |
+| [prefecthq/prefect/examples](https://github.com/PrefectHQ/prefect/tree/main/examples) | Prefect flow examples with deployments | |
+
+**Best Pick:** [dagster-io/dagster/examples](https://github.com/dagster-io/dagster/tree/master/examples) — observability-first, software-defined assets, modern DX with lineage and data quality built in
+
 ## Reference Repositories
 
 - [dbt-labs/jaffle_shop](https://github.com/dbt-labs/jaffle_shop) — canonical dbt project structure and testing patterns
@@ -72,8 +82,9 @@ Use this template for systems that ingest data from multiple sources, transform 
 
 ## Official Documentation
 
-- [dbt Docs](https://docs.getdbt.com) — models, tests, sources, lineage
 - [Dagster Docs](https://docs.dagster.io) — assets, jobs, schedules, sensors
+- [Apache Airflow Docs](https://airflow.apache.org/docs/) — workflow scheduling
+- [dbt Docs](https://docs.getdbt.com) — models, tests, sources, lineage
 - [Airflow Docs](https://airflow.apache.org/docs/) — DAG authoring, operators, connections
 - [Great Expectations Docs](https://docs.greatexpectations.io) — data quality suites and checkpoints
 - [Apache Kafka Docs](https://kafka.apache.org/documentation/) — streaming architecture reference

@@ -62,12 +62,24 @@ Use this template for systems where multiple specialized AI agents collaborate t
 - [ ] Runbook: how to pause the orchestrator, drain active tasks, roll back an agent version
 - [ ] Load test: 10 concurrent tasks; verify no shared state corruption; trace all tasks independently
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [langchain-ai/langgraph/examples](https://github.com/langchain-ai/langgraph/tree/main/examples) | LangGraph multi-agent examples including supervisor, collaboration patterns | ✅ Best pick |
+| [microsoft/autogen/samples](https://github.com/microsoft/autogen/tree/main/python/samples) | AutoGen multi-agent conversation samples | |
+| [crewAIInc/crewAI-examples](https://github.com/crewAIInc/crewAI-examples) | CrewAI role-based multi-agent examples | |
+
+**Best Pick:** [langchain-ai/langgraph/examples](https://github.com/langchain-ai/langgraph/tree/main/examples) — stateful, production-ready with checkpointing, covers supervisor and peer-to-peer collaboration patterns
+
 ## Reference Repositories
 - [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) — Graph-based agent orchestration with typed state, interrupt nodes, and streaming
 - [microsoft/autogen](https://github.com/microsoft/autogen) — Multi-agent conversation framework with human-in-the-loop support
 - [crewAIInc/crewAI](https://github.com/crewAIInc/crewAI) — Role-based multi-agent framework with task delegation and tool sharing
 
 ## Official Documentation
+- [LangGraph Multi-Agent Docs](https://langchain-ai.github.io/langgraph/concepts/multi_agent/) — multi-agent architecture patterns
+- [AutoGen Docs](https://microsoft.github.io/autogen/) — Microsoft's multi-agent framework
 - [LangGraph Documentation](https://langchain-ai.github.io/langgraph/) — State graphs, interrupt/resume, persistence, streaming
 - [Anthropic Tool Use Guide](https://docs.anthropic.com/en/docs/build-with-claude/tool-use) — Structured tool calling, parallel tool use, tool result handling
 - [e2b.dev Sandbox Docs](https://e2b.dev/docs) — Secure code execution sandbox for AI agents

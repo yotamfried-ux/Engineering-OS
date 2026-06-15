@@ -66,6 +66,16 @@ Use this template for LLM-powered agent systems that call tools, maintain memory
 - [ ] Alerting on error rate, cost per run, and agent timeout frequency
 - [ ] Rollback plan: previous system prompt version retrievable and deployable
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [anthropics/anthropic-quickstarts](https://github.com/anthropics/anthropic-quickstarts) | Official Anthropic agent quickstarts (computer-use demo, customer support agent) | ✅ Best pick |
+| [langchain-ai/langchain/templates](https://github.com/langchain-ai/langchain/tree/master/templates) | LangChain official templates including RAG, agents, chatbots | |
+| [microsoft/autogen/samples](https://github.com/microsoft/autogen/tree/main/python/samples) | AutoGen multi-agent samples | |
+
+**Best Pick:** [anthropics/anthropic-quickstarts](https://github.com/anthropics/anthropic-quickstarts) — official, up-to-date with latest APIs, includes production-ready computer-use and customer support agent examples
+
 ## Reference Repositories
 
 - [anthropics/anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook) — tool use, agents, MCP patterns
@@ -75,6 +85,7 @@ Use this template for LLM-powered agent systems that call tools, maintain memory
 ## Official Documentation
 
 - [Anthropic API Docs](https://docs.anthropic.com) — tool use, streaming, model specs, pricing
+- [Anthropic Agent Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use) — tool use and agent patterns
 - [Anthropic Agent SDK](https://github.com/anthropics/anthropic-sdk-python) — Python SDK with agent primitives
 - [Model Context Protocol Docs](https://modelcontextprotocol.io/docs) — MCP spec, server/client setup
 - [LangGraph Docs](https://langchain-ai.github.io/langgraph/) — stateful agents, checkpointing, human-in-the-loop

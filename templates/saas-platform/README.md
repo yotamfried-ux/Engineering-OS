@@ -69,6 +69,16 @@ Use this template for B2B or B2C SaaS products with subscription billing, multip
 - [ ] Backup and point-in-time recovery enabled on production database
 - [ ] Status page configured (statuspage.io or BetterUptime) for customer communication
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [vercel/nextjs-subscription-payments](https://github.com/vercel/nextjs-subscription-payments) | Next.js + Stripe Subscriptions + Supabase, official Vercel SaaS | ✅ Best pick |
+| [boxyhq/saas-starter-kit](https://github.com/boxyhq/saas-starter-kit) | Next.js + Prisma + SAML SSO + team management, enterprise SaaS features | |
+| [calcom/cal.com](https://github.com/calcom/cal.com) | Full production SaaS reference app with team workspaces, billing, integrations | |
+
+**Best Pick:** [vercel/nextjs-subscription-payments](https://github.com/vercel/nextjs-subscription-payments) — official, actively maintained by Vercel, complete billing flow with Stripe + Supabase wired up end-to-end
+
 ## Reference Repositories
 
 - [vercel/nextjs-subscription-payments](https://github.com/vercel/nextjs-subscription-payments) — Stripe + Supabase subscription pattern
@@ -78,6 +88,7 @@ Use this template for B2B or B2C SaaS products with subscription billing, multip
 ## Official Documentation
 
 - [Stripe Docs — Subscriptions](https://stripe.com/docs/billing/subscriptions/overview) — lifecycle, webhooks, customer portal
+- [Supabase Auth Docs](https://supabase.com/docs/guides/auth) — multi-tenant auth
 - [Supabase Row Level Security](https://supabase.com/docs/guides/database/row-level-security) — RLS policies for multi-tenancy
 - [Clerk Docs — Organizations](https://clerk.com/docs/organizations/overview) — tenant model, roles, invitations
 - [Next.js Docs](https://nextjs.org/docs) — App Router, middleware for tenant routing

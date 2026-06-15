@@ -48,6 +48,7 @@ Scales well on the client — reads are always local and fast. Server-side, the 
 
 ## Reference Implementations
 - [realm/realm-swift](https://github.com/realm/realm-swift) and [realm/realm-java](https://github.com/realm/realm-java) — mobile-first database with built-in sync (Atlas Device Sync); reference for offline-first patterns
+- [realm/realm-js examples](https://github.com/realm/realm-js/tree/main/examples) — Realm offline-first database examples for React Native
 - [powersync-open-source/powersync-service](https://github.com/powersync-open-source/powersync-service) — open-source Postgres-to-SQLite sync engine designed for offline-first mobile apps
 - [WatermelonDB/WatermelonDB](https://github.com/Nozbe/WatermelonDB) — high-performance React Native database with lazy loading and sync adapter interface
 - [cashapp/sqldelight](https://github.com/cashapp/sqldelight) — type-safe SQLite for Kotlin Multiplatform; widely used in offline-first Android/KMP apps

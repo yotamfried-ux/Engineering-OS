@@ -54,6 +54,7 @@ Each BFF scales independently based on its client's traffic profile. A mobile BF
 - [Sam Newman — Backends for Frontends](https://samnewman.io/patterns/architectural/bff/) — original pattern write-up by the author; authoritative definition and rationale
 - [Martin Fowler — BFF pattern](https://martinfowler.com/articles/micro-frontends.html) — covered in the context of micro-frontends; explains client-ownership model
 - [Microsoft Azure Architecture — BFF pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends) — production-grade guidance with diagrams and considerations
+- [Netflix Tech Blog — API Gateway](https://netflixtechblog.com/tagged/api) — Netflix's experience with per-client BFF layers and API aggregation at scale
 
 ## Related Architectures
 - See also: [Microservices](./microservices.md) — BFF is the standard API entry point pattern when downstream services are microservices

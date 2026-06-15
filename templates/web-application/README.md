@@ -65,6 +65,16 @@ Use this template for full-stack web applications with a React/Next.js frontend,
 - [ ] Uptime monitoring configured (Better Uptime, or Vercel analytics)
 - [ ] `robots.txt` and `sitemap.xml` correct for production domain
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [t3-oss/create-t3-app](https://github.com/t3-oss/create-t3-app) | Next.js + tRPC + Prisma + NextAuth, type-safe full-stack | ✅ Best pick |
+| [vercel/nextjs-subscription-payments](https://github.com/vercel/nextjs-subscription-payments) | Next.js + Stripe + Supabase, official Vercel SaaS starter | |
+| [shadcn-ui/taxonomy](https://github.com/shadcn-ui/taxonomy) | Next.js + Prisma + Auth.js, modern component showcase app | |
+
+**Best Pick:** [t3-oss/create-t3-app](https://github.com/t3-oss/create-t3-app) — 25k+ stars, most opinionated, type-safe end-to-end from database to UI with zero glue code
+
 ## Reference Repositories
 
 - [vercel/next.js/examples](https://github.com/vercel/next.js/tree/canary/examples) — official patterns for auth, DB, API routes

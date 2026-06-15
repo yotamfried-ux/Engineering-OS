@@ -66,6 +66,16 @@ Use this template for a Customer Relationship Management platform where sales, s
 - [ ] GDPR deletion endpoint tested end-to-end (hard delete, not soft delete for PII)
 - [ ] Monitoring: email sync job lag, pipeline report query time, API p99 latency
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [twentyhq/twenty](https://github.com/twentyhq/twenty) | Open-source CRM built with React + NestJS + PostgreSQL, modern Salesforce alternative | ✅ Best pick |
+| [Automattic/wp-calypso](https://github.com/Automattic/wp-calypso) | Large-scale React + Node production application reference | |
+| [supabase/supabase/examples](https://github.com/supabase/supabase/tree/master/examples) | Supabase-based CRM and data patterns | |
+
+**Best Pick:** [twentyhq/twenty](https://github.com/twentyhq/twenty) — 7k+ stars, complete CRM features (contacts, deals, pipeline, timeline), well-architected with React and NestJS
+
 ## Reference Repositories
 - [twentyhq/twenty](https://github.com/twentyhq/twenty) — Open-source CRM built with React and NestJS; excellent reference for data model and pipeline UI
 - [cortezaproject/corteza](https://github.com/cortezaproject/corteza) — Open-source low-code CRM/business platform with strong role/permission model
@@ -73,6 +83,8 @@ Use this template for a Customer Relationship Management platform where sales, s
 
 ## Official Documentation
 - [Gmail API Docs](https://developers.google.com/gmail/api/guides) — OAuth scopes, message threading, push notifications via Pub/Sub
+- [Twenty CRM Docs](https://twenty.com/developers) — Open-source CRM developer documentation
+- [Supabase Row Level Security](https://supabase.com/docs/guides/auth/row-level-security) — Multi-tenant data isolation patterns
 - [Microsoft Graph Mail API](https://learn.microsoft.com/en-us/graph/api/resources/mail-api-overview) — Outlook email sync, delta queries
 - [Nylas Email API](https://developer.nylas.com/docs/email/) — Unified email API abstracting Gmail and Outlook
 - [TanStack Table](https://tanstack.com/table/latest/docs/introduction) — Headless table with sorting, filtering, virtualization for contact lists

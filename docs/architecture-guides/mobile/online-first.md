@@ -48,11 +48,14 @@ Scales with the backend. Client-side, there is no local state to manage across r
 - [square/retrofit](https://github.com/square/retrofit) — type-safe Android HTTP client; standard building block for online-first Android apps
 - [Alamofire/Alamofire](https://github.com/Alamofire/Alamofire) — Swift HTTP networking library for iOS; standard choice for online-first iOS apps
 - [TanStack/query](https://github.com/TanStack/query) — React Native data-fetching library with built-in loading, error, and refetch states; implements network-first caching out of the box
+- [expo/expo examples](https://github.com/expo/expo/tree/main/examples) — official Expo examples demonstrating online-first data fetching patterns in React Native
 
 ## Official Sources
 - [Android developers — Network overview](https://developer.android.com/training/basics/network-ops/overview) — authoritative guide to connectivity checks, HTTP clients, and background fetching on Android
 - [Apple developer — URL Loading System](https://developer.apple.com/documentation/foundation/url_loading_system) — iOS/macOS networking foundation; covers URLSession, caching policies, and background transfers
 - [React Native — Networking](https://reactnative.dev/docs/network) — official guide for Fetch and WebSocket usage in React Native
+- [Expo Docs — Development Builds](https://docs.expo.dev/develop/development-builds/introduction/) — Expo development workflow for online-first React Native apps
+- [TanStack Query — React Native Guides](https://tanstack.com/query/latest/docs/framework/react/guides/queries) — server state management and online-first caching strategies
 
 ## Related Architectures
 - See also: [Offline-First](./offline-first.md) — adds a local cache as the primary source of truth with server sync

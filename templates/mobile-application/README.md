@@ -64,6 +64,16 @@ Use this template for cross-platform iOS and Android apps built with React Nativ
 - [ ] App Store and Google Play metadata, screenshots, and privacy policy prepared
 - [ ] OTA update rollout strategy defined (percentage rollout vs. immediate)
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [infinitered/ignite](https://github.com/infinitered/ignite) | React Native CLI boilerplate with navigation, state, auth | ✅ Best pick |
+| [expo/expo/templates/expo-template-default](https://github.com/expo/expo/tree/main/templates/expo-template-default) | Official Expo default template | |
+| [obytes/react-native-template-obytes](https://github.com/obytes/react-native-template-obytes) | Expo + TypeScript + TailwindCSS React Native starter | |
+
+**Best Pick:** [infinitered/ignite](https://github.com/infinitered/ignite) — 15k+ stars, production-tested, batteries-included with navigation, state management, auth, and testing wired up out of the box
+
 ## Reference Repositories
 
 - [expo/expo](https://github.com/expo/expo) — official SDK, examples in `/apps` and `/examples`
@@ -73,6 +83,7 @@ Use this template for cross-platform iOS and Android apps built with React Nativ
 ## Official Documentation
 
 - [Expo Docs](https://docs.expo.dev) — SDK, EAS Build, EAS Submit, OTA updates
+- [Expo Router Docs](https://docs.expo.dev/router/introduction/) — file-based routing for React Native
 - [React Navigation Docs](https://reactnavigation.org/docs/getting-started) — navigation patterns
 - [React Native Docs](https://reactnative.dev/docs/getting-started) — core components, native APIs
 - [EAS Build Docs](https://docs.expo.dev/build/introduction/) — CI/CD for React Native

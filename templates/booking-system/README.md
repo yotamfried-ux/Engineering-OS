@@ -63,6 +63,16 @@ Use this template for reservation and scheduling platforms — appointment booki
 - [ ] Cancellation policy page live and linked from booking confirmation email
 - [ ] Alert: booking failure rate > 1%, reminder job error rate > 0
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [calcom/cal.com](https://github.com/calcom/cal.com) | Open-source scheduling platform (Calendly alternative), 35k+ stars | ✅ Best pick |
+| [calcom/cal.com/packages](https://github.com/calcom/cal.com/tree/main/packages) | Cal.com packages for embedding scheduling in your app | |
+| [schedule-x/schedule-x](https://github.com/schedule-x/schedule-x) | Framework-agnostic calendar and scheduling UI component | |
+
+**Best Pick:** [calcom/cal.com](https://github.com/calcom/cal.com) — Production SaaS reference with availability engine, team scheduling, webhooks, and calendar integrations
+
 ## Reference Repositories
 - [calcom/cal.com](https://github.com/calcom/cal.com) — Open-source scheduling platform; excellent reference for availability engine, calendar integrations, and booking state machine
 - [jitsi/jitsi-meet](https://github.com/jitsi/jitsi-meet) — Video conferencing scheduling integration patterns
@@ -70,6 +80,7 @@ Use this template for reservation and scheduling platforms — appointment booki
 
 ## Official Documentation
 - [Google Calendar API](https://developers.google.com/calendar/api/guides/overview) — Events, push notifications, OAuth scopes
+- [Cal.com Docs](https://cal.com/docs) — Scheduling platform documentation
 - [Microsoft Graph Calendar API](https://learn.microsoft.com/en-us/graph/api/resources/calendar) — Outlook calendar integration
 - [RFC 5545 — iCalendar](https://datatracker.ietf.org/doc/html/rfc5545) — iCal format specification for `.ics` generation
 - [Stripe Payment Intents](https://stripe.com/docs/payments/payment-intents) — Two-step capture for deposits and confirmations

@@ -64,6 +64,16 @@ Use this template for command-line interface tools distributed to developers, op
 - [ ] Shell completion scripts generated for bash, zsh, fish and documented in README
 - [ ] Goreleaser / release-it configured in CI to automate the above steps
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [oclif/oclif](https://github.com/oclif/oclif) | Salesforce's open CLI framework: TypeScript, plugin system, command parsing | ✅ Best pick |
+| [tj/commander.js](https://github.com/tj/commander.js) | Commander.js: minimal Node.js CLI library | |
+| [google/zx](https://github.com/google/zx) | Google's library for writing shell scripts in JavaScript/TypeScript | |
+
+**Best Pick:** [oclif/oclif](https://github.com/oclif/oclif) — Used by Heroku CLI and Salesforce CLI; enterprise-grade, TypeScript-native, plugin system built-in
+
 ## Reference Repositories
 - [cli/cli](https://github.com/cli/cli) — GitHub's official CLI (Go + Cobra); reference for subcommand structure, auth flow, and interactive prompts
 - [vercel/vercel](https://github.com/vercel/vercel) — Large Node.js CLI; study the config loading, update notifier, and deployment flow
@@ -75,3 +85,4 @@ Use this template for command-line interface tools distributed to developers, op
 - [clap (Rust)](https://docs.rs/clap/latest/clap/) — Rust argument parser with derive macros
 - [GoReleaser](https://goreleaser.com/docs/) — Cross-compile, package, and publish Go CLIs from CI
 - [NO_COLOR standard](https://no-color.org/) — Convention for disabling terminal color output
+- [oclif Docs](https://oclif.io/docs/introduction) — Open CLI framework documentation

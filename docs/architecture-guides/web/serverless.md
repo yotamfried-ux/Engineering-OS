@@ -49,11 +49,14 @@ Near-unlimited horizontal scale managed by the provider. The bottleneck shifts t
 - [serverless/examples](https://github.com/serverless/examples) — official Serverless Framework examples across AWS, GCP, Azure
 - [sst/sst](https://github.com/sst/sst) — modern full-stack serverless framework with local dev and type-safe infra
 - [cloudflare/workers-sdk](https://github.com/cloudflare/workers-sdk) — Cloudflare Workers toolchain; excellent for edge use cases
+- [aws-powertools/powertools-lambda-python](https://github.com/aws-powertools/powertools-lambda-python) — AWS Lambda best practices toolkit: structured logging, tracing, idempotency, and more
 
 ## Official Sources
 - [AWS Lambda documentation](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) — authoritative Lambda reference
 - [Cloudflare Workers docs](https://developers.cloudflare.com/workers/) — edge serverless with V8 isolates
 - [SST documentation](https://sst.dev/docs/) — developer-friendly full-stack serverless on AWS
+- [Vercel Functions Docs](https://vercel.com/docs/functions) — edge and serverless functions with zero-config deployment
+- [Martin Fowler — Serverless Architectures](https://martinfowler.com/articles/serverless.html) — comprehensive overview of trade-offs, cold starts, and when to use FaaS
 
 ## Related Architectures
 - See also: [Event-Driven Architecture](../api/event-driven.md) — serverless functions are a natural consumer of event streams

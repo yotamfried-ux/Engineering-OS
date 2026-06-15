@@ -48,6 +48,7 @@ Scales vertically (bigger machines) and horizontally (multiple identical instanc
 - [basecamp/the-one-person-framework](https://github.com/basecamp/omakase) — Rails-idiomatic monolith conventions from Basecamp
 - [gothinkster/realworld](https://github.com/gothinkster/realworld) — reference app implemented as a monolith in many languages; good baseline
 - [django/django](https://github.com/django/django) — the framework itself demonstrates monolith-first design philosophy
+- [rails/rails](https://github.com/rails/rails) — Ruby on Rails: convention-over-configuration monolith framework
 
 ## Official Sources
 - [Martin Fowler — Monolith First](https://martinfowler.com/bliki/MonolithFirst.html) — argues why starting with a monolith is almost always right

@@ -47,6 +47,8 @@ Scales horizontally (many independent agent instances in parallel) but does not 
 - [langchain-ai/langchain](https://github.com/langchain-ai/langchain) — `create_react_agent` in `langchain.agents`; study `AgentExecutor` for loop control and error handling
 - [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph) — graph-based ReAct with explicit state, conditional edges, and human-in-the-loop interrupts
 - [pydantic/pydantic-ai](https://github.com/pydantic/pydantic-ai) — typed tool definitions and agent loop with first-class Pydantic validation of tool inputs/outputs
+- [langchain-ai/langgraph/examples/react_agent](https://github.com/langchain-ai/langgraph/blob/main/examples/react_agent.ipynb) — LangGraph ReAct agent implementation
+- [openai/openai-cookbook](https://github.com/openai/openai-cookbook) — OpenAI ReAct pattern examples
 
 ## Official Sources
 - [ReAct: Synergizing Reasoning and Acting in Language Models (Yao et al., 2022)](https://arxiv.org/abs/2210.03629) — the original paper defining the Thought/Action/Observation loop

@@ -66,6 +66,16 @@ Use this template for a standalone backend API — REST or GraphQL — consumed 
 - [ ] Auto-scaling rules or resource limits set
 - [ ] Structured logs flowing to a log aggregator (Datadog, Logtail, or CloudWatch)
 
+## Starter Templates
+
+| Option | Description | Recommended |
+|---|---|---|
+| [fastapi/full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template) | FastAPI + SQLModel + Alembic + PostgreSQL, official starter | ✅ Best pick |
+| [nestjs/nest/sample](https://github.com/nestjs/nest/tree/master/sample) | Official NestJS sample applications | |
+| [trpc/examples-next-prisma-starter](https://github.com/trpc/examples-next-prisma-starter) | tRPC + Next.js + Prisma starter | |
+
+**Best Pick:** [fastapi/full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template) — official from the FastAPI maintainer, comprehensive setup with auth, DB migrations, Docker, and CI included
+
 ## Reference Repositories
 
 - [fastify/fastify](https://github.com/fastify/fastify) — core framework with plugin examples
@@ -76,6 +86,7 @@ Use this template for a standalone backend API — REST or GraphQL — consumed 
 
 - [Fastify Docs](https://fastify.dev/docs/latest/) — plugins, hooks, schema validation
 - [FastAPI Docs](https://fastapi.tiangolo.com) — dependency injection, async, OpenAPI
+- [NestJS Docs](https://docs.nestjs.com) — TypeScript Node.js framework
 - [Prisma Docs](https://www.prisma.io/docs) — schema, migrations, query API
 - [BullMQ Docs](https://docs.bullmq.io) — job queues, workers, schedulers
 - [OpenTelemetry JS Docs](https://opentelemetry.io/docs/languages/js/) — tracing and metrics
