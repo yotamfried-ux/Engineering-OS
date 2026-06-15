@@ -86,3 +86,6 @@ Use this template for data integration pipelines that move and transform data be
 - [Apache Airflow Documentation](https://airflow.apache.org/docs/) — DAG authoring, pools, sensors, backfill, dynamic task mapping
 - [Great Expectations Docs](https://docs.greatexpectations.io/) — Data quality expectations, checkpoints, data docs
 - [Dagster Documentation](https://docs.dagster.io/) — Software-defined assets, partitions, schedules, sensors, dbt integration
+- [Airbyte Docs](https://docs.airbyte.com) — open-source ELT connectors and orchestration
+- [dbt Docs](https://docs.getdbt.com) — data transformation layer
+- [Apache Spark Docs](https://spark.apache.org/docs/latest/) — large-scale data processing

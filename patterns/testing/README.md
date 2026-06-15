@@ -256,3 +256,10 @@ describe("Cart.addItem — regression #CART-88", () => {
 
 **Testing:**
 Check out the commit just before the fix and run only the new regression test — it must fail. Then check out the fix commit and verify it passes.
+
+## Official References
+- [Vitest Docs](https://vitest.dev) — Vite-native unit testing framework
+- [Playwright Docs](https://playwright.dev/docs/intro) — end-to-end browser testing
+- [Testing Library](https://testing-library.com/docs/) — component testing philosophy
+- [Jest Docs](https://jestjs.io/docs/getting-started) — JavaScript testing framework
+- [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — security testing methodology

@@ -228,3 +228,10 @@ export function LoginForm() {
 
 **Testing:**
 Use `@testing-library/react` with `userEvent` to simulate typing and submission. Assert that invalid input shows the correct error message without submitting. Assert that a mocked server error surfaces via `errors.root`. Assert that the form resets after a successful mock submission.
+
+## Official References
+- [React Docs](https://react.dev) — React official documentation
+- [Next.js Docs](https://nextjs.org/docs) — full-stack React framework
+- [TanStack Query Docs](https://tanstack.com/query/latest/docs/framework/react/overview) — server state management
+- [Zustand Docs](https://docs.pmnd.rs/zustand/getting-started/introduction) — lightweight client state
+- [Tailwind CSS Docs](https://tailwindcss.com/docs) — utility-first CSS framework

@@ -222,3 +222,10 @@ def upgrade():
 
 **Testing:**
 Run the expand migration, then deploy old application code against the new schema and verify it still works. Then run the contract migration and verify new application code works. Confirm the contract migration fails fast if any null values remain in the target column before the NOT NULL constraint is applied.
+
+## Official References
+- [Docker Docs](https://docs.docker.com) — containerization documentation
+- [Kubernetes Docs](https://kubernetes.io/docs/home/) — container orchestration
+- [GitHub Actions Docs](https://docs.github.com/en/actions) — CI/CD workflows
+- [Vercel Docs](https://vercel.com/docs) — frontend deployment platform
+- [12-Factor App](https://12factor.net) — methodology for cloud-native application design
