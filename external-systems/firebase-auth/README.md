@@ -75,6 +75,13 @@ Set environment variables:
 - [Security Rules](https://firebase.google.com/docs/rules) — using `request.auth` in Firestore and Storage rules
 - [Identity Platform](https://cloud.google.com/identity-platform/docs) — SAML, OIDC, multi-tenancy upgrade path
 
+## Common Pitfalls
+- **Never trust the client-side `user.uid`** for access control — always verify the ID token server-side with `admin.auth().verifyIdToken()`. An attacker can forge any UID in a direct API call.
+- **ID tokens expire after 1 hour** — use `user.getIdToken(/* forceRefresh */ true)` to get a fresh token if the client has been open a long time; the Firebase SDK handles silent refresh automatically for web.
+- **Custom claims are cached in the token** — after setting a custom claim via Admin SDK, the client must force-refresh the token (`user.getIdToken(true)`) to pick up the new claims; the old token remains valid until expiry.
+- **Firestore security rules are enforced server-side** — a mistake in your rules can expose all data; always test rules in the Firebase Emulator before deploying to production.
+- **Phone auth costs money and requires Blaze plan** — do not assume phone auth is free; switch to Blaze (pay-as-you-go) before enabling it, or you will hit an error at runtime.
+
 ## Examples
 1. **Next.js full-stack auth:** Client signs in with `signInWithPopup(provider)` → gets ID token via `user.getIdToken()` → sends token in `Authorization` header → Next.js API route calls `admin.auth().verifyIdToken()` → sets a secure HttpOnly session cookie for subsequent requests.
 2. **Anonymous-to-permanent upgrade:** User browses app anonymously (`signInAnonymously`) → adds items to cart → at checkout links account with `linkWithCredential(emailCredential)` — cart data under the anonymous UID is preserved.
