@@ -56,8 +56,12 @@
 2. **חיפוש דוגמאות ואיסוף מידע** — משוך פתרון קיים ומקור אמין לפי `<information_sources>`
    (ראה [`connector-policy.md`](./connector-policy.md)): קודם `patterns/`/`templates/`,
    ואז **Context7** לתיעוד רשמי עדכני של הספריות/הגרסאות בהן תשתמש.
-3. **בחירת כלים** — בחר את הקונקטורים המתאימים **לפי המשימה**, והעדף כלי שכבר בשימוש
-   בפרויקט אם הוא מספק את היכולת (ראה [`connector-policy.md`](./connector-policy.md)).
+3. **בחירת כלים והערכת סקילים** — בחר את הקונקטורים המתאימים **לפי המשימה**, והעדף כלי
+   שכבר בשימוש בפרויקט אם הוא מספק את היכולת (ראה [`connector-policy.md`](./connector-policy.md)).
+   **באותו שלב — הערך אילו סקילים חיצוניים חלים** לפי סוג המשימה, רמת ההרצה והסדר
+   (ראה [`skill-orchestration-policy.md`](./skill-orchestration-policy.md) › `<selection_rule>`):
+   planning ראשון · security gate שלא ניתן לעקיפה · review אחרון. סקיל LEVEL 2 שחסר —
+   הצֵף דרך ה-bootstrap, אל תדלג בשקט.
 4. **תכנון יישום** — 3–5 צעדים קונקרטיים, לפני כתיבה.
 
    > **שער כניסה לכתיבה (אל תדלג):** התחל לכתוב קוד רק כאשר —
@@ -98,6 +102,8 @@
    `patterns`/`templates`, ואז Context7).
 4. זהה שפה, ספריות, וקונקטורים שהפרויקט דורש — והפעל את אלה תלויי-הפרויקט המתאימים.
 5. אל תניח מבנה — בדוק בפועל איך הקוד מאורגן.
+6. **הרץ את ה-bootstrap של הסקילים** — `scripts/skill-bootstrap.sh` כדי לוודא שהסקילים
+   הנדרשים קיימים בפרויקט; דווח על חסרים (ראה [`skill-orchestration-policy.md`](./skill-orchestration-policy.md) › `<bootstrap>`).
 
 </onboarding>
 
@@ -122,6 +128,9 @@
 - **שכבת hooks בסיסית** — אכיפה דטרמיניסטית של הכללים הבלתי-עבירים (ראה
   [`hooks-policy.md`](./hooks-policy.md) › `<hooks>`): pre-commit שמריץ lint+טסטים,
   חסימת `--no-verify`, חסימת כתיבה לנתיבים מוגנים, סריקת secrets.
+- **bootstrap של סקילים** — הרץ `scripts/skill-bootstrap.sh` כדי לוודא שהסקילים החיצוניים
+  הנדרשים (LEVEL 1/2) מותקנים בפרויקט, והתקן את החסרים באישור (ראה
+  [`skill-orchestration-policy.md`](./skill-orchestration-policy.md) › `<bootstrap>`).
 
 ### לפי סוג פרויקט
 

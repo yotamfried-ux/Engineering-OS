@@ -93,6 +93,16 @@ claude mcp add <name> -- npx -y <package>
 | **Notion** | ✅ | `https://mcp.notion.com/mcp` |
 | **Composio** | ✅ | `https://connect.composio.dev/mcp` (גם ה-fallback האוניברסלי לכל השאר) |
 
+### שרתי MCP של סקילים (ראה [`../external-skills/`](../external-skills/))
+
+חלק מהסקילים החיצוניים מספקים שרת MCP. הם מנוהלים דרך ה-SIP
+([`skill-orchestration-policy.md`](./skill-orchestration-policy.md)); כאן רק ערך ה-MCP:
+
+| סקיל | סטטוס | שרת MCP / איך מוסיפים |
+|---|---|---|
+| **graphify** | ✅ | מקומי (stdio): `claude mcp add --transport stdio graphify -- python -m graphify.serve graphify-out/graph.json`. דורש `uv tool install "graphifyy[mcp]"`. כלים: `query_graph`, `get_node`, `get_pr_impact`… ראה [`../external-skills/graphify/activation.md`](../external-skills/graphify/activation.md). **HTTP transport דורש `GRAPHIFY_API_KEY` ב-`.env` בלבד; טוקן בשיתוף URL = secret אישי, לא לקומיט.** |
+| **claude-mem** | ✅ | מותקן עם הפלאגין (`npx claude-mem install`) — רושם את שרת ה-MCP `mcp-search` אוטומטית (כלים: `search`, `timeline`, `get_observations`). worker רץ על פורט 37777. ראה [`../external-skills/claude-mem/activation.md`](../external-skills/claude-mem/activation.md). |
+
 ---
 
 ## כלל עבודה

@@ -100,6 +100,28 @@
 
 ---
 
+## <skill_activation>
+
+Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestration Framework**: שכבה
+שמחליטה *איך* משתמשים ביכולות חיצוניות (skills/plugins/MCP/agents), *מתי*, ו*באיזה סדר*.
+
+**לפני כל משימה, חובה:**
+
+1. **להעריך** אילו סקילים חיצוניים רלוונטיים לסוג המשימה (ראה [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md)).
+2. **לקבוע רמות הרצה** — LEVEL 2 (חובה כשהטריגר מתקיים והסקיל מותקן) › LEVEL 1 (ברירת מחדל) › LEVEL 0 (שיקול דעת).
+3. **להריץ לפי ה-pipeline** של ה-SIP: context-optimization ראשון · planning · coding · **security gate** (לא ניתן לעקיפה) · review אחרון.
+
+הסקילים מוגדרים תחת [`external-skills/`](./external-skills/) (כל אחד עם
+`README/integration/policy/activation`). נוהל ה-bootstrap
+([`scripts/skill-bootstrap.sh`](./scripts/skill-bootstrap.sh)) מוודא שהם קיימים בכל
+פרויקט ומדווח על חסרים — **סקיל LEVEL 2 חסר הוא פער שמדווחים עליו, לא מדלגים בשקט**.
+
+**override:** שום סקיל לא גובר על סקיל אבטחה (ראה [`<precedence>`](#precedence) דרגות 1 ו-3).
+
+</skill_activation>
+
+---
+
 ## <communication>
 
 - שפת צ'אט: עברית (אנגלית כשהקוד/התיעוד דורשים).
@@ -147,6 +169,7 @@
 | שתי הנחיות מתנגשות; לא ברור איזה כלל גובר; לפני עקיפת כלל כתוב | [`core/precedence.md`](./core/precedence.md) | `<precedence>`, `<conflict_procedure>` |
 | חיפוש דוגמאות; בחירת קונקטור; בחירה בין פלטפורמות; fallback; עדכון משתני סביבה | [`core/connector-policy.md`](./core/connector-policy.md) | `<information_sources>`, `<connectors>`, `<environment>` |
 | קונקטור לא עובד בקלוד; להוריד שרת MCP נקודתית לפרויקט | [`core/mcp-servers.md`](./core/mcp-servers.md) | טבלת שרתי ה-MCP, `claude mcp add` |
+| **לפני כל משימה — הערכת סקילים חיצוניים; הוספת skill/plugin/MCP; רמות הרצה וסדר; bootstrap לפרויקט** | [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) | `<skill_integration_protocol>`, `<classification>`, `<execution_levels>`, `<composition>`, `<override_rule>`, `<bootstrap>` |
 
 ### שאר חלקי המערכת (לא נטענים אוטומטית — גש לפי הצורך)
 
@@ -184,7 +207,8 @@
 - [`lessons-learned/`](./lessons-learned/) — לקחים מתועדים: [`bugs/`](./lessons-learned/bugs/), [`postmortems/`](./lessons-learned/postmortems/), [`prevention-strategies/`](./lessons-learned/prevention-strategies/)
 - [`failed-solutions/`](./failed-solutions/) — פתרונות שנוסו ונכשלו — קרא לפני שמנסים גישה דומה
 - [`architecture-decisions/`](./architecture-decisions/) — ADRs — קרא לפני שמערערים החלטות ארכיטקטוריות קיימות
-- [`external-systems/`](./external-systems/) — מערכות חיצוניות מלאות וריפו-ים מאושרים לאינטגרציה
+- [`external-systems/`](./external-systems/) — מערכות חיצוניות מלאות וריפו-ים מאושרים לאינטגרציה (שירותים שהאפליקציה מתחברת אליהם)
+- **[`external-skills/`](./external-skills/) — סקילים חיצוניים שמשנים את ה-workflow של קלוד עצמו (superpowers, frontend-design, claude-code-workflows, security-review, claude-mem, gstack, graphify). כל אחד עם wrapper של SIP. נשלט ע"י [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md)** ← חדש
 
 > **הערת ניווט — Stripe:** ידע Stripe מפוצל ב-3 מקומות בכוונה. ראה [`patterns/stripe/`](./patterns/stripe/) להסבר מלא.
 > **הערת ניווט — Input Validation:** מופיע גם ב-`patterns/api/` (contract enforcement) וגם ב-`patterns/security/` (security boundary). הסבר בכל אחד מהם.
