@@ -110,7 +110,7 @@ install_graphify='uv tool install graphifyy && graphify install'
 SKILLS="
 superpowers|2|detect_superpowers|install_superpowers|default
 security-review|2|detect_security_review|install_security_review|default
-graphify|1|detect_graphify|install_graphify|default
+graphify|2|detect_graphify|install_graphify|default
 claude-mem|2|detect_claude_mem|install_claude_mem|default
 frontend-design|2|detect_frontend_design|install_frontend_design|conditional
 claude-code-workflows|1|detect_claude_code_workflows|install_claude_code_workflows|conditional
