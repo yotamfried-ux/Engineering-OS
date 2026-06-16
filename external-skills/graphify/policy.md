@@ -12,11 +12,13 @@
 
 ## Execution Level Detail
 
-**Level 1: Recommended default-on for non-trivial repos.**
+**Level 1: Recommended default-on for EVERY project.**
 
-Graphify should be treated as the default starting point on any repository that is not trivially small. The project owner's stated aspiration is to use it on every project as a way to reduce context cost across all work. This is recorded here as a standing recommendation.
+Graphify is treated as default-on for every project. The project owner's stated aspiration is to use it on every project to reduce context cost across all work, and that is the standing default here.
 
-"Default-on" means: at the start of a session on a non-trivial repo, build or verify the graph before doing anything else. It is not a hard, enforced dependency — a single small script or a project that has not yet been extracted does not require it — but it should be the default assumption rather than an optional add-on.
+"Default-on" means: at the start of a session, build or verify the graph before doing anything else. The skill is **always part of the default profile** — it is never permanently excluded from a project.
+
+**Growing repos — re-evaluate, never permanently skip.** A project that is *currently* tiny may not yet benefit from a graph. In that case, defer **building the graph** only — but keep Graphify in the default profile and **re-evaluate at every bootstrap/onboarding run** (`scripts/skill-bootstrap.sh`). The moment the repo grows past the trivial threshold, the graph gets built on the next run. A project is never marked "tiny" once and excluded forever — the decision is re-made each session against the repo's current size.
 
 When in doubt, build the graph first. The overhead of running `graphify extract .` (or `/graphify .`) once is low compared to the token savings it enables over the course of a session.
 
@@ -56,4 +58,4 @@ Mitigation: install the post-commit hook on day one (`graphify hook install`), a
 
 Graphify enforces a minimum node count before treating the graph as useful. On very small projects the graph will be built but Graphify itself may warn that the threshold has not been reached. The `--force` flag bypasses this check, but there is typically little benefit to using Graphify on a repository small enough to read in full without context pressure.
 
-Level 1 (recommended default-on) applies to non-trivial repos; single-file scripts or minimal prototypes are explicitly excluded from this recommendation.
+This threshold governs **whether to build the graph right now**, not whether Graphify is in the project's profile. Graphify stays default-on; on a currently-tiny repo you simply defer the build and let the next bootstrap/onboarding run re-check the repo size. There is no permanent "this project is too small" flag — a prototype that grows into a real codebase picks up the graph automatically on the next session.

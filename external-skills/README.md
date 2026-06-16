@@ -61,7 +61,7 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 |---|---|---|
 | superpowers | ✅ **every project** | Prevents the #1 failure mode (jumping to code without a spec). Always loaded via its SessionStart hook; only the *depth* of process scales with task size. |
 | security-review | ✅ **every production-bound project** | Security is a baseline, not an add-on. Diff-aware, so cheap to run before each commit; mandatory gate before merge to main. |
-| graphify | ✅ **any non-tiny repo** | Saves context cost every session. Skipped only for tiny repos where the graph isn't worth building. |
+| graphify | ✅ **every project** | Saves context cost every session. For a still-tiny repo you defer *building the graph* only — the skill stays default-on and is re-evaluated at each bootstrap run as the repo grows. Never a permanent opt-out: a prototype that grows picks up the graph on the next session. |
 | claude-mem | ✅ **where the environment allows** | Cross-session memory helps almost any multi-session project. Opt-out only in locked-down/ephemeral environments or where data must not persist to disk. |
 | frontend-design | ⚠️ **conditional — UI projects** | Irrelevant to pure backend / CLI / library. Installed when there is a UI surface. |
 | claude-code-workflows | ⚠️ **recommended with PR review** | Provides PR-review subagents + Actions; full value only in a PR-based flow. |
