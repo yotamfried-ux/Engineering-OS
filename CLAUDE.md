@@ -105,7 +105,13 @@
 Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestration Framework**: שכבה
 שמחליטה *איך* משתמשים ביכולות חיצוניות (skills/plugins/MCP/agents), *מתי*, ו*באיזה סדר*.
 
-**לפני כל משימה, חובה:**
+> **עיקרון יסוד — סקילים משרתים את ה-workflow, לא מחליפים אותו (ראה [`core/precedence.md`](./core/precedence.md) דרגה 7):**
+> שלבי `workflow.md` (אפיון ב-Notion, חיפוש ב-Context7, בדיקת `patterns/`) הם **חובה עצמאית**.
+> הפעלת סקיל **לא פוטרת** מהם — אך **ניתן ואף רצוי** להשתמש בסקילים לביצועם
+> (למשל: `superpowers:brainstorming` לכתיבת תוכנית ב-Notion, `superpowers:writing-plans`
+> לפירוק משימה לפני כתיבה, Context7 לאיסוף מידע). הסקיל הוא האמצעי; השלב הוא החובה.
+
+**הערכת סקילים — שלב 3 ב-`workflow.md`** (אחרי אפיון ואיסוף מידע, לא לפניהם):
 
 1. **להעריך** אילו סקילים חיצוניים רלוונטיים לסוג המשימה (ראה [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md)).
 2. **לקבוע רמות הרצה** — LEVEL 2 (חובה כשהטריגר מתקיים והסקיל מותקן) › LEVEL 1 (ברירת מחדל) › LEVEL 0 (שיקול דעת).
