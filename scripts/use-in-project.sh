@@ -136,13 +136,20 @@ if [ -f "$EOS_HOME/scripts/use-engineering-os.command.md" ]; then
   dim "Installed /use-engineering-os slash command into .claude/commands/"
 fi
 
-# 5. Run skill bootstrap and capture output.
+# 5. Run skill bootstrap: detect, then auto-install all installable L2 defaults.
 BOOTSTRAP_OUT=""
 if [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
   echo
-  dim "Skill presence in this project (default profile):"
+  dim "Checking L2 default skills and auto-installing what can run unattended…"
+  # First pass: detect only (capture output for next-steps parsing).
   BOOTSTRAP_OUT="$( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default 2>&1 )" || true
   echo "$BOOTSTRAP_OUT"
+  # Second pass: auto-install installable skills without prompting.
+  # Skills that require manual action (superpowers, security-review) are
+  # automatically skipped by the bootstrap (their install commands start with '#').
+  echo
+  dim "Auto-installing installable skills (--install --yes)…"
+  ( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default --install --yes 2>&1 ) || true
 fi
 
 echo

@@ -7,12 +7,15 @@
 # Governing policy: core/skill-orchestration-policy.md  (<bootstrap>, <default_activation>)
 # Skill registry:   external-skills/README.md
 #
-# DESIGN: detect-and-report by default. Installing external skills mutates the
-# environment (gstack runs ./setup, claude-mem spawns a worker on :37777,
-# graphify needs uv), which per core/git-policy.md <safety> requires explicit
-# human approval. So:
-#   * default            -> scan, report ✅ / ⚠️ / ➖, print exact install commands
+# DESIGN: detect-and-report by default. Use --install to run auto-install for
+# skills whose install commands can run unattended (superpowers, security-review,
+# graphify, claude-mem). Skills that require manual steps (claude-code-workflows)
+# are always reported as "manual" and never auto-installed regardless of flags.
+#
+#   * default            -> scan and report ✅ / ⚠️ / ➖ with install commands
 #   * --install          -> additionally run installs, asking before each one
+#   * --install --yes    -> run all installable skills without prompting (auto-mode)
+#   * -y / --yes         -> (with --install) skip all confirmation prompts
 #   * --level N          -> only consider skills at LEVEL >= N (e.g. --level 2)
 #   * --profile P        -> only consider skills whose default profile == P
 #                           (default | conditional | opt-in)
@@ -29,18 +32,20 @@
 set -u
 
 INSTALL=0
+YES=0
 MIN_LEVEL=0
 PROFILE=""
 JSON=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --install) INSTALL=1 ;;
-    --level)   shift; MIN_LEVEL="${1:-0}" ;;
-    --profile) shift; PROFILE="${1:-}" ;;
-    --json)    JSON=1 ;;
+    --install)    INSTALL=1 ;;
+    --yes|-y)     YES=1 ;;
+    --level)      shift; MIN_LEVEL="${1:-0}" ;;
+    --profile)    shift; PROFILE="${1:-}" ;;
+    --json)       JSON=1 ;;
     -h|--help)
-      sed -n '2,34p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'
       exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
@@ -60,15 +65,40 @@ CLAUDE_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 have()        { command -v "$1" >/dev/null 2>&1; }
 port_open()   { (exec 3<>"/dev/tcp/127.0.0.1/$1") >/dev/null 2>&1 && exec 3>&- 2>/dev/null; }
 
+# EOS_HOME: derive from this script's location so install functions can find assets.
+EOS_HOME="${ENGINEERING_OS_HOME:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd || echo "$HOME/.engineering-os")}"
+
 # ---- skill table -----------------------------------------------------------
 # Each skill is one line: name|level|detect_fn|install_var|profile
 # detect_fn returns 0 = present, 1 = missing.
+# install_var holds either:
+#   - a shell command string  → run with sh -c
+#   - 'fn:<name>'             → call the named bash function directly
+#   - '# ...'                 → permanent manual-only (never auto-run)
 
 detect_superpowers() {
   { have claude && claude plugin list 2>/dev/null | grep -qi superpowers; } && return 0
-  [ -d "$CLAUDE_HOME/skills/superpowers" ] || ls "$CLAUDE_HOME"/plugins/*superpowers* >/dev/null 2>&1
+  [ -d "$CLAUDE_HOME/plugins/cache/superpowers-marketplace/superpowers" ] && return 0
+  ls "$CLAUDE_HOME"/plugins/cache/*superpowers* >/dev/null 2>&1
 }
-install_superpowers='claude /plugin install superpowers@claude-plugins-official'
+_install_superpowers() {
+  if ! have claude; then
+    printf '  %s⚠️  claude CLI not found in PATH — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
+    printf '       /plugin install superpowers@claude-plugins-official\n'
+    return 1
+  fi
+  # Register the superpowers marketplace (idempotent), then install the plugin.
+  # Both commands are non-interactive and safe to re-run.
+  claude plugin marketplace add obra/superpowers-marketplace 2>/dev/null || true
+  if claude plugin install superpowers@superpowers-marketplace 2>/dev/null; then
+    printf '  %s✅ superpowers installed (v5.1.0 from obra/superpowers-marketplace)%s\n' "$G" "$Z"
+    return 0
+  fi
+  printf '  %s⚠️  superpowers CLI install failed — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
+  printf '       /plugin install superpowers@claude-plugins-official\n'
+  return 1
+}
+install_superpowers='fn:_install_superpowers'
 
 detect_frontend_design() {
   [ -d "$CLAUDE_HOME/skills/frontend-design" ] && return 0
@@ -87,7 +117,63 @@ detect_security_review() {
   [ -f "$PROJECT_ROOT/.claude/commands/security-review.md" ] && return 0
   grep -rqs 'claude-code-security-review' "$PROJECT_ROOT/.github/workflows" 2>/dev/null
 }
-install_security_review='# add anthropics/claude-code-security-review@main to .github/workflows — see activation.md'
+_install_security_review() {
+  local target="$PROJECT_ROOT"
+  # 1. Create GitHub Actions workflow.
+  mkdir -p "$target/.github/workflows"
+  cat > "$target/.github/workflows/security.yml" << 'WORKFLOW'
+name: Claude Code Security Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Run Claude Code Security Review
+        uses: anthropics/claude-code-security-review@main
+        with:
+          comment-pr: true
+          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+WORKFLOW
+  printf '  %s✅ created .github/workflows/security.yml%s\n' "$G" "$Z"
+  # 2. Create /security-review slash command.
+  mkdir -p "$target/.claude/commands"
+  cat > "$target/.claude/commands/security-review.md" << 'CMD'
+---
+description: Run a security review of the pending changes on the current branch
+---
+
+Run a security review on all pending changes in the current branch.
+
+Steps:
+1. Identify all changed files since the branch diverged from main.
+2. For each changed file, check for: injection vulnerabilities, authentication/authorization
+   gaps, insecure data handling, secrets or credentials in code, unsafe dependencies,
+   broken access control, OWASP Top 10 issues relevant to the change.
+3. Report findings grouped by severity (CRITICAL / HIGH / MEDIUM / LOW / INFO).
+4. For each finding: file path + line range, description, recommendation.
+5. End with a go/no-go recommendation for merging.
+
+Focus on actual security impact, not style. A finding without a concrete attack vector
+should be INFO at most.
+CMD
+  printf '  %s✅ created .claude/commands/security-review.md%s\n' "$G" "$Z"
+  printf '  %s⚠️  ACTION REQUIRED: add CLAUDE_API_KEY secret to GitHub repo%s\n' "$Y" "$Z"
+  printf '       Settings → Secrets and variables → Actions → New repository secret\n'
+}
+install_security_review='fn:_install_security_review'
 
 detect_claude_mem() {
   have claude-mem && return 0
@@ -169,24 +255,50 @@ fi
 
 # ---- optional install ------------------------------------------------------
 if [ "$INSTALL" -eq 0 ]; then
-  printf '\n%s\n' "${D}Re-run with --install to install missing skills (you will be asked before each).${Z}"
+  printf '\n%s\n' "${D}Re-run with --install to install missing skills.${Z}"
+  printf '%s\n' "${D}Add --yes to skip all confirmation prompts (auto-mode).${Z}"
   printf '%s\n' "${D}Tip: --profile default checks only the skills every standard project needs.${Z}"
   exit 1
 fi
 
-printf '\n%s\n' "${B}--install requested.${Z} Installing external skills mutates this environment."
+if [ "$YES" -eq 1 ]; then
+  printf '\n%s\n' "${B}Auto-installing missing skills${Z} ${D}(--yes: no prompts)${Z}"
+else
+  printf '\n%s\n' "${B}--install requested.${Z} Installing external skills mutates this environment."
+fi
+
 i=0
 for name in "${MISSING_NAMES[@]}"; do
   cmd="${MISSING_CMDS[$i]}"; i=$((i+1))
   case "$cmd" in
-    '#'*) printf '  %s➖ %s%s needs a manual step — see external-skills/%s/activation.md\n' "$D" "$name" "$Z" "$name"; skipped=$((skipped+1)); continue ;;
+    '#'*)
+      # Permanent manual-only (legacy) — extract note after '# '
+      note="${cmd#\# }"
+      printf '  %s⚠️  %-20s%s manual action required:\n       %s%s%s\n' "$Y" "$name" "$Z" "$D" "$note" "$Z"
+      skipped=$((skipped+1))
+      continue
+      ;;
   esac
-  printf '\n  %s%s%s\n  run: %s\n' "$B" "$name" "$Z" "$cmd"
-  printf '  proceed? [y/N] '
-  read -r ans </dev/tty 2>/dev/null || ans="n"
+  printf '\n  %s%s%s\n' "$B" "$name" "$Z"
+  case "$cmd" in fn:*)
+    printf '  run: (function %s)\n' "${cmd#fn:}" ;;
+  *)
+    printf '  run: %s\n' "$cmd" ;;
+  esac
+  if [ "$YES" -eq 1 ]; then
+    ans="y"
+  else
+    printf '  proceed? [y/N] '
+    read -r ans </dev/tty 2>/dev/null || ans="n"
+  fi
   case "$ans" in
-    y|Y) sh -c "$cmd" || printf '  %sinstall failed for %s%s\n' "$R" "$name" "$Z" ;;
-    *)   printf '  %sskipped%s\n' "$D" "$Z"; skipped=$((skipped+1)) ;;
+    y|Y)
+      case "$cmd" in
+        fn:*) "${cmd#fn:}" || { printf '  %s❌ install failed for %s%s\n' "$R" "$name" "$Z"; skipped=$((skipped+1)); } ;;
+        *)    sh -c "$cmd" && printf '  %s✅ installed%s\n' "$G" "$Z" || printf '  %s❌ install failed for %s — check manually%s\n' "$R" "$name" "$Z" ;;
+      esac
+      ;;
+    *) printf '  %sskipped%s\n' "$D" "$Z"; skipped=$((skipped+1)) ;;
   esac
 done
 
