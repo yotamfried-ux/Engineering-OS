@@ -7,12 +7,16 @@
 # Governing policy: core/skill-orchestration-policy.md  (<bootstrap>, <default_activation>)
 # Skill registry:   external-skills/README.md
 #
-# DESIGN: detect-and-report by default. Installing external skills mutates the
-# environment (gstack runs ./setup, claude-mem spawns a worker on :37777,
-# graphify needs uv), which per core/git-policy.md <safety> requires explicit
-# human approval. So:
-#   * default            -> scan, report ✅ / ⚠️ / ➖, print exact install commands
+# DESIGN: detect-and-report by default. Use --install to run auto-install for
+# skills whose install commands can run unattended (graphify, claude-mem).
+# Skills that require an interactive CLI command or manual steps (superpowers,
+# security-review, claude-code-workflows) are always reported as "manual" and
+# never auto-installed regardless of flags.
+#
+#   * default            -> scan and report ✅ / ⚠️ / ➖ with install commands
 #   * --install          -> additionally run installs, asking before each one
+#   * --install --yes    -> run all installable skills without prompting (auto-mode)
+#   * -y / --yes         -> (with --install) skip all confirmation prompts
 #   * --level N          -> only consider skills at LEVEL >= N (e.g. --level 2)
 #   * --profile P        -> only consider skills whose default profile == P
 #                           (default | conditional | opt-in)
@@ -29,18 +33,20 @@
 set -u
 
 INSTALL=0
+YES=0
 MIN_LEVEL=0
 PROFILE=""
 JSON=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --install) INSTALL=1 ;;
-    --level)   shift; MIN_LEVEL="${1:-0}" ;;
-    --profile) shift; PROFILE="${1:-}" ;;
-    --json)    JSON=1 ;;
+    --install)    INSTALL=1 ;;
+    --yes|-y)     YES=1 ;;
+    --level)      shift; MIN_LEVEL="${1:-0}" ;;
+    --profile)    shift; PROFILE="${1:-}" ;;
+    --json)       JSON=1 ;;
     -h|--help)
-      sed -n '2,34p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'
       exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
@@ -68,7 +74,7 @@ detect_superpowers() {
   { have claude && claude plugin list 2>/dev/null | grep -qi superpowers; } && return 0
   [ -d "$CLAUDE_HOME/skills/superpowers" ] || ls "$CLAUDE_HOME"/plugins/*superpowers* >/dev/null 2>&1
 }
-install_superpowers='claude /plugin install superpowers@claude-plugins-official'
+install_superpowers='# MANUAL — inside Claude Code CLI run: /plugin install superpowers@claude-plugins-official'
 
 detect_frontend_design() {
   [ -d "$CLAUDE_HOME/skills/frontend-design" ] && return 0
@@ -169,23 +175,39 @@ fi
 
 # ---- optional install ------------------------------------------------------
 if [ "$INSTALL" -eq 0 ]; then
-  printf '\n%s\n' "${D}Re-run with --install to install missing skills (you will be asked before each).${Z}"
+  printf '\n%s\n' "${D}Re-run with --install to install missing skills.${Z}"
+  printf '%s\n' "${D}Add --yes to skip all confirmation prompts (auto-mode).${Z}"
   printf '%s\n' "${D}Tip: --profile default checks only the skills every standard project needs.${Z}"
   exit 1
 fi
 
-printf '\n%s\n' "${B}--install requested.${Z} Installing external skills mutates this environment."
+if [ "$YES" -eq 1 ]; then
+  printf '\n%s\n' "${B}Auto-installing missing skills${Z} ${D}(--yes: no prompts)${Z}"
+else
+  printf '\n%s\n' "${B}--install requested.${Z} Installing external skills mutates this environment."
+fi
+
 i=0
 for name in "${MISSING_NAMES[@]}"; do
   cmd="${MISSING_CMDS[$i]}"; i=$((i+1))
   case "$cmd" in
-    '#'*) printf '  %s➖ %s%s needs a manual step — see external-skills/%s/activation.md\n' "$D" "$name" "$Z" "$name"; skipped=$((skipped+1)); continue ;;
+    '#'*)
+      # Manual-only skill — extract the human-readable note after '# '
+      note="${cmd#\# }"
+      printf '  %s⚠️  %-20s%s manual action required:\n       %s%s%s\n' "$Y" "$name" "$Z" "$D" "$note" "$Z"
+      skipped=$((skipped+1))
+      continue
+      ;;
   esac
   printf '\n  %s%s%s\n  run: %s\n' "$B" "$name" "$Z" "$cmd"
-  printf '  proceed? [y/N] '
-  read -r ans </dev/tty 2>/dev/null || ans="n"
+  if [ "$YES" -eq 1 ]; then
+    ans="y"
+  else
+    printf '  proceed? [y/N] '
+    read -r ans </dev/tty 2>/dev/null || ans="n"
+  fi
   case "$ans" in
-    y|Y) sh -c "$cmd" || printf '  %sinstall failed for %s%s\n' "$R" "$name" "$Z" ;;
+    y|Y) sh -c "$cmd" && printf '  %s✅ installed%s\n' "$G" "$Z" || printf '  %s❌ install failed for %s — check manually%s\n' "$R" "$name" "$Z" ;;
     *)   printf '  %sskipped%s\n' "$D" "$Z"; skipped=$((skipped+1)) ;;
   esac
 done
