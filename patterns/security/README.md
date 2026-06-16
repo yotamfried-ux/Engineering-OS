@@ -4,6 +4,8 @@
 ## Overview
 Apply these patterns at every trust boundary: API endpoints, form inputs, background jobs that consume external data, and any service-to-service call. Security patterns are not optional hardening — they define the baseline. Add them during initial implementation, not as a retrofit.
 
+> **Navigation note — Input Validation:** [`patterns/api/`](../api/README.md) contains a Request Validation pattern focused on API contract enforcement (schema shape, type coercion, 400 error format). This library's Input Validation & Sanitization pattern covers the *security* dimension: SQL injection prevention, XSS mitigation, output encoding, and allowlist vs. blocklist design. Both patterns use Zod but address different concerns. Apply the API pattern for "is this well-formed?"; apply this pattern for "could this cause harm?"
+
 ---
 
 ## Pattern: Input Validation & Sanitization
