@@ -8,10 +8,9 @@
 # Skill registry:   external-skills/README.md
 #
 # DESIGN: detect-and-report by default. Use --install to run auto-install for
-# skills whose install commands can run unattended (graphify, claude-mem).
-# Skills that require an interactive CLI command or manual steps (superpowers,
-# security-review, claude-code-workflows) are always reported as "manual" and
-# never auto-installed regardless of flags.
+# skills whose install commands can run unattended (superpowers, security-review,
+# graphify, claude-mem). Skills that require manual steps (claude-code-workflows)
+# are always reported as "manual" and never auto-installed regardless of flags.
 #
 #   * default            -> scan and report ✅ / ⚠️ / ➖ with install commands
 #   * --install          -> additionally run installs, asking before each one
@@ -79,14 +78,23 @@ EOS_HOME="${ENGINEERING_OS_HOME:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd ||
 
 detect_superpowers() {
   { have claude && claude plugin list 2>/dev/null | grep -qi superpowers; } && return 0
-  [ -d "$CLAUDE_HOME/skills/superpowers" ] || ls "$CLAUDE_HOME"/plugins/*superpowers* >/dev/null 2>&1
+  [ -d "$CLAUDE_HOME/plugins/cache/superpowers-marketplace/superpowers" ] && return 0
+  ls "$CLAUDE_HOME"/plugins/cache/*superpowers* >/dev/null 2>&1
 }
 _install_superpowers() {
-  # Try the claude CLI plugin install command (works when claude CLI is in PATH).
-  if have claude && claude plugin install superpowers@claude-plugins-official 2>/dev/null; then
+  if ! have claude; then
+    printf '  %s⚠️  claude CLI not found in PATH — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
+    printf '       /plugin install superpowers@claude-plugins-official\n'
+    return 1
+  fi
+  # Register the superpowers marketplace (idempotent), then install the plugin.
+  # Both commands are non-interactive and safe to re-run.
+  claude plugin marketplace add obra/superpowers-marketplace 2>/dev/null || true
+  if claude plugin install superpowers@superpowers-marketplace 2>/dev/null; then
+    printf '  %s✅ superpowers installed (v5.1.0 from obra/superpowers-marketplace)%s\n' "$G" "$Z"
     return 0
   fi
-  printf '  %s⚠️  superpowers requires manual install inside Claude Code CLI:%s\n' "$Y" "$Z"
+  printf '  %s⚠️  superpowers CLI install failed — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
   printf '       /plugin install superpowers@claude-plugins-official\n'
   return 1
 }
