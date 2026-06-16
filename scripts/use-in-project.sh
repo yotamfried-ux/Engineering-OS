@@ -23,9 +23,11 @@ EOS_REPO="${ENGINEERING_OS_REPO:-https://github.com/yotamfried-ux/Engineering-OS
 EOS_HOME="${ENGINEERING_OS_HOME:-$HOME/.engineering-os}"
 TARGET="$(pwd)"
 
-red() { printf '\033[31m%s\033[0m\n' "$*"; }
-grn() { printf '\033[32m%s\033[0m\n' "$*"; }
-dim() { printf '\033[2m%s\033[0m\n' "$*"; }
+red()  { printf '\033[31m%s\033[0m\n' "$*"; }
+grn()  { printf '\033[32m%s\033[0m\n' "$*"; }
+dim()  { printf '\033[2m%s\033[0m\n' "$*"; }
+bold() { printf '\033[1m%s\033[0m\n' "$*"; }
+warn() { printf '\033[33m⚠️  %s\033[0m\n' "$*"; }
 
 # 0. GUARD — never run inside the Engineering OS repo itself.
 if [ -f "$TARGET/core/skill-orchestration-policy.md" ] && [ -f "$TARGET/external-skills/README.md" ]; then
@@ -41,12 +43,20 @@ if [ "$(cd "$EOS_HOME" 2>/dev/null && pwd || true)" = "$TARGET" ]; then
 fi
 
 # 1. Ensure a READ-ONLY reference copy of Engineering OS exists / is current.
+#    Strategy: prefer existing local copy (works even when GitHub is network-blocked).
+#    If no local copy exists, try to clone. If network is blocked, fail with clear message.
 if [ -d "$EOS_HOME/.git" ]; then
-  dim "Updating Engineering OS reference at $EOS_HOME (read-only, fast-forward only)…"
-  git -C "$EOS_HOME" pull --ff-only --quiet || dim "(pull skipped — using existing reference copy)"
+  dim "Engineering OS reference found at $EOS_HOME — fast-forward pull (read-only)…"
+  git -C "$EOS_HOME" pull --ff-only --quiet 2>/dev/null \
+    || dim "(pull skipped — network blocked or already up-to-date; using existing copy)"
 else
   dim "Cloning Engineering OS reference to $EOS_HOME…"
-  git clone --depth 1 "$EOS_REPO" "$EOS_HOME"
+  if ! git clone --depth 1 "$EOS_REPO" "$EOS_HOME" 2>/dev/null; then
+    red "Could not clone Engineering OS from $EOS_REPO"
+    red "If you are in a network-restricted environment (e.g. Claude Code on the web):"
+    red "  Ask Claude to clone the repo for you via the GitHub MCP tools, then re-run this script."
+    exit 1
+  fi
 fi
 # From here on we only READ from $EOS_HOME.
 
@@ -91,6 +101,29 @@ This project is governed by **Engineering OS**, a read-only reference at
 Apply these rules to THIS project's code. **Never modify anything under
 \`$EOS_HOME\`** — it is shared, read-only reference. Run
 \`$EOS_HOME/scripts/skill-bootstrap.sh\` to see which skills are present here.
+
+### Manual install required — superpowers plugin
+
+superpowers cannot be installed by a script. Inside Claude Code CLI, run:
+\`\`\`
+/plugin install superpowers@claude-plugins-official
+\`\`\`
+This is a one-time step per machine. Verify with \`/plugin list\`.
+
+### Cross-project learning loop
+
+When you encounter a bug, lesson, failed solution, or validated pattern in THIS project
+that is relevant beyond it, follow the two-step protocol:
+
+1. **Document locally first** — create \`lessons-learned/\` or \`failed-solutions/\` in
+   this repo using the schema in \`$EOS_HOME/core/learning-loop.md\`.
+2. **Promote to Engineering OS when confidence ≥ Medium** (root cause proven, not just
+   "it stopped happening") — open a PR to \`$EOS_REPO\` adding the lesson to
+   \`lessons-learned/\` or \`patterns/\`. This is how Engineering OS accumulates
+   cross-project wisdom. Read \`$EOS_HOME/core/learning-loop.md › <learning_loop>\`
+   for the full promotion protocol (Observation → Verified Lesson → Best Practice).
+
+Never write directly to \`$EOS_HOME\` — all contributions go via PR.
 $MARK_END
 EOF
   grn "Added Engineering OS managed block to $TARGET/CLAUDE.md"
@@ -103,13 +136,50 @@ if [ -f "$EOS_HOME/scripts/use-engineering-os.command.md" ]; then
   dim "Installed /use-engineering-os slash command into .claude/commands/"
 fi
 
-# 5. Report which external skills are present in THIS project (default profile).
+# 5. Run skill bootstrap and capture output.
+BOOTSTRAP_OUT=""
 if [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
   echo
   dim "Skill presence in this project (default profile):"
-  ( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default ) || true
+  BOOTSTRAP_OUT="$( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default 2>&1 )" || true
+  echo "$BOOTSTRAP_OUT"
 fi
 
 echo
 grn "Engineering OS is now wired into: $TARGET"
 dim "Reference (read-only): $EOS_HOME   —   re-run anytime; this script is idempotent."
+
+# 6. Print next-steps checklist — manual actions that cannot be automated.
+echo
+bold "════════════════════════════════════════════"
+bold "  Next steps — manual actions required"
+bold "════════════════════════════════════════════"
+echo
+
+# superpowers
+warn "superpowers — install inside Claude Code CLI (not in bash):"
+printf '      /plugin install superpowers@claude-plugins-official\n'
+printf '      Then verify: /plugin list\n'
+echo
+
+# graphify API key
+if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
+  warn "graphify — set ANTHROPIC_API_KEY for semantic markdown/code extraction:"
+  printf '      export ANTHROPIC_API_KEY=sk-ant-...\n'
+  printf '      (Add to your shell profile or project .env — never commit it)\n'
+  echo
+fi
+
+# security-review GitHub secret
+if echo "$BOOTSTRAP_OUT" | grep -q "security-review.*✅\|security.*yml\|security.*GitHub"; then
+  warn "security-review — add CLAUDE_API_KEY secret to GitHub:"
+  printf '      GitHub repo → Settings → Secrets and variables → Actions\n'
+  printf '      Add: CLAUDE_API_KEY = <your Anthropic API key>\n'
+  echo
+fi
+
+bold "════════════════════════════════════════════"
+dim "Learning loop: when a lesson from this project is validated (Medium confidence+),"
+dim "open a PR to $EOS_REPO to share it."
+bold "════════════════════════════════════════════"
+echo
