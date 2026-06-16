@@ -66,15 +66,31 @@ CLAUDE_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 have()        { command -v "$1" >/dev/null 2>&1; }
 port_open()   { (exec 3<>"/dev/tcp/127.0.0.1/$1") >/dev/null 2>&1 && exec 3>&- 2>/dev/null; }
 
+# EOS_HOME: derive from this script's location so install functions can find assets.
+EOS_HOME="${ENGINEERING_OS_HOME:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd || echo "$HOME/.engineering-os")}"
+
 # ---- skill table -----------------------------------------------------------
 # Each skill is one line: name|level|detect_fn|install_var|profile
 # detect_fn returns 0 = present, 1 = missing.
+# install_var holds either:
+#   - a shell command string  → run with sh -c
+#   - 'fn:<name>'             → call the named bash function directly
+#   - '# ...'                 → permanent manual-only (never auto-run)
 
 detect_superpowers() {
   { have claude && claude plugin list 2>/dev/null | grep -qi superpowers; } && return 0
   [ -d "$CLAUDE_HOME/skills/superpowers" ] || ls "$CLAUDE_HOME"/plugins/*superpowers* >/dev/null 2>&1
 }
-install_superpowers='# MANUAL — inside Claude Code CLI run: /plugin install superpowers@claude-plugins-official'
+_install_superpowers() {
+  # Try the claude CLI plugin install command (works when claude CLI is in PATH).
+  if have claude && claude plugin install superpowers@claude-plugins-official 2>/dev/null; then
+    return 0
+  fi
+  printf '  %s⚠️  superpowers requires manual install inside Claude Code CLI:%s\n' "$Y" "$Z"
+  printf '       /plugin install superpowers@claude-plugins-official\n'
+  return 1
+}
+install_superpowers='fn:_install_superpowers'
 
 detect_frontend_design() {
   [ -d "$CLAUDE_HOME/skills/frontend-design" ] && return 0
@@ -93,7 +109,63 @@ detect_security_review() {
   [ -f "$PROJECT_ROOT/.claude/commands/security-review.md" ] && return 0
   grep -rqs 'claude-code-security-review' "$PROJECT_ROOT/.github/workflows" 2>/dev/null
 }
-install_security_review='# add anthropics/claude-code-security-review@main to .github/workflows — see activation.md'
+_install_security_review() {
+  local target="$PROJECT_ROOT"
+  # 1. Create GitHub Actions workflow.
+  mkdir -p "$target/.github/workflows"
+  cat > "$target/.github/workflows/security.yml" << 'WORKFLOW'
+name: Claude Code Security Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Run Claude Code Security Review
+        uses: anthropics/claude-code-security-review@main
+        with:
+          comment-pr: true
+          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+WORKFLOW
+  printf '  %s✅ created .github/workflows/security.yml%s\n' "$G" "$Z"
+  # 2. Create /security-review slash command.
+  mkdir -p "$target/.claude/commands"
+  cat > "$target/.claude/commands/security-review.md" << 'CMD'
+---
+description: Run a security review of the pending changes on the current branch
+---
+
+Run a security review on all pending changes in the current branch.
+
+Steps:
+1. Identify all changed files since the branch diverged from main.
+2. For each changed file, check for: injection vulnerabilities, authentication/authorization
+   gaps, insecure data handling, secrets or credentials in code, unsafe dependencies,
+   broken access control, OWASP Top 10 issues relevant to the change.
+3. Report findings grouped by severity (CRITICAL / HIGH / MEDIUM / LOW / INFO).
+4. For each finding: file path + line range, description, recommendation.
+5. End with a go/no-go recommendation for merging.
+
+Focus on actual security impact, not style. A finding without a concrete attack vector
+should be INFO at most.
+CMD
+  printf '  %s✅ created .claude/commands/security-review.md%s\n' "$G" "$Z"
+  printf '  %s⚠️  ACTION REQUIRED: add CLAUDE_API_KEY secret to GitHub repo%s\n' "$Y" "$Z"
+  printf '       Settings → Secrets and variables → Actions → New repository secret\n'
+}
+install_security_review='fn:_install_security_review'
 
 detect_claude_mem() {
   have claude-mem && return 0
@@ -192,14 +264,19 @@ for name in "${MISSING_NAMES[@]}"; do
   cmd="${MISSING_CMDS[$i]}"; i=$((i+1))
   case "$cmd" in
     '#'*)
-      # Manual-only skill — extract the human-readable note after '# '
+      # Permanent manual-only (legacy) — extract note after '# '
       note="${cmd#\# }"
       printf '  %s⚠️  %-20s%s manual action required:\n       %s%s%s\n' "$Y" "$name" "$Z" "$D" "$note" "$Z"
       skipped=$((skipped+1))
       continue
       ;;
   esac
-  printf '\n  %s%s%s\n  run: %s\n' "$B" "$name" "$Z" "$cmd"
+  printf '\n  %s%s%s\n' "$B" "$name" "$Z"
+  case "$cmd" in fn:*)
+    printf '  run: (function %s)\n' "${cmd#fn:}" ;;
+  *)
+    printf '  run: %s\n' "$cmd" ;;
+  esac
   if [ "$YES" -eq 1 ]; then
     ans="y"
   else
@@ -207,8 +284,13 @@ for name in "${MISSING_NAMES[@]}"; do
     read -r ans </dev/tty 2>/dev/null || ans="n"
   fi
   case "$ans" in
-    y|Y) sh -c "$cmd" && printf '  %s✅ installed%s\n' "$G" "$Z" || printf '  %s❌ install failed for %s — check manually%s\n' "$R" "$name" "$Z" ;;
-    *)   printf '  %sskipped%s\n' "$D" "$Z"; skipped=$((skipped+1)) ;;
+    y|Y)
+      case "$cmd" in
+        fn:*) "${cmd#fn:}" || { printf '  %s❌ install failed for %s%s\n' "$R" "$name" "$Z"; skipped=$((skipped+1)); } ;;
+        *)    sh -c "$cmd" && printf '  %s✅ installed%s\n' "$G" "$Z" || printf '  %s❌ install failed for %s — check manually%s\n' "$R" "$name" "$Z" ;;
+      esac
+      ;;
+    *) printf '  %sskipped%s\n' "$D" "$Z"; skipped=$((skipped+1)) ;;
   esac
 done
 
