@@ -1,10 +1,15 @@
 # Communication Patterns
 
-> Pattern library for transactional messaging: email, push, in-app notifications, and SMS. See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring and lifecycle.
+> **Content migrated.** The patterns previously in this file have moved to [`patterns/integrations/`](../integrations/README.md).
+>
+> | Pattern | New location |
+> |---|---|
+> | Transactional Email | [`patterns/integrations/email/`](../integrations/email/README.md) |
+> | Push Notifications | [`patterns/integrations/notifications/`](../integrations/notifications/README.md) |
+> | In-App Notifications | [`patterns/integrations/notifications/`](../integrations/notifications/README.md) |
+> | SMS Verification (OTP) | [`patterns/integrations/messaging/`](../integrations/messaging/README.md) |
 
-## Overview
-
-Patterns for delivering reliable, trackable messages to users across channels. Covers the abstraction layer for sending emails without coupling to a specific provider, mobile push notification handling, real-time in-app notification feeds, and OTP-based phone verification.
+This file is kept as a redirect. Do not add new patterns here.
 
 ---
 

@@ -175,6 +175,9 @@
 - **[`patterns/ui/`](./patterns/ui/) — design tokens, component architecture, accessibility, data tables, theming** ← שלם כעת
 - [`patterns/ai/`](./patterns/ai/) — prompt chaining, tool use, RAG, streaming, structured output
 - [`patterns/ai-agents/`](./patterns/ai-agents/) — multi-agent, orchestration, tool-calling
+- **[`patterns/integrations/`](./patterns/integrations/) — אינטגרציות עם מערכות חיצוניות: calendar (Google, MS Graph, Cal.com, Calendly), email, notifications, messaging (SMS/OTP), CRM, analytics** ← חדש
+
+> **כלל שכבות:** קוד שמתקשר עם ספק חיצוני שייך ל-`patterns/integrations/`. קוד שמגדיר התנהגות פנימית (תור, DB, API shape) שייך לתחום ב-`patterns/<domain>/`. תיעוד ה-API הגולמי של הספק שייך ל-`external-systems/`.
 
 **שאר ספריות:**
 
