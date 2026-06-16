@@ -106,12 +106,18 @@ Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestrati
 שמחליטה *איך* משתמשים ביכולות חיצוניות (skills/plugins/MCP/agents), *מתי*, ו*באיזה סדר*.
 
 > **עיקרון יסוד — סקילים משרתים את ה-workflow, לא מחליפים אותו (ראה [`core/precedence.md`](./core/precedence.md) דרגה 7):**
-> שלבי `workflow.md` (אפיון ב-Notion, חיפוש ב-Context7, בדיקת `patterns/`) הם **חובה עצמאית**.
+>
+> **סקילי תשתית** (graphify · claude-mem) — **לפני ה-workflow ולאורכו, תמיד:**
+> graphify בונה גרף קוד בתחילת כל סשן וחוסך קונטקסט לאורך כל העבודה. claude-mem משחזר הקשר.
+> אין "שלב ייעודי" להם — הם שכבת בסיס שרצה מתחת לכל ה-pipeline.
+>
+> **סקילי משימה** (superpowers · security-review · frontend-design) — **שלב 3 ב-`workflow.md`:**
+> שלבי ה-workflow (אפיון ב-Notion, חיפוש ב-Context7, בדיקת `patterns/`) הם **חובה עצמאית**.
 > הפעלת סקיל **לא פוטרת** מהם — אך **ניתן ואף רצוי** להשתמש בסקילים לביצועם
 > (למשל: `superpowers:brainstorming` לכתיבת תוכנית ב-Notion, `superpowers:writing-plans`
-> לפירוק משימה לפני כתיבה, Context7 לאיסוף מידע). הסקיל הוא האמצעי; השלב הוא החובה.
+> לפירוק משימה לפני כתיבה). הסקיל הוא האמצעי; השלב הוא החובה.
 
-**הערכת סקילים — שלב 3 ב-`workflow.md`** (אחרי אפיון ואיסוף מידע, לא לפניהם):
+**הערכת סקילי-משימה — שלב 3 ב-`workflow.md`** (אחרי אפיון ואיסוף מידע, לא לפניהם):
 
 1. **להעריך** אילו סקילים חיצוניים רלוונטיים לסוג המשימה (ראה [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md)).
 2. **לקבוע רמות הרצה** — LEVEL 2 (חובה כשהטריגר מתקיים והסקיל מותקן) › LEVEL 1 (ברירת מחדל) › LEVEL 0 (שיקול דעת).
