@@ -4,7 +4,7 @@
 # in the current project / environment, and report what is missing.
 #
 # Part of the Skill Orchestration Framework.
-# Governing policy: core/skill-orchestration-policy.md  (<bootstrap>)
+# Governing policy: core/skill-orchestration-policy.md  (<bootstrap>, <default_activation>)
 # Skill registry:   external-skills/README.md
 #
 # DESIGN: detect-and-report by default. Installing external skills mutates the
@@ -14,7 +14,14 @@
 #   * default            -> scan, report ✅ / ⚠️ / ➖, print exact install commands
 #   * --install          -> additionally run installs, asking before each one
 #   * --level N          -> only consider skills at LEVEL >= N (e.g. --level 2)
+#   * --profile P        -> only consider skills whose default profile == P
+#                           (default | conditional | opt-in)
 #   * --json             -> machine-readable status output
+#
+# "Default profile" (core/skill-orchestration-policy.md <default_activation>):
+#   default     = installed in every standard project
+#   conditional = installed when a condition holds (UI surface, PR-based review)
+#   opt-in      = chosen deliberately, never auto-installed
 #
 # Detection is best-effort (skills live in global/user config or the project
 # tree). A ⚠️ means "not detected here" — confirm manually before assuming absent.
@@ -23,15 +30,17 @@ set -u
 
 INSTALL=0
 MIN_LEVEL=0
+PROFILE=""
 JSON=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --install) INSTALL=1 ;;
     --level)   shift; MIN_LEVEL="${1:-0}" ;;
+    --profile) shift; PROFILE="${1:-}" ;;
     --json)    JSON=1 ;;
     -h|--help)
-      sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,34p' "$0" | sed 's/^# \{0,1\}//'
       exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
@@ -52,7 +61,7 @@ have()        { command -v "$1" >/dev/null 2>&1; }
 port_open()   { (exec 3<>"/dev/tcp/127.0.0.1/$1") >/dev/null 2>&1 && exec 3>&- 2>/dev/null; }
 
 # ---- skill table -----------------------------------------------------------
-# Each skill is one line: name|level|detect_fn|install_hint
+# Each skill is one line: name|level|detect_fn|install_var|profile
 # detect_fn returns 0 = present, 1 = missing.
 
 detect_superpowers() {
@@ -99,13 +108,13 @@ detect_graphify() {
 install_graphify='uv tool install graphifyy && graphify install'
 
 SKILLS="
-superpowers|2|detect_superpowers|install_superpowers
-frontend-design|2|detect_frontend_design|install_frontend_design
-claude-code-workflows|1|detect_claude_code_workflows|install_claude_code_workflows
-security-review|2|detect_security_review|install_security_review
-claude-mem|2|detect_claude_mem|install_claude_mem
-gstack|1|detect_gstack|install_gstack
-graphify|1|detect_graphify|install_graphify
+superpowers|2|detect_superpowers|install_superpowers|default
+security-review|2|detect_security_review|install_security_review|default
+graphify|1|detect_graphify|install_graphify|default
+claude-mem|2|detect_claude_mem|install_claude_mem|default
+frontend-design|2|detect_frontend_design|install_frontend_design|conditional
+claude-code-workflows|1|detect_claude_code_workflows|install_claude_code_workflows|conditional
+gstack|1|detect_gstack|install_gstack|opt-in
 "
 
 # ---- run -------------------------------------------------------------------
@@ -118,24 +127,24 @@ first=1
 [ "$JSON" -eq 0 ] && {
   printf '%s\n' "${B}Engineering OS — Skill Bootstrap${Z}"
   printf '%s\n' "${D}project: $PROJECT_ROOT   |   claude home: $CLAUDE_HOME${Z}"
+  [ -n "$PROFILE" ] && printf '%s\n' "${D}profile filter: $PROFILE${Z}"
   printf '%s\n\n' "${D}policy: core/skill-orchestration-policy.md${Z}"
 }
 
-while IFS='|' read -r name level detect installvar; do
+while IFS='|' read -r name level detect installvar profile; do
   [ -z "$name" ] && continue
-  if [ "$level" -lt "$MIN_LEVEL" ]; then
-    continue
-  fi
+  [ "$level" -lt "$MIN_LEVEL" ] && continue
+  [ -n "$PROFILE" ] && [ "$profile" != "$PROFILE" ] && continue
 
   if "$detect" 2>/dev/null; then
     status="present"; present=$((present+1))
-    [ "$JSON" -eq 0 ] && printf '  %s✅ %-24s%s L%s  %sdetected%s\n' "$G" "$name" "$Z" "$level" "$D" "$Z"
+    [ "$JSON" -eq 0 ] && printf '  %s✅ %-24s%s L%s %-11s %sdetected%s\n' "$G" "$name" "$Z" "$level" "$profile" "$D" "$Z"
   else
     status="missing"; missing=$((missing+1))
     cmd="${!installvar}"
     MISSING_NAMES+=("$name"); MISSING_CMDS+=("$cmd")
     if [ "$JSON" -eq 0 ]; then
-      printf '  %s⚠️  %-24s%s L%s  %snot detected%s\n' "$Y" "$name" "$Z" "$level" "$Y" "$Z"
+      printf '  %s⚠️  %-24s%s L%s %-11s %snot detected%s\n' "$Y" "$name" "$Z" "$level" "$profile" "$Y" "$Z"
       printf '       %sinstall:%s %s\n' "$D" "$Z" "$cmd"
     fi
   fi
@@ -143,7 +152,7 @@ while IFS='|' read -r name level detect installvar; do
   if [ "$JSON" -eq 1 ]; then
     [ $first -eq 0 ] && printf ','
     first=0
-    printf '{"name":"%s","level":%s,"status":"%s"}' "$name" "$level" "$status"
+    printf '{"name":"%s","level":%s,"profile":"%s","status":"%s"}' "$name" "$level" "$profile" "$status"
   fi
 done <<EOF
 $SKILLS
@@ -151,7 +160,7 @@ EOF
 
 [ "$JSON" -eq 1 ] && { printf ']}\n'; exit 0; }
 
-printf '\n%s\n' "${B}Summary:${Z} ${G}$present present${Z}, ${Y}$missing missing${Z} (level >= $MIN_LEVEL)"
+printf '\n%s\n' "${B}Summary:${Z} ${G}$present present${Z}, ${Y}$missing missing${Z} (level >= $MIN_LEVEL${PROFILE:+, profile=$PROFILE})"
 
 if [ "$missing" -eq 0 ]; then
   printf '%s\n' "${G}All required skills detected.${Z}"
@@ -161,6 +170,7 @@ fi
 # ---- optional install ------------------------------------------------------
 if [ "$INSTALL" -eq 0 ]; then
   printf '\n%s\n' "${D}Re-run with --install to install missing skills (you will be asked before each).${Z}"
+  printf '%s\n' "${D}Tip: --profile default checks only the skills every standard project needs.${Z}"
   exit 1
 fi
 

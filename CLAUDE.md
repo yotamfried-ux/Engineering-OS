@@ -116,6 +116,11 @@ Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestrati
 ([`scripts/skill-bootstrap.sh`](./scripts/skill-bootstrap.sh)) מוודא שהם קיימים בכל
 פרויקט ומדווח על חסרים — **סקיל LEVEL 2 חסר הוא פער שמדווחים עליו, לא מדלגים בשקט**.
 
+**ברירת מחדל פר-פרויקט:** חלק מהסקילים מותקנים בכל פרויקט כברירת מחדל (superpowers,
+security-review, graphify, ו-claude-mem כשהסביבה מאפשרת), אחרים מותנים (frontend-design
+ל-UI) או opt-in (gstack). הפירוט והנימוק:
+[`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) › `<default_activation>`.
+
 **override:** שום סקיל לא גובר על סקיל אבטחה (ראה [`<precedence>`](#precedence) דרגות 1 ו-3).
 
 </skill_activation>
@@ -130,6 +135,25 @@ Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestrati
 - **שקיפות לאימות:** בכל תשובה שכוללת פעולה, ציין בקצרה **אילו כלים/קונקטורים שימשו
   ואילו צעדים ננקטו** — וכשרלוונטי, לאיזה סעיף/קובץ core הם מעוגנים. כך המשתמש יכול
   לאמת שהעבודה תואמת את כללי ה-md ולתקן את הקבצים לפי הצורך.
+
+- **דוח שימוש בסוף כל משימה (חובה):** בנוסף לדיווח הרגיל (מה בוצע / עובד / לא עובד /
+  למה), סיים **כל** משימה בבלוק "🧰 במה השתמשתי" שמפרט במפורש את כל מה שהופעל — כדי
+  שהמשתמש יוכל לוודא במבט אחד שהגבת כמצופה והשתמשת בכלים הנכונים למשימה:
+
+  ```
+  🧰 במה השתמשתי:
+  - קונקטורים/חיבורים: <GitHub, Supabase… או "ללא">
+  - שרתי MCP: <graphify, Context7… או "ללא">
+  - סקילים: <superpowers (planning/L2), security-review (gate)… או "ללא">
+  - תבניות קוד (patterns/): <patterns/ui, patterns/api… או "ללא">
+  - תיעוד/רפרנסים: <Context7, official-docs, reference-repositories… או "ללא">
+  - יכולות/כלים: <Edit, Bash, Agent, Web… ברמת-על>
+  🗣️ בשפה פשוטה: <משפט–שניים: מה עשיתי ולמה הכלים שבחרתי מתאימים לבקשה>
+  ```
+
+  הבלוק הוא **בנוסף** לפורמט הקומיט ([`core/git-policy.md`](./core/git-policy.md) ›
+  `<commit_protocol>`). אם לא השתמשת בקטגוריה — כתוב "ללא" במפורש, אל תשמיט. כלל זה
+  ניתן לגיבוי ב-Stop hook (ראה [`core/hooks-policy.md`](./core/hooks-policy.md)).
 
 </communication>
 
@@ -169,7 +193,9 @@ Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestrati
 | שתי הנחיות מתנגשות; לא ברור איזה כלל גובר; לפני עקיפת כלל כתוב | [`core/precedence.md`](./core/precedence.md) | `<precedence>`, `<conflict_procedure>` |
 | חיפוש דוגמאות; בחירת קונקטור; בחירה בין פלטפורמות; fallback; עדכון משתני סביבה | [`core/connector-policy.md`](./core/connector-policy.md) | `<information_sources>`, `<connectors>`, `<environment>` |
 | קונקטור לא עובד בקלוד; להוריד שרת MCP נקודתית לפרויקט | [`core/mcp-servers.md`](./core/mcp-servers.md) | טבלת שרתי ה-MCP, `claude mcp add` |
-| **לפני כל משימה — הערכת סקילים חיצוניים; הוספת skill/plugin/MCP; רמות הרצה וסדר; bootstrap לפרויקט** | [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) | `<skill_integration_protocol>`, `<classification>`, `<execution_levels>`, `<composition>`, `<override_rule>`, `<bootstrap>` |
+| **לפני כל משימה — הערכת סקילים חיצוניים; הוספת skill/plugin/MCP; רמות הרצה וסדר; ברירת מחדל; bootstrap לפרויקט** | [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) | `<skill_integration_protocol>`, `<classification>`, `<execution_levels>`, `<default_activation>`, `<composition>`, `<override_rule>`, `<bootstrap>`, `<integration_procedure>` |
+| תזמון קומיט/ברנץ'/מיזוג — כל כמה זמן עושים כל פעולה | [`core/git-policy.md`](./core/git-policy.md) | `<cadence>` |
+| כתיבת/עדכון README ותיעוד; מבנה תיעוד נדרש; מתי מעדכנים | [`core/documentation-policy.md`](./core/documentation-policy.md) | `<documentation>` |
 
 ### שאר חלקי המערכת (לא נטענים אוטומטית — גש לפי הצורך)
 

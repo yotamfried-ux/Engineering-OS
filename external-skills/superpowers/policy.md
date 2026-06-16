@@ -10,20 +10,25 @@
 
 ## Execution Level
 
-**LEVEL 2 — mandatory**
+**LEVEL 2 — mandatory. Default-ON in every project.**
 
-Trigger condition (both must be true):
+superpowers is installed by default in **every** project (see
+[`core/skill-orchestration-policy.md`](../../core/skill-orchestration-policy.md) ›
+`<default_activation>`). Its SessionStart hook keeps the `using-superpowers` skill loaded
+at all times, so the methodology is **always active** — the only thing that scales is the
+*depth* of process, not the skill's presence.
 
-1. The task is a **non-trivial multi-step development or debugging task** — i.e., it
-   involves writing or modifying code, spans more than a trivial one-liner, and has
-   a Definition of Done that requires verification.
-2. The superpowers plugin is **installed and active** in the current Claude Code session
-   (confirmed by `using-superpowers` skill being available).
+How depth scales with the task:
 
-If either condition is false, superpowers skills are not invoked.
+| Task | superpowers depth |
+|---|---|
+| Non-trivial feature / bugfix (multi-step, code changes, real DoD) | **Full pipeline** — `brainstorming` → `writing-plans` → worktree → TDD → `verification-before-completion` → code review |
+| Trivial edit (one-liner, typo, log line, rename) | **Light touch** — the plugin stays loaded; the heavy brainstorm/TDD cycle is skipped because the skill's own logic deems it unnecessary |
+| Read-only / question | Loaded but dormant; no workflow imposed |
 
-LEVEL 2 means: when the trigger condition is met, using the appropriate superpowers skill
-is not optional — it is the required first action before proceeding with the task.
+LEVEL 2 means: for any non-trivial development task, running the appropriate superpowers
+skill is not optional — it is the required first action. The plugin is **never uninstalled
+per task**; "skipping" only ever means skipping the heavy cycle for a genuinely trivial change.
 
 ## Composition rules
 
@@ -50,7 +55,8 @@ is not optional — it is the required first action before proceeding with the t
 
 - **Overhead on trivial tasks.** The full brainstorm → plan → worktree → TDD pipeline adds
   meaningful overhead. For throwaway scripts, one-liners, or read-only tasks, do not trigger
-  LEVEL 2; skip superpowers entirely.
+  the heavy cycle — but the plugin stays installed and loaded (it is default-on per project).
+  "Skip" here means skip the heavy process, not uninstall the skill.
 
 - **Opinionated and mandatory by design.** superpowers describes its workflows as
   "mandatory, not suggestions." This is intentional: the plugin is designed to steer Claude

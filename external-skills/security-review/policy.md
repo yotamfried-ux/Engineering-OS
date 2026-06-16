@@ -13,14 +13,24 @@
 
 ## Execution Level
 
-**LEVEL 2 — MANDATORY before production AND before merge to main (conditioned on installation).**
+**LEVEL 2 — MANDATORY. Default-ON in every project that ships to production.**
 
-"Conditioned on installation" means: if this skill is not installed in a given repository, the gate does not apply to that repository. Once installed, the gate is unconditional for that repository.
+security-review is installed by default in every production-bound project (see
+[`core/skill-orchestration-policy.md`](../../core/skill-orchestration-policy.md) ›
+`<default_activation>`). "Conditioned on installation" means: if it is not installed in a
+given repository, the gate does not apply there — but for any project that reaches
+production, installing it is the default, not opt-in.
 
-Mandatory trigger conditions (both must be satisfied for the gate to fire):
+The skill is **diff-aware**, so running it on the small pending diff is cheap. It fires at
+two cadences:
 
-1. The skill is installed (the GitHub Action workflow exists in `.github/workflows/` OR the slash command is available in `.claude/commands/`).
-2. Any of the following is about to happen: merge to `main` (or the repository's production branch), production deployment, final sign-off on a branch.
+| Cadence | Trigger | Mode |
+|---|---|---|
+| **Before each commit on a feature branch** | code changes staged/pending on a non-main branch | run `/security-review` on the pending diff — **recommended default**, catches new issues before they enter history (see [`core/git-policy.md`](../../core/git-policy.md) › `<cadence>`) |
+| **Before merge to main / deploy** | merge to `main` (or production branch), production deployment, final branch sign-off | **mandatory gate** — must pass; cannot be skipped or overridden |
+
+The per-commit run is the early-warning pass; the pre-merge run is the unconditional gate.
+A clean per-commit result does not waive the pre-merge gate.
 
 ---
 
