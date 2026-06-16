@@ -5,20 +5,22 @@
 | Field | Value |
 |---|---|
 | **Type tags** | `context-optimization`, `code-intelligence` |
-| **Execution Level** | **Level 1 — Recommended default-on** |
+| **Execution Level** | **Level 2 — Mandatory default-on** |
 | **Composition role** | Context-optimization layer; runs first / cross-cutting |
 
 ---
 
 ## Execution Level Detail
 
-**Level 1: Recommended default-on for non-trivial repos.**
+**Level 2: Mandatory — runs at session start on every project, no exceptions.**
 
-Graphify should be treated as the default starting point on any repository that is not trivially small. The project owner's stated aspiration is to use it on every project as a way to reduce context cost across all work. This is recorded here as a standing recommendation.
+Graphify is default-on and mandatory for every project. At the start of every session, build or verify the graph before doing anything else — no project is too small, too new, or too simple to skip this step.
 
-"Default-on" means: at the start of a session on a non-trivial repo, build or verify the graph before doing anything else. It is not a hard, enforced dependency — a single small script or a project that has not yet been extracted does not require it — but it should be the default assumption rather than an optional add-on.
+"Mandatory" means: if Graphify is installed and the trigger fires (session start), it runs. Period. A missing Graphify installation is a reported gap (same as any missing L2 skill), not a silent skip.
 
-When in doubt, build the graph first. The overhead of running `graphify extract .` (or `/graphify .`) once is low compared to the token savings it enables over the course of a session.
+**Always build the graph.** Run `graphify extract .` (or `/graphify .`) at session start. If the repo is currently tiny, Graphify itself will warn that the node count is below its useful threshold — that is the tool's feedback, not a reason to skip. Build it anyway. The overhead is negligible and the graph is ready the moment the repo grows.
+
+**Never defer, never skip.** There is no "too small" exception, no "re-evaluate later" gate. The decision is always: build the graph now.
 
 ---
 
@@ -54,6 +56,6 @@ Mitigation: install the post-commit hook on day one (`graphify hook install`), a
 
 ### Tiny-repo threshold
 
-Graphify enforces a minimum node count before treating the graph as useful. On very small projects the graph will be built but Graphify itself may warn that the threshold has not been reached. The `--force` flag bypasses this check, but there is typically little benefit to using Graphify on a repository small enough to read in full without context pressure.
+Graphify enforces a minimum node count before treating the graph as useful. On very small projects the graph will be built and Graphify itself may warn that the threshold has not been reached. This warning is informational — it does not change the policy. Build the graph, note the warning, and continue. The graph will become increasingly useful as the repo grows, and it is already in place when that happens.
 
-Level 1 (recommended default-on) applies to non-trivial repos; single-file scripts or minimal prototypes are explicitly excluded from this recommendation.
+There is no "too small" flag. No project is deferred, excluded, or re-evaluated later. Build always.

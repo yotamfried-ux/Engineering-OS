@@ -49,7 +49,7 @@ Each wrapper is written from a **verified scan of the real repository** — not 
 | **[security-review](./security-review/)** | security, review | **L2** · default-on · pre-commit + pre-merge gate | GitHub Action + slash command | `/security-review`, `anthropics/claude-code-security-review@main` Action |
 | **[claude-mem](./claude-mem/)** | memory, context-persistence | **L2** (passive system dependency) | plugin + MCP + hooks + worker | MCP tools `search`, `timeline`, `get_observations` (+ passive lifecycle hooks) |
 | **[gstack](./gstack/)** | orchestration, role-simulation | L1 (complex projects) | `git clone` + `./setup` (needs Bun) | role commands `/autoplan`, `/review`, `/qa`, `/cso`, `/ship` (23 specialists + 8 power tools) |
-| **[graphify](./graphify/)** | context-optimization, code-intelligence | L1 (recommended default-on) | `uv tool install graphifyy` + MCP | `/graphify .`, MCP tools `query_graph`, `get_node`, `get_pr_impact`… |
+| **[graphify](./graphify/)** | context-optimization, code-intelligence | **L2** (mandatory default-on every project) | `uv tool install graphifyy` + MCP | `/graphify .`, MCP tools `query_graph`, `get_node`, `get_pr_impact`… |
 
 ---
 
@@ -61,7 +61,7 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 |---|---|---|
 | superpowers | ✅ **every project** | Prevents the #1 failure mode (jumping to code without a spec). Always loaded via its SessionStart hook; only the *depth* of process scales with task size. |
 | security-review | ✅ **every production-bound project** | Security is a baseline, not an add-on. Diff-aware, so cheap to run before each commit; mandatory gate before merge to main. |
-| graphify | ✅ **any non-tiny repo** | Saves context cost every session. Skipped only for tiny repos where the graph isn't worth building. |
+| graphify | ✅ **every project** | Saves context cost every session. Always build the graph at session start, no exceptions. If the repo is tiny, Graphify itself warns — that is the tool's feedback, not a skip condition. The graph is in place when the repo grows. |
 | claude-mem | ✅ **where the environment allows** | Cross-session memory helps almost any multi-session project. Opt-out only in locked-down/ephemeral environments or where data must not persist to disk. |
 | frontend-design | ⚠️ **conditional — UI projects** | Irrelevant to pure backend / CLI / library. Installed when there is a UI surface. |
 | claude-code-workflows | ⚠️ **recommended with PR review** | Provides PR-review subagents + Actions; full value only in a PR-based flow. |
