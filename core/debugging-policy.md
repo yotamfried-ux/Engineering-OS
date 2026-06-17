@@ -12,12 +12,30 @@
 
 **מתי:** כשמתגלה באג — בפיתוח או בפרודקשן — בכל שלב.
 
+### ⛔ MANDATORY FIRST STEP — לפני הכל: Sentry
+
+**לפני כל פעולת debugging** — פתח Sentry ובדוק האם יש issue רלוונטי:
+
+```
+mcp__Sentry__search_issues(query="<error message>", project="<project>")
+mcp__Sentry__get_sentry_resource(resource_link="<issue URL>")
+```
+
+אם Sentry לא מחובר/לא זמין — **תעד זאת מפורשות** ורק אז המשך ידנית.
+אסור להתחיל בניחושי קוד לפני שבדקת ב-Sentry.
+
+**נימוק:** ניחוש שורש הבאג מהקוד הוא מקור הבאגים החוזרים מספר 1. Sentry מספק
+stack trace מדויק, context, וhistory — מה שהופך debugging לוקאלי ל-verification,
+לא investigation.
+
+---
+
 **דיבאג מתבצע דרך Sentry (או קונקטור דיבאג ייעודי) — לא על ידי קלוד לבד.** אל
 תנחש את מקור הבאג מהקוד; הסתמך על הנתונים מהכלי.
 
 1. בדוק ב-`lessons-learned/` וב-`failed-solutions/` אם כבר נתקלנו בבאג דומה (ראה
    [`learning-loop.md`](./learning-loop.md)).
-2. **Sentry** — חפש את השגיאה וה-stack trace.
+2. **Sentry** — חפש את השגיאה וה-stack trace (ראה mandatory step למעלה).
 3. שחזר את הבעיה.
 4. בדוק logs ו-DB (query אמיתי, לא ניחוש).
 5. השווה ל-commit אחרון תקין (לפי תיעוד הקומיטים — ראה

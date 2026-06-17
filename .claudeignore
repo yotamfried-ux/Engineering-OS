@@ -1,0 +1,92 @@
+# .claudeignore — files Claude should NOT read (saves tokens).
+# This is the Engineering OS baseline; adapt per project.
+# Governing policy: core/resource-management.md (<claudeignore>)
+
+# Package managers / dependencies
+node_modules/
+.pnp/
+.pnp.js
+vendor/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.nuxt/
+.output/
+*.egg-info/
+__pycache__/
+*.pyc
+target/
+
+# Lock files (verbose, low information density for Claude)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+Cargo.lock
+poetry.lock
+Pipfile.lock
+composer.lock
+Gemfile.lock
+
+# Generated / compiled assets
+*.min.js
+*.min.css
+*.map
+*.bundle.js
+graphify-out/
+
+# Environment & secrets (never read by Claude)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Git internals
+.git/
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Binary assets (Claude cannot use these anyway)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.otf
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.pdf
+*.zip
+*.tar.gz
+*.tgz
+
+# Test snapshots & coverage (large, generated)
+__snapshots__/
+*.snap
+coverage/
+.nyc_output/
+htmlcov/
+.coverage
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*.orig

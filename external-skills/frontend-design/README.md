@@ -1,6 +1,16 @@
 # frontend-design
 
-**One-line summary:** A Claude Code skill that reframes Claude as a design lead and enforces a multi-pass, intentional visual design process when building or reshaping UI.
+> ## ⚠️ DEPRECATED
+>
+> **השתמש ב-[`ui-ux-pro-max`](../ui-ux-pro-max/) במקום.**
+>
+> `ui-ux-pro-max` מחליף סקיל זה לחלוטין ומספק: 67 UI styles, 161 color palettes,
+> 57 font pairings, 161 industry reasoning rules, ו-pre-delivery checklist.
+> לפרויקטים חדשים — התקן `ui-ux-pro-max` בלבד. פרויקטים קיימים — עבור migration ב-`ui-ux-pro-max/activation.md`.
+>
+> **תאריך deprecation:** 2026-06-17
+
+**One-line summary:** *(deprecated)* A Claude Code skill that reframes Claude as a design lead and enforces a multi-pass, intentional visual design process when building or reshaping UI.
 
 ---
 

@@ -61,12 +61,14 @@
    (או בקונקטור ניהול פרויקטים ייעודי): מטרה, דרישות, מערכות מושפעות, תוכנית. אם יש
    בחירה בין פלטפורמות (ענן / DB / auth / אירוח) — אבחן אותה והכרע עם המשתמש כאן
    (ראה [`connector-policy.md`](./connector-policy.md) › `<connectors>`).
+   *כלי:* `mcp__Notion__notion-create-pages` ליצירת spec · `mcp__Notion__notion-fetch` לקריאה · `mcp__Notion__notion-update-page` לסגירת הלולאה (שלב 10).
    *סקיל שיכול לסייע:* `superpowers:brainstorming` לגיבוש הרעיון, `superpowers:writing-plans` לפירוק לשלבים — הפלט נכתב ב-Notion.
 2. **חיפוש דוגמאות ואיסוף מידע** — משוך פתרון קיים ומקור אמין לפי `<information_sources>`
    (ראה [`connector-policy.md`](./connector-policy.md)): קודם `patterns/`/`templates/`,
    ואז **Context7** לתיעוד רשמי עדכני של הספריות/הגרסאות בהן תשתמש.
    **אם לאחר כל החיפושים אין כיסוי** — הפעל את נוהל הפער לפני כתיבה
    (ראה [`connector-policy.md`](./connector-policy.md) › `<pattern_gap>`).
+   *כלי:* `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`; לבאגים: Sentry ראשון (ראה [`debugging-policy.md`](./debugging-policy.md) › `<debug_loop>`).
    *סקיל שיכול לסייע:* graphify (גרף כבר בנוי — שלוף תת-גרף רלוונטי); Context7 MCP לתיעוד ספריות.
 3. **בחירת כלים והערכת סקילים** — בחר את הקונקטורים המתאימים **לפי המשימה**, והעדף כלי
    שכבר בשימוש בפרויקט אם הוא מספק את היכולת (ראה [`connector-policy.md`](./connector-policy.md)).

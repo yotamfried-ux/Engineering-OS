@@ -11,7 +11,29 @@
 
 ---
 
-## Install — Option A: GitHub Action (automated, PR-triggered)
+## Install — Option A: Slash Command (interactive, Claude Code) ← מומלץ
+
+**זוהי הדרך המועדפת** — רצה בתוך סשן Claude Code הקיים ללא API key נוסף.
+Claude Code משתמש ב-model context של הסשן הנוכחי; אין עלות LLM נפרדת.
+
+Copy the command definition file into the target repository's Claude commands directory:
+
+```bash
+# From inside the target repository:
+mkdir -p .claude/commands
+cp <path-to-cloned-skill-repo>/.claude/commands/security-review.md .claude/commands/security-review.md
+```
+
+The `/security-review` slash command is then available in Claude Code sessions in that repository.
+It runs the review on all pending changes on the current branch.
+
+To customize review behavior, edit `.claude/commands/security-review.md` directly.
+
+**אימות:** בתוך Claude Code session, הקלד `/security-review` — הפקודה אמורה להתחיל מיד.
+
+---
+
+## Install — Option B: GitHub Action (automated, CI/CD only)
 
 Add the following file to the target repository. The workflow triggers on every pull request and posts findings as inline PR comments.
 
@@ -59,19 +81,7 @@ jobs:
 
 ---
 
-## Install — Option B: Slash Command (interactive, Claude Code)
-
-Copy the command definition file into the target repository's Claude commands directory:
-
-```bash
-# From inside the target repository:
-mkdir -p .claude/commands
-cp <path-to-cloned-skill-repo>/.claude/commands/security-review.md .claude/commands/security-review.md
-```
-
-The `/security-review` slash command is then available in Claude Code sessions in that repository. It runs the review on all pending changes on the current branch.
-
-To customize review behavior (scope, focus areas, output format), edit `.claude/commands/security-review.md` in the target repository directly.
+*(Option B was the slash command — moved to Option A above.)*
 
 ---
 
