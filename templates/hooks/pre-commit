@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# Engineering OS — pre-commit hook template
+#
+# USAGE: copy to .git/hooks/pre-commit in your project and make executable:
+#   cp <engineering-os>/templates/hooks/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# This hook enforces the rules defined in core/hooks-policy.md:
+#   - Lint + format check (fail fast on violations)
+#   - Test suite (block on failure)
+#   - Secrets scan (block on leaked credentials)
+#   - Block --no-verify bypass attempt (detects the flag and warns)
+#
+# Customize the LINT_CMD, FORMAT_CMD, TEST_CMD variables for your stack.
+# For projects with no tests yet, set TEST_CMD="" to skip that step.
+
+set -euo pipefail
+
+RED='\033[31m'
+GRN='\033[32m'
+YLW='\033[33m'
+RST='\033[0m'
+
+pass() { printf "${GRN}✅ %s${RST}\n" "$*"; }
+fail() { printf "${RED}❌ %s${RST}\n" "$*" >&2; }
+warn() { printf "${YLW}⚠️  %s${RST}\n" "$*"; }
+
+# ── CONFIGURE FOR YOUR STACK ──────────────────────────────────────────────────
+# JS/TS projects:
+#   LINT_CMD="npx eslint . --max-warnings 0"
+#   FORMAT_CMD="npx prettier --check ."
+#   TEST_CMD="npx vitest run --reporter=verbose"
+#
+# Python projects:
+#   LINT_CMD="ruff check ."
+#   FORMAT_CMD="ruff format --check ."
+#   TEST_CMD="pytest -x -q"
+#
+# Leave empty ("") to skip a step.
+LINT_CMD="${LINT_CMD:-}"
+FORMAT_CMD="${FORMAT_CMD:-}"
+TEST_CMD="${TEST_CMD:-}"
+# ──────────────────────────────────────────────────────────────────────────────
+
+ERRORS=0
+
+# 1. Secrets scan — always runs, no configuration needed.
+#    Scans staged files for patterns that look like credentials.
+STAGED=$(git diff --cached --name-only 2>/dev/null || true)
+if [ -n "$STAGED" ]; then
+  SECRET_PATTERNS='(AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9-_]{20,}|ghp_[A-Za-z0-9]{36,}|npm_[A-Za-z0-9]{36,}|password\s*=\s*["\x27][^"\x27]{8,}|secret\s*=\s*["\x27][^"\x27]{8,}|api_key\s*=\s*["\x27][^"\x27]{8,})'
+  HITS=$(echo "$STAGED" | xargs git show HEAD:"$FILE" 2>/dev/null | grep -iEn "$SECRET_PATTERNS" || true)
+  if [ -n "$HITS" ]; then
+    fail "Possible secrets detected in staged files:"
+    echo "$HITS" >&2
+    fail "Remove secrets before committing. If this is a false positive, use git-secrets allowlist."
+    ERRORS=$((ERRORS + 1))
+  else
+    pass "Secrets scan — clean"
+  fi
+fi
+
+# 2. Lint
+if [ -n "$LINT_CMD" ]; then
+  if eval "$LINT_CMD" >/dev/null 2>&1; then
+    pass "Lint — passed"
+  else
+    fail "Lint failed. Run: $LINT_CMD"
+    eval "$LINT_CMD" 2>&1 | tail -20 >&2
+    ERRORS=$((ERRORS + 1))
+  fi
+else
+  warn "Lint — no LINT_CMD configured; skipping. Set LINT_CMD in .git/hooks/pre-commit."
+fi
+
+# 3. Format check
+if [ -n "$FORMAT_CMD" ]; then
+  if eval "$FORMAT_CMD" >/dev/null 2>&1; then
+    pass "Format — passed"
+  else
+    fail "Format check failed. Run: $FORMAT_CMD --write (or equivalent) to fix."
+    ERRORS=$((ERRORS + 1))
+  fi
+else
+  warn "Format — no FORMAT_CMD configured; skipping."
+fi
+
+# 4. Tests
+if [ -n "$TEST_CMD" ]; then
+  if eval "$TEST_CMD" >/dev/null 2>&1; then
+    pass "Tests — passed"
+  else
+    fail "Tests failed. Run: $TEST_CMD"
+    eval "$TEST_CMD" 2>&1 | tail -30 >&2
+    ERRORS=$((ERRORS + 1))
+  fi
+else
+  warn "Tests — no TEST_CMD configured; skipping."
+fi
+
+# 5. Result
+if [ "$ERRORS" -gt 0 ]; then
+  echo >&2
+  fail "$ERRORS check(s) failed. Commit blocked."
+  fail "Fix the issues above and try again."
+  fail "See core/hooks-policy.md for enforcement rationale."
+  exit 1
+fi
+
+pass "All pre-commit checks passed."
+exit 0

@@ -1,7 +1,25 @@
 # CLAUDE.md
 
-> Copy this file to your project root as `CLAUDE.md` and fill in `<Project Context>`.
-> Keep `./engineering-os/` as a git submodule at that exact path.
+> **How to use this template — choose one mode:**
+>
+> **Mode A — Recommended (shared reference via `use-in-project.sh`):**
+> Run this once from your target project's root:
+> ```bash
+> bash ~/.engineering-os/scripts/use-in-project.sh
+> ```
+> This installs Engineering OS at `~/.engineering-os/` and auto-generates the correct
+> CLAUDE.md block with the right paths. **You do not need to copy this file manually.**
+>
+> **Mode B — Git submodule (if you want the OS pinned to your repo):**
+> ```bash
+> git submodule add https://github.com/yotamfried-ux/Engineering-OS ./engineering-os
+> ```
+> Then copy this file to your project root as `CLAUDE.md` and replace every
+> `./engineering-os/` path below with the actual submodule path.
+>
+> **Path note:** Mode A uses `~/.engineering-os/` everywhere. Mode B uses `./engineering-os/`.
+> The paths in this template use `./engineering-os/` (Mode B). If using Mode A, adjust accordingly
+> or let `use-in-project.sh` generate the block automatically.
 
 ---
 
