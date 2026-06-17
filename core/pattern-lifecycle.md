@@ -11,10 +11,11 @@
 
 ## <pattern_registry>
 
-האינדקס של התבניות מוחזק בקובץ **מובנה** (`registry.yaml`), לא בפרוזה מפוזרת, כדי
-שבחירת "התבנית בעלת הציון הגבוה ביותר שמתאימה למשימה" תהיה query ולא קריאה ידנית של
-קובץ אחרי קובץ (ראה [`connector-policy.md`](./connector-policy.md) ›
-`<information_sources>`).
+האינדקס של התבניות מנוהל דרך **קבצי ה-policy** — `pattern-lifecycle.md` (סטטוס וחיים)
+ו-[`scoring-guide.md`](./scoring-guide.md) (ציון) — ולא בקובץ yaml נפרד.
+בחירת "התבנית בעלת הציון הגבוה ביותר שמתאימה למשימה" נעשית דרך קריאת קבצי ה-`README.md`
+בכל תת-תיקייה ב-`patterns/` בשילוב עם ציוני הסקירה המתועדים (ראה
+[`connector-policy.md`](./connector-policy.md) › `<information_sources>`).
 
 כל רשומה כוללת:
 

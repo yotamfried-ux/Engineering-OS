@@ -181,7 +181,7 @@ superpowers · security-review · graphify · rtk · claude-mem. הסקריפט 
 │   memory layer         │   (claude-mem) — משחזר הקשר ב-SessionStart, מסכם ב-Stop; פסיבי, מתחת לכל ה-pipeline
 │                        │
 │   1. planning   ───────┤   (superpowers brainstorm/plan, gstack /autoplan /plan-*) — לפני קוד
-│   2. coding     ───────┤   (frontend-design ל-UI, superpowers TDD) — מימוש
+│   2. coding     ───────┤   (ui-ux-pro-max ל-UI, superpowers TDD) — מימוש
 │   3. SECURITY GATE ────┤   (security-review, gstack /cso) — חוסם לפני פרודקשן; לא ניתן לעקיפה
 │   4. review     ───────┘   (claude-code-workflows, gstack /review, superpowers receiving-code-review) — אחרון
 └────────────────────────┘
@@ -305,7 +305,7 @@ claude-mem מרים worker ופורט 37777, graphify דורש uv). לפי [`git
 
 - **workflow** — שלב הערכת הסקילים נכנס לפתיחת כל משימה ([`workflow.md`](./workflow.md)).
 - **precedence** — שער האבטחה נשען על היררכיית ההכרעה ([`precedence.md`](./precedence.md)).
-- **patterns** — סקילי קוד (frontend-design) משלימים את ספריות ה-`patterns/` (למשל `patterns/ui/`).
+- **patterns** — סקילי קוד (ui-ux-pro-max) משלימים את ספריות ה-`patterns/` (למשל `patterns/ui/`).
 - **hooks** — סקילים שמביאים hooks משלהם (superpowers SessionStart, claude-mem lifecycle)
   מתועדים ב-activation.md שלהם; אין להחליף בהם את ה-hooks הדטרמיניסטיים של המערכת
   ([`hooks-policy.md`](./hooks-policy.md)).

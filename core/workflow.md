@@ -54,7 +54,7 @@
 >   קריאת קבצים שלמים. חוסך קונטקסט לאורך כל ה-workflow. רץ תמיד, לא דורש שלב ייעודי.
 > - **claude-mem** — משחזר הקשר מסשנים קודמים ב-SessionStart; מסכם ב-Stop. פסיבי.
 >
-> שאר הסקילים (superpowers, security-review, frontend-design) הם **כלי עזר לשלבים**
+> שאר הסקילים (superpowers, security-review, ui-ux-pro-max) הם **כלי עזר לשלבים**
 > ומופעלים בשלב 3. כלל הברזל: **השלב חייב לקרות; הסקיל הוא האמצעי, לא התחליף.**
 
 1. **אפיון ותכנון** — השלב הראשון בכל פרויקט/משימה. אפיין ותכנן ב-**Notion**
@@ -87,7 +87,7 @@
    > ודוגמה היא ניחוש ארכיטקטורה — בדיוק מה שעקרון-העל אוסר.
 
 5. **כתיבה איטרטיבית** — שינויים קטנים בתוך ה-branch הפעיל.
-   *סקיל שיכול לסייע:* `superpowers:test-driven-development`; `frontend-design` לממשק.
+   *סקיל שיכול לסייע:* `superpowers:test-driven-development`; `ui-ux-pro-max` לממשק (ראה [`external-skills/ui-ux-pro-max/`](../external-skills/ui-ux-pro-max/)).
 6. **אימות** — דרך הכלי המתאים למשימה.
    *סקיל שיכול לסייע:* `superpowers:verification-before-completion` — מריץ פקודות ומאמת לפני הצהרת הצלחה.
 7. **ניקוי קוד** — ראה [`quality-gates.md`](./quality-gates.md) › `<cleanup>`.
@@ -112,6 +112,43 @@
 
 ## <onboarding>
 
+### 0. Prerequisites (חובה לפני שלב 1)
+
+לפני שמתחילים לעבוד עם Engineering OS בפרויקט חדש, ודא שכל הכלים והחיבורים הבאים קיימים:
+
+**כלים נדרשים:**
+- `uv` — מנהל חבילות Python (נדרש לgraphify): `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- `node` / `npm` — נדרש לrtk ולסקילים נוספים
+- `git` — ברמה 2.x לפחות
+
+**הגדרת `.env`** — צור קובץ `.env` בשורש הפרויקט עם הטוקנים הנדרשים:
+```
+ANTHROPIC_API_KEY=sk-ant-...        # חובה — לgraphify ולsecurity-review
+NOTION_TOKEN=secret_...             # לניהול spec ואפיון (שלב 1 בworkflow)
+GITHUB_TOKEN=ghp_...                # לGitHub MCP ולpull requests
+```
+> **אבטחה:** `.env` חייב להיות ב-`.gitignore`. לעולם אל תעשה commit לטוקנים.
+
+**חיבור שרתי MCP** (פעם אחת לכל מכונה, בתוך Claude Code CLI):
+```bash
+# Notion — לניהול spec ואפיון
+claude mcp add notion https://mcp.notion.com/mcp
+
+# Context7 — לתיעוד ספריות עדכני
+claude mcp add context7 https://mcp.context7.com/mcp
+```
+אמת חיבור: `/mcp` בתוך Claude Code — שני השרתים חייבים להופיע כ-connected לפני שממשיכים.
+
+**התקנה ידנית של `superpowers`** (פעם אחת לכל מכונה, בתוך Claude Code CLI):
+```
+/plugin install superpowers@claude-plugins-official
+```
+אמת: `/plugin list` — צריך להופיע `superpowers`.
+
+---
+
+### שלבי Onboarding
+
 לפני כתיבת קוד בפרויקט שאינך מכיר:
 
 1. קרא את `CLAUDE.md` ואת קבצי ההגדרה (`package.json`, `pyproject.toml`, `.env.example`).
@@ -123,6 +160,8 @@
 5. אל תניח מבנה — בדוק בפועל איך הקוד מאורגן.
 6. **הרץ את ה-bootstrap של הסקילים** — `scripts/skill-bootstrap.sh` כדי לוודא שהסקילים
    הנדרשים קיימים בפרויקט; דווח על חסרים (ראה [`skill-orchestration-policy.md`](./skill-orchestration-policy.md) › `<bootstrap>`).
+   - `superpowers`, `security-review`, `claude-mem` דורשים התקנה ידנית — ראה
+     `external-skills/<skill>/activation.md` לפירוט.
 
 </onboarding>
 

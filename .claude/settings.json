@@ -33,6 +33,16 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"Stop\",\"additionalContext\":\"📋 DoD reminder — before marking done, verify: (1) tests pass, (2) no secrets committed, (3) behavior proven via tests/logs/UI/API, (4) CLAUDE.md usage report included, (5) commit message includes proof. See core/quality-gates.md › <definition_of_done>.\"}}'  || true"
+          }
+        ]
+      }
     ]
   }
 }
