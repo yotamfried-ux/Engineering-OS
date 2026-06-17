@@ -54,7 +54,7 @@
 >   קריאת קבצים שלמים. חוסך קונטקסט לאורך כל ה-workflow. רץ תמיד, לא דורש שלב ייעודי.
 > - **claude-mem** — משחזר הקשר מסשנים קודמים ב-SessionStart; מסכם ב-Stop. פסיבי.
 >
-> שאר הסקילים (superpowers, security-review, frontend-design) הם **כלי עזר לשלבים**
+> שאר הסקילים (superpowers, security-review, ui-ux-pro-max) הם **כלי עזר לשלבים**
 > ומופעלים בשלב 3. כלל הברזל: **השלב חייב לקרות; הסקיל הוא האמצעי, לא התחליף.**
 
 1. **אפיון ותכנון** — השלב הראשון בכל פרויקט/משימה. אפיין ותכנן ב-**Notion**
@@ -63,6 +63,7 @@
    (ראה [`connector-policy.md`](./connector-policy.md) › `<connectors>`).
    *כלי:* `mcp__Notion__notion-create-pages` ליצירת spec · `mcp__Notion__notion-fetch` לקריאה · `mcp__Notion__notion-update-page` לסגירת הלולאה (שלב 10).
    *סקיל שיכול לסייע:* `superpowers:brainstorming` לגיבוש הרעיון, `superpowers:writing-plans` לפירוק לשלבים — הפלט נכתב ב-Notion.
+   > *אם Notion לא מחובר:* השתמש ב-GitHub Issues / מסמך markdown בריפו ועדכן ב-`connector-policy.md` › `<connectors>` · Notion · אופציה משנית. אל תדלג על שלב האפיון — רק כלי כתיבת ה-spec ישתנה.
 2. **חיפוש דוגמאות ואיסוף מידע** — משוך פתרון קיים ומקור אמין לפי `<information_sources>`
    (ראה [`connector-policy.md`](./connector-policy.md)): קודם `patterns/`/`templates/`,
    ואז **Context7** לתיעוד רשמי עדכני של הספריות/הגרסאות בהן תשתמש.
@@ -87,7 +88,7 @@
    > ודוגמה היא ניחוש ארכיטקטורה — בדיוק מה שעקרון-העל אוסר.
 
 5. **כתיבה איטרטיבית** — שינויים קטנים בתוך ה-branch הפעיל.
-   *סקיל שיכול לסייע:* `superpowers:test-driven-development`; `frontend-design` לממשק.
+   *סקיל שיכול לסייע:* `superpowers:test-driven-development`; `ui-ux-pro-max` לממשק.
 6. **אימות** — דרך הכלי המתאים למשימה.
    *סקיל שיכול לסייע:* `superpowers:verification-before-completion` — מריץ פקודות ומאמת לפני הצהרת הצלחה.
 7. **ניקוי קוד** — ראה [`quality-gates.md`](./quality-gates.md) › `<cleanup>`.
@@ -158,7 +159,7 @@
 - **Python** — `pyproject.toml`, הגדרת linter+formatter (Ruff), קונפיג טסטים
   (pytest), `.python-version`.
 - **כל פרויקט** — הגדרת pre-commit כ-**hook אוכף** (lint + format + טסטים; ראה
-  [`hooks-policy.md`](./hooks-policy.md)) ו-CI בסיסי ב-GitHub Actions שמריץ את אותן בדיקות.
+  [`hooks-policy.md`](./hooks-policy.md)): `cp scripts/hooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit` (הסקריפט זמין ב-Engineering OS). CI בסיסי ב-GitHub Actions שמריץ את אותן בדיקות.
 
 לסוג פרויקט אחר (ML, אוטומציה וכו') — הוסף את קבצי הבסיס המקובלים לאותו סוג
 (למשל לפרויקט ML: ניהול תלויות, מבנה לנתונים/מודלים, seed לשחזוריות), באותו עיקרון
