@@ -102,6 +102,7 @@ claude mcp add <name> -- npx -y <package>
 |---|---|---|
 | **graphify** | ✅ | מקומי (stdio): `claude mcp add --transport stdio graphify -- python -m graphify.serve graphify-out/graph.json`. דורש `uv tool install "graphifyy[mcp]"`. כלים: `query_graph`, `get_node`, `get_pr_impact`… ראה [`../external-skills/graphify/activation.md`](../external-skills/graphify/activation.md). **HTTP transport דורש `GRAPHIFY_API_KEY` ב-`.env` בלבד; טוקן בשיתוף URL = secret אישי, לא לקומיט.** |
 | **claude-mem** | ✅ | מותקן עם הפלאגין (`npx claude-mem install`) — רושם את שרת ה-MCP `mcp-search` אוטומטית (כלים: `search`, `timeline`, `get_observations`). worker רץ על פורט 37777. ראה [`../external-skills/claude-mem/activation.md`](../external-skills/claude-mem/activation.md). |
+| **nemotron** | ✅ | מקומי (stdio via uv): `claude mcp add --scope project nemotron -- uv run scripts/nemotron-mcp-server.py`. דורש `Nemotron_api_key` כ-Claude Code secret. כלים: `nemotron_generate_code`, `nemotron_review_code`, `nemotron_summarize`, `nemotron_explain`, `nemotron_brainstorm`. ראה [`../external-skills/nemotron/activation.md`](../external-skills/nemotron/activation.md). **API key = Claude Code secret בלבד — לא ב-`.env`, לא ב-git.** |
 
 ---
 

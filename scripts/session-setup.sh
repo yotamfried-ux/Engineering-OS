@@ -68,6 +68,18 @@ if command -v rtk >/dev/null 2>&1; then
   ok "RTK $(rtk --version 2>/dev/null | head -1) ready (60-90% Bash token savings)"
 fi
 
+# ── 4. Nemotron (Nvidia) ─────────────────────────────────────────────────────
+# Exposes Nvidia's OpenAI-compatible API to graphify (non-code extraction)
+# and registers it for use by the Nemotron MCP server tools.
+# Governing policy: external-skills/nemotron/activation.md
+if [ -n "${Nemotron_api_key:-}" ]; then
+  export OPENAI_API_KEY="${Nemotron_api_key}"
+  export OPENAI_BASE_URL="https://integrate.api.nvidia.com/v1"
+  ok "Nemotron ready — graphify non-code extraction via Nvidia API"
+else
+  info "Nemotron_api_key not set — graphify uses local extraction only"
+fi
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf '\n'
 info "session setup complete."
