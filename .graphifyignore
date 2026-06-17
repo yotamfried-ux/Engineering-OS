@@ -1,0 +1,13 @@
+# Exclude documentation files from graphify extraction.
+# Engineering OS is a governance system (primarily .md); only scripts (*.sh) are code.
+# This lets graphify run without an LLM API key by keeping the corpus code-only.
+*.md
+*.txt
+*.json
+*.yaml
+*.yml
+*.toml
+*.png
+*.jpg
+*.svg
+*.pdf

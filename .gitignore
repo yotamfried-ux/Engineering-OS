@@ -1,2 +1,6 @@
-# Claude Code internal files
-.claude/
+# Claude Code internal files (keep settings.json tracked for team config)
+.claude/*
+!.claude/settings.json
+
+# Graphify knowledge graph (rebuilt each session via session-setup.sh)
+graphify-out/

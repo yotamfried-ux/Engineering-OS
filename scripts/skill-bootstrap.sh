@@ -82,6 +82,10 @@ detect_superpowers() {
   ls "$CLAUDE_HOME"/plugins/cache/*superpowers* >/dev/null 2>&1
 }
 _install_superpowers() {
+  # Web-only environments (Claude Code on the web) have no SSH agent.
+  # Force HTTPS for all github.com clones so submodule fetches don't fail.
+  git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
+
   if ! have claude; then
     printf '  %s⚠️  claude CLI not found in PATH — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
     printf '       /plugin install superpowers@claude-plugins-official\n'
@@ -100,11 +104,57 @@ _install_superpowers() {
 }
 install_superpowers='fn:_install_superpowers'
 
+detect_rtk() {
+  have rtk && return 0
+  grep -q '"rtk hook"' "$HOME/.claude/settings.json" 2>/dev/null
+}
+_install_rtk() {
+  # Web-only environments (Claude Code on the web) have no SSH agent.
+  git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
+
+  if have brew; then
+    brew install rtk 2>/dev/null && rtk init -g 2>/dev/null && return 0
+  fi
+  if have cargo; then
+    printf '  %sInstalling RTK via cargo (may take 2-3 min)…%s\n' "$D" "$Z"
+    cargo install --git https://github.com/rtk-ai/rtk 2>/dev/null \
+      && rtk init -g 2>/dev/null \
+      && printf '  %s✅ RTK installed%s\n' "$G" "$Z" && return 0
+  fi
+  printf '  %s⚠️  RTK install failed — no brew or cargo. Install manually:%s\n' "$Y" "$Z"
+  printf '       curl -fsSL https://rtk.ai/install.sh | sh && rtk init -g\n'
+  return 1
+}
+install_rtk='fn:_install_rtk'
+
+detect_ui_ux_pro_max() {
+  { have claude && claude plugin list 2>/dev/null | grep -qi 'ui-ux-pro-max'; } && return 0
+  [ -d "$CLAUDE_HOME/plugins/cache/ui-ux-pro-max-skill" ] && return 0
+}
+_install_ui_ux_pro_max() {
+  if ! have claude; then
+    printf '  %s⚠️  claude CLI not found — install manually inside Claude Code:%s\n' "$Y" "$Z"
+    printf '       /plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill\n'
+    printf '       /plugin install ui-ux-pro-max@ui-ux-pro-max-skill\n'
+    return 1
+  fi
+  claude plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill 2>/dev/null || true
+  if claude plugin install ui-ux-pro-max@ui-ux-pro-max-skill 2>/dev/null; then
+    printf '  %s✅ ui-ux-pro-max installed%s\n' "$G" "$Z"
+    return 0
+  fi
+  printf '  %s⚠️  ui-ux-pro-max install failed — install manually inside Claude Code:%s\n' "$Y" "$Z"
+  printf '       /plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill\n'
+  printf '       /plugin install ui-ux-pro-max@ui-ux-pro-max-skill\n'
+  return 1
+}
+install_ui_ux_pro_max='fn:_install_ui_ux_pro_max'
+
 detect_frontend_design() {
   [ -d "$CLAUDE_HOME/skills/frontend-design" ] && return 0
   { have claude && claude plugin list 2>/dev/null | grep -qi 'example-skills\|anthropic-agent-skills'; }
 }
-install_frontend_design='claude /plugin marketplace add anthropics/skills && claude /plugin install example-skills@anthropic-agent-skills'
+install_frontend_design='# DEPRECATED — use ui-ux-pro-max instead (see external-skills/frontend-design/README.md)'
 
 detect_claude_code_workflows() {
   ls "$PROJECT_ROOT"/.claude/agents/*code-review* >/dev/null 2>&1 \
@@ -197,8 +247,10 @@ SKILLS="
 superpowers|2|detect_superpowers|install_superpowers|default
 security-review|2|detect_security_review|install_security_review|default
 graphify|2|detect_graphify|install_graphify|default
+rtk|2|detect_rtk|install_rtk|default
 claude-mem|2|detect_claude_mem|install_claude_mem|default
-frontend-design|2|detect_frontend_design|install_frontend_design|conditional
+ui-ux-pro-max|2|detect_ui_ux_pro_max|install_ui_ux_pro_max|conditional
+frontend-design|0|detect_frontend_design|install_frontend_design|conditional
 claude-code-workflows|1|detect_claude_code_workflows|install_claude_code_workflows|conditional
 gstack|1|detect_gstack|install_gstack|opt-in
 "

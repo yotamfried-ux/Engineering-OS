@@ -157,14 +157,13 @@ external systems › reference repos › templates › new implementation). כש
 
 **Context7** — ✅ מחובר
 - תפקיד: משיכת תיעוד רשמי עדכני ודוגמאות קוד של ספריות ופריימוורקים.
-- מתי: בתחילת פרויקט, ובכל פעם שעובדים עם ספרייה/גרסה לא מוכרת.
-- הסיבה: מונע שימוש ב-API ישנים מתוך ידע מיושן — מושך את התיעוד הנוכחי בפועל.
+- **חובה לפני**: כל שאלה על API / ספרייה / framework. אסור לסמוך על ידע מאימון — הוא עשוי להיות מיושן.
+- כיצד: `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`
 
 **Sentry** — ✅ מחובר
 - תפקיד: ניטור ואיתור שגיאות/קריסות בזמן אמת בפרודקשן (stack traces, נתוני רקע).
-- מתי: **דיבאג של שגיאות פרודקשן מתבצע דרך Sentry** — לא ניחוש מהקוד. בפיתוח, הדיבאג
-  נשען על logs / טסטים / DB דרך הכלי המתאים (ראה
-  [`debugging-policy.md`](./debugging-policy.md) › `<debug_loop>`).
+- **חובה לפני debugging**: ראה [`debugging-policy.md`](./debugging-policy.md) › `<debug_loop>` — Sentry הוא צעד חובה ראשון, לא אופציה.
+- כיצד: `mcp__Sentry__search_issues`, `mcp__Sentry__get_sentry_resource`
 - אופציה משנית: **Firebase (Crashlytics)** — לניטור קריסות/שגיאות, בעיקר ב-mobile.
   הערה: Sentry רחב יותר (גם שגיאות backend/web), לכן המעבר חלקי.
 
@@ -322,7 +321,8 @@ external systems › reference repos › templates › new implementation). כש
 
 **Notion** — ✅ מחובר
 - תפקיד: אפיון ותכנון פרויקטים, תיעוד החלטות, מעקב משימות.
-- מתי: **השלב הראשון בכל משימה** — אפיון ותכנון לפני כתיבת קוד.
+- **חובה לפני כתיבת קוד**: בכל משימה שאינה טריוויאלית — פתח/עדכן spec ב-Notion לפני כתיבת שורת קוד. ראה [`workflow.md`](./workflow.md) › שלב 1.
+- כיצד: `mcp__Notion__notion-create-pages` (יצירת spec) · `mcp__Notion__notion-fetch` (קריאה) · `mcp__Notion__notion-update-page` (עדכון סטטוס)
 - אופציה משנית: **GitHub** (Issues / Projects + מסמכי markdown בריפו) — למעקב משימות
   ולאפיון טקסטואלי. כיסוי בסיסי בלבד — בלי עושר התיעוד של Notion.
 
@@ -331,6 +331,30 @@ external systems › reference repos › templates › new implementation). כש
 - מתי: כשצריך חיבור לשירות שאין לו קונקטור ישיר — בדוק אם Composio מספק שרת MCP מתאים.
 
 </connectors>
+
+---
+
+## <skills-vs-connectors>
+
+**הבחנה קריטית שמונעת טעות נפוצה:**
+
+```
+סקילים = HOW Claude עובד (תהליך, מתודולוגיה, אופטימיזציה).
+קונקטורים = WHERE נתונים נמצאים / WHERE פעולות מתבצעות.
+```
+
+הם **אינם** מחליפים זה את זה. דוגמאות:
+
+| מצב | טעות | נכון |
+|---|---|---|
+| כתיבת spec לפיצ'ר | `superpowers:brainstorming` במקום Notion | brainstorming *ואז* שמירת התוצאה ב-Notion דרך `mcp__Notion__notion-create-pages` |
+| debugging | בדיקת קוד מנחש | Sentry ראשון דרך `mcp__Sentry__search_issues`, קוד רק לאימות |
+| שאלה על ספרייה | הסתמכות על ידע מאימון | Context7 ראשון דרך `mcp__Context7__query-docs` |
+| UI/UX design | ui-ux-pro-max במקום Figma | ui-ux-pro-max *ואז* עיצוב ב-Figma/קוד בהתאם לתוצאות הסקיל |
+
+**הכלל:** כשסקיל מייצר תוצאה (spec, ניתוח, עיצוב, תוכנית) — **התוצאה נכתבת לקונקטור הרלוונטי** (Notion, GitHub, Sentry וכו'). הסקיל הוא האמצעי; הקונקטור הוא המקום.
+
+</skills-vs-connectors>
 
 ---
 

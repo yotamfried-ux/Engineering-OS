@@ -29,6 +29,10 @@ dim()  { printf '\033[2m%s\033[0m\n' "$*"; }
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
 warn() { printf '\033[33m⚠️  %s\033[0m\n' "$*"; }
 
+# 0. HTTPS override — web sessions (Claude Code on the web) have no SSH agent.
+#    This forces HTTPS for all github.com clones. Idempotent.
+git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
+
 # 0. GUARD — never run inside the Engineering OS repo itself.
 if [ -f "$TARGET/core/skill-orchestration-policy.md" ] && [ -f "$TARGET/external-skills/README.md" ]; then
   red "Refusing to run inside the Engineering OS repo itself."
