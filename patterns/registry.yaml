@@ -1,0 +1,1548 @@
+# patterns/registry.yaml
+# Queryable index of all Engineering OS patterns.
+#
+# Scoring formula: (R×2 + M + S×2 + P + SR×2 + Re) / 10 × 20 = 0-100
+# See: core/pattern-lifecycle.md (lifecycle), core/scoring-guide.md (formula)
+#
+# status: candidate | active | deprecated | retired
+# All entries start as candidate (score: null) until validated in production.
+
+patterns:
+
+  # ─── api ────────────────────────────────────────────────────────────────────
+
+  - id: api-pagination-cursor
+    domain: api
+    subdomain: null
+    name: "Cursor-based Pagination"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/api/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: api-rate-limiting
+    domain: api
+    subdomain: null
+    name: "Rate Limiting"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/api/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: api-versioning
+    domain: api
+    subdomain: null
+    name: "API Versioning"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/api/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: api-request-validation
+    domain: api
+    subdomain: null
+    name: "Request Validation"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/api/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: api-error-response-format
+    domain: api
+    subdomain: null
+    name: "Error Response Format"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/api/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── auth ────────────────────────────────────────────────────────────────────
+
+  - id: auth-jwt
+    domain: auth
+    subdomain: null
+    name: "JWT Authentication"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/auth/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: auth-oauth2-social-login
+    domain: auth
+    subdomain: null
+    name: "OAuth 2.0 / Social Login"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/auth/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: auth-session
+    domain: auth
+    subdomain: null
+    name: "Session-based Auth"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/auth/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: auth-api-key
+    domain: auth
+    subdomain: null
+    name: "API Key Authentication"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/auth/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── authorization ───────────────────────────────────────────────────────────
+
+  - id: authz-rbac
+    domain: authorization
+    subdomain: null
+    name: "Role-Based Access Control (RBAC)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/authorization/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: authz-abac
+    domain: authorization
+    subdomain: null
+    name: "Attribute-Based Access Control (ABAC)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/authorization/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: authz-rebac
+    domain: authorization
+    subdomain: null
+    name: "Relationship-Based Access Control (ReBAC)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/authorization/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: authz-policy-engine-selection
+    domain: authorization
+    subdomain: null
+    name: "Policy Engine Selection Guide"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/authorization/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── database ────────────────────────────────────────────────────────────────
+
+  - id: db-repository-pattern
+    domain: database
+    subdomain: null
+    name: "Repository Pattern"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/database/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: db-optimistic-locking
+    domain: database
+    subdomain: null
+    name: "Optimistic Locking"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/database/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: db-soft-delete
+    domain: database
+    subdomain: null
+    name: "Soft Delete"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/database/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: db-migrations-strategy
+    domain: database
+    subdomain: null
+    name: "Database Migrations Strategy"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/database/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: db-connection-pooling
+    domain: database
+    subdomain: null
+    name: "Connection Pooling"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/database/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── billing ─────────────────────────────────────────────────────────────────
+
+  - id: billing-subscription-lifecycle
+    domain: billing
+    subdomain: null
+    name: "Subscription Lifecycle (Stripe)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/billing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: billing-webhook-idempotency
+    domain: billing
+    subdomain: null
+    name: "Webhook Idempotency"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/billing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: billing-metered
+    domain: billing
+    subdomain: null
+    name: "Metered Billing"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/billing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: billing-trial-period
+    domain: billing
+    subdomain: null
+    name: "Trial Period Management"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/billing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── security ────────────────────────────────────────────────────────────────
+
+  - id: security-input-validation
+    domain: security
+    subdomain: null
+    name: "Input Validation & Sanitization"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/security/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: security-csrf
+    domain: security
+    subdomain: null
+    name: "CSRF Protection"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/security/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: security-secret-management
+    domain: security
+    subdomain: null
+    name: "Secret Management"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/security/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: security-rls
+    domain: security
+    subdomain: null
+    name: "Row-Level Security (RLS)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/security/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: security-rate-limiting
+    domain: security
+    subdomain: null
+    name: "Rate Limiting (Security)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/security/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── testing ─────────────────────────────────────────────────────────────────
+
+  - id: testing-pyramid
+    domain: testing
+    subdomain: null
+    name: "Test Pyramid"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/testing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: testing-aaa
+    domain: testing
+    subdomain: null
+    name: "Arrange-Act-Assert (AAA)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/testing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: testing-factories
+    domain: testing
+    subdomain: null
+    name: "Test Factories & Fixtures"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/testing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: testing-contract
+    domain: testing
+    subdomain: null
+    name: "Contract Testing"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/testing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: testing-regression
+    domain: testing
+    subdomain: null
+    name: "Regression Test on Every Bug"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/testing/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── observability ───────────────────────────────────────────────────────────
+
+  - id: obs-structured-logging
+    domain: observability
+    subdomain: null
+    name: "Structured Logging"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/observability/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: obs-distributed-tracing
+    domain: observability
+    subdomain: null
+    name: "Distributed Tracing"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/observability/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: obs-health-check
+    domain: observability
+    subdomain: null
+    name: "Health Check Endpoint"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/observability/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: obs-error-budgets
+    domain: observability
+    subdomain: null
+    name: "Error Budgets & Alert Fatigue Prevention"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/observability/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── frontend ────────────────────────────────────────────────────────────────
+
+  - id: fe-server-vs-client-components
+    domain: frontend
+    subdomain: null
+    name: "Server Components vs Client Components"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/frontend/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: fe-optimistic-updates
+    domain: frontend
+    subdomain: null
+    name: "Optimistic Updates"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/frontend/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: fe-infinite-scroll
+    domain: frontend
+    subdomain: null
+    name: "Infinite Scroll / Virtual List"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/frontend/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: fe-form-state-management
+    domain: frontend
+    subdomain: null
+    name: "Form State Management (React Hook Form + Zod)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/frontend/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── ui ──────────────────────────────────────────────────────────────────────
+
+  - id: ui-design-tokens
+    domain: ui
+    subdomain: null
+    name: "Design Tokens"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ui/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ui-component-architecture
+    domain: ui
+    subdomain: null
+    name: "Component Architecture (Atomic Design)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ui/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ui-accessibility
+    domain: ui
+    subdomain: null
+    name: "Accessibility (WCAG 2.2)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ui/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ui-data-table
+    domain: ui
+    subdomain: null
+    name: "Data Table"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ui/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ui-theming
+    domain: ui
+    subdomain: null
+    name: "Theming (Dark Mode + Brand Tokens)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ui/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ui-form-accessibility
+    domain: ui
+    subdomain: null
+    name: "Form Accessibility & Error States"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ui/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ui-dashboard-layout
+    domain: ui
+    subdomain: null
+    name: "Dashboard Layout"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ui/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── ai ──────────────────────────────────────────────────────────────────────
+
+  - id: ai-prompt-chaining
+    domain: ai
+    subdomain: null
+    name: "Prompt Chaining"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ai/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ai-tool-use
+    domain: ai
+    subdomain: null
+    name: "Tool Use / Function Calling"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ai/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ai-memory-management
+    domain: ai
+    subdomain: null
+    name: "Memory Management"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ai/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ai-streaming
+    domain: ai
+    subdomain: null
+    name: "Streaming Responses"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ai/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ai-structured-output
+    domain: ai
+    subdomain: null
+    name: "Structured Output"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/ai/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── infrastructure ───────────────────────────────────────────────────────────
+
+  - id: infra-terraform-modules
+    domain: infrastructure
+    subdomain: null
+    name: "Terraform Module Structure"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/infrastructure/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: infra-docker-production
+    domain: infrastructure
+    subdomain: null
+    name: "Docker Production Image"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/infrastructure/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: infra-kubernetes-deployment
+    domain: infrastructure
+    subdomain: null
+    name: "Kubernetes Deployment"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/infrastructure/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: infra-terraform-remote-state
+    domain: infrastructure
+    subdomain: null
+    name: "Terraform Remote State and Locking"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/infrastructure/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: infra-secrets-management
+    domain: infrastructure
+    subdomain: null
+    name: "Secrets Management (Infrastructure)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/infrastructure/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: infra-pulumi-typescript
+    domain: infrastructure
+    subdomain: null
+    name: "Pulumi TypeScript Infrastructure"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/infrastructure/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── background-jobs ─────────────────────────────────────────────────────────
+
+  - id: jobs-queue-retry-backoff
+    domain: background-jobs
+    subdomain: null
+    name: "Job Queue with Retry & Backoff"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/background-jobs/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: jobs-scheduled-cron
+    domain: background-jobs
+    subdomain: null
+    name: "Scheduled Jobs / Cron"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/background-jobs/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: jobs-idempotent-workers
+    domain: background-jobs
+    subdomain: null
+    name: "Idempotent Workers"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/background-jobs/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: jobs-dlq
+    domain: background-jobs
+    subdomain: null
+    name: "Dead Letter Queue (DLQ)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/background-jobs/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── deployment ──────────────────────────────────────────────────────────────
+
+  - id: deploy-blue-green
+    domain: deployment
+    subdomain: null
+    name: "Blue-Green Deployment"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/deployment/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: deploy-canary
+    domain: deployment
+    subdomain: null
+    name: "Canary Release"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/deployment/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: deploy-feature-flags
+    domain: deployment
+    subdomain: null
+    name: "Feature Flags"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/deployment/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: deploy-zero-downtime-db-migration
+    domain: deployment
+    subdomain: null
+    name: "Zero-Downtime Database Migration"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/deployment/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── mobile ──────────────────────────────────────────────────────────────────
+
+  - id: mobile-offline-first
+    domain: mobile
+    subdomain: null
+    name: "Offline-First with Sync"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/mobile/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: mobile-deep-linking
+    domain: mobile
+    subdomain: null
+    name: "Deep Linking"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/mobile/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: mobile-push-notifications
+    domain: mobile
+    subdomain: null
+    name: "Push Notification Handling (Expo)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/mobile/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: mobile-ota-updates
+    domain: mobile
+    subdomain: null
+    name: "OTA Updates (Expo EAS Update)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/mobile/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── machine-learning ────────────────────────────────────────────────────────
+
+  - id: ml-train-val-test-split
+    domain: machine-learning
+    subdomain: null
+    name: "Train/Val/Test Split"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/machine-learning/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ml-feature-store
+    domain: machine-learning
+    subdomain: null
+    name: "Feature Store"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/machine-learning/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ml-model-registry
+    domain: machine-learning
+    subdomain: null
+    name: "Model Registry"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/machine-learning/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: ml-shadow-mode
+    domain: machine-learning
+    subdomain: null
+    name: "Shadow Mode Deployment"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/machine-learning/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── storage ─────────────────────────────────────────────────────────────────
+
+  - id: storage-presigned-url
+    domain: storage
+    subdomain: null
+    name: "Pre-signed URL Upload"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/storage/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: storage-cdn-assets
+    domain: storage
+    subdomain: null
+    name: "CDN-backed Assets"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/storage/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: storage-file-processing-pipeline
+    domain: storage
+    subdomain: null
+    name: "File Processing Pipeline"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/storage/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: storage-tiering
+    domain: storage
+    subdomain: null
+    name: "Storage Tiering"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/storage/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── integrations / calendar ─────────────────────────────────────────────────
+
+  - id: cal-google-oauth-sync
+    domain: integrations
+    subdomain: calendar
+    name: "Google Calendar — OAuth + Event Sync"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/calendar/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: cal-microsoft-graph-delta
+    domain: integrations
+    subdomain: calendar
+    name: "Microsoft Graph Calendar — Delta Sync + Change Notifications"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/calendar/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: cal-calcom-embed-api-webhooks
+    domain: integrations
+    subdomain: calendar
+    name: "Cal.com — Embed + API + Webhooks"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/calendar/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: cal-calendly-webhooks
+    domain: integrations
+    subdomain: calendar
+    name: "Calendly Integration"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/calendar/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: cal-unified-abstraction
+    domain: integrations
+    subdomain: calendar
+    name: "Unified Calendar Abstraction Layer"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/calendar/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: cal-booking-state-machine
+    domain: integrations
+    subdomain: calendar
+    name: "Booking State Machine"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/calendar/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── integrations / email ────────────────────────────────────────────────────
+
+  - id: integrations-email-transactional
+    domain: integrations
+    subdomain: email
+    name: "Transactional Email"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/email/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── integrations / notifications ────────────────────────────────────────────
+
+  - id: integrations-push-notifications
+    domain: integrations
+    subdomain: notifications
+    name: "Push Notifications (FCM/APNs)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/notifications/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  - id: integrations-in-app-notifications
+    domain: integrations
+    subdomain: notifications
+    name: "In-App Notifications"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/notifications/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null
+
+  # ─── integrations / messaging ────────────────────────────────────────────────
+
+  - id: integrations-sms-otp
+    domain: integrations
+    subdomain: messaging
+    name: "SMS Verification (OTP)"
+    status: candidate
+    score: null
+    version: "1.0.0"
+    used_in: 0
+    scored_by: null
+    scored_at: null
+    code_path: patterns/integrations/messaging/README.md
+    test_path: null
+    source_url: null
+    evidence: []
+    deprecated_reason: null
+    successor: null

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "nemotron": {
+      "command": "uv",
+      "args": ["run", "scripts/nemotron-mcp-server.py"],
+      "description": "Nvidia Nemotron LLM tools — generate_code, review_code, summarize, explain, brainstorm"
+    }
+  }
+}
