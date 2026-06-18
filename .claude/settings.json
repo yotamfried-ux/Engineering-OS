@@ -11,6 +11,14 @@
           {
             "type": "command",
             "command": "command -v rtk >/dev/null 2>&1 && rtk hook claude || true"
+          },
+          {
+            "type": "command",
+            "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *\"git checkout -b\"*|*\"git switch -c\"*|*\"git branch \"[!-]*) COUNT=$(git branch -r 2>/dev/null | grep -v 'HEAD\\|->\\|main\\|master' | grep -v '^ *$' | wc -l | tr -d ' '); [ \"${COUNT:-0}\" -gt 1 ] && echo \"❌ ONE-BRANCH POLICY: ${COUNT} remote branches besides main exist. Merge+delete first. See core/git-policy.md\" && exit 1 || true ;; esac"
+          },
+          {
+            "type": "command",
+            "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *\"npm install \"[a-zA-Z@]*|*\"yarn add \"*|*\"pnpm add \"*|*\"pip install \"[a-zA-Z]*|*\"uv add \"*) echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"📚 MANDATORY Context7 check before install: mcp__Context7__resolve-library-id → mcp__Context7__query-docs. Breaking change example: @supabase/ssr v0.4 → 4 TypeScript errors. See lessons-learned/bugs/supabase-ssr-breaking-change.md\"}}' ;; esac"
           }
         ]
       },
@@ -22,6 +30,28 @@
             "command": "HIT=$(python3 -c \"import json,sys;d=json.load(sys.stdin);t=d.get('tool_input',d);s=(str(t.get('file_path') or '')+' '+str(t.get('pattern') or '')+' '+str(t.get('path') or '')).lower().replace(chr(92),'/');exts=('.py','.js','.ts','.tsx','.jsx','.go','.rs','.java','.rb','.c','.h','.cpp','.hpp','.cc','.cs','.kt','.swift','.php','.scala','.lua','.sh','.md','.rst','.txt','.mdx');sys.stdout.write('1' if 'graphify-out/' not in s and any(e in s for e in exts) else '')\" 2>/dev/null || true); if [ \"$HIT\" = 1 ] && [ -f graphify-out/graph.json ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"MANDATORY: graphify-out/graph.json exists. You MUST run graphify before reading source files. Use: `graphify query \\\"<question>\\\"` (scoped subgraph), `graphify explain \\\"<concept>\\\"`, or `graphify path \\\"<A>\\\" \\\"<B>\\\"`. Only read raw files after graphify has oriented you, or to modify/debug specific lines. This rule applies to subagents too — include it in every subagent prompt involving code exploration.\"}}'; fi || true"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/hooks/validate-workflow-state.sh\" 2>&1 || true"
+          },
+          {
+            "type": "command",
+            "command": "FILE=$(python3 -c \"import json,sys; d=json.load(sys.stdin); t=d.get('tool_input',d); print(t.get('file_path',''))\" 2>/dev/null || true); case \"$FILE\" in *.sql|*migration*|*schema*|*seed*) echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"🗄️ SUPABASE: After any SQL change, verify with mcp__Supabase__execute_sql + mcp__Supabase__list_tables. RLS required on every user-exposed table. See connector-policy.md › Supabase › אבטחה.\"}}' ;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "TASKS=$(ls .claude/tasks.json 2>/dev/null); if [ -z \"$TASKS\" ]; then echo '❌ AGENT BLOCKED: .claude/tasks.json must exist before spawning agents. Create it with task goals and status fields per agent. See core/workflow.md <agent_loop> and core/resource-management.md for required format.'; exit 1; fi; echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"tasks.json found ✅. After all agents complete: verify each status=done, set spec_loop_verified=true before commit. See core/resource-management.md for tasks.json schema)\"}}'"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -29,7 +59,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/session-setup.sh\" 2>&1 | head -25 || true"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/session-setup.sh\" 2>&1 | head -50 || true"
           }
         ]
       }
@@ -39,7 +69,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "git diff --cached --quiet 2>/dev/null || echo '{\"hookSpecificOutput\":{\"hookEventName\":\"Stop\",\"additionalContext\":\"📋 DoD reminder — staged changes detected. Verify before committing: (1) tests pass, (2) no secrets, (3) behavior proven, (4) usage report included. See core/quality-gates.md.\"}}' || true"
+            "command": "STAGED=$(git diff --cached --name-only 2>/dev/null); if [ -n \"$STAGED\" ]; then PLAN=$(ls -t .claude/plans/*.md 2>/dev/null | head -1); PMSG=\"\"; [ -n \"$PLAN\" ] && PMSG=\"📋 spec_loop: plan '$(basename $PLAN)' exists — verify EVERY DoD item against output before committing. \"; CODE=$(echo \"$STAGED\" | grep -cE '\\.(ts|tsx|js|jsx|py|go|rs)$' 2>/dev/null || echo 0); TEST=$(echo \"$STAGED\" | grep -cE '(\\.(test|spec)\\.(ts|tsx|js|jsx|py)|__tests__)' 2>/dev/null || echo 0); TWARN=\"\"; [ \"${CODE:-0}\" -gt 0 ] && [ \"${TEST:-0}\" -eq 0 ] && TWARN=\"⚠️ ${CODE} code files staged, 0 test files in diff — pre-commit will scan project for tests. \"; GMSG=\"\"; [ \"${CODE:-0}\" -gt 0 ] && GMSG=\"📊 Run: graphify update . after commit to keep graph current. \"; echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"Stop\\\",\\\"additionalContext\\\":\\\"${PMSG}${TWARN}${GMSG}Commit format: ✅❌🔄📌🧪 required (commit-msg hook enforces). superpowers:verification-before-completion must have run.\\\"}}\"; fi || true"
           }
         ]
       }

@@ -23,6 +23,9 @@
   גדולה אחת.
 - **עקוב אחר state דרך git ודרך קבצים מובנים.** ל-state מובנה (תוצאות טסטים, סטטוס
   משימות) השתמש ב-JSON (`tasks.json`); להערות התקדמות חופשיות — טקסט פשוט.
+
+  > **אכיפה:** PreToolUse Agent hook חוסם spawn אם `.claude/tasks.json` לא קיים (exit 1).
+  > צור `tasks.json` לפי הסכמה ב-`core/resource-management.md` › `<remote-session-limitations>` לפני שמפעילים agents.
 - **תעד את מהלך הריצה (run trace).** לצד ה-state, רשום ב-`tasks.json` אילו
   קונקטורים/כלים שימשו, מספר ה-turns, ונקודות כשל. זה זול, וזה מה שמאפשר ל-
   [`learning-loop.md`](./learning-loop.md) לזהות כשל או כלי שחוזר על פני ריצות (תצפית
@@ -63,6 +66,10 @@
    (ראה [`connector-policy.md`](./connector-policy.md) › `<connectors>`).
    *כלי:* `mcp__Notion__notion-create-pages` ליצירת spec · `mcp__Notion__notion-fetch` לקריאה · `mcp__Notion__notion-update-page` לסגירת הלולאה (שלב 10).
    *סקיל שיכול לסייע:* `superpowers:brainstorming` לגיבוש הרעיון, `superpowers:writing-plans` לפירוק לשלבים — הפלט נכתב ב-Notion.
+
+   > **Fallback מאושר:** `.claude/plans/<name>.md` הוא חלופה לגיטימית ל-Notion כשהוא אינו מחובר.
+   > Write/Edit hook בודק שקובץ plan קיים לפני כתיבת קוד (exit 1 אם לא). צור plan file לפני שמתחילים.
+
 2. **חיפוש דוגמאות ואיסוף מידע** — משוך פתרון קיים ומקור אמין לפי `<information_sources>`
    (ראה [`connector-policy.md`](./connector-policy.md)): קודם `patterns/`/`templates/`,
    ואז **Context7** לתיעוד רשמי עדכני של הספריות/הגרסאות בהן תשתמש.
@@ -70,6 +77,10 @@
    (ראה [`connector-policy.md`](./connector-policy.md) › `<pattern_gap>`).
    *כלי:* `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`; לבאגים: Sentry ראשון (ראה [`debugging-policy.md`](./debugging-policy.md) › `<debug_loop>`).
    *סקיל שיכול לסייע:* graphify (גרף כבר בנוי — שלוף תת-גרף רלוונטי); Context7 MCP לתיעוד ספריות.
+
+   > **⚠️ חובה לפני כל `npm install` / `pip install`:** `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`.
+   > PreToolUse hook מזריק reminder אוטומטי, אך האחריות היא שלך לבצע.
+   > דוגמה: `@supabase/ssr` v0.4 שבר 4 TypeScript types — ראה [`lessons-learned/bugs/supabase-ssr-breaking-change.md`](../lessons-learned/bugs/supabase-ssr-breaking-change.md).
 3. **בחירת כלים והערכת סקילים** — בחר את הקונקטורים המתאימים **לפי המשימה**, והעדף כלי
    שכבר בשימוש בפרויקט אם הוא מספק את היכולת (ראה [`connector-policy.md`](./connector-policy.md)).
    **באותו שלב — הערך אילו סקילי-משימה חיצוניים חלים** לפי סוג המשימה, רמת ההרצה והסדר
@@ -86,6 +97,11 @@
    > אם אחד מאלה חסר — אתה עדיין בשלב 1–3 (תכנון/איסוף), לא בכתיבה. כתיבה בלי מקור
    > ודוגמה היא ניחוש ארכיטקטורה — בדיוק מה שעקרון-העל אוסר.
 
+   > **debug_loop gate:** שגיאת קומפילציה, כשל CI, או runtime error בשלב זה → STOP.
+   > (1) בדוק Sentry ראשון; (2) זהה root cause — אל תתקן תסמין; (3) הוסף regression test.
+   > רק אז חזור לכתיבה. `post-commit` hook מזכיר learning_loop אחרי `fix:` commits.
+   > ראה [`debugging-policy.md`](./debugging-policy.md) › `<debug_loop>`.
+
 5. **כתיבה איטרטיבית** — שינויים קטנים בתוך ה-branch הפעיל.
    *סקיל שיכול לסייע:* `superpowers:test-driven-development`; `ui-ux-pro-max` לממשק (ראה [`external-skills/ui-ux-pro-max/`](../external-skills/ui-ux-pro-max/)).
 6. **אימות** — דרך הכלי המתאים למשימה.
@@ -96,6 +112,8 @@
    *סקיל שיכול לסייע:* `superpowers:requesting-code-review`; security-review (L2 — חובה לפני main).
 9. **קומיט מובנה** — ראה [`git-policy.md`](./git-policy.md) › `<commit_protocol>`.
 10. **אימות מול האפיון** — ודא שהתוצר תואם למה שאופיין בשלב 1 (ראה `<spec_loop>`).
+
+    > **אכיפה:** Stop hook מציג תזכורת spec_loop + DoD אם יש staged changes. סמן ✅ על **כל** DoD item ב-plan file לפני merge. `spec_loop_verified: true` ב-tasks.json אם עבדת עם agents.
 11. **מיזוג ל-main** — רק אחרי אימות מלא ו**אישור המשתמש** (ראה
     [`git-policy.md`](./git-policy.md)).
     *סקיל שיכול לסייע:* `superpowers:finishing-a-development-branch` לבחירת אופן המיזוג.

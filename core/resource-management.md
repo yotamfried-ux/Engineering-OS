@@ -251,6 +251,44 @@ CREATE TABLE token_usage (
 
 ---
 
+## <remote-session-limitations>
+
+מגבלות ידועות בסביבת remote (Claude Code on the web / GitHub Actions):
+
+| כלי | מגבלה | Workaround |
+|---|---|---|
+| `agent isolation: "worktree"` | נכשל כש-CWD לא git repo תקין | בדוק `git rev-parse --git-dir` לפני שימוש; השתמש ב-`isolation: "none"` |
+| `claude-mem worker` | לא מובטח ב-remote sessions | best-effort; session-setup מנסה אוטומטית |
+| `settings.json` user-level | לא קיים ב-remote | הכל ב-`.claude/settings.json` פרויקטלי |
+| SSH clone | אין SSH agent ב-web sessions | session-setup מגדיר HTTPS override אוטומטית |
+
+ראה גם: [`lessons-learned/bugs/worktree-isolation-remote-session.md`](../lessons-learned/bugs/worktree-isolation-remote-session.md)
+
+### tasks.json — פורמט מחייב (Agent hook בודק שקיים לפני spawn)
+
+```json
+{
+  "task_id": "YYYY-MM-DD-task-name",
+  "agents": {
+    "agent-1": {
+      "goal": "תיאור המטרה",
+      "files": ["paths/to/relevant/files"],
+      "status": "pending|running|done|failed",
+      "result": ""
+    }
+  },
+  "spec_loop_verified": false,
+  "tools_used": [],
+  "failures": []
+}
+```
+
+**כלל:** `spec_loop_verified` מוגדר ל-`true` רק אחרי שוידאת כל DoD item ב-plan file מול התוצר בפועל.
+
+</remote-session-limitations>
+
+---
+
 ## חיבור לשאר המערכת
 
 - **session-setup.sh** — מריץ graphify ו-RTK בתחילת כל סשן ([`../scripts/session-setup.sh`](../scripts/session-setup.sh))

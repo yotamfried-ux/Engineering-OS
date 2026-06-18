@@ -80,6 +80,53 @@ else
   info "Nemotron_api_key not set — graphify uses local extraction only"
 fi
 
+# ── 5. claude-mem (best-effort, non-fatal) ────────────────────────────────────
+if command -v claude-mem >/dev/null 2>&1; then
+  claude-mem start >/dev/null 2>&1 &
+  CLAUDEMEM_PID=$!
+  disown 2>/dev/null || true
+  sleep 1
+  if kill -0 "$CLAUDEMEM_PID" 2>/dev/null; then
+    ok "claude-mem worker started (cross-session memory)"
+  else
+    info "claude-mem start attempted — worker may not persist in remote sessions (known limitation)"
+  fi
+else
+  info "claude-mem not installed — /plugin marketplace add thedotmack/claude-mem"
+fi
+
+# ── 6. Nvidia Nemotron smoke test ────────────────────────────────────────────
+bash "${EOS_ROOT}/scripts/test-nvidia-capabilities.sh" 2>/dev/null || true
+
+# ── 7. project_context check ─────────────────────────────────────────────────
+if [ -f "CLAUDE.md" ] && grep -q "מטרת הפרויקט במשפט" CLAUDE.md 2>/dev/null; then
+  warn "CLAUDE.md <project_context> is a template — FILL IT before starting work!"
+fi
+
+# ── 8. learning_loop check ───────────────────────────────────────────────────
+RECENT_FIXES=$(git log --oneline -10 2>/dev/null | grep -c " fix:" || echo 0)
+LESSON_ADDS=$(git log --oneline -10 --diff-filter=A -- 'lessons-learned/**' 2>/dev/null | wc -l | tr -d ' ')
+if [ "${RECENT_FIXES:-0}" -gt 0 ] && [ "${LESSON_ADDS:-0}" -eq 0 ]; then
+  warn "${RECENT_FIXES} fix: commit(s) in last 10, 0 lessons-learned entries — learning_loop? (core/learning-loop.md)"
+fi
+
+# ── 9. L2 Mandatory Skills + active blockers status ──────────────────────────
+printf '\n%s📋 L2 MANDATORY (physical blockers active):%s\n' "$Y" "$Z"
+printf '  ✋ Write/Edit → code blocked without .claude/plans/*.md (validate-workflow-state.sh)\n'
+printf '  ✋ Agent → blocked without .claude/tasks.json (PreToolUse hook, exit 1)\n'
+printf '  ✋ pre-commit → blocked if >2 code files staged + 0 test files in project\n'
+printf '  ✋ commit-msg → blocked if missing ✅❌🔄🧪 sections\n'
+printf '  ⚡ Context7 STRONGLY recommended before every npm/pip install\n'
+printf '  ⚡ superpowers:brainstorming before new features\n'
+printf '  ⚡ superpowers:verification-before-completion before done\n'
+
+# Show existing plan files with timestamps (zombie plan awareness)
+EXISTING_PLANS=$(ls -lt .claude/plans/*.md 2>/dev/null | head -5)
+if [ -n "$EXISTING_PLANS" ]; then
+  printf '\n%s📋 Existing plans (check if current for this task!):%s\n' "$Y" "$Z"
+  echo "$EXISTING_PLANS" | awk '{print "  " $NF, $6, $7, $8}'
+fi
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf '\n'
 info "session setup complete."
