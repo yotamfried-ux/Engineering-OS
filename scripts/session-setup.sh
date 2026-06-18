@@ -20,7 +20,22 @@ info() { printf '%s[session]%s %s\n' "$D" "$Z" "$1"; }
 # ── 1. HTTPS override (no SSH agent in web sessions) ─────────────────────────
 git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
 
-# ── 2. graphify ──────────────────────────────────────────────────────────────
+# ── 2. Nemotron (Nvidia) — MUST run before graphify so OPENAI_* vars are set ─
+# graphify reads OPENAI_API_KEY + OPENAI_BASE_URL for community naming.
+# Without this block running first, graphify finds no LLM backend and may
+# fall back to ANTHROPIC_API_KEY (present in Claude Code env) — which is
+# explicitly forbidden. Use --no-label instead when Nemotron key is absent.
+# Governing policy: external-skills/nemotron/activation.md
+if [ -n "${Nemotron_api_key:-}" ]; then
+  export OPENAI_API_KEY="${Nemotron_api_key}"
+  export OPENAI_BASE_URL="https://integrate.api.nvidia.com/v1"
+  export OPENAI_MODEL="nvidia/nemotron-super-49b-v1"
+  ok "Nemotron API configured — graphify will use Nvidia backend"
+else
+  warn "Nemotron_api_key not set — graphify will use local extraction only (no LLM naming)"
+fi
+
+# ── 3. graphify ──────────────────────────────────────────────────────────────
 if ! command -v graphify >/dev/null 2>&1; then
   info "graphify not found — installing..."
   if command -v uv >/dev/null 2>&1; then
@@ -36,9 +51,15 @@ if command -v graphify >/dev/null 2>&1; then
   GRAPH="$EOS_ROOT/graphify-out/graph.json"
   if [ ! -f "$GRAPH" ]; then
     info "building knowledge graph..."
-    ( cd "$EOS_ROOT" && graphify extract . 2>&1 | tail -2 ) \
-      && ok "graphify graph built" \
-      || warn "graphify extract failed (see error above)"
+    if [ -n "${Nemotron_api_key:-}" ]; then
+      ( cd "$EOS_ROOT" && graphify extract . --backend=openai 2>&1 | tail -2 ) \
+        && ok "graphify graph built (Nvidia backend)" \
+        || warn "graphify extract failed (see error above)"
+    else
+      ( cd "$EOS_ROOT" && graphify extract . 2>&1 | tail -2 ) \
+        && ok "graphify graph built" \
+        || warn "graphify extract failed (see error above)"
+    fi
   else
     NODES=$(python3 -c "import json; g=json.load(open('$GRAPH')); print(len(g.get('nodes',[])))" 2>/dev/null || echo "?")
     ok "graphify ready — $NODES nodes in graph"
@@ -47,13 +68,20 @@ if command -v graphify >/dev/null 2>&1; then
   # Generate GRAPH_REPORT.md and wiki/ for broad navigation (referenced in CLAUDE.md)
   if [ ! -f "$EOS_ROOT/graphify-out/GRAPH_REPORT.md" ]; then
     info "generating GRAPH_REPORT.md and wiki/..."
-    ( cd "$EOS_ROOT" && graphify cluster-only . 2>&1 | tail -2 ) \
-      && ok "GRAPH_REPORT.md and wiki/ generated" \
-      || warn "graphify cluster-only failed"
+    if [ -n "${Nemotron_api_key:-}" ]; then
+      ( cd "$EOS_ROOT" && graphify cluster-only . --backend=openai 2>&1 | tail -2 ) \
+        && ok "GRAPH_REPORT.md and wiki/ generated (Nvidia backend)" \
+        || warn "graphify cluster-only failed"
+    else
+      # --no-label prevents graphify auto-detecting ANTHROPIC_API_KEY in Claude Code env
+      ( cd "$EOS_ROOT" && graphify cluster-only . --no-label 2>&1 | tail -2 ) \
+        && ok "GRAPH_REPORT.md and wiki/ generated (local, no LLM naming)" \
+        || warn "graphify cluster-only failed"
+    fi
   fi
 fi
 
-# ── 3. RTK ───────────────────────────────────────────────────────────────────
+# ── 4. RTK ───────────────────────────────────────────────────────────────────
 if ! command -v rtk >/dev/null 2>&1; then
   info "RTK not found — installing..."
   if command -v cargo >/dev/null 2>&1; then
@@ -67,18 +95,6 @@ fi
 
 if command -v rtk >/dev/null 2>&1; then
   ok "RTK $(rtk --version 2>/dev/null | head -1) ready (60-90% Bash token savings)"
-fi
-
-# ── 4. Nemotron (Nvidia) ─────────────────────────────────────────────────────
-# Exposes Nvidia's OpenAI-compatible API to graphify (non-code extraction)
-# and registers it for use by the Nemotron MCP server tools.
-# Governing policy: external-skills/nemotron/activation.md
-if [ -n "${Nemotron_api_key:-}" ]; then
-  export OPENAI_API_KEY="${Nemotron_api_key}"
-  export OPENAI_BASE_URL="https://integrate.api.nvidia.com/v1"
-  ok "Nemotron ready — graphify non-code extraction via Nvidia API"
-else
-  info "Nemotron_api_key not set — graphify uses local extraction only"
 fi
 
 # ── 5. claude-mem (best-effort, non-fatal) ────────────────────────────────────
