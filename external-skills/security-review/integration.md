@@ -57,17 +57,14 @@ This skill acts as a **gate**, not a recommendation. When installed:
 
 Runs the review on all pending changes on the current branch. Customize behavior by editing `.claude/commands/security-review.md` in the target repository.
 
-### GitHub Action
+### Invocation
 
-```yaml
-# .github/workflows/security.yml
-- uses: anthropics/claude-code-security-review@main
-  with:
-    comment-pr: true
-    claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
-```
+**Primary (Nemotron MCP):** `mcp__nemotron__nemotron_review_code` — available automatically when `Nemotron_api_key` is set in Claude Code secrets.
 
-Triggers on pull request events. Posts findings as inline PR comments. Full YAML including permissions is in `activation.md`.
+**Fallback (slash command):** `/security-review` inside a Claude Code session — uses the current session context, no API key required.
+
+> **No GitHub Action with `CLAUDE_API_KEY`.** The Anthropic-API-based action was removed.
+> Full routing logic and setup steps are in `activation.md`.
 
 ---
 

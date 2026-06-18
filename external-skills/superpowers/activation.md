@@ -62,6 +62,29 @@ After installation, confirm the plugin is active:
 None. superpowers has no environment variables, no API keys, and no configuration files
 beyond what the plugin manifest ships.
 
+## Availability Without Plugin (Remote/Web Sessions)
+
+When `/plugin install` is not available (Claude Code on the web, remote sessions, GitHub Actions),
+use the slash commands installed by `use-in-project.sh`:
+
+| Slash command | Replaces | L2 status |
+|---|---|---|
+| `/superpowers-brainstorm` | `superpowers:brainstorming` | **L2 mandatory before features** |
+| `/superpowers-verify` | `superpowers:verification-before-completion` | **L2 mandatory before done** |
+| `/superpowers-plan` | `superpowers:writing-plans` | Recommended before non-trivial code |
+
+These commands are **always available** — they are markdown files in `.claude/commands/` that
+work in every Claude Code environment without a plugin. The plugin adds automatic SessionStart
+injection on top; the commands are the portable foundation.
+
+**Invocation:** User or Claude types `/superpowers-brainstorm` (or the other commands) in
+Claude Code. No plugin, no API key, no setup beyond `use-in-project.sh` having run.
+
+**How they get installed:** `use-in-project.sh` copies them from
+`${EOS_HOME}/.claude/commands/` to the target project's `.claude/commands/` during bootstrap.
+
+---
+
 ## Disable / uninstall
 
 To stop superpowers from running:

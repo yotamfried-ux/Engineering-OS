@@ -13,15 +13,14 @@
 
 ## What It Ships
 
-A combination of three integrated components that share a single Python audit engine:
-
 | Component | Path / Reference |
 |---|---|
-| GitHub Action | `anthropics/claude-code-security-review@main` (name: "Claude Code Security Reviewer") |
-| Claude Code slash command | `/security-review` (`.claude/commands/security-review.md`) |
-| Python audit engine | `claudecode/` — `github_action_audit.py`, `prompts.py`, `findings_filter.py`, `claude_api_client.py` |
+| Nemotron MCP tool (primary) | `mcp__nemotron__nemotron_review_code` — available when `Nemotron_api_key` is set |
+| Claude Code slash command (fallback) | `/security-review` (`.claude/commands/security-review.md`) |
+| Python script (CI/local) | `scripts/security-review-nvidia.py` — uses `Nemotron_api_key` |
 
-Supporting files: `.github/workflows/`, `docs/`, `examples/`, `scripts/comment-pr-findings.js`.
+> **No GitHub Action with CLAUDE_API_KEY.** The Anthropic-API-based GitHub Action was removed.
+> Security review runs through Nemotron (NVIDIA) or the Claude Code session context only.
 
 ---
 
@@ -37,10 +36,10 @@ Supporting files: `.github/workflows/`, `docs/`, `examples/`, `scripts/comment-p
 
 ## Install Summary
 
-- **GitHub Action:** Add the `security.yml` workflow snippet (see `activation.md`). Set the `CLAUDE_API_KEY` repository secret.
-- **Slash command:** Copy `security-review.md` into `.claude/commands/` in the target repository.
+- **Primary (Nemotron):** Set `Nemotron_api_key` in Claude Code secrets. The `mcp__nemotron__nemotron_review_code` MCP tool becomes available automatically.
+- **Fallback (slash command):** Copy `security-review.md` into `.claude/commands/` in the target repository (done automatically by `use-in-project.sh`).
 
-Full setup steps, the exact YAML snippet, secrets config, and verification steps are in `activation.md`.
+Full setup steps, secrets config, and verification steps are in `activation.md`.
 
 ---
 

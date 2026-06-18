@@ -8,9 +8,10 @@ Usage:
     python security-review-nvidia.py --diff-file /tmp/diff.txt --output-json
 
 Environment variables:
-    NVIDIA_API_KEY   Required. Starts with nvapi-
-    NVIDIA_MODEL     Optional. Default: meta/llama-3.1-70b-instruct
-    NVIDIA_BASE_URL  Optional. Default: https://integrate.api.nvidia.com/v1
+    Nemotron_api_key  Preferred. Nemotron API key (Engineering OS standard).
+    NVIDIA_API_KEY    Alias. Falls back to this if Nemotron_api_key is unset.
+    NVIDIA_MODEL      Optional. Default: nvidia/llama-3.1-nemotron-ultra-253b-v1
+    NVIDIA_BASE_URL   Optional. Default: https://integrate.api.nvidia.com/v1
 """
 
 import argparse
@@ -64,13 +65,13 @@ def get_diff(args: argparse.Namespace) -> str:
 
 
 def run_review(diff: str) -> list[dict]:
-    api_key = os.environ.get("NVIDIA_API_KEY")
+    api_key = os.environ.get("Nemotron_api_key") or os.environ.get("NVIDIA_API_KEY")
     if not api_key:
-        print("Error: NVIDIA_API_KEY environment variable not set", file=sys.stderr)
+        print("Error: set Nemotron_api_key (or NVIDIA_API_KEY) environment variable", file=sys.stderr)
         sys.exit(1)
 
     base_url = os.environ.get("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
-    model = os.environ.get("NVIDIA_MODEL", "meta/llama-3.1-70b-instruct")
+    model = os.environ.get("NVIDIA_MODEL", "nvidia/llama-3.1-nemotron-ultra-253b-v1")
 
     client = OpenAI(api_key=api_key, base_url=base_url)
 

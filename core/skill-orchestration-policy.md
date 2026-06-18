@@ -258,8 +258,8 @@ claude-mem מרים worker ופורט 37777, graphify דורש uv). לפי [`git
 
 | Skill | type | Level | ברירת מחדל | מנגנון |
 |---|---|---|---|---|
-| [superpowers](../external-skills/superpowers/) | planning, review, orchestration | **L2** (עומק לפי מורכבות) | ✅ כל פרויקט | Claude Code plugin |
-| [security-review](../external-skills/security-review/) | security, review | **L2** לפני קומיט + שער לפני main | ✅ כל פרויקט (פרודקשן) | `/security-review` slash command + GitHub Action |
+| [superpowers](../external-skills/superpowers/) | planning, review, orchestration | **L2** (עומק לפי מורכבות) | ✅ כל פרויקט | Claude Code plugin כש-installed; אחרת `/superpowers-brainstorm` / `/superpowers-verify` / `/superpowers-plan` slash commands (portable, ללא plugin) |
+| [security-review](../external-skills/security-review/) | security, review | **L2** לפני קומיט + שער לפני main | ✅ כל פרויקט (פרודקשן) | `mcp__nemotron__nemotron_review_code` (primary, כש-`Nemotron_api_key` מוגדר); fallback: `/security-review` slash command. **לעולם לא Anthropic API.** |
 | [graphify](../external-skills/graphify/) | context-optimization | **L2** | ✅ כל פרויקט (בונים גרף תמיד; Graphify עצמו יתריע אם ריפו זעיר) | `uv tool install` + MCP |
 | [rtk](../external-skills/rtk/) | context-optimization | **L2** | ✅ כל פרויקט | binary + `rtk init -g` (PreToolUse hook) |
 | [claude-mem](../external-skills/claude-mem/) | memory, context-persistence | **L2** (פסיבי) | ✅ כשהסביבה מאפשרת | plugin + MCP + hooks + worker |

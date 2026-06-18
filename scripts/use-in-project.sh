@@ -181,35 +181,48 @@ else
   dim "  To update manually: cp ${EOS_HOME}/.claude/settings.json $TARGET_SETTINGS"
 fi
 
-# 8. Build graphify knowledge graph (only if not already built).
+# 8. Copy superpowers slash commands (portable — work without plugin in all environments).
+mkdir -p "$TARGET/.claude/commands"
+for CMD in superpowers-brainstorm.md superpowers-verify.md superpowers-plan.md; do
+  SRC="${EOS_HOME}/.claude/commands/${CMD}"
+  DST="$TARGET/.claude/commands/${CMD}"
+  if [ -f "$SRC" ]; then
+    cp "$SRC" "$DST"
+    grn "Copied /${CMD%.md} slash command → $DST"
+  fi
+done
+
+# 9. Build graphify knowledge graph (only if not already built).
 if command -v graphify >/dev/null 2>&1 && [ ! -f "$TARGET/graphify-out/graph.json" ]; then
   dim "Building graphify knowledge graph for this project..."
   ( cd "$TARGET" && graphify extract . 2>&1 | tail -2 ) && grn "graphify graph built for project"
 fi
 
-# 9. MCP connectivity check.
+# 10. MCP connectivity check.
 printf '\n⚡ MCP connectivity check:\n'
 python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.com/health', timeout=3)" 2>/dev/null \
   && printf '  \033[32m✅\033[0m Context7 reachable\n' \
   || printf '  \033[33m⚠️\033[0m  Context7 unreachable — add manually: claude mcp add context7 https://mcp.context7.com/mcp\n'
 
-# 10. Generate ENGINEERING_OS_SETUP.md checklist.
+# 11. Generate ENGINEERING_OS_SETUP.md checklist.
 cat > "$TARGET/ENGINEERING_OS_SETUP.md" << 'CHECKLIST'
 # Engineering OS — Setup Checklist
 
 ## Manual steps (cannot be automated):
 - [ ] Fill CLAUDE.md › <project_context> with project details (owner, goal, stack, stage)
-- [ ] Nemotron_api_key in Claude Code secrets (optional — Nvidia LLM for heavy generation)
+- [ ] Nemotron_api_key in Claude Code secrets — required for security-review (primary path) + heavy generation
 - [ ] Sentry MCP connected: claude mcp add sentry ... (required for debug_loop step 1)
 - [ ] Notion MCP connected: claude mcp add notion ... (required for spec writing in workflow)
-- [ ] GitHub Secret: CLAUDE_API_KEY → repo Settings > Secrets > Actions (security-review CI)
-- [ ] superpowers plugin: /plugin install superpowers@claude-plugins-official
+- [ ] superpowers plugin (optional): /plugin install superpowers@claude-plugins-official
+  Note: /superpowers-brainstorm, /superpowers-verify, /superpowers-plan are auto-installed below
+  and work WITHOUT the plugin in all environments (web, remote, CLI).
 
 ## Auto-installed by use-in-project.sh:
 - [x] pre-commit hook — PHYSICAL test file scan (exit 1 if >2 code files + 0 tests)
 - [x] commit-msg hook — format enforcer + "no tests" blocker (exit 1)
 - [x] post-commit hook — learning_loop reminder on fix: commits
 - [x] .claude/settings.json — Write/Edit/Agent/Bash PreToolUse blockers active
+- [x] /superpowers-brainstorm, /superpowers-verify, /superpowers-plan slash commands
 - [x] graphify knowledge graph built (if graphify installed)
 
 ## Hard blockers (exit 1 — will stop work):
@@ -231,7 +244,7 @@ echo
 grn "Engineering OS is now wired into: $TARGET"
 dim "Reference (read-only): $EOS_HOME   —   re-run anytime; this script is idempotent."
 
-# 11. Print next-steps checklist — manual actions that cannot be automated.
+# 12. Print next-steps checklist — manual actions that cannot be automated.
 echo
 bold "════════════════════════════════════════════"
 bold "  Next steps — manual actions required"
@@ -252,11 +265,12 @@ if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
   echo
 fi
 
-# security-review GitHub secret
-if echo "$BOOTSTRAP_OUT" | grep -q "security-review.*✅\|security.*yml\|security.*GitHub"; then
-  warn "security-review — add CLAUDE_API_KEY secret to GitHub:"
-  printf '      GitHub repo → Settings → Secrets and variables → Actions\n'
-  printf '      Add: CLAUDE_API_KEY = <your Anthropic API key>\n'
+# security-review — Nemotron_api_key (primary path)
+if echo "$BOOTSTRAP_OUT" | grep -q "security-review.*✅\|security-review"; then
+  warn "security-review — set Nemotron_api_key for primary Nemotron path:"
+  printf '      Claude Code: Settings → Secrets → Add: Nemotron_api_key = nvapi-...\n'
+  printf '      Get key at: build.nvidia.com\n'
+  printf '      Fallback (no key needed): /security-review slash command in Claude Code session\n'
   echo
 fi
 

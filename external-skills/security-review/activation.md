@@ -4,233 +4,159 @@
 
 | Requirement | Details |
 |---|---|
-| Anthropic API key | Required by both the Action and the slash command. Obtain from https://console.anthropic.com |
-| GitHub repository | Required for the GitHub Action path only |
-| Claude Code CLI | Required for the `/security-review` slash command path |
-| Repository permissions | `pull-requests: write`, `contents: read` (GitHub Action) |
+| `Nemotron_api_key` | **Required for primary path (Option A).** Set as Claude Code secret or env var. Obtain from [build.nvidia.com](https://build.nvidia.com). |
+| Claude Code CLI | Required for fallback path (Option B slash command). |
+| Repository permissions | `pull-requests: write`, `contents: read` (if using GitHub comment output). |
+
+> **NEVER use Claude Anthropic API for security review.** Option A uses Nemotron (NVIDIA).
+> Option B uses the current Claude Code session (no separate API key). No Anthropic API key is
+> needed or acceptable for this gate.
 
 ---
 
-## Install — Option A: Slash Command (interactive, Claude Code) ← מומלץ
+## Routing — מי מריץ את הביקורת
 
-**זוהי הדרך המועדפת** — רצה בתוך סשן Claude Code הקיים ללא API key נוסף.
-Claude Code משתמש ב-model context של הסשן הנוכחי; אין עלות LLM נפרדת.
-
-Copy the command definition file into the target repository's Claude commands directory:
-
-```bash
-# From inside the target repository:
-mkdir -p .claude/commands
-cp <path-to-cloned-skill-repo>/.claude/commands/security-review.md .claude/commands/security-review.md
+```
+Nemotron_api_key set?
+  YES → Option A: mcp__nemotron__nemotron_review_code  (PRIMARY)
+  NO  → Option B: /security-review slash command       (FALLBACK — Claude Code session)
 ```
 
-The `/security-review` slash command is then available in Claude Code sessions in that repository.
-It runs the review on all pending changes on the current branch.
-
-To customize review behavior, edit `.claude/commands/security-review.md` directly.
-
-**אימות:** בתוך Claude Code session, הקלד `/security-review` — הפקודה אמורה להתחיל מיד.
+ה-security gate חייב לרוץ לפני מיזוג ל-main, ללא יוצא מן הכלל. ה-routing אוטומטי —
+אם `Nemotron_api_key` מוגדר, Option A מופעל; אחרת, Option B.
 
 ---
 
-## Install — Option B: GitHub Action (automated, CI/CD only)
+## Option A: Nemotron MCP (PRIMARY)
 
-Add the following file to the target repository. The workflow triggers on every pull request and posts findings as inline PR comments.
+**מתי:** כאשר `Nemotron_api_key` מוגדר (recommended — ה-Nemotron model מתמחה בביקורת קוד).
 
-**File:** `.github/workflows/security.yml`
+### הפעלה דרך Claude Code
 
-```yaml
-name: Claude Code Security Review
+כש-`Nemotron_api_key` מוגדר, הכלי `mcp__nemotron__nemotron_review_code` זמין אוטומטית
+בסשן דרך shרת ה-MCP של Nemotron. לא נדרשת כל התקנה נוספת.
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-permissions:
-  pull-requests: write
-  contents: read
-
-jobs:
-  security-review:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Run Claude Code Security Review
-        uses: anthropics/claude-code-security-review@main
-        with:
-          comment-pr: true
-          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+**הפעלה (מתוך Claude):**
+```
+Use mcp__nemotron__nemotron_review_code with the current diff to perform a security review.
 ```
 
-**Important:** `fetch-depth: 2` is required so the action can compute the diff against the previous commit. Without it, the diff-aware scanning cannot function.
-
-### Optional Action Inputs
-
-| Input | Default | Description |
-|---|---|---|
-| `comment-pr` | `false` | Post findings as inline PR comments |
-| `upload-results` | `false` | Upload findings as a workflow artifact |
-| `exclude-directories` | (none) | Comma-separated list of directories to skip |
-| `claude-model` | `claude-opus-4-1-20250805` | Override the Claude model used for analysis |
-| `claudecode-timeout` | (default) | Timeout for Claude Code execution |
-| `run-every-commit` | `false` | Run on every commit push, not just PR events |
-
----
-
-*(Option B was the slash command — moved to Option A above.)*
-
----
-
-## Install — Option C: NVIDIA NIM (ספק חלופי — ללא Anthropic API)
-
-שימוש ב-NVIDIA NIM (מודלים פתוחים: Llama, Nemotron) במקום Anthropic. המסלול הזה
-**עצמאי לחלוטין** — לא דורש Claude API key, ורץ גם ב-CI/CD וגם locally.
-
-### Option C1: GitHub Action
-
-העתק את ה-workflow לפרויקט היעד:
-
+**הפעלה דרך slash command (אם הותקן `/security-review-nvidia`):**
 ```bash
-mkdir -p .github/workflows
-cp <path-to-engineering-os>/templates/github-actions/security-review-nvidia.yml \
-   .github/workflows/security-review-nvidia.yml
+/security-review-nvidia
 ```
 
-הוסף את הסקריפט:
+### הגדרת Nemotron_api_key
 
+**ב-Claude Code CLI (מומלץ — נשמר בין סשנים):**
 ```bash
-mkdir -p scripts
-cp <path-to-engineering-os>/scripts/security-review-nvidia.py scripts/security-review-nvidia.py
+# Add to Claude Code secrets (one-time, persists across sessions):
+# Settings → Secrets → Add: Nemotron_api_key = nvapi-...
 ```
 
-הגדר secret אחד בלבד (ראה "Configure Secrets" → NVIDIA_API_KEY):
-
-```
-NVIDIA_API_KEY=nvapi-...
-```
-
-### Option C2: Slash Command (Claude Code session)
-
+**כמשתנה סביבה (זמני לסשן):**
 ```bash
-mkdir -p .claude/commands
-cp <path-to-engineering-os>/templates/commands/security-review-nvidia.md \
-   .claude/commands/security-review-nvidia.md
+export Nemotron_api_key=nvapi-...
 ```
-
-הגדר את המשתנה בסביבה הנוכחית:
-
-```bash
-export NVIDIA_API_KEY=nvapi-...
-```
-
-הפעלה: `/security-review-nvidia` בתוך Claude Code session.
-
-### משתני סביבה
-
-| משתנה | ברירת מחדל | תיאור |
-|---|---|---|
-| `NVIDIA_API_KEY` | **חובה** | מפתח API מ-build.nvidia.com |
-| `NVIDIA_MODEL` | `meta/llama-3.1-70b-instruct` | מודל להרצה |
-| `NVIDIA_BASE_URL` | `https://integrate.api.nvidia.com/v1` | endpoint |
 
 ### מודלים מומלצים
 
 | מודל | ID | הערות |
 |---|---|---|
-| Llama 3.1 70B | `meta/llama-3.1-70b-instruct` | ברירת מחדל — איכות גבוהה |
+| Nemotron Ultra | `nvidia/llama-3.1-nemotron-ultra-253b-v1` | **ברירת מחדל** — עמוק ביותר |
+| Llama 3.1 70B | `meta/llama-3.1-70b-instruct` | מהיר יותר, איכות גבוהה |
 | Llama 3.1 8B | `meta/llama-3.1-8b-instruct` | מהיר, tier חינמי |
-| Llama 3.1 405B | `meta/llama-3.1-405b-instruct` | עמוק ביותר |
 
-### תיעוד מלא
+לעקיפת המודל: `export NVIDIA_MODEL=meta/llama-3.1-70b-instruct`
 
-ראה `external-systems/nvidia/README.md` ו-`scripts/security-review-nvidia.py`.
+---
+
+## Option B: Slash Command ב-Claude Code (FALLBACK)
+
+**מתי:** כאשר `Nemotron_api_key` אינו מוגדר. רץ בתוך סשן Claude Code הקיים —
+לא דורש API key נפרד; משתמש ב-model context של הסשן הנוכחי.
+
+### התקנה
+
+העתק את קובץ הפקודה לריפו היעד:
+
+```bash
+mkdir -p .claude/commands
+cp <path-to-engineering-os>/.claude/commands/security-review.md .claude/commands/security-review.md
+```
+
+ניתן לקבל זאת אוטומטית דרך `use-in-project.sh` — הסקריפט מעתיק את הפקודה בשלב ה-bootstrap.
+
+### הפעלה
+
+```
+/security-review
+```
+
+בתוך Claude Code session בריפו — הפקודה מריצה ביקורת אבטחה על כל השינויים הממתינים
+ב-branch הנוכחי.
+
+**אימות:** הקלד `/security-review` ב-Claude Code — הפקודה אמורה להתחיל מיד.
 
 ---
 
 ## Configure Secrets
 
-### CLAUDE_API_KEY (required)
+### Nemotron_api_key (required for Option A)
 
-Set this as a GitHub Actions repository secret:
+1. Sign up at [build.nvidia.com](https://build.nvidia.com) and generate an API key (`nvapi-...`).
+2. **Claude Code secrets (recommended):** Settings → Secrets → Add `Nemotron_api_key`.
+3. **Local env (alternative):** `export Nemotron_api_key=nvapi-...` (add to `.env`, never commit).
 
-1. Go to the target repository → **Settings** → **Secrets and variables** → **Actions**.
-2. Click **New repository secret**.
-3. Name: `CLAUDE_API_KEY`
-4. Value: your Anthropic API key from https://console.anthropic.com
+### GITHUB_TOKEN (automatic — for PR comment output only)
 
-### NVIDIA_API_KEY (required for Option C only)
+The default `GITHUB_TOKEN` provided by GitHub Actions is used automatically for posting PR comments when the script is run in CI. No additional configuration needed — the `permissions` block in any workflow YAML grants the required access.
 
-Set this as a GitHub Actions repository secret (Option C1), or export it in your shell (Option C2):
-
-1. Sign up at [build.nvidia.com](https://build.nvidia.com) and generate an API key.
-2. For GitHub Actions: **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
-   - Name: `NVIDIA_API_KEY`
-   - Value: `nvapi-...`
-3. For local use: `export NVIDIA_API_KEY=nvapi-...` (add to `.env` for persistence).
-
-### GITHUB_TOKEN (automatic)
-
-The action uses the default `GITHUB_TOKEN` provided by GitHub Actions for posting PR comments. No additional configuration is needed — the `permissions` block in the workflow YAML grants the required access.
-
----
-
-## Verify Installation
-
-### Verify the GitHub Action
-
-```bash
-# Check the workflow file exists and is syntactically valid:
-cat .github/workflows/security.yml
-
-# Confirm the secret is set (GitHub CLI):
-gh secret list | grep CLAUDE_API_KEY
-
-# Trigger a test run by opening or updating a PR; then check:
-gh run list --workflow=security.yml
-```
-
-### Verify the Slash Command
-
-In a Claude Code session in the target repository, type `/security-review` and confirm the command is recognized and begins analyzing the current branch's pending changes.
+> **No Anthropic API key (`CLAUDE_API_KEY`) is required or used.** If a previous setup had
+> `CLAUDE_API_KEY` configured for security review — it can be removed from repository secrets.
 
 ---
 
 ## Trusted-PR Gating (Mandatory for Public Repositories)
 
-Because the skill is not hardened against prompt injection, external contributor PRs must be approval-gated before the workflow runs. Configure this in GitHub:
+Because the skill is not hardened against prompt injection, external contributor PRs must be
+approval-gated before the review runs. Configure this in GitHub:
 
 1. Go to the repository → **Settings** → **Actions** → **General**.
-2. Under "Fork pull request workflows from outside collaborators", select **"Require approval for first-time contributors"** (minimum) or **"Require approval for all outside collaborators"** (recommended for security-sensitive repositories).
+2. Under "Fork pull request workflows from outside collaborators", select
+   **"Require approval for first-time contributors"** (minimum) or
+   **"Require approval for all outside collaborators"** (recommended for security-sensitive repos).
 
 ---
 
-## Reference
+## Verify Installation
 
-For advanced setup and scripting, see `scripts/skill-bootstrap.sh` in the source repository:
-https://github.com/anthropics/claude-code-security-review
+```bash
+# Verify Nemotron_api_key is set:
+echo ${Nemotron_api_key:0:8}...   # should show nvapi-xx...
+
+# Verify nemotron MCP tool is available in session:
+# (In Claude Code) type: /tools — mcp__nemotron__nemotron_review_code should appear
+
+# Verify fallback slash command:
+ls .claude/commands/security-review.md
+```
 
 ---
 
 ## Disable / Uninstall
 
-### Disable the GitHub Action
+### Disable Option A (Nemotron)
 
-Remove or rename the workflow file:
-
+Unset the API key:
 ```bash
-git mv .github/workflows/security.yml .github/workflows/security.yml.disabled
-git commit -m "chore: disable security-review action"
+unset Nemotron_api_key
+# Remove from Claude Code secrets: Settings → Secrets → remove Nemotron_api_key
 ```
 
-Or delete it entirely if the skill is being removed permanently. This does not affect the slash command.
+The system automatically falls back to Option B (slash command).
 
-### Disable the Slash Command
-
-Remove the command definition file:
+### Disable Option B (Slash Command)
 
 ```bash
 git rm .claude/commands/security-review.md
@@ -239,6 +165,6 @@ git commit -m "chore: remove security-review slash command"
 
 ### Full Removal
 
-Remove both the workflow file and the slash command file, then optionally delete the `CLAUDE_API_KEY` secret from repository settings if it is not used by other workflows.
-
-**Note:** Disabling this skill removes the LEVEL 2 mandatory gate. Ensure an alternative security review process is in place before disabling in a production repository.
+Remove the slash command file and unset `Nemotron_api_key`. Note: disabling this skill removes
+the LEVEL 2 mandatory gate. Ensure an alternative security review process is in place before
+disabling in a production repository.
