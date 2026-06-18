@@ -100,6 +100,29 @@
 
 ---
 
+## <web_session_import>
+
+**לשימוש כשמתבקשים ליישם Engineering OS על פרויקט אחר מתוך סשן Claude Web:**
+
+בסשן Claude Web, `git clone` נכשל כי אין credentials. **אל תנסה** `git clone`, חיפוש credentials, או GitHub MCP file-by-file copy. הפתרון הנכון:
+
+Engineering-OS **כבר קיים** כ-working directory של הסשן (בד"כ `/home/user/Engineering-OS`). עבור לספריית פרויקט המטרה והפעל עם `ENGINEERING_OS_HOME` מפורש:
+
+```bash
+cd /path/to/target-project
+ENGINEERING_OS_HOME=/home/user/Engineering-OS \
+  bash /home/user/Engineering-OS/scripts/use-in-project.sh
+```
+
+אם `ENGINEERING_OS_HOME` כבר מוגדר (session-setup.sh מייצא אותו אוטומטית), מספיק:
+```bash
+cd /path/to/target-project && bash "$ENGINEERING_OS_HOME/scripts/use-in-project.sh"
+```
+
+</web_session_import>
+
+---
+
 ## <skill_activation>
 
 Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestration Framework**: שכבה
