@@ -1,62 +1,69 @@
 # Engineering OS
 
-מערכת הפעלה לפיתוח תוכנה — ריפו מרכזי של כללים, תבניות קוד, ו-workflow שהופכים את Claude לסוכן פיתוח עקבי ואמין בכל פרויקט.
+A read-only governance and knowledge layer that Claude loads before every coding task.
+It enforces consistent workflow, patterns, and quality gates across all your projects —
+without rewriting the rules each time.
 
-**בעיה שהוא פותר:** בכל פרויקט חדש, Claude מתחיל מאפס — ארכיטקטורה מאולתרת, security שנשכחת, patterns שמומצאים מחדש. Engineering OS מגדיר ברירות מחדל קבועות, patterns מאומתים, וכללים שנאכפים דטרמיניסטית — כך שכל פרויקט מתחיל מ"כבר יודעים".
+## What's inside
 
-**עיקרון-העל: לאמת, לא לנחש.** כל קביעה על מצב המערכת — קוד, נתונים, באגים, פריסה — נשענת על בדיקה דרך כלי. ניחוש שגוי על מצב המערכת הוא מקור הבאגים החוזרים מספר אחת.
+| Directory | Purpose |
+|---|---|
+| `CLAUDE.md` | **Entry point.** Loaded by Claude at the start of every session. Defines role, principles, skill activation, and navigation. |
+| `core/` | 14 policy files: workflow, quality gates, git policy, hooks, debugging, learning loop, skill orchestration, and more. |
+| `patterns/` | 22 code-pattern domains — auth, billing, API, database, UI, AI agents, observability, security, testing, integrations, and more. |
+| `external-skills/` | 9 external skill wrappers (superpowers, security-review, graphify, rtk, claude-mem, ui-ux-pro-max, gstack, claude-code-workflows). Each has a 4-file SIP contract. |
+| `external-systems/` | 47 third-party service guides — LLM providers, databases, auth, payments, observability, CRM, and more. |
+| `templates/` | Project scaffolds and reusable file templates (including `hooks/pre-commit`). |
+| `scripts/` | `use-in-project.sh` (apply OS to a new project), `skill-bootstrap.sh` (detect/install skills), `session-setup.sh` (SessionStart hook). |
+| `docs/` | Architecture guides, framework references, troubleshooting. |
+| `lessons-learned/` | Documented bugs, post-mortems, prevention strategies. |
+| `failed-solutions/` | Approaches that were tried and failed — read before repeating them. |
+| `architecture-decisions/` | ADRs for cross-project architectural choices. |
 
----
+## How to use in a new project
 
-## מבנה הריפו
-
-| שכבה | תוכן | מתי משתמשים |
-|---|---|---|
-| `CLAUDE.md` | Entry point — תפקיד, עקרונות, מפת ניווט | נטען אוטומטית בכל סשן |
-| `core/` | קבצי מדיניות: workflow, git, hooks, quality-gates, debugging, learning, patterns | לפני כל פעולה — גש לקובץ הרלוונטי |
-| `patterns/` | תבניות קוד מוכנות לשימוש-חוזר (98 תבניות, 21 דומיינים) | כשכותבים קוד לבעיה ידועה |
-| `templates/` | מפרטים ארכיטקטוריים לתחילת פרויקט | בתחילת פרויקט חדש |
-| `external-systems/` | תיעוד API של מערכות חיצוניות (Stripe, Auth0, Anthropic, …) | כשמגדירים אינטגרציה |
-| `external-skills/` | סקילים שמשנים את ה-workflow של Claude (superpowers, security-review, ui-ux-pro-max, …) | נשלטים ע"י `core/skill-orchestration-policy.md` |
-| `scripts/` | כלי bootstrap, session setup, hooks | `skill-bootstrap.sh` להקמת פרויקט חדש |
-| `lessons-learned/` | באגים מתועדים, postmortems, prevention strategies | לפני debugging — קרא לפני שמנסים שוב |
-| `failed-solutions/` | פתרונות שנוסו ונכשלו | קרא לפני שמנסים גישה דומה |
-| `architecture-decisions/` | ADRs — החלטות ארכיטקטוניות מנומקות | לפני שמערערים החלטה קיימת |
-
----
-
-## הקמת פרויקט חדש
-
-**3 צעדים:**
+**Recommended — one command from your project root:**
 
 ```bash
-# 1. העתק את CLAUDE.md לפרויקט החדש
-cp CLAUDE.md /path/to/new-project/CLAUDE.md
-
-# 2. מלא את <project_context> ב-CLAUDE.md
-#    Owner, Goal, Type, Stack, Stage, Key services
-
-# 3. הרץ skill-bootstrap.sh לאימות שכל הסקילים מותקנים
-bash scripts/skill-bootstrap.sh --install
+bash ~/.engineering-os/scripts/use-in-project.sh
 ```
 
-לאחר מכן:
-- בחר template מ-`templates/` לפי סוג הפרויקט
-- הגדר pre-commit hook: `cp scripts/hooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`
-- התחל בשלב 1 של `core/workflow.md` — אפיון ב-Notion
+This clones Engineering OS to `~/.engineering-os/`, wires it into your project's
+`CLAUDE.md`, runs skill bootstrap, and prints the manual steps that can't be automated
+(superpowers plugin install, GitHub secrets for security-review).
 
----
+For submodule mode (pin the OS version to your repo), see `CLAUDE.template.md`.
 
-## ניווט מהיר
+## First-time machine setup
 
-| צריך | קובץ |
-|---|---|
-| סדר שלבי עבודה | [`core/workflow.md`](./core/workflow.md) |
-| תבניות קוד לפי דומיין | [`patterns/`](./patterns/) |
-| תבניות ארכיטקטורה לפי סוג פרויקט | [`templates/`](./templates/) |
-| תיעוד API של מערכות חיצוניות | [`external-systems/`](./external-systems/) |
-| כללי git, קומיט, branches | [`core/git-policy.md`](./core/git-policy.md) |
-| תנאי סיום (DoD) לפני קומיט | [`core/quality-gates.md`](./core/quality-gates.md) |
-| debugging — לפני שמנחשים | [`core/debugging-policy.md`](./core/debugging-policy.md) |
-| כשהנחיות מתנגשות | [`core/precedence.md`](./core/precedence.md) |
-| הגדרת ו-bootstrap של סקילים | [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) |
+```bash
+# 1. Required tools
+curl -LsSf https://astral.sh/uv/install.sh | sh   # for graphify
+# node/npm must already be installed
+
+# 2. MCP servers (run inside Claude Code CLI once per machine)
+claude mcp add notion https://mcp.notion.com/mcp
+claude mcp add context7 https://mcp.context7.com/mcp
+
+# 3. superpowers plugin (inside Claude Code CLI)
+/plugin install superpowers@claude-plugins-official
+
+# 4. Verify
+/mcp          # Notion and Context7 should show as connected
+/plugin list  # superpowers should appear
+```
+
+## Requirements
+
+- [Claude Code CLI](https://claude.ai/code) with an Anthropic API key
+- `git` 2.x+
+- `uv` (Python package manager, for graphify)
+- `node` / `npm` (for rtk and other skills)
+
+## Philosophy
+
+> Validate, don't guess. The system enforces quality gates deterministically —
+> not through reminders, but through hooks and policy files that Claude re-reads
+> before every action.
+
+Full rationale and principles: `CLAUDE.md` → `<core_principles>`.

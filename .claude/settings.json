@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\\n⏹️  הסתיים turn — בדוק:\\n  1. הוספת בלוק 🧰 במה השתמשתי?\\n  2. אם הוצהרה הצלחה — האם אומתה בכלי (בדיקות/לוגים/UI)? לא \"נראה לי שעובד\"\\n  3. אם נגעת ב-DB — RLS פעיל + policy מפורשת?\\nאם כן — סיים. אם לא — חזור ותשלים.'"
+            "command": "git diff --cached --quiet 2>/dev/null || echo '{\"hookSpecificOutput\":{\"hookEventName\":\"Stop\",\"additionalContext\":\"📋 DoD reminder — staged changes detected. Verify before committing: (1) tests pass, (2) no secrets, (3) behavior proven, (4) usage report included. See core/quality-gates.md.\"}}'  || true"
           }
         ]
       }

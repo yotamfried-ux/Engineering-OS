@@ -42,6 +42,14 @@ if command -v graphify >/dev/null 2>&1; then
     NODES=$(python3 -c "import json; g=json.load(open('$GRAPH')); print(len(g.get('nodes',[])))" 2>/dev/null || echo "?")
     ok "graphify ready — $NODES nodes in graph"
   fi
+
+  # Generate GRAPH_REPORT.md and wiki/ for broad navigation (referenced in CLAUDE.md)
+  if [ ! -f "$EOS_ROOT/graphify-out/GRAPH_REPORT.md" ]; then
+    info "generating GRAPH_REPORT.md and wiki/..."
+    ( cd "$EOS_ROOT" && graphify cluster-only . 2>&1 | tail -2 ) \
+      && ok "GRAPH_REPORT.md and wiki/ generated" \
+      || warn "graphify cluster-only failed"
+  fi
 fi
 
 # ── 3. RTK ───────────────────────────────────────────────────────────────────

@@ -63,7 +63,6 @@
    (ראה [`connector-policy.md`](./connector-policy.md) › `<connectors>`).
    *כלי:* `mcp__Notion__notion-create-pages` ליצירת spec · `mcp__Notion__notion-fetch` לקריאה · `mcp__Notion__notion-update-page` לסגירת הלולאה (שלב 10).
    *סקיל שיכול לסייע:* `superpowers:brainstorming` לגיבוש הרעיון, `superpowers:writing-plans` לפירוק לשלבים — הפלט נכתב ב-Notion.
-   > *אם Notion לא מחובר:* השתמש ב-GitHub Issues / מסמך markdown בריפו ועדכן ב-`connector-policy.md` › `<connectors>` · Notion · אופציה משנית. אל תדלג על שלב האפיון — רק כלי כתיבת ה-spec ישתנה.
 2. **חיפוש דוגמאות ואיסוף מידע** — משוך פתרון קיים ומקור אמין לפי `<information_sources>`
    (ראה [`connector-policy.md`](./connector-policy.md)): קודם `patterns/`/`templates/`,
    ואז **Context7** לתיעוד רשמי עדכני של הספריות/הגרסאות בהן תשתמש.
@@ -88,7 +87,7 @@
    > ודוגמה היא ניחוש ארכיטקטורה — בדיוק מה שעקרון-העל אוסר.
 
 5. **כתיבה איטרטיבית** — שינויים קטנים בתוך ה-branch הפעיל.
-   *סקיל שיכול לסייע:* `superpowers:test-driven-development`; `ui-ux-pro-max` לממשק.
+   *סקיל שיכול לסייע:* `superpowers:test-driven-development`; `ui-ux-pro-max` לממשק (ראה [`external-skills/ui-ux-pro-max/`](../external-skills/ui-ux-pro-max/)).
 6. **אימות** — דרך הכלי המתאים למשימה.
    *סקיל שיכול לסייע:* `superpowers:verification-before-completion` — מריץ פקודות ומאמת לפני הצהרת הצלחה.
 7. **ניקוי קוד** — ראה [`quality-gates.md`](./quality-gates.md) › `<cleanup>`.
@@ -113,6 +112,43 @@
 
 ## <onboarding>
 
+### 0. Prerequisites (חובה לפני שלב 1)
+
+לפני שמתחילים לעבוד עם Engineering OS בפרויקט חדש, ודא שכל הכלים והחיבורים הבאים קיימים:
+
+**כלים נדרשים:**
+- `uv` — מנהל חבילות Python (נדרש לgraphify): `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- `node` / `npm` — נדרש לrtk ולסקילים נוספים
+- `git` — ברמה 2.x לפחות
+
+**הגדרת `.env`** — צור קובץ `.env` בשורש הפרויקט עם הטוקנים הנדרשים:
+```
+ANTHROPIC_API_KEY=sk-ant-...        # חובה — לgraphify ולsecurity-review
+NOTION_TOKEN=secret_...             # לניהול spec ואפיון (שלב 1 בworkflow)
+GITHUB_TOKEN=ghp_...                # לGitHub MCP ולpull requests
+```
+> **אבטחה:** `.env` חייב להיות ב-`.gitignore`. לעולם אל תעשה commit לטוקנים.
+
+**חיבור שרתי MCP** (פעם אחת לכל מכונה, בתוך Claude Code CLI):
+```bash
+# Notion — לניהול spec ואפיון
+claude mcp add notion https://mcp.notion.com/mcp
+
+# Context7 — לתיעוד ספריות עדכני
+claude mcp add context7 https://mcp.context7.com/mcp
+```
+אמת חיבור: `/mcp` בתוך Claude Code — שני השרתים חייבים להופיע כ-connected לפני שממשיכים.
+
+**התקנה ידנית של `superpowers`** (פעם אחת לכל מכונה, בתוך Claude Code CLI):
+```
+/plugin install superpowers@claude-plugins-official
+```
+אמת: `/plugin list` — צריך להופיע `superpowers`.
+
+---
+
+### שלבי Onboarding
+
 לפני כתיבת קוד בפרויקט שאינך מכיר:
 
 1. קרא את `CLAUDE.md` ואת קבצי ההגדרה (`package.json`, `pyproject.toml`, `.env.example`).
@@ -124,6 +160,8 @@
 5. אל תניח מבנה — בדוק בפועל איך הקוד מאורגן.
 6. **הרץ את ה-bootstrap של הסקילים** — `scripts/skill-bootstrap.sh` כדי לוודא שהסקילים
    הנדרשים קיימים בפרויקט; דווח על חסרים (ראה [`skill-orchestration-policy.md`](./skill-orchestration-policy.md) › `<bootstrap>`).
+   - `superpowers`, `security-review`, `claude-mem` דורשים התקנה ידנית — ראה
+     `external-skills/<skill>/activation.md` לפירוט.
 
 </onboarding>
 
@@ -159,7 +197,7 @@
 - **Python** — `pyproject.toml`, הגדרת linter+formatter (Ruff), קונפיג טסטים
   (pytest), `.python-version`.
 - **כל פרויקט** — הגדרת pre-commit כ-**hook אוכף** (lint + format + טסטים; ראה
-  [`hooks-policy.md`](./hooks-policy.md)): `cp scripts/hooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit` (הסקריפט זמין ב-Engineering OS). CI בסיסי ב-GitHub Actions שמריץ את אותן בדיקות.
+  [`hooks-policy.md`](./hooks-policy.md)) ו-CI בסיסי ב-GitHub Actions שמריץ את אותן בדיקות.
 
 לסוג פרויקט אחר (ML, אוטומציה וכו') — הוסף את קבצי הבסיס המקובלים לאותו סוג
 (למשל לפרויקט ML: ניהול תלויות, מבנה לנתונים/מודלים, seed לשחזוריות), באותו עיקרון

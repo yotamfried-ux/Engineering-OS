@@ -1,90 +1,129 @@
-# external-systems/
+# external-systems
 
-תיעוד אינטגרציה עם מערכות חיצוניות: API overview, auth model, key objects, setup, rate limits, ומגבלות ידועות.
+Integration guides for third-party services. Each subdirectory contains setup
+instructions, authentication details, key objects/concepts, and usage patterns.
 
-## external-systems vs. patterns/integrations
+Before choosing a service, check `../core/connector-policy.md` for selection criteria
+and fallback procedures.
 
-| | external-systems/ | patterns/integrations/ |
+---
+
+## LLM Providers & AI APIs
+
+| Service | Path | Notes |
 |---|---|---|
-| **מה** | תיעוד API גולמי של ספק ספציפי | קוד + ארכיטקטורה לאינטגרציה |
-| **מתי** | בחירת ספק / lookup של API object | כשכותבים קוד שמדבר עם ספק |
-| **דוגמה** | "מה השדות של Stripe Subscription?" | "איך מטפלים ב-webhook idempotency?" |
+| Anthropic (Claude) | `anthropic/` | Primary LLM; Claude API, tool use, streaming |
+| OpenAI | `openai/` | GPT-4o, embeddings, assistants API |
+| Google Gemini | `google-gemini/` | Gemini Pro/Ultra, multimodal |
+| Mistral | `mistral/` | Mistral Large/Medium, function calling |
+| Cohere | `cohere/` | Command R+, reranking, embeddings |
+| NVIDIA NIM | `nvidia/` | OpenAI-compatible inference API (llama, nemotron, etc.) |
 
-## 3 דרכי שימוש (מ-connector-policy.md)
+## AI Agent Frameworks
 
-1. **שילוב מלא** — החיבור מחובר דרך MCP ומשמש ישירות ב-workflow
-2. **חילוץ חלקי** — קוראים את הדוקומנטציה ומממשים בקוד ידנית
-3. **למידה והשראה** — מבינים את הארכיטקטורה של מערכת לפני בניית משהו דומה
+| Service | Path | Notes |
+|---|---|---|
+| LangGraph | `langgraph/` | Stateful multi-agent graphs |
+| CrewAI | `crewai/` | Role-based agent crews |
+| AutoGen | `autogen/` | Conversational multi-agent |
+| Pydantic AI | `pydantic-ai/` | Structured output, type-safe agents |
+| MCP SDK | `mcp-sdk/` | Build and consume MCP servers |
 
-## מערכות זמינות
+## Vector Databases & Search
 
-### תשלומים ובילינג
-| מערכת | תיאור |
+| Service | Path | Notes |
+|---|---|---|
+| Pinecone | `pinecone/` | Managed vector DB, serverless |
+| Weaviate | `weaviate/` | Vector DB with hybrid search |
+| Qdrant | `qdrant/` | Self-hosted or cloud vector DB |
+| Chroma | `chroma/` | Lightweight local vector store |
+| Meilisearch | `meilisearch/` | Full-text + vector search |
+| Typesense | `typesense/` | Fast typo-tolerant search |
+| Algolia | `algolia/` | Managed search with analytics |
+
+## Databases & Data Pipelines
+
+| Service | Path | Notes |
+|---|---|---|
+| Supabase | `supabase/` | Postgres + Auth + Storage + RLS |
+| dlt | `dlt/` | Data load tool — ETL pipelines |
+| Meltano | `meltano/` | Singer-based ELT platform |
+
+## Authentication & Identity
+
+| Service | Path | Notes |
+|---|---|---|
+| Auth0 | `auth0/` | Enterprise auth, SSO, MFA |
+| Clerk | `clerk/` | Next.js-first auth, user management |
+| Firebase Auth | `firebase-auth/` | Google Firebase auth |
+
+## Payments & Commerce
+
+| Service | Path | Notes |
+|---|---|---|
+| Stripe | `stripe/` | Subscriptions, webhooks, metered billing |
+| Paddle | `paddle/` | B2B SaaS billing, tax handling |
+| LemonSqueezy | `lemonsqueezy/` | Simple SaaS billing |
+
+## Observability & Analytics
+
+| Service | Path | Notes |
+|---|---|---|
+| Datadog | `datadog/` | APM, logs, metrics, dashboards |
+| Grafana | `grafana/` | OSS observability stack |
+| LangSmith | `langsmith/` | LLM observability and tracing |
+| DeepEval | `deepeval/` | LLM evaluation framework |
+| PostHog | `posthog/` | Product analytics, feature flags |
+| Amplitude | `amplitude/` | Product analytics |
+| Mixpanel | `mixpanel/` | Event-based analytics |
+
+## Feature Flags & Experimentation
+
+| Service | Path | Notes |
+|---|---|---|
+| GrowthBook | `growthbook/` | OSS feature flags + A/B testing |
+| LaunchDarkly | `launchdarkly/` | Enterprise feature management |
+| Unleash | `unleash/` | Self-hosted feature toggles |
+
+## Communication & Media
+
+| Service | Path | Notes |
+|---|---|---|
+| Resend | `resend/` | Transactional email API |
+| Ably | `ably/` | Realtime pub/sub, websockets |
+| Cloudinary | `cloudinary/` | Image/video CDN and transforms |
+| Mux | `mux/` | Video hosting and streaming |
+| Mapbox | `mapbox/` | Maps, geocoding, routing |
+
+## Scheduling & Events
+
+| Service | Path | Notes |
+|---|---|---|
+| Cal.com | `cal-com/` | Open-source scheduling |
+| Inngest | `inngest/` | Durable functions and event queues |
+| Liveblocks | `liveblocks/` | Collaborative real-time features |
+
+## CRM
+
+| Service | Path | Notes |
+|---|---|---|
+| Twenty CRM | `twenty-crm/` | Open-source CRM |
+
+## MCP Connectors
+
+Pre-built MCP server wrappers for common services (use with `claude mcp add`):
+
+| Connector | Path |
 |---|---|
-| [`stripe/`](./stripe/) | תשלומים, subscriptions, billing — ראה גם `patterns/billing/` |
-
-### אימות וזהות
-| מערכת | תיאור |
-|---|---|
-| [`auth0/`](./auth0/) | Identity platform — OAuth, SSO, MFA |
-| [`clerk/`](./clerk/) | Auth + user management לאפליקציות React/Next.js |
-| [`firebase-auth/`](./firebase-auth/) | Auth כחלק מ-Firebase suite |
-
-### AI ו-LLMs
-| מערכת | תיאור |
-|---|---|
-| [`anthropic/`](./anthropic/) | Claude API — chat, tool use, streaming |
-| [`google-gemini/`](./google-gemini/) | Gemini API — multimodal AI |
-| [`cohere/`](./cohere/) | Embeddings, RAG, language models |
-
-### וקטור DB ו-RAG
-| מערכת | תיאור |
-|---|---|
-| [`chroma/`](./chroma/) | Open-source vector database |
-
-### Agents ו-Orchestration
-| מערכת | תיאור |
-|---|---|
-| [`autogen/`](./autogen/) | Multi-agent framework (Microsoft) |
-| [`crewai/`](./crewai/) | Role-based multi-agent orchestration |
-
-### Analytics ו-Monitoring
-| מערכת | תיאור |
-|---|---|
-| [`amplitude/`](./amplitude/) | Product analytics |
-| [`datadog/`](./datadog/) | Infrastructure monitoring, APM |
-| [`grafana/`](./grafana/) | Visualization, dashboards |
-| [`growthbook/`](./growthbook/) | Feature flags, A/B testing |
-
-### קבצים ומדיה
-| מערכת | תיאור |
-|---|---|
-| [`cloudinary/`](./cloudinary/) | Image/video transformation, CDN |
-
-### Search
-| מערכת | תיאור |
-|---|---|
-| [`algolia/`](./algolia/) | Search-as-a-service |
-
-### זמינות ותזמון
-| מערכת | תיאור |
-|---|---|
-| [`cal-com/`](./cal-com/) | Open-source scheduling — ראה גם `patterns/integrations/calendar/` |
-
-### Evaluation ו-ML
-| מערכת | תיאור |
-|---|---|
-| [`deepeval/`](./deepeval/) | LLM evaluation framework |
-| [`dlt/`](./dlt/) | Data load tool — pipelines to warehouses |
-
-### Connectors (Composio)
-| מערכת | תיאור |
-|---|---|
-| [`connectors/`](./connectors/) | Composio-managed connectors: Stripe, Google Calendar, ועוד |
-
-## הוספת מערכת חדשה
-
-1. צור `external-systems/<provider>/README.md`
-2. כלול: overview, auth model, key objects, SDK setup, rate limits, known limitations
-3. אם יש קוד אינטגרציה — הוסף גם ל-`patterns/integrations/<domain>/`
-4. אם יש Composio connector — הוסף ל-`connectors/<provider>/`
+| GitHub | `connectors/github/` |
+| Notion | `connectors/notion/` |
+| Slack | `connectors/slack/` |
+| Linear | `connectors/linear/` |
+| Jira | `connectors/jira/` |
+| Stripe | `connectors/stripe/` |
+| Supabase | `connectors/supabase/` |
+| Postgres | `connectors/postgres/` |
+| Google Drive | `connectors/google-drive/` |
+| Google Sheets | `connectors/google-sheets/` |
+| Figma | `connectors/figma/` |
+| Discord | `connectors/discord/` |
