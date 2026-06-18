@@ -243,12 +243,21 @@ detect_graphify() {
 }
 install_graphify='uv tool install graphifyy && graphify install'
 
+detect_nemotron() {
+  # Present if .mcp.json registers the server AND the API key is set
+  { [ -f "$PROJECT_ROOT/.mcp.json" ] && grep -q '"nemotron"' "$PROJECT_ROOT/.mcp.json"; } && return 0
+  # Also present if just the API key exists (server can be registered separately)
+  [ -n "${Nemotron_api_key:-}" ] && [ -f "$PROJECT_ROOT/scripts/nemotron-mcp-server.py" ]
+}
+install_nemotron='# Register with: claude mcp add --scope project nemotron -- uv run scripts/nemotron-mcp-server.py  |  Requires Nemotron_api_key Claude Code secret — see external-skills/nemotron/activation.md'
+
 SKILLS="
 superpowers|2|detect_superpowers|install_superpowers|default
 security-review|2|detect_security_review|install_security_review|default
 graphify|2|detect_graphify|install_graphify|default
 rtk|2|detect_rtk|install_rtk|default
 claude-mem|2|detect_claude_mem|install_claude_mem|default
+nemotron|1|detect_nemotron|install_nemotron|conditional
 ui-ux-pro-max|2|detect_ui_ux_pro_max|install_ui_ux_pro_max|conditional
 frontend-design|0|detect_frontend_design|install_frontend_design|conditional
 claude-code-workflows|1|detect_claude_code_workflows|install_claude_code_workflows|conditional

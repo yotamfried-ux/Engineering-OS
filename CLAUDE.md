@@ -107,8 +107,9 @@ Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestrati
 
 > **עיקרון יסוד — סקילים משרתים את ה-workflow, לא מחליפים אותו (ראה [`core/precedence.md`](./core/precedence.md) דרגה 7):**
 >
-> **סקילי תשתית** (graphify · rtk · claude-mem) — **לפני ה-workflow ולאורכו, תמיד:**
+> **סקילי תשתית** (graphify · rtk · claude-mem · nemotron) — **לפני ה-workflow ולאורכו, תמיד:**
 > graphify בונה גרף קוד בתחילת כל סשן וחוסך קונטקסט לאורך כל העבודה. rtk מכווץ פלטי Bash (60–90%) דרך PreToolUse hook. claude-mem משחזר הקשר.
+> nemotron (Nvidia) — מודל LLM חינמי שמשמש ל-generation ו-review כבדים; Claude קורא אליו דרך MCP ומאמת את הפלט לפני יישום.
 > אין "שלב ייעודי" להם — הם שכבת בסיס שרצה מתחת לכל ה-pipeline.
 >
 > **סקילי משימה** (superpowers · security-review · ui-ux-pro-max) — **שלב 3 ב-`workflow.md`:**
@@ -130,8 +131,14 @@ Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestrati
 
 **ברירת מחדל פר-פרויקט:** חלק מהסקילים מותקנים בכל פרויקט כברירת מחדל (superpowers,
 security-review, graphify, rtk, ו-claude-mem כשהסביבה מאפשרת), אחרים מותנים (ui-ux-pro-max
-ל-UI) או opt-in (gstack). frontend-design הוחלף ב-ui-ux-pro-max (**DEPRECATED**). הפירוט והנימוק:
+ל-UI, nemotron כש-`Nemotron_api_key` קיים — L1) או opt-in (gstack). frontend-design הוחלף
+ב-ui-ux-pro-max (**DEPRECATED**). הפירוט והנימוק:
 [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) › `<default_activation>`.
+
+**nemotron (Nvidia Nemotron-Ultra/Super):** כש-`Nemotron_api_key` מוגדר, יש להשתמש בכלי MCP
+של nemotron לgeneration כבד (>50 שורות), first-pass review (diff >100 שורות), סיכום (>200 שורות).
+Claude מאמת את הפלט לפני כל יישום. Security gate נשאר על Claude/Anthropic ללא יוצא מן הכלל.
+ראה ניתוב מלא: [`core/resource-management.md`](./core/resource-management.md) › `<nemotron-routing>`.
 
 **override:** שום סקיל לא גובר על סקיל אבטחה (ראה [`<precedence>`](#precedence) דרגות 1 ו-3).
 

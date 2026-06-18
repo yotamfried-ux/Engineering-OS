@@ -33,6 +33,32 @@
 
 ---
 
+## <nemotron-routing>
+
+**Nemotron (Nvidia) — מתי לאצול משימה במקום לבצע ב-Claude:**
+
+| משימה | לאן | טריגר |
+|---|---|---|
+| יצירת קוד / boilerplate | `nemotron_generate_code` | output צפוי > ~50 שורות |
+| כתיבת unit tests | `nemotron_generate_code` (output_type=tests) | test suite שלם |
+| כתיבת docs/docstrings | `nemotron_generate_code` (output_type=documentation) | docs גדולים |
+| first-pass code review | `nemotron_review_code` / agent `nemotron-code-reviewer` | diff > 100 שורות |
+| סיכום קובץ/PR/log | `nemotron_summarize` | תוכן > 200 שורות |
+| הסבר קוד לא מוכר | `nemotron_explain` | כל גודל |
+| brainstorming גישות | `nemotron_brainstorm` | צריך > 3 alternatives |
+
+**כללי אצבע:**
+- generation קטנה (<10 שורות) — Claude ישירות, overhead של MCP call לא שווה.
+- **לעולם אל תעביר** ל-Nemotron: security gate, orchestration, edit קבצים, context עם secrets.
+- **תמיד** אמת פלט Nemotron לפני שמחיל עם Edit.
+- graphify non-code extraction — אוטומטי דרך `OPENAI_API_KEY` שמוגדר ב-`session-setup.sh`.
+
+ראה: [`../external-skills/nemotron/integration.md`](../external-skills/nemotron/integration.md)
+
+</nemotron-routing>
+
+---
+
 ## <sub-agents>
 
 Sub-agents (Agent tool) מתאימים כשיש עבודה שאפשר להקביל או שתאסוף context רב
