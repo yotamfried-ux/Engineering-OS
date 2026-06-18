@@ -89,11 +89,14 @@ To extract meaning from documents, images, or videos, Graphify needs to call an 
 
 | Environment variable | Provider |
 |---|---|
+| `Nemotron_api_key` | NVIDIA Nemotron **(recommended — Engineering OS default)** |
 | `ANTHROPIC_API_KEY` | Anthropic (Claude) |
 | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Google Gemini |
 | `OPENAI_API_KEY` | OpenAI |
 | `MOONSHOT_API_KEY` | Moonshot AI |
 | `DEEPSEEK_API_KEY` | DeepSeek |
+
+> **Engineering OS note:** `session-setup.sh` automatically exports `Nemotron_api_key` as `OPENAI_API_KEY` (NVIDIA uses an OpenAI-compatible API). No extra setup needed — setting `Nemotron_api_key` in Claude Code secrets is sufficient.
 
 Azure OpenAI and Amazon Bedrock are also supported; consult the upstream documentation for the corresponding variable names.
 

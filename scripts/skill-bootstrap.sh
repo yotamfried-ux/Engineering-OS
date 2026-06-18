@@ -165,14 +165,14 @@ install_claude_code_workflows='# manual copy — see external-skills/claude-code
 
 detect_security_review() {
   [ -f "$PROJECT_ROOT/.claude/commands/security-review.md" ] && return 0
-  grep -rqs 'claude-code-security-review' "$PROJECT_ROOT/.github/workflows" 2>/dev/null
+  grep -rqs 'security-review-nemotron\|Nemotron_api_key\|nemotron_review_code' "$PROJECT_ROOT/.github/workflows" 2>/dev/null
 }
 _install_security_review() {
   local target="$PROJECT_ROOT"
-  # 1. Create GitHub Actions workflow.
+  # 1. Create GitHub Actions workflow (Nemotron — never Anthropic API).
   mkdir -p "$target/.github/workflows"
-  cat > "$target/.github/workflows/security.yml" << 'WORKFLOW'
-name: Claude Code Security Review
+  cat > "$target/.github/workflows/security-review-nemotron.yml" << 'WORKFLOW'
+name: Security Review — Nemotron
 
 on:
   pull_request:
@@ -186,18 +186,34 @@ jobs:
   security-review:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-
-      - name: Run Claude Code Security Review
-        uses: anthropics/claude-code-security-review@main
-        with:
-          comment-pr: true
-          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+      - name: Run Nemotron Security Review
+        env:
+          Nemotron_api_key: ${{ secrets.Nemotron_api_key }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pip install openai --quiet
+          python3 -c "
+import os, sys, subprocess
+api_key = os.environ.get('Nemotron_api_key') or os.environ.get('NVIDIA_API_KEY')
+if not api_key:
+    print('Nemotron_api_key not set — skipping CI security review. Run /security-review in Claude Code session instead.')
+    sys.exit(0)
+from openai import OpenAI
+diff = subprocess.check_output(['git', 'diff', 'HEAD~1', 'HEAD'], text=True)
+client = OpenAI(base_url='https://integrate.api.nvidia.com/v1', api_key=api_key)
+resp = client.chat.completions.create(
+    model='nvidia/llama-3.1-nemotron-ultra-253b-v1',
+    messages=[{'role':'system','content':'You are a security code reviewer. Analyze the diff for OWASP Top 10, injection, auth gaps, secrets. Rate findings CRITICAL/HIGH/MEDIUM/LOW/INFO. End with go/no-go.'},
+              {'role':'user','content':f'Review this diff:\n{diff[:12000]}'}],
+    max_tokens=2048
+)
+print(resp.choices[0].message.content)
+"
 WORKFLOW
-  printf '  %s✅ created .github/workflows/security.yml%s\n' "$G" "$Z"
+  printf '  %s✅ created .github/workflows/security-review-nemotron.yml%s\n' "$G" "$Z"
   # 2. Create /security-review slash command.
   mkdir -p "$target/.claude/commands"
   cat > "$target/.claude/commands/security-review.md" << 'CMD'
@@ -206,6 +222,11 @@ description: Run a security review of the pending changes on the current branch
 ---
 
 Run a security review on all pending changes in the current branch.
+
+**Routing (in order):**
+1. If `mcp__nemotron__nemotron_review_code` is available → use it (primary path).
+2. Otherwise → run the review inline using the current Claude Code session.
+Never use the Anthropic API or CLAUDE_API_KEY for security review.
 
 Steps:
 1. Identify all changed files since the branch diverged from main.
@@ -220,8 +241,10 @@ Focus on actual security impact, not style. A finding without a concrete attack 
 should be INFO at most.
 CMD
   printf '  %s✅ created .claude/commands/security-review.md%s\n' "$G" "$Z"
-  printf '  %s⚠️  ACTION REQUIRED: add CLAUDE_API_KEY secret to GitHub repo%s\n' "$Y" "$Z"
+  printf '  %s⚠️  ACTION REQUIRED: add Nemotron_api_key secret to GitHub repo%s\n' "$Y" "$Z"
   printf '       Settings → Secrets and variables → Actions → New repository secret\n'
+  printf '       Name: Nemotron_api_key   Value: nvapi-...\n'
+  printf '       Get key at: build.nvidia.com\n'
 }
 install_security_review='fn:_install_security_review'
 
