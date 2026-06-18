@@ -9,6 +9,15 @@ set -e
 STAGED=$(git diff --cached --name-only)
 [ -z "$STAGED" ] && exit 0
 
+# Block accidental deletion of CLAUDE.md — it is the Engineering OS entry point
+if echo "$STAGED" | grep -q "^CLAUDE\.md$"; then
+  if ! git show ":CLAUDE.md" > /dev/null 2>&1; then
+    echo "❌ BLOCKED: Cannot delete CLAUDE.md — it is the Engineering OS entry point."
+    echo "   If intentional, bypass with: SKIP_CLAUDE_CHECK=1 git commit"
+    [ "${SKIP_CLAUDE_CHECK:-}" = "1" ] || exit 1
+  fi
+fi
+
 if [ -f "package.json" ]; then
   npm run lint --if-present && npm test --if-present
 elif [ -f "pyproject.toml" ]; then

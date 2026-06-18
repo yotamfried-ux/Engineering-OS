@@ -13,11 +13,44 @@ except:
   print('')
 " 2>/dev/null || echo "")
 
+# Skip empty path
+[ -z "$FILE" ] && exit 0
+
+# Engineering OS critical paths — block writes WITHOUT a plan regardless of file extension.
+# Rationale: Engineering OS IS markdown; the extension-based skip would bypass enforcement.
+CRITICAL_DIRS=("core/" "patterns/" "external-skills/" "templates/" "scripts/hooks/")
+IN_CRITICAL_DIR=0
+MATCHED_DIR=""
+for dir in "${CRITICAL_DIRS[@]}"; do
+  if [[ "$FILE" == *"$dir"* ]]; then
+    IN_CRITICAL_DIR=1
+    MATCHED_DIR="$dir"
+    break
+  fi
+done
+
+if [ "$IN_CRITICAL_DIR" -eq 1 ]; then
+  PLAN_COUNT=$(ls .claude/plans/*.md 2>/dev/null | wc -l | tr -d ' ')
+  if [ "${PLAN_COUNT:-0}" -eq 0 ]; then
+    echo "❌ WORKFLOW BLOCKED: Writing to '$MATCHED_DIR' requires a plan in .claude/plans/*.md"
+    echo "   Create .claude/plans/<task-name>.md (see core/workflow.md steps 1-4)"
+    exit 1
+  fi
+  # L2 mandatory: plan must document brainstorming (alternatives considered)
+  PLAN_FILE=$(ls .claude/plans/*.md 2>/dev/null | head -1)
+  if [ -n "$PLAN_FILE" ] && ! grep -qi "brainstorm\|חלופות\|alternatives\|Brainstorming" "$PLAN_FILE"; then
+    echo "❌ WORKFLOW BLOCKED: Plan file is missing a Brainstorm/Alternatives section (L2 mandatory)"
+    echo "   Add '## Brainstorming' or '## חלופות שנשקלו' to: $PLAN_FILE"
+    echo "   See: core/skill-orchestration-policy.md <execution_levels>"
+    exit 1
+  fi
+  exit 0
+fi
+
 # Skip non-code files — plans, config, docs, locks
 case "$FILE" in
   *.md|*.json|*.yaml|*.yml|*.toml|*.lock|*.env*|*.gitignore|*.editorconfig|*.prettierrc|*.eslintrc) exit 0 ;;
   *tasks.json*|*session-state*|*CLAUDE.md*|*SETUP*|*REFERENCE*|*.claudeignore*) exit 0 ;;
-  "") exit 0 ;;
 esac
 
 # Only enforce for code files (not config/markup)
