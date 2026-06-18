@@ -53,6 +53,11 @@
 - **תמיד** אמת פלט Nemotron לפני שמחיל עם Edit.
 - graphify non-code extraction — אוטומטי דרך `OPENAI_API_KEY` שמוגדר ב-`session-setup.sh`.
 
+**כשאין `Nemotron_api_key` — fallback מותר ואסור:**
+- ✅ מותר: Claude Code ישירות (in-session generation/review)
+- ✅ מותר: graphify עם `--no-label` (ללא LLM naming)
+- ❌ **אסור בהחלט: `ANTHROPIC_API_KEY`** — אף skill, graphify, או כלי אחר לא יופנה ל-Claude API כ-fallback. אם כלי מנסה לגלות `ANTHROPIC_API_KEY` אוטומטית — חסום אותו (למשל `--no-label` ב-graphify).
+
 ראה: [`../external-skills/nemotron/integration.md`](../external-skills/nemotron/integration.md)
 
 </nemotron-routing>

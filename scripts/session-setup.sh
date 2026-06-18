@@ -32,7 +32,7 @@ if [ -n "${Nemotron_api_key:-}" ]; then
   export OPENAI_MODEL="nvidia/nemotron-super-49b-v1"
   ok "Nemotron API configured — graphify will use Nvidia backend"
 else
-  warn "Nemotron_api_key not set — graphify will use local extraction only (no LLM naming)"
+  warn "Nemotron_api_key not set — graphify will run without LLM naming (--no-label) to prevent ANTHROPIC_API_KEY fallback"
 fi
 
 # ── 3. graphify ──────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ if command -v graphify >/dev/null 2>&1; then
         && ok "graphify graph built (Nvidia backend)" \
         || warn "graphify extract failed (see error above)"
     else
-      ( cd "$EOS_ROOT" && graphify extract . 2>&1 | tail -2 ) \
+      ( cd "$EOS_ROOT" && graphify extract . --no-label 2>&1 | tail -2 ) \
         && ok "graphify graph built" \
         || warn "graphify extract failed (see error above)"
     fi
