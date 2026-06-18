@@ -13,9 +13,17 @@ Steps:
    bash "${ENGINEERING_OS_HOME:-$HOME/.engineering-os}/scripts/use-in-project.sh"
    ```
 
-   **If running in Claude Code on the web** (GitHub may be network-blocked):
-   - Tell Claude: *"Clone Engineering OS from https://github.com/yotamfried-ux/Engineering-OS
-     to ~/.engineering-os using the GitHub MCP, then run scripts/use-in-project.sh from there."*
+   **If running in Claude Code on the web** (git clone blocked — no credentials):
+   Engineering OS is already cloned as the session's working directory. No clone needed:
+   ```bash
+   cd /path/to/target-project
+   ENGINEERING_OS_HOME=/home/user/Engineering-OS \
+     bash /home/user/Engineering-OS/scripts/use-in-project.sh
+   ```
+   If `ENGINEERING_OS_HOME` is already exported (session-setup.sh does this automatically):
+   ```bash
+   cd /path/to/target-project && bash "$ENGINEERING_OS_HOME/scripts/use-in-project.sh"
+   ```
 
    **First time on a local machine:**
    ```bash
@@ -29,7 +37,8 @@ Steps:
 3. Use `patterns/` for reusable code and `external-skills/` to know which skills are
    default-on. End every task with the "🧰 במה השתמשתי" usage report.
 
-4. **superpowers** requires a one-time manual install inside Claude Code CLI:
+4. **superpowers** portable slash commands (`/superpowers-brainstorm`, `/superpowers-verify`,
+   `/superpowers-plan`) are **auto-installed** — no plugin needed. Full plugin (optional):
    ```
    /plugin install superpowers@claude-plugins-official
    ```

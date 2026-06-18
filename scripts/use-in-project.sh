@@ -55,10 +55,21 @@ if [ -d "$EOS_HOME/.git" ]; then
     || dim "(pull skipped — network blocked or already up-to-date; using existing copy)"
 else
   dim "Cloning Engineering OS reference to $EOS_HOME…"
-  if ! git clone --depth 1 "$EOS_REPO" "$EOS_HOME" 2>/dev/null; then
+  _CLONE_URL="$EOS_REPO"
+  [ -n "${GITHUB_TOKEN:-}" ] && _CLONE_URL="https://oauth2:${GITHUB_TOKEN}@github.com/yotamfried-ux/Engineering-OS"
+  if ! git clone --depth 1 "$_CLONE_URL" "$EOS_HOME" 2>&1; then
     red "Could not clone Engineering OS from $EOS_REPO"
-    red "If you are in a network-restricted environment (e.g. Claude Code on the web):"
-    red "  Ask Claude to clone the repo for you via the GitHub MCP tools, then re-run this script."
+    red ""
+    red "═══ CLAUDE WEB SESSION — EXACT FIX ═══"
+    red "Engineering OS is likely already your working directory."
+    red "Run this instead (from the TARGET project directory):"
+    red ""
+    red "  cd /path/to/target-project"
+    red "  ENGINEERING_OS_HOME=/home/user/Engineering-OS \\"
+    red "    bash /home/user/Engineering-OS/scripts/use-in-project.sh"
+    red ""
+    red "Or: export GITHUB_TOKEN=<token> and re-run to enable git clone."
+    red "════════════════════════════════════════"
     exit 1
   fi
 fi
@@ -106,13 +117,13 @@ Apply these rules to THIS project's code. **Never modify anything under
 \`$EOS_HOME\`** — it is shared, read-only reference. Run
 \`$EOS_HOME/scripts/skill-bootstrap.sh\` to see which skills are present here.
 
-### Manual install required — superpowers plugin
+### superpowers
 
-superpowers cannot be installed by a script. Inside Claude Code CLI, run:
-\`\`\`
-/plugin install superpowers@claude-plugins-official
-\`\`\`
-This is a one-time step per machine. Verify with \`/plugin list\`.
+Portable slash commands are auto-installed:
+\`/superpowers-brainstorm\` · \`/superpowers-verify\` · \`/superpowers-plan\`
+
+These work in all environments (web, remote, CLI) without any plugin.
+Full plugin (optional — adds more skills): \`/plugin install superpowers@claude-plugins-official\`
 
 ### Cross-project learning loop
 
@@ -205,12 +216,17 @@ python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.
   || printf '  \033[32m✅\033[0m Context7: use the built-in connector in Claude app (claude.ai/code) — no MCP needed there.\n       MCP fallback (CLI/remote only): claude mcp add context7 https://mcp.context7.com/mcp\n'
 
 # 11. Generate ENGINEERING_OS_SETUP.md checklist.
-cat > "$TARGET/ENGINEERING_OS_SETUP.md" << 'CHECKLIST'
+if [ -n "${Nemotron_api_key:-}" ]; then
+  _NEMOTRON_LINE="- [x] Nemotron_api_key ✅ already set"
+else
+  _NEMOTRON_LINE="- [ ] Nemotron_api_key — Settings → Secrets → Add: Nemotron_api_key = nvapi-... (required for security-review primary path + heavy generation)"
+fi
+cat > "$TARGET/ENGINEERING_OS_SETUP.md" << CHECKLIST
 # Engineering OS — Setup Checklist
 
 ## Manual steps (cannot be automated):
 - [ ] Fill CLAUDE.md › <project_context> with project details (owner, goal, stack, stage)
-- [ ] Nemotron_api_key in Claude Code secrets — required for security-review (primary path) + heavy generation
+${_NEMOTRON_LINE}
 - [ ] Sentry MCP connected: claude mcp add sentry ... (required for debug_loop step 1)
 - [ ] Notion MCP connected: claude mcp add notion ... (required for spec writing in workflow)
 - [ ] superpowers plugin (optional): /plugin install superpowers@claude-plugins-official
@@ -252,9 +268,14 @@ bold "════════════════════════�
 echo
 
 # superpowers
-warn "superpowers — install inside Claude Code CLI (not in bash):"
-printf '      /plugin install superpowers@claude-plugins-official\n'
-printf '      Then verify: /plugin list\n'
+if [ -f "$TARGET/.claude/commands/superpowers-brainstorm.md" ]; then
+  grn "superpowers — portable slash commands ✅ ready (no plugin needed)"
+  printf '      /superpowers-brainstorm  /superpowers-verify  /superpowers-plan\n'
+  printf '      Optional full plugin: /plugin install superpowers@claude-plugins-official\n'
+else
+  warn "superpowers — portable slash commands missing; install plugin inside Claude Code CLI:"
+  printf '      /plugin install superpowers@claude-plugins-official\n'
+fi
 echo
 
 # graphify API key

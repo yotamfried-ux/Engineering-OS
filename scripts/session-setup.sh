@@ -10,6 +10,7 @@
 set -u
 
 EOS_ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
+export ENGINEERING_OS_HOME="$EOS_ROOT"
 
 G=$'\033[32m'; Y=$'\033[33m'; D=$'\033[2m'; Z=$'\033[0m'
 ok()   { printf '%s✅%s %s\n' "$G" "$Z" "$1"; }
