@@ -1,0 +1,16 @@
+[project]
+name = "repo-auditor"
+version = "0.1.0"
+description = "AI agent that audits GitHub repos and returns criticality reports"
+requires-python = ">=3.10"
+dependencies = [
+  "mcp[cli]>=1.0",
+  "httpx>=0.27",
+  "pydantic>=2.0",
+]
+
+[project.scripts]
+repo-auditor = "agent:main"
+
+[tool.uv]
+dev-dependencies = ["pytest>=8.0", "pytest-asyncio>=0.23"]

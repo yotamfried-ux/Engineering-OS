@@ -4,6 +4,11 @@
       "command": "uv",
       "args": ["run", "scripts/nemotron-mcp-server.py"],
       "description": "Nvidia Nemotron LLM tools — generate_code, review_code, summarize, explain, brainstorm"
+    },
+    "repo-auditor": {
+      "command": "uv",
+      "args": ["run", "repo-auditor/mcp_server.py"],
+      "description": "GitHub repo auditor — audit_repo, audit_aspect, list_aspects"
     }
   }
 }
