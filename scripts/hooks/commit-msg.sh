@@ -9,9 +9,6 @@ MSG=$(cat "$MSG_FILE")
 # Exempt merge/revert commits
 case "$MSG" in "Merge "*|"Revert "*) exit 0 ;; esac
 
-# Short commits (≤3 lines) are exempt — hotfixes, chore, ci tweaks
-[ "$(echo "$MSG" | wc -l)" -le 3 ] && exit 0
-
 has() { echo "$MSG" | grep -q "$1"; }
 MISSING=""
 has "✅" || MISSING="${MISSING}✅ "
@@ -31,7 +28,7 @@ TEST_CONTENT=$(echo "$MSG" | grep -A3 "🧪" | tail -3)
 if echo "$TEST_CONTENT" | grep -iE "^\s*(none|no tests?|אין|לא נכתבו)\s*$" >/dev/null 2>&1; then
   echo "❌ COMMIT BLOCKED — 🧪 section says 'none'."
   echo "   Either write tests, or document explicitly WHY N/A (e.g., 'chore: no logic changed')."
-  echo "   Short commits (≤3 lines) are exempt from this check."
+  echo "   Only Merge/Revert commits are exempt from this check."
   exit 1
 fi
 
