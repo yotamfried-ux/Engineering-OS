@@ -79,26 +79,44 @@ EOS_HOME="${ENGINEERING_OS_HOME:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd ||
 detect_superpowers() {
   { have claude && claude plugin list 2>/dev/null | grep -qi superpowers; } && return 0
   [ -d "$CLAUDE_HOME/plugins/cache/superpowers-marketplace/superpowers" ] && return 0
-  ls "$CLAUDE_HOME"/plugins/cache/*superpowers* >/dev/null 2>&1
+  ls "$CLAUDE_HOME"/plugins/cache/*superpowers* >/dev/null 2>&1 && return 0
+  # Portable slash commands count as installed — work in all environments without plugin
+  [ -f "$PROJECT_ROOT/.claude/commands/superpowers-brainstorm.md" ]
+}
+_install_superpowers_slash_commands() {
+  local dst="$PROJECT_ROOT/.claude/commands"
+  local src
+  src="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)/.claude/commands"
+  [ -d "$src" ] || return 1
+  mkdir -p "$dst"
+  local installed=0
+  for CMD in superpowers-brainstorm.md superpowers-verify.md superpowers-plan.md; do
+    [ -f "$src/$CMD" ] && cp "$src/$CMD" "$dst/$CMD" && installed=$((installed+1))
+  done
+  [ "$installed" -gt 0 ] || return 1
+  printf '  %s✅ superpowers slash commands installed (portable — no plugin needed)%s\n' "$G" "$Z"
+  printf '       /superpowers-brainstorm  /superpowers-verify  /superpowers-plan\n'
+  return 0
 }
 _install_superpowers() {
-  # Web-only environments (Claude Code on the web) have no SSH agent.
-  # Force HTTPS for all github.com clones so submodule fetches don't fail.
   git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
 
   if ! have claude; then
-    printf '  %s⚠️  claude CLI not found in PATH — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
+    # No claude CLI — fall back to portable slash commands immediately
+    _install_superpowers_slash_commands && return 0
+    printf '  %s⚠️  claude CLI not found — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
     printf '       /plugin install superpowers@claude-plugins-official\n'
     return 1
   fi
-  # Register the superpowers marketplace (idempotent), then install the plugin.
-  # Both commands are non-interactive and safe to re-run.
+  # Try plugin install (works in interactive CLI sessions)
   claude plugin marketplace add obra/superpowers-marketplace 2>/dev/null || true
   if claude plugin install superpowers@superpowers-marketplace 2>/dev/null; then
     printf '  %s✅ superpowers installed (v5.1.0 from obra/superpowers-marketplace)%s\n' "$G" "$Z"
     return 0
   fi
-  printf '  %s⚠️  superpowers CLI install failed — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
+  # Plugin install failed (e.g. remote/web session) — install portable slash commands
+  _install_superpowers_slash_commands && return 0
+  printf '  %s⚠️  superpowers install failed — install manually inside Claude Code CLI:%s\n' "$Y" "$Z"
   printf '       /plugin install superpowers@claude-plugins-official\n'
   return 1
 }
@@ -255,9 +273,32 @@ install_security_review='fn:_install_security_review'
 detect_claude_mem() {
   have claude-mem && return 0
   [ -d "$HOME/.claude-mem" ] && return 0
-  port_open 37777
+  port_open 37777 && return 0
+  # Detect via npm global install (package may be installed but not yet running)
+  npm list -g claude-mem >/dev/null 2>&1
 }
-install_claude_mem='npx claude-mem install'
+_install_claude_mem() {
+  # Try npm global install first (works without interactive session)
+  if have npm; then
+    if npm install -g claude-mem --quiet 2>/dev/null && have claude-mem; then
+      claude-mem install 2>/dev/null || true
+      printf '  %s✅ claude-mem installed via npm%s\n' "$G" "$Z"
+      return 0
+    fi
+  fi
+  # Try npx fallback
+  if have npx; then
+    if npx --yes claude-mem install 2>/dev/null; then
+      printf '  %s✅ claude-mem installed via npx%s\n' "$G" "$Z"
+      return 0
+    fi
+  fi
+  printf '  %s⚠️  claude-mem install failed — install manually:%s\n' "$Y" "$Z"
+  printf '       npm install -g claude-mem && claude-mem install\n'
+  printf '       Or in Claude Code: /plugin marketplace add thedotmack/claude-mem\n'
+  return 1
+}
+install_claude_mem='fn:_install_claude_mem'
 
 detect_gstack() {
   [ -d "$CLAUDE_HOME/skills/gstack" ]
