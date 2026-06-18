@@ -116,7 +116,7 @@ fi
 bash "${EOS_ROOT}/scripts/test-nvidia-capabilities.sh" 2>/dev/null || true
 
 # ── 7. project_context check ─────────────────────────────────────────────────
-if [ -f "CLAUDE.md" ] && grep -q "מטרת הפרויקט במשפט" CLAUDE.md 2>/dev/null; then
+if [ -f "CLAUDE.md" ] && grep -qE "מטרת הפרויקט במשפט|Goal: <|<project goal>|PURPOSE: TBD" CLAUDE.md 2>/dev/null; then
   warn "CLAUDE.md <project_context> is a template — FILL IT before starting work!"
 fi
 

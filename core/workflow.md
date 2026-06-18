@@ -113,6 +113,7 @@
    *סקיל שיכול לסייע:* `superpowers:requesting-code-review`; security-review (L2 — חובה לפני main).
 9. **קומיט מובנה** — ראה [`git-policy.md`](./git-policy.md) › `<commit_protocol>`.
 10. **אימות מול האפיון** — ודא שהתוצר תואם למה שאופיין בשלב 1 (ראה `<spec_loop>`).
+    רשימת תנאי הסיום המלאה: [`quality-gates.md`](./quality-gates.md) › `<definition_of_done>`.
 
     > **אכיפה:** Stop hook מציג תזכורת spec_loop + DoD אם יש staged changes. סמן ✅ על **כל** DoD item ב-plan file לפני merge. `spec_loop_verified: true` ב-tasks.json אם עבדת עם agents.
 11. **מיזוג ל-main** — רק אחרי אימות מלא ו**אישור המשתמש** (ראה
@@ -219,9 +220,20 @@ claude mcp add context7 https://mcp.context7.com/mcp
 - **כל פרויקט** — הגדרת pre-commit כ-**hook אוכף** (lint + format + טסטים; ראה
   [`hooks-policy.md`](./hooks-policy.md)) ו-CI בסיסי ב-GitHub Actions שמריץ את אותן בדיקות.
 
-לסוג פרויקט אחר (ML, אוטומציה וכו') — הוסף את קבצי הבסיס המקובלים לאותו סוג
-(למשל לפרויקט ML: ניהול תלויות, מבנה לנתונים/מודלים, seed לשחזוריות), באותו עיקרון
-של תשתית קבועה במקום הגדרה מאפס בכל פעם.
+לסוגי פרויקט נוספים — ראה תבנית מוכנה ב-`templates/<type>/README.md`:
+
+| סוג פרויקט | תבנית |
+|------------|-------|
+| ML / Data Science | [`templates/machine-learning/`](../templates/machine-learning/) |
+| AI Agent / Multi-Agent | [`templates/multi-agent-system/`](../templates/multi-agent-system/) |
+| Mobile (iOS/Android/RN) | [`templates/mobile-application/`](../templates/mobile-application/) |
+| CLI tool / Library | [`templates/desktop-application/`](../templates/desktop-application/) |
+| Microservice | [`templates/microservice/`](../templates/microservice/) |
+| RAG / LLM system | [`templates/rag-system/`](../templates/rag-system/) |
+| ETL / Data pipeline | [`templates/etl-elt-system/`](../templates/etl-elt-system/) |
+
+לסוג שאינו ברשימה — הוסף קבצי בסיס מקובלים לאותו סוג (מבנה תיקיות, ניהול תלויות,
+seed לשחזוריות), באותו עיקרון של תשתית קבועה במקום הגדרה מאפס בכל פעם.
 
 ### כלל עבודה
 

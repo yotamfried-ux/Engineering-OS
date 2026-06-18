@@ -74,3 +74,59 @@ migrations"). אל תסתפק בטקסט עבור כלל שאסור שייכשל
 הרצה — ולכן מתאים לסקריפטים ולאוטומציה (non-interactive) יותר מלשימוש אינטראקטיבי.
 
 </system_prompt_injection>
+
+---
+
+## <hook_examples>
+
+דוגמאות מלאות לכל סוג hook — העתק והתאם לפרויקט.
+
+### PreToolUse (Write/Edit) — חסימת כתיבה ללא plan
+קובץ: `.claude/settings.json` (ראה דוגמה מלאה ב-[`../.claude/settings.json`](../.claude/settings.json))
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{
+        "type": "command",
+        "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/hooks/validate-workflow-state.sh\" 2>&1"
+      }]
+    }]
+  }
+}
+```
+**שים לב:** אסור `|| true` בסוף — הוא מבטל את ה-exit code וה-enforcement לא עובד.
+
+### pre-commit — lint + tests + חסימת no-verify
+קובץ: `.git/hooks/pre-commit` (העתק מ-[`../scripts/hooks/pre-commit.sh`](../scripts/hooks/pre-commit.sh))
+```bash
+#!/bin/bash
+set -e
+STAGED=$(git diff --cached --name-only)
+[ -z "$STAGED" ] && exit 0
+# הרץ linter ו-tests לפי stack הפרויקט:
+# JS/TS: npm run lint --if-present && npm test --if-present
+# Python: ruff check . && pytest --tb=short -q
+```
+התקנה: `cp scripts/hooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`
+לפרויקטי Engineering OS עצמו: `bash scripts/install-self-hooks.sh`
+
+### commit-msg — אכיפת פורמט commit
+קובץ: `.git/hooks/commit-msg` (העתק מ-[`../scripts/hooks/commit-msg.sh`](../scripts/hooks/commit-msg.sh))
+
+### SessionStart — bootstrap + אימות סביבה
+```json
+{
+  "hooks": {
+    "SessionStart": [{
+      "hooks": [{
+        "type": "command",
+        "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/session-setup.sh\" 2>&1 | head -50 || true"
+      }]
+    }]
+  }
+}
+```
+
+</hook_examples>
