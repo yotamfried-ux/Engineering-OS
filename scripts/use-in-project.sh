@@ -156,11 +156,82 @@ if [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
   ( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default --install --yes 2>&1 ) || true
 fi
 
+# 6. Auto-install git hooks (hooks are Engineering OS property — always overwrite).
+if [ -d "$TARGET/.git/hooks" ]; then
+  for HOOK in pre-commit commit-msg post-commit; do
+    SRC="${EOS_HOME}/scripts/hooks/${HOOK}.sh"
+    DST="$TARGET/.git/hooks/${HOOK}"
+    if [ -f "$SRC" ]; then
+      cp "$SRC" "$DST" && chmod +x "$DST"
+      grn "${HOOK} hook installed/updated → $DST"
+    fi
+  done
+else
+  warn "No .git/hooks directory found — skipping git hooks (not a git repo?)"
+fi
+
+# 7. Install .claude/settings.json with Engineering OS hooks (skip if already customized).
+TARGET_SETTINGS="$TARGET/.claude/settings.json"
+if [ ! -f "$TARGET_SETTINGS" ]; then
+  mkdir -p "$TARGET/.claude"
+  cp "${EOS_HOME}/.claude/settings.json" "$TARGET_SETTINGS"
+  grn ".claude/settings.json installed (PreToolUse + Stop hooks active)"
+else
+  dim ".claude/settings.json already exists — skipped (preserve customizations)"
+  dim "  To update manually: cp ${EOS_HOME}/.claude/settings.json $TARGET_SETTINGS"
+fi
+
+# 8. Build graphify knowledge graph (only if not already built).
+if command -v graphify >/dev/null 2>&1 && [ ! -f "$TARGET/graphify-out/graph.json" ]; then
+  dim "Building graphify knowledge graph for this project..."
+  ( cd "$TARGET" && graphify extract . 2>&1 | tail -2 ) && grn "graphify graph built for project"
+fi
+
+# 9. MCP connectivity check.
+printf '\n⚡ MCP connectivity check:\n'
+python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.com/health', timeout=3)" 2>/dev/null \
+  && printf '  \033[32m✅\033[0m Context7 reachable\n' \
+  || printf '  \033[33m⚠️\033[0m  Context7 unreachable — add manually: claude mcp add context7 https://mcp.context7.com/mcp\n'
+
+# 10. Generate ENGINEERING_OS_SETUP.md checklist.
+cat > "$TARGET/ENGINEERING_OS_SETUP.md" << 'CHECKLIST'
+# Engineering OS — Setup Checklist
+
+## Manual steps (cannot be automated):
+- [ ] Fill CLAUDE.md › <project_context> with project details (owner, goal, stack, stage)
+- [ ] Nemotron_api_key in Claude Code secrets (optional — Nvidia LLM for heavy generation)
+- [ ] Sentry MCP connected: claude mcp add sentry ... (required for debug_loop step 1)
+- [ ] Notion MCP connected: claude mcp add notion ... (required for spec writing in workflow)
+- [ ] GitHub Secret: CLAUDE_API_KEY → repo Settings > Secrets > Actions (security-review CI)
+- [ ] superpowers plugin: /plugin install superpowers@claude-plugins-official
+
+## Auto-installed by use-in-project.sh:
+- [x] pre-commit hook — PHYSICAL test file scan (exit 1 if >2 code files + 0 tests)
+- [x] commit-msg hook — format enforcer + "no tests" blocker (exit 1)
+- [x] post-commit hook — learning_loop reminder on fix: commits
+- [x] .claude/settings.json — Write/Edit/Agent/Bash PreToolUse blockers active
+- [x] graphify knowledge graph built (if graphify installed)
+
+## Hard blockers (exit 1 — will stop work):
+- Writing code files without .claude/plans/*.md → create plan first
+- Spawning agents without .claude/tasks.json → create tasks.json first
+- git commit with missing ✅❌🔄🧪 sections → add all required sections
+- git commit with "🧪 none" → write tests or justify explicitly
+- git commit with >2 code files when project has 0 test files → write at least 1 test
+- git checkout -b when >1 non-main branches exist → merge/delete first
+
+## Before EVERY task:
+- [ ] .claude/plans/<task-name>.md written with measurable DoD (Write hook enforces)
+- [ ] .claude/tasks.json created if using parallel agents (Agent hook enforces)
+- [ ] Context7 queried for any external library before npm/pip install
+CHECKLIST
+grn "ENGINEERING_OS_SETUP.md created at $TARGET/ENGINEERING_OS_SETUP.md"
+
 echo
 grn "Engineering OS is now wired into: $TARGET"
 dim "Reference (read-only): $EOS_HOME   —   re-run anytime; this script is idempotent."
 
-# 6. Print next-steps checklist — manual actions that cannot be automated.
+# 11. Print next-steps checklist — manual actions that cannot be automated.
 echo
 bold "════════════════════════════════════════════"
 bold "  Next steps — manual actions required"

@@ -60,7 +60,33 @@ branch חדש.
   של המשתמש**. אין מיזוג אוטומטי, אף אם הכל ירוק (ראה `<safety>`).
 - **קצב:** מזג כשהמשימה הושלמה ואומתה — אל תצבור ברנצ'ים פתוחים ואל תמזג עבודה חלקית.
 
+### חוק ברנץ' יחיד — נאכף ב-PreToolUse hook (exit 1)
+
+מחוץ ל-main מותר ברנץ' אחד פעיל בלבד. ניסיון ליצור branch שני נחסם אוטומטית:
+
+```
+PreToolUse Bash: git checkout -b / git switch -c / git branch →
+  counts remote branches (excl. main/master) → if >1: exit 1
+```
+
+לפני פרויקט חדש: merge לmain (אישור מפורש) → delete branch → branch חדש.
+`commit-msg` hook מאמת פורמט + 🧪 section בכל commit. מותקן ע"י `use-in-project.sh`.
+
 </cadence>
+
+---
+
+## <new_project_checklist>
+
+רשימת בדיקה לפני תחילת פרויקט חדש. **כל סעיף מחויב — אל תתחיל לכתוב קוד לפני שכולם נסגרים.**
+
+- [ ] אין branches פתוחים מלבד main (`git branch -r | grep -v main`)
+- [ ] CLAUDE.md › `<project_context>` מולא (owner, goal, stack, stage)
+- [ ] `use-in-project.sh` הורץ על הפרויקט (מתקין hooks, graphify, settings.json, SETUP.md)
+- [ ] `ENGINEERING_OS_SETUP.md` — כל manual steps בוצעו (Sentry, Notion, secrets)
+- [ ] `.claude/plans/<name>.md` נכתב עם DoD מדיד (Write hook אוכף זאת)
+
+</new_project_checklist>
 
 ---
 

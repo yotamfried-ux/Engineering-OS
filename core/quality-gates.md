@@ -54,6 +54,16 @@
 - אם בדיקה דורשת קונקטור שאינו מחובר — הפעל את נוהל ה-fallback (ראה
   [`connector-policy.md`](./connector-policy.md)); אל "תאמת" מהזיכרון.
 
+### אכיפה פיזית (מותקנת ע"י `use-in-project.sh`)
+
+> הכללים הבאים מגובים ב-hooks עם `exit 1` — לא תזכורות:
+>
+> - **pre-commit**: סריקת filesystem פיזית — commit נחסם אם >2 code files staged ו-0 test files בכל הפרויקט
+> - **commit-msg**: commit נחסם ללא ✅❌🔄🧪 sections, או אם 🧪 section אומר "none"
+> - **Write/Edit hook**: כתיבת code files נחסמת אם אין `.claude/plans/*.md`
+> - **Agent hook**: spawn נחסם אם אין `.claude/tasks.json`
+> - **Bash hook**: יצירת branch שני נחסמת (one-branch policy)
+
 ### בדיקת קוד קבועה (בכל קומיט, ללא תלות במשימה)
 
 תמיד הרץ את שני אלה על ה-diff לפני קומיט:
