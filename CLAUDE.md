@@ -158,8 +158,9 @@ Engineering OS הוא לא רק מערכת ידע — הוא **Skill Orchestrati
 
 **ברירת מחדל פר-פרויקט:** חלק מהסקילים מותקנים בכל פרויקט כברירת מחדל (superpowers,
 security-review, graphify, rtk, ו-claude-mem כשהסביבה מאפשרת), אחרים מותנים (ui-ux-pro-max
-ל-UI, nemotron כש-`Nemotron_api_key` קיים — L1) או opt-in (gstack). frontend-design הוחלף
-ב-ui-ux-pro-max (**DEPRECATED**). הפירוט והנימוק:
+ל-UI, nemotron כש-`Nemotron_api_key` קיים — L1) או opt-in (gstack). הפירוט והנימוק:
+
+> ⚠️ **DEPRECATED:** `frontend-design` הוחלף ב-`ui-ux-pro-max` — אל תשתמש ב-frontend-design.
 [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) › `<default_activation>`.
 
 **nemotron (Nvidia Nemotron-Ultra/Super):** כש-`Nemotron_api_key` מוגדר, יש להשתמש בכלי MCP

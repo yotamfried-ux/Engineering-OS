@@ -18,13 +18,14 @@ except:
 
 # Engineering OS critical paths — block writes WITHOUT a plan regardless of file extension.
 # Rationale: Engineering OS IS markdown; the extension-based skip would bypass enforcement.
-CRITICAL_DIRS=("core/" "patterns/" "external-skills/" "templates/" "scripts/hooks/")
+CRITICAL_DIRS=("core" "patterns" "external-skills" "templates" "scripts/hooks")
 IN_CRITICAL_DIR=0
 MATCHED_DIR=""
 for dir in "${CRITICAL_DIRS[@]}"; do
-  if [[ "$FILE" == *"$dir"* ]]; then
+  # Path-aware match: only match as a real directory component, not substring
+  if [[ "$FILE" == "$dir/"* ]] || [[ "$FILE" == *"/$dir/"* ]]; then
     IN_CRITICAL_DIR=1
-    MATCHED_DIR="$dir"
+    MATCHED_DIR="$dir/"
     break
   fi
 done
@@ -36,11 +37,15 @@ if [ "$IN_CRITICAL_DIR" -eq 1 ]; then
     echo "   Create .claude/plans/<task-name>.md (see core/workflow.md steps 1-4)"
     exit 1
   fi
-  # L2 mandatory: plan must document brainstorming (alternatives considered)
-  PLAN_FILE=$(ls .claude/plans/*.md 2>/dev/null | head -1)
-  if [ -n "$PLAN_FILE" ] && ! grep -qi "brainstorm\|חלופות\|alternatives\|Brainstorming" "$PLAN_FILE"; then
-    echo "❌ WORKFLOW BLOCKED: Plan file is missing a Brainstorm/Alternatives section (L2 mandatory)"
-    echo "   Add '## Brainstorming' or '## חלופות שנשקלו' to: $PLAN_FILE"
+  # L2 mandatory: at least ONE plan must document brainstorming (alternatives considered)
+  BRAINSTORM_FOUND=0
+  for pf in .claude/plans/*.md; do
+    [ -f "$pf" ] || continue
+    grep -qi "brainstorm\|חלופות\|alternatives\|Brainstorming" "$pf" && BRAINSTORM_FOUND=1 && break
+  done
+  if [ "$BRAINSTORM_FOUND" -eq 0 ]; then
+    echo "❌ WORKFLOW BLOCKED: No plan file contains a Brainstorm/Alternatives section (L2 mandatory)"
+    echo "   Add '## Brainstorming' or '## חלופות שנשקלו' to any file in .claude/plans/"
     echo "   See: core/skill-orchestration-policy.md <execution_levels>"
     exit 1
   fi
