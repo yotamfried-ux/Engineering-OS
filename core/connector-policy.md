@@ -158,7 +158,10 @@ external systems › reference repos › templates › new implementation). כש
 **Context7** — ✅ מחובר
 - תפקיד: משיכת תיעוד רשמי עדכני ודוגמאות קוד של ספריות ופריימוורקים.
 - **חובה לפני**: כל שאלה על API / ספרייה / framework. אסור לסמוך על ידע מאימון — הוא עשוי להיות מיושן.
-- כיצד: `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`
+- **סדר עדיפות:**
+  1. **Claude app built-in connector** (claude.ai/code) — זמין מובנה; השתמש בו ישירות ללא MCP call.
+  2. **MCP server** (`mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`) — fallback כש-built-in לא זמין (Claude Code CLI עצמאי, remote sessions ללא built-in).
+- כיצד לזהות: ב-Claude app ו-claude.ai/code, Context7 זמין כ-connector מובנה. ב-CLI / remote session — השתמש ב-MCP tools.
 
 **Sentry** — ✅ מחובר
 - תפקיד: ניטור ואיתור שגיאות/קריסות בזמן אמת בפרודקשן (stack traces, נתוני רקע).

@@ -75,10 +75,11 @@
    ואז **Context7** לתיעוד רשמי עדכני של הספריות/הגרסאות בהן תשתמש.
    **אם לאחר כל החיפושים אין כיסוי** — הפעל את נוהל הפער לפני כתיבה
    (ראה [`connector-policy.md`](./connector-policy.md) › `<pattern_gap>`).
-   *כלי:* `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`; לבאגים: Sentry ראשון (ראה [`debugging-policy.md`](./debugging-policy.md) › `<debug_loop>`).
-   *סקיל שיכול לסייע:* graphify (גרף כבר בנוי — שלוף תת-גרף רלוונטי); Context7 MCP לתיעוד ספריות.
+   *כלי (Context7):* built-in ב-Claude app — השתמש בו ישירות; fallback ל-CLI/remote: `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`.
+   לבאגים: Sentry ראשון (ראה [`debugging-policy.md`](./debugging-policy.md) › `<debug_loop>`).
+   *סקיל שיכול לסייע:* graphify (גרף כבר בנוי — שלוף תת-גרף רלוונטי).
 
-   > **⚠️ חובה לפני כל `npm install` / `pip install`:** `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`.
+   > **⚠️ חובה לפני כל `npm install` / `pip install`:** Context7 (built-in ב-app, או `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs` ב-CLI/remote).
    > PreToolUse hook מזריק reminder אוטומטי, אך האחריות היא שלך לבצע.
    > דוגמה: `@supabase/ssr` v0.4 שבר 4 TypeScript types — ראה [`lessons-learned/bugs/supabase-ssr-breaking-change.md`](../lessons-learned/bugs/supabase-ssr-breaking-change.md).
 3. **בחירת כלים והערכת סקילים** — בחר את הקונקטורים המתאימים **לפי המשימה**, והעדף כלי

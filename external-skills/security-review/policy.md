@@ -5,9 +5,22 @@
 | Field | Value |
 |---|---|
 | Type tags | `security`, `review` |
-| Source | https://github.com/anthropics/claude-code-security-review |
-| License | MIT (Anthropic) |
+| Primary engine | Nemotron (`mcp__nemotron__nemotron_review_code`) |
+| Fallback engine | Claude Code slash command `/security-review` (no API key) |
+| **NEVER** | Anthropic API / `CLAUDE_API_KEY` |
 | Wrapper status | Active |
+
+### Routing Rule
+
+```
+Nemotron_api_key set → mcp__nemotron__nemotron_review_code   (PRIMARY)
+Nemotron_api_key unset → /security-review slash command       (FALLBACK)
+NEVER → Claude Anthropic API, CLAUDE_API_KEY, GitHub Action with claude-api-key
+```
+
+This routing is **non-negotiable**. The Anthropic API path was removed to eliminate
+external API dependency on the security gate. The gate must remain functional without
+any Anthropic API key.
 
 ---
 

@@ -117,8 +117,15 @@ printf '  ✋ Agent → blocked without .claude/tasks.json (PreToolUse hook, exi
 printf '  ✋ pre-commit → blocked if >2 code files staged + 0 test files in project\n'
 printf '  ✋ commit-msg → blocked if missing ✅❌🔄🧪 sections\n'
 printf '  ⚡ Context7 STRONGLY recommended before every npm/pip install\n'
-printf '  ⚡ superpowers:brainstorming before new features\n'
-printf '  ⚡ superpowers:verification-before-completion before done\n'
+# superpowers: check if plugin is installed, otherwise point to slash commands
+if command -v claude >/dev/null 2>&1 && claude plugin list 2>/dev/null | grep -q superpowers; then
+  printf '  ⚡ superpowers plugin active ✅ — Skill("superpowers:brainstorming") available\n'
+else
+  printf '  ⚡ superpowers plugin NOT installed — use portable slash commands:\n'
+  printf '       /superpowers-brainstorm  (L2 mandatory: before features)\n'
+  printf '       /superpowers-verify      (L2 mandatory: before done)\n'
+  printf '       /superpowers-plan        (recommended: before non-trivial code)\n'
+fi
 
 # Show existing plan files with timestamps (zombie plan awareness)
 EXISTING_PLANS=$(ls -lt .claude/plans/*.md 2>/dev/null | head -5)
