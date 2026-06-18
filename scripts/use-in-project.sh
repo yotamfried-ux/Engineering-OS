@@ -201,8 +201,8 @@ fi
 # 10. MCP connectivity check.
 printf '\n⚡ MCP connectivity check:\n'
 python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.com/health', timeout=3)" 2>/dev/null \
-  && printf '  \033[32m✅\033[0m Context7 reachable\n' \
-  || printf '  \033[33m⚠️\033[0m  Context7 unreachable — add manually: claude mcp add context7 https://mcp.context7.com/mcp\n'
+  && printf '  \033[32m✅\033[0m Context7 MCP reachable\n' \
+  || printf '  \033[32m✅\033[0m Context7: use the built-in connector in Claude app (claude.ai/code) — no MCP needed there.\n       MCP fallback (CLI/remote only): claude mcp add context7 https://mcp.context7.com/mcp\n'
 
 # 11. Generate ENGINEERING_OS_SETUP.md checklist.
 cat > "$TARGET/ENGINEERING_OS_SETUP.md" << 'CHECKLIST'
@@ -259,18 +259,22 @@ echo
 
 # graphify API key
 if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
-  warn "graphify — set ANTHROPIC_API_KEY for semantic markdown/code extraction:"
-  printf '      export ANTHROPIC_API_KEY=sk-ant-...\n'
-  printf '      (Add to your shell profile or project .env — never commit it)\n'
+  warn "graphify — set Nemotron_api_key for semantic markdown/code extraction:"
+  printf '      Claude Code: Settings → Secrets → Add: Nemotron_api_key = nvapi-...\n'
+  printf '      session-setup.sh exports it automatically as OPENAI_API_KEY for graphify.\n'
   echo
 fi
 
 # security-review — Nemotron_api_key (primary path)
 if echo "$BOOTSTRAP_OUT" | grep -q "security-review.*✅\|security-review"; then
-  warn "security-review — set Nemotron_api_key for primary Nemotron path:"
-  printf '      Claude Code: Settings → Secrets → Add: Nemotron_api_key = nvapi-...\n'
-  printf '      Get key at: build.nvidia.com\n'
-  printf '      Fallback (no key needed): /security-review slash command in Claude Code session\n'
+  if [ -n "${Nemotron_api_key:-}" ]; then
+    grn "security-review — Nemotron_api_key ✅ already set"
+  else
+    warn "security-review — set Nemotron_api_key for primary Nemotron path:"
+    printf '      Claude Code: Settings → Secrets → Add: Nemotron_api_key = nvapi-...\n'
+    printf '      Get key at: build.nvidia.com\n'
+    printf '      Fallback (no key needed): /security-review slash command in Claude Code session\n'
+  fi
   echo
 fi
 

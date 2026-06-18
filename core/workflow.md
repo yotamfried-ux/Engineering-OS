@@ -142,7 +142,8 @@
 
 **הגדרת `.env`** — צור קובץ `.env` בשורש הפרויקט עם הטוקנים הנדרשים:
 ```
-ANTHROPIC_API_KEY=sk-ant-...        # חובה — לgraphify ולsecurity-review
+Nemotron_api_key=nvapi-...          # ראשי — לgraphify (semantic) ולsecurity-review (Nemotron MCP)
+# ANTHROPIC_API_KEY — לא נדרש; security-review רץ על Nemotron, לא Anthropic API
 NOTION_TOKEN=secret_...             # לניהול spec ואפיון (שלב 1 בworkflow)
 GITHUB_TOKEN=ghp_...                # לGitHub MCP ולpull requests
 ```
