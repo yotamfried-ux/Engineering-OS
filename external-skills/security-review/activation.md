@@ -85,6 +85,72 @@ jobs:
 
 ---
 
+## Install — Option C: NVIDIA NIM (ספק חלופי — ללא Anthropic API)
+
+שימוש ב-NVIDIA NIM (מודלים פתוחים: Llama, Nemotron) במקום Anthropic. המסלול הזה
+**עצמאי לחלוטין** — לא דורש Claude API key, ורץ גם ב-CI/CD וגם locally.
+
+### Option C1: GitHub Action
+
+העתק את ה-workflow לפרויקט היעד:
+
+```bash
+mkdir -p .github/workflows
+cp <path-to-engineering-os>/templates/github-actions/security-review-nvidia.yml \
+   .github/workflows/security-review-nvidia.yml
+```
+
+הוסף את הסקריפט:
+
+```bash
+mkdir -p scripts
+cp <path-to-engineering-os>/scripts/security-review-nvidia.py scripts/security-review-nvidia.py
+```
+
+הגדר secret אחד בלבד (ראה "Configure Secrets" → NVIDIA_API_KEY):
+
+```
+NVIDIA_API_KEY=nvapi-...
+```
+
+### Option C2: Slash Command (Claude Code session)
+
+```bash
+mkdir -p .claude/commands
+cp <path-to-engineering-os>/templates/commands/security-review-nvidia.md \
+   .claude/commands/security-review-nvidia.md
+```
+
+הגדר את המשתנה בסביבה הנוכחית:
+
+```bash
+export NVIDIA_API_KEY=nvapi-...
+```
+
+הפעלה: `/security-review-nvidia` בתוך Claude Code session.
+
+### משתני סביבה
+
+| משתנה | ברירת מחדל | תיאור |
+|---|---|---|
+| `NVIDIA_API_KEY` | **חובה** | מפתח API מ-build.nvidia.com |
+| `NVIDIA_MODEL` | `meta/llama-3.1-70b-instruct` | מודל להרצה |
+| `NVIDIA_BASE_URL` | `https://integrate.api.nvidia.com/v1` | endpoint |
+
+### מודלים מומלצים
+
+| מודל | ID | הערות |
+|---|---|---|
+| Llama 3.1 70B | `meta/llama-3.1-70b-instruct` | ברירת מחדל — איכות גבוהה |
+| Llama 3.1 8B | `meta/llama-3.1-8b-instruct` | מהיר, tier חינמי |
+| Llama 3.1 405B | `meta/llama-3.1-405b-instruct` | עמוק ביותר |
+
+### תיעוד מלא
+
+ראה `external-systems/nvidia/README.md` ו-`scripts/security-review-nvidia.py`.
+
+---
+
 ## Configure Secrets
 
 ### CLAUDE_API_KEY (required)
@@ -95,6 +161,16 @@ Set this as a GitHub Actions repository secret:
 2. Click **New repository secret**.
 3. Name: `CLAUDE_API_KEY`
 4. Value: your Anthropic API key from https://console.anthropic.com
+
+### NVIDIA_API_KEY (required for Option C only)
+
+Set this as a GitHub Actions repository secret (Option C1), or export it in your shell (Option C2):
+
+1. Sign up at [build.nvidia.com](https://build.nvidia.com) and generate an API key.
+2. For GitHub Actions: **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+   - Name: `NVIDIA_API_KEY`
+   - Value: `nvapi-...`
+3. For local use: `export NVIDIA_API_KEY=nvapi-...` (add to `.env` for persistence).
 
 ### GITHUB_TOKEN (automatic)
 
