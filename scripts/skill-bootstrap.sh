@@ -241,10 +241,14 @@ Focus on actual security impact, not style. A finding without a concrete attack 
 should be INFO at most.
 CMD
   printf '  %s✅ created .claude/commands/security-review.md%s\n' "$G" "$Z"
-  printf '  %s⚠️  ACTION REQUIRED: add Nemotron_api_key secret to GitHub repo%s\n' "$Y" "$Z"
-  printf '       Settings → Secrets and variables → Actions → New repository secret\n'
-  printf '       Name: Nemotron_api_key   Value: nvapi-...\n'
-  printf '       Get key at: build.nvidia.com\n'
+  if [ -n "${Nemotron_api_key:-}" ]; then
+    printf '  %s✅ Nemotron_api_key already set — CI workflow will use it automatically%s\n' "$G" "$Z"
+  else
+    printf '  %s⚠️  ACTION REQUIRED: add Nemotron_api_key secret to GitHub repo%s\n' "$Y" "$Z"
+    printf '       Settings → Secrets and variables → Actions → New repository secret\n'
+    printf '       Name: Nemotron_api_key   Value: nvapi-...\n'
+    printf '       Get key at: build.nvidia.com\n'
+  fi
 }
 install_security_review='fn:_install_security_review'
 
