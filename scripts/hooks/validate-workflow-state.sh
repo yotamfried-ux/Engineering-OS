@@ -33,8 +33,10 @@ done
 if [ "$IN_CRITICAL_DIR" -eq 1 ]; then
   PLAN_COUNT=$(ls .claude/plans/*.md 2>/dev/null | wc -l | tr -d ' ')
   if [ "${PLAN_COUNT:-0}" -eq 0 ]; then
-    echo "❌ WORKFLOW BLOCKED: Writing to '$MATCHED_DIR' requires a plan in .claude/plans/*.md"
-    echo "   Create .claude/plans/<task-name>.md (see core/workflow.md steps 1-4)"
+    echo "ERROR_FOR_AGENT: Workflow gate blocked — writing to '${MATCHED_DIR}' requires an approved plan."
+    echo "ACTION REQUIRED: (1) Run /superpowers-brainstorm to create .claude/plans/<task>.md"
+    echo "  (2) Include a '## Brainstorming' section in the plan. (3) Retry the write operation."
+    echo "  Reference: core/workflow.md steps 1-4"
     exit 1
   fi
   # L2 mandatory: at least ONE plan must document brainstorming (alternatives considered)
@@ -44,9 +46,10 @@ if [ "$IN_CRITICAL_DIR" -eq 1 ]; then
     grep -qi "brainstorm\|חלופות\|alternatives\|Brainstorming" "$pf" && BRAINSTORM_FOUND=1 && break
   done
   if [ "$BRAINSTORM_FOUND" -eq 0 ]; then
-    echo "❌ WORKFLOW BLOCKED: No plan file contains a Brainstorm/Alternatives section (L2 mandatory)"
-    echo "   Add '## Brainstorming' or '## חלופות שנשקלו' to any file in .claude/plans/"
-    echo "   See: core/skill-orchestration-policy.md <execution_levels>"
+    echo "ERROR_FOR_AGENT: Workflow gate blocked — plan file exists but missing Brainstorming section."
+    echo "ACTION REQUIRED: Open your plan in .claude/plans/ and add a '## Brainstorming' section"
+    echo "  documenting at least 2 alternatives considered. Then retry the write operation."
+    echo "  Reference: core/skill-orchestration-policy.md <execution_levels>"
     exit 1
   fi
   exit 0
@@ -59,16 +62,16 @@ case "$FILE" in
 esac
 
 # Only enforce for code files (not config/markup)
-echo "$FILE" | grep -qE '\.(ts|tsx|js|jsx|py|go|rs|java|swift|kt|rb|cs|cpp|c|h|php|scala|lua)$' || exit 0
+echo "$FILE" | grep -qE '\.(ts|tsx|js|jsx|py|go|rs|java|swift|kt|rb|cs|cpp|c|h|php|scala|lua|sh|bash|zsh)$' || exit 0
 
 # Check: any plan file must exist before writing code
 PLAN_COUNT=$(ls .claude/plans/*.md 2>/dev/null | wc -l | tr -d ' ')
 
 if [ "${PLAN_COUNT:-0}" -eq 0 ]; then
-  echo "❌ WORKFLOW BLOCKED: Cannot write code before creating a plan."
-  echo "   Create .claude/plans/<task-name>.md with goal + DoD first."
-  echo "   Then run: /plan (plan mode) or write the plan manually."
-  echo "   See: core/workflow.md <workflow> steps 1-4"
+  echo "ERROR_FOR_AGENT: Workflow gate blocked — no plan file exists for this coding task."
+  echo "ACTION REQUIRED: (1) Run /superpowers-brainstorm to generate a plan."
+  echo "  (2) Save to .claude/plans/<task-name>.md with goal, steps, and DoD."
+  echo "  (3) Retry the write. Reference: core/workflow.md <workflow> steps 1-4"
   exit 1
 fi
 

@@ -153,19 +153,20 @@ external systems › reference repos › templates › new implementation). כש
 **GitHub** — ✅ מחובר
 - תפקיד: ניהול הריפו — קוד, branches, PRs, קומיטים, היסטוריה.
 - מתי: בכל אינטראקציה עם הריפו.
+- **Primary:** `mcp__github__*` (זמין בכל סביבה — web, CLI, remote); **Fallback:** `gh` CLI (כש-MCP לא זמין)
 - מדיניות branch/merge מלאה: ראה [`git-policy.md`](./git-policy.md).
 
 **Context7** — ✅ מחובר
 - תפקיד: משיכת תיעוד רשמי עדכני ודוגמאות קוד של ספריות ופריימוורקים.
 - **חובה לפני**: כל שאלה על API / ספרייה / framework. אסור לסמוך על ידע מאימון — הוא עשוי להיות מיושן.
-- **סדר עדיפות:**
-  1. **Claude app built-in connector** (claude.ai/code) — זמין מובנה; השתמש בו ישירות ללא MCP call.
-  2. **MCP server** (`mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs`) — fallback כש-built-in לא זמין (Claude Code CLI עצמאי, remote sessions ללא built-in).
+- **Primary:** built-in Claude connector (claude.ai/code) — זמין מובנה; השתמש בו ישירות ללא MCP call.
+- **Fallback:** `mcp__Context7__resolve-library-id` → `mcp__Context7__query-docs` — כש-built-in לא זמין (Claude Code CLI עצמאי, remote sessions ללא built-in).
 - כיצד לזהות: ב-Claude app ו-claude.ai/code, Context7 זמין כ-connector מובנה. ב-CLI / remote session — השתמש ב-MCP tools.
 
 **Sentry** — ✅ מחובר
 - תפקיד: ניטור ואיתור שגיאות/קריסות בזמן אמת בפרודקשן (stack traces, נתוני רקע).
 - **חובה לפני debugging**: ראה [`debugging-policy.md`](./debugging-policy.md) › `<debug_loop>` — Sentry הוא צעד חובה ראשון, לא אופציה.
+- **Primary:** `mcp__Sentry__*` — אין built-in equivalent; השתמש תמיד ב-MCP. **Fallback:** Sentry web dashboard (קריאה ידנית בלבד).
 - כיצד: `mcp__Sentry__search_issues`, `mcp__Sentry__get_sentry_resource`
 - אופציה משנית: **Firebase (Crashlytics)** — לניטור קריסות/שגיאות, בעיקר ב-mobile.
   הערה: Sentry רחב יותר (גם שגיאות backend/web), לכן המעבר חלקי.
@@ -277,6 +278,14 @@ external systems › reference repos › templates › new implementation). כש
 - אופציה משנית: **Azure** — ענן כללי חלופי. החלפת ספק ענן היא בחירה בין פלטפורמות —
   דורשת אבחון והכרעה עם המשתמש.
 
+#### עיצוב UI
+
+**Figma** — ✅ מחובר
+- תפקיד: עיצוב UI ו-UX — יצירת מסכים, components, design tokens ו-handoff לפיתוח.
+- מתי: בכל עבודה על עיצוב, לפני כתיבת קוד UI כשיש spec ב-Figma.
+- **Primary:** built-in Figma integration (claude.ai/code) — כשזמין, השתמש ישירות ללא MCP call. **Fallback:** `mcp__Figma__*` (Claude Code CLI, remote sessions).
+- כיצד (Fallback): `mcp__Figma__get_design_context` (קריאת עיצוב) · `mcp__Figma__use_figma` (כתיבה לעיצוב) · `mcp__Figma__get_screenshot` (תצוגה ויזואלית)
+
 #### בדיקות UI
 
 **Playwright** — ⏳ להתחבר
@@ -325,7 +334,8 @@ external systems › reference repos › templates › new implementation). כש
 **Notion** — ✅ מחובר
 - תפקיד: אפיון ותכנון פרויקטים, תיעוד החלטות, מעקב משימות.
 - **חובה לפני כתיבת קוד**: בכל משימה שאינה טריוויאלית — פתח/עדכן spec ב-Notion לפני כתיבת שורת קוד. ראה [`workflow.md`](./workflow.md) › שלב 1.
-- כיצד: `mcp__Notion__notion-create-pages` (יצירת spec) · `mcp__Notion__notion-fetch` (קריאה) · `mcp__Notion__notion-update-page` (עדכון סטטוס)
+- **Primary:** built-in Notion integration (claude.ai/code) — כשזמין, השתמש ישירות ללא MCP call. **Fallback:** `mcp__Notion__*` (Claude Code CLI, remote sessions).
+- כיצד (Fallback): `mcp__Notion__notion-create-pages` (יצירת spec) · `mcp__Notion__notion-fetch` (קריאה) · `mcp__Notion__notion-update-page` (עדכון סטטוס)
 - אופציה משנית: **GitHub** (Issues / Projects + מסמכי markdown בריפו) — למעקב משימות
   ולאפיון טקסטואלי. כיסוי בסיסי בלבד — בלי עושר התיעוד של Notion.
 
