@@ -219,7 +219,7 @@ python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.
 if [ -n "${Nemotron_api_key:-}" ]; then
   _NEMOTRON_LINE="- [x] Nemotron_api_key ✅ already set"
 else
-  _NEMOTRON_LINE="- [ ] Nemotron_api_key — Settings → Secrets → Add: Nemotron_api_key = nvapi-... (required for security-review primary path + heavy generation)"
+  _NEMOTRON_LINE="- [ ] Nemotron_api_key — claude.ai → Code → ⚙ Default Cloud Environment → Environment variables → Add: \`Nemotron_api_key=nvapi-...\` (get key: build.nvidia.com — NOT GitHub Secrets)"
 fi
 cat > "$TARGET/ENGINEERING_OS_SETUP.md" << CHECKLIST
 # Engineering OS — Setup Checklist
@@ -280,10 +280,15 @@ echo
 
 # graphify API key
 if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
-  warn "graphify — set Nemotron_api_key for semantic markdown/code extraction:"
-  printf '      Claude Code: Settings → Secrets → Add: Nemotron_api_key = nvapi-...\n'
-  printf '      session-setup.sh exports it automatically as OPENAI_API_KEY for graphify.\n'
-  echo
+  if [ -n "${Nemotron_api_key:-}" ]; then
+    grn "graphify — Nemotron_api_key ✅ already set (semantic extraction enabled)"
+  else
+    warn "graphify — set Nemotron_api_key for semantic extraction + AI node naming:"
+    printf '      claude.ai → Code → ⚙ Default Cloud Environment → Environment variables\n'
+    printf '      Add: Nemotron_api_key=nvapi-...  (get free key at: build.nvidia.com)\n'
+    printf '      session-setup.sh exports it automatically as OPENAI_API_KEY for graphify.\n'
+    echo
+  fi
 fi
 
 # security-review — Nemotron_api_key (primary path)
@@ -292,8 +297,8 @@ if echo "$BOOTSTRAP_OUT" | grep -q "security-review.*✅\|security-review"; then
     grn "security-review — Nemotron_api_key ✅ already set"
   else
     warn "security-review — set Nemotron_api_key for primary Nemotron path:"
-    printf '      Claude Code: Settings → Secrets → Add: Nemotron_api_key = nvapi-...\n'
-    printf '      Get key at: build.nvidia.com\n'
+    printf '      claude.ai → Code → ⚙ Default Cloud Environment → Environment variables\n'
+    printf '      Add: Nemotron_api_key=nvapi-...  (get free key at: build.nvidia.com)\n'
     printf '      Fallback (no key needed): /security-review slash command in Claude Code session\n'
   fi
   echo
