@@ -38,7 +38,8 @@ EOF
 ## הגדרת ה-API Key
 
 הסיקרט `Nemotron_api_key` צריך להיות מוגדר ב-Claude Code:
-- Web: Project Settings → Secrets → Add secret: `Nemotron_api_key`
+- Web: claude.ai → Code → ⚙ Default Cloud Environment → Environment variables → Add: `Nemotron_api_key=nvapi-...`
+  (⚠️ זה **לא** GitHub Settings → Secrets — אין סעיף Secrets נפרד בממשק; משתמשים ב-Environment variables)
 - CLI: `claude config set secrets.Nemotron_api_key <your-key>`
 
 המפתח זמין ב: [build.nvidia.com](https://build.nvidia.com) (free tier).
