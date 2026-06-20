@@ -8,7 +8,7 @@ core/git-policy.md	scripts/enforcement/enforce-git.sh	block plain force-push + d
 core/hooks-policy.md	NONE	meta-policy about hooks themselves
 core/debugging-policy.md	scripts/enforcement/enforce-debugging.sh	no-verify block + fix-needs-test + rollback reminder
 core/learning-loop.md	NONE	pending — to be enforced md-by-md
-core/connector-policy.md	NONE	pending — to be enforced md-by-md
+core/connector-policy.md	scripts/enforcement/enforce-connector.sh	block staged .env files + hardcoded secrets (<environment>)
 core/skill-orchestration-policy.md	NONE	pending — to be enforced md-by-md
 core/resource-management.md	scripts/enforcement/enforce-resource.sh	.claudeignore required + no model-id in commit msg
 core/precedence.md	NONE	judgment — conflict resolution, not deterministically enforceable

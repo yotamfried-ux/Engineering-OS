@@ -27,6 +27,12 @@ if [ -f "$REPO_ROOT/scripts/enforcement/enforce-resource.sh" ]; then
   bash "$REPO_ROOT/scripts/enforcement/enforce-resource.sh" precommit || exit 1
 fi
 
+# connector-policy.md <environment> — block staged .env files and hardcoded secrets.
+# Governing policy: core/connector-policy.md. Bypass: EOS_BYPASS_CONNECTOR=1.
+if [ -f "$REPO_ROOT/scripts/enforcement/enforce-connector.sh" ]; then
+  bash "$REPO_ROOT/scripts/enforcement/enforce-connector.sh" || exit 1
+fi
+
 # Repo-wide gates above run on every commit (incl. --allow-empty); the remaining
 # checks operate on staged content, so short-circuit empty commits here.
 [ -z "$STAGED" ] && exit 0
