@@ -69,6 +69,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/hooks/calibration-checklist.sh\" 2>/dev/null || true"
+          },
+          {
+            "type": "command",
             "command": "STAGED=$(git diff --cached --name-only 2>/dev/null); if [ -n \"$STAGED\" ]; then PLAN=$(ls -t .claude/plans/*.md 2>/dev/null | head -1); PMSG=\"\"; [ -n \"$PLAN\" ] && PMSG=\"📋 spec_loop: plan '$(basename $PLAN)' exists — verify EVERY DoD item against output before committing. \"; CODE=$(echo \"$STAGED\" | grep -cE '\\.(ts|tsx|js|jsx|py|go|rs)$' 2>/dev/null || echo 0); TEST=$(echo \"$STAGED\" | grep -cE '(\\.(test|spec)\\.(ts|tsx|js|jsx|py)|__tests__)' 2>/dev/null || echo 0); TWARN=\"\"; [ \"${CODE:-0}\" -gt 0 ] && [ \"${TEST:-0}\" -eq 0 ] && TWARN=\"⚠️ ${CODE} code files staged, 0 test files in diff — pre-commit will scan project for tests. \"; GMSG=\"\"; [ \"${CODE:-0}\" -gt 0 ] && GMSG=\"📊 Run: graphify update . after commit to keep graph current. \"; echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"Stop\\\",\\\"additionalContext\\\":\\\"${PMSG}${TWARN}${GMSG}Commit format: ✅❌🔄📌🧪 required (commit-msg hook enforces). superpowers:verification-before-completion must have run.\\\"}}\"; fi || true"
           }
         ]
