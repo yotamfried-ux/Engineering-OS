@@ -39,4 +39,10 @@ if [ -f "$REPO_ROOT/scripts/enforcement/enforce-debugging.sh" ]; then
   bash "$REPO_ROOT/scripts/enforcement/enforce-debugging.sh" commit-msg "$MSG_FILE" || exit 1
 fi
 
+# resource-management.md <model-selection> — no model identifier in commit messages.
+# Governing policy: core/resource-management.md. Bypass: EOS_BYPASS_MODELID=1.
+if [ -f "$REPO_ROOT/scripts/enforcement/enforce-resource.sh" ]; then
+  bash "$REPO_ROOT/scripts/enforcement/enforce-resource.sh" commit-msg "$MSG_FILE" || exit 1
+fi
+
 exit 0
