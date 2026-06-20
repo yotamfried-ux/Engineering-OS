@@ -54,16 +54,34 @@ print(t.get('command', '') or '')
   [ -z "$CMD" ] && exit 0
 
   # ── D1: block verification bypass ──────────────────────────────────────────
-  # Look only at the flags BEFORE the message (-m/-F/...), so a commit message
-  # that merely contains "-n" or "--no-verify" is not misread as a flag.
-  local head_part
-  head_part="$(printf '%s' "$CMD" | sed -E 's/[[:space:]]-m([[:space:]=]).*//; s/[[:space:]]--message([[:space:]=]).*//; s/[[:space:]]-F([[:space:]=]).*//; s/[[:space:]]--file([[:space:]=]).*//')"
+  # Tokenize the command (shlex) and drop the value that follows a message flag,
+  # so a commit MESSAGE containing "-n"/"--no-verify" is not misread as a flag —
+  # while a flag placed AFTER the message (git commit -m x --no-verify) is caught.
+  local flag_toks
+  flag_toks="$(printf '%s' "$CMD" | python3 -c '
+import shlex, sys
+try:
+    toks = shlex.split(sys.stdin.read())
+except Exception:
+    toks = []
+msg_flags = {"-m", "--message", "-F", "--file"}
+out, skip = [], False
+for tok in toks:
+    if skip:
+        skip = False
+        continue
+    if tok in msg_flags:
+        skip = True
+        continue
+    out.append(tok)
+print("\n".join(out))
+' 2>/dev/null || printf '')"
 
   # git commit: both --no-verify and the short -n flag mean "skip hooks".
   # Anchor on the `commit` SUBCOMMAND (not the word) to avoid e.g. `git log --grep commit -n 5`.
-  if printf '%s' "$head_part" | grep -qE '\bgit[[:space:]]+commit\b'; then
-    if printf '%s' "$head_part" | grep -qE '(^|[[:space:]])--no-verify([[:space:]]|=|$)' \
-       || printf '%s' "$head_part" | grep -qE '(^|[[:space:]])-[a-zA-Z]*n[a-zA-Z]*([[:space:]]|$)'; then
+  if printf '%s' "$CMD" | grep -qE '\bgit[[:space:]]+commit\b'; then
+    if printf '%s\n' "$flag_toks" | grep -qE '^--no-verify$' \
+       || printf '%s\n' "$flag_toks" | grep -qE '^-[A-Za-z]*n[A-Za-z]*$'; then
       bypass_active EOS_BYPASS_NOVERIFY && exit 0
       echo "ERROR_FOR_AGENT: debugging-policy.md — '--no-verify'/'-n' bypasses the commit hooks (lint/tests/format). This is forbidden as a debugging shortcut."
       echo "ACTION: fix the underlying failure the hook reports; do not skip verification. See core/debugging-policy.md <debug_loop> (lines 82-84)."
@@ -72,8 +90,8 @@ print(t.get('command', '') or '')
     fi
   fi
   # git push: only --no-verify skips hooks (-n here means --dry-run; allowed).
-  if printf '%s' "$head_part" | grep -qE '\bgit[[:space:]]+push\b'; then
-    if printf '%s' "$head_part" | grep -qE '(^|[[:space:]])--no-verify([[:space:]]|=|$)'; then
+  if printf '%s' "$CMD" | grep -qE '\bgit[[:space:]]+push\b'; then
+    if printf '%s\n' "$flag_toks" | grep -qE '^--no-verify$'; then
       bypass_active EOS_BYPASS_NOVERIFY && exit 0
       echo "ERROR_FOR_AGENT: debugging-policy.md — 'git push --no-verify' bypasses pre-push verification. Forbidden as a shortcut."
       echo "ACTION: resolve the failing check instead of skipping it. See core/debugging-policy.md <debug_loop>."
@@ -103,8 +121,11 @@ do_commit_msg() {
 
   bypass_active EOS_BYPASS_FIXTEST && exit 0
 
-  local staged; staged="$(git diff --cached --name-only 2>/dev/null || true)"
-  [ -z "$staged" ] && exit 0
+  # Outside a git repo there is nothing to check (commit-msg always runs inside one).
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+  # --diff-filter=ACMR excludes Deletions, so a fix cannot satisfy the gate by deleting
+  # a test: a deletion-only staged set yields no test match below and is correctly blocked.
+  local staged; staged="$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)"
 
   # Does the staged set include at least one test file?
   if printf '%s' "$staged" | grep -qE '(\.(test|spec)\.(ts|tsx|js|jsx|py|go|rb)|(^|/)__tests__/|(^|/)tests?/|_test\.(py|go)|(^|/)test_[^/]*\.py)'; then

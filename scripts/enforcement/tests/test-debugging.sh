@@ -24,6 +24,8 @@ run_pre_out() {
 
 echo "── D1: no-verify bypass is blocked (git commit) ──"
 run_pre "git commit --no-verify -m x";  expect "commit --no-verify blocked" 1 $?
+run_pre "git commit -m x --no-verify";  expect "commit --no-verify AFTER -m blocked" 1 $?
+run_pre "git commit -m --no-verify";    expect "-m value (--no-verify) not misread as flag" 0 $?
 run_pre "git commit -n -m x";           expect "commit -n blocked" 1 $?
 run_pre "git commit -nm x";             expect "commit -nm (combined) blocked" 1 $?
 run_pre "git commit -m x";              expect "normal commit allowed" 0 $?
@@ -80,6 +82,14 @@ bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "fix(scope): without 
 
 EOS_BYPASS_FIXTEST=1 bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "EOS_BYPASS_FIXTEST skips D2" 0 $?
 EOS_BYPASS_DEBUG=1   bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "EOS_BYPASS_DEBUG (master) skips D2" 0 $?
+
+# Deleting a test file must NOT satisfy D2 (--diff-filter excludes deletions).
+git reset -q 2>/dev/null
+echo "baseline" > test_seed.py; git add test_seed.py 2>/dev/null
+git commit -qm "chore: seed test file" 2>/dev/null
+git rm -q test_seed.py 2>/dev/null
+printf '%s\n' "fix: drop coverage instead of adding it" > "$MSG"
+bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "fix: deleting a test file is blocked" 1 $?
 
 echo
 echo "════════ $PASS passed, $FAIL failed ════════"
