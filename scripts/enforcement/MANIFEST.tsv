@@ -6,7 +6,7 @@ core/workflow.md	scripts/enforcement/enforce-workflow.sh	entry-gate + Context7 +
 core/quality-gates.md	NONE	pending — to be enforced md-by-md
 core/git-policy.md	NONE	pending — to be enforced md-by-md
 core/hooks-policy.md	NONE	meta-policy about hooks themselves
-core/debugging-policy.md	NONE	pending — to be enforced md-by-md
+core/debugging-policy.md	scripts/enforcement/enforce-debugging.sh	no-verify block + fix-needs-test + rollback reminder
 core/learning-loop.md	NONE	pending — to be enforced md-by-md
 core/connector-policy.md	NONE	pending — to be enforced md-by-md
 core/skill-orchestration-policy.md	NONE	pending — to be enforced md-by-md
