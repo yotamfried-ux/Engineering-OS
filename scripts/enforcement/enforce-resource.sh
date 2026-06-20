@@ -51,7 +51,9 @@ do_precommit() {
 # ── R2 — no model identifier in the commit message ───────────────────────────
 do_commit_msg() {
   local msg_file="$1"
-  [ -z "$msg_file" ] || [ ! -f "$msg_file" ] && exit 0
+  if [ -z "$msg_file" ] || [ ! -f "$msg_file" ]; then
+    exit 0
+  fi
   grep -qiE "$MODEL_ID_RE" "$msg_file" || exit 0
   bypass_active EOS_BYPASS_MODELID && exit 0
   echo "❌ COMMIT BLOCKED — resource-management.md <model-selection>: commit message contains a model identifier."

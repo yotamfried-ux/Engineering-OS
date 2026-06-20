@@ -7,7 +7,6 @@
 set -e
 
 STAGED=$(git diff --cached --name-only)
-[ -z "$STAGED" ] && exit 0
 
 # md ↔ enforcer sync — changing a policy md requires updating its enforcer.
 # Governing policy: core/hooks-policy.md <hooks>. Bypass: EOS_BYPASS_MDSYNC=1
@@ -27,6 +26,10 @@ fi
 if [ -f "$REPO_ROOT/scripts/enforcement/enforce-resource.sh" ]; then
   bash "$REPO_ROOT/scripts/enforcement/enforce-resource.sh" precommit || exit 1
 fi
+
+# Repo-wide gates above run on every commit (incl. --allow-empty); the remaining
+# checks operate on staged content, so short-circuit empty commits here.
+[ -z "$STAGED" ] && exit 0
 
 # Block accidental deletion of CLAUDE.md — it is the Engineering OS entry point
 if echo "$STAGED" | grep -q "^CLAUDE\.md$"; then
