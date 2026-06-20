@@ -3,7 +3,7 @@
 # exists requires staging the enforcer too. An md with NONE must justify why no
 # enforcer exists. Add a row here as each md gets its own enforcer.
 core/workflow.md	scripts/enforcement/enforce-workflow.sh	entry-gate + Context7 + tasks.json
-core/quality-gates.md	NONE	pending — to be enforced md-by-md
+core/quality-gates.md	scripts/enforcement/enforce-quality.sh	cleanup gate: debug-leftover + conflict-marker block (pre-commit)
 core/git-policy.md	NONE	pending — to be enforced md-by-md
 core/hooks-policy.md	NONE	meta-policy about hooks themselves
 core/debugging-policy.md	scripts/enforcement/enforce-debugging.sh	no-verify block + fix-needs-test + rollback reminder

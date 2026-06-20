@@ -34,6 +34,12 @@
 
 אם לא בוצע ניקוי מאומת — הקומיט אינו תקף.
 
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-quality.sh`, נקרא מ-`pre-commit`):
+> ה-diff ה-staged נחסם אם נוספו שאריות debug חד-משמעיות — `debugger`, `breakpoint()`,
+> `pdb.set_trace()`/`import pdb`, `binding.pry`/`byebug` — או סמני merge-conflict
+> (`<<<<<<<`/`>>>>>>>`). `console.log`/`print` מקבלים **אזהרה** (לא חסימה). שאר ה-cleanup
+> (קוד מת, לוגיקה כפולה) שיפוטי ונשאר ידני. bypass: `EOS_BYPASS_CLEANUP=1`.
+
 </cleanup>
 
 ---

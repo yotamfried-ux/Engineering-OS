@@ -16,6 +16,12 @@ if [ -f "$REPO_ROOT/scripts/enforcement/enforce-sync.sh" ]; then
   bash "$REPO_ROOT/scripts/enforcement/enforce-sync.sh" || exit 1
 fi
 
+# quality-gates.md <cleanup> — block debug leftovers (debugger/pdb/pry, conflict markers)
+# in the staged diff. Governing policy: core/quality-gates.md. Bypass: EOS_BYPASS_CLEANUP=1.
+if [ -f "$REPO_ROOT/scripts/enforcement/enforce-quality.sh" ]; then
+  bash "$REPO_ROOT/scripts/enforcement/enforce-quality.sh" || exit 1
+fi
+
 # Block accidental deletion of CLAUDE.md — it is the Engineering OS entry point
 if echo "$STAGED" | grep -q "^CLAUDE\.md$"; then
   if ! git show ":CLAUDE.md" > /dev/null 2>&1; then
