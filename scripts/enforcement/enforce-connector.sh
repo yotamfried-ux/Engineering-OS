@@ -53,9 +53,13 @@ added="$(git diff --cached --diff-filter=ACMR -U0 -- . ':(exclude)scripts/enforc
   | grep -E '^\+' | grep -vE '^\+\+\+' || true)"
 if [ -n "$added" ]; then
   # -e terminates option parsing — the PEM pattern starts with '-' and would
-  # otherwise be misread by grep as a flag.
+  # otherwise be misread by grep as a flag. Token formats cover current variants:
+  #   AWS long-lived (AKIA) + STS temporary (ASIA); GitHub classic + fine-grained
+  #   (github_pat_) + gho/ghu/ghs/ghr; Slack xox[bapsr]; OpenAI sk- incl. hyphenated
+  #   project/service keys (sk-proj-, sk-svcacct-). The sk- length floor (40) keeps
+  #   ordinary kebab-case text from matching.
   secret_hits="$(printf '%s\n' "$added" | grep -nE \
-    -e '-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9]{32,}' \
+    -e '-----BEGIN [A-Z ]*PRIVATE KEY-----|(AKIA|ASIA)[0-9A-Z]{16}|(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{40,}' \
     || true)"
   if [ -n "$secret_hits" ]; then
     if ! bypass_active EOS_BYPASS_SECRETS; then
