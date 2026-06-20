@@ -1,0 +1,20 @@
+# md ↔ enforcer registry. Format: <md_path>\t<enforcer|NONE>\t<note>
+# Rule (enforced by enforce-sync.sh via pre-commit): changing an md whose enforcer
+# exists requires staging the enforcer too. An md with NONE must justify why no
+# enforcer exists. Add a row here as each md gets its own enforcer.
+core/workflow.md	scripts/enforcement/enforce-workflow.sh	entry-gate + Context7 + tasks.json
+core/quality-gates.md	NONE	pending — to be enforced md-by-md
+core/git-policy.md	NONE	pending — to be enforced md-by-md
+core/hooks-policy.md	NONE	meta-policy about hooks themselves
+core/debugging-policy.md	NONE	pending — to be enforced md-by-md
+core/learning-loop.md	NONE	pending — to be enforced md-by-md
+core/connector-policy.md	NONE	pending — to be enforced md-by-md
+core/skill-orchestration-policy.md	NONE	pending — to be enforced md-by-md
+core/resource-management.md	NONE	pending — to be enforced md-by-md
+core/precedence.md	NONE	judgment — conflict resolution, not deterministically enforceable
+core/pattern-lifecycle.md	NONE	internal maintenance
+core/scoring-guide.md	NONE	internal maintenance
+core/documentation-policy.md	NONE	pending — to be enforced md-by-md
+core/maintenance-routine.md	NONE	internal maintenance
+core/mcp-servers.md	NONE	reference table
+CLAUDE.md	NONE	entry/navigation — principles, judgment-based
