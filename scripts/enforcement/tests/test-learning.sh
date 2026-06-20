@@ -119,6 +119,18 @@ expect "prevention-strategies/ skipped"   0 "$(stage_run lessons-learned/prevent
 expect "postmortems/ skipped"             0 "$(stage_run lessons-learned/postmortems/p.md '# pm')"
 expect "file outside lesson dirs skipped" 0 "$(stage_run src/x.md '# code doc')"
 expect "EOS_BYPASS_LEARNING (master)"     0 "$(EOS_BYPASS_LEARNING=1 stage_run lessons-learned/bugs/x.md "$LESSON_NO_EVIDENCE")"
+expect "_-prefixed non-template still enforced" 1 "$(stage_run lessons-learned/bugs/_draft.md "$LESSON_NO_EVIDENCE")"
+
+# index-vs-working-tree: stage valid content, then corrupt the working tree without
+# staging — the enforcer must judge the staged blob and pass.
+partial_rc() {
+  local f="lessons-learned/bugs/partial.md"; mkdir -p "$(dirname "$f")"
+  printf '%s\n' "$LESSON_OK" > "$f"; git add -f "$f" 2>/dev/null
+  printf 'broken — no schema\n' > "$f"   # working tree now invalid, change NOT staged
+  bash "$ENFORCER" >/dev/null 2>&1; local rc=$?
+  git reset -q 2>/dev/null; rm -f "$f" 2>/dev/null; echo "$rc"
+}
+expect "staged-valid + worktree-invalid → pass (validates index)" 0 "$(partial_rc)"
 expect "no staged files → pass"           0 "$(bash "$ENFORCER" >/dev/null 2>&1; echo $?)"
 
 echo

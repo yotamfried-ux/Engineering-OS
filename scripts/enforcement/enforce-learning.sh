@@ -39,15 +39,19 @@ staged="$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)"
 LESSON_SECTIONS="מה קרה|שורש הבעיה|ראיה|רמת ביטחון|איך מונעים בעתיד|טסט רגרסיה|סטטוס הבשלה|Prevented Future Issues"
 FAILSOL_SECTIONS="מה ניסיתי|למה לא עבד|מה לבדוק במקום"
 
-# is_excluded <path> — README/_TEMPLATE helpers are not lessons.
-is_excluded() { case "$(basename "$1")" in README.md|_*) return 0 ;; *) return 1 ;; esac; }
+# is_excluded <path> — only README.md and _TEMPLATE.md helpers are not lessons.
+# (Scoped narrowly so a lesson can't bypass the gate by being named "_foo.md".)
+is_excluded() { case "$(basename "$1")" in README.md|_TEMPLATE.md) return 0 ;; *) return 1 ;; esac; }
 
-# missing_sections <file> <pipe-separated-sections> — echo the sections absent from file.
+# missing_sections <file> <pipe-separated-sections> — echo the sections absent.
+# Validates the STAGED blob (git show :path), not the working tree, so a file that
+# was staged valid then edited (unstaged) is judged on what will actually commit.
 missing_sections() {
-  local file="$1" want="$2" sec miss=""
+  local file="$1" want="$2" sec miss="" content
+  content="$(git show ":$file" 2>/dev/null || cat -- "$file" 2>/dev/null || true)"
   local IFS='|'
   for sec in $want; do
-    grep -qE "^##[[:space:]].*$sec" "$file" 2>/dev/null || miss="$miss$sec\n"
+    printf '%s\n' "$content" | grep -qE "^##[[:space:]].*$sec" || miss="$miss$sec\n"
   done
   printf '%b' "$miss"
 }
