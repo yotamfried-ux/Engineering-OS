@@ -29,6 +29,10 @@
 - **Haiku לsub-agents**: כל agent שמטרתו בלבד חיפוש/lookup — דווח ב-model override.
 - **לעולם אל תציין מודל ב-commit messages, PR bodies, או comments בקוד.**
 
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-resource.sh`, נקרא מ-`commit-msg`):
+> הודעת קומיט שמכילה מזהה-מודל (`claude-<tier>-N`) נחסמת. מוגבל להודעות commit בלבד —
+> קוד שמציין מודל לגיטימית (AI apps) אינו נסרק. bypass: `EOS_BYPASS_MODELID=1`.
+
 </model-selection>
 
 ---
@@ -141,6 +145,9 @@ foreground vs. background: foreground כשצריך תוצאה לפני המשך
 - Storybook stories אם לא רלוונטי לשאלה
 
 **כלל**: אם Claude שאל על קובץ שאינו רלוונטי לשאלה — הוסף אותו ל-`.claudeignore`.
+
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-resource.sh`, נקרא מ-`pre-commit`):
+> קומיט נחסם אם אין `.claudeignore` בשורש הריפו. bypass: `EOS_BYPASS_CLAUDEIGNORE=1`.
 
 </claudeignore>
 
