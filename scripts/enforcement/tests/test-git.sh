@@ -22,6 +22,7 @@ echo "── G1: block plain force-push (allow --force-with-lease) ──"
 expect "git push --force blocked"             1 "$(run 'git push --force')"
 expect "git push -f blocked"                  1 "$(run 'git push -f')"
 expect "git push --force origin br blocked"   1 "$(run 'git push --force origin feature')"
+expect "git -c ... push --force blocked"      1 "$(run 'git -c user.name=bot push --force origin feature')"
 expect "git push --force-with-lease allowed"  0 "$(run 'git push --force-with-lease')"
 expect "git push --force-with-lease origin allowed" 0 "$(run 'git push --force-with-lease origin feature')"
 expect "plain git push allowed"               0 "$(run 'git push origin feature')"
@@ -30,6 +31,8 @@ expect "commit msg mentioning --force allowed" 0 "$(run 'git commit -m "handle -
 
 echo "── G2: block draft PR creation ──"
 expect "gh pr create --draft blocked"         1 "$(run 'gh pr create --draft --title x --body y')"
+expect "gh pr create -d (short) blocked"      1 "$(run 'gh pr create -d --title x')"
+expect "gh --repo ... pr create --draft blocked" 1 "$(run 'gh --repo owner/repo pr create --draft --title x --body y')"
 expect "gh pr create (ready) allowed"         0 "$(run 'gh pr create --title x --body y')"
 expect "--draft inside --body allowed"        0 "$(run 'gh pr create --title x --body "we use --draft sparingly"')"
 

@@ -42,50 +42,69 @@ print(t.get('command', '') or '')
 " 2>/dev/null || printf '')"
   [ -z "$CMD" ] && exit 0
 
-  # Tokenize and drop the value following a message/body flag, so a PR body or
-  # commit message containing "--force"/"--draft" is not misread as a flag.
-  local toks
-  toks="$(printf '%s' "$CMD" | python3 -c '
+  # Classify from the parsed token stream (shlex), not raw text. We skip the
+  # program's GLOBAL options (which may take a value) to find the real subcommand
+  # — so `git -c k=v push --force` and `gh --repo o/r pr create --draft` are still
+  # caught — and skip VALUE-taking flags when scanning args, so a `--force`/`--draft`
+  # sitting inside a --body/--title/-m value is not misread as a flag.
+  # Emits: "G1" (plain force-push), "G2" (draft PR), or "" (allowed).
+  local VERDICT
+  VERDICT="$(printf '%s' "$CMD" | python3 -c '
 import shlex, sys
 try:
-    toks = shlex.split(sys.stdin.read())
+    t = shlex.split(sys.stdin.read())
 except Exception:
-    toks = []
-val_flags = {"-m","--message","-F","--file","-t","--title","-b","--body","--body-file"}
-out, skip = [], False
-for tok in toks:
-    if skip:
-        skip = False
-        continue
-    if tok in val_flags:
-        skip = True
-        continue
-    out.append(tok)
-print("\n".join(out))
+    t = []
+
+def short_force(a):  # short cluster containing f: -f, -fu … (not a long --flag)
+    return len(a) >= 2 and a[0] == "-" and a[1] != "-" and "f" in a[1:]
+
+verdict = ""
+if t and t[0] == "git":
+    gval = {"-c","-C","--git-dir","--work-tree","--namespace","--config-env","--exec-path","--super-prefix"}
+    i = 1
+    while i < len(t):
+        if t[i] in gval: i += 2; continue
+        if t[i].startswith("-"): i += 1; continue
+        break
+    if i < len(t) and t[i] == "push":
+        for a in t[i+1:]:
+            if a == "--force" or short_force(a):
+                verdict = "G1"; break
+elif t and t[0] == "gh":
+    ghval = {"-R","--repo","--hostname"}
+    i = 1
+    while i < len(t) and t[i].startswith("-"):
+        i += 2 if t[i] in ghval else 1
+    if i + 1 < len(t) and t[i] == "pr" and t[i+1] == "create":
+        vval = {"-t","--title","-b","--body","-F","--body-file","-H","--head","-B","--base",
+                "-l","--label","-a","--assignee","-r","--reviewer","-p","--project","-m","--milestone","-T","--template"}
+        args, j = t[i+2:], 0
+        while j < len(args):
+            a = args[j]
+            if a in vval: j += 2; continue
+            if a in ("--draft","-d"):
+                verdict = "G2"; break
+            j += 1
+print(verdict)
 ' 2>/dev/null || printf '')"
 
-  # ── G1: block plain force-push (allow --force-with-lease) ───────────────────
-  if printf '%s' "$CMD" | grep -qE '\bgit[[:space:]]+push\b'; then
-    if printf '%s\n' "$toks" | grep -qE '^--force$' \
-       || printf '%s\n' "$toks" | grep -qE '^-[A-Za-z]*f[A-Za-z]*$'; then
+  case "$VERDICT" in
+    G1)
       bypass_active EOS_BYPASS_FORCEPUSH && exit 0
       echo "ERROR_FOR_AGENT: git-policy.md <safety> — 'git push --force' can overwrite others' history and needs explicit human approval."
       echo "ACTION: prefer 'git push --force-with-lease' (refuses to clobber unseen upstream commits), which is allowed."
       echo "BYPASS: EOS_BYPASS_FORCEPUSH=1 (or EOS_BYPASS_GIT=1) — only with the owner's explicit go-ahead."
       exit 1
-    fi
-  fi
-
-  # ── G2: block draft PR creation ─────────────────────────────────────────────
-  if printf '%s' "$CMD" | grep -qE '\bgh[[:space:]]+pr[[:space:]]+create\b'; then
-    if printf '%s\n' "$toks" | grep -qE '^--draft$'; then
+      ;;
+    G2)
       bypass_active EOS_BYPASS_DRAFTPR && exit 0
       echo "ERROR_FOR_AGENT: git-policy.md <pull_requests> — PRs must be opened ready-for-review, not as drafts. CodeRabbit and other auto-reviewers skip draft PRs."
-      echo "ACTION: run 'gh pr create' without --draft. If CI must gate review, use a 'wip' label instead."
+      echo "ACTION: run 'gh pr create' without --draft (and without -d). If CI must gate review, use a 'wip' label instead."
       echo "BYPASS: EOS_BYPASS_DRAFTPR=1 (or EOS_BYPASS_GIT=1)."
       exit 1
-    fi
-  fi
+      ;;
+  esac
 
   exit 0
 }
