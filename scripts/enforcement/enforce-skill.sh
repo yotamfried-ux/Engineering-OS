@@ -65,8 +65,10 @@ while IFS= read -r dir; do
     fi
   fi
 
-  # S2 — registered in external-skills/README.md (read from index).
-  if ! git show ":$REGISTRY" 2>/dev/null | grep -q "$name"; then
+  # S2 — registered in external-skills/README.md (read from index). Exact match on
+  # the registry link form "[name](./name/)" (fixed string) so a skill whose name
+  # is a substring of another (e.g. "good" vs "goodskill") is not falsely accepted.
+  if ! git show ":$REGISTRY" 2>/dev/null | grep -qF "[$name](./$name/)"; then
     if ! bypass_active EOS_BYPASS_SKILLREG; then
       echo "❌ COMMIT BLOCKED — skill-orchestration-policy.md <integration_procedure>: skill '$name' is not registered in $REGISTRY."
       echo "  Add a registry row for '$name' (step 4 of the integration procedure)."

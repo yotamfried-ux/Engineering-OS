@@ -15,9 +15,16 @@ REPO="$(mktemp -d)"; trap 'rm -rf "$REPO" 2>/dev/null' EXIT
 cd "$REPO" || exit 1
 git init -q 2>/dev/null; git config user.email t@t.t; git config user.name t
 
-# Registry baseline (committed) listing the registered test skill names.
+# Registry baseline (committed) — uses the real registry link form [name](./name/)
+# so the enforcer's exact match is exercised.
 mkdir -p external-skills
-printf '# Registry\n\n- goodskill\n- nopolicy\n- noact\n' > external-skills/README.md
+{
+  echo '# Registry'
+  echo
+  echo '| **[goodskill](./goodskill/)** | desc |'
+  echo '| **[nopolicy](./nopolicy/)** | desc |'
+  echo '| **[noact](./noact/)** | desc |'
+} > external-skills/README.md
 git add external-skills/README.md; git commit -qm init 2>/dev/null
 
 ALL4="README.md integration.md policy.md activation.md"
@@ -42,6 +49,7 @@ expect "EOS_BYPASS_SKILLDOC skips S1"         0 "$(EOS_BYPASS_SKILLDOC=1 mkskill
 
 echo "── S2: registry registration ──"
 expect "unregistered skill blocked"           1 "$(mkskill ghostskill $ALL4)"
+expect "partial-name (substring of registered) blocked" 1 "$(mkskill good $ALL4)"
 expect "EOS_BYPASS_SKILLREG skips S2"         0 "$(EOS_BYPASS_SKILLREG=1 mkskill ghostskill $ALL4)"
 
 echo "── excluded paths & general ──"
