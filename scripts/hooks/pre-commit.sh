@@ -39,6 +39,12 @@ if [ -f "$REPO_ROOT/scripts/enforcement/enforce-learning.sh" ]; then
   bash "$REPO_ROOT/scripts/enforcement/enforce-learning.sh" || exit 1
 fi
 
+# skill-orchestration-policy.md — every external-skills/<name>/ needs its 4 contract
+# files + a registry entry. Governing policy: core/skill-orchestration-policy.md. Bypass: EOS_BYPASS_SKILL=1.
+if [ -f "$REPO_ROOT/scripts/enforcement/enforce-skill.sh" ]; then
+  bash "$REPO_ROOT/scripts/enforcement/enforce-skill.sh" || exit 1
+fi
+
 # Repo-wide gates above run on every commit (incl. --allow-empty); the remaining
 # checks operate on staged content, so short-circuit empty commits here.
 [ -z "$STAGED" ] && exit 0
