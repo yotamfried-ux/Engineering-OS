@@ -1,0 +1,39 @@
+name: enforcement-tests
+
+# Runs every enforcer's regression suite (scripts/enforcement/tests/test-*.sh).
+# Each enforcer guards a core/*.md policy; this CI proves the guards still work.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  enforcement-tests:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned to a full commit SHA (supply-chain hardening); no auth git ops needed.
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Run all enforcement test suites
+        run: |
+          set -u
+          # Each test bootstraps its own temp git repo, so give git an identity.
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+
+          fail=0
+          for t in scripts/enforcement/tests/test-*.sh; do
+            echo "──────── $t ────────"
+            if bash "$t"; then :; else fail=1; fi
+          done
+
+          echo
+          if [ "$fail" -ne 0 ]; then
+            echo "❌ one or more enforcement suites failed"
+            exit 1
+          fi
+          echo "✅ all enforcement suites passed"
