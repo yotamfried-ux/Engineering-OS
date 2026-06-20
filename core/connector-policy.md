@@ -385,6 +385,11 @@ external systems › reference repos › templates › new implementation). כש
 - הסיבה למקור יחיד: כשמשתנה מתעדכן, מעדכנים במקום אחד ומסנכרנים החוצה — בלי לרדוף
   אחרי עותקים מפוזרים שיוצרים אי-התאמות ובאגים.
 
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-connector.sh`, נקרא מ-`pre-commit`):
+> קומיט נחסם אם קובץ `.env` ב-staged (פרט ל-`.env.example`/`.sample`/`.template`; bypass `EOS_BYPASS_ENVFILE=1`),
+> או אם ב-diff הופיע ערך-סוד מובהק — מפתח PEM, AWS access-key, או GitHub/Slack/OpenAI token
+> (bypass `EOS_BYPASS_SECRETS=1`). master: `EOS_BYPASS_CONNECTOR=1`. מילות-מפתח בלבד אינן נחסמות.
+
 ### נוהל עדכון משתנה בפלטפורמה
 
 כשצריך להזריק/לעדכן משתנה בפלטפורמה חיצונית (GitHub, Vercel, Supabase וכו'),
