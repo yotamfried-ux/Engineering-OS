@@ -39,8 +39,18 @@ printf 'TBD\n' > doc.md; git add doc.md
 expect "standalone TBD blocked"            1 "$(run)"; reset_idx; rm -f doc.md
 printf '## TBD\n' > doc.md; git add doc.md
 expect "heading-only TBD blocked"          1 "$(run)"; reset_idx; rm -f doc.md
+printf -- '- TBD\n' > doc.md; git add doc.md
+expect "list-item TBD blocked"             1 "$(run)"; reset_idx; rm -f doc.md
+printf '> XXX\n' > doc.md; git add doc.md
+expect "blockquote XXX blocked"            1 "$(run)"; reset_idx; rm -f doc.md
+printf 'status: TBD\n' > doc.md; git add doc.md
+expect "key-value TBD blocked"             1 "$(run)"; reset_idx; rm -f doc.md
+printf '???\n' > doc.md; git add doc.md
+expect "standalone ??? blocked"            1 "$(run)"; reset_idx; rm -f doc.md
 printf 'see the `TBD` list inline here\n' > doc.md; git add doc.md
 expect "inline TBD prose allowed"          0 "$(run)"; reset_idx; rm -f doc.md
+printf 'is this ??? unclear in prose\n' > doc.md; git add doc.md
+expect "inline ??? prose allowed"          0 "$(run)"; reset_idx; rm -f doc.md
 printf 'TBD\n' > note.txt; git add note.txt
 expect "non-.md TBD allowed"               0 "$(run)"; reset_idx; rm -f note.txt
 printf 'TBD\n' > doc.md; git add doc.md

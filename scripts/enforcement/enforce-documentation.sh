@@ -72,10 +72,11 @@ fi
 added="$(git diff --cached --diff-filter=ACMR -U0 -- '*.md' 2>/dev/null \
   | grep -E '^\+' | grep -vE '^\+\+\+' || true)"
 if [ -n "$added" ]; then
-  # A placeholder line is one whose entire content (after an optional heading '#'s
-  # or a 'key:' prefix) is just TBD/FIXME/XXX/???. Mid-sentence mentions don't match.
+  # A placeholder line is one whose entire content is just TBD/FIXME/XXX/??? —
+  # bare, or wrapped as a list item ("- "/"* "), blockquote ("> "), heading ("## "),
+  # or a "key: value" body. Mid-sentence mentions don't match (marker must end the line).
   tbd_hits="$(printf '%s\n' "$added" \
-    | grep -nE '^\+[[:space:]]*(#+[[:space:]]*)?(TBD|FIXME|XXX|\?\?\?)[[:space:]]*$|:[[:space:]]*(TBD|FIXME|XXX|\?\?\?)[[:space:]]*$' \
+    | grep -nE '^\+[[:space:]]*([*-][[:space:]]+|>[[:space:]]+)?(#+[[:space:]]*)?(TBD|FIXME|XXX|\?\?\?)[[:space:]]*$|^\+[[:space:]]*[^:]+:[[:space:]]*(TBD|FIXME|XXX|\?\?\?)[[:space:]]*$' \
     || true)"
   if [ -n "$tbd_hits" ]; then
     if ! bypass_active EOS_BYPASS_TBD; then
