@@ -14,7 +14,7 @@ core/resource-management.md	scripts/enforcement/enforce-resource.sh	.claudeignor
 core/precedence.md	NONE	judgment — conflict resolution, not deterministically enforceable
 core/pattern-lifecycle.md	NONE	internal maintenance
 core/scoring-guide.md	NONE	internal maintenance
-core/documentation-policy.md	NONE	pending — to be enforced md-by-md
+core/documentation-policy.md	scripts/enforcement/enforce-documentation.sh	README required (dirs + root) + no TBD placeholders
 core/maintenance-routine.md	NONE	internal maintenance
 core/mcp-servers.md	NONE	reference table
 CLAUDE.md	NONE	entry/navigation — principles, judgment-based

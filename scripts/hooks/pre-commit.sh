@@ -45,6 +45,12 @@ if [ -f "$REPO_ROOT/scripts/enforcement/enforce-skill.sh" ]; then
   bash "$REPO_ROOT/scripts/enforcement/enforce-skill.sh" || exit 1
 fi
 
+# documentation-policy.md — content dirs + root need README; no TBD placeholders in
+# staged docs. Governing policy: core/documentation-policy.md. Bypass: EOS_BYPASS_DOC=1.
+if [ -f "$REPO_ROOT/scripts/enforcement/enforce-documentation.sh" ]; then
+  bash "$REPO_ROOT/scripts/enforcement/enforce-documentation.sh" || exit 1
+fi
+
 # Repo-wide gates above run on every commit (incl. --allow-empty); the remaining
 # checks operate on staged content, so short-circuit empty commits here.
 [ -z "$STAGED" ] && exit 0
