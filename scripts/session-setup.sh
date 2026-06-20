@@ -12,6 +12,10 @@ set -u
 EOS_ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 export ENGINEERING_OS_HOME="$EOS_ROOT"
 
+# Reset the per-session evidence ledger (read by scripts/enforcement/*).
+# Ledger is project-cwd relative (.claude/.evidence/ledger); see lib/evidence.sh.
+. "$EOS_ROOT/scripts/enforcement/lib/evidence.sh" 2>/dev/null && evidence_reset 2>/dev/null || true
+
 G=$'\033[32m'; Y=$'\033[33m'; D=$'\033[2m'; Z=$'\033[0m'
 ok()   { printf '%s✅%s %s\n' "$G" "$Z" "$1"; }
 warn() { printf '%s⚠️ %s%s\n' "$Y" "$Z" "$1"; }

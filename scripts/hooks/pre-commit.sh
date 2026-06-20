@@ -9,6 +9,13 @@ set -e
 STAGED=$(git diff --cached --name-only)
 [ -z "$STAGED" ] && exit 0
 
+# md ↔ enforcer sync — changing a policy md requires updating its enforcer.
+# Governing policy: core/hooks-policy.md <hooks>. Bypass: EOS_BYPASS_MDSYNC=1
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if [ -f "$REPO_ROOT/scripts/enforcement/enforce-sync.sh" ]; then
+  bash "$REPO_ROOT/scripts/enforcement/enforce-sync.sh" || exit 1
+fi
+
 # Block accidental deletion of CLAUDE.md — it is the Engineering OS entry point
 if echo "$STAGED" | grep -q "^CLAUDE\.md$"; then
   if ! git show ":CLAUDE.md" > /dev/null 2>&1; then
