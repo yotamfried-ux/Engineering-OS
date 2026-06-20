@@ -23,8 +23,9 @@ expect() { # <desc> <expected_code> <actual_code>
 }
 
 # ── isolated workspace for the Write/Bash/Agent gates ────────────────────────
-WORK="$(mktemp -d)"; trap 'rm -rf "$WORK" "$GITREPO" 2>/dev/null' EXIT
-cd "$WORK"
+GITREPO=""
+WORK="$(mktemp -d)"; trap 'rm -rf "$WORK" "${GITREPO:-}" 2>/dev/null' EXIT
+cd "$WORK" || exit 1
 
 echo "── workflow enforcer: Write gate ──"
 run_enforcer Write "src/app.ts"; expect "code write blocked without plan" 1 $?
@@ -75,7 +76,7 @@ run_enforcer Agent ""; expect "agent allowed with tasks.json" 0 $?
 # ── md-sync gate (needs a git repo) ──────────────────────────────────────────
 echo "── enforce-sync: md ↔ enforcer ──"
 GITREPO="$(mktemp -d)"
-cd "$GITREPO"
+cd "$GITREPO" || exit 1
 git init -q 2>/dev/null
 git config user.email t@t.t; git config user.name t
 mkdir -p core scripts/enforcement
