@@ -69,7 +69,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/hooks/calibration-checklist.sh\" 2>/dev/null || true"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/hooks/calibration-checklist.sh\" || true"
           },
           {
             "type": "command",
