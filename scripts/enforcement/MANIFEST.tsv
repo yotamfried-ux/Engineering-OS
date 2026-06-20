@@ -7,7 +7,7 @@ core/quality-gates.md	scripts/enforcement/enforce-quality.sh	cleanup gate: debug
 core/git-policy.md	scripts/enforcement/enforce-git.sh	block plain force-push + draft PR (one-branch/no-verify/commit-fmt enforced elsewhere)
 core/hooks-policy.md	NONE	meta-policy about hooks themselves
 core/debugging-policy.md	scripts/enforcement/enforce-debugging.sh	no-verify block + fix-needs-test + rollback reminder
-core/learning-loop.md	NONE	pending — to be enforced md-by-md
+core/learning-loop.md	scripts/enforcement/enforce-learning.sh	enforce fixed lesson schema (lessons-learned/bugs + failed-solutions)
 core/connector-policy.md	scripts/enforcement/enforce-connector.sh	block staged .env files + hardcoded secrets (<environment>)
 core/skill-orchestration-policy.md	NONE	pending — to be enforced md-by-md
 core/resource-management.md	scripts/enforcement/enforce-resource.sh	.claudeignore required + no model-id in commit msg
