@@ -110,6 +110,9 @@ gh pr create --draft ...
 
 אם ה-CI דורש בדיקה לפני review — השתמש ב-label כמו `wip` במקום draft.
 
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-git.sh`, PreToolUse Bash):
+> פקודת `gh pr create --draft` נחסמת. bypass: `EOS_BYPASS_DRAFTPR=1`.
+
 </pull_requests>
 
 ---
@@ -133,6 +136,11 @@ gh pr create --draft ...
 ופעולות הרסניות-משותפות נשארים אישור-אדם מפורש** — hook יכול לחסום ברירת-מחדל, אך
 ההחלטה היא של המשתמש, לא של בדיקה אוטומטית. hooks מתאימים לבדיקות עם פלט pass/fail,
 לא להחלטות שיפוט.
+
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-git.sh`, PreToolUse Bash):
+> `git push --force`/`-f` ה-plain נחסם (`--force-with-lease` הבטוח מותר). bypass: `EOS_BYPASS_FORCEPUSH=1`.
+> `--no-verify` נחסם ע"י enforce-debugging.sh; one-branch ע"י settings.json. מיזוג ל-main/deploy
+> נשארים אישור-אדם מפורש — לא נאכפים אוטומטית.
 
 </safety>
 
