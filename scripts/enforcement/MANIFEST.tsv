@@ -4,7 +4,7 @@
 # enforcer exists. Add a row here as each md gets its own enforcer.
 core/workflow.md	scripts/enforcement/enforce-workflow.sh	entry-gate + Context7 + tasks.json
 core/quality-gates.md	scripts/enforcement/enforce-quality.sh	cleanup gate: debug-leftover + conflict-marker block (pre-commit)
-core/git-policy.md	NONE	pending — to be enforced md-by-md
+core/git-policy.md	scripts/enforcement/enforce-git.sh	block plain force-push + draft PR (one-branch/no-verify/commit-fmt enforced elsewhere)
 core/hooks-policy.md	NONE	meta-policy about hooks themselves
 core/debugging-policy.md	scripts/enforcement/enforce-debugging.sh	no-verify block + fix-needs-test + rollback reminder
 core/learning-loop.md	NONE	pending — to be enforced md-by-md
