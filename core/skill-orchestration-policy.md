@@ -55,6 +55,11 @@ external-skills/<skill-name>/
 | `policy.md` | *איך הוא משתלב בתזמור?* — סיווג, רמה, קומפוזיציה, override |
 | `activation.md` | *איך מתקינים ומוודאים שהוא קיים?* — פקודות מדויקות + אימות + secrets |
 
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-skill.sh`, נקרא מ-`pre-commit`):
+> קומיט שנוגע ב-`external-skills/<name>/` נחסם אם חסר אחד מ-4 קבצי החוזה (S1, `EOS_BYPASS_SKILLDOC=1`)
+> או אם `<name>` אינו רשום ב-`external-skills/README.md` (S2 — אוכף את שלב 4 ב-`<integration_procedure>`,
+> `EOS_BYPASS_SKILLREG=1`). master: `EOS_BYPASS_SKILL=1`. הוולידציה index-based.
+
 </skill_structure>
 
 ---
