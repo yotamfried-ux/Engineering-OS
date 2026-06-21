@@ -15,6 +15,9 @@ expect() { if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (expected $2, got $3)"
 REPO="$(mktemp -d)"; trap 'rm -rf "$REPO" 2>/dev/null' EXIT
 cd "$REPO" || exit 1
 git init -q 2>/dev/null; git config user.email t@t.t; git config user.name t
+# Initial empty commit so `git reset` in reset_case clears the index reliably
+# (without a HEAD, reset is unreliable across git versions → index leakage between cases).
+git commit --allow-empty -qm init 2>/dev/null
 
 STUBDIR="$REPO/.stubs"; mkdir -p "$STUBDIR"
 RUNLOG="$REPO/.runlog"
@@ -34,7 +37,7 @@ EOF
 runE() { ( cd "$REPO" && PATH="$STUBDIR:/usr/bin:/bin" bash "$ENFORCER" ) >/dev/null 2>&1; echo $?; }
 
 reset_case() {
-  git reset -q >/dev/null 2>&1
+  git reset -q >/dev/null 2>&1 || true
   rm -f "$REPO"/package.json "$REPO"/go.mod "$REPO"/*.js "$REPO"/*.go "$REPO"/*.sh "$RUNLOG" 2>/dev/null
   rm -f "$STUBDIR"/* 2>/dev/null
 }
@@ -69,7 +72,7 @@ printf 'if then fi\n' > broken.sh           # invalid bash syntax
 git add broken.sh 2>/dev/null
 expect "staged .sh syntax error blocks" 1 "$(runE)"
 reset_case
-printf 'echo hi\n' > ok.sh
+printf '#!/usr/bin/env bash\necho hi\n' > ok.sh
 git add ok.sh 2>/dev/null
 expect "clean staged .sh allowed"       0 "$(runE)"
 

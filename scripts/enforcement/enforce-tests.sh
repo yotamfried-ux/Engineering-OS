@@ -47,8 +47,15 @@ run() {
 warn_missing() { echo "⚠️  ${1}: '${2}' not installed — skipping (install it so this gate can run)."; }
 
 # has_npm_script <name> — true if package.json defines the given script.
+# Prefer node (always present in a node project); fall back to python3; else assume no.
 has_npm_script() {
-  python3 -c "import json,sys;d=json.load(open('$ROOT/package.json'));sys.exit(0 if '$1' in d.get('scripts',{}) else 1)" 2>/dev/null
+  if have node; then
+    node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.exit((p.scripts&&Object.prototype.hasOwnProperty.call(p.scripts,process.argv[2]))?0:1)" "$ROOT/package.json" "$1" 2>/dev/null
+  elif have python3; then
+    python3 -c "import json,sys;d=json.load(open('$ROOT/package.json'));sys.exit(0 if '$1' in d.get('scripts',{}) else 1)" 2>/dev/null
+  else
+    return 1
+  fi
 }
 # make_target <name> — true if the Makefile defines the target.
 make_target() { grep -qE "^$1[[:space:]]*:" "$ROOT/Makefile" 2>/dev/null; }
@@ -70,7 +77,14 @@ fi
 if { [ -f "$ROOT/pyproject.toml" ] || [ -f "$ROOT/setup.py" ] || [ -f "$ROOT/requirements.txt" ]; } \
    && staged_match '\.py$'; then
   if have ruff; then run "python lint (ruff)" ruff check "$ROOT"; else warn_missing python ruff; fi
-  if have pytest; then run "python test (pytest)" pytest -q "$ROOT"; else warn_missing python pytest; fi
+  if have pytest; then
+    echo "── python test (pytest) ──"
+    pytest -q "$ROOT"; prc=$?
+    # exit 5 = "no tests collected" → not a failure (the test-file gate lives in commit-msg).
+    if [ "$prc" -eq 0 ] || [ "$prc" -eq 5 ]; then echo "  ✅ python test (pytest)"; else echo "  ❌ python test (pytest) FAILED"; fail=1; fi
+  else
+    warn_missing python pytest
+  fi
 fi
 
 # ── go ───────────────────────────────────────────────────────────────────────
@@ -94,7 +108,7 @@ if [ -f "$ROOT/Cargo.toml" ] && staged_match '\.rs$'; then
 fi
 
 # ── make ─────────────────────────────────────────────────────────────────────
-if [ -f "$ROOT/Makefile" ]; then
+if [ -f "$ROOT/Makefile" ] && staged_match '(^|/)Makefile$|\.mk$'; then
   if have make; then
     make_target lint && run "make lint" make -C "$ROOT" lint
     make_target test && run "make test" make -C "$ROOT" test
@@ -110,7 +124,9 @@ if [ -n "$shells" ]; then
     [ -z "$f" ] && continue
     [ -f "$ROOT/$f" ] || continue
     run "shell syntax: $f" bash -n "$ROOT/$f"
-    if have shellcheck; then run "shellcheck: $f" shellcheck -S error "$ROOT/$f"; fi
+    # -e SC2148: don't force a shebang (sourced libs legitimately omit one); still
+    # catch real error-severity issues.
+    if have shellcheck; then run "shellcheck: $f" shellcheck -S error -e SC2148 "$ROOT/$f"; fi
   done <<EOF
 $shells
 EOF

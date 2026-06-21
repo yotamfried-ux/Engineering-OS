@@ -54,12 +54,13 @@ case "$TYPE" in chore|docs|style|ci|build) exit 0 ;; esac
 
 STAGED_CODE=$(git diff --cached --name-only 2>/dev/null \
   | grep -E '\.(ts|tsx|js|jsx|py|go|rs)$' \
-  | grep -vE '(\.(test|spec)\.(ts|tsx|js|jsx|py)|__tests__|/tests/|_test\.go$|(^|/)test_[^/]*\.py$)' \
+  | grep -vE '(\.(test|spec)\.(ts|tsx|js|jsx|py)|__tests__|/tests/|_test\.go$|(^|/)(test_[^/]*|[^/]*_test|tests)\.py$)' \
   | wc -l | tr -d ' ')
 
 if [ "${STAGED_CODE:-0}" -gt 2 ]; then
   PROJECT_TESTS=$(find "$REPO_ROOT" \
-    \( -name "*.test.*" -o -name "*.spec.*" -o -name "*_test.go" -o -name "test_*.py" \) \
+    \( -name "*.test.*" -o -name "*.spec.*" -o -name "*_test.go" -o -name "test_*.py" \
+       -o -name "*_test.py" -o -name "tests.py" -o -path "*/tests/*" -o -path "*/__tests__/*" \) \
     -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | wc -l | tr -d ' ')
   if [ "${PROJECT_TESTS:-0}" -eq 0 ]; then
     echo "❌ COMMIT BLOCKED: $STAGED_CODE code files staged, 0 test files found in project."
