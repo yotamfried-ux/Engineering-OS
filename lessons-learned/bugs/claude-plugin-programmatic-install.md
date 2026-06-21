@@ -69,7 +69,7 @@ claude plugin install superpowers@superpowers-marketplace
 - עובדות מ-bash, CI/CD, Docker, cron
 - מעדכנות את `~/.claude/plugins/installed_plugins.json` אוטומטית
 
-## איך מונעים בעיה בהוספת plugin עתידי
+## איך מונעים בעתיד
 
 לפני הגדרת plugin חדש כ-`fn:_install_<name>` ב-`skill-bootstrap.sh`:
 1. מצא את ה-marketplace repo של ה-plugin

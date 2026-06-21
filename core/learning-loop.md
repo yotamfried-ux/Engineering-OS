@@ -104,6 +104,15 @@ Observation | Repeated Observation | Verified Lesson | Best Practice
 ל-`failed-solutions/` סכמה קצרה יותר: **מה ניסיתי** · **למה לא עבד (ראיה)** ·
 **מה לבדוק במקום**.
 
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-learning.sh`, נקרא מ-`pre-commit`):
+> כל קובץ ב-`lessons-learned/bugs/` (פרט ל-README/`_TEMPLATE.md`) חייב להכיל את 8 הכותרות
+> ה**נדרשות**: `## מה קרה`, `## שורש הבעיה`, `## ראיה`, `## רמת ביטחון`, `## איך מונעים בעתיד`,
+> `## טסט רגרסיה`, `## סטטוס הבשלה`, `## Prevented Future Issues`. שתי הכותרות `## השערות שנבדקו`
+> ו-`## איך מזהים מוקדם` **מומלצות** (בתבנית, לא נאכפות). כל קובץ ב-`failed-solutions/` חייב
+> `## מה ניסיתי`, `## למה לא עבד`, `## מה לבדוק במקום`. `prevention-strategies/` ו-`postmortems/`
+> מוחרגים (פורמטים נפרדים). יצירה נכונה: העתק `_TEMPLATE.md`. bypass: `EOS_BYPASS_LESSON=1` /
+> `EOS_BYPASS_FAILSOL=1`, master `EOS_BYPASS_LEARNING=1`.
+
 ---
 
 ## רמות ביטחון
