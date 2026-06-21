@@ -112,6 +112,12 @@ gate_write() {
       rm -f "$marker"
     fi
   fi
+
+  # Living-plan nudge (non-blocking): the plan is a tracker, not a one-time checkbox.
+  # If it has no Progress/Status heading, remind to add+maintain one (and mirror to Notion).
+  if ! grep -qiE '^#+[[:space:]].*(progress|סטטוס|status)' "$pf" 2>/dev/null; then
+    echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"📋 workflow.md: the plan is a LIVING tracker — keep a current \"## Progress\" section (done / next / blockers) in the active .claude/plans file and mirror it in the Notion spec. Do not treat the plan as a one-time checkbox."}}'
+  fi
   exit 0
 }
 

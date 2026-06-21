@@ -64,44 +64,32 @@ if echo "$STAGED" | grep -q "^CLAUDE\.md$"; then
   fi
 fi
 
-if [ -f "package.json" ]; then
-  npm run lint --if-present && npm test --if-present
-elif [ -f "pyproject.toml" ]; then
-  ruff check . && pytest --tb=short -q
-elif [ -f "Makefile" ]; then
-  make lint test
+# quality-gates.md <pre_commit_review> — run EVERY detected stack's lint+test (node,
+# python, go, rust, make, shell). A failing check blocks; a missing tool warns.
+# Governing policy: core/quality-gates.md. Bypass: EOS_BYPASS_TESTS=1.
+# (The "project has zero tests" scan moved to commit-msg.sh, where the commit TYPE
+#  is available so chore/docs/… can be exempted correctly.)
+if [ -f "$REPO_ROOT/scripts/enforcement/enforce-tests.sh" ]; then
+  bash "$REPO_ROOT/scripts/enforcement/enforce-tests.sh" || exit 1
 fi
 
-# ── Physical test file enforcement ────────────────────────────────────────────
-# Blocks commits when: >2 code files are staged AND the entire project has 0 test files.
-# This is a filesystem scan — not a text check of the commit message.
-# Note: checks project-wide test existence (not per-change coverage).
-#       A project with any test files passes. A project with ZERO tests is blocked on large commits.
-
-STAGED_CODE=$(git diff --cached --name-only 2>/dev/null \
-  | grep -E '\.(ts|tsx|js|jsx|py|go|rs)$' \
-  | grep -vE '(\.(test|spec)\.(ts|tsx|js|jsx|py)|__tests__|/tests/)' \
-  | wc -l | tr -d ' ')
-
-if [ "${STAGED_CODE:-0}" -gt 2 ]; then
-  # Exempt chore/docs/style/ci/build commits
-  COMMIT_TYPE=$(git log --format=%s -1 HEAD 2>/dev/null | grep -oE '^[a-z]+' || echo "")
-  case "$COMMIT_TYPE" in chore|docs|style|ci|build) exit 0 ;; esac
-
-  PROJECT_TESTS=$(find . \
-    \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.test.js" -o -name "*.test.jsx" \
-       -o -name "*.spec.ts" -o -name "*.spec.js" \
-       -o -name "*.test.py" -o -name "*.spec.py" \
-       -o -name "*.test.go" \) \
-    -not -path "*/node_modules/*" \
-    -not -path "*/.git/*" \
-    2>/dev/null | wc -l | tr -d ' ')
-
-  if [ "${PROJECT_TESTS:-0}" -eq 0 ]; then
-    echo "❌ COMMIT BLOCKED: $STAGED_CODE code files staged, 0 test files found in project."
-    echo "   (This check fires only when the ENTIRE project has no tests — not per-file coverage)"
-    echo "   Write at least one test file anywhere in the project, then commit."
-    echo "   Exempt commit types: chore, docs, style, ci, build"
-    exit 1
+# workflow.md — living-plan reminder (non-blocking). If the newest plan file is older
+# than a staged file, the plan probably wasn't updated for this change. The plan is a
+# living tracker, not a one-time checkbox.
+if [ -d "$REPO_ROOT/.claude/plans" ]; then
+  NEWEST_PLAN="$(ls -t "$REPO_ROOT"/.claude/plans/*.md 2>/dev/null | head -1 || true)"
+  if [ -n "$NEWEST_PLAN" ]; then
+    PLAN_STALE=0
+    while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      [ -f "$REPO_ROOT/$f" ] || continue
+      if [ "$REPO_ROOT/$f" -nt "$NEWEST_PLAN" ]; then PLAN_STALE=1; break; fi
+    done <<PLANEOF
+$STAGED
+PLANEOF
+    if [ "$PLAN_STALE" -eq 1 ]; then
+      echo "⚠️  workflow: staged changes are newer than your plan ($(basename "$NEWEST_PLAN"))."
+      echo "   Update the plan's ## Progress section and the Notion spec — keep it a living tracker."
+    fi
   fi
 fi
