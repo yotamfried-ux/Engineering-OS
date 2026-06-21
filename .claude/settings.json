@@ -2,6 +2,15 @@
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "Bash|Read|Write|Edit|Glob|Grep|Agent|WebFetch|WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "touch /tmp/claude-tools-ran-this-turn 2>/dev/null || true"
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {
