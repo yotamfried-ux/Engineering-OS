@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "touch /tmp/claude-tools-ran-this-turn 2>/dev/null || true"
+            "command": "touch \"/tmp/claude-tools-ran-$PPID\" 2>/dev/null || true"
           }
         ]
       },
@@ -101,7 +101,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/hooks/calibration-checklist.sh\" || true"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/hooks/calibration-checklist.sh\" \"/tmp/claude-tools-ran-$PPID\" || true"
           },
           {
             "type": "command",

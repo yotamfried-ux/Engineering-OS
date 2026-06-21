@@ -3,7 +3,7 @@
 # יורה רק כשכלי כלשהו רץ בתור (flag מוגדר ע"י PreToolUse hook).
 # הפלט נכנס לClaude כ-hookSpecificOutput ומשמש למילוי סעיף "🔍 ביקורת עצמית".
 
-FLAG="/tmp/claude-tools-ran-this-turn"
+FLAG="${1:-/tmp/claude-tools-ran-$PPID}"
 [ -f "$FLAG" ] || exit 0
 rm -f "$FLAG"
 
