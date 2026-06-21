@@ -126,7 +126,7 @@ fi
 
 # ── 8. learning_loop check ───────────────────────────────────────────────────
 RECENT_FIXES=$(git log --oneline -10 2>/dev/null | grep -c " fix:" || echo 0)
-LESSON_ADDS=$(git log --oneline -10 --diff-filter=A -- 'lessons-learned/**' 2>/dev/null | wc -l | tr -d ' ')
+LESSON_ADDS=$(git log --oneline -10 --diff-filter=A -- 'lessons-learned/**' 2>/dev/null | wc -l | xargs)
 if [ "${RECENT_FIXES:-0}" -gt 0 ] && [ "${LESSON_ADDS:-0}" -eq 0 ]; then
   warn "${RECENT_FIXES} fix: commit(s) in last 10, 0 lessons-learned entries — learning_loop? (core/learning-loop.md)"
 fi
