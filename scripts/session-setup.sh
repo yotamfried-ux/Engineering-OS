@@ -83,6 +83,14 @@ if command -v graphify >/dev/null 2>&1; then
         || warn "graphify cluster-only failed"
     fi
   fi
+
+  # Report doc files excluded when no LLM backend is available
+  if [ -z "${Nemotron_api_key:-}" ]; then
+    DOC_COUNT=$(find "$EOS_ROOT" -name "*.md" \
+      -not -path "*/.git/*" -not -path "*/graphify-out/*" \
+      2>/dev/null | wc -l | tr -d ' ')
+    info "graphify: ${DOC_COUNT} .md docs NOT in graph — add Nemotron_api_key to include them"
+  fi
 fi
 
 # ── 4. RTK ───────────────────────────────────────────────────────────────────
@@ -98,19 +106,38 @@ if ! command -v rtk >/dev/null 2>&1; then
 fi
 
 if command -v rtk >/dev/null 2>&1; then
+  # Register global hook if not already present; rtk may have been just installed
+  # so explicitly include cargo bin dir in PATH before checking/running rtk init -g.
+  export PATH="${HOME}/.cargo/bin:${PATH}"
+  if ! grep -q '"rtk hook"' "$HOME/.claude/settings.json" 2>/dev/null; then
+    rtk init -g >/dev/null 2>&1 \
+      && info "RTK global hook registered in ~/.claude/settings.json" \
+      || warn "rtk init -g failed — run manually: rtk init -g"
+  fi
   ok "RTK $(rtk --version 2>/dev/null | head -1) ready (60-90% Bash token savings)"
 fi
 
 # ── 5. claude-mem (best-effort, non-fatal) ────────────────────────────────────
 if command -v claude-mem >/dev/null 2>&1; then
-  claude-mem start >/dev/null 2>&1 &
-  CLAUDEMEM_PID=$!
-  disown 2>/dev/null || true
-  sleep 1
-  if kill -0 "$CLAUDEMEM_PID" 2>/dev/null; then
-    ok "claude-mem worker started (cross-session memory)"
+  if curl -sf http://localhost:37777/health >/dev/null 2>&1; then
+    ok "claude-mem worker already running"
   else
-    info "claude-mem start attempted — worker may not persist in remote sessions (known limitation)"
+    # nohup + stdin redirect avoids TTY requirement in hook (non-interactive) context.
+    nohup claude-mem start </dev/null >/dev/null 2>&1 &
+    disown 2>/dev/null || true
+    # Polling: up to 5 attempts × 1s to let the worker bind to :37777.
+    _CM_UP=0
+    for _i in 1 2 3 4 5; do
+      sleep 1
+      if curl -sf http://localhost:37777/health >/dev/null 2>&1; then
+        _CM_UP=1; break
+      fi
+    done
+    if [ "$_CM_UP" -eq 1 ]; then
+      ok "claude-mem worker started (cross-session memory)"
+    else
+      info "claude-mem start attempted — worker did not respond on :37777 (may need manual start)"
+    fi
   fi
 else
   info "claude-mem not installed — /plugin marketplace add thedotmack/claude-mem"
@@ -156,6 +183,61 @@ EXISTING_PLANS=$(ls -lt .claude/plans/*.md 2>/dev/null | head -5)
 if [ -n "$EXISTING_PLANS" ]; then
   printf '\n%s📋 Existing plans (check if current for this task!):%s\n' "$Y" "$Z"
   echo "$EXISTING_PLANS" | awk '{print "  " $NF, $6, $7, $8}'
+fi
+
+# ── 10. Installation readiness report — defines "done", no manual actions needed ──
+printf '\n%s🔍 Installation Status:%s\n' "$G" "$Z"
+_FAIL=0
+
+if command -v graphify >/dev/null 2>&1 && [ -f "$EOS_ROOT/graphify-out/graph.json" ]; then
+  if _N=$(GRAPH_JSON="$EOS_ROOT/graphify-out/graph.json" python3 - <<'PY' 2>/dev/null
+import json, os
+with open(os.environ["GRAPH_JSON"], "r", encoding="utf-8") as f:
+    g = json.load(f)
+print(len(g.get("nodes", [])))
+PY
+  ); then
+    printf '  ✅ graphify: %s nodes in graph\n' "$_N"
+  else
+    printf '  ❌ graphify: graph.json unreadable/invalid\n'; _FAIL=$((_FAIL+1))
+  fi
+else
+  printf '  ❌ graphify: graph.json missing\n'; _FAIL=$((_FAIL+1))
+fi
+
+if command -v rtk >/dev/null 2>&1; then
+  _GLOBAL=$(grep -q '"rtk hook"' "$HOME/.claude/settings.json" 2>/dev/null && echo "1" || echo "0")
+  _PROJECT=$(grep -q '"rtk hook"' ".claude/settings.json" 2>/dev/null && echo "1" || echo "0")
+  if [ "$_GLOBAL" = "1" ] && [ "$_PROJECT" = "1" ]; then
+    _RTK_SCOPE="global+project"
+  elif [ "$_GLOBAL" = "1" ]; then
+    _RTK_SCOPE="global-only"
+  else
+    _RTK_SCOPE="project-only"
+  fi
+  printf '  ✅ RTK: %s (%s hook)\n' "$(rtk --version 2>/dev/null | head -1)" "$_RTK_SCOPE"
+else
+  printf '  ❌ RTK: not installed\n'; _FAIL=$((_FAIL+1))
+fi
+
+if curl -sf http://localhost:37777/health >/dev/null 2>&1; then
+  printf '  ✅ claude-mem: worker running on :37777\n'
+elif command -v claude-mem >/dev/null 2>&1; then
+  printf '  ⚠️  claude-mem: installed but worker not responding on :37777\n'; _FAIL=$((_FAIL+1))
+else
+  printf '  ➖ claude-mem: not installed\n'
+fi
+
+if [ -n "${Nemotron_api_key:-}" ]; then
+  printf '  ✅ Nemotron: API key set — graphify includes code + docs\n'
+else
+  printf '  ⚠️  Nemotron: no API key — graphify code-only (docs excluded)\n'
+fi
+
+if [ "$_FAIL" -eq 0 ]; then
+  printf '\n%s✅ All tools ready — no manual actions needed%s\n' "$G" "$Z"
+else
+  printf '\n%s⚠️  %s item(s) need attention (see above)%s\n' "$Y" "$_FAIL" "$Z"
 fi
 
 # ── Done ─────────────────────────────────────────────────────────────────────
