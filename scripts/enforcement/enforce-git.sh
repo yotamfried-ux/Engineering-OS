@@ -106,6 +106,32 @@ print(verdict)
       ;;
   esac
 
+  # G6c: gh pr create requires reading core/maintenance-routine.md this session.
+  # Checked AFTER VERDICT so G2 blocks and EOS_BYPASS_DRAFTPR take priority.
+  # Uses shlex token parsing (same approach as VERDICT) to avoid substring false-positives.
+  if printf '%s' "$CMD" | python3 -c '
+import shlex, sys
+try:
+    t = shlex.split(sys.stdin.read())
+except Exception:
+    t = []
+ok = False
+if t and t[0] == "gh":
+    ghval = {"-R","--repo","--hostname"}
+    i = 1
+    while i < len(t) and t[i].startswith("-"):
+        i += 2 if t[i] in ghval else 1
+    ok = i + 1 < len(t) and t[i] == "pr" and t[i+1] == "create"
+print("1" if ok else "")
+' 2>/dev/null | grep -q '^1$'; then
+    evidence_has read_maintenance_routine 2>/dev/null || {
+      echo "ERROR_FOR_AGENT: core/maintenance-routine.md not read in this session."
+      echo "ACTION: read core/maintenance-routine.md (PR checklist) before creating a PR."
+      echo "BYPASS: EOS_BYPASS_GIT=1"
+      exit 1
+    }
+  fi
+
   exit 0
 }
 

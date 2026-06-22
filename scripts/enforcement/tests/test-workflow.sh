@@ -73,6 +73,79 @@ run_enforcer Agent ""; expect "agent blocked without tasks.json" 1 $?
 echo '{}' > .claude/tasks.json
 run_enforcer Agent ""; expect "agent allowed with tasks.json" 0 $?
 
+echo "── workflow enforcer: G1 — .github/ critical path ──"
+rm -rf .claude/plans
+run_enforcer Write ".github/workflows/ci.yml"; expect "G1: .github/ write blocked without plan" 1 $?
+mkdir -p .claude/plans
+cat > .claude/plans/g.md <<'EOF'
+# Task
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+run_enforcer Write ".github/workflows/ci.yml"; expect "G1: .github/ write allowed with full plan" 0 $?
+rm -rf .claude/plans
+
+echo "── workflow enforcer: G3 — self-bypass detection ──"
+run_enforcer Bash "export EOS_BYPASS_WORKFLOW=1"; expect "G3: export EOS_BYPASS_* via Bash blocked" 1 $?
+run_enforcer Bash "EOS_BYPASS_CONTEXT7=1 npm install react"; expect "G3: EOS_BYPASS_* prefix via Bash blocked" 1 $?
+run_enforcer Bash "echo EOS_BYPASS_WORKFLOW=1"; expect "G3: echo of bypass var allowed (not assignment)" 0 $?
+
+echo "── workflow enforcer: G6a — pattern-lifecycle evidence gate ──"
+mkdir -p .claude/plans
+cat > .claude/plans/g6.md <<'EOF'
+# Task
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+rm -rf .claude/.evidence
+run_enforcer Write "patterns/api/test.ts"; expect "G6a: patterns/ write blocked without pattern-lifecycle evidence" 1 $?
+mkdir -p .claude/.evidence
+printf '%s\tread_pattern_lifecycle\t\n' "$(date +%s)" > .claude/.evidence/ledger
+run_enforcer Write "patterns/api/test.ts"; expect "G6a: patterns/ write allowed with pattern-lifecycle evidence" 0 $?
+rm -rf .claude/.evidence
+
+echo "── workflow enforcer: G6b — hooks-policy evidence gate ──"
+rm -rf .claude/.evidence
+run_enforcer Write "scripts/enforcement/test.sh"; expect "G6b: enforcement write blocked without hooks-policy evidence" 1 $?
+mkdir -p .claude/.evidence
+printf '%s\tread_hooks_policy\t\n' "$(date +%s)" > .claude/.evidence/ledger
+run_enforcer Write "scripts/enforcement/test.sh"; expect "G6b: enforcement write allowed with hooks-policy evidence" 0 $?
+rm -rf .claude/.evidence
+
+echo "── workflow enforcer: G4 — bypass audit trail ──"
+rm -rf .claude/.evidence
+mkdir -p .claude/plans
+cat > .claude/plans/p2.md <<'EOF'
+# Task
+## מטרה
+goal
+## תכנון
+steps
+## DoD
+done
+## חלופות
+alts
+EOF
+EOS_BYPASS_WORKFLOW=1 run_enforcer Write ".github/workflows/ci.yml"
+if grep -q "bypass_used.*EOS_BYPASS_WORKFLOW" .claude/.evidence/ledger 2>/dev/null; then
+  ok "G4: bypass activation recorded to evidence ledger"
+else
+  bad "G4: bypass activation NOT recorded in ledger"
+fi
+rm -rf .claude/.evidence .claude/plans
+
 # ── md-sync gate (needs a git repo) ──────────────────────────────────────────
 echo "── enforce-sync: md ↔ enforcer ──"
 GITREPO="$(mktemp -d)"

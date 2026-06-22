@@ -240,6 +240,32 @@ else
   printf '\n%s⚠️  %s item(s) need attention (see above)%s\n' "$Y" "$_FAIL" "$Z"
 fi
 
+# ── 11. Plan continuity check (G2: plans don't survive compaction) ───────────
+_check_plan_continuity() {
+  local plan_dir=".claude/plans"
+  local max_age_h="${EOS_PLAN_MAX_AGE_H:-48}"
+
+  if [ ! -d "$plan_dir" ] || [ -z "$(ls "$plan_dir"/*.md 2>/dev/null)" ]; then
+    printf '\n%s⚠️  [Engineering OS] No plan file in .claude/plans/%s\n' "$Y" "$Z"
+    printf '   If continuing work from a previous session, create a plan before writing code:\n'
+    printf '   .claude/plans/<task>.md with Goal/Plan/DoD/Alternatives\n\n'
+    return
+  fi
+
+  local newest; newest="$(ls -t "$plan_dir"/*.md 2>/dev/null | head -1)"
+  local now mtime age_h
+  now="$(date +%s 2>/dev/null || echo 0)"
+  mtime="$(stat -c %Y "$newest" 2>/dev/null || stat -f %m "$newest" 2>/dev/null || echo 0)"
+  age_h=$(( (now - mtime) / 3600 ))
+
+  if [ "$age_h" -ge "$max_age_h" ]; then
+    printf '\n%s⚠️  [Engineering OS] Stale plan: %s (age: %dh > %dh)%s\n' \
+      "$Y" "$(basename "$newest")" "$age_h" "$max_age_h" "$Z"
+    printf '   Create/refresh a plan before writing code (EOS_PLAN_MAX_AGE_H=0 to disable).\n\n'
+  fi
+}
+_check_plan_continuity
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf '\n'
 info "session setup complete."

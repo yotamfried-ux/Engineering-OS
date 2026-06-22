@@ -18,7 +18,7 @@ except:
 
 # Engineering OS critical paths — block writes WITHOUT a plan regardless of file extension.
 # Rationale: Engineering OS IS markdown; the extension-based skip would bypass enforcement.
-CRITICAL_DIRS=("core" "patterns" "external-skills" "templates" "scripts/hooks")
+CRITICAL_DIRS=("core" "patterns" "external-skills" "templates" "scripts/hooks" ".github")
 IN_CRITICAL_DIR=0
 MATCHED_DIR=""
 for dir in "${CRITICAL_DIRS[@]}"; do

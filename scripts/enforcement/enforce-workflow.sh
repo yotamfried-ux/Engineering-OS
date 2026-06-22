@@ -67,7 +67,9 @@ gate_write() {
   # Critical Engineering OS dirs: block regardless of extension (it IS markdown).
   local crit=0
   case "$FILE" in
-    core/*|*/core/*|patterns/*|*/patterns/*|external-skills/*|*/external-skills/*|templates/*|*/templates/*|scripts/*|*/scripts/*) crit=1 ;;
+    core/*|*/core/*|patterns/*|*/patterns/*|external-skills/*|*/external-skills/*|\
+    templates/*|*/templates/*|scripts/*|*/scripts/*|\
+    .github/*|*/.github/*|.claude/settings.json|*/.claude/settings.json) crit=1 ;;
   esac
 
   if [ "$crit" -eq 0 ]; then
@@ -95,23 +97,51 @@ gate_write() {
   fi
 
   # Freshness: block code writes if the newest plan is stale (default 48h; 0 disables).
+  # Uses stat for mtime — reliable across Linux/macOS, no touch -d portability issues.
   local max_age="${EOS_PLAN_MAX_AGE_H:-48}"
+  if ! printf '%s' "$max_age" | grep -qE '^[0-9]+$'; then
+    echo "ERROR_FOR_AGENT: invalid EOS_PLAN_MAX_AGE_H='$max_age' (expected a non-negative integer)."
+    echo "ACTION: unset EOS_PLAN_MAX_AGE_H or set it to a non-negative integer (0 to disable freshness check)."
+    exit 1
+  fi
   if [ "${max_age}" != "0" ]; then
-    local marker; marker="$(mktemp 2>/dev/null)"
-    if [ -n "$marker" ]; then
-      if touch -d "${max_age} hours ago" "$marker" 2>/dev/null \
-         || touch -t "$(date -v-"${max_age}"H '+%Y%m%d%H%M' 2>/dev/null || echo 200001010000)" "$marker" 2>/dev/null; then
-        if [ ! "$pf" -nt "$marker" ]; then
-          rm -f "$marker"
-          echo "ERROR_FOR_AGENT: workflow.md gate — newest plan ($(basename "$pf")) is older than ${max_age}h (possible zombie plan)."
-          echo "ACTION: create/refresh a plan for the current task, or set EOS_PLAN_MAX_AGE_H=0 to disable freshness."
-          echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
-          exit 1
-        fi
-      fi
-      rm -f "$marker"
+    local now mtime age_h
+    now="$(date +%s 2>/dev/null || echo 0)"
+    mtime="$(stat -c %Y "$pf" 2>/dev/null || stat -f %m "$pf" 2>/dev/null || echo "$now")"
+    age_h=$(( (now - mtime) / 3600 ))
+    if [ "$age_h" -ge "$max_age" ]; then
+      echo "ERROR_FOR_AGENT: workflow.md gate — newest plan ($(basename "$pf")) is ${age_h}h old (limit: ${max_age}h, possible zombie plan)."
+      echo "ACTION: create/refresh a plan for the current task, or set EOS_PLAN_MAX_AGE_H=0 to disable freshness."
+      echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
+      exit 1
     fi
   fi
+
+  # G6a: patterns/ writes require reading core/pattern-lifecycle.md this session
+  case "$FILE" in
+    patterns/*|*/patterns/*)
+      evidence_has read_pattern_lifecycle || {
+        echo "ERROR_FOR_AGENT: core/pattern-lifecycle.md not read in this session."
+        echo "ACTION: read core/pattern-lifecycle.md (<lifecycle> section) before modifying patterns."
+        echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
+        exit 1
+      }
+      ;;
+  esac
+
+  # G6b: hooks/enforcement/.claude/settings writes require reading core/hooks-policy.md
+  case "$FILE" in
+    scripts/hooks/*|*/scripts/hooks/*|scripts/enforcement/*|*/scripts/enforcement/*|\
+    .claude/settings.json|*/.claude/settings.json)
+      evidence_has read_hooks_policy || {
+        echo "ERROR_FOR_AGENT: core/hooks-policy.md not read in this session."
+        echo "ACTION: read core/hooks-policy.md before modifying hooks or enforcement scripts."
+        echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
+        exit 1
+      }
+      ;;
+  esac
+
   exit 0
 }
 
@@ -121,6 +151,17 @@ gate_write() {
 gate_bash() {
   local CMD="$1"
   [ -z "$CMD" ] && exit 0
+
+  # G3: block if command sets a bypass var — Claude cannot self-disable enforcement.
+  # Matches only at command-start positions: ^ | after ; | & | ( or after `export`.
+  # Does NOT match when EOS_BYPASS_X= appears as an argument (e.g. echo EOS_BYPASS_X=1).
+  if printf '%s' "$CMD" | grep -qE '(^[[:space:]]*(export[[:space:]]+)?|[;|&(][[:space:]]*(export[[:space:]]+)?)EOS_BYPASS_[A-Z_]+='; then
+    echo "ERROR_FOR_AGENT: this command sets an EOS_BYPASS_* variable — Claude cannot self-disable enforcement."
+    echo "Only the human user may set bypass vars outside the Claude Code session."
+    echo "If there is a genuine reason to bypass, inform the user and ask them to set the variable."
+    exit 1
+  fi
+
   # Only fire for real package installs (a package name follows the verb).
   case "$CMD" in
     *"npm install "[a-zA-Z@]*|*"npm i "[a-zA-Z@]*|*"yarn add "[a-zA-Z@]*|*"pnpm add "[a-zA-Z@]*|*"pip install "[a-zA-Z]*|*"pip3 install "[a-zA-Z]*|*"uv add "[a-zA-Z]*|*"uv pip install "[a-zA-Z]*) ;;
