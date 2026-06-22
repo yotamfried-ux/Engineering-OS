@@ -99,6 +99,11 @@ gate_write() {
   # Freshness: block code writes if the newest plan is stale (default 48h; 0 disables).
   # Uses stat for mtime — reliable across Linux/macOS, no touch -d portability issues.
   local max_age="${EOS_PLAN_MAX_AGE_H:-48}"
+  if ! printf '%s' "$max_age" | grep -qE '^[0-9]+$'; then
+    echo "ERROR_FOR_AGENT: invalid EOS_PLAN_MAX_AGE_H='$max_age' (expected a non-negative integer)."
+    echo "ACTION: unset EOS_PLAN_MAX_AGE_H or set it to a non-negative integer (0 to disable freshness check)."
+    exit 1
+  fi
   if [ "${max_age}" != "0" ]; then
     local now mtime age_h
     now="$(date +%s 2>/dev/null || echo 0)"
