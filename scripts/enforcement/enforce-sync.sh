@@ -15,6 +15,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$SCRIPT_DIR/MANIFEST.tsv"
 [ -f "$MANIFEST" ] || exit 0
 
+# Validate MANIFEST.tsv format: every non-comment, non-empty line must contain a tab.
+# A space-instead-of-tab mistake breaks awk -F '\t' silently — the whole sync check
+# becomes a no-op without any error, which is worse than a noisy failure.
+bad_format="$(grep -v '^#' "$MANIFEST" | grep -v '^[[:space:]]*$' | grep -v $'\t' || true)"
+if [ -n "$bad_format" ]; then
+  echo "ERROR_FOR_AGENT: enforce-sync — MANIFEST.tsv has lines without tab separators (use TAB, not spaces):"
+  printf '%s\n' "$bad_format" | head -5 | sed 's/^/    /'
+  echo "  Fix: ensure each row uses a literal TAB between columns."
+  exit 1
+fi
+
 STAGED="$(git diff --cached --name-only 2>/dev/null)"
 [ -z "$STAGED" ] && exit 0
 
