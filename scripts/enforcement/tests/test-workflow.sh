@@ -85,6 +85,12 @@ run_enforcer Agent ""; expect "agent blocked when task missing status field" 1 $
 printf '{"tasks":[{"title":"do thing","status":"todo"}]}\n' > .claude/tasks.json
 run_enforcer Agent ""; expect "agent blocked when task missing id field" 1 $?
 
+printf '{"tasks":[{"id":"t1","status":"todo"}]}\n' > .claude/tasks.json
+run_enforcer Agent ""; expect "agent blocked when task missing title field" 1 $?
+
+printf '{"tasks":["idtitlestatus"]}\n' > .claude/tasks.json
+run_enforcer Agent ""; expect "agent blocked when task item is a string not an object" 1 $?
+
 # Valid schema: all required fields present
 printf '{"tasks":[{"id":"t1","title":"do thing","status":"todo"}]}\n' > .claude/tasks.json
 run_enforcer Agent ""; expect "agent allowed with valid tasks.json schema" 0 $?

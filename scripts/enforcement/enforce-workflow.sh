@@ -158,7 +158,10 @@ try:
     if not isinstance(tasks, list) or len(tasks) == 0:
         print('FAIL: tasks array is missing or empty')
         sys.exit(0)
-    for t in tasks:
+    for i, t in enumerate(tasks):
+        if not isinstance(t, dict):
+            print(f'FAIL: task at index {i} must be an object, got {type(t).__name__}')
+            sys.exit(0)
         for f in ('id', 'title', 'status'):
             if f not in t:
                 print(f'FAIL: task missing field \"{f}\": {t}')
