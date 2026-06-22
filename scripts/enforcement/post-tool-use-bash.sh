@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o pipefail
 # post-tool-use-bash.sh — PostToolUse evidence recorder for Bash tool.
 #
 # Records evidence for gates that depend on successful Bash commands:
@@ -44,7 +45,7 @@ OUT="$(_parse_field out)"
 # Require a real subcommand (not just any string containing "graphify") AND
 # non-trivial output (length > 30 chars and no leading error text).
 case "$CMD" in
-  *"graphify query "*|*"graphify explain "*|*"graphify path "*|*"graphify update"*)
+  *"graphify query "*|*"graphify explain "*|*"graphify path "*|*"graphify update "*|*"graphify update"*)
     OUT_LEN="${#OUT}"
     if [ "${OUT_LEN:-0}" -gt 30 ]; then
       FIRST_100="${OUT:0:100}"

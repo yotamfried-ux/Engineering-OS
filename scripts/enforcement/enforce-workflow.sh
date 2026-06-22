@@ -245,7 +245,7 @@ gate_write() {
     case "$FILE" in
       *"/${_dom}/"*|*"/${_dom}."*|*"_${_dom}."*|*"${_dom}_"*)
         if [ -d "patterns/${_dom}" ]; then
-          bypass_active EOS_BYPASS_PATTERNS || evidence_has patterns_searched || {
+          bypass_active EOS_BYPASS_PATTERNS || evidence_has "patterns_read_${_dom}" || {
             echo "ERROR_FOR_AGENT: patterns gate (G8) — writing to '${_dom}' domain but no patterns/${_dom}/ file was read this session."
             echo "ACTION: read at least one file from patterns/${_dom}/ before writing ${_dom} code."
             echo "BYPASS: EOS_BYPASS_PATTERNS=1 — only with explicit user authorization in the current conversation."

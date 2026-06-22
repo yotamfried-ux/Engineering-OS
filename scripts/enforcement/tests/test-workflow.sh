@@ -242,14 +242,18 @@ done criteria
 ## חלופות
 alternatives considered
 EOF
-mkdir -p graphify-out patterns/auth
+mkdir -p graphify-out patterns/auth patterns/billing
 echo '{}' > graphify-out/graph.json
 mkdir -p .claude/.evidence
 printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
 # G8 fires when patterns/<domain>/ exists and file path matches that domain
-run_enforcer Write "src/auth/service.ts"; expect "G8: auth domain write blocked without patterns_searched" 1 $?
-printf '%s\tpatterns_searched\t\n' "$(date +%s)" >> .claude/.evidence/ledger
-run_enforcer Write "src/auth/service.ts"; expect "G8: auth domain write allowed after patterns_searched" 0 $?
+run_enforcer Write "src/auth/service.ts"; expect "G8: auth domain write blocked without any patterns evidence" 1 $?
+# Cross-domain negative: reading billing patterns must NOT unlock auth writes
+printf '%s\tpatterns_read_billing\t\n' "$(date +%s)" >> .claude/.evidence/ledger
+run_enforcer Write "src/auth/service.ts"; expect "G8: auth domain write blocked after reading billing patterns (cross-domain)" 1 $?
+# Domain-specific: reading auth patterns unlocks auth writes
+printf '%s\tpatterns_read_auth\t\n' "$(date +%s)" >> .claude/.evidence/ledger
+run_enforcer Write "src/auth/service.ts"; expect "G8: auth domain write allowed after reading auth patterns" 0 $?
 # Non-existent domain dir — no G8 block
 rm -rf patterns/auth
 run_enforcer Write "src/auth/service.ts"; expect "G8: auth write allowed when patterns/auth/ absent" 0 $?

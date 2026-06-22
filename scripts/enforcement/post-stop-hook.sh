@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o pipefail
 # post-stop-hook.sh — Stop event hook: session status summary + staged-file reminders.
 #
 # Emits hookSpecificOutput JSON with:
