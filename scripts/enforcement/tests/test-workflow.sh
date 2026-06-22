@@ -8,7 +8,9 @@ ENFORCER="$ENFORCE_DIR/enforce-workflow.sh"
 SYNC="$ENFORCE_DIR/enforce-sync.sh"
 
 PASS=0; FAIL=0
+# ok <desc> — record a passing assertion.
 ok()   { PASS=$((PASS+1)); printf '  ✅ %s\n' "$1"; }
+# bad <desc> — record a failing assertion.
 bad()  { FAIL=$((FAIL+1)); printf '  ❌ %s\n' "$1"; }
 
 # run_enforcer <tool> <file_path|command> ; returns enforcer exit code
