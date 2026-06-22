@@ -23,6 +23,7 @@ bypass_active EOS_BYPASS_WORKFLOW && exit 0
 # ── Parse PreToolUse stdin: tool name, file_path, command ────────────────────
 INPUT="$(cat 2>/dev/null || true)"
 read_field() {
+  command -v python3 >/dev/null 2>&1 || { printf 'WARNING_FOR_AGENT: python3 not found — enforce-workflow hook degraded\n' >&2; return; }
   printf '%s' "$INPUT" | python3 -c "
 import json, sys
 try:
@@ -62,7 +63,15 @@ plan_missing_sections() {
 # ═════════════════════════════════════════════════════════════════════════════
 gate_write() {
   local FILE="$1"
-  [ -z "$FILE" ] && exit 0
+  if [ -z "$FILE" ]; then
+    # Empty file_path may mean JSON parse failure — warn but allow (avoid false positives).
+    case "$TOOL" in
+      Write|Edit|MultiEdit|NotebookEdit)
+        echo "WARNING_FOR_AGENT: enforce-workflow could not parse file_path — plan gate skipped. Verify python3 is available and hook stdin is valid JSON."
+        ;;
+    esac
+    exit 0
+  fi
 
   # Critical Engineering OS dirs: block regardless of extension (it IS markdown).
   local crit=0
@@ -70,6 +79,12 @@ gate_write() {
     core/*|*/core/*|patterns/*|*/patterns/*|external-skills/*|*/external-skills/*|\
     templates/*|*/templates/*|scripts/*|*/scripts/*|\
     .github/*|*/.github/*|.claude/settings.json|*/.claude/settings.json) crit=1 ;;
+  esac
+
+  # GitHub Actions workflows are infrastructure code — require a plan like any code file.
+  case "$FILE" in
+    .github/workflows/*|.github/workflows/*.yml|.github/workflows/*.yaml|\
+    */.github/workflows/*|*/.github/workflows/*.yml|*/.github/workflows/*.yaml) crit=1 ;;
   esac
 
   if [ "$crit" -eq 0 ]; then
@@ -84,7 +99,7 @@ gate_write() {
   if [ -z "$pf" ]; then
     echo "ERROR_FOR_AGENT: workflow.md gate — no plan exists. Writing code requires a plan first."
     echo "ACTION: create .claude/plans/<task>.md with Goal/מטרה, Plan/תכנון, DoD/תנאי-סיום, Alternatives/חלופות (workflow.md steps 1-4)."
-    echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
+    echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
     exit 1
   fi
 
@@ -92,7 +107,7 @@ gate_write() {
   if [ -n "$missing" ]; then
     echo "ERROR_FOR_AGENT: workflow.md gate — newest plan ($(basename "$pf")) is missing sections: ${missing}"
     echo "ACTION: add the missing section(s) documenting workflow.md steps 1-4. Then retry."
-    echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
+    echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
     exit 1
   fi
 
@@ -112,7 +127,7 @@ gate_write() {
     if [ "$age_h" -ge "$max_age" ]; then
       echo "ERROR_FOR_AGENT: workflow.md gate — newest plan ($(basename "$pf")) is ${age_h}h old (limit: ${max_age}h, possible zombie plan)."
       echo "ACTION: create/refresh a plan for the current task, or set EOS_PLAN_MAX_AGE_H=0 to disable freshness."
-      echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
+      echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
       exit 1
     fi
   fi
@@ -173,7 +188,7 @@ gate_bash() {
   fi
   echo "ERROR_FOR_AGENT: workflow.md step 2 — query Context7 for the library BEFORE installing it (training data may be outdated)."
   echo "ACTION: use the built-in Context7 connector, or mcp__Context7__resolve-library-id → mcp__Context7__query-docs. Then retry the install."
-  echo "BYPASS: EOS_BYPASS_CONTEXT7=1 (or EOS_BYPASS_WORKFLOW=1)"
+  echo "BYPASS: EOS_BYPASS_CONTEXT7=1 — only with explicit user authorization in the current conversation."
   exit 1
 }
 
@@ -186,7 +201,7 @@ gate_agent() {
   if [ ! -f .claude/tasks.json ]; then
     echo "ERROR_FOR_AGENT: workflow.md <agent_loop> — .claude/tasks.json must exist before spawning agents."
     echo "ACTION: create .claude/tasks.json with each agent's goal + status fields (see core/resource-management.md)."
-    echo "BYPASS: EOS_BYPASS_WORKFLOW=1 or EOS_BYPASS_TASKSJSON=1"
+    echo "BYPASS: EOS_BYPASS_WORKFLOW=1 or EOS_BYPASS_TASKSJSON=1 — only with explicit user authorization in the current conversation."
     exit 1
   fi
 
@@ -217,7 +232,7 @@ except Exception as e:
   if [ "$schema_result" != "ok" ]; then
     echo "ERROR_FOR_AGENT: workflow.md <agent_loop> — .claude/tasks.json schema invalid: ${schema_result}"
     echo "ACTION: tasks.json must contain: {\"tasks\": [{\"id\": \"...\", \"title\": \"...\", \"status\": \"...\"}]}"
-    echo "BYPASS: EOS_BYPASS_WORKFLOW=1 or EOS_BYPASS_TASKSJSON=1"
+    echo "BYPASS: EOS_BYPASS_WORKFLOW=1 or EOS_BYPASS_TASKSJSON=1 — only with explicit user authorization in the current conversation."
     exit 1
   fi
   exit 0
