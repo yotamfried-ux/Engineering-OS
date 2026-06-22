@@ -22,6 +22,7 @@ bypass_active EOS_BYPASS_WORKFLOW && exit 0
 
 # ── Parse PreToolUse stdin: tool name, file_path, command ────────────────────
 INPUT="$(cat 2>/dev/null || true)"
+# read_field <field> — extracts a named field (tool, file_path, command, content) from stdin JSON.
 read_field() {
   command -v python3 >/dev/null 2>&1 || { printf 'WARNING_FOR_AGENT: python3 not found — enforce-workflow hook degraded\n' >&2; return; }
   printf '%s' "$INPUT" | python3 -c "
@@ -123,7 +124,7 @@ gate_tasks_completion() {
 }
 
 # ═════════════════════════════════════════════════════════════════════════════
-# Gate 1 — Write|Edit: entry gate to writing (workflow.md steps 1 + 4)
+# gate_write <file_path> — Write/Edit entry gate: enforces plan + G7/G8/G9a/G9b.
 # ═════════════════════════════════════════════════════════════════════════════
 gate_write() {
   local FILE="$1"
