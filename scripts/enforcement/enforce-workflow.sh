@@ -83,8 +83,7 @@ gate_write() {
 
   # GitHub Actions workflows are infrastructure code — require a plan like any code file.
   case "$FILE" in
-    .github/workflows/*|.github/workflows/*.yml|.github/workflows/*.yaml|\
-    */.github/workflows/*|*/.github/workflows/*.yml|*/.github/workflows/*.yaml) crit=1 ;;
+    .github/workflows/*|*/.github/workflows/*) crit=1 ;;
   esac
 
   if [ "$crit" -eq 0 ]; then
@@ -138,7 +137,7 @@ gate_write() {
       evidence_has read_pattern_lifecycle || {
         echo "ERROR_FOR_AGENT: core/pattern-lifecycle.md not read in this session."
         echo "ACTION: read core/pattern-lifecycle.md (<lifecycle> section) before modifying patterns."
-        echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
+        echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
         exit 1
       }
       ;;
@@ -151,7 +150,7 @@ gate_write() {
       evidence_has read_hooks_policy || {
         echo "ERROR_FOR_AGENT: core/hooks-policy.md not read in this session."
         echo "ACTION: read core/hooks-policy.md before modifying hooks or enforcement scripts."
-        echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
+        echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
         exit 1
       }
       ;;
