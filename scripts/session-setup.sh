@@ -190,14 +190,31 @@ printf '\n%s🔍 Installation Status:%s\n' "$G" "$Z"
 _FAIL=0
 
 if command -v graphify >/dev/null 2>&1 && [ -f "$EOS_ROOT/graphify-out/graph.json" ]; then
-  _N=$(python3 -c "import json;g=json.load(open('$EOS_ROOT/graphify-out/graph.json'));print(len(g.get('nodes',[])))" 2>/dev/null || echo "?")
-  printf '  ✅ graphify: %s nodes in graph\n' "$_N"
+  if _N=$(GRAPH_JSON="$EOS_ROOT/graphify-out/graph.json" python3 - <<'PY' 2>/dev/null
+import json, os
+with open(os.environ["GRAPH_JSON"], "r", encoding="utf-8") as f:
+    g = json.load(f)
+print(len(g.get("nodes", [])))
+PY
+  ); then
+    printf '  ✅ graphify: %s nodes in graph\n' "$_N"
+  else
+    printf '  ❌ graphify: graph.json unreadable/invalid\n'; _FAIL=$((_FAIL+1))
+  fi
 else
   printf '  ❌ graphify: graph.json missing\n'; _FAIL=$((_FAIL+1))
 fi
 
 if command -v rtk >/dev/null 2>&1; then
-  _RTK_SCOPE=$(grep -q '"rtk hook"' "$HOME/.claude/settings.json" 2>/dev/null && echo "global+project" || echo "project-only")
+  _GLOBAL=$(grep -q '"rtk hook"' "$HOME/.claude/settings.json" 2>/dev/null && echo "1" || echo "0")
+  _PROJECT=$(grep -q '"rtk hook"' ".claude/settings.json" 2>/dev/null && echo "1" || echo "0")
+  if [ "$_GLOBAL" = "1" ] && [ "$_PROJECT" = "1" ]; then
+    _RTK_SCOPE="global+project"
+  elif [ "$_GLOBAL" = "1" ]; then
+    _RTK_SCOPE="global-only"
+  else
+    _RTK_SCOPE="project-only"
+  fi
   printf '  ✅ RTK: %s (%s hook)\n' "$(rtk --version 2>/dev/null | head -1)" "$_RTK_SCOPE"
 else
   printf '  ❌ RTK: not installed\n'; _FAIL=$((_FAIL+1))
