@@ -140,11 +140,43 @@ gate_bash() {
 # Gate 3 — Agent: tasks.json before spawning agents (workflow.md <agent_loop>)
 # ═════════════════════════════════════════════════════════════════════════════
 gate_agent() {
-  [ -f .claude/tasks.json ] && exit 0
-  echo "ERROR_FOR_AGENT: workflow.md <agent_loop> — .claude/tasks.json must exist before spawning agents."
-  echo "ACTION: create .claude/tasks.json with each agent's goal + status fields (see core/resource-management.md)."
-  echo "BYPASS: EOS_BYPASS_WORKFLOW=1"
-  exit 1
+  bypass_active EOS_BYPASS_TASKSJSON && exit 0
+
+  if [ ! -f .claude/tasks.json ]; then
+    echo "ERROR_FOR_AGENT: workflow.md <agent_loop> — .claude/tasks.json must exist before spawning agents."
+    echo "ACTION: create .claude/tasks.json with each agent's goal + status fields (see core/resource-management.md)."
+    echo "BYPASS: EOS_BYPASS_WORKFLOW=1 or EOS_BYPASS_TASKSJSON=1"
+    exit 1
+  fi
+
+  # Schema validation: must have a non-empty tasks array; each item needs id, title, status.
+  schema_result="$(python3 -c "
+import json, sys
+try:
+    d = json.load(open('.claude/tasks.json'))
+    tasks = d.get('tasks', [])
+    if not isinstance(tasks, list) or len(tasks) == 0:
+        print('FAIL: tasks array is missing or empty')
+        sys.exit(0)
+    for t in tasks:
+        for f in ('id', 'title', 'status'):
+            if f not in t:
+                print(f'FAIL: task missing field \"{f}\": {t}')
+                sys.exit(0)
+    print('ok')
+except json.JSONDecodeError as e:
+    print(f'FAIL: invalid JSON — {e}')
+except Exception as e:
+    print(f'FAIL: {e}')
+" 2>/dev/null || echo 'FAIL: python3 unavailable')"
+
+  if [ "$schema_result" != "ok" ]; then
+    echo "ERROR_FOR_AGENT: workflow.md <agent_loop> — .claude/tasks.json schema invalid: ${schema_result}"
+    echo "ACTION: tasks.json must contain: {\"tasks\": [{\"id\": \"...\", \"title\": \"...\", \"status\": \"...\"}]}"
+    echo "BYPASS: EOS_BYPASS_WORKFLOW=1 or EOS_BYPASS_TASKSJSON=1"
+    exit 1
+  fi
+  exit 0
 }
 
 # ── Route by tool ────────────────────────────────────────────────────────────

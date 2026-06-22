@@ -19,18 +19,32 @@ _evidence_file() { printf '%s/ledger' "$(_evidence_dir)"; }
 # evidence_reset — truncate the ledger (called at SessionStart).
 evidence_reset() {
   local dir; dir="$(_evidence_dir)"
-  mkdir -p "$dir" 2>/dev/null || return 0
-  : > "$(_evidence_file)" 2>/dev/null || true
+  if ! mkdir -p "$dir" 2>/dev/null; then
+    printf 'evidence_reset: WARNING — could not create ledger dir %s\n' "$dir" >&2
+    return 1
+  fi
+  if ! : > "$(_evidence_file)" 2>/dev/null; then
+    printf 'evidence_reset: WARNING — could not truncate ledger %s\n' "$(_evidence_file)" >&2
+    return 1
+  fi
 }
 
 # evidence_record <key> [value] — append an evidence line.
+# Returns 1 and prints to stderr if the ledger cannot be written (silent failure was
+# a systemic bug: gates would pass as if evidence existed when mkdir/write failed).
 evidence_record() {
   local key="${1:-}" val="${2:-}"
   [ -z "$key" ] && return 0
   local dir; dir="$(_evidence_dir)"
-  mkdir -p "$dir" 2>/dev/null || return 0
-  printf '%s\t%s\t%s\n' "$(date +%s 2>/dev/null || echo 0)" "$key" "$val" \
-    >> "$(_evidence_file)" 2>/dev/null || true
+  if ! mkdir -p "$dir" 2>/dev/null; then
+    printf 'evidence_record: WARNING — could not create ledger dir %s (gate may pass without proof)\n' "$dir" >&2
+    return 1
+  fi
+  if ! printf '%s\t%s\t%s\n' "$(date +%s 2>/dev/null || echo 0)" "$key" "$val" \
+    >> "$(_evidence_file)" 2>/dev/null; then
+    printf 'evidence_record: WARNING — could not write to ledger %s (gate may pass without proof)\n' "$(_evidence_file)" >&2
+    return 1
+  fi
 }
 
 # evidence_has <key> [value] — exit 0 if an evidence line matches, else 1.

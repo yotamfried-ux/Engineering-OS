@@ -70,8 +70,32 @@ EOS_BYPASS_CONTEXT7=1 run_enforcer Bash "npm install react"; expect "EOS_BYPASS_
 echo "── workflow enforcer: Agent/tasks.json gate ──"
 rm -f .claude/tasks.json
 run_enforcer Agent ""; expect "agent blocked without tasks.json" 1 $?
+
+# Schema validation: empty tasks array blocked
 echo '{}' > .claude/tasks.json
-run_enforcer Agent ""; expect "agent allowed with tasks.json" 0 $?
+run_enforcer Agent ""; expect "agent blocked with empty tasks.json ({})" 1 $?
+
+echo '{"tasks":[]}' > .claude/tasks.json
+run_enforcer Agent ""; expect "agent blocked with empty tasks array" 1 $?
+
+# Schema validation: missing required fields blocked
+printf '{"tasks":[{"id":"t1","title":"do thing"}]}\n' > .claude/tasks.json
+run_enforcer Agent ""; expect "agent blocked when task missing status field" 1 $?
+
+printf '{"tasks":[{"title":"do thing","status":"todo"}]}\n' > .claude/tasks.json
+run_enforcer Agent ""; expect "agent blocked when task missing id field" 1 $?
+
+# Valid schema: all required fields present
+printf '{"tasks":[{"id":"t1","title":"do thing","status":"todo"}]}\n' > .claude/tasks.json
+run_enforcer Agent ""; expect "agent allowed with valid tasks.json schema" 0 $?
+
+# Multiple tasks: all must be valid
+printf '{"tasks":[{"id":"t1","title":"a","status":"done"},{"id":"t2","title":"b","status":"todo"}]}\n' > .claude/tasks.json
+run_enforcer Agent ""; expect "agent allowed with multiple valid tasks" 0 $?
+
+EOS_BYPASS_TASKSJSON=1 rm -f .claude/tasks.json 2>/dev/null; true
+printf '{"tool_name":"Agent","tool_input":{}}' | EOS_BYPASS_TASKSJSON=1 bash "$ENFORCER" >/dev/null 2>&1
+expect "EOS_BYPASS_TASKSJSON skips schema gate" 0 $?
 
 # ── md-sync gate (needs a git repo) ──────────────────────────────────────────
 echo "── enforce-sync: md ↔ enforcer ──"

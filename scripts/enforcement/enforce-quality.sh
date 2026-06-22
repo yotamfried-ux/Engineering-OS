@@ -30,14 +30,21 @@ bypass_active EOS_BYPASS_CLEANUP && exit 0
 # Scoping to code extensions also means .sh/.md files (including this enforcer and
 # its own tests) are never scanned, so the gate can't trip on its own pattern text.
 added="$(git diff --cached --diff-filter=ACMR -U0 -- \
-  '*.js' '*.jsx' '*.ts' '*.tsx' '*.py' '*.rb' 2>/dev/null \
+  '*.js' '*.jsx' '*.ts' '*.tsx' '*.py' '*.rb' \
+  '*.go' '*.rs' '*.java' '*.kt' 2>/dev/null \
   | grep -E '^\+' | grep -vE '^\+\+\+' || true)"
 
 [ -z "$added" ] && exit 0
 
 # ── Blocking: interactive debuggers + leftover merge-conflict markers ─────────
+# JS/TS/Python/Ruby (original) + Go/Rust/Java/Kotlin (extended)
 debug_hits="$(printf '%s\n' "$added" \
-  | grep -nE '\bdebugger\b|pdb\.set_trace\(|\bbreakpoint\(\)|import (i)?pdb|binding\.pry|\bbyebug\b' || true)"
+  | grep -nE \
+    '\bdebugger\b|pdb\.set_trace\(|\bbreakpoint\(\)|import (i)?pdb|binding\.pry|\bbyebug\b|'\
+'runtime\.Breakpoint\(\)|debug\.PrintStack\(\)|spew\.Dump\(|'\
+'\bdbg!\(|'\
+'Thread\.dumpStack\(\)|\.dumpStack\(\)' \
+  || true)"
 conflict_hits="$(printf '%s\n' "$added" | grep -nE '^\+(<{7}|>{7})' || true)"
 
 if [ -n "$debug_hits" ] || [ -n "$conflict_hits" ]; then
@@ -54,10 +61,16 @@ if [ -n "$debug_hits" ] || [ -n "$conflict_hits" ]; then
   exit 1
 fi
 
-# ── Advisory (non-blocking): console.log / print may be leftover debug ────────
-warn_hits="$(printf '%s\n' "$added" | grep -nE 'console\.(log|debug)\(|\bprint\(' || true)"
+# ── Advisory (non-blocking): common debug output that may be leftover ─────────
+warn_hits="$(printf '%s\n' "$added" \
+  | grep -nE \
+    'console\.(log|debug)\(|\bprint\(|'\
+'fmt\.Printf\(|log\.Printf\(|'\
+'\beprintln!\(|'\
+'System\.out\.print|System\.err\.print' \
+  || true)"
 if [ -n "$warn_hits" ]; then
-  echo "⚠️  quality-gates.md <cleanup>: console.log/print added — confirm these are intentional logging, not leftover debug:"
+  echo "⚠️  quality-gates.md <cleanup>: debug-style output added — confirm these are intentional logging, not leftover debug:"
   printf '%s\n' "$warn_hits" | sed 's/^/    /'
 fi
 exit 0

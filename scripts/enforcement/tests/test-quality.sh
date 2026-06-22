@@ -35,6 +35,14 @@ check "PY import ipdb blocked"       1 imp2.py  "import ipdb"
 check "RB binding.pry blocked"       1 app.rb   "binding.pry"
 check "RB byebug blocked"            1 dbg.rb   "byebug"
 
+echo "── blocking: Go/Rust/Java debug leftovers ──"
+check "Go runtime.Breakpoint() blocked"   1 app.go   "runtime.Breakpoint()"
+check "Go debug.PrintStack() blocked"     1 dbg.go   "debug.PrintStack()"
+check "Go spew.Dump() blocked"            1 spw.go   "spew.Dump(myVar)"
+check "Rust dbg! macro blocked"           1 app.rs   "dbg!(my_value)"
+check "Java Thread.dumpStack() blocked"   1 App.java "Thread.dumpStack();"
+check "Kotlin .dumpStack() blocked"       1 App.kt   "someThread.dumpStack()"
+
 echo "── blocking: merge-conflict markers ──"
 check "conflict marker <<<<<<< blocked" 1 conf.js  "<<<<<<< HEAD"
 check "conflict marker >>>>>>> blocked" 1 conf2.js ">>>>>>> branch-name"
@@ -45,13 +53,22 @@ check "non-code file (.md) not scanned" 0 notes.md "here is a debugger; and pdb.
 check "debugger inside identifier not matched" 0 ok.js "const debugger_flag = true;"
 
 echo "── advisory (non-blocking) ──"
-check "console.log does not block"   0 log.js   "console.log(x)"
-check "print() does not block"       0 p.py     "print(x)"
+check "console.log does not block"      0 log.js  "console.log(x)"
+check "print() does not block"          0 p.py    "print(x)"
+check "Go fmt.Printf does not block"    0 app.go  "fmt.Printf(\"%s\", v)"
+check "Go log.Printf does not block"    0 log.go  "log.Printf(\"msg: %v\", err)"
+check "Rust eprintln! does not block"   0 app.rs  "eprintln!(\"debug: {:?}\", val)"
+check "Java System.out does not block"  0 App.java "System.out.println(msg);"
 git reset -q 2>/dev/null
 printf '%s\n' "console.log(x)" > w.js; git add w.js 2>/dev/null
 out="$(bash "$ENFORCER" 2>&1)"; code=$?
-{ [ "$code" = 0 ] && printf '%s' "$out" | grep -q 'console.log/print'; } \
+{ [ "$code" = 0 ] && printf '%s' "$out" | grep -q 'debug-style output'; } \
   && ok "console.log emits a warning" || bad "console.log emits a warning"
+git reset -q 2>/dev/null
+printf '%s\n' "fmt.Printf(\"%s\", v)" > w.go; git add w.go 2>/dev/null
+out="$(bash "$ENFORCER" 2>&1)"; code=$?
+{ [ "$code" = 0 ] && printf '%s' "$out" | grep -q 'debug-style output'; } \
+  && ok "Go fmt.Printf emits a warning" || bad "Go fmt.Printf emits a warning"
 
 echo "── bypasses ──"
 git reset -q 2>/dev/null; printf '%s\n' "debugger;" > b.js; git add b.js 2>/dev/null
