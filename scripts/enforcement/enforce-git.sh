@@ -42,19 +42,6 @@ print(t.get('command', '') or '')
 " 2>/dev/null || printf '')"
   [ -z "$CMD" ] && exit 0
 
-  # G6c: gh pr create requires reading core/maintenance-routine.md this session
-  case "$CMD" in *"gh "*)
-    if printf '%s' "$CMD" | grep -qE 'pr[[:space:]]+create'; then
-      evidence_has read_maintenance_routine 2>/dev/null || {
-        echo "ERROR_FOR_AGENT: core/maintenance-routine.md not read in this session."
-        echo "ACTION: read core/maintenance-routine.md (PR checklist) before creating a PR."
-        echo "BYPASS: EOS_BYPASS_GIT=1"
-        exit 1
-      }
-    fi
-    ;;
-  esac
-
   # Classify from the parsed token stream (shlex), not raw text. We skip the
   # program's GLOBAL options (which may take a value) to find the real subcommand
   # — so `git -c k=v push --force` and `gh --repo o/r pr create --draft` are still
@@ -117,6 +104,20 @@ print(verdict)
       echo "BYPASS: EOS_BYPASS_DRAFTPR=1 (or EOS_BYPASS_GIT=1)."
       exit 1
       ;;
+  esac
+
+  # G6c: gh pr create requires reading core/maintenance-routine.md this session.
+  # Checked AFTER VERDICT so G2 blocks and EOS_BYPASS_DRAFTPR take priority.
+  case "$CMD" in *"gh "*)
+    if printf '%s' "$CMD" | grep -qE 'pr[[:space:]]+create'; then
+      evidence_has read_maintenance_routine 2>/dev/null || {
+        echo "ERROR_FOR_AGENT: core/maintenance-routine.md not read in this session."
+        echo "ACTION: read core/maintenance-routine.md (PR checklist) before creating a PR."
+        echo "BYPASS: EOS_BYPASS_GIT=1"
+        exit 1
+      }
+    fi
+    ;;
   esac
 
   exit 0
