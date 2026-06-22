@@ -60,6 +60,14 @@ evidence_has() {
   fi
 }
 
+# evidence_get <key> — prints the last value recorded for key (empty if none).
+evidence_get() {
+  local key="${1:-}"
+  local f; f="$(_evidence_file)"
+  [ -f "$f" ] || { printf ''; return 1; }
+  grep -F "$(printf '\t%s\t' "$key")" "$f" | tail -1 | cut -f3
+}
+
 # bypass_active <ENV_VAR_NAME> — exit 0 if that env var is set to a truthy value.
 # Side effect: logs to evidence ledger + stderr when bypass is active (audit trail).
 bypass_active() {

@@ -2,7 +2,7 @@
 # Rule (enforced by enforce-sync.sh via pre-commit): changing an md whose enforcer
 # exists requires staging the enforcer too. An md with NONE must justify why no
 # enforcer exists. Add a row here as each md gets its own enforcer.
-core/workflow.md	scripts/enforcement/enforce-workflow.sh	entry-gate + Context7 + tasks.json
+core/workflow.md	scripts/enforcement/enforce-workflow.sh	entry-gate + Context7 + tasks.json + G7 (graphify) + G8 (domain patterns) + G9a (DoD integrity) + G9b (DoD completion)
 core/quality-gates.md	scripts/enforcement/enforce-quality.sh	cleanup gate: debug-leftover + conflict-marker block (pre-commit)
 core/git-policy.md	scripts/enforcement/enforce-git.sh	block plain force-push + draft PR (one-branch/no-verify/commit-fmt enforced elsewhere)
 core/hooks-policy.md	scripts/enforcement/enforce-workflow.sh	G6b evidence gate — read required before modifying hooks/enforcement

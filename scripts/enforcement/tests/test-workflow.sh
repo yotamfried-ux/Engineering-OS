@@ -202,6 +202,163 @@ git reset -q 2>/dev/null
 echo "w2" > core/made-up.md; git add core/made-up.md 2>/dev/null
 EOS_BYPASS_MDSYNC=1 bash "$SYNC" >/dev/null 2>&1; expect "EOS_BYPASS_MDSYNC skips sync gate" 0 $?
 
+echo "── workflow enforcer: G7 — graphify gate ──"
+cd "$WORK" || exit 1
+mkdir -p .claude/plans graphify-out
+cat > .claude/plans/g7.md <<'EOF'
+# Task
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+rm -rf .claude/.evidence
+# G7 fires only when graphify-out/graph.json exists
+run_enforcer Write "src/app.ts"; expect "G7: code write allowed when graph.json absent (no gate)" 0 $?
+echo '{}' > graphify-out/graph.json
+run_enforcer Write "src/app.ts"; expect "G7: code write blocked without graphify_used evidence" 1 $?
+mkdir -p .claude/.evidence
+printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
+run_enforcer Write "src/app.ts"; expect "G7: code write allowed after graphify_used evidence" 0 $?
+rm -rf .claude/.evidence graphify-out
+mkdir -p graphify-out && echo '{}' > graphify-out/graph.json
+EOS_BYPASS_GRAPHIFY=1 run_enforcer Write "src/app.ts"; expect "G7: EOS_BYPASS_GRAPHIFY skips gate" 0 $?
+rm -f graphify-out/graph.json .claude/plans/g7.md
+
+echo "── workflow enforcer: G8 — domain patterns gate ──"
+mkdir -p .claude/plans
+cat > .claude/plans/g8.md <<'EOF'
+# Task
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+mkdir -p graphify-out patterns/auth
+echo '{}' > graphify-out/graph.json
+mkdir -p .claude/.evidence
+printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
+# G8 fires when patterns/<domain>/ exists and file path matches that domain
+run_enforcer Write "src/auth/service.ts"; expect "G8: auth domain write blocked without patterns_searched" 1 $?
+printf '%s\tpatterns_searched\t\n' "$(date +%s)" >> .claude/.evidence/ledger
+run_enforcer Write "src/auth/service.ts"; expect "G8: auth domain write allowed after patterns_searched" 0 $?
+# Non-existent domain dir — no G8 block
+rm -rf patterns/auth
+run_enforcer Write "src/auth/service.ts"; expect "G8: auth write allowed when patterns/auth/ absent" 0 $?
+# Bypass
+mkdir -p patterns/auth
+rm -rf .claude/.evidence
+mkdir -p .claude/.evidence
+printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
+EOS_BYPASS_PATTERNS=1 run_enforcer Write "src/auth/service.ts"; expect "G8: EOS_BYPASS_PATTERNS skips gate" 0 $?
+rm -rf .claude/.evidence patterns graphify-out .claude/plans/g8.md
+
+echo "── workflow enforcer: G9a — DoD integrity gate ──"
+mkdir -p .claude/plans .claude/.evidence
+cat > .claude/plans/task.md <<'EOF'
+# Task
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+- [ ] item one
+- [ ] item two
+- [ ] item three
+## חלופות
+alternatives considered
+EOF
+# Snapshot initial DoD count (3 items) in evidence — simulates PostToolUse Read recording
+printf '%s\tdod_initial_task\t3\n' "$(date +%s)" > .claude/.evidence/ledger
+# Attempt to reduce DoD count: 3 → 2 (delete a line)
+NEW_CONTENT=$'# Task\n## מטרה\ngoal\n## תכנון\nsteps\n## DoD\n- [ ] item one\n- [x] item two\n## חלופות\nalts'
+python3 -c "
+import json, sys
+print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/plans/task.md','new_string':sys.argv[1]}}))
+" "$NEW_CONTENT" | bash "$ENFORCER" >/dev/null 2>&1
+expect "G9a: plan write blocked when DoD count reduced (3→2)" 1 $?
+# Same count (3 items, 1 checked) — allowed
+NEW_CONTENT2=$'# Task\n## מטרה\ngoal\n## תכנון\nsteps\n## DoD\n- [x] item one\n- [ ] item two\n- [ ] item three\n## חלופות\nalts'
+python3 -c "
+import json, sys
+print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/plans/task.md','new_string':sys.argv[1]}}))
+" "$NEW_CONTENT2" | bash "$ENFORCER" >/dev/null 2>&1
+expect "G9a: plan write allowed when DoD count unchanged (3→3)" 0 $?
+# Bypass
+NEW_CONTENT_BAD=$'# Task\n## DoD\n- [x] one\n## חלופות\nalts'
+python3 -c "
+import json, sys
+print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/plans/task.md','new_string':sys.argv[1]}}))
+" "$NEW_CONTENT_BAD" | EOS_BYPASS_DOD=1 bash "$ENFORCER" >/dev/null 2>&1
+expect "G9a: EOS_BYPASS_DOD skips integrity gate" 0 $?
+rm -rf .claude/.evidence .claude/plans/task.md
+
+echo "── workflow enforcer: G9b — DoD completion gate ──"
+mkdir -p .claude/plans .claude/.evidence
+printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
+cat > .claude/plans/finish.md <<'EOF'
+# Task
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+- [x] item one
+- [ ] item two unchecked
+## חלופות
+alternatives considered
+EOF
+TASKS_COMPLETE='{"tasks":[{"id":"t1","title":"do thing","status":"complete"}]}'
+python3 -c "
+import json, sys
+print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/tasks.json','new_string':sys.argv[1]}}))
+" "$TASKS_COMPLETE" | bash "$ENFORCER" >/dev/null 2>&1
+expect "G9b: tasks.json complete blocked when plan has unchecked DoD item" 1 $?
+# All DoD items checked — allowed
+cat > .claude/plans/finish.md <<'EOF'
+# Task
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+- [x] item one
+- [x] item two
+## חלופות
+alternatives considered
+EOF
+python3 -c "
+import json, sys
+print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/tasks.json','new_string':sys.argv[1]}}))
+" "$TASKS_COMPLETE" | bash "$ENFORCER" >/dev/null 2>&1
+expect "G9b: tasks.json complete allowed when all DoD items checked" 0 $?
+# Bypass
+cat > .claude/plans/finish.md <<'EOF'
+# Task
+## מטרה
+goal
+## תכנון
+steps
+## DoD
+- [ ] unchecked
+## חלופות
+alts
+EOF
+python3 -c "
+import json, sys
+print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/tasks.json','new_string':sys.argv[1]}}))
+" "$TASKS_COMPLETE" | EOS_BYPASS_DOD=1 bash "$ENFORCER" >/dev/null 2>&1
+expect "G9b: EOS_BYPASS_DOD skips completion gate" 0 $?
+rm -rf .claude/.evidence .claude/plans
+
 echo
 echo "════════ $PASS passed, $FAIL failed ════════"
 [ "$FAIL" -eq 0 ]
