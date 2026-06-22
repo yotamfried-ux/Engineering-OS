@@ -50,8 +50,8 @@ TOOL="$(read_field tool)"
 # ─────────────────────────────────────────────────────────────────────────────
 newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1; }
 
+# plan_missing_sections <plan_file> — echoes missing required section names (empty = all present).
 plan_missing_sections() {
-  # Echoes a space-separated list of missing section names (empty = all present).
   local pf="$1" missing=""
   grep -qiE 'מטרה|goal|requirements|דרישות' "$pf" || missing="${missing}Goal/מטרה "
   grep -qiE 'תכנון|\bplan\b|steps|שלבים' "$pf"     || missing="${missing}Plan/תכנון "

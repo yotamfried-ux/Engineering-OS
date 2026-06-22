@@ -20,7 +20,8 @@ run_enforcer() {
   printf '{"tool_name":"%s","tool_input":{"%s":"%s"}}' "$tool" "$key" "$arg" \
     | bash "$ENFORCER" >/dev/null 2>&1
 }
-expect() { # <desc> <expected_code> <actual_code>
+# expect <desc> <expected_code> <actual_code> — assert exit code and record result.
+expect() {
   if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (expected exit $2, got $3)"; fi
 }
 
