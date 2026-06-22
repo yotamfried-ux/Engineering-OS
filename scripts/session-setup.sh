@@ -266,6 +266,22 @@ _check_plan_continuity() {
 }
 _check_plan_continuity
 
+# ── Compaction gap detection ──────────────────────────────────────────────────
+# Warn when on a feature branch with commits but no plan files — plans are not
+# stored in git and are lost when a remote container is replaced after compaction.
+_current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
+_plan_count=$(ls .claude/plans/*.md 2>/dev/null | wc -l | tr -d ' ')
+_commits_ahead=$(git rev-list --count "$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"..HEAD 2>/dev/null || echo 0)
+
+if [ "$_current_branch" != "main" ] && [ "$_current_branch" != "unknown" ] \
+   && [ "${_plan_count:-0}" -eq 0 ] && [ "${_commits_ahead:-0}" -gt 0 ]; then
+  printf '\n'
+  warn "COMPACTION GAP: branch '$_current_branch' has $_commits_ahead commit(s) ahead of main"
+  warn "  but .claude/plans/ is empty. Plans may have been lost in a context compaction."
+  warn "  ACTION: Create .claude/plans/<task>.md before writing any code."
+  printf '\n'
+fi
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf '\n'
 info "session setup complete."
