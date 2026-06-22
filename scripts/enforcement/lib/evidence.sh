@@ -47,9 +47,19 @@ evidence_has() {
 }
 
 # bypass_active <ENV_VAR_NAME> — exit 0 if that env var is set to a truthy value.
+# Side effect: logs to evidence ledger + stderr when bypass is active (audit trail).
 bypass_active() {
   local name="${1:-}"
   [ -z "$name" ] && return 1
   local val="${!name:-}"
-  case "$val" in 1|true|TRUE|yes|YES) return 0 ;; *) return 1 ;; esac
+  case "$val" in
+    1|true|TRUE|yes|YES)
+      evidence_record "bypass_used" "$name=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)"
+      printf '⚠️  BYPASS ACTIVE: %s — enforcement disabled. If unintended, unset the variable.\n' "$name" >&2
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
 }

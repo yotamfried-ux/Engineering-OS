@@ -95,6 +95,24 @@ migrations"). אל תסתפק בטקסט עבור כלל שאסור שייכשל
 
 ---
 
+## <known_gaps>
+
+פערי אכיפה ידועים — מתועדים במפורש כדי שלא יועברו כ"כוונה".
+
+| # | פגם | מיטיגציה | סטטוס |
+|---|-----|----------|-------|
+| **KG1** | `exit 1` מ-PreToolUse hook **אינו hard block בסביבת web** — קלוד רואה את השגיאה אך יכול לבחור להשתמש ב-bypass var | G3 (חסימת self-bypass דרך Bash) + G4 (audit trail לכל bypass שהופעל) | מיטיגטד |
+| **KG2** | **JSON parse failure → silent pass**: אם ה-JSON מ-stdin שבור, `TOOL=""` ו-gate לא פועל | Known limitation — שיפור: הוסף fallback `exit 1` אם parse נכשל (לא מומש כדי למנוע false-positives) | פתוח |
+| **KG3** | **Bypass vars מחוץ לסשן**: משתמש שמגדיר `EOS_BYPASS_*=1` בטרמינל לפני פתיחת Claude Code עוקף את כל האכיפה | זו פעולה מכוונת של המשתמש — legitimately allowed. G4 (audit) יתעד זאת אחרי הסשן | by design |
+| **KG4** | **`core/precedence.md` ו-`core/mcp-servers.md` נשארים NONE** — conflict resolution הוא judgment; reference table אין לו טריגר ברור | מתועד ב-MANIFEST.tsv עם נימוק | by design |
+| **KG5** | **שערי evidence (G6) תלויים ב-PostToolUse(Read) hook**: אם ה-hook לא פועל (כשל טעינה), evidence לא נרשם ו-G6 חוסם בלי סיבה | evidence_reset ב-SessionStart מאפס; fallback: `EOS_BYPASS_WORKFLOW=1` | מיטיגטד |
+
+**אחריות תיעוד:** כשמתגלה פגם אכיפה חדש — הוסף שורה לטבלה הזו לפני שדנים בתיקון, כדי שהפגם לא יחזור לאחר refactor.
+
+</known_gaps>
+
+---
+
 ## <system_prompt_injection>
 
 טקסט ב-CLAUDE.md מועבר כהודעת user אחרי ה-system prompt — לא כחלק ממנו. לעיקרון שאתה
