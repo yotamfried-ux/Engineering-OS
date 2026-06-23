@@ -31,7 +31,7 @@ for dir in "${CRITICAL_DIRS[@]}"; do
 done
 
 if [ "$IN_CRITICAL_DIR" -eq 1 ]; then
-  PLAN_COUNT=$(ls .claude/plans/*.md 2>/dev/null | wc -l | tr -d ' ')
+  PLAN_COUNT=$(ls .claude/plans/*.md 2>/dev/null | wc -l | xargs)
   if [ "${PLAN_COUNT:-0}" -eq 0 ]; then
     echo "ERROR_FOR_AGENT: Workflow gate blocked — writing to '${MATCHED_DIR}' requires an approved plan."
     echo "ACTION REQUIRED: (1) Run /superpowers-brainstorm to create .claude/plans/<task>.md"
@@ -65,7 +65,7 @@ esac
 echo "$FILE" | grep -qE '\.(ts|tsx|js|jsx|py|go|rs|java|swift|kt|rb|cs|cpp|c|h|php|scala|lua|sh|bash|zsh)$' || exit 0
 
 # Check: any plan file must exist before writing code
-PLAN_COUNT=$(ls .claude/plans/*.md 2>/dev/null | wc -l | tr -d ' ')
+PLAN_COUNT=$(ls .claude/plans/*.md 2>/dev/null | wc -l | xargs)
 
 if [ "${PLAN_COUNT:-0}" -eq 0 ]; then
   echo "ERROR_FOR_AGENT: Workflow gate blocked — no plan file exists for this coding task."
@@ -81,7 +81,7 @@ MARKER=$(mktemp /tmp/.plan_age_check_XXXXX)
 touch -d "48 hours ago" "$MARKER" 2>/dev/null || touch -t "$(date -d '48 hours ago' '+%Y%m%d%H%M' 2>/dev/null || date -v-48H '+%Y%m%d%H%M' 2>/dev/null || echo '202001010000')" "$MARKER" 2>/dev/null || true
 
 if [ -f "$MARKER" ]; then
-  FRESH_PLANS=$(find .claude/plans/ -name "*.md" -newer "$MARKER" 2>/dev/null | wc -l | tr -d ' ')
+  FRESH_PLANS=$(find .claude/plans/ -name "*.md" -newer "$MARKER" 2>/dev/null | wc -l | xargs)
   rm -f "$MARKER"
 
   if [ "${FRESH_PLANS:-0}" -eq 0 ] && [ "${PLAN_COUNT:-0}" -gt 0 ]; then

@@ -81,7 +81,7 @@ fi
 STAGED_CODE=$(git diff --cached --name-only 2>/dev/null \
   | grep -E '\.(ts|tsx|js|jsx|py|go|rs)$' \
   | grep -vE '(\.(test|spec)\.(ts|tsx|js|jsx|py)|__tests__|/tests/)' \
-  | wc -l | tr -d ' ')
+  | wc -l | xargs)
 
 if [ "${STAGED_CODE:-0}" -gt 2 ]; then
   # Exempt chore/docs/style/ci/build commits
@@ -95,7 +95,7 @@ if [ "${STAGED_CODE:-0}" -gt 2 ]; then
        -o -name "*.test.go" \) \
     -not -path "*/node_modules/*" \
     -not -path "*/.git/*" \
-    2>/dev/null | wc -l | tr -d ' ')
+    2>/dev/null | wc -l | xargs)
 
   if [ "${PROJECT_TESTS:-0}" -eq 0 ]; then
     echo "❌ COMMIT BLOCKED: $STAGED_CODE code files staged, 0 test files found in project."
