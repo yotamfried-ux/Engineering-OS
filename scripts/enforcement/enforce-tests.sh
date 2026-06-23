@@ -47,14 +47,13 @@ run() {
 warn_missing() { echo "⚠️  ${1}: '${2}' not installed — skipping (install it so this gate can run)."; }
 
 # has_npm_script <name> — true if package.json defines the given script.
-# Prefer node (always present in a node project); fall back to python3; else assume no.
+# Prefers node (accurate JSON parsing); falls back to grep when node is absent
+# (sufficient for standard names like lint/test/build; avoids python3 dependency).
 has_npm_script() {
   if have node; then
     node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.exit((p.scripts&&Object.prototype.hasOwnProperty.call(p.scripts,process.argv[2]))?0:1)" "$ROOT/package.json" "$1" 2>/dev/null
-  elif have python3; then
-    python3 -c "import json,sys;d=json.load(open('$ROOT/package.json'));sys.exit(0 if '$1' in d.get('scripts',{}) else 1)" 2>/dev/null
   else
-    return 1
+    grep -qE "\"$1\"[[:space:]]*:" "$ROOT/package.json" 2>/dev/null
   fi
 }
 # make_target <name> — true if the Makefile defines the target.
