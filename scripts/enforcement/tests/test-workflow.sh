@@ -366,6 +366,54 @@ print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/tasks.j
 expect "G9b: EOS_BYPASS_DOD skips completion gate" 0 $?
 rm -rf .claude/.evidence .claude/plans
 
+echo "── workflow enforcer: G12 — generic file patterns advisory ──"
+mkdir -p .claude/plans .claude/.evidence patterns/auth
+printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
+cat > .claude/plans/g12.md <<'EOF'
+# Task
+## מטרה
+goal
+## תכנון
+steps
+## DoD
+- [x] done
+## חלופות
+alts
+EOF
+# New generic file (not on disk) + patterns/ exists + no patterns_read_* in ledger → WARNING (exit 0)
+OUT=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/utils.ts"}}' \
+  | bash "$ENFORCER" 2>&1); RC=$?
+expect "G12: new generic file warns when no patterns read (exit 0)" 0 $RC
+printf '%s' "$OUT" | grep -q "WARNING_FOR_AGENT" && ok "G12: output contains WARNING_FOR_AGENT" \
+  || bad "G12: expected WARNING_FOR_AGENT in output"
+# With patterns_read_auth evidence → no warning
+printf '%s\tpatterns_read_auth\t\n' "$(date +%s)" >> .claude/.evidence/ledger
+OUT2=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/utils.ts"}}' \
+  | bash "$ENFORCER" 2>&1); RC2=$?
+expect "G12: no warning when patterns were read (exit 0)" 0 $RC2
+printf '%s' "$OUT2" | grep -q "WARNING_FOR_AGENT" && bad "G12: unexpected WARNING_FOR_AGENT after patterns read" \
+  || ok "G12: no warning after patterns read"
+# Existing file (on disk) → no warning even without patterns
+touch src/utils.ts 2>/dev/null || { mkdir -p src; touch src/utils.ts; }
+printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
+OUT3=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/utils.ts"}}' \
+  | bash "$ENFORCER" 2>&1)
+printf '%s' "$OUT3" | grep -q "WARNING_FOR_AGENT" && bad "G12: unexpected warning for existing file" \
+  || ok "G12: existing file not warned (G12 only for new files)"
+# Domain file → G8 handles it, G12 silent
+rm src/utils.ts 2>/dev/null
+OUT4=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/auth/login.ts"}}' \
+  | bash "$ENFORCER" 2>&1)
+printf '%s' "$OUT4" | grep -q "WARNING_FOR_AGENT.*G12" && bad "G12: should not warn for domain-matched file" \
+  || ok "G12: domain files handled by G8, not G12"
+# EOS_BYPASS_PATTERNS suppresses warning
+printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
+OUT5=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/helpers.ts"}}' \
+  | EOS_BYPASS_PATTERNS=1 bash "$ENFORCER" 2>&1)
+printf '%s' "$OUT5" | grep -q "WARNING_FOR_AGENT" && bad "G12: EOS_BYPASS_PATTERNS should suppress warning" \
+  || ok "G12: EOS_BYPASS_PATTERNS suppresses advisory"
+rm -rf .claude/.evidence .claude/plans patterns src
+
 echo
 echo "════════ $PASS passed, $FAIL failed ════════"
 [ "$FAIL" -eq 0 ]
