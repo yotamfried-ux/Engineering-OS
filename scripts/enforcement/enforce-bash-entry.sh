@@ -11,13 +11,16 @@
 #   EOS_BYPASS_ENTRY=1, only with explicit human authorization.
 
 set -u
+set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
 
-bypass_active EOS_BYPASS_ENTRY && exit 0
-bypass_active EOS_BYPASS_WORKFLOW && exit 0
+log() { printf 'INFO_FOR_AGENT: enforce-bash-entry: %s\n' "$*" >&2; }
+
+bypass_active EOS_BYPASS_ENTRY && { log "bypassed via EOS_BYPASS_ENTRY"; exit 0; }
+bypass_active EOS_BYPASS_WORKFLOW && { log "bypassed via EOS_BYPASS_WORKFLOW"; exit 0; }
 
 INPUT="$(cat 2>/dev/null || true)"
 CMD="$(printf '%s' "$INPUT" | python3 -c '
@@ -30,9 +33,9 @@ except Exception:
     print("")
 ' 2>/dev/null || true)"
 
-[ -z "$CMD" ] && exit 0
+[ -z "$CMD" ] && { log "no bash command found in hook payload; allowing"; exit 0; }
 
-newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1; }
+newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1 || true; }
 plan_missing_sections() {
   local pf="$1" missing=""
   grep -qiE 'מטרה|goal|requirements|דרישות' "$pf" || missing="${missing}Goal/מטרה "
@@ -42,22 +45,17 @@ plan_missing_sections() {
   printf '%s' "$missing"
 }
 
-# Allow low-risk orientation and setup commands before a plan. These do not execute
-# project behavior or call external APIs.
-case "$CMD" in
-  ls*|pwd|git\ status*|git\ diff*|git\ log*|git\ branch*|git\ rev-parse*|git\ remote*|\
-  cat\ *|sed\ *|awk\ *|grep\ *|rg\ *|find\ *|fd\ *|head\ *|tail\ *|wc\ *|\
-  mkdir\ *|touch\ .claude/plans/*|cat\ *\ .claude/plans/*|printf\ *\ .claude/plans/*)
-    exit 0 ;;
-esac
-
 # Work-like commands: API checks, runtime execution, build/test/lint/typecheck,
 # package manager scripts, docker/infra execution, or direct interpreter execution.
+# Important: do NOT allowlist prefix commands before this check. A command like
+# `ls && curl ...` must still be blocked because the full command contains curl.
 if ! printf '%s' "$CMD" | grep -qiE '(^|[;&|[:space:]])(curl|wget|http|python|python3|node|npx|npm[[:space:]]+run|npm[[:space:]]+test|yarn[[:space:]]+(run|test)|pnpm[[:space:]]+(run|test|exec)|bun[[:space:]]+(run|test)|pytest|ruff|mypy|tsc|next[[:space:]]+(dev|build|start)|vite|vitest|jest|cargo[[:space:]]+(run|test|build)|go[[:space:]]+(run|test|build)|docker|docker-compose|kubectl|terraform|gh[[:space:]]+workflow|vercel|supabase)([[:space:]]|$)'; then
+  log "non-work-like command allowed"
   exit 0
 fi
 
-PLAN="$(newest_plan)"
+log "work-like command detected; validating task plan"
+PLAN="$(newest_plan || true)"
 if [ -z "$PLAN" ]; then
   echo "ERROR_FOR_AGENT: Engineering OS entry gate — no task plan exists before a work-like Bash command."
   echo "COMMAND: $CMD"
@@ -74,4 +72,5 @@ if [ -n "$MISSING" ]; then
   exit 1
 fi
 
+log "valid task plan found: $PLAN"
 exit 0
