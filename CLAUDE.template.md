@@ -31,15 +31,27 @@ This project uses **[Engineering OS](./engineering-os/)** as the authoritative s
 
 ---
 
+## Boundary Rule (Non-Negotiable)
+
+- `./engineering-os/` (or the shared `ENGINEERING_OS_HOME` reference) is **read-only from the perspective of this project**.
+- **Never write directly** to Engineering OS files while working on this project.
+- If this project uncovers a reusable lesson / pattern / improvement for the OS:
+  1. document it locally in this project first,
+  2. then promote it via a PR to the Engineering OS repository.
+- Only edit Engineering OS directly when the active repository is the Engineering OS repo itself.
+
+---
+
 ## Pre-Task Protocol (Required Before Every Feature or Fix)
 
 Before writing any code or making any decision, consult Engineering OS **in this exact order**:
 
-1. `./engineering-os/templates/` — Does a matching project template exist? **Use it as the starting point.**
-2. `./engineering-os/docs/architecture-guides/` — Is there an architecture guide for this domain?
-3. `./engineering-os/patterns/` — Are there established patterns for this type of problem?
-4. `./engineering-os/external-systems/` — Which service does the OS recommend for this use case?
-5. `./engineering-os/docs/troubleshooting/` — Are there known bugs in this domain to avoid upfront?
+1. `./engineering-os/core/task-router.md` — classify the task and build the route plan.
+2. `./engineering-os/templates/` — Does a matching project template exist? **Use it as the starting point.**
+3. `./engineering-os/docs/architecture-guides/` — Is there an architecture guide for this domain?
+4. `./engineering-os/patterns/` — Are there established patterns for this type of problem?
+5. `./engineering-os/external-systems/` — Which service does the OS recommend for this use case?
+6. `./engineering-os/docs/troubleshooting/` — Are there known bugs in this domain to avoid upfront?
 
 **If you skip this protocol, you are operating outside the Engineering OS. Stop and go back.**
 
@@ -97,6 +109,7 @@ Fill this in at the start of the project and update it as the stack changes.
 
 | What you need | Where to look |
 |---|---|
+| Task routing — which template/pattern/skill/connector applies | `./engineering-os/core/task-router.md` |
 | Project structure / boilerplate | `./engineering-os/templates/` |
 | Architecture for a domain (web, AI, API, mobile, data, MCP) | `./engineering-os/docs/architecture-guides/` |
 | Code pattern (auth, billing, database, API, AI agents, observability) | `./engineering-os/patterns/` |
