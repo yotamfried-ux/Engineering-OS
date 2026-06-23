@@ -236,8 +236,8 @@ ${_NEMOTRON_LINE}
   and work WITHOUT the plugin in all environments (web, remote, CLI).
 
 ## Auto-installed by use-in-project.sh:
-- [x] pre-commit hook — PHYSICAL test file scan (exit 1 if >2 code files + 0 tests)
-- [x] commit-msg hook — format enforcer + "no tests" blocker (exit 1)
+- [x] pre-commit hook — staged lint/test stack enforcer via enforce-tests.sh
+- [x] commit-msg hook — format enforcer + "no tests" blocker + project test-file scan
 - [x] post-commit hook — learning_loop reminder on fix: commits
 - [x] .claude/settings.json — Write/Edit/Agent/Bash PreToolUse blockers active
 - [x] /superpowers-brainstorm, /superpowers-verify, /superpowers-plan slash commands
