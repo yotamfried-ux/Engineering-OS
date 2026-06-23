@@ -25,11 +25,13 @@ bypass_active EOS_BYPASS_TESTS && exit 0
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-staged="$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)"
+staged="$(git diff --cached --name-only --diff-filter=ACMRD 2>/dev/null || true)"
 [ -z "$staged" ] && exit 0
 
 fail=0          # set when a check runs and fails → blocks
+# have <cmd> — true if cmd is on PATH.
 have() { command -v "$1" >/dev/null 2>&1; }
+# staged_match <pattern> — true if any staged file matches the ERE pattern.
 staged_match() { printf '%s\n' "$staged" | grep -qE "$1"; }
 
 # run <label> <cmd...> — run a check, echo result, set fail on non-zero.
@@ -122,6 +124,12 @@ if [ -n "$shells" ]; then
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     [ -f "$ROOT/$f" ] || continue
+    case "$f" in
+      *.zsh)
+        have zsh && run "zsh syntax: $f" zsh -n "$ROOT/$f"
+        continue
+        ;;
+    esac
     run "shell syntax: $f" bash -n "$ROOT/$f"
     # -e SC2148: don't force a shebang (sourced libs legitimately omit one); still
     # catch real error-severity issues.
