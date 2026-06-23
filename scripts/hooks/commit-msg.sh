@@ -5,6 +5,7 @@
 
 MSG_FILE="$1"
 MSG=$(cat "$MSG_FILE")
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
 # Exempt merge/revert commits
 case "$MSG" in "Merge "*|"Revert "*) exit 0 ;; esac
@@ -34,7 +35,6 @@ fi
 
 # debugging-policy.md — a `fix:` commit must add a regression test (debug_loop step 7).
 # Governing policy: core/debugging-policy.md. Bypass: EOS_BYPASS_FIXTEST=1 (or EOS_BYPASS_DEBUG=1).
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 if [ -f "$REPO_ROOT/scripts/enforcement/enforce-debugging.sh" ]; then
   bash "$REPO_ROOT/scripts/enforcement/enforce-debugging.sh" commit-msg "$MSG_FILE" || exit 1
 fi
