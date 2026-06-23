@@ -8,3 +8,7 @@
 
 # Graphify knowledge graph (rebuilt each session via session-setup.sh)
 graphify-out/
+
+# Python cache
+__pycache__/
+*.pyc
