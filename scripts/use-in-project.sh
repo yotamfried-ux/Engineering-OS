@@ -118,7 +118,7 @@ Cross-project learning loop:
 $MARK_END
 
 EOF
-cat "$TMP_CLAUDE" >> "$TARGET_CLAUDE"
+sed '/./,$!d' "$TMP_CLAUDE" >> "$TARGET_CLAUDE"
 rm -f "$TMP_CLAUDE"
 grn "Engineering OS managed block installed at TOP of $TARGET/CLAUDE.md"
 
@@ -188,7 +188,7 @@ fi
 printf '\n⚡ MCP connectivity check:\n'
 python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.com/health', timeout=3)" 2>/dev/null \
   && printf '  \033[32m✅\033[0m Context7 MCP reachable\n' \
-  || printf '  \033[32m✅\033[0m Context7: use the built-in connector in Claude app (claude.ai/code) — no MCP needed there.\n       MCP fallback (CLI/remote only): claude mcp add context7 https://mcp.context7.com/mcp\n'
+  || printf '  ℹ️  Context7: use the built-in connector in Claude app (claude.ai/code) — no MCP needed there.\n       MCP fallback (CLI/remote only): claude mcp add context7 https://mcp.context7.com/mcp\n'
 
 # Generate ENGINEERING_OS_SETUP.md checklist.
 if [ -n "${Nemotron_api_key:-}" ]; then
