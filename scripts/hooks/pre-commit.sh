@@ -71,40 +71,6 @@ if [ -f "$REPO_ROOT/scripts/enforcement/enforce-tests.sh" ]; then
   bash "$REPO_ROOT/scripts/enforcement/enforce-tests.sh" || exit 1
 fi
 
-# ── Physical test file enforcement ────────────────────────────────────────────
-# Blocks commits when: >2 code files are staged AND the entire project has 0 test files.
-# This is a filesystem scan — not a text check of the commit message.
-# Note: checks project-wide test existence (not per-change coverage).
-#       A project with any test files passes. A project with ZERO tests is blocked on large commits.
-
-STAGED_CODE=$(git diff --cached --name-only 2>/dev/null \
-  | grep -E '\.(ts|tsx|js|jsx|py|go|rs)$' \
-  | grep -vE '(\.(test|spec)\.(ts|tsx|js|jsx|py)|__tests__|/tests/)' \
-  | wc -l | xargs)
-
-if [ "${STAGED_CODE:-0}" -gt 2 ]; then
-  # Exempt chore/docs/style/ci/build commits
-  COMMIT_TYPE=$(git log --format=%s -1 HEAD 2>/dev/null | grep -oE '^[a-z]+' || echo "")
-  case "$COMMIT_TYPE" in chore|docs|style|ci|build) exit 0 ;; esac
-
-  PROJECT_TESTS=$(find . \
-    \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.test.js" -o -name "*.test.jsx" \
-       -o -name "*.spec.ts" -o -name "*.spec.js" \
-       -o -name "*.test.py" -o -name "*.spec.py" \
-       -o -name "*.test.go" \) \
-    -not -path "*/node_modules/*" \
-    -not -path "*/.git/*" \
-    2>/dev/null | wc -l | xargs)
-
-  if [ "${PROJECT_TESTS:-0}" -eq 0 ]; then
-    echo "❌ COMMIT BLOCKED: $STAGED_CODE code files staged, 0 test files found in project."
-    echo "   (This check fires only when the ENTIRE project has no tests — not per-file coverage)"
-    echo "   Write at least one test file anywhere in the project, then commit."
-    echo "   Exempt commit types: chore, docs, style, ci, build"
-    exit 1
-  fi
-fi
-
 # ── G10: DoD completion gate ──────────────────────────────────────────────────
 # Blocks commit when code is staged and the newest plan has unchecked DoD items.
 # Governing policy: core/quality-gates.md › <definition_of_done>. Bypass: EOS_BYPASS_DOD=1.
