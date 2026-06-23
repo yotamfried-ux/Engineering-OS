@@ -88,7 +88,7 @@ if command -v graphify >/dev/null 2>&1; then
   if [ -z "${Nemotron_api_key:-}" ]; then
     DOC_COUNT=$(find "$EOS_ROOT" -name "*.md" \
       -not -path "*/.git/*" -not -path "*/graphify-out/*" \
-      2>/dev/null | wc -l | tr -d ' ')
+      2>/dev/null | wc -l | xargs)
     info "graphify: ${DOC_COUNT} .md docs NOT in graph — add Nemotron_api_key to include them"
   fi
 fi
@@ -156,7 +156,7 @@ fi
 # (yielding "0\n0" → "integer expression expected" at the test below). Handle the
 # exit code via assignment instead, keeping the value a single line.
 RECENT_FIXES=$(git log --oneline -10 2>/dev/null | grep -c " fix:") || RECENT_FIXES=0
-LESSON_ADDS=$(git log --oneline -10 --diff-filter=A -- 'lessons-learned/**' 2>/dev/null | wc -l | tr -d ' ')
+LESSON_ADDS=$(git log --oneline -10 --diff-filter=A -- 'lessons-learned/**' 2>/dev/null | wc -l | xargs)
 if [ "${RECENT_FIXES:-0}" -gt 0 ] && [ "${LESSON_ADDS:-0}" -eq 0 ]; then
   warn "${RECENT_FIXES} fix: commit(s) in last 10, 0 lessons-learned entries — learning_loop? (core/learning-loop.md)"
 fi
@@ -270,7 +270,7 @@ _check_plan_continuity
 # Warn when on a feature branch with commits but no plan files — plans are not
 # stored in git and are lost when a remote container is replaced after compaction.
 _current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
-_plan_count=$(ls .claude/plans/*.md 2>/dev/null | wc -l | tr -d ' ')
+_plan_count=$(ls .claude/plans/*.md 2>/dev/null | wc -l | xargs)
 _commits_ahead=$(git rev-list --count "$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"..HEAD 2>/dev/null || echo 0)
 
 if [ "$_current_branch" != "main" ] && [ "$_current_branch" != "unknown" ] \
@@ -284,4 +284,4 @@ fi
 
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf '\n'
-info "session setup complete."
+info "session setup complete."}
