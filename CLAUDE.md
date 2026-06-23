@@ -61,6 +61,8 @@
 - **לפני כל משימה** הפעל ניתוב משימה דטרמיניסטי דרך [`core/task-router.md`](./core/task-router.md)
   כדי לבחור templates / patterns / external-skills / connectors לפי סוג המשימה. אין להסתמך
   על זיכרון או על "נראה לי שזה רלוונטי".
+- **לפני שינוי ב-Engineering OS עצמו** פעל לפי [`core/coderabbit-policy.md`](./core/coderabbit-policy.md):
+  branch ייעודי → PR → GitHub Actions → CodeRabbit review → תיקון הערות → אישור מפורש לפני merge ל-main.
 - חפש פתרון קיים לפני כתיבה מחדש (ראה [`core/connector-policy.md`](./core/connector-policy.md) › `<information_sources>`).
 - טפל בשורש הבעיה, לא בסימפטום.
 - בנה את הפתרון המינימלי שעונה על הדרישה. אל תוסיף פיצ'רים, אבסטרקציות או גמישות
