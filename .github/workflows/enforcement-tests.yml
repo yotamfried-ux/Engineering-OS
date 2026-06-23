@@ -1,7 +1,7 @@
 name: enforcement-tests
 
-# Runs every enforcer's regression suite (scripts/enforcement/tests/test-*.sh).
-# Each enforcer guards a core/*.md policy; this CI proves the guards still work.
+# Runs every enforcer's regression suite plus OS contract checks that keep
+# routing, boundary rules, and project templates wired into Claude.
 on:
   push:
     branches: [main]
@@ -37,3 +37,53 @@ jobs:
             exit 1
           fi
           echo "✅ all enforcement suites passed"
+
+      - name: Verify task router contract
+        run: |
+          set -euo pipefail
+          test -f core/task-router.md
+          grep -q '<routing_algorithm>' core/task-router.md
+          grep -q '<routing_matrix>' core/task-router.md
+          grep -q '<required_output>' core/task-router.md
+          grep -q 'Route Plan' core/task-router.md
+          grep -q 'templates/' core/task-router.md
+          grep -q 'patterns/' core/task-router.md
+          grep -q 'external-skills/' core/task-router.md
+          grep -q 'external-systems/' core/task-router.md
+          echo "✅ task router contract is present"
+
+      - name: Verify CLAUDE entrypoint wiring
+        run: |
+          set -euo pipefail
+          grep -q 'core/task-router.md' CLAUDE.md
+          grep -q '<boundary_rule>' CLAUDE.md
+          grep -q 'ENGINEERING_OS_HOME' CLAUDE.md
+          grep -q 'לעולם אל תכתוב ישירות' CLAUDE.md
+          grep -q 'Route' core/task-router.md
+          echo "✅ CLAUDE.md is wired to task-router and boundary rules"
+
+      - name: Verify project template wiring
+        run: |
+          set -euo pipefail
+          grep -q 'core/task-router.md' CLAUDE.template.md
+          grep -q 'Boundary Rule' CLAUDE.template.md
+          grep -q 'Never write directly' CLAUDE.template.md
+          grep -q 'Task routing' CLAUDE.template.md
+          echo "✅ CLAUDE.template.md propagates routing and boundary rules"
+
+      - name: Verify use-in-project output contract
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          git init "$tmp" >/dev/null
+          (
+            cd "$tmp"
+            ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
+            test -f CLAUDE.md
+            test -f .engineering-os/REFERENCE.md
+            test -f ENGINEERING_OS_SETUP.md
+            grep -q 'Engineering OS — governance layer' CLAUDE.md
+            grep -q 'Never modify anything under' CLAUDE.md
+            grep -q 'core/task-router.md' CLAUDE.md
+          )
+          echo "✅ use-in-project.sh installs expected governance contract"
