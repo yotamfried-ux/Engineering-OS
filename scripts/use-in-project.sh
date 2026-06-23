@@ -24,13 +24,12 @@ EOS_HOME="${ENGINEERING_OS_HOME:-$HOME/.engineering-os}"
 TARGET="$(pwd)"
 
 red()  { printf '\033[31m%s\033[0m\n' "$*"; }
+grns() { printf '\033[32m%s\033[0m\n' "$*"; }
 grn()  { printf '\033[32m%s\033[0m\n' "$*"; }
 dim()  { printf '\033[2m%s\033[0m\n' "$*"; }
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
 warn() { printf '\033[33m⚠️  %s\033[0m\n' "$*"; }
 
-# 0. HTTPS override — web sessions (Claude Code on the web) have no SSH agent.
-#    This forces HTTPS for all github.com clones. Idempotent.
 git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
 
 # 0. GUARD — never run inside the Engineering OS repo itself.
@@ -47,8 +46,6 @@ if [ "$(cd "$EOS_HOME" 2>/dev/null && pwd || true)" = "$TARGET" ]; then
 fi
 
 # 1. Ensure a READ-ONLY reference copy of Engineering OS exists / is current.
-#    Strategy: prefer existing local copy (works even when GitHub is network-blocked).
-#    If no local copy exists, try to clone. If network is blocked, fail with clear message.
 if [ -d "$EOS_HOME/.git" ]; then
   dim "Engineering OS reference found at $EOS_HOME — fast-forward pull (read-only)…"
   git -C "$EOS_HOME" pull --ff-only --quiet 2>/dev/null \
@@ -65,7 +62,7 @@ else
     red "Run this instead (from the TARGET project directory):"
     red ""
     red "  cd /path/to/target-project"
-    red "  ENGINEERING_OS_HOME=/home/user/Engineering-OS \\"
+    red "  ENGINEERING_OS_HOME=/home/user/Engineering-OS \\" 
     red "    bash /home/user/Engineering-OS/scripts/use-in-project.sh"
     red ""
     red "Or: export GITHUB_TOKEN=<token> and re-run to enable git clone."
@@ -73,6 +70,7 @@ else
     exit 1
   fi
 fi
+
 # From here on we only READ from $EOS_HOME.
 
 # 2. Record the reference pointer inside the target project.
@@ -88,7 +86,7 @@ This project uses Engineering OS as its engineering governance + knowledge layer
 **Do NOT edit anything under \`$EOS_HOME\` from this project** — it is a shared,
 read-only reference. To update it: \`git -C "$EOS_HOME" pull --ff-only\`.
 
-Rules to follow: \`$EOS_HOME/CLAUDE.md\` and \`$EOS_HOME/core/\`.
+Rules to follow: \`$EOS_HOME/CLAUDE.md\`, \`$EOS_HOME/core/task-router.md\`, and \`$EOS_HOME/core/\`.
 EOF
 
 # 3. Wire the rules into the target's CLAUDE.md via an idempotent managed block.
@@ -107,15 +105,23 @@ $MARK_BEGIN
 This project is governed by **Engineering OS**, a read-only reference at
 \`$EOS_HOME\` (see \`.engineering-os/REFERENCE.md\`).
 
-**Before any task**, read and apply:
-- \`$EOS_HOME/CLAUDE.md\` — role, precedence, skill activation, end-of-task usage report
+**Before any task**, read and apply in this order:
+- \`$EOS_HOME/CLAUDE.md\` — role, precedence, boundary rule, and mandatory OS behavior
+- \`$EOS_HOME/core/task-router.md\` — classify the task and choose templates / patterns / skills / connectors
 - \`$EOS_HOME/core/\` — workflow, git cadence, quality gates, skill orchestration, documentation
+- \`$EOS_HOME/templates/\` — project scaffolds and reusable file templates
 - \`$EOS_HOME/patterns/\` — reusable, security-reviewed code patterns
+- \`$EOS_HOME/external-systems/\` — approved services and integration guides
 - \`$EOS_HOME/external-skills/\` — external skill wrappers (SIP) + which are default-on
 
 Apply these rules to THIS project's code. **Never modify anything under
-\`$EOS_HOME\`** — it is shared, read-only reference. Run
+\`$EOS_HOME\`** — it is a shared, read-only reference. Run
 \`$EOS_HOME/scripts/skill-bootstrap.sh\` to see which skills are present here.
+
+### Required Route Plan
+
+Before non-trivial work, produce a short Route Plan:
+\`Task type\` · \`Domain tags\` · \`Templates\` · \`Architecture guides\` · \`Patterns\` · \`External systems/connectors\` · \`Skills\` · \`Validation gates\`.
 
 ### superpowers
 
@@ -156,12 +162,8 @@ BOOTSTRAP_OUT=""
 if [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
   echo
   dim "Checking L2 default skills and auto-installing what can run unattended…"
-  # First pass: detect only (capture output for next-steps parsing).
   BOOTSTRAP_OUT="$( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default 2>&1 )" || true
   echo "$BOOTSTRAP_OUT"
-  # Second pass: auto-install installable skills without prompting.
-  # Skills that require manual action (superpowers, security-review) are
-  # automatically skipped by the bootstrap (their install commands start with '#').
   echo
   dim "Auto-installing installable skills (--install --yes)…"
   ( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default --install --yes 2>&1 ) || true
@@ -250,6 +252,7 @@ ${_NEMOTRON_LINE}
 - git checkout -b when >1 non-main branches exist → merge/delete first
 
 ## Before EVERY task:
+- [ ] Read \`$EOS_HOME/core/task-router.md\` and produce a Route Plan
 - [ ] .claude/plans/<task-name>.md written with measurable DoD (Write hook enforces)
 - [ ] .claude/tasks.json created if using parallel agents (Agent hook enforces)
 - [ ] Context7 queried for any external library before npm/pip install
@@ -267,7 +270,6 @@ bold "  Next steps — manual actions required"
 bold "════════════════════════════════════════════"
 echo
 
-# superpowers
 if [ -f "$TARGET/.claude/commands/superpowers-brainstorm.md" ]; then
   grn "superpowers — portable slash commands ✅ ready (no plugin needed)"
   printf '      /superpowers-brainstorm  /superpowers-verify  /superpowers-plan\n'
@@ -278,7 +280,6 @@ else
 fi
 echo
 
-# graphify API key
 if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
   if [ -n "${Nemotron_api_key:-}" ]; then
     grn "graphify — Nemotron_api_key ✅ already set (semantic extraction enabled)"
@@ -291,7 +292,6 @@ if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
   fi
 fi
 
-# security-review — Nemotron_api_key (primary path)
 if echo "$BOOTSTRAP_OUT" | grep -q "security-review.*✅\|security-review"; then
   if [ -n "${Nemotron_api_key:-}" ]; then
     grn "security-review — Nemotron_api_key ✅ already set"
