@@ -134,11 +134,12 @@ def call_api(messages: list, model: str, api_key: str, temperature: float = 0.1,
     raise RuntimeError("API call failed after all retries")
 
 
-def extract_json(text: str) -> list:
+def extract_json(text: str) -> tuple[list, bool]:
     """Extract JSON array from LLM response (handles markdown code fences).
 
-    Returns [] for both empty results and parse failures; logs to stderr on parse
-    failure so callers can distinguish no-issues-found from malformed LLM output.
+    Returns (issues, parsed_ok). parsed_ok is False when a JSON-like structure
+    was found but could not be parsed, letting callers distinguish malformed LLM
+    output from a legitimate empty result.
     """
     patterns = [
         r"```json\s*(\[.*\])\s*```",
@@ -151,16 +152,16 @@ def extract_json(text: str) -> list:
         if m:
             found_candidate = True
             try:
-                return json.loads(m.group(1))
+                parsed = json.loads(m.group(1))
+                return (parsed, isinstance(parsed, list))
             except json.JSONDecodeError:
                 continue
     # Try the whole response
     try:
-        return json.loads(text.strip())
+        parsed = json.loads(text.strip())
+        return (parsed, isinstance(parsed, list))
     except json.JSONDecodeError:
-        if found_candidate:
-            print("  ⚠️  JSON parse failed (LLM returned malformed array)", file=sys.stderr)
-        return []
+        return ([], not found_candidate)
 
 
 # ---------------------------------------------------------------------------
@@ -397,7 +398,19 @@ def review_file(filepath: Path, repo: Path, project_summary: str,
         ]
         try:
             raw = call_api(messages, model, api_key, temperature=0.1, max_tokens=4096)
-            issues = extract_json(raw)
+            issues, parsed_ok = extract_json(raw)
+            if not parsed_ok:
+                all_issues.append({
+                    "file": rel_path,
+                    "line": None,
+                    "severity": "LOW",
+                    "category": "ERROR_HANDLING",
+                    "description": "Model response was not valid JSON; chunk review could not be parsed.",
+                    "why": "Malformed response hides real findings and under-reports issues.",
+                    "fix": "Retry the chunk or enforce stricter JSON-only response formatting.",
+                })
+                time.sleep(RATE_LIMIT_DELAY)
+                continue
             for issue in issues:
                 issue["file"] = rel_path
                 # Adjust line numbers for chunks
