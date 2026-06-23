@@ -16,6 +16,7 @@
 # ENV:
 #   ENGINEERING_OS_HOME   read-only reference location (default: ~/.engineering-os)
 #   ENGINEERING_OS_REPO   repo URL (default: the canonical GitHub repo)
+#   EOS_CONTRACT_TEST     skip optional network/tool setup; verify file contract only
 
 set -euo pipefail
 
@@ -159,7 +160,9 @@ fi
 
 # 5. Run skill bootstrap: detect, then auto-install all installable L2 defaults.
 BOOTSTRAP_OUT=""
-if [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
+if [ "${EOS_CONTRACT_TEST:-}" = "1" ]; then
+  dim "EOS_CONTRACT_TEST=1 — skipping optional skill bootstrap/install steps."
+elif [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
   echo
   dim "Checking L2 default skills and auto-installing what can run unattended…"
   BOOTSTRAP_OUT="$( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default 2>&1 )" || true
@@ -206,16 +209,20 @@ for CMD in superpowers-brainstorm.md superpowers-verify.md superpowers-plan.md; 
 done
 
 # 9. Build graphify knowledge graph (only if not already built).
-if command -v graphify >/dev/null 2>&1 && [ ! -f "$TARGET/graphify-out/graph.json" ]; then
+if [ "${EOS_CONTRACT_TEST:-}" != "1" ] && command -v graphify >/dev/null 2>&1 && [ ! -f "$TARGET/graphify-out/graph.json" ]; then
   dim "Building graphify knowledge graph for this project..."
   ( cd "$TARGET" && graphify extract . 2>&1 | tail -2 ) && grn "graphify graph built for project"
 fi
 
 # 10. MCP connectivity check.
 printf '\n⚡ MCP connectivity check:\n'
-python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.com/health', timeout=3)" 2>/dev/null \
-  && printf '  \033[32m✅\033[0m Context7 MCP reachable\n' \
-  || printf '  \033[32m✅\033[0m Context7: use the built-in connector in Claude app (claude.ai/code) — no MCP needed there.\n       MCP fallback (CLI/remote only): claude mcp add context7 https://mcp.context7.com/mcp\n'
+if [ "${EOS_CONTRACT_TEST:-}" = "1" ]; then
+  printf '  \033[32m✅\033[0m skipped in contract-test mode\n'
+else
+  python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.com/health', timeout=3)" 2>/dev/null \
+    && printf '  \033[32m✅\033[0m Context7 MCP reachable\n' \
+    || printf '  \033[32m✅\033[0m Context7: use the built-in connector in Claude app (claude.ai/code) — no MCP needed there.\n       MCP fallback (CLI/remote only): claude mcp add context7 https://mcp.context7.com/mcp\n'
+fi
 
 # 11. Generate ENGINEERING_OS_SETUP.md checklist.
 if [ -n "${Nemotron_api_key:-}" ]; then
@@ -236,8 +243,8 @@ ${_NEMOTRON_LINE}
   and work WITHOUT the plugin in all environments (web, remote, CLI).
 
 ## Auto-installed by use-in-project.sh:
-- [x] pre-commit hook — PHYSICAL test file scan (exit 1 if >2 code files + 0 tests)
-- [x] commit-msg hook — format enforcer + "no tests" blocker (exit 1)
+- [x] pre-commit hook — staged lint/test stack enforcer via enforce-tests.sh
+- [x] commit-msg hook — format enforcer + "no tests" blocker + project test-file scan
 - [x] post-commit hook — learning_loop reminder on fix: commits
 - [x] .claude/settings.json — Write/Edit/Agent/Bash PreToolUse blockers active
 - [x] /superpowers-brainstorm, /superpowers-verify, /superpowers-plan slash commands

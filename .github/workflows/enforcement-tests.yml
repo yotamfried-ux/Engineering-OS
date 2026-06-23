@@ -78,12 +78,41 @@ jobs:
           git init "$tmp" >/dev/null
           (
             cd "$tmp"
-            ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
+            EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
+
+            # Core governance files
             test -f CLAUDE.md
             test -f .engineering-os/REFERENCE.md
             test -f ENGINEERING_OS_SETUP.md
             grep -q 'Engineering OS — governance layer' CLAUDE.md
             grep -q 'Never modify anything under' CLAUDE.md
             grep -q 'core/task-router.md' CLAUDE.md
+
+            # Claude wiring and portable commands
+            test -f .claude/settings.json
+            test -f .claude/commands/use-engineering-os.md
+            test -f .claude/commands/superpowers-brainstorm.md
+            test -f .claude/commands/superpowers-verify.md
+            test -f .claude/commands/superpowers-plan.md
+            grep -q 'enforce-bash-entry.sh' .claude/settings.json
+            grep -q 'enforce-workflow.sh' .claude/settings.json
+
+            # Git hooks copied from Engineering OS
+            test -x .git/hooks/pre-commit
+            test -x .git/hooks/commit-msg
+            test -x .git/hooks/post-commit
+            grep -q 'enforce-tests.sh' .git/hooks/pre-commit
+            grep -q 'EOS_BYPASS_TESTFILES' .git/hooks/commit-msg
+
+            # Setup checklist reflects current enforcement split after #65
+            grep -q 'staged lint/test stack enforcer via enforce-tests.sh' ENGINEERING_OS_SETUP.md
+            grep -q 'project test-file scan' ENGINEERING_OS_SETUP.md
+
+            # Idempotency: re-run should not duplicate managed block or commands.
+            EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
+            managed_count="$(grep -c '<!-- BEGIN engineering-os (managed) -->' CLAUDE.md)"
+            test "$managed_count" -eq 1
+            test -f .claude/commands/use-engineering-os.md
+            test -f .claude/commands/superpowers-brainstorm.md
           )
           echo "✅ use-in-project.sh installs expected governance contract"
