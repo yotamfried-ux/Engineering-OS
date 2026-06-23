@@ -2,20 +2,6 @@
 #
 # use-in-project.sh — apply Engineering OS as a READ-ONLY governance + knowledge
 # layer to ANOTHER project. Safe, idempotent, repeatable across any project.
-#
-# SAFETY GUARANTEE
-#   This script never writes to the Engineering OS repo. Every write goes to the
-#   current target project ($PWD). The Engineering OS reference is only ever READ
-#   (at most a fast-forward `git pull` — never a commit, push, reset, or clean).
-#   It refuses to run inside the Engineering OS repo itself. Using it from another
-#   coding project therefore cannot damage Engineering OS.
-#
-# USAGE (from your TARGET project's root directory):
-#   bash ~/.engineering-os/scripts/use-in-project.sh
-#
-# ENV:
-#   ENGINEERING_OS_HOME   read-only reference location (default: ~/.engineering-os)
-#   ENGINEERING_OS_REPO   repo URL (default: the canonical GitHub repo)
 
 set -euo pipefail
 
@@ -29,23 +15,22 @@ dim()  { printf '\033[2m%s\033[0m\n' "$*"; }
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
 warn() { printf '\033[33m⚠️  %s\033[0m\n' "$*"; }
 
-# 0. HTTPS override — web sessions (Claude Code on the web) have no SSH agent.
 git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
 
-# 0a. GUARD — never run inside the Engineering OS repo itself.
+# Never run inside the Engineering OS repo itself.
 if [ -f "$TARGET/core/skill-orchestration-policy.md" ] && [ -f "$TARGET/external-skills/README.md" ]; then
   red "Refusing to run inside the Engineering OS repo itself."
   red "This command applies Engineering OS to OTHER projects. cd into your target project and re-run."
   exit 1
 fi
 
-# 0b. GUARD — never let the reference path equal the target path.
+# Never let the reference path equal the target path.
 if [ "$(cd "$EOS_HOME" 2>/dev/null && pwd || true)" = "$TARGET" ]; then
   red "ENGINEERING_OS_HOME must not be the current project. Aborting."
   exit 1
 fi
 
-# 1. Ensure a READ-ONLY reference copy of Engineering OS exists / is current.
+# Ensure a READ-ONLY reference copy of Engineering OS exists / is current.
 if [ -d "$EOS_HOME/.git" ]; then
   dim "Engineering OS reference found at $EOS_HOME — fast-forward pull (read-only)…"
   git -C "$EOS_HOME" pull --ff-only --quiet 2>/dev/null \
@@ -57,22 +42,18 @@ else
   if ! git clone --depth 1 "$_CLONE_URL" "$EOS_HOME" 2>&1; then
     red "Could not clone Engineering OS from $EOS_REPO"
     red ""
-    red "═══ CLAUDE WEB SESSION — EXACT FIX ═══"
     red "Run this from the TARGET project directory:"
-    red ""
     red "  cd /path/to/target-project"
-    red "  ENGINEERING_OS_HOME=/home/user/Engineering-OS \\\"
-    red "    bash /home/user/Engineering-OS/scripts/use-in-project.sh"
+    red "  ENGINEERING_OS_HOME=/home/user/Engineering-OS bash /home/user/Engineering-OS/scripts/use-in-project.sh"
     red ""
     red "Or export GITHUB_TOKEN=<token> and re-run to enable git clone."
-    red "════════════════════════════════════════"
     exit 1
   fi
 fi
 
 # From here on we only READ from $EOS_HOME.
 
-# 2. Record the reference pointer inside the target project.
+# Record the reference pointer inside the target project.
 mkdir -p "$TARGET/.engineering-os"
 cat > "$TARGET/.engineering-os/REFERENCE.md" <<EOF
 # Engineering OS — reference (READ-ONLY)
@@ -88,10 +69,8 @@ read-only reference. To update it: \`git -C "$EOS_HOME" pull --ff-only\`.
 Rules to follow: \`$EOS_HOME/CLAUDE.md\` and \`$EOS_HOME/core/\`.
 EOF
 
-# 3. Wire Engineering OS into the TARGET CLAUDE.md at the TOP.
-#    This is intentional: CLAUDE.md is the model-facing entry point, while hooks are
-#    the deterministic enforcement layer. Re-running this script refreshes the
-#    managed block without duplicating it.
+# Wire Engineering OS into the TARGET CLAUDE.md at the TOP.
+# CLAUDE.md is the model-facing entry point; hooks are deterministic enforcement.
 TARGET_CLAUDE="$TARGET/CLAUDE.md"
 MARK_BEGIN="<!-- BEGIN engineering-os (managed) -->"
 MARK_END="<!-- END engineering-os (managed) -->"
@@ -141,24 +120,16 @@ $MARK_END
 EOF
 cat "$TMP_CLAUDE" >> "$TARGET_CLAUDE"
 rm -f "$TMP_CLAUDE"
-grnn_msg="Engineering OS managed block installed at TOP of $TARGET/CLAUDE.md"
-grnn_msg=${grnn_msg:-}
-grN="$(printf '%s' "$grnn_msg")"
-grN=${grN:-}
-grN=${grN}
-grN=${grN}
-grN=${grN}
-grN=${grN}
-grn "$grnn_msg"
+grn "Engineering OS managed block installed at TOP of $TARGET/CLAUDE.md"
 
-# 4. Install a repeatable /use-engineering-os slash command into the target.
+# Install a repeatable /use-engineering-os slash command into the target.
 if [ -f "$EOS_HOME/scripts/use-engineering-os.command.md" ]; then
   mkdir -p "$TARGET/.claude/commands"
   cp "$EOS_HOME/scripts/use-engineering-os.command.md" "$TARGET/.claude/commands/use-engineering-os.md"
   dim "Installed /use-engineering-os slash command into .claude/commands/"
 fi
 
-# 5. Run skill bootstrap: detect, then auto-install all installable L2 defaults.
+# Run skill bootstrap: detect, then auto-install all installable L2 defaults.
 BOOTSTRAP_OUT=""
 if [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
   echo
@@ -170,7 +141,7 @@ if [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
   ( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default --install --yes 2>&1 ) || true
 fi
 
-# 6. Auto-install git hooks (hooks are Engineering OS property — always overwrite).
+# Auto-install git hooks (hooks are Engineering OS property — always overwrite).
 if [ -d "$TARGET/.git/hooks" ]; then
   for HOOK in pre-commit commit-msg post-commit; do
     SRC="${EOS_HOME}/scripts/hooks/${HOOK}.sh"
@@ -184,8 +155,8 @@ else
   warn "No .git/hooks directory found — skipping git hooks (not a git repo?)"
 fi
 
-# 7. Install .claude/settings.json with Engineering OS hooks.
-#    If the file already exists, preserve it to avoid destroying local custom hooks.
+# Install .claude/settings.json with Engineering OS hooks.
+# If the file already exists, preserve it to avoid destroying local custom hooks.
 TARGET_SETTINGS="$TARGET/.claude/settings.json"
 if [ ! -f "$TARGET_SETTINGS" ]; then
   mkdir -p "$TARGET/.claude"
@@ -196,7 +167,7 @@ else
   dim "  To update manually: cp ${EOS_HOME}/.claude/settings.json $TARGET_SETTINGS"
 fi
 
-# 8. Copy superpowers slash commands (portable — work without plugin in all environments).
+# Copy superpowers slash commands (portable — work without plugin in all environments).
 mkdir -p "$TARGET/.claude/commands"
 for CMD in superpowers-brainstorm.md superpowers-verify.md superpowers-plan.md; do
   SRC="${EOS_HOME}/.claude/commands/${CMD}"
@@ -207,19 +178,19 @@ for CMD in superpowers-brainstorm.md superpowers-verify.md superpowers-plan.md; 
   fi
 done
 
-# 9. Build graphify knowledge graph (only if not already built).
+# Build graphify knowledge graph (only if not already built).
 if command -v graphify >/dev/null 2>&1 && [ ! -f "$TARGET/graphify-out/graph.json" ]; then
   dim "Building graphify knowledge graph for this project..."
   ( cd "$TARGET" && graphify extract . 2>&1 | tail -2 ) && grn "graphify graph built for project" || true
 fi
 
-# 10. MCP connectivity check.
+# MCP connectivity check.
 printf '\n⚡ MCP connectivity check:\n'
 python3 -c "import urllib.request; urllib.request.urlopen('https://mcp.context7.com/health', timeout=3)" 2>/dev/null \
   && printf '  \033[32m✅\033[0m Context7 MCP reachable\n' \
   || printf '  \033[32m✅\033[0m Context7: use the built-in connector in Claude app (claude.ai/code) — no MCP needed there.\n       MCP fallback (CLI/remote only): claude mcp add context7 https://mcp.context7.com/mcp\n'
 
-# 11. Generate ENGINEERING_OS_SETUP.md checklist.
+# Generate ENGINEERING_OS_SETUP.md checklist.
 if [ -n "${Nemotron_api_key:-}" ]; then
   _NEMOTRON_LINE="- [x] Nemotron_api_key ✅ already set"
 else
@@ -258,22 +229,15 @@ ${_NEMOTRON_LINE}
 - [ ] .claude/tasks.json created if using parallel agents
 - [ ] Context7 queried for any external library before npm/pip install
 CHECKLIST
-grnn="ENGINEERING_OS_SETUP.md created at $TARGET/ENGINEERING_OS_SETUP.md"
-grnn=${grnn:-}
-grN2="$(printf '%s' "$grnn")"
-grN2=${grN2:-}
-grN2=${grN2}
-grN2=${grN2}
-grN2=${grN2}
-grn "$grnn"
+grn "ENGINEERING_OS_SETUP.md created at $TARGET/ENGINEERING_OS_SETUP.md"
 
 echo
 grn "Engineering OS is now wired into: $TARGET"
 dim "Reference (read-only): $EOS_HOME — re-run anytime; this script is idempotent."
 
-# 12. Immediate agent-facing handoff. The output is intentionally explicit because
-#     this installer may run inside an already-open Claude session, before project
-#     settings are reloaded by the host environment.
+# Immediate agent-facing handoff. The output is intentionally explicit because this
+# installer may run inside an already-open Claude session, before project settings
+# are reloaded by the host environment.
 echo
 bold "════════════════════════════════════════════"
 bold "  AGENT ACTION REQUIRED NOW"
@@ -286,7 +250,7 @@ echo "CLAUDE.md immediately; deterministic .claude/settings.json hooks are persi
 echo "for Claude Code once project settings are loaded."
 echo
 
-# 13. Print next-steps checklist — manual actions that cannot be automated.
+# Print next-steps checklist — manual actions that cannot be automated.
 bold "════════════════════════════════════════════"
 bold "  Next steps — manual actions required"
 bold "════════════════════════════════════════════"
