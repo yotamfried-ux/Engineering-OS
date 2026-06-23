@@ -104,8 +104,8 @@ reports/
 |------|--------|-------------|
 | `--repo` | נתיב לריפו | נדרש |
 | `--output` | ספריית הפלט | `./reports` |
-| `--model` | מודל Nvidia לסריקה | `nemotron-super-49b` |
-| `--fast-model` | מודל לפאזות context/structure | `nemotron-nano-8b` |
+| `--model` | מודל Nvidia לסריקה | `nvidia/llama-3.3-nemotron-super-49b-v1` |
+| `--fast-model` | מודל לפאזות context/structure | `nvidia/llama-3.1-nemotron-nano-8b-v1` |
 | `--resume` | המשך סריקה שנקטעה | `false` |
 | `--skip-structure` | דלג על זיהוי תפקידי קבצים | `false` |
 | `--max-files` | הגבל מספר קבצים (לבדיקה) | `0` (ללא הגבלה) |

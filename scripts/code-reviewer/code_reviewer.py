@@ -135,16 +135,21 @@ def call_api(messages: list, model: str, api_key: str, temperature: float = 0.1,
 
 
 def extract_json(text: str) -> list:
-    """Extract JSON array from LLM response (handles markdown code fences)."""
-    # Try to find JSON array in the response
+    """Extract JSON array from LLM response (handles markdown code fences).
+
+    Returns [] for both empty results and parse failures; logs to stderr on parse
+    failure so callers can distinguish no-issues-found from malformed LLM output.
+    """
     patterns = [
         r"```json\s*(\[.*\])\s*```",
         r"```\s*(\[.*\])\s*```",
         r"(\[.*\])",
     ]
+    found_candidate = False
     for pattern in patterns:
         m = re.search(pattern, text, re.DOTALL)
         if m:
+            found_candidate = True
             try:
                 return json.loads(m.group(1))
             except json.JSONDecodeError:
@@ -153,6 +158,8 @@ def extract_json(text: str) -> list:
     try:
         return json.loads(text.strip())
     except json.JSONDecodeError:
+        if found_candidate:
+            print("  ⚠️  JSON parse failed (LLM returned malformed array)", file=sys.stderr)
         return []
 
 
@@ -223,9 +230,11 @@ def collect_files(repo: Path) -> list[Path]:
     """Walk repo and collect all reviewable code files."""
     files = []
     for path in sorted(repo.rglob("*")):
-        # Skip hidden dirs, skip dirs
-        parts = path.parts
-        if any(p in SKIP_DIRS or p.startswith(".") for p in parts[len(repo.parts):]):
+        rel_parts = path.parts[len(repo.parts):]
+        # Only check directory segments (not filename) for dotfile/skip-dir filtering
+        # so files like .env.example are not wrongly excluded by their leading dot.
+        dir_parts = rel_parts[:-1]
+        if any(p in SKIP_DIRS or p.startswith(".") for p in dir_parts):
             continue
         if not path.is_file():
             continue
@@ -513,10 +522,10 @@ def generate_report(all_issues: list[dict], project_summary: str,
     lines.append("| File | CRIT | HIGH | MED | LOW | Total |")
     lines.append("|------|------|------|-----|-----|-------|")
     for filepath, file_issues in sorted(by_file.items()):
-        c = sum(1 for i in file_issues if i.get("severity") == "CRITICAL")
-        h = sum(1 for i in file_issues if i.get("severity") == "HIGH")
-        m = sum(1 for i in file_issues if i.get("severity") == "MEDIUM")
-        low = sum(1 for i in file_issues if i.get("severity") == "LOW")
+        c = sum(1 for i in file_issues if i.get("severity", "").upper() == "CRITICAL")
+        h = sum(1 for i in file_issues if i.get("severity", "").upper() == "HIGH")
+        m = sum(1 for i in file_issues if i.get("severity", "").upper() == "MEDIUM")
+        low = sum(1 for i in file_issues if i.get("severity", "").upper() == "LOW")
         lines.append(f"| `{filepath}` | {c} | {h} | {m} | {low} | {len(file_issues)} |")
 
     return "\n".join(lines)
@@ -528,12 +537,14 @@ def generate_report(all_issues: list[dict], project_summary: str,
 
 def load_progress(progress_file: Path) -> dict:
     """Load progress.json from a prior scan; return empty state if missing or corrupt."""
+    defaults: dict = {"reviewed_files": [], "issues": []}
     if progress_file.exists():
         try:
-            return json.loads(progress_file.read_text())
+            data = json.loads(progress_file.read_text())
+            return {**defaults, **data}
         except Exception:
             pass
-    return {"reviewed_files": [], "issues": []}
+    return defaults
 
 
 def save_progress(progress_file: Path, reviewed_files: list[str], issues: list[dict]) -> None:
