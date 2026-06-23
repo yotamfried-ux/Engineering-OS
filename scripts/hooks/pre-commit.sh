@@ -4,7 +4,7 @@
 # Blocks commits if linter, tests, or physical test-file scan fails.
 # Install: cp scripts/hooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
-set -e
+set -eo pipefail
 
 STAGED=$(git diff --cached --name-only)
 
