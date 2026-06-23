@@ -4,7 +4,7 @@
 # Blocks commits if linter, tests, or physical test-file scan fails.
 # Install: cp scripts/hooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
-set -e
+set -eo pipefail
 
 STAGED=$(git diff --cached --name-only)
 
@@ -103,5 +103,49 @@ if [ "${STAGED_CODE:-0}" -gt 2 ]; then
     echo "   Write at least one test file anywhere in the project, then commit."
     echo "   Exempt commit types: chore, docs, style, ci, build"
     exit 1
+  fi
+fi
+
+# ── G10: DoD completion gate ──────────────────────────────────────────────────
+# Blocks commit when code is staged and the newest plan has unchecked DoD items.
+# Governing policy: core/quality-gates.md › <definition_of_done>. Bypass: EOS_BYPASS_DOD=1.
+REPO_ROOT_G10="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+EOS_LIB_G10="${ENGINEERING_OS_HOME:-$REPO_ROOT_G10}/scripts/enforcement/lib/evidence.sh"
+# shellcheck source=../enforcement/lib/evidence.sh
+. "$EOS_LIB_G10" 2>/dev/null || true
+if ! bypass_active EOS_BYPASS_DOD 2>/dev/null; then
+  G10_PLAN="$(ls -t "$REPO_ROOT_G10/.claude/plans/"*.md 2>/dev/null | head -1 || true)"
+  G10_CODE="$(git diff --cached --name-only 2>/dev/null \
+    | grep -cE '\.(ts|tsx|js|jsx|py|go|rs|sh)$' 2>/dev/null || echo 0)"
+  if [ -n "$G10_PLAN" ] && [ "${G10_CODE:-0}" -gt 0 ]; then
+    G10_UNCHECKED="$(awk '
+      /^#{1,4}[[:space:]].*([Dd]o[Dd]|תנאי.סיום|Definition.of.Done)/ { found=1; next }
+      found && /^#{1,4}[[:space:]]/ && !/([Dd]o[Dd]|תנאי.סיום|Definition.of.Done)/ { found=0 }
+      found && /^\- \[ \]/ { count++ }
+      END { print count+0 }
+    ' "$G10_PLAN" 2>/dev/null || echo 0)"
+    if [ "${G10_UNCHECKED:-0}" -gt 0 ]; then
+      echo "❌ G10 (DoD gate) — ${G10_UNCHECKED} unchecked DoD item(s) in $(basename "$G10_PLAN")."
+      echo "   Complete all '- [ ]' items in the DoD section before committing code."
+      echo "   BYPASS: EOS_BYPASS_DOD=1 (explicit user authorization required)"
+      exit 1
+    fi
+  fi
+fi
+
+# ── G11: Verification gate ─────────────────────────────────────────────────────
+# Blocks large commits (>2 code files) when neither /superpowers-verify nor tests ran.
+# Governing policy: core/workflow.md step 6. Bypass: EOS_BYPASS_VERIFY=1.
+if ! bypass_active EOS_BYPASS_VERIFY 2>/dev/null; then
+  G11_CODE="$(git diff --cached --name-only 2>/dev/null \
+    | grep -cE '\.(ts|tsx|js|jsx|py|go|rs)$' 2>/dev/null || echo 0)"
+  if [ "${G11_CODE:-0}" -gt 2 ]; then
+    if ! evidence_has superpowers_verify_run 2>/dev/null && \
+       ! evidence_has tests_run 2>/dev/null; then
+      echo "❌ G11 (Verification gate) — ${G11_CODE} code files staged but no verification ran this session."
+      echo "   Run /superpowers-verify OR ensure tests pass before committing large changes."
+      echo "   BYPASS: EOS_BYPASS_VERIFY=1 (explicit user authorization required)"
+      exit 1
+    fi
   fi
 fi

@@ -242,9 +242,11 @@ gate_write() {
   # Independent from G7 — graphify provides structural orientation; patterns provide implementation standards.
   # Evidence 'patterns_searched' is recorded by PostToolUse Read hook when any patterns/** file is read.
   local _domains="auth api billing database frontend security testing ai ai-agents authorization infrastructure integrations ui observability"
+  local _g8_matched=0
   for _dom in $_domains; do
     case "$FILE" in
       *"/${_dom}/"*|*"/${_dom}."*|*"_${_dom}."*|*"${_dom}_"*)
+        _g8_matched=1
         if [ -d "patterns/${_dom}" ]; then
           bypass_active EOS_BYPASS_PATTERNS || evidence_has "patterns_read_${_dom}" || {
             echo "ERROR_FOR_AGENT: patterns gate (G8) — writing to '${_dom}' domain but no patterns/${_dom}/ file was read this session."
@@ -256,6 +258,21 @@ gate_write() {
         break ;;
     esac
   done
+
+  # G12: advisory warning for new generic files with no patterns read at all this session.
+  # Does NOT exit 1 — generic files are legitimate, this is a nudge, not a gate.
+  if [ "$_g8_matched" -eq 0 ] && [ ! -f "$FILE" ] && [ -d "patterns" ]; then
+    bypass_active EOS_BYPASS_PATTERNS 2>/dev/null || {
+      # Check if ANY patterns_read_* evidence exists this session
+      local _any_pattern
+      _any_pattern="$(grep -F $'\tpatterns_read_' "$(_evidence_file)" 2>/dev/null | head -1 || true)"
+      if [ -z "$_any_pattern" ]; then
+        echo "WARNING_FOR_AGENT: patterns advisory (G12) — creating new file '$(basename "$FILE")' with no patterns read this session."
+        echo "ACTION (optional): browse patterns/ for relevant implementation patterns before writing new code."
+        echo "BYPASS: EOS_BYPASS_PATTERNS=1 to silence this warning."
+      fi
+    }
+  fi
 
   exit 0
 }

@@ -18,8 +18,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GQ_STATUS="$(evidence_has graphify_used 2>/dev/null && printf '✅ graphify queried' || printf '⚠️ graphify not queried')"
 TR_STATUS="$(evidence_has tests_run 2>/dev/null && printf '✅ tests passed' || printf '⚠️ no successful test run')"
 NT_STATUS="$(evidence_has notion_spec_created 2>/dev/null && printf '✅ Notion spec' || printf '📄 local plan only')"
+VF_STATUS="$(evidence_has superpowers_verify_run 2>/dev/null && printf '✅ verified' || printf '⚠️ /superpowers-verify not run')"
 
-SESSION_MSG="Session: ${GQ_STATUS} | ${TR_STATUS} | ${NT_STATUS}. "
+SESSION_MSG="Session: ${GQ_STATUS} | ${TR_STATUS} | ${NT_STATUS} | ${VF_STATUS}. "
 
 # ── Notion anchor warning ─────────────────────────────────────────────────────
 NMSG=""
