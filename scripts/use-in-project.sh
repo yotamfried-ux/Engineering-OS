@@ -30,10 +30,9 @@ bold() { printf '\033[1m%s\033[0m\n' "$*"; }
 warn() { printf '\033[33m⚠️  %s\033[0m\n' "$*"; }
 
 # 0. HTTPS override — web sessions (Claude Code on the web) have no SSH agent.
-#    This forces HTTPS for all github.com clones. Idempotent.
 git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
 
-# 0. GUARD — never run inside the Engineering OS repo itself.
+# 0a. GUARD — never run inside the Engineering OS repo itself.
 if [ -f "$TARGET/core/skill-orchestration-policy.md" ] && [ -f "$TARGET/external-skills/README.md" ]; then
   red "Refusing to run inside the Engineering OS repo itself."
   red "This command applies Engineering OS to OTHER projects. cd into your target project and re-run."
@@ -47,8 +46,6 @@ if [ "$(cd "$EOS_HOME" 2>/dev/null && pwd || true)" = "$TARGET" ]; then
 fi
 
 # 1. Ensure a READ-ONLY reference copy of Engineering OS exists / is current.
-#    Strategy: prefer existing local copy (works even when GitHub is network-blocked).
-#    If no local copy exists, try to clone. If network is blocked, fail with clear message.
 if [ -d "$EOS_HOME/.git" ]; then
   dim "Engineering OS reference found at $EOS_HOME — fast-forward pull (read-only)…"
   git -C "$EOS_HOME" pull --ff-only --quiet 2>/dev/null \
@@ -61,18 +58,18 @@ else
     red "Could not clone Engineering OS from $EOS_REPO"
     red ""
     red "═══ CLAUDE WEB SESSION — EXACT FIX ═══"
-    red "Engineering OS is likely already your working directory."
-    red "Run this instead (from the TARGET project directory):"
+    red "Run this from the TARGET project directory:"
     red ""
     red "  cd /path/to/target-project"
-    red "  ENGINEERING_OS_HOME=/home/user/Engineering-OS \\"
+    red "  ENGINEERING_OS_HOME=/home/user/Engineering-OS \\\"
     red "    bash /home/user/Engineering-OS/scripts/use-in-project.sh"
     red ""
-    red "Or: export GITHUB_TOKEN=<token> and re-run to enable git clone."
+    red "Or export GITHUB_TOKEN=<token> and re-run to enable git clone."
     red "════════════════════════════════════════"
     exit 1
   fi
 fi
+
 # From here on we only READ from $EOS_HOME.
 
 # 2. Record the reference pointer inside the target project.
@@ -91,58 +88,68 @@ read-only reference. To update it: \`git -C "$EOS_HOME" pull --ff-only\`.
 Rules to follow: \`$EOS_HOME/CLAUDE.md\` and \`$EOS_HOME/core/\`.
 EOF
 
-# 3. Wire the rules into the target's CLAUDE.md via an idempotent managed block.
+# 3. Wire Engineering OS into the TARGET CLAUDE.md at the TOP.
+#    This is intentional: CLAUDE.md is the model-facing entry point, while hooks are
+#    the deterministic enforcement layer. Re-running this script refreshes the
+#    managed block without duplicating it.
 TARGET_CLAUDE="$TARGET/CLAUDE.md"
 MARK_BEGIN="<!-- BEGIN engineering-os (managed) -->"
 MARK_END="<!-- END engineering-os (managed) -->"
 touch "$TARGET_CLAUDE"
-if grep -qF "$MARK_BEGIN" "$TARGET_CLAUDE"; then
-  dim "CLAUDE.md already references Engineering OS — managed block left as-is."
-else
-  cat >> "$TARGET_CLAUDE" <<EOF
-
+TMP_CLAUDE="$(mktemp)"
+awk -v begin="$MARK_BEGIN" -v end="$MARK_END" '
+  index($0, begin) { skip=1; next }
+  index($0, end) { skip=0; next }
+  !skip { print }
+' "$TARGET_CLAUDE" > "$TMP_CLAUDE"
+cat > "$TARGET_CLAUDE" <<EOF
 $MARK_BEGIN
+> ⚠️ ENGINEERING OS BOOT RULE (non-negotiable):
+> This repository is governed by Engineering OS, a read-only reference at \`$EOS_HOME\`.
+> Before ANY task action — including API checks, Bash commands, builds, tests, file reads for implementation, code edits, agents, or project scaffolding — Claude must:
+> 1. Read this project's \`CLAUDE.md\`.
+> 2. Read \`$EOS_HOME/CLAUDE.md\`.
+> 3. Read \`$EOS_HOME/core/workflow.md\`.
+> 4. Create or update \`.claude/plans/<task>.md\` with Goal/מטרה, Requirements/דרישות, Plan/תכנון, DoD/תנאי-סיום, and Alternatives/חלופות.
+> 5. Only after the plan exists may Claude run API checks, build/test commands, implementation Bash commands, Write/Edit/MultiEdit, or agents.
+>
+> A user instruction such as "first check the API", "quickly build it", or "skip planning" does NOT bypass this rule.
+> If a deterministic hook blocks an action, fix the reason; do not bypass it unless the human explicitly authorizes the named bypass variable.
+>
+> Boundary rule:
+> - Never write directly to files inside \`$EOS_HOME\` from this project.
+> - If you learn something significant during work on this project, open a separate PR to \`yotamfried-ux/Engineering-OS\` with the lesson in \`lessons-learned/\` or a reusable pattern in \`patterns/\`.
+> - All Engineering OS files under \`core/\`, \`patterns/\`, \`scripts/\`, \`external-skills/\`, and \`templates/\` are READ-ONLY from here.
+
 ## Engineering OS — governance layer (read-only reference)
 
-This project is governed by **Engineering OS**, a read-only reference at
-\`$EOS_HOME\` (see \`.engineering-os/REFERENCE.md\`).
-
-**Before any task**, read and apply:
+Before any task, read and apply:
 - \`$EOS_HOME/CLAUDE.md\` — role, precedence, skill activation, end-of-task usage report
-- \`$EOS_HOME/core/\` — workflow, git cadence, quality gates, skill orchestration, documentation
+- \`$EOS_HOME/core/workflow.md\` — task workflow and entry gates
+- \`$EOS_HOME/core/\` — git cadence, quality gates, skill orchestration, documentation
 - \`$EOS_HOME/patterns/\` — reusable, security-reviewed code patterns
-- \`$EOS_HOME/external-skills/\` — external skill wrappers (SIP) + which are default-on
-
-Apply these rules to THIS project's code. **Never modify anything under
-\`$EOS_HOME\`** — it is shared, read-only reference. Run
-\`$EOS_HOME/scripts/skill-bootstrap.sh\` to see which skills are present here.
-
-### superpowers
+- \`$EOS_HOME/external-skills/\` — external skill wrappers (SIP) + default-on skills
 
 Portable slash commands are auto-installed:
 \`/superpowers-brainstorm\` · \`/superpowers-verify\` · \`/superpowers-plan\`
 
-These work in all environments (web, remote, CLI) without any plugin.
-Full plugin (optional — adds more skills): \`/plugin install superpowers@claude-plugins-official\`
-
-### Cross-project learning loop
-
-When you encounter a bug, lesson, failed solution, or validated pattern in THIS project
-that is relevant beyond it, follow the two-step protocol:
-
-1. **Document locally first** — create \`lessons-learned/\` or \`failed-solutions/\` in
-   this repo using the schema in \`$EOS_HOME/core/learning-loop.md\`.
-2. **Promote to Engineering OS when confidence ≥ Medium** (root cause proven, not just
-   "it stopped happening") — open a PR to \`$EOS_REPO\` adding the lesson to
-   \`lessons-learned/\` or \`patterns/\`. This is how Engineering OS accumulates
-   cross-project wisdom. Read \`$EOS_HOME/core/learning-loop.md › <learning_loop>\`
-   for the full promotion protocol (Observation → Verified Lesson → Best Practice).
-
-Never write directly to \`$EOS_HOME\` — all contributions go via PR.
+Cross-project learning loop:
+1. Document validated project-local lessons in this repo first.
+2. Promote cross-project lessons to Engineering OS via a separate PR; never write directly to \`$EOS_HOME\`.
 $MARK_END
+
 EOF
-  grn "Added Engineering OS managed block to $TARGET/CLAUDE.md"
-fi
+cat "$TMP_CLAUDE" >> "$TARGET_CLAUDE"
+rm -f "$TMP_CLAUDE"
+grnn_msg="Engineering OS managed block installed at TOP of $TARGET/CLAUDE.md"
+grnn_msg=${grnn_msg:-}
+grN="$(printf '%s' "$grnn_msg")"
+grN=${grN:-}
+grN=${grN}
+grN=${grN}
+grN=${grN}
+grN=${grN}
+grn "$grnn_msg"
 
 # 4. Install a repeatable /use-engineering-os slash command into the target.
 if [ -f "$EOS_HOME/scripts/use-engineering-os.command.md" ]; then
@@ -156,12 +163,8 @@ BOOTSTRAP_OUT=""
 if [ -x "$EOS_HOME/scripts/skill-bootstrap.sh" ]; then
   echo
   dim "Checking L2 default skills and auto-installing what can run unattended…"
-  # First pass: detect only (capture output for next-steps parsing).
   BOOTSTRAP_OUT="$( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default 2>&1 )" || true
   echo "$BOOTSTRAP_OUT"
-  # Second pass: auto-install installable skills without prompting.
-  # Skills that require manual action (superpowers, security-review) are
-  # automatically skipped by the bootstrap (their install commands start with '#').
   echo
   dim "Auto-installing installable skills (--install --yes)…"
   ( cd "$TARGET" && "$EOS_HOME/scripts/skill-bootstrap.sh" --profile default --install --yes 2>&1 ) || true
@@ -181,7 +184,8 @@ else
   warn "No .git/hooks directory found — skipping git hooks (not a git repo?)"
 fi
 
-# 7. Install .claude/settings.json with Engineering OS hooks (skip if already customized).
+# 7. Install .claude/settings.json with Engineering OS hooks.
+#    If the file already exists, preserve it to avoid destroying local custom hooks.
 TARGET_SETTINGS="$TARGET/.claude/settings.json"
 if [ ! -f "$TARGET_SETTINGS" ]; then
   mkdir -p "$TARGET/.claude"
@@ -206,7 +210,7 @@ done
 # 9. Build graphify knowledge graph (only if not already built).
 if command -v graphify >/dev/null 2>&1 && [ ! -f "$TARGET/graphify-out/graph.json" ]; then
   dim "Building graphify knowledge graph for this project..."
-  ( cd "$TARGET" && graphify extract . 2>&1 | tail -2 ) && grn "graphify graph built for project"
+  ( cd "$TARGET" && graphify extract . 2>&1 | tail -2 ) && grn "graphify graph built for project" || true
 fi
 
 # 10. MCP connectivity check.
@@ -228,20 +232,19 @@ cat > "$TARGET/ENGINEERING_OS_SETUP.md" << CHECKLIST
 - [ ] Fill CLAUDE.md › <project_context> with project details (owner, goal, stack, stage)
 ${_NEMOTRON_LINE}
 - [ ] Sentry MCP connected: claude mcp add sentry ... (required for debug_loop step 1)
-- [ ] Notion MCP connected: claude mcp add notion ... (required for spec writing in workflow)
+- [ ] Notion MCP connected: claude mcp add notion ... (optional if using .claude/plans/*.md fallback)
 - [ ] superpowers plugin (optional): /plugin install superpowers@claude-plugins-official
-  Note: /superpowers-brainstorm, /superpowers-verify, /superpowers-plan are auto-installed below
-  and work WITHOUT the plugin in all environments (web, remote, CLI).
 
 ## Auto-installed by use-in-project.sh:
-- [x] pre-commit hook — PHYSICAL test file scan (exit 1 if >2 code files + 0 tests)
-- [x] commit-msg hook — format enforcer + "no tests" blocker (exit 1)
+- [x] pre-commit hook — physical quality gate
+- [x] commit-msg hook — commit format + test justification gate
 - [x] post-commit hook — learning_loop reminder on fix: commits
-- [x] .claude/settings.json — Write/Edit/Agent/Bash PreToolUse blockers active
+- [x] .claude/settings.json — Bash/Write/Edit/MultiEdit/Agent PreToolUse blockers active when Claude Code loads project settings
 - [x] /superpowers-brainstorm, /superpowers-verify, /superpowers-plan slash commands
-- [x] graphify knowledge graph built (if graphify installed)
+- [x] graphify knowledge graph built if graphify installed
 
 ## Hard blockers (exit 1 — will stop work):
+- Work-like Bash commands without .claude/plans/*.md → create plan first
 - Writing code files without .claude/plans/*.md → create plan first
 - Spawning agents without .claude/tasks.json → create tasks.json first
 - git commit with missing ✅❌🔄🧪 sections → add all required sections
@@ -250,24 +253,45 @@ ${_NEMOTRON_LINE}
 - git checkout -b when >1 non-main branches exist → merge/delete first
 
 ## Before EVERY task:
-- [ ] .claude/plans/<task-name>.md written with measurable DoD (Write hook enforces)
-- [ ] .claude/tasks.json created if using parallel agents (Agent hook enforces)
+- [ ] Read CLAUDE.md and the Engineering OS boot rule at the top
+- [ ] .claude/plans/<task-name>.md written with measurable DoD before API checks/builds/tests/code
+- [ ] .claude/tasks.json created if using parallel agents
 - [ ] Context7 queried for any external library before npm/pip install
 CHECKLIST
-grn "ENGINEERING_OS_SETUP.md created at $TARGET/ENGINEERING_OS_SETUP.md"
+grnn="ENGINEERING_OS_SETUP.md created at $TARGET/ENGINEERING_OS_SETUP.md"
+grnn=${grnn:-}
+grN2="$(printf '%s' "$grnn")"
+grN2=${grN2:-}
+grN2=${grN2}
+grN2=${grN2}
+grN2=${grN2}
+grn "$grnn"
 
 echo
 grn "Engineering OS is now wired into: $TARGET"
-dim "Reference (read-only): $EOS_HOME   —   re-run anytime; this script is idempotent."
+dim "Reference (read-only): $EOS_HOME — re-run anytime; this script is idempotent."
 
-# 12. Print next-steps checklist — manual actions that cannot be automated.
+# 12. Immediate agent-facing handoff. The output is intentionally explicit because
+#     this installer may run inside an already-open Claude session, before project
+#     settings are reloaded by the host environment.
 echo
+bold "════════════════════════════════════════════"
+bold "  AGENT ACTION REQUIRED NOW"
+bold "════════════════════════════════════════════"
+echo "Read the TOP of ./CLAUDE.md now. Do not run API checks, builds, tests, code edits,"
+echo "agents, or project scaffolding until .claude/plans/<task>.md exists and satisfies"
+echo "the Engineering OS boot rule. The installation is persistent; do not reinstall in"
+echo "future sessions. If this session was already open before installation, rely on"
+echo "CLAUDE.md immediately; deterministic .claude/settings.json hooks are persistent"
+echo "for Claude Code once project settings are loaded."
+echo
+
+# 13. Print next-steps checklist — manual actions that cannot be automated.
 bold "════════════════════════════════════════════"
 bold "  Next steps — manual actions required"
 bold "════════════════════════════════════════════"
 echo
 
-# superpowers
 if [ -f "$TARGET/.claude/commands/superpowers-brainstorm.md" ]; then
   grn "superpowers — portable slash commands ✅ ready (no plugin needed)"
   printf '      /superpowers-brainstorm  /superpowers-verify  /superpowers-plan\n'
@@ -278,7 +302,6 @@ else
 fi
 echo
 
-# graphify API key
 if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
   if [ -n "${Nemotron_api_key:-}" ]; then
     grn "graphify — Nemotron_api_key ✅ already set (semantic extraction enabled)"
@@ -291,7 +314,6 @@ if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
   fi
 fi
 
-# security-review — Nemotron_api_key (primary path)
 if echo "$BOOTSTRAP_OUT" | grep -q "security-review.*✅\|security-review"; then
   if [ -n "${Nemotron_api_key:-}" ]; then
     grn "security-review — Nemotron_api_key ✅ already set"
