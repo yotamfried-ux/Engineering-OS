@@ -22,6 +22,7 @@ bypass_active EOS_BYPASS_WORKFLOW && exit 0
 
 # ── Parse PreToolUse stdin: tool name, file_path, command ────────────────────
 INPUT="$(cat 2>/dev/null || true)"
+# read_field <field> — extracts a named field (tool, file_path, command, content) from stdin JSON.
 read_field() {
   command -v python3 >/dev/null 2>&1 || { printf 'WARNING_FOR_AGENT: python3 not found — enforce-workflow hook degraded\n' >&2; return; }
   printf '%s' "$INPUT" | python3 -c "
@@ -38,6 +39,8 @@ elif field == 'file_path':
     print(t.get('file_path', '') or '')
 elif field == 'command':
     print(t.get('command', '') or '')
+elif field == 'content':
+    print(t.get('content', '') or t.get('new_string', '') or '')
 " 2>/dev/null || printf ''
 }
 
@@ -48,8 +51,8 @@ TOOL="$(read_field tool)"
 # ─────────────────────────────────────────────────────────────────────────────
 newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1; }
 
+# plan_missing_sections <plan_file> — echoes missing required section names (empty = all present).
 plan_missing_sections() {
-  # Echoes a space-separated list of missing section names (empty = all present).
   local pf="$1" missing=""
   grep -qiE 'מטרה|goal|requirements|דרישות' "$pf" || missing="${missing}Goal/מטרה "
   grep -qiE 'תכנון|\bplan\b|steps|שלבים' "$pf"     || missing="${missing}Plan/תכנון "
@@ -58,8 +61,70 @@ plan_missing_sections() {
   printf '%s' "$missing"
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# G9a — gate_plan_integrity: prevent reducing DoD item count in plan files.
+# Fires inside gate_write() when a .claude/plans/*.md file is being written.
+# ─────────────────────────────────────────────────────────────────────────────
+gate_plan_integrity() {
+  local file="$1"
+  case "$file" in
+    .claude/plans/*.md|*/.claude/plans/*.md) ;;
+    *) return 0 ;;
+  esac
+  bypass_active EOS_BYPASS_DOD && return 0
+
+  local fname; fname="$(basename "$file" .md)"
+  local initial; initial="$(evidence_get "dod_initial_${fname}" 2>/dev/null || printf '0')"
+  [ "${initial:-0}" -eq 0 ] && return 0  # no snapshot yet — first write is allowed
+
+  local new_content; new_content="$(read_field content)"
+  [ -z "$new_content" ] && return 0
+  local new_total; new_total="$(printf '%s' "$new_content" | grep -cE '^\- \[(x| )\]' 2>/dev/null || printf '0')"
+  if [ "${new_total:-0}" -lt "${initial:-0}" ]; then
+    echo "ERROR_FOR_AGENT: DoD integrity gate (G9a) — plan had ${initial} DoD item(s), new version has ${new_total}."
+    echo "ACTION: DoD items cannot be removed. Mark them [x] to complete; do not delete them."
+    echo "BYPASS: EOS_BYPASS_DOD=1 — only with explicit user authorization in the current conversation."
+    exit 1
+  fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# G9b — gate_tasks_completion: all DoD items must be [x] before marking complete.
+# Fires inside gate_write() when .claude/tasks.json is being written with status=complete.
+# ─────────────────────────────────────────────────────────────────────────────
+gate_tasks_completion() {
+  local file="$1"
+  case "$file" in
+    .claude/tasks.json|*/.claude/tasks.json) ;;
+    *) return 0 ;;
+  esac
+  bypass_active EOS_BYPASS_DOD && return 0
+
+  local new_content; new_content="$(read_field content)"
+  [ -z "$new_content" ] && return 0
+  printf '%s' "$new_content" | grep -q '"complete"' || return 0
+
+  local pf; pf="$(newest_plan)"
+  [ -z "$pf" ] && return 0
+
+  local unchecked
+  unchecked=$(awk '
+    /^#{1,4}[[:space:]].*([Dd]o[Dd]|תנאי.סיום)/ { found=1; next }
+    found && /^#{1,4}[[:space:]]/ && !/([Dd]o[Dd]|תנאי.סיום)/ { found=0 }
+    found && /^\- \[ \]/ { count++ }
+    END { print count+0 }
+  ' "$pf" 2>/dev/null || printf '0')
+
+  if [ "${unchecked:-0}" -gt 0 ]; then
+    echo "ERROR_FOR_AGENT: DoD completion gate (G9b) — plan '$(basename "$pf")' has ${unchecked} unchecked DoD item(s)."
+    echo "ACTION: complete all '- [ ]' items in the DoD section before marking task complete."
+    echo "BYPASS: EOS_BYPASS_DOD=1 — only with explicit user authorization in the current conversation."
+    exit 1
+  fi
+}
+
 # ═════════════════════════════════════════════════════════════════════════════
-# Gate 1 — Write|Edit: entry gate to writing (workflow.md steps 1 + 4)
+# gate_write <file_path> — Write/Edit entry gate: enforces plan + G7/G8/G9a/G9b.
 # ═════════════════════════════════════════════════════════════════════════════
 gate_write() {
   local FILE="$1"
@@ -72,6 +137,11 @@ gate_write() {
     esac
     exit 0
   fi
+
+  # G9a/G9b: run before any early exits — plan files and tasks.json match *.md/*.json
+  # and would otherwise exit 0 before reaching the gates at the bottom of this function.
+  gate_plan_integrity "$FILE"
+  gate_tasks_completion "$FILE"
 
   # Critical Engineering OS dirs: block regardless of extension (it IS markdown).
   local crit=0
@@ -155,6 +225,37 @@ gate_write() {
       }
       ;;
   esac
+
+  # G7: graphify must have been successfully queried before first code write (when graph exists).
+  # Evidence is recorded by PostToolUse Bash hook only for graphify query/explain/path/update
+  # with non-trivial output (filters out echo graphify, failed runs, --help flags).
+  if [ -f "graphify-out/graph.json" ]; then
+    bypass_active EOS_BYPASS_GRAPHIFY || evidence_has graphify_used || {
+      echo "ERROR_FOR_AGENT: graphify gate (G7) — graphify-out/graph.json exists but graphify was not queried this session."
+      echo "ACTION: run graphify query \"<question>\" (or graphify explain/path) to orient before writing code."
+      echo "BYPASS: EOS_BYPASS_GRAPHIFY=1 — only with explicit user authorization in the current conversation."
+      exit 1
+    }
+  fi
+
+  # G8: writing to a recognised domain requires reading the matching patterns/<domain>/ first.
+  # Independent from G7 — graphify provides structural orientation; patterns provide implementation standards.
+  # Evidence 'patterns_searched' is recorded by PostToolUse Read hook when any patterns/** file is read.
+  local _domains="auth api billing database frontend security testing ai ai-agents authorization infrastructure integrations ui observability"
+  for _dom in $_domains; do
+    case "$FILE" in
+      *"/${_dom}/"*|*"/${_dom}."*|*"_${_dom}."*|*"${_dom}_"*)
+        if [ -d "patterns/${_dom}" ]; then
+          bypass_active EOS_BYPASS_PATTERNS || evidence_has "patterns_read_${_dom}" || {
+            echo "ERROR_FOR_AGENT: patterns gate (G8) — writing to '${_dom}' domain but no patterns/${_dom}/ file was read this session."
+            echo "ACTION: read at least one file from patterns/${_dom}/ before writing ${_dom} code."
+            echo "BYPASS: EOS_BYPASS_PATTERNS=1 — only with explicit user authorization in the current conversation."
+            exit 1
+          }
+        fi
+        break ;;
+    esac
+  done
 
   exit 0
 }

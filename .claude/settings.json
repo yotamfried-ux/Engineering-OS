@@ -77,11 +77,29 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-bash.sh\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
         "matcher": "Read",
         "hooks": [
           {
             "type": "command",
-            "command": "F=$(python3 -c \"import json,sys; d=json.load(sys.stdin); t=d.get('tool_input',d); print(t.get('file_path','') or '')\" 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; case \"$F\" in core/pattern-lifecycle.md|*/core/pattern-lifecycle.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_pattern_lifecycle ;; core/maintenance-routine.md|*/core/maintenance-routine.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_maintenance_routine ;; core/hooks-policy.md|*/core/hooks-policy.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_hooks_policy ;; esac 2>/dev/null || true"
+            "command": "F=$(python3 -c \"import json,sys; d=json.load(sys.stdin); t=d.get('tool_input',d); print(t.get('file_path','') or '')\" 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; case \"$F\" in core/pattern-lifecycle.md|*/core/pattern-lifecycle.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_pattern_lifecycle ;; core/maintenance-routine.md|*/core/maintenance-routine.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_maintenance_routine ;; core/hooks-policy.md|*/core/hooks-policy.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_hooks_policy ;; patterns/*|*/patterns/*) DOM=$(printf '%s' \"$F\" | sed 's|.*/patterns/||; s|/.*||'); . \"$EOS_LIB\" 2>/dev/null && { [ -n \"$DOM\" ] && evidence_record \"patterns_read_${DOM}\" || true; } ;; .claude/plans/*.md|*/.claude/plans/*.md) FNAME=$(basename \"$F\" .md); TOTAL=$(grep -cE '^\\- \\[(x| )\\]' \"$F\" 2>/dev/null || echo 0); . \"$EOS_LIB\" 2>/dev/null && { EXISTING=$(evidence_get \"dod_initial_${FNAME}\" 2>/dev/null || true); [ -n \"$EXISTING\" ] || evidence_record \"dod_initial_${FNAME}\" \"$TOTAL\"; } ;; esac 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__Notion__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; PAGE_ID=$(printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); r=d.get('tool_response','') or {}; print((r.get('id','') or r.get('page_id','') or '') if isinstance(r,dict) else '')\" 2>/dev/null || true); . \"$EOS_LIB\" 2>/dev/null && evidence_record notion_spec_created && { [ -n \"$PAGE_ID\" ] && evidence_record notion_page_id \"$PAGE_ID\" || true; } || true"
           }
         ]
       }
@@ -101,7 +119,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "STAGED=$(git diff --cached --name-only 2>/dev/null); if [ -n \"$STAGED\" ]; then PLAN=$(ls -t .claude/plans/*.md 2>/dev/null | head -1); PMSG=\"\"; [ -n \"$PLAN\" ] && PMSG=\"📋 spec_loop: plan '$(basename $PLAN)' exists — verify EVERY DoD item against output before committing. \"; CODE=$(echo \"$STAGED\" | grep -cE '\\.(ts|tsx|js|jsx|py|go|rs)$' 2>/dev/null) || CODE=0; TEST=$(echo \"$STAGED\" | grep -cE '(\\.(test|spec)\\.(ts|tsx|js|jsx|py)|__tests__)' 2>/dev/null) || TEST=0; TWARN=\"\"; [ \"${CODE:-0}\" -gt 0 ] && [ \"${TEST:-0}\" -eq 0 ] && TWARN=\"⚠️ ${CODE} code files staged, 0 test files in diff — pre-commit will scan project for tests. \"; GMSG=\"\"; [ \"${CODE:-0}\" -gt 0 ] && GMSG=\"📊 Run: graphify update . after commit to keep graph current. \"; echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"Stop\\\",\\\"additionalContext\\\":\\\"${PMSG}${TWARN}${GMSG}Commit format: ✅❌🔄📌🧪 required (commit-msg hook enforces). superpowers:verification-before-completion must have run.\\\"}}\"; fi || true"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-stop-hook.sh\" 2>/dev/null || true"
           }
         ]
       }
