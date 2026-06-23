@@ -11,11 +11,9 @@
 pip install requests pyyaml
 ```
 
-**API key:**  
+**API key** (either variable name is accepted):
 ```bash
 export NVIDIA_API_KEY=nvapi-...
-# or
-export Nemotron_api_key=nvapi-...
 ```
 
 > **הערה לסביבת Claude Code on the web:** הסוכן צריך גישה ל-`integrate.api.nvidia.com`.  

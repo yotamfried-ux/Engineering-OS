@@ -85,6 +85,7 @@ RATE_LIMIT_DELAY = 2    # seconds between API calls
 # ---------------------------------------------------------------------------
 
 def get_api_key() -> str:
+    """Return the Nvidia NIM API key from env (NVIDIA_API_KEY or Nemotron_api_key)."""
     key = os.environ.get("NVIDIA_API_KEY") or os.environ.get("Nemotron_api_key")
     if not key:
         print("ERROR: Set NVIDIA_API_KEY or Nemotron_api_key env var.", file=sys.stderr)
@@ -137,9 +138,9 @@ def extract_json(text: str) -> list:
     """Extract JSON array from LLM response (handles markdown code fences)."""
     # Try to find JSON array in the response
     patterns = [
-        r"```json\s*(\[.*?\])\s*```",
-        r"```\s*(\[.*?\])\s*```",
-        r"(\[.*?\])",
+        r"```json\s*(\[.*\])\s*```",
+        r"```\s*(\[.*\])\s*```",
+        r"(\[.*\])",
     ]
     for pattern in patterns:
         m = re.search(pattern, text, re.DOTALL)
@@ -228,11 +229,12 @@ def collect_files(repo: Path) -> list[Path]:
             continue
         if not path.is_file():
             continue
-        if path.suffix.lower() in SKIP_EXTENSIONS:
+        full_ext = "".join(path.suffixes).lower()
+        if path.suffix.lower() in SKIP_EXTENSIONS or full_ext in SKIP_EXTENSIONS:
             continue
         if path.suffix.lower() not in CODE_EXTENSIONS and path.name not in DOC_FILENAMES:
             continue
-        # Skip very small files (< 3 lines)
+        # Skip files under 50 bytes
         try:
             if path.stat().st_size < 50:
                 continue
@@ -438,26 +440,26 @@ def generate_report(all_issues: list[dict], project_summary: str,
         by_severity[sev].sort(key=lambda x: (x.get("file", ""), x.get("line") or 0))
 
     lines = []
-    lines.append(f"# Code Review Report")
-    lines.append(f"")
+    lines.append("# Code Review Report")
+    lines.append("")
     lines.append(f"**Repository:** `{repo.name}`  ")
     lines.append(f"**Scanned:** {now}  ")
     lines.append(f"**Files reviewed:** {scan_meta.get('files_reviewed', '?')}  ")
     lines.append(f"**Model:** {scan_meta.get('model', '?')}  ")
-    lines.append(f"")
-    lines.append(f"---")
-    lines.append(f"")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
 
     # Executive summary
-    lines.append(f"## Executive Summary")
-    lines.append(f"")
-    lines.append(f"| Severity | Count |")
-    lines.append(f"|----------|-------|")
+    lines.append("## Executive Summary")
+    lines.append("")
+    lines.append("| Severity | Count |")
+    lines.append("|----------|-------|")
     for sev in ["CRITICAL", "HIGH", "MEDIUM", "LOW"]:
         count = len(by_severity[sev])
         lines.append(f"| {SEVERITY_EMOJI[sev]} {sev} | {count} |")
     lines.append(f"| **TOTAL** | **{total}** |")
-    lines.append(f"")
+    lines.append("")
 
     # Top issues by category
     categories: dict[str, int] = {}
@@ -465,18 +467,18 @@ def generate_report(all_issues: list[dict], project_summary: str,
         cat = issue.get("category", "OTHER")
         categories[cat] = categories.get(cat, 0) + 1
     if categories:
-        lines.append(f"### Issues by Category")
-        lines.append(f"")
+        lines.append("### Issues by Category")
+        lines.append("")
         for cat, count in sorted(categories.items(), key=lambda x: -x[1]):
             lines.append(f"- **{cat}**: {count}")
-        lines.append(f"")
+        lines.append("")
 
-    lines.append(f"### Project Context")
-    lines.append(f"")
+    lines.append("### Project Context")
+    lines.append("")
     lines.append(f"> {project_summary[:500].replace(chr(10), ' ')}")
-    lines.append(f"")
-    lines.append(f"---")
-    lines.append(f"")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
 
     # Issues by severity
     for sev in ["CRITICAL", "HIGH", "MEDIUM", "LOW"]:
@@ -484,7 +486,7 @@ def generate_report(all_issues: list[dict], project_summary: str,
         if not issues:
             continue
         lines.append(f"## {SEVERITY_EMOJI[sev]} {sev} Issues ({len(issues)})")
-        lines.append(f"")
+        lines.append("")
         for issue in issues:
             file_ref = issue.get("file", "?")
             line_ref = f":{issue['line']}" if issue.get("line") else ""
@@ -493,29 +495,29 @@ def generate_report(all_issues: list[dict], project_summary: str,
             why = issue.get("why", "")
             fix = issue.get("fix", "")
             lines.append(f"### `{file_ref}{line_ref}` — {cat}")
-            lines.append(f"")
+            lines.append("")
             lines.append(f"**Problem:** {desc}")
-            lines.append(f"")
+            lines.append("")
             if why:
                 lines.append(f"**Why it matters:** {why}")
-                lines.append(f"")
+                lines.append("")
             if fix:
                 lines.append(f"**Fix:** {fix}")
-            lines.append(f"")
-            lines.append(f"---")
-            lines.append(f"")
+            lines.append("")
+            lines.append("---")
+            lines.append("")
 
     # Per-file summary
-    lines.append(f"## Per-File Summary")
-    lines.append(f"")
-    lines.append(f"| File | CRIT | HIGH | MED | LOW | Total |")
-    lines.append(f"|------|------|------|-----|-----|-------|")
+    lines.append("## Per-File Summary")
+    lines.append("")
+    lines.append("| File | CRIT | HIGH | MED | LOW | Total |")
+    lines.append("|------|------|------|-----|-----|-------|")
     for filepath, file_issues in sorted(by_file.items()):
         c = sum(1 for i in file_issues if i.get("severity") == "CRITICAL")
         h = sum(1 for i in file_issues if i.get("severity") == "HIGH")
         m = sum(1 for i in file_issues if i.get("severity") == "MEDIUM")
-        l = sum(1 for i in file_issues if i.get("severity") == "LOW")
-        lines.append(f"| `{filepath}` | {c} | {h} | {m} | {l} | {len(file_issues)} |")
+        low = sum(1 for i in file_issues if i.get("severity") == "LOW")
+        lines.append(f"| `{filepath}` | {c} | {h} | {m} | {low} | {len(file_issues)} |")
 
     return "\n".join(lines)
 
@@ -525,6 +527,7 @@ def generate_report(all_issues: list[dict], project_summary: str,
 # ---------------------------------------------------------------------------
 
 def load_progress(progress_file: Path) -> dict:
+    """Load progress.json from a prior scan; return empty state if missing or corrupt."""
     if progress_file.exists():
         try:
             return json.loads(progress_file.read_text())
@@ -534,6 +537,7 @@ def load_progress(progress_file: Path) -> dict:
 
 
 def save_progress(progress_file: Path, reviewed_files: list[str], issues: list[dict]) -> None:
+    """Persist incremental scan progress so the run can be resumed with --resume."""
     progress_file.write_text(json.dumps({
         "reviewed_files": reviewed_files,
         "issues": issues,
@@ -546,6 +550,7 @@ def save_progress(progress_file: Path, reviewed_files: list[str], issues: list[d
 # ---------------------------------------------------------------------------
 
 def parse_args() -> argparse.Namespace:
+    """Parse and return CLI arguments."""
     p = argparse.ArgumentParser(
         description="Comprehensive AI code review agent (Nvidia Nemotron)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -577,6 +582,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Orchestrate the four-phase code review pipeline and write the final report."""
     args = parse_args()
     api_key = get_api_key()
 
@@ -588,9 +594,20 @@ def main() -> None:
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_name = f"{repo.name}_{timestamp}"
-    report_dir = output_dir / report_name
+    # On --resume, reuse the most recent existing report dir for this repo.
+    # Otherwise always create a fresh timestamped directory.
+    if args.resume:
+        prior = sorted(output_dir.glob(f"{repo.name}_*"))
+        report_dir = prior[-1] if prior else None
+    else:
+        report_dir = None
+
+    if report_dir is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_dir = output_dir / f"{repo.name}_{timestamp}"
+    else:
+        timestamp = report_dir.name.split("_", 1)[1] if "_" in report_dir.name else datetime.now().strftime("%Y%m%d_%H%M%S")
+
     report_dir.mkdir(parents=True, exist_ok=True)
     progress_file = report_dir / "progress.json"
 

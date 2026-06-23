@@ -1,5 +1,7 @@
-# code-reviewer default configuration
-# Override via CLI flags; this file documents defaults.
+# code-reviewer default configuration — DOCUMENTATION ONLY
+# This file is NOT loaded at runtime. It documents the defaults that are
+# hard-coded in code_reviewer.py. Update both files together when changing values.
+# Override at runtime via CLI flags (--model, --include-ext, --exclude-dir).
 
 model: nvidia/llama-3.3-nemotron-super-49b-v1
 fast_model: nvidia/llama-3.1-nemotron-nano-8b-v1
@@ -19,11 +21,17 @@ skip_dirs:
   - build
   - .venv
   - venv
+  - env
   - vendor
   - coverage
   - graphify-out
   - .turbo
   - .cache
+  - .idea
+  - .vscode
+  - .expo
+  - .output
+  - storybook-static
   - public
   - out
 
@@ -38,14 +46,22 @@ code_extensions:
   - .java
   - .rb
   - .c
+  - .h
   - .cpp
+  - .hpp
+  - .cc
   - .cs
   - .kt
   - .swift
   - .php
+  - .scala
+  - .lua
   - .sh
+  - .bash
+  - .zsh
   - .sql
   - .graphql
+  - .gql
   - .yaml
   - .yml
   - .toml
