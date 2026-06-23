@@ -284,4 +284,4 @@ fi
 
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf '\n'
-info "session setup complete."}
+info "session setup complete."
