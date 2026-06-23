@@ -1,0 +1,51 @@
+# code-reviewer default configuration
+# Override via CLI flags; this file documents defaults.
+
+model: nvidia/llama-3.3-nemotron-super-49b-v1
+fast_model: nvidia/llama-3.1-nemotron-nano-8b-v1
+
+scan:
+  max_file_lines: 1500        # chunk files larger than this
+  chunk_overlap: 50           # overlap lines between chunks
+  rate_limit_delay: 2         # seconds between API calls
+  max_retry: 4
+
+skip_dirs:
+  - node_modules
+  - .git
+  - __pycache__
+  - .next
+  - dist
+  - build
+  - .venv
+  - venv
+  - vendor
+  - coverage
+  - graphify-out
+  - .turbo
+  - .cache
+  - public
+  - out
+
+code_extensions:
+  - .py
+  - .js
+  - .ts
+  - .tsx
+  - .jsx
+  - .go
+  - .rs
+  - .java
+  - .rb
+  - .c
+  - .cpp
+  - .cs
+  - .kt
+  - .swift
+  - .php
+  - .sh
+  - .sql
+  - .graphql
+  - .yaml
+  - .yml
+  - .toml
