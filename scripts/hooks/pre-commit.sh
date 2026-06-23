@@ -64,12 +64,11 @@ if echo "$STAGED" | grep -q "^CLAUDE\.md$"; then
   fi
 fi
 
-if [ -f "package.json" ]; then
-  npm run lint --if-present && npm test --if-present
-elif [ -f "pyproject.toml" ]; then
-  ruff check . && pytest --tb=short -q
-elif [ -f "Makefile" ]; then
-  make lint test
+# quality-gates.md <pre_commit_review> — run EVERY detected stack's lint+test (node,
+# python, go, rust, make, shell). A failing check blocks; a missing tool warns.
+# Governing policy: core/quality-gates.md. Bypass: EOS_BYPASS_TESTS=1.
+if [ -f "$REPO_ROOT/scripts/enforcement/enforce-tests.sh" ]; then
+  bash "$REPO_ROOT/scripts/enforcement/enforce-tests.sh" || exit 1
 fi
 
 # ── Physical test file enforcement ────────────────────────────────────────────
