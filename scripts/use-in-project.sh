@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 set -euo pipefail
-printf 'restored placeholder\n'
+printf 'Engineering OS installer temporarily restored.\n'
