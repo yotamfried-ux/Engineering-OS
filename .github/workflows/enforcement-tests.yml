@@ -78,7 +78,7 @@ jobs:
           git init "$tmp" >/dev/null
           (
             cd "$tmp"
-            ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
+            EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
 
             # Core governance files
             test -f CLAUDE.md
@@ -109,7 +109,7 @@ jobs:
             grep -q 'project test-file scan' ENGINEERING_OS_SETUP.md
 
             # Idempotency: re-run should not duplicate managed block or commands.
-            ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
+            EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
             managed_count="$(grep -c '<!-- BEGIN engineering-os (managed) -->' CLAUDE.md)"
             test "$managed_count" -eq 1
             test -f .claude/commands/use-engineering-os.md
