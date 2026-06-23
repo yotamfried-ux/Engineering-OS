@@ -49,7 +49,7 @@ plan_missing_sections() {
 # package manager scripts, docker/infra execution, or direct interpreter execution.
 # Important: do NOT allowlist prefix commands before this check. A command like
 # `ls && curl ...` must still be blocked because the full command contains curl.
-if ! printf '%s' "$CMD" | grep -qiE '(^|[;&|[:space:]])(curl|wget|http|python|python3|node|npx|npm[[:space:]]+run|npm[[:space:]]+test|yarn[[:space:]]+(run|test)|pnpm[[:space:]]+(run|test|exec)|bun[[:space:]]+(run|test)|pytest|ruff|mypy|tsc|next[[:space:]]+(dev|build|start)|vite|vitest|jest|cargo[[:space:]]+(run|test|build)|go[[:space:]]+(run|test|build)|docker|docker-compose|kubectl|terraform|gh[[:space:]]+workflow|vercel|supabase)([[:space:]]|$)'; then
+if ! printf '%s' "$CMD" | grep -qiE '(^|[;&|[:space:]])(curl|wget|http|python|python3|node|npx|npm[[:space:]]+run|npm[[:space:]]+test|yarn[[:space:]]+(run|test)|pnpm[[:space:]]+(run|test|exec)|bun[[:space:]]+(run|test)|pytest|ruff|mypy|tsc|next[[:space:]]+(dev|build|start)|vite|vitest|jest|make|mvn|gradle|gradlew|ruby|php|java|dotnet|bash[[:space:]]+-c|sh[[:space:]]+-c|eval|cargo[[:space:]]+(run|test|build)|go[[:space:]]+(run|test|build)|docker|docker-compose|kubectl|terraform|gh[[:space:]]+workflow|vercel|supabase)([[:space:]]|$)'; then
   log "non-work-like command allowed"
   exit 0
 fi
