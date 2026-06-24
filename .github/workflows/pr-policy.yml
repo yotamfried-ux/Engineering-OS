@@ -1,0 +1,23 @@
+name: pr-policy
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  no-draft-pr:
+    name: Require ready-for-review PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block draft pull requests
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.pull_request.draft }}" = "true" ]; then
+            echo "ERROR_FOR_AGENT: Pull requests must be ready for review, not draft."
+            echo "ACTION: mark the PR ready for review so CodeRabbit and CI review gates can run."
+            exit 1
+          fi
+          echo "✅ pull request is ready for review"
