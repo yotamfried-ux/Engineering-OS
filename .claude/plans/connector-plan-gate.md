@@ -35,6 +35,6 @@ to avoid declaring external connector usage simply by omitting a Route Plan.
 
 ## Validation
 
-- [ ] Add/update shell tests for positive and negative cases.
-- [ ] Confirm GitHub Actions pass on the PR.
-- [ ] Confirm CodeRabbit has no actionable comments before merge.
+- [x] Add/update shell tests for positive and negative cases.
+- [x] Confirm GitHub Actions pass on the PR.
+- [x] Confirm CodeRabbit has no actionable comments before merge.
