@@ -33,9 +33,9 @@ jobs:
           while IFS= read -r plan; do
             [ -n "$plan" ] || continue
             [ -f "$plan" ] || continue
-            if ! grep -qi "Connector Evidence" "$plan"; then
-              echo "ERROR_FOR_AGENT: $plan is missing 'Connector Evidence' section."
-              echo "ACTION: add a '## Connector Evidence' section to the plan before merging."
+            if ! grep -q "## Connector Evidence" "$plan"; then
+              echo "ERROR_FOR_AGENT: $plan is missing '## Connector Evidence' section."
+              echo "ACTION: add a '## Connector Evidence' heading to the plan before merging."
               failed=1
             fi
           done <<< "$changed_plans"
