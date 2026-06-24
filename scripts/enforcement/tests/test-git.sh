@@ -40,6 +40,21 @@ expect "gh pr create (ready) allowed"         0 "$(EOS_EVIDENCE_DIR="$_EV_G6C" r
 expect "--draft inside --body allowed"        0 "$(EOS_EVIDENCE_DIR="$_EV_G6C" run 'gh pr create --title x --body "we use --draft sparingly"')"
 rm -rf "$_EV_G6C"
 
+echo "── G3: block direct push to main/master ──"
+expect "git push origin main blocked"         1 "$(run 'git push origin main')"
+expect "git push origin master blocked"       1 "$(run 'git push origin master')"
+expect "git push HEAD:main blocked"           1 "$(run 'git push origin HEAD:main')"
+expect "git push feature branch allowed"      0 "$(run 'git push origin feature')"
+expect "EOS_BYPASS_MAINPUSH skips G3"         0 "$(EOS_BYPASS_MAINPUSH=1 run 'git push origin main')"
+
+echo "── G4: block GitHub Contents API writes to default branch ──"
+expect "gh api contents write without branch blocked" 1 "$(run 'gh api repos/o/r/contents/file.md --method PUT -f message=x -f content=y')"
+expect "gh api contents write branch main blocked"    1 "$(run 'gh api repos/o/r/contents/file.md --method PUT -f branch=main -f message=x -f content=y')"
+expect "gh api contents delete branch master blocked" 1 "$(run 'gh api repos/o/r/contents/file.md --method DELETE -f branch=master')"
+expect "gh api contents write feature branch allowed" 0 "$(run 'gh api repos/o/r/contents/file.md --method PUT -f branch=feature -f message=x -f content=y')"
+expect "gh api non-contents write allowed"             0 "$(run 'gh api repos/o/r/issues --method POST -f title=x')"
+expect "EOS_BYPASS_CONTENTS_API skips G4"              0 "$(EOS_BYPASS_CONTENTS_API=1 run 'gh api repos/o/r/contents/file.md --method PUT -f message=x -f content=y')"
+
 echo "── bypasses + general ──"
 expect "EOS_BYPASS_FORCEPUSH skips G1"  0 "$(EOS_BYPASS_FORCEPUSH=1 run 'git push --force')"
 expect "EOS_BYPASS_DRAFTPR skips G2"    0 "$(EOS_BYPASS_DRAFTPR=1 run 'gh pr create --draft')"
