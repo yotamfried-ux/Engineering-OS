@@ -16,4 +16,28 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - run: bash scripts/enforcement/check-connector-evidence.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+
+      - name: Require connector evidence in changed plans
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          changed_plans="$(git diff --name-only "$base" "$head" -- '.claude/plans/*.md' || true)"
+
+          if [ -z "$changed_plans" ]; then
+            echo "No changed plan files."
+            exit 0
+          fi
+
+          failed=0
+          for plan in $changed_plans; do
+            [ -f "$plan" ] || continue
+            if ! grep -qi "Connector Evidence" "$plan"; then
+              echo "ERROR_FOR_AGENT: $plan is missing 'Connector Evidence' section."
+              echo "ACTION: add a '## Connector Evidence' section to the plan before merging."
+              failed=1
+            fi
+          done
+
+          [ "$failed" -eq 0 ] || exit 1
+          echo "Connector Evidence found in all changed plans."

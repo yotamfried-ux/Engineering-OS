@@ -208,6 +208,12 @@ for CMD in superpowers-brainstorm.md superpowers-verify.md superpowers-plan.md; 
   fi
 done
 
+# 8b. Install GitHub Actions policy gate workflows.
+if [ -x "$EOS_HOME/scripts/install-policy-gates.sh" ]; then
+  bash "$EOS_HOME/scripts/install-policy-gates.sh" "$TARGET"
+  grn "Policy gate workflows installed (.github/workflows/)"
+fi
+
 # 9. Build graphify knowledge graph (only if not already built).
 if [ "${EOS_CONTRACT_TEST:-}" != "1" ] && command -v graphify >/dev/null 2>&1 && [ ! -f "$TARGET/graphify-out/graph.json" ]; then
   dim "Building graphify knowledge graph for this project..."
