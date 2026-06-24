@@ -29,6 +29,7 @@ HEAD_OK="$(git rev-parse HEAD)"
 "$CHECKER" "$BASE" "$HEAD_OK"
 
 git checkout -q -b missing "$BASE"
+mkdir -p .claude/plans
 cat > .claude/plans/task.md <<'PLAN'
 # Task
 
