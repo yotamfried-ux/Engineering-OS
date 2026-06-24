@@ -22,7 +22,7 @@ jobs:
           set -euo pipefail
           base="${{ github.event.pull_request.base.sha }}"
           head="${{ github.event.pull_request.head.sha }}"
-          changed_plans="$(git diff --name-only "$base" "$head" -- '.claude/plans/*.md' || true)"
+          changed_plans="$(git diff --name-only "$base...$head" -- '.claude/plans/*.md' || true)"
 
           if [ -z "$changed_plans" ]; then
             echo "No changed plan files."
@@ -30,14 +30,15 @@ jobs:
           fi
 
           failed=0
-          for plan in $changed_plans; do
+          while IFS= read -r plan; do
+            [ -n "$plan" ] || continue
             [ -f "$plan" ] || continue
             if ! grep -qi "Connector Evidence" "$plan"; then
               echo "ERROR_FOR_AGENT: $plan is missing 'Connector Evidence' section."
               echo "ACTION: add a '## Connector Evidence' section to the plan before merging."
               failed=1
             fi
-          done
+          done <<< "$changed_plans"
 
           [ "$failed" -eq 0 ] || exit 1
           echo "Connector Evidence found in all changed plans."
