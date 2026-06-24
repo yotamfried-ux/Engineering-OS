@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   connector-evidence:
-    name: Require connector evidence
+    name: Require connector route plan evidence
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -17,28 +17,37 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Require connector evidence in changed plans
+      - name: Check connector route plan evidence
         run: |
           set -euo pipefail
-          base="${{ github.event.pull_request.base.sha }}"
-          head="${{ github.event.pull_request.head.sha }}"
-          changed_plans="$(git diff --name-only "$base...$head" -- '.claude/plans/*.md' || true)"
-
-          if [ -z "$changed_plans" ]; then
-            echo "No changed plan files."
-            exit 0
+          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" || true)"
+          plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' || true)"
+          code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
+          if [ -n "$code" ] && [ -z "$plans" ]; then
+            echo "ERROR_FOR_AGENT: code/config/script files changed without a changed .claude/plans/*.md Route Plan."
+            exit 1
           fi
-
-          failed=0
-          while IFS= read -r plan; do
-            [ -n "$plan" ] || continue
-            [ -f "$plan" ] || continue
-            if ! grep -qi "Connector Evidence" "$plan"; then
-              echo "ERROR_FOR_AGENT: $plan is missing 'Connector Evidence' section."
-              echo "ACTION: add a '## Connector Evidence' section to the plan before merging."
-              failed=1
+          [ -n "$plans" ] || { echo "No changed plan files."; exit 0; }
+          bad=0
+          for plan in $plans; do
+            line="$(grep -iE 'external[[:space:]]*(systems/connectors|systems|connectors)' "$plan" | head -n 1 || true)"
+            if [ -z "$line" ]; then
+              echo "ERROR_FOR_AGENT: $plan is missing External systems/connectors."
+              bad=1
+              continue
             fi
-          done <<< "$changed_plans"
-
-          [ "$failed" -eq 0 ] || exit 1
-          echo "Connector Evidence found in all changed plans."
+            value="$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]' | tr -d '|*_' | sed -E 's/.*external[[:space:]]*(systems\/connectors|systems|connectors)[^[:alnum:]]*//' | xargs)"
+            if [ -z "$value" ]; then
+              echo "ERROR_FOR_AGENT: $plan has an empty External systems/connectors value."
+              bad=1
+              continue
+            fi
+            if [[ ! "$value" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+external[[:space:]]+connectors|no[[:space:]]+connectors)$ ]]; then
+              if ! grep -qiE '^#{1,4}[[:space:]]+Connector[[:space:]]+Evidence([[:space:]]|$)' "$plan"; then
+                echo "ERROR_FOR_AGENT: $plan declares external connector(s) '$value' but lacks ## Connector Evidence."
+                bad=1
+              fi
+            fi
+          done
+          [ "$bad" -eq 0 ] || exit 1
+          echo "Connector route plan checks passed."
