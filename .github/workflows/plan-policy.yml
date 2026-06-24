@@ -1,0 +1,47 @@
+name: plan-policy
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  plan-checklist:
+    name: Require completed plan checklists
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Block unchecked plan items
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          changed_plans="$(git diff --name-only "$base" "$head" -- '.claude/plans/*.md' || true)"
+
+          if [ -z "$changed_plans" ]; then
+            echo "No changed Engineering OS plan files."
+            exit 0
+          fi
+
+          failed=0
+          for plan in $changed_plans; do
+            if [ ! -f "$plan" ]; then
+              continue
+            fi
+            if grep -nE '^[[:space:]]*[-*][[:space:]]*\[[[:space:]]\]' "$plan"; then
+              echo "ERROR_FOR_AGENT: $plan has unchecked plan items."
+              echo "ACTION: complete the work or update the plan before opening/merging the PR."
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+          echo "All changed plan checklists are complete."
