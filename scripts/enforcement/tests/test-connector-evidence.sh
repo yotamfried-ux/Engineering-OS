@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 CHECKER="$ROOT/scripts/enforcement/check-connector-evidence.sh"
+chmod +x "$CHECKER"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
