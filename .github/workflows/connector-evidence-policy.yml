@@ -1,0 +1,19 @@
+name: connector-evidence-policy
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  connector-evidence:
+    name: Require connector evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: bash scripts/enforcement/check-connector-evidence.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
