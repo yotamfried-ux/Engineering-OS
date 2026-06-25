@@ -96,6 +96,10 @@ jobs:
             test -f .claude/commands/superpowers-plan.md
             grep -q 'enforce-bash-entry.sh' .claude/settings.json
             grep -q 'enforce-workflow.sh' .claude/settings.json
+            grep -q 'pre-tool-use-runtime-evidence.sh' .claude/settings.json
+            grep -q 'post-tool-use-mcp.sh' .claude/settings.json
+            grep -q 'post-tool-use-read-evidence.sh' .claude/settings.json
+            python3 -c 'import json; from pathlib import Path; s=json.loads(Path(".claude/settings.json").read_text()); pre=s["hooks"]["PreToolUse"]; post=s["hooks"]["PostToolUse"]; assert any(x.get("matcher") == "Write|Edit|MultiEdit|NotebookEdit" and any("pre-tool-use-runtime-evidence.sh" in h.get("command", "") for h in x.get("hooks", [])) for x in pre); assert any(x.get("matcher") == "mcp__.*" for x in post); assert any(x.get("matcher") == "Read" and any("post-tool-use-read-evidence.sh" in h.get("command", "") for h in x.get("hooks", [])) for x in post); stop_cmd=s["hooks"]["Stop"][0]["hooks"][0]["command"]; assert "post-stop-hook.sh" in stop_cmd; assert "|| true" not in stop_cmd'
 
             # Git hooks copied from Engineering OS
             test -x .git/hooks/pre-commit
