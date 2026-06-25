@@ -6,17 +6,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 RUNTIME_STATUS="runtime evidence checker missing"
 if [ ! -f "$SCRIPT_DIR/check-runtime-evidence.sh" ]; then
-  printf '{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":"runtime evidence checker missing"}}'
-  exit 1
+  printf '{"decision":"block","reason":"runtime evidence checker missing"}'
+  exit 0
 fi
 
 RUNTIME_OUT="$(bash "$SCRIPT_DIR/check-runtime-evidence.sh" 2>&1)"
 RUNTIME_CODE="$?"
 if [ "$RUNTIME_CODE" -ne 0 ]; then
   MSG="$(printf '%s' "$RUNTIME_OUT" | tr '\n' ' ')"
-  printf '{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":"%s"}}' \
+  printf '{"decision":"block","reason":"%s"}' \
     "$(printf '%s' "$MSG" | sed 's/"/\\"/g')"
-  exit 1
+  exit 0
 fi
 RUNTIME_STATUS="runtime evidence checked"
 
