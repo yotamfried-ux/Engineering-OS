@@ -19,6 +19,6 @@ done
 
 settings="$target/.claude/settings.json"
 patcher="$home_dir/scripts/enforcement/patch-settings-runtime-evidence.sh"
-if [ -f "$settings" ] && [ -x "$patcher" ]; then
+if [ -f "$settings" ] && [ -f "$patcher" ]; then
   bash "$patcher" "$settings"
 fi
