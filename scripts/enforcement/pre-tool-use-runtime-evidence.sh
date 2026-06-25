@@ -96,7 +96,7 @@ import sys
 pd = "permission" + "Decision"
 pdr = pd + "Reason"
 value = "de" + "ny"
-reason = "runtime evidence gate — " + sys.argv[1] + " ACTION: " + sys.argv[2]
+reason = "runtime evidence gate — " + sys.argv[1] + " ACTION: " + sys.argv[2] + " Manual override needs current user approval."
 print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", pd: value, pdr: reason}}, ensure_ascii=False))
 PY
   [ "${EOS_PRETOOL_LEGACY_EXIT:-0}" = "1" ] && exit 1
