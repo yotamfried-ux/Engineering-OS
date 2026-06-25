@@ -23,7 +23,7 @@ for plan in $plans; do
     continue
   fi
   normalized_line="$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]' | tr -d '*_')"
-  value="$(printf '%s' "$normalized_line" | awk -F'|' '
+  table_value="$(printf '%s' "$normalized_line" | awk -F'|' '
     NF > 1 {
       for (i = 1; i < NF; i++) {
         field = $i
@@ -31,13 +31,15 @@ for plan in $plans; do
         if (field ~ /^external[ \t]*(systems\/connectors|systems|connectors)$/) {
           value = $(i + 1)
           gsub(/^[ \t]+|[ \t]+$/, "", value)
-          print value
+          print "FOUND:" value
           exit
         }
       }
     }
   ')"
-  if [ -z "$value" ]; then
+  if [[ "$table_value" == FOUND:* ]]; then
+    value="${table_value#FOUND:}"
+  else
     value="$(printf '%s' "$normalized_line" | sed -E 's/.*external[[:space:]]*(systems\/connectors|systems|connectors)[[:space:]]*[:=-][[:space:]]*//' | xargs)"
   fi
   value="$(printf '%s' "$value" | sed -E 's/[[:space:][:punct:]]+$//' | xargs)"
