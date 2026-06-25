@@ -81,6 +81,14 @@ connector_has_evidence() {
   evidence_has connector_used "$key" 2>/dev/null || evidence_has "connector_${key}" 2>/dev/null
 }
 
+skill_has_evidence() {
+  local key key_us
+  key="$(canon_key "$1")"
+  key_us="$(printf '%s' "$key" | tr '-' '_')"
+  [ -n "$key" ] || return 0
+  evidence_has skill_used "$key" 2>/dev/null || evidence_has "skill_${key}" 2>/dev/null || evidence_has "${key_us}_run" 2>/dev/null
+}
+
 fail() {
   echo "ERROR_FOR_AGENT: runtime evidence gate — $1"
   echo "ACTION: $2"
@@ -97,12 +105,10 @@ esac
 FILE="$(json_field file_path)"
 [ -n "$FILE" ] || exit 0
 
-# The route plan itself is the first artifact and must be writable before evidence exists.
 case "$FILE" in
   .claude/plans/*.md|*/.claude/plans/*.md) exit 0 ;;
 esac
 
-# Enforce only code, config, tests, and Engineering OS governance paths.
 critical=0
 case "$FILE" in
   core/*|*/core/*|patterns/*|*/patterns/*|external-skills/*|*/external-skills/*|external-systems/*|*/external-systems/*|\
@@ -131,6 +137,7 @@ evidence_has workflow_read || fail "core/workflow.md was not read in this sessio
 templates="$(field_value "$PLAN" '^templates$|^template$')"
 patterns="$(field_value "$PLAN" '^patterns$|^pattern$')"
 connectors="$(field_value "$PLAN" '^external systems/connectors$|^external systems$|^external connectors$|^connectors$')"
+skills="$(field_value "$PLAN" '^skills$|^skill$')"
 
 if ! is_none_value "$templates"; then
   evidence_has templates_read || evidence_has template_used || fail "Route Plan declares templates '$templates' but no template read evidence exists." "read the relevant templates/ file before writing implementation code."
@@ -153,6 +160,17 @@ if ! is_none_value "$connectors"; then
 $(normalize_list "$connectors")
 EOF_CONNECTORS
   [ -z "$missing" ] || fail "Route Plan declares connectors '$connectors' but missing connector evidence for: ${missing}." "use each declared connector/source-of-truth before implementation, or change the plan to an explicit none/waiver."
+fi
+
+if ! is_none_value "$skills"; then
+  missing=""
+  while IFS= read -r skill; do
+    [ -n "$skill" ] || continue
+    skill_has_evidence "$skill" || missing="${missing}${skill} "
+  done <<EOF_SKILLS
+$(normalize_list "$skills")
+EOF_SKILLS
+  [ -z "$missing" ] || fail "Route Plan declares skills '$skills' but missing skill evidence for: ${missing}." "run each declared skill before implementation, or change the plan to an explicit none/waiver."
 fi
 
 exit 0
