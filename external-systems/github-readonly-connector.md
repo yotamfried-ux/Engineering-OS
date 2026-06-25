@@ -57,7 +57,7 @@ These can be added later only when a concrete failure requires them.
 The profile is validated by:
 
 ```text
-scripts/enforcement/tests/test-github-readonly-connector-profile.sh
+scripts/enforcement/tests/test-github-connector-profile.sh
 ```
 
 The test checks that the profile remains read-only, uses the official GitHub image, uses a narrow toolset allow-list, and does not include broad toolsets.
