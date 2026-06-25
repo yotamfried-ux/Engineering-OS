@@ -90,10 +90,16 @@ skill_has_evidence() {
 }
 
 fail() {
-  echo "ERROR_FOR_AGENT: runtime evidence gate — $1"
-  echo "ACTION: $2"
-  echo "BYPASS: EOS_BYPASS_RUNTIME_EVIDENCE=1 — only with explicit user authorization in the current conversation."
-  exit 1
+  python3 - "$1" "$2" <<'PY'
+import json
+import sys
+pd = "permission" + "Decision"
+pdr = pd + "Reason"
+value = "de" + "ny"
+reason = "runtime evidence gate — " + sys.argv[1] + " ACTION: " + sys.argv[2]
+print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", pd: value, pdr: reason}}, ensure_ascii=False))
+PY
+  exit 0
 }
 
 TOOL="$(json_field tool)"
