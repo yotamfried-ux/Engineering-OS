@@ -44,8 +44,8 @@ A source or pattern can be adopted only if it answers all of these:
 
 - [x] Read the Deep Research report.
 - [x] Read `CLAUDE.md`, `core/task-router.md`, `core/workflow.md`, and `core/coderabbit-policy.md`.
-- [ ] Add official-source adoption audit document.
-- [ ] Add minimal capability-registry skeleton for the next PR.
+- [x] Add official-source adoption audit document.
+- [x] Add minimal capability-registry skeleton for the next PR.
 - [ ] Open PR against `main`.
 - [ ] Wait for GitHub Actions and CodeRabbit.
 - [ ] Address review comments or document why they are not applicable.
