@@ -6,11 +6,11 @@
 |---|---|
 | Task type | Engineering OS maintenance / governance |
 | Domain tags | governance, workflow, hooks, connectors, skills, evidence, testing |
-| Templates | None required for this audit stage; this PR records official adoption decisions only. |
+| Templates | Not required for this audit documentation stage. |
 | Architecture guides | Deep Research report: "דוח מחקר עומק לאימוץ דפוסים רשמיים לאכיפת Skills ו-Connectors ב-Engineering OS" |
 | Patterns | Existing Engineering OS workflow, connector policy, skill orchestration policy, CodeRabbit policy |
 | External systems / connectors | GitHub connector for repository state and PR workflow |
-| Skills | None required for this audit stage. |
+| Skills | None |
 | Validation gates | GitHub PR, GitHub Actions, CodeRabbit review, explicit Yotam approval before merge |
 | Task-router evidence | Read `core/task-router.md` on main before writing. |
 | Workflow evidence | Read `core/workflow.md` on main before writing. |
