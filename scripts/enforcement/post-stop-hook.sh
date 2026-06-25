@@ -5,17 +5,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
 
 RUNTIME_STATUS="runtime evidence checker missing"
-if [ -f "$SCRIPT_DIR/check-runtime-evidence.sh" ]; then
-  RUNTIME_OUT="$(bash "$SCRIPT_DIR/check-runtime-evidence.sh" 2>&1)"
-  RUNTIME_CODE="$?"
-  if [ "$RUNTIME_CODE" -ne 0 ]; then
-    MSG="$(printf '%s' "$RUNTIME_OUT" | tr '\n' ' ')"
-    printf '{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":"%s"}}' \
-      "$(printf '%s' "$MSG" | sed 's/"/\\"/g')"
-    exit 1
-  fi
-  RUNTIME_STATUS="runtime evidence checked"
+if [ ! -f "$SCRIPT_DIR/check-runtime-evidence.sh" ]; then
+  printf '{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":"runtime evidence checker missing"}}'
+  exit 1
 fi
+
+RUNTIME_OUT="$(bash "$SCRIPT_DIR/check-runtime-evidence.sh" 2>&1)"
+RUNTIME_CODE="$?"
+if [ "$RUNTIME_CODE" -ne 0 ]; then
+  MSG="$(printf '%s' "$RUNTIME_OUT" | tr '\n' ' ')"
+  printf '{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":"%s"}}' \
+    "$(printf '%s' "$MSG" | sed 's/"/\\"/g')"
+  exit 1
+fi
+RUNTIME_STATUS="runtime evidence checked"
 
 GQ_STATUS="$(evidence_has graphify_used 2>/dev/null && printf 'graphify queried' || printf 'graphify not queried')"
 TR_STATUS="$(evidence_has tests_run 2>/dev/null && printf 'tests passed' || printf 'no successful test run')"
