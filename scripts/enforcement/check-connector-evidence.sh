@@ -3,69 +3,58 @@ set -euo pipefail
 
 base="${1:-HEAD~1}"
 head="${2:-HEAD}"
-
-changed="$(git diff --name-only "$base" "$head" || true)"
+changed="$(git diff --name-only "$base" "$head")"
 plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' || true)"
+code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
 
-code_files="$(printf '%s\n' "$changed" \
-  | grep -v '^$' \
-  | grep -v '^\.claude/plans/' \
-  | grep -v '^docs/' \
-  | grep -v '^README\.md$' \
-  | grep -v '^CHANGELOG\.md$' \
-  | grep -v '^LICENSE' \
-  || true)"
-
-if [ -n "$code_files" ] && [ -z "$plans" ]; then
-  echo "ERROR_FOR_AGENT: code/config/script files changed, but no Route Plan changed under .claude/plans/."
-  echo "ACTION: add or update a .claude/plans/*.md Route Plan that declares External systems/connectors."
+if [ -n "$code" ] && [ -z "$plans" ]; then
+  echo "ERROR_FOR_AGENT: code/config/script files changed without a changed .claude/plans/*.md Route Plan."
   exit 1
 fi
 
-if [ -z "$plans" ]; then
-  echo "No changed plan files."
-  exit 0
-fi
+[ -n "$plans" ] || { echo "No changed plan files."; exit 0; }
 
-no_connector_pattern='^(none|n/a|na|not required|no external connectors|no connectors)$'
-failed=0
-
-while IFS= read -r plan; do
-  [ -n "$plan" ] || continue
-  [ -f "$plan" ] || continue
-
-  ext_line="$(grep -iE 'external[[:space:]]*(systems/connectors|systems|connectors)' "$plan" | head -n 1 || true)"
-  if [ -z "$ext_line" ]; then
-    echo "ERROR_FOR_AGENT: $plan is missing an 'External systems/connectors' Route Plan field."
-    echo "ACTION: add an explicit External systems/connectors field with either 'none' or the connector name."
-    failed=1
+bad=0
+for plan in $plans; do
+  line="$(grep -iE 'external[[:space:]]*(systems/connectors|systems|connectors)' "$plan" | head -n 1 || true)"
+  if [ -z "$line" ]; then
+    echo "ERROR_FOR_AGENT: $plan is missing External systems/connectors."
+    bad=1
     continue
   fi
-
-  ext_value="$(printf '%s' "$ext_line" \
-    | tr '[:upper:]' '[:lower:]' \
-    | tr -d '|*_' \
-    | sed -E 's/.*external[[:space:]]*(systems\/connectors|systems|connectors)[^[:alnum:]]*//' \
-    | xargs)"
-
-  if [ -z "$ext_value" ]; then
+  normalized_line="$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]' | tr -d '*_')"
+  table_value="$(printf '%s' "$normalized_line" | awk -F'|' '
+    NF > 1 {
+      for (i = 1; i < NF; i++) {
+        field = $i
+        gsub(/^[ \t]+|[ \t]+$/, "", field)
+        if (field ~ /^external[ \t]*(systems\/connectors|systems|connectors)$/) {
+          value = $(i + 1)
+          gsub(/^[ \t]+|[ \t]+$/, "", value)
+          print "FOUND:" value
+          exit
+        }
+      }
+    }
+  ')"
+  if [[ "$table_value" == FOUND:* ]]; then
+    value="${table_value#FOUND:}"
+  else
+    value="$(printf '%s' "$normalized_line" | sed -E 's/.*external[[:space:]]*(systems\/connectors|systems|connectors)[[:space:]]*[:=-][[:space:]]*//' | xargs)"
+  fi
+  value="$(printf '%s' "$value" | sed -E 's/[[:space:][:punct:]]+$//' | xargs)"
+  if [ -z "$value" ]; then
     echo "ERROR_FOR_AGENT: $plan has an empty External systems/connectors value."
-    echo "ACTION: set External systems/connectors to 'none' or to the connector name."
-    failed=1
+    bad=1
     continue
   fi
-
-  if [[ "$ext_value" =~ $no_connector_pattern ]]; then
-    echo "$plan declares no external connectors."
-    continue
+  if [[ ! "$value" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+external[[:space:]]+connectors|no[[:space:]]+connectors)$ ]]; then
+    if ! grep -qiE '^#{1,4}[[:space:]]+Connector[[:space:]]+Evidence([[:space:]]|$)' "$plan"; then
+      echo "ERROR_FOR_AGENT: $plan declares external connector(s) '$value' but lacks ## Connector Evidence."
+      bad=1
+    fi
   fi
+done
 
-  if ! grep -qiE '^#{1,4}[[:space:]]+Connector[[:space:]]+Evidence([[:space:]]|$)' "$plan"; then
-    echo "ERROR_FOR_AGENT: $plan declares external connector(s) '$ext_value' but is missing a Connector Evidence heading."
-    echo "ACTION: add a '## Connector Evidence' section documenting connector purpose, scope, permissions, and approval basis."
-    failed=1
-  fi
-done <<< "$plans"
-
-[ "$failed" -eq 0 ] || exit 1
+[ "$bad" -eq 0 ] || exit 1
 echo "Connector route plan checks passed."

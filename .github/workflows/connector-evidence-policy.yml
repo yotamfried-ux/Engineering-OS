@@ -20,7 +20,7 @@ jobs:
       - name: Check connector route plan evidence
         run: |
           set -euo pipefail
-          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" || true)"
+          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")"
           plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' || true)"
           code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
           if [ -n "$code" ] && [ -z "$plans" ]; then
@@ -36,7 +36,27 @@ jobs:
               bad=1
               continue
             fi
-            value="$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]' | tr -d '|*_' | sed -E 's/.*external[[:space:]]*(systems\/connectors|systems|connectors)[^[:alnum:]]*//' | xargs)"
+            normalized_line="$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]' | tr -d '*_')"
+            table_value="$(printf '%s' "$normalized_line" | awk -F'|' '
+              NF > 1 {
+                for (i = 1; i < NF; i++) {
+                  field = $i
+                  gsub(/^[ \t]+|[ \t]+$/, "", field)
+                  if (field ~ /^external[ \t]*(systems\/connectors|systems|connectors)$/) {
+                    value = $(i + 1)
+                    gsub(/^[ \t]+|[ \t]+$/, "", value)
+                    print "FOUND:" value
+                    exit
+                  }
+                }
+              }
+            ')"
+            if [[ "$table_value" == FOUND:* ]]; then
+              value="${table_value#FOUND:}"
+            else
+              value="$(printf '%s' "$normalized_line" | sed -E 's/.*external[[:space:]]*(systems\/connectors|systems|connectors)[[:space:]]*[:=-][[:space:]]*//' | xargs)"
+            fi
+            value="$(printf '%s' "$value" | sed -E 's/[[:space:][:punct:]]+$//' | xargs)"
             if [ -z "$value" ]; then
               echo "ERROR_FOR_AGENT: $plan has an empty External systems/connectors value."
               bad=1
