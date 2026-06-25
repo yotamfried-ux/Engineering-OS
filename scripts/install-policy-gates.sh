@@ -16,3 +16,9 @@ for name in pr-policy.yml plan-policy.yml connector-evidence-policy.yml workflow
   cp "$src" "$dst"
   echo "installed $name"
 done
+
+settings="$target/.claude/settings.json"
+patcher="$home_dir/scripts/enforcement/patch-settings-runtime-evidence.sh"
+if [ -f "$settings" ] && [ -x "$patcher" ]; then
+  bash "$patcher" "$settings"
+fi
