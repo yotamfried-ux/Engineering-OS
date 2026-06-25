@@ -52,6 +52,19 @@ is_none_value() {
   [[ -z "$value" || "$value" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+(external[[:space:]]+)?connectors|no[[:space:]]+skills|no[[:space:]]+templates|no[[:space:]]+patterns)$ ]]
 }
 
+normalize_list() {
+  printf '%s' "${1:-}" \
+    | tr ',;' '\n' \
+    | sed -E 's/<[^>]+>//g; s/`//g; s/^[-*[:space:]]+//; s/[[:space:]]+$//' \
+    | sed '/^$/d'
+}
+
+canon_key() {
+  printf '%s' "${1:-}" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/^mcp__//; s/__.*$//; s/^[[:space:]]+|[[:space:]]+$//g; s/[^a-z0-9_-]+/-/g; s/^-+|-+$//g'
+}
+
 newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1 || true; }
 
 any_evidence_matching() {
@@ -59,6 +72,13 @@ any_evidence_matching() {
   local f; f="$(_evidence_file)"
   [ -f "$f" ] || return 1
   grep -qE "$pattern" "$f" 2>/dev/null
+}
+
+connector_has_evidence() {
+  local key
+  key="$(canon_key "$1")"
+  [ -n "$key" ] || return 0
+  evidence_has connector_used "$key" 2>/dev/null || evidence_has "connector_${key}" 2>/dev/null
 }
 
 fail() {
@@ -125,7 +145,14 @@ if ! grep -qi 'Source of Truth Checks' "$PLAN" 2>/dev/null; then
 fi
 
 if ! is_none_value "$connectors"; then
-  evidence_has connector_used || fail "Route Plan declares connectors '$connectors' but no connector evidence exists." "use the relevant connector/source-of-truth before implementation, or change the plan to an explicit none/waiver."
+  missing=""
+  while IFS= read -r connector; do
+    [ -n "$connector" ] || continue
+    connector_has_evidence "$connector" || missing="${missing}${connector} "
+  done <<EOF_CONNECTORS
+$(normalize_list "$connectors")
+EOF_CONNECTORS
+  [ -z "$missing" ] || fail "Route Plan declares connectors '$connectors' but missing connector evidence for: ${missing}." "use each declared connector/source-of-truth before implementation, or change the plan to an explicit none/waiver."
 fi
 
 exit 0
