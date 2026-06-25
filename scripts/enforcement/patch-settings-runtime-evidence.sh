@@ -10,7 +10,7 @@ from pathlib import Path
 p = Path(sys.argv[1])
 d = json.loads(p.read_text())
 post = d.setdefault('hooks', {}).setdefault('PostToolUse', [])
-cmd = 'bash "$ENGINEERING_OS_HOME/scripts/enforcement/post-tool-use-mcp.sh" 2>/dev/null || true'
+cmd = 'bash "${' + 'ENGINEERING_OS_HOME:-$(pwd)' + '}/scripts/enforcement/post-tool-use-mcp.sh" 2>/dev/null || true'
 entry = {'matcher': 'mcp__.*', 'hooks': [{'type': 'command', 'command': cmd}]}
 if not any(isinstance(x, dict) and x.get('matcher') == 'mcp__.*' for x in post):
     post.insert(0, entry)
