@@ -112,6 +112,7 @@ jobs:
             test -f .github/workflows/pr-policy.yml
             test -f .github/workflows/plan-policy.yml
             test -f .github/workflows/connector-evidence-policy.yml
+            test -f .github/workflows/workflow-evidence-policy.yml
 
             # Idempotency: re-run should not duplicate managed block or commands.
             EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
