@@ -22,9 +22,11 @@ required_cases = {
     "missing_skill_selection",
 }
 seen = set()
+case_count = 0
 for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
     if not line.strip():
         continue
+    case_count += 1
     case = json.loads(line)
     missing = required_fields - set(case)
     if missing:
@@ -40,6 +42,8 @@ for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
 missing_cases = required_cases - seen
 if missing_cases:
     raise SystemExit(f"missing required eval cases: {sorted(missing_cases)}")
+if case_count != len(required_cases) or len(seen) != case_count:
+    raise SystemExit("eval case id set is inconsistent")
 
 print("✅ agent eval corpus schema is valid")
 PY
