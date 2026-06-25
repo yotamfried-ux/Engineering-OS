@@ -16,6 +16,13 @@ print(t.get("file_path","") or t.get("path","") or "")' 2>/dev/null || true)"
 [ -n "$FILE" ] || exit 0
 NORMALIZED="$(printf '%s' "$FILE" | tr '\\' '/')"
 
+first_after_dir() {
+  local path="$1" dir="$2" rest
+  rest="${path#*/${dir}/}"
+  rest="${rest#${dir}/}"
+  printf '%s' "${rest%%/*}"
+}
+
 case "$NORMALIZED" in
   core/task-router.md|*/core/task-router.md) evidence_record task_router_read 2>/dev/null || true ;;
   core/workflow.md|*/core/workflow.md) evidence_record workflow_read 2>/dev/null || true ;;
@@ -24,15 +31,15 @@ case "$NORMALIZED" in
   core/hooks-policy.md|*/core/hooks-policy.md) evidence_record read_hooks_policy 2>/dev/null || true ;;
   core/connector-policy.md|*/core/connector-policy.md) evidence_record source_truth_checked connector-policy 2>/dev/null || true ;;
   patterns/*|*/patterns/*)
-    dom="$(printf '%s' "$NORMALIZED" | awk -F'/patterns/' '{print $2}' | cut -d/ -f1)"
+    dom="$(first_after_dir "$NORMALIZED" patterns)"
     [ -n "$dom" ] && evidence_record "patterns_read_${dom}" 2>/dev/null || true
     [ -n "$dom" ] && evidence_record pattern_used "$dom" 2>/dev/null || true ;;
   templates/*|*/templates/*)
-    tmpl="$(printf '%s' "$NORMALIZED" | awk -F'/templates/' '{print $2}' | cut -d/ -f1)"
+    tmpl="$(first_after_dir "$NORMALIZED" templates)"
     evidence_record templates_read 2>/dev/null || true
     [ -n "$tmpl" ] && evidence_record template_used "$tmpl" 2>/dev/null || true ;;
   external-systems/*|*/external-systems/*)
-    system="$(printf '%s' "$NORMALIZED" | awk -F'/external-systems/' '{print $2}' | cut -d/ -f1)"
+    system="$(first_after_dir "$NORMALIZED" external-systems)"
     evidence_record source_truth_checked "$system" 2>/dev/null || true
     evidence_record "external_system_${system}" 2>/dev/null || true ;;
   .claude/plans/*.md|*/.claude/plans/*.md)
