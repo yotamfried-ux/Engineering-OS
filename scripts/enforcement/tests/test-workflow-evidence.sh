@@ -11,11 +11,14 @@ cd "$TMP"
 git init -q
 git config user.email test@example.com
 git config user.name test
-mkdir -p .claude/plans src
 echo initial > README.md
 git add README.md
 git commit -qm initial
 BASE="$(git rev-parse HEAD)"
+
+reset_workspace() {
+  mkdir -p .claude/plans src
+}
 
 expect_pass() {
   local name="$1"
@@ -66,6 +69,7 @@ PLAN
 
 # Code without plan fails.
 git checkout -q -b code-without-plan "$BASE"
+reset_workspace
 echo 'console.log("hello")' > src/app.js
 git add src/app.js
 git commit -qm code-without-plan
@@ -73,6 +77,7 @@ expect_fail code-without-plan "$(git rev-parse HEAD)"
 
 # Plan and code in same commit fails because order is not proven.
 git checkout -q -b plan-and-code-same-commit "$BASE"
+reset_workspace
 write_good_plan .claude/plans/task.md
 echo 'console.log("hello")' > src/app.js
 git add .claude/plans/task.md src/app.js
@@ -81,9 +86,11 @@ expect_fail plan-and-code-same-commit "$(git rev-parse HEAD)"
 
 # Plan before code passes.
 git checkout -q -b plan-before-code "$BASE"
+reset_workspace
 write_good_plan .claude/plans/task.md
 git add .claude/plans/task.md
 git commit -qm plan-first
+reset_workspace
 echo 'console.log("hello")' > src/app.js
 git add src/app.js
 git commit -qm code-second
@@ -91,6 +98,7 @@ expect_pass plan-before-code "$(git rev-parse HEAD)"
 
 # Missing task-router evidence fails.
 git checkout -q -b missing-router-evidence "$BASE"
+reset_workspace
 write_good_plan .claude/plans/task.md
 python3 - <<'PY'
 from pathlib import Path
@@ -105,6 +113,7 @@ expect_fail missing-router-evidence "$(git rev-parse HEAD)"
 
 # Missing source-of-truth checks fails.
 git checkout -q -b missing-source-checks "$BASE"
+reset_workspace
 write_good_plan .claude/plans/task.md
 python3 - <<'PY'
 from pathlib import Path
@@ -119,6 +128,7 @@ expect_fail missing-source-checks "$(git rev-parse HEAD)"
 
 # Declared skill without evidence fails.
 git checkout -q -b missing-skill-evidence "$BASE"
+reset_workspace
 write_good_plan .claude/plans/task.md
 python3 - <<'PY'
 from pathlib import Path
@@ -132,6 +142,7 @@ expect_fail missing-skill-evidence "$(git rev-parse HEAD)"
 
 # Template gap without waiver or learning/template artifact fails.
 git checkout -q -b template-gap-no-waiver "$BASE"
+reset_workspace
 write_good_plan .claude/plans/task.md
 python3 - <<'PY'
 from pathlib import Path
@@ -146,6 +157,7 @@ expect_fail template-gap-no-waiver "$(git rev-parse HEAD)"
 
 # Template gap with waiver passes.
 git checkout -q -b template-gap-with-waiver "$BASE"
+reset_workspace
 write_good_plan .claude/plans/task.md
 python3 - <<'PY'
 from pathlib import Path
