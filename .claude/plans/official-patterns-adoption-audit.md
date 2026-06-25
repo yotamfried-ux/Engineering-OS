@@ -31,6 +31,10 @@
 |---|---|
 | GitHub | Used GitHub connector to read `CLAUDE.md`, `core/task-router.md`, `core/workflow.md`, `core/coderabbit-policy.md`, compare the branch against `main`, and open PR #81. |
 
+## Skill Evidence
+
+No skill was required or executed in this audit-only PR. This section is intentionally explicit so review and policy gates do not infer hidden skill execution.
+
 ## Template Gap Waiver
 
 This is an audit/documentation PR, not an implementation scaffold. No code template is required. The waiver is intentionally limited to this audit stage and must not be reused for runtime hook or connector implementation PRs.
