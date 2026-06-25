@@ -5,8 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
 
 RUNTIME_STATUS="runtime evidence checker missing"
-if [ -x "$SCRIPT_DIR/check-runtime-evidence.sh" ]; then
-  RUNTIME_OUT="$($SCRIPT_DIR/check-runtime-evidence.sh 2>&1)"
+if [ -f "$SCRIPT_DIR/check-runtime-evidence.sh" ]; then
+  RUNTIME_OUT="$(bash "$SCRIPT_DIR/check-runtime-evidence.sh" 2>&1)"
   RUNTIME_CODE="$?"
   if [ "$RUNTIME_CODE" -ne 0 ]; then
     MSG="$(printf '%s' "$RUNTIME_OUT" | tr '\n' ' ')"
