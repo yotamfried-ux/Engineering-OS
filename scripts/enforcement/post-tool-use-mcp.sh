@@ -5,19 +5,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
 
 INPUT="$(cat 2>/dev/null || true)"
-TOOL_NAME="$(printf '%s' "$INPUT" | python3 -c 'import json,sys
+PARSED="$(printf '%s' "$INPUT" | python3 -c 'import json,sys,re
 try:
  d=json.load(sys.stdin)
 except Exception:
  print(""); sys.exit(0)
-print(d.get("tool_name") or d.get("tool") or "")' 2>/dev/null || true)"
+name=d.get("tool_name") or d.get("tool") or ""
+if not name.startswith("mcp__") or "__" not in name[5:]:
+ print(""); sys.exit(0)
+connector=name.split("__",2)[1].lower()
+connector=re.sub(r"[^a-z0-9_-]", "", connector)
+print(connector)' 2>/dev/null || true)"
 
-case "$TOOL_NAME" in
-  mcp__*__*) ;;
-  *) exit 0 ;;
-esac
-
-CONNECTOR="$(printf '%s' "$TOOL_NAME" | sed -E 's/^mcp__([^_]+)__.*/\1/' | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9_-')"
+CONNECTOR="$PARSED"
 [ -n "$CONNECTOR" ] || exit 0
 
 evidence_record connector_used "$CONNECTOR" 2>/dev/null || true
