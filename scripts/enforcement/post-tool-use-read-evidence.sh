@@ -44,7 +44,17 @@ case "$NORMALIZED" in
     evidence_record "external_system_${system}" 2>/dev/null || true ;;
   .claude/plans/*.md|*/.claude/plans/*.md)
     fname="$(basename "$NORMALIZED" .md)"
-    total="$(awk '/^- \[[x ]\]/ { count++ } END { print count+0 }' "$FILE" 2>/dev/null)"
+    total="$(python3 - "$NORMALIZED" <<'PY'
+from pathlib import Path
+import sys
+try:
+    lines = Path(sys.argv[1]).read_text().splitlines()
+except Exception:
+    print(0)
+else:
+    print(sum(1 for line in lines if line.startswith('- [x]') or line.startswith('- [ ]')))
+PY
+)"
     total="${total:-0}"
     existing="$(evidence_get "dod_initial_${fname}" 2>/dev/null || true)"
     [ -n "$existing" ] || evidence_record "dod_initial_${fname}" "$total" 2>/dev/null || true ;;
