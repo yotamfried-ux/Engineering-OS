@@ -1,0 +1,146 @@
+# Engineering OS capability registry
+#
+# Status: skeleton / non-runtime.
+#
+# This file records the minimal capability vocabulary selected by the
+# official-patterns adoption audit. It is intentionally not wired to hooks yet.
+# Runtime use must be introduced in a later PR with tests.
+
+version: 1
+status: skeleton
+runtime_enabled: false
+
+principles:
+  - Keep the registry small.
+  - Add a capability only when it maps to an observed Engineering OS failure.
+  - Prefer official Anthropic / MCP / GitHub / OpenAI surfaces.
+  - Skills are packaging units; hooks and validators decide what is required.
+  - Connectors should start narrow and read-oriented.
+  - Every runtime capability must have a test before it is enforced.
+
+source_classes:
+  skill:
+    description: "A Claude Code skill packaged using official SKILL.md format."
+  connector:
+    description: "An external source or tool, preferably exposed through MCP."
+  source_of_truth:
+    description: "A repo file, spec, official doc, or project-management record used before implementation."
+  validator:
+    description: "A local check that verifies a required condition."
+
+task_classes:
+  engineering_os_governance:
+    description: "Changes to CLAUDE.md, core policies, hooks, scripts, skills, connectors, workflows, or adoption docs."
+    required_capabilities:
+      - routing.task_router_read
+      - workflow.workflow_read
+      - source.github_repo_read
+      - plan.route_plan_before_write
+      - validation.coderabbit_policy
+
+  code_change:
+    description: "Implementation, refactor, or behavior change in a project."
+    required_capabilities:
+      - routing.task_router_read
+      - workflow.workflow_read
+      - plan.route_plan_before_write
+      - source.github_repo_read
+
+  external_library_or_api:
+    description: "Work involving external packages, SDKs, APIs, frameworks, or services."
+    required_capabilities:
+      - source.official_docs_checked
+      - source.context7_when_available
+
+  pr_or_merge_workflow:
+    description: "Opening, updating, reviewing, or merging a pull request."
+    required_capabilities:
+      - source.github_repo_read
+      - validation.actions_checked
+      - validation.review_checked
+      - validation.user_merge_approval
+
+capabilities:
+  routing.task_router_read:
+    kind: source_of_truth
+    official_basis: "Engineering OS core/task-router.md"
+    evidence_goal: "record that core/task-router.md was read before implementation"
+    runtime_status: planned
+
+  workflow.workflow_read:
+    kind: source_of_truth
+    official_basis: "Engineering OS core/workflow.md"
+    evidence_goal: "record that core/workflow.md was read before implementation"
+    runtime_status: planned
+
+  plan.route_plan_before_write:
+    kind: validator
+    official_basis: "Claude Code PreToolUse / Stop hook lifecycle"
+    evidence_goal: "route plan exists before implementation actions"
+    runtime_status: planned
+
+  source.github_repo_read:
+    kind: connector
+    official_basis: "GitHub official MCP server, narrowed/read-oriented profile"
+    evidence_goal: "record repo or PR read operation before repo changes"
+    runtime_status: planned
+
+  source.official_docs_checked:
+    kind: source_of_truth
+    official_basis: "Official vendor documentation or repository"
+    evidence_goal: "record official source checked for external API/library decisions"
+    runtime_status: planned
+
+  source.context7_when_available:
+    kind: connector
+    official_basis: "Engineering OS workflow Context7 step"
+    evidence_goal: "record Context7 or approved fallback when external docs are required"
+    runtime_status: planned
+
+  validation.coderabbit_policy:
+    kind: validator
+    official_basis: "Engineering OS core/coderabbit-policy.md"
+    evidence_goal: "record that PR workflow follows CodeRabbit policy"
+    runtime_status: planned
+
+  validation.actions_checked:
+    kind: validator
+    official_basis: "GitHub Actions"
+    evidence_goal: "record workflow checks before merge"
+    runtime_status: planned
+
+  validation.review_checked:
+    kind: validator
+    official_basis: "CodeRabbit / reviewer feedback loop"
+    evidence_goal: "record review checked and comments handled"
+    runtime_status: planned
+
+  validation.user_merge_approval:
+    kind: validator
+    official_basis: "Yotam explicit approval policy"
+    evidence_goal: "record explicit user approval before merge"
+    runtime_status: planned
+
+rejected_for_now:
+  openai_agents_runtime_migration:
+    reason: "Different runtime; not needed to strengthen Claude Code workflow."
+  openai_guardrails_primary_layer:
+    reason: "Does not directly control Claude Code built-in tools or MCP execution."
+  mcp_reference_servers_as_runtime:
+    reason: "Reference implementations, not the selected production runtime path."
+  broad_skill_import:
+    reason: "Adds maintenance and context cost before solving the observed failures."
+  broad_connector_expansion:
+    reason: "Adds ambiguity and access surface without a concrete failure mapping."
+
+next_pr_contract:
+  may_use:
+    - routing.task_router_read
+    - workflow.workflow_read
+    - plan.route_plan_before_write
+    - source.github_repo_read
+  must_not_do:
+    - enable runtime enforcement without tests
+    - add managed settings lockdown
+    - import broad skill packs
+    - add broad MCP connector access
