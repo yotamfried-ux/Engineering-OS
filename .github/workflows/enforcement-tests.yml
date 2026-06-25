@@ -96,6 +96,16 @@ jobs:
             test -f .claude/commands/superpowers-plan.md
             grep -q 'enforce-bash-entry.sh' .claude/settings.json
             grep -q 'enforce-workflow.sh' .claude/settings.json
+            grep -q 'post-tool-use-mcp.sh' .claude/settings.json
+            python3 - <<'PY'
+import json
+from pathlib import Path
+s=json.loads(Path('.claude/settings.json').read_text())
+assert any(x.get('matcher') == 'mcp__.*' for x in s['hooks']['PostToolUse'])
+stop_cmd = s['hooks']['Stop'][0]['hooks'][0]['command']
+assert 'post-stop-hook.sh' in stop_cmd
+assert '|| true' not in stop_cmd
+PY
 
             # Git hooks copied from Engineering OS
             test -x .git/hooks/pre-commit
