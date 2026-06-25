@@ -52,48 +52,38 @@ record_read() {
 
 expect_pass() {
   local name="$1"; shift
-  if "$@"; then
-    echo "  ✅ $name"
-  else
-    echo "  ❌ expected $name to pass"
-    exit 1
-  fi
+  if "$@"; then echo "  ✅ $name"; else echo "  ❌ expected $name to pass"; exit 1; fi
 }
 
 expect_fail() {
   local name="$1"; shift
-  if "$@"; then
-    echo "  ❌ expected $name to fail"
-    exit 1
-  else
-    echo "  ✅ $name"
-  fi
+  if "$@"; then echo "  ❌ expected $name to fail"; exit 1; else echo "  ✅ $name"; fi
 }
 
-# Stop-time checker: no declared connectors or skills should pass with no evidence.
 : > .claude/.evidence/ledger
 write_plan none none
 expect_pass "stop checker allows none-needed plan" "$CHECKER" .claude/plans/task.md
 
-# Stop-time checker: declared connector should fail before a connector tool records evidence.
 : > .claude/.evidence/ledger
 write_plan GitHub none
 expect_fail "stop checker blocks missing connector evidence" "$CHECKER" .claude/plans/task.md
 
-# Generic MCP recorder should satisfy connector evidence.
 printf '{"tool_name":"mcp__GitHub__search","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER"
 expect_pass "stop checker accepts connector evidence" "$CHECKER" .claude/plans/task.md
 grep -q 'connector_used' .claude/.evidence/ledger
 grep -q 'connector_github' .claude/.evidence/ledger
 
-# Declared superpowers-verify should fail until evidence exists.
+: > .claude/.evidence/ledger
+write_plan GitHub none
+printf '{"tool_name":"mcp__Sentry__search","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER"
+expect_fail "stop checker rejects wrong connector evidence" "$CHECKER" .claude/plans/task.md
+
 : > .claude/.evidence/ledger
 write_plan none superpowers-verify
 expect_fail "stop checker blocks missing skill evidence" "$CHECKER" .claude/plans/task.md
 printf '%s\tsuperpowers_verify_run\t\n' "$(date +%s)" >> .claude/.evidence/ledger
 expect_pass "stop checker accepts skill evidence" "$CHECKER" .claude/plans/task.md
 
-# Connector plus skill requires both.
 : > .claude/.evidence/ledger
 write_plan Sentry superpowers-verify
 printf '{"tool_name":"mcp__Sentry__search","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER"
@@ -101,14 +91,12 @@ expect_fail "stop checker still blocks missing skill evidence" "$CHECKER" .claud
 printf '%s\tsuperpowers_verify_run\t\n' "$(date +%s)" >> .claude/.evidence/ledger
 expect_pass "stop checker accepts connector plus skill evidence" "$CHECKER" .claude/plans/task.md
 
-# Pre-write runtime gate: route plan files themselves must remain writable first.
 rm -rf .claude/plans .claude/.evidence
 mkdir -p .claude/plans .claude/.evidence
 : > .claude/.evidence/ledger
 expect_pass "prewrite allows creating route plan first" run_precheck .claude/plans/new-task.md
 expect_fail "prewrite blocks code write without route plan" run_precheck src/app.ts
 
-# Pre-write runtime gate: plan is not enough; task-router/workflow must be read this session.
 write_plan none none
 expect_fail "prewrite blocks plan-only code write without router/workflow reads" run_precheck src/app.ts
 record_read core/task-router.md
@@ -116,14 +104,12 @@ expect_fail "prewrite still blocks until workflow is read" run_precheck src/app.
 record_read core/workflow.md
 expect_pass "prewrite allows code after router/workflow reads" run_precheck src/app.ts
 
-# Source-of-truth section is required before implementation writes.
 : > .claude/.evidence/ledger
 write_plan none none none none no
 record_read core/task-router.md
 record_read core/workflow.md
 expect_fail "prewrite blocks missing source-of-truth section" run_precheck src/app.ts
 
-# Declared templates require template read evidence before code writes.
 : > .claude/.evidence/ledger
 write_plan none none templates/github-actions none
 record_read core/task-router.md
@@ -134,7 +120,6 @@ touch templates/github-actions/security-review-nvidia.yml
 record_read templates/github-actions/security-review-nvidia.yml
 expect_pass "prewrite accepts template read evidence" run_precheck src/app.ts
 
-# Declared patterns require pattern read evidence before code writes.
 : > .claude/.evidence/ledger
 write_plan none none none patterns/api
 record_read core/task-router.md
@@ -145,7 +130,6 @@ touch patterns/api/rest-api.md
 record_read patterns/api/rest-api.md
 expect_pass "prewrite accepts pattern read evidence" run_precheck src/app.ts
 
-# Declared connectors require connector evidence before implementation writes.
 : > .claude/.evidence/ledger
 write_plan GitHub none none none
 record_read core/task-router.md
@@ -153,5 +137,27 @@ record_read core/workflow.md
 expect_fail "prewrite blocks declared connector without connector use" run_precheck src/app.ts
 printf '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER"
 expect_pass "prewrite accepts connector evidence" run_precheck src/app.ts
+
+: > .claude/.evidence/ledger
+write_plan none superpowers-verify none none
+record_read core/task-router.md
+record_read core/workflow.md
+expect_fail "prewrite blocks declared skill without skill evidence" run_precheck src/app.ts
+printf '%s\tsuperpowers_verify_run\t\n' "$(date +%s)" >> .claude/.evidence/ledger
+expect_pass "prewrite accepts skill evidence" run_precheck src/app.ts
+
+: > .claude/.evidence/ledger
+cat > .claude/plans/zero.md <<'PLAN'
+# Route Plan
+No checkbox items here.
+PLAN
+record_read .claude/plans/zero.md
+if grep -q $'dod_initial_zero\t0$' .claude/.evidence/ledger; then
+  echo "  ✅ read recorder stores scalar zero DoD count"
+else
+  echo "  ❌ expected scalar zero DoD count"
+  cat .claude/.evidence/ledger
+  exit 1
+fi
 
 echo "runtime evidence checker tests passed"
