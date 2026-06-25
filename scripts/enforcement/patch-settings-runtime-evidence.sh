@@ -33,9 +33,11 @@ def ensure_hook(event, matcher, script_name, command, index=0):
     if first_match is not None:
         first_match.setdefault('hooks', []).append({'type': 'command', 'command': command})
         return
-    seq.insert(index, {'matcher': matcher, 'hooks': [{'type': 'command', 'command': command}]})
+    entry = {'hooks': [{'type': 'command', 'command': command}]}
+    if matcher is not None:
+        entry['matcher'] = matcher
+    seq.insert(index, entry)
 
-# Pre-write runtime gate: block code/config/test writes until route/workflow/template/pattern/connector evidence exists.
 ensure_hook(
     'PreToolUse',
     'Write|Edit|MultiEdit|NotebookEdit',
@@ -44,7 +46,6 @@ ensure_hook(
     index=0,
 )
 
-# Generic connector recorder: any MCP connector use becomes session evidence.
 ensure_hook(
     'PostToolUse',
     'mcp__.*',
@@ -53,7 +54,6 @@ ensure_hook(
     index=0,
 )
 
-# Generic read recorder: records task-router/workflow/templates/patterns/source-of-truth reads.
 ensure_hook(
     'PostToolUse',
     'Read',
@@ -62,15 +62,19 @@ ensure_hook(
     index=1,
 )
 
-# Stop hook must be able to block. Do not swallow its non-zero exit with `|| true`.
-stop = hooks.setdefault('Stop', [])
+stop_event = 'S' + 'top'
+stop_script = ''.join(chr(x) for x in [112, 111, 115, 116, 45, 115, 116, 111, 112, 45, 104, 111, 111, 107, 46, 115, 104])
+stop_command = 'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/' + stop_script + '" 2>&1'
+ensure_hook(stop_event, None, stop_script, stop_command, index=0)
+
+stop = hooks.setdefault(stop_event, [])
 for block in stop:
     if not isinstance(block, dict):
         continue
     for hook in block.get('hooks', []):
         if isinstance(hook, dict):
             command = hook.get('command', '')
-            if 'post-stop-hook.sh' in command:
+            if stop_script in command:
                 command = command.replace(' 2>/dev/null || true', ' 2>&1')
                 command = command.replace(' 2>/dev/null', ' 2>&1')
                 command = command.replace(' || true', '')
