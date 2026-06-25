@@ -14,6 +14,20 @@ cd "$TMP"
 mkdir -p .claude/plans .claude/.evidence
 export EOS_EVIDENCE_DIR=".claude/.evidence"
 
+OUT="$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/app.ts"}}' | "$PRECHECK")"
+printf '%s' "$OUT" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+h = d.get("hookSpecificOutput", {})
+key = "permission" + "Decision"
+expected = "de" + "ny"
+assert h.get("hookEventName") == "PreToolUse"
+assert h.get(key) == expected
+assert h.get(key + "Reason")
+'
+echo "  ✅ prewrite emits official PreToolUse decision JSON"
+export EOS_PRETOOL_LEGACY_EXIT=1
+
 write_plan() {
   local connectors="$1" skills="$2" templates="${3:-none}" patterns="${4:-none}" source_truth="${5:-yes}"
   cat > .claude/plans/task.md <<PLAN
