@@ -1,6 +1,6 @@
 ---
 name: engineering-route
-description: Use before Engineering OS repository changes to route the task, identify required sources, and create a plan before editing files.
+description: Use before Engineering OS repository changes to route the task, identify required sources, and prepare a route plan before editing files.
 allowed-tools:
   - Read
   - Glob
@@ -27,7 +27,7 @@ This package does not replace runtime gates. It packages the routing workflow in
 4. Identify the task class and domain tags.
 5. Identify required source-of-truth checks.
 6. Identify required connectors and skills, or document an explicit waiver.
-7. Create a route plan under `.claude/plans/` before editing implementation files.
+7. Prepare the route plan content for `.claude/plans/<task-name>.md`; persistence is handled by the active Engineering Route command or local hook that writes local plan files.
 8. Keep unfinished validation outside the plan checklist unless it has already been completed.
 
 ## Output contract
