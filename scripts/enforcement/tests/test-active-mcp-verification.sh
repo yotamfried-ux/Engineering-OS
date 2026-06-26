@@ -92,20 +92,34 @@ if not isinstance(args, list) or not isinstance(env, dict):
 
 if server.get("command") != "docker":
     raise SystemExit("github-readonly must run via docker")
-if "ghcr.io/github/github-mcp-server" not in args:
-    raise SystemExit("github-readonly must use the official GitHub MCP Server image")
+expected_args = [
+    "run",
+    "-i",
+    "--rm",
+    "-e",
+    "GITHUB_PERSONAL_ACCESS_TOKEN",
+    "-e",
+    "GITHUB_READ_ONLY",
+    "-e",
+    "GITHUB_TOOLSETS",
+    "ghcr.io/github/github-mcp-server",
+]
+if args != expected_args:
+    raise SystemExit("github-readonly profile must match the approved Docker argv exactly")
+
+expected_env = {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}",
+    "GITHUB_READ_ONLY": "1",
+    "GITHUB_TOOLSETS": "context,repos,pull_requests,issues,actions",
+}
+if env != expected_env:
+    raise SystemExit("github-readonly profile must match the approved environment map exactly")
 
 passed_env = {current for previous, current in zip(args, args[1:]) if previous == "-e"}
-if not set(env).issubset(passed_env):
-    raise SystemExit("github-readonly must pass every configured env key to docker")
-if "GITHUB_TOOLS" in env:
-    raise SystemExit("github-readonly must not use GITHUB_TOOLS in this proof")
-if env.get("GITHUB_READ_ONLY") != "1":
-    raise SystemExit("github-readonly must keep GITHUB_READ_ONLY=1")
-if env.get("GITHUB_PERSONAL_ACCESS_TOKEN") != "${GITHUB_PERSONAL_ACCESS_TOKEN}":
-    raise SystemExit("github-readonly token must use environment expansion only")
+if set(env) != passed_env:
+    raise SystemExit("github-readonly must pass exactly every configured env key to docker")
 
-items = {item.strip() for item in env.get("GITHUB_TOOLSETS", "").split(",") if item.strip()}
+items = {item.strip() for item in env["GITHUB_TOOLSETS"].split(",") if item.strip()}
 allowed = {"context", "repos", "pull_requests", "issues", "actions"}
 forbidden = {"all", "default", "git", "copilot", "notifications", "gists", "dependabot", "code_security", "discussions"}
 if items != allowed:
