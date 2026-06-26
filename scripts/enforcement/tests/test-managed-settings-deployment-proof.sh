@@ -18,14 +18,18 @@ settings = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
 
 required_runbook_terms = [
     "templates/settings/claude-managed-lockdown.json",
-    "repository template -> system managed settings path -> Claude Code status/permissions evidence -> rollback",
+    "repository template -> safety preflight -> system managed settings path -> Claude Code status/permissions evidence -> rollback or restore",
     "Do not use this runbook to:",
     "Copy the template into `.claude/settings.json`.",
     "Enable managed settings from `use-in-project.sh`.",
     "Add `allowManagedPermissionRulesOnly`.",
     "allowManagedPermissionRulesOnly` remains deferred",
+    "Active deployment is blocked until managed hook replacements are available.",
+    "Do not run the active deployment commands below until the safety preflight passes.",
     "sudo install -d /etc/claude-code",
     "/etc/claude-code/managed-settings.json",
+    "BACKUP_PATH=\"\"",
+    "sudo cp -p \"$MANAGED_SETTINGS_PATH\" \"$BACKUP_PATH\"",
     "sudo install -d \"/Library/Application Support/ClaudeCode\"",
     "/Library/Application Support/ClaudeCode/managed-settings.json",
     "claude doctor",
@@ -33,8 +37,8 @@ required_runbook_terms = [
     "/permissions",
     "sha256sum templates/settings/claude-managed-lockdown.json",
     "Deployment Evidence Record",
-    "Rollback",
-    "Completion criteria",
+    "Rollback or restore",
+    "Full active deployment proof is complete only after a future PR adds managed hook replacements",
 ]
 
 for term in required_runbook_terms:
@@ -60,6 +64,16 @@ if settings.get("allowedMcpServers") != [{"serverName": "github-readonly"}]:
 for deferred in ("skills", "agents", "permissions"):
     if deferred in settings:
         raise SystemExit(f"{deferred} must not be locked in this deployment proof")
+
+if settings.get("allowManagedHooksOnly") is True and "hooks" not in settings:
+    required_safety_terms = [
+        "STOP: allowManagedHooksOnly is true but no managed hooks are defined.",
+        "The current template sets `allowManagedHooksOnly: true`. Active deployment is blocked unless managed replacement hooks are deployed at the same managed scope.",
+        "The safety preflight blocks active deployment while managed hook replacements are absent.",
+    ]
+    for term in required_safety_terms:
+        if term not in runbook:
+            raise SystemExit(f"runbook must document hook-lockout safety gate: {term}")
 
 print("✅ managed settings deployment proof is valid")
 PY
