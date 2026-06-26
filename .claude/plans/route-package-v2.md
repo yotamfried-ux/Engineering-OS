@@ -48,6 +48,8 @@ Add one route package and validator only. Do not migrate all external entries, d
 - [x] Read external registry.
 - [x] Read orchestration policy.
 - [x] Read enforcement workflow.
+- [x] Read core/task-router.md.
+- [x] Read core/workflow.md.
 
 ## Remaining Validation Outside This Plan
 
