@@ -72,7 +72,8 @@ import json
 from pathlib import Path
 
 settings = json.loads(Path("templates/settings/claude-managed-lockdown.json").read_text())
-if settings.get("allowManagedHooksOnly") is True and "hooks" not in settings:
+hooks = settings.get("hooks")
+if settings.get("allowManagedHooksOnly") is True and not hooks:
     raise SystemExit(
         "STOP: allowManagedHooksOnly is true but no managed hooks are defined. "
         "Active deployment is blocked until managed hook replacements are available."
@@ -211,6 +212,7 @@ If a backup was created, restore it. If no previous file existed, remove only th
 Restore previous managed settings:
 
 ```bash
+BACKUP_PATH="<paste the recorded backup path here>"
 sudo cp -p "$BACKUP_PATH" /etc/claude-code/managed-settings.json
 ```
 
@@ -225,6 +227,7 @@ sudo rm -f /etc/claude-code/managed-settings.json
 Restore previous managed settings:
 
 ```bash
+BACKUP_PATH="<paste the recorded backup path here>"
 sudo cp -p "$BACKUP_PATH" "/Library/Application Support/ClaudeCode/managed-settings.json"
 ```
 
