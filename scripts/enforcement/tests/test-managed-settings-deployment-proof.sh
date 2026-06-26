@@ -48,10 +48,16 @@ for term in required_runbook_terms:
     if term not in runbook:
         raise SystemExit(f"managed settings deployment proof missing: {term}")
 
-if ".claude/settings.json" in runbook:
-    allowed_context = "Copy the template into `.claude/settings.json`."
-    if allowed_context not in runbook:
-        raise SystemExit("runbook must not direct deployment into .claude/settings.json")
+exclusions_header = "Do not use this runbook to:"
+_, sep, tail = runbook.partition(exclusions_header)
+if not sep:
+    raise SystemExit("runbook must include the exclusions block")
+
+exclusions_block, _, remainder = tail.partition("\n## ")
+if "Copy the template into `.claude/settings.json`." not in exclusions_block:
+    raise SystemExit("runbook must explicitly exclude .claude/settings.json deployment")
+if ".claude/settings.json" in remainder:
+    raise SystemExit("runbook must not direct deployment into .claude/settings.json")
 
 if settings.get("allowManagedHooksOnly") is not True:
     raise SystemExit("template must keep allowManagedHooksOnly true")
