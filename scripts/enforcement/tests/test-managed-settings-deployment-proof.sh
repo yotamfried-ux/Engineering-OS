@@ -26,10 +26,13 @@ required_runbook_terms = [
     "allowManagedPermissionRulesOnly` remains deferred",
     "Active deployment is blocked until managed hook replacements are available.",
     "Do not run the active deployment commands below until the safety preflight passes.",
+    "hooks = settings.get(\"hooks\")",
+    "if settings.get(\"allowManagedHooksOnly\") is True and not hooks:",
     "sudo install -d /etc/claude-code",
     "/etc/claude-code/managed-settings.json",
     "BACKUP_PATH=\"\"",
     "sudo cp -p \"$MANAGED_SETTINGS_PATH\" \"$BACKUP_PATH\"",
+    "BACKUP_PATH=\"<paste the recorded backup path here>\"",
     "sudo install -d \"/Library/Application Support/ClaudeCode\"",
     "/Library/Application Support/ClaudeCode/managed-settings.json",
     "claude doctor",
@@ -65,7 +68,7 @@ for deferred in ("skills", "agents", "permissions"):
     if deferred in settings:
         raise SystemExit(f"{deferred} must not be locked in this deployment proof")
 
-if settings.get("allowManagedHooksOnly") is True and "hooks" not in settings:
+if settings.get("allowManagedHooksOnly") is True and not settings.get("hooks"):
     required_safety_terms = [
         "STOP: allowManagedHooksOnly is true but no managed hooks are defined.",
         "The current template sets `allowManagedHooksOnly: true`. Active deployment is blocked unless managed replacement hooks are deployed at the same managed scope.",
