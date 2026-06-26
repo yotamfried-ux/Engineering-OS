@@ -62,6 +62,9 @@ Do not:
 - [x] Read managed settings rollout doc.
 - [x] Read enforcement-tests workflow.
 - [x] Read existing managed settings template validator.
+- [x] Added safety preflight that blocks active deployment while managed hook replacements are absent.
+- [x] Added backup/restore instructions for pre-existing managed settings files.
+- [x] Updated the validator to enforce the safety preflight and backup/restore requirements.
 
 ## Remaining Validation Outside This Plan
 
