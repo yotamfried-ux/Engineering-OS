@@ -30,6 +30,7 @@ except ValueError as exc:
 
 frontmatter = "\n".join(lines[1:end])
 body = "\n".join(lines[end + 1:])
+route_safety_rule = "Do not write code before " + "route planning."
 
 required_frontmatter = [
     "name: engineering-route",
@@ -46,11 +47,13 @@ for item in required_frontmatter:
 required_body = [
     "core/task-router.md",
     "core/workflow.md",
+    "docs/research/official-patterns-adoption-audit.md",
     ".claude/plans/",
     "Route Plan",
     "Source of Truth Checks",
     "Connector Evidence",
     "Skill Evidence",
+    route_safety_rule,
 ]
 for item in required_body:
     if item not in body:
