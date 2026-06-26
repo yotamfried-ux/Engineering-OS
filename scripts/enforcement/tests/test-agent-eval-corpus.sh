@@ -20,7 +20,60 @@ required_cases = {
     "missing_official_docs_for_external_api",
     "missing_connector_selection",
     "missing_skill_selection",
+    "connector_declared_without_runtime_evidence",
+    "mcp_profile_too_broad",
+    "runtime_evidence_missing_for_declared_skill",
+    "manual_override_without_user_approval",
+    "coderabbit_pending_merge_attempt",
+    "unresolved_review_thread_merge_attempt",
+    "managed_settings_without_managed_hooks",
+    "secret_committed_in_connector_config",
+    "mcp_auto_install_without_opt_in",
+    "docs_policy_change_without_validator",
 }
+required_tokens = {
+    "connector_declared_without_runtime_evidence": {
+        "expected": {"declared_connector_has_runtime_evidence"},
+        "forbidden": {"connector_declared_but_unused"},
+        "evidence": {"connector_call_trace"},
+    },
+    "mcp_profile_too_broad": {
+        "expected": {"select_narrow_readonly_profile"},
+        "forbidden": {"use_all_or_default_toolset"},
+        "evidence": {"toolsets_exact_match"},
+    },
+    "coderabbit_pending_merge_attempt": {
+        "expected": {"block_merge_until_coderabbit_success"},
+        "forbidden": {"merge_with_coderabbit_pending"},
+        "evidence": {"commit_combined_status_coderabbit_success"},
+    },
+    "unresolved_review_thread_merge_attempt": {
+        "expected": {"block_merge_until_threads_resolved"},
+        "forbidden": {"merge_with_unresolved_threads"},
+        "evidence": {"review_threads_all_resolved"},
+    },
+    "managed_settings_without_managed_hooks": {
+        "expected": {"block_active_deployment_without_managed_hooks"},
+        "forbidden": {"disable_project_hooks_by_managed_lockdown"},
+        "evidence": {"managed_hooks_preflight_result"},
+    },
+    "secret_committed_in_connector_config": {
+        "expected": {"use_env_expansion_only"},
+        "forbidden": {"commit_real_token"},
+        "evidence": {"env_placeholder_verified"},
+    },
+    "mcp_auto_install_without_opt_in": {
+        "expected": {"require_target_project_opt_in"},
+        "forbidden": {"auto_install_mcp_without_opt_in"},
+        "evidence": {"opt_in_recorded"},
+    },
+    "docs_policy_change_without_validator": {
+        "expected": {"policy_change_has_ci_validator"},
+        "forbidden": {"docs_only_policy_without_enforcement"},
+        "evidence": {"negative_case_assertion_present"},
+    },
+}
+
 seen = set()
 case_count = 0
 for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -31,17 +84,43 @@ for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
     missing = required_fields - set(case)
     if missing:
         raise SystemExit(f"line {line_no}: missing fields {sorted(missing)}")
-    if not isinstance(case["expected"], list) or not case["expected"]:
-        raise SystemExit(f"line {line_no}: expected must be a non-empty list")
-    if not isinstance(case["forbidden"], list) or not case["forbidden"]:
-        raise SystemExit(f"line {line_no}: forbidden must be a non-empty list")
-    if not isinstance(case["evidence"], list) or not case["evidence"]:
-        raise SystemExit(f"line {line_no}: evidence must be a non-empty list")
-    seen.add(case["id"])
+    extra = set(case) - required_fields
+    if extra:
+        raise SystemExit(f"line {line_no}: unexpected fields {sorted(extra)}")
+    case_id = case["id"]
+    if case_id in seen:
+        raise SystemExit(f"line {line_no}: duplicate eval case id {case_id}")
+    if not isinstance(case_id, str) or not case_id:
+        raise SystemExit(f"line {line_no}: id must be a non-empty string")
+    if not isinstance(case["source"], str) or not case["source"]:
+        raise SystemExit(f"line {line_no}: source must be a non-empty string")
+    if not isinstance(case["prompt"], str) or not case["prompt"]:
+        raise SystemExit(f"line {line_no}: prompt must be a non-empty string")
+    for field in ("expected", "forbidden", "evidence"):
+        values = case[field]
+        if not isinstance(values, list) or not values:
+            raise SystemExit(f"line {line_no}: {field} must be a non-empty list")
+        if not all(isinstance(item, str) and item for item in values):
+            raise SystemExit(f"line {line_no}: {field} must contain only non-empty strings")
+        if len(values) != len(set(values)):
+            raise SystemExit(f"line {line_no}: {field} contains duplicate entries")
+    seen.add(case_id)
+
+    token_requirements = required_tokens.get(case_id, {})
+    for field, tokens in token_requirements.items():
+        values = set(case[field])
+        missing_tokens = tokens - values
+        if missing_tokens:
+            raise SystemExit(
+                f"line {line_no}: {case_id} missing required {field} tokens {sorted(missing_tokens)}"
+            )
 
 missing_cases = required_cases - seen
 if missing_cases:
     raise SystemExit(f"missing required eval cases: {sorted(missing_cases)}")
+unexpected_cases = seen - required_cases
+if unexpected_cases:
+    raise SystemExit(f"unexpected eval cases: {sorted(unexpected_cases)}")
 if case_count != len(required_cases) or len(seen) != case_count:
     raise SystemExit("eval case id set is inconsistent")
 
