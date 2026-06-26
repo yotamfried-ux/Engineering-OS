@@ -44,13 +44,13 @@ Do not:
 - Add a new eval runner framework.
 - Add external dependencies.
 
-## Planned Work
+## Completed Work
 
 - [x] Read existing eval corpus.
 - [x] Read existing eval corpus validator.
-- [ ] Add real incident-derived eval cases for CodeRabbit, review threads, MCP scope, runtime evidence, managed settings, secrets, and auto-install boundaries.
-- [ ] Update the validator to require the expanded case set and reject duplicate or malformed rows.
-- [ ] Open PR and validate with Actions + CodeRabbit.
+- [x] Added real incident-derived eval cases for CodeRabbit, review threads, MCP scope, runtime evidence, managed settings, secrets, and auto-install boundaries.
+- [x] Updated the validator to require the expanded case set and reject duplicate or malformed rows.
+- [x] Added required token checks for the highest-risk eval cases.
 
 ## Remaining Validation Outside This Plan
 
