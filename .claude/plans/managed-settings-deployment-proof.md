@@ -65,6 +65,8 @@ Do not:
 - [x] Added safety preflight that blocks active deployment while managed hook replacements are absent.
 - [x] Added backup/restore instructions for pre-existing managed settings files.
 - [x] Updated the validator to enforce the safety preflight and backup/restore requirements.
+- [x] Tightened the safety preflight so empty or placeholder managed hook payloads do not pass.
+- [x] Made rollback restore snippets self-contained by requiring the recorded backup path in each block.
 
 ## Remaining Validation Outside This Plan
 
