@@ -2,9 +2,16 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-SKILL="$ROOT/.claude/skills/engineering-route/SKILL.md"
+SKILLS_DIR="$ROOT/.claude/skills"
+SKILL="$SKILLS_DIR/engineering-route/SKILL.md"
 
 test -f "$SKILL"
+
+count="$(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ')"
+if [ "$count" != "1" ]; then
+  echo "ERROR: exactly one project skill package is allowed in this rollout"
+  exit 1
+fi
 
 python3 - "$SKILL" <<'PY'
 import sys
