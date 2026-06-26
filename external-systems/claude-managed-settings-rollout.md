@@ -22,13 +22,14 @@ Deploy it only in an environment that intentionally supports Claude Code managed
 
 Claude Code managed scope is intended for security policies, compliance requirements, and standardized configurations that cannot be overridden. Managed settings have highest precedence over command-line, local, project, and user settings.
 
-Claude Code documents the following managed-only fields that are relevant to Engineering OS:
+Claude Code documents the following managed-only fields that are relevant to this first Engineering OS rollout:
 
 - `allowManagedHooksOnly`
 - `allowManagedMcpServersOnly`
-- `allowManagedPermissionRulesOnly`
 - `strictPluginOnlyCustomization`
 - `allowedMcpServers`
+
+`allowManagedPermissionRulesOnly` is intentionally deferred. It should be added only together with a managed `permissions` block, so existing user/project allow/ask/deny rules are not silently ignored.
 
 ## Scope
 
@@ -41,10 +42,10 @@ hooks,mcp
 It intentionally does not lock:
 
 ```text
-skills,agents
+skills,agents,permission-rules
 ```
 
-Skills are not locked yet because the project has not fully migrated selected skills to official managed/plugin-compatible locations. Agents are not locked because they are not part of the current failure set.
+Skills are not locked yet because the project has not fully migrated selected skills to official managed/plugin-compatible locations. Agents are not locked because they are not part of the current failure set. Permission rules are not locked yet because this PR does not provide managed replacement permission rules.
 
 ## Rollout rules
 
@@ -53,7 +54,7 @@ Skills are not locked yet because the project has not fully migrated selected sk
 - Deploy only through the managed settings paths documented by Claude Code.
 - Validate the template before deployment.
 - Pair this with the narrowed GitHub read-only connector profile.
-- Add a separate PR before expanding to skills, agents, or additional connector servers.
+- Add a separate PR before expanding to skills, agents, permission rules, or additional connector servers.
 
 ## Validation
 
@@ -63,4 +64,4 @@ The template is validated by:
 scripts/enforcement/tests/test-managed-settings-template.sh
 ```
 
-The test checks that the template keeps managed-only controls enabled, limits customization lockdown to `hooks` and `mcp`, and allowlists only the first approved connector profile.
+The test checks that the template keeps managed hooks and MCP controls enabled, defers permission-rule lockdown, limits customization lockdown to `hooks` and `mcp`, and allowlists only the first approved connector profile.
