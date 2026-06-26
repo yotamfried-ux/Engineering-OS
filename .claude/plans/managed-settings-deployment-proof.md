@@ -68,6 +68,7 @@ Do not:
 - [x] Tightened the safety preflight so empty or placeholder managed hook payloads do not pass.
 - [x] Made rollback restore snippets self-contained by requiring the recorded backup path in each block.
 - [x] Recorded CodeRabbit status refresh after a stale pending status despite a completed no-actionable-comments review.
+- [x] Hardened the `.claude/settings.json` destination guard so future contradictory deployment instructions fail CI.
 
 ## Remaining Validation Outside This Plan
 
