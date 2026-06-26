@@ -47,16 +47,15 @@ Do not:
 - Auto-install or auto-activate MCP in target projects.
 - Add a write profile.
 
-## Planned Work
+## Completed Work
 
 - [x] Read task router.
 - [x] Read workflow.
 - [x] Read GitHub read-only connector template.
 - [x] Read GitHub read-only connector profile doc.
 - [x] Read existing GitHub connector profile validator.
-- [ ] Add active MCP verification runbook.
-- [ ] Add active MCP verification validator.
-- [ ] Open PR and validate with Actions + CodeRabbit.
+- [x] Added active MCP verification runbook.
+- [x] Added active MCP verification validator.
 
 ## Remaining Validation Outside This Plan
 
