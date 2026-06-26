@@ -16,11 +16,13 @@ settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 required_true = [
     "allowManagedHooksOnly",
     "allowManagedMcpServersOnly",
-    "allowManagedPermissionRulesOnly",
 ]
 for key in required_true:
     if settings.get(key) is not True:
         raise SystemExit(f"{key} must be true")
+
+if "allowManagedPermissionRulesOnly" in settings:
+    raise SystemExit("permission-rule managed-only mode is deferred until managed rules exist")
 
 locked = settings.get("strictPluginOnlyCustomization")
 if locked != ["hooks", "mcp"]:
