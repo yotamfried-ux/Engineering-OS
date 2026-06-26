@@ -18,17 +18,28 @@ if not isinstance(server, dict):
 
 args = server.get("args", [])
 env = server.get("env", {})
+if not isinstance(args, list) or not isinstance(env, dict):
+    raise SystemExit("connector profile has invalid args or env")
+
+passed_env = {current for previous, current in zip(args, args[1:]) if previous == "-e"}
+if not set(env).issubset(passed_env):
+    raise SystemExit("connector profile does not pass every env key to docker")
+
+read_only_key = next((key for key in env if key.endswith("READ_ONLY")), None)
+token_key = next((key for key in env if key.endswith("TOKEN")), None)
+toolsets_key = next((key for key in env if key.endswith("TOOLSETS")), None)
 
 checks = [
     server.get("command") == "docker",
     "ghcr.io/github/github-mcp-server" in args,
-    env.get("GITHUB_READ_ONLY") == "1",
-    env.get("GITHUB_PERSONAL_ACCESS_TOKEN") == "${GITHUB_PERSONAL_ACCESS_TOKEN}",
+    read_only_key is not None and env.get(read_only_key) == "1",
+    token_key is not None and env.get(token_key) == "${" + token_key + "}",
+    toolsets_key is not None,
 ]
 if not all(checks):
     raise SystemExit("connector profile does not match required shape")
 
-items = {item.strip() for item in env.get("GITHUB_TOOLSETS", "").split(",") if item.strip()}
+items = {item.strip() for item in env.get(toolsets_key, "").split(",") if item.strip()}
 allowed = {"context", "repos", "pull_requests", "issues", "actions"}
 if items != allowed:
     raise SystemExit("connector profile toolset list changed")
