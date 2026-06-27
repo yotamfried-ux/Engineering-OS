@@ -1,14 +1,16 @@
 # Engineering OS capability registry
 #
-# Status: inventory-backed / non-runtime.
+# Status: inventory-backed / plan-level runtime gate.
 #
-# This file is the deterministic decision source for which capabilities must be
-# considered during task routing. It is not a runtime hook yet. Runtime
-# enforcement must be added only in a later PR with dedicated tests.
+# This is the deterministic source for task-class capability requirements.
+# Runtime enforcement is active at the Route Plan + write-gate layer: plans must
+# satisfy required capabilities, and implementation writes validate the active
+# plan before continuing.
 
 version: 2
 status: inventory_backed
-runtime_enabled: false
+runtime_enabled: true
+runtime_scope: plan_level_write_gate
 
 coverage_contract:
   minimum_total_connector_entries: 26
@@ -23,28 +25,21 @@ coverage_contract:
 
 principles:
   - Keep capability decisions explicit and evidence-backed.
-  - Add runtime enforcement only after registry coverage has tests.
-  - Every connector, skill, accelerator, and template family listed in repository docs must have a registry entry or an explicit removed/deprecated entry.
-  - Skills are workflow packages; LLM accelerators are support runtimes and must not be counted as ordinary skills.
+  - Runtime enforcement starts at the Route Plan and write-gate layer.
+  - Add live tool-call blocking beyond plan evidence only with dedicated tests.
+  - Skills are workflow packages; LLM accelerators are support runtimes.
   - Connectors start narrow and opt-in unless a separate PR proves a broader path.
   - Every task class must declare required evidence, not only a capability name.
   - Waivers must be explicit when an applicable capability is not used.
 
 source_classes:
-  skill:
-    description: "A Claude workflow capability or external skill wrapper listed under external-skills/."
-  llm_accelerator:
-    description: "A supporting model/runtime used for generation, review, summarization, or context-cost reduction."
-  connector:
-    description: "An external service, MCP connector, or source tool used to retrieve or update external state."
-  source_of_truth:
-    description: "A repo file, spec, official doc, or project-management record used before implementation."
-  validator:
-    description: "A local check that verifies a required condition."
-  template:
-    description: "A reusable project, hook, command, connector, settings, or workflow template."
-  pattern:
-    description: "A reusable implementation pattern under patterns/."
+  skill: {description: "Claude workflow capability under external-skills/."}
+  llm_accelerator: {description: "Supporting model/runtime backend."}
+  connector: {description: "External service, MCP connector, or source tool."}
+  source_of_truth: {description: "Repo file, spec, official doc, or project-management record."}
+  validator: {description: "Local or CI check that verifies a required condition."}
+  template: {description: "Reusable project, hook, command, connector, settings, or workflow template."}
+  pattern: {description: "Reusable implementation pattern under patterns/."}
 
 selection_rules:
   task_class_required: true
@@ -198,146 +193,34 @@ task_classes:
       - accelerator_used_or_waived
 
 capabilities:
-  routing.task-router-read:
-    kind: source_of_truth
-    official_basis: "Engineering OS core/task-router.md"
-    evidence_goal: "record that core/task-router.md was read before implementation"
-    runtime_status: planned
-  workflow.workflow-read:
-    kind: source_of_truth
-    official_basis: "Engineering OS core/workflow.md"
-    evidence_goal: "record that core/workflow.md was read before implementation"
-    runtime_status: planned
-  spec.project-requirements-captured:
-    kind: source_of_truth
-    official_basis: "Engineering OS workflow requirements capture"
-    evidence_goal: "record users, roles, data model, success criteria, risks, and open questions for broad project requests"
-    runtime_status: planned
-  plan.route-plan-before-write:
-    kind: validator
-    official_basis: "Claude Code PreToolUse / Stop hook lifecycle"
-    evidence_goal: "route plan exists before implementation actions"
-    runtime_status: planned
-  source.github-repo-read:
-    kind: connector
-    official_basis: "GitHub connector / GitHub MCP read-oriented profile"
-    evidence_goal: "record repo or PR read operation before repo changes"
-    runtime_status: planned
-  source.official-docs-checked:
-    kind: source_of_truth
-    official_basis: "Official vendor documentation or repository"
-    evidence_goal: "record official source checked for external API/library decisions"
-    runtime_status: planned
-  source.context7-when-available:
-    kind: connector
-    official_basis: "Context7 documentation connector"
-    evidence_goal: "record Context7 lookup or approved fallback when external docs are required"
-    runtime_status: planned
-  registry.service-connector-selected:
-    kind: connector
-    official_basis: "external-systems/README.md service inventory"
-    evidence_goal: "record selected service connector or explain why none applies"
-    runtime_status: planned
-  registry.mcp-connector-selected:
-    kind: connector
-    official_basis: "external-systems/README.md MCP connector inventory"
-    evidence_goal: "record selected MCP connector or explain why no MCP path applies"
-    runtime_status: planned
-  connector.notion-progress-tracking:
-    kind: connector
-    official_basis: "external-systems/connectors/notion/README.md"
-    evidence_goal: "Notion plan is updated and validated across execution milestones"
-    runtime_status: planned
-  skill.superpowers:
-    kind: skill
-    official_basis: "external-skills/superpowers"
-    evidence_goal: "planning/review workflow is used or waived"
-    runtime_status: planned
-  skill.ui-ux-pro-max:
-    kind: skill
-    official_basis: "external-skills/ui-ux-pro-max"
-    evidence_goal: "UI work uses ui-ux-pro-max or records a waiver"
-    runtime_status: planned
-  skill.security-review:
-    kind: skill
-    official_basis: "external-skills/security-review"
-    evidence_goal: "security review is run or explicitly waived where allowed"
-    runtime_status: planned
-  skill.graphify:
-    kind: skill
-    official_basis: "external-skills/graphify"
-    evidence_goal: "code graph or fallback is recorded for context-heavy work"
-    runtime_status: planned
-  skill.rtk:
-    kind: skill
-    official_basis: "external-skills/rtk"
-    evidence_goal: "output compaction availability or waiver is recorded"
-    runtime_status: planned
-  skill.claude-mem:
-    kind: skill
-    official_basis: "external-skills/claude-mem"
-    evidence_goal: "memory context availability or waiver is recorded"
-    runtime_status: planned
-  accelerator.nemotron-optional:
-    kind: llm_accelerator
-    official_basis: "external-systems/nvidia-nemotron/orchestration.md"
-    evidence_goal: "Nemotron engine use or waiver is recorded for generation/review/summarization support"
-    runtime_status: planned
-  template.project-template-checked:
-    kind: template
-    official_basis: "templates/ and docs/architecture-guides inventory"
-    evidence_goal: "record applicable template checked or waiver reason"
-    runtime_status: planned
-  pattern.relevant-patterns-checked:
-    kind: pattern
-    official_basis: "patterns/registry.yaml and patterns/<domain>/"
-    evidence_goal: "record relevant patterns checked or waiver reason"
-    runtime_status: planned
-  validation.coderabbit-policy:
-    kind: validator
-    official_basis: "Engineering OS core/coderabbit-policy.md"
-    evidence_goal: "record CodeRabbit status or manual review waiver when CodeRabbit is unavailable"
-    runtime_status: planned
-  validation.actions-checked:
-    kind: validator
-    official_basis: "GitHub Actions"
-    evidence_goal: "record workflow checks before merge"
-    runtime_status: planned
-  validation.review-checked:
-    kind: validator
-    official_basis: "CodeRabbit / reviewer feedback loop / manual review fallback"
-    evidence_goal: "record review checked and comments handled"
-    runtime_status: planned
-  validation.user-merge-approval:
-    kind: validator
-    official_basis: "Yotam explicit approval policy"
-    evidence_goal: "record explicit user approval before merge"
-    runtime_status: planned
-  validation.policy-change-has-validator:
-    kind: validator
-    official_basis: "Engineering OS governance policy"
-    evidence_goal: "governance changes include a validator or explicit validator waiver"
-    runtime_status: planned
-  validation.no-broad-mcp-default:
-    kind: validator
-    official_basis: "MCP profile hardening"
-    evidence_goal: "prove no default broad MCP toolset was introduced"
-    runtime_status: planned
-  validation.mcp-opt-in-only:
-    kind: validator
-    official_basis: "Active MCP verification runbook"
-    evidence_goal: "prove target-project MCP activation remains explicit opt-in"
-    runtime_status: planned
-  validation.profile-shape-checked:
-    kind: validator
-    official_basis: "Connector profile validator pattern"
-    evidence_goal: "profile command, args, env, and scopes are checked exactly"
-    runtime_status: planned
-  validation.security-gate-checked:
-    kind: validator
-    official_basis: "external-skills/security-review policy"
-    evidence_goal: "security gate run or allowed waiver recorded"
-    runtime_status: planned
+  routing.task-router-read: {kind: source_of_truth, runtime_status: active_plan_gate}
+  workflow.workflow-read: {kind: source_of_truth, runtime_status: active_plan_gate}
+  spec.project-requirements-captured: {kind: source_of_truth, runtime_status: active_plan_gate}
+  plan.route-plan-before-write: {kind: validator, runtime_status: active_plan_gate}
+  source.github-repo-read: {kind: connector, runtime_status: active_plan_gate}
+  source.official-docs-checked: {kind: source_of_truth, runtime_status: active_plan_gate}
+  source.context7-when-available: {kind: connector, runtime_status: active_plan_gate}
+  registry.service-connector-selected: {kind: connector, runtime_status: active_plan_gate}
+  registry.mcp-connector-selected: {kind: connector, runtime_status: active_plan_gate}
+  connector.notion-progress-tracking: {kind: connector, runtime_status: active_plan_gate}
+  skill.superpowers: {kind: skill, runtime_status: active_plan_gate}
+  skill.ui-ux-pro-max: {kind: skill, runtime_status: active_plan_gate}
+  skill.security-review: {kind: skill, runtime_status: active_plan_gate}
+  skill.graphify: {kind: skill, runtime_status: active_plan_gate}
+  skill.rtk: {kind: skill, runtime_status: active_plan_gate}
+  skill.claude-mem: {kind: skill, runtime_status: active_plan_gate}
+  accelerator.nemotron-optional: {kind: llm_accelerator, runtime_status: active_plan_gate}
+  template.project-template-checked: {kind: template, runtime_status: active_plan_gate}
+  pattern.relevant-patterns-checked: {kind: pattern, runtime_status: active_plan_gate}
+  validation.coderabbit-policy: {kind: validator, runtime_status: active_plan_gate}
+  validation.actions-checked: {kind: validator, runtime_status: active_plan_gate}
+  validation.review-checked: {kind: validator, runtime_status: active_plan_gate}
+  validation.user-merge-approval: {kind: validator, runtime_status: active_plan_gate}
+  validation.policy-change-has-validator: {kind: validator, runtime_status: active_plan_gate}
+  validation.no-broad-mcp-default: {kind: validator, runtime_status: active_plan_gate}
+  validation.mcp-opt-in-only: {kind: validator, runtime_status: active_plan_gate}
+  validation.profile-shape-checked: {kind: validator, runtime_status: active_plan_gate}
+  validation.security-gate-checked: {kind: validator, runtime_status: active_plan_gate}
 
 skill_capabilities:
   superpowers:
@@ -492,14 +375,10 @@ template_capabilities:
   - {id: mobile-application-template, path: templates/mobile-application/README.md, kind: project_template}
 
 rejected_for_now:
-  openai_agents_runtime_migration:
-    reason: "Different runtime; not needed to strengthen Claude Code workflow."
-  openai_guardrails_primary_layer:
-    reason: "Does not directly control Claude Code built-in tools or MCP execution."
-  mcp_reference_servers_as_runtime:
-    reason: "Reference implementations, not the selected production runtime path."
-  broad_runtime_connector_access:
-    reason: "Registry may inventory broad services, but runtime access stays narrow and opt-in."
+  openai_agents_runtime_migration: {reason: "Different runtime; not needed to strengthen Claude Code workflow."}
+  openai_guardrails_primary_layer: {reason: "Does not directly control Claude Code built-in tools or MCP execution."}
+  mcp_reference_servers_as_runtime: {reason: "Reference implementations, not the selected production runtime path."}
+  broad_runtime_connector_access: {reason: "Registry may inventory broad services, but runtime access stays narrow and opt-in."}
 
 next_pr_contract:
   may_use:
@@ -512,7 +391,6 @@ next_pr_contract:
     - connector.notion-progress-tracking
     - accelerator.nemotron-optional
   must_not_do:
-    - enable runtime enforcement without tests
     - add managed settings lockdown
     - add elevated connector defaults
     - auto-install MCP config into target projects
