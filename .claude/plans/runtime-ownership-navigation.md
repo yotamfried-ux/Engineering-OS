@@ -17,11 +17,24 @@ PR: #98
 | Skills | None. |
 | Validation gates | GitHub Actions, manual review fallback, explicit merge workflow approved by user. |
 
+## Source of Truth Checks
+
+| Source | Why it matters | Status |
+|---|---|---|
+| `CLAUDE.md` | Main entrypoint and canonical navigation owner. | Read and updated |
+| `docs/README.md` | Docs inventory owner. | Read and updated |
+| PR #95 | Established central index and cleaned doc sprawl. | Considered |
+| PR #96 | Completed Nemotron engine reclassification, so this PR avoids duplicating it. | Considered |
+
 ## Connector Evidence
 
 | Connector | Evidence |
 |---|---|
 | GitHub | Used to create a clean branch from `main`, read current docs, create PR #98, inspect the diff, check workflow results, and update this plan. |
+
+## Template Gap Waiver
+
+No template is required because this is a documentation ownership/navigation update, not a project scaffold or reusable implementation pattern.
 
 ## Scope
 
