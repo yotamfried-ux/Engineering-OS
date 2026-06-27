@@ -177,6 +177,10 @@ EOF_CONNECTORS
   [ -z "$missing" ] || fail "Route Plan declares connectors '$connectors' but missing connector evidence for: ${missing}." "use each declared connector/source-of-truth before implementation, or change the plan to an explicit none/waiver."
 fi
 
+if grep -q 'source.github-repo-read' "$PLAN" 2>/dev/null; then
+  connector_has_evidence github || evidence_has source_github_repo_read 2>/dev/null || fail "Route Plan lists source.github-repo-read but this session has no GitHub source evidence." "use the GitHub connector before implementation, or add a focused Capability Waiver."
+fi
+
 if ! is_none_value "$skills"; then
   missing=""
   while IFS= read -r skill; do
