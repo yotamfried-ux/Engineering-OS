@@ -100,37 +100,37 @@ jobs:
             grep -q 'post-tool-use-mcp.sh' .claude/settings.json
             grep -q 'post-tool-use-read-evidence.sh' .claude/settings.json
             python3 - <<'PY'
-import json
-import os
-from pathlib import Path
+            import json
+            import os
+            from pathlib import Path
 
-s = json.loads(Path('.claude/settings.json').read_text())
-serialized = json.dumps(s, ensure_ascii=False)
-workspace = os.environ['GITHUB_WORKSPACE']
+            s = json.loads(Path('.claude/settings.json').read_text())
+            serialized = json.dumps(s, ensure_ascii=False)
+            workspace = os.environ['GITHUB_WORKSPACE']
 
-assert '${ENGINEERING_OS_HOME:-$(pwd)}' not in serialized
-assert '$(pwd)/scripts/' not in serialized
-assert f'{workspace}/scripts/enforcement/enforce-workflow.sh' in serialized
-assert f'{workspace}/scripts/session-setup.sh' in serialized
-assert f'{workspace}/scripts/enforcement/post-stop-hook.sh' in serialized
+            assert '${ENGINEERING_OS_HOME:-$(pwd)}' not in serialized
+            assert '$(pwd)/scripts/' not in serialized
+            assert f'{workspace}/scripts/enforcement/enforce-workflow.sh' in serialized
+            assert f'{workspace}/scripts/session-setup.sh' in serialized
+            assert f'{workspace}/scripts/enforcement/post-stop-hook.sh' in serialized
 
-pre = s['hooks']['PreToolUse']
-post = s['hooks']['PostToolUse']
-assert any(
-    x.get('matcher') == 'Write|Edit|MultiEdit|NotebookEdit'
-    and any('pre-tool-use-runtime-evidence.sh' in h.get('command', '') for h in x.get('hooks', []))
-    for x in pre
-)
-assert any(x.get('matcher') == 'mcp__.*' for x in post)
-assert any(
-    x.get('matcher') == 'Read'
-    and any('post-tool-use-read-evidence.sh' in h.get('command', '') for h in x.get('hooks', []))
-    for x in post
-)
-stop_cmd = s['hooks']['Stop'][0]['hooks'][0]['command']
-assert 'post-stop-hook.sh' in stop_cmd
-assert '|| true' not in stop_cmd
-PY
+            pre = s['hooks']['PreToolUse']
+            post = s['hooks']['PostToolUse']
+            assert any(
+                x.get('matcher') == 'Write|Edit|MultiEdit|NotebookEdit'
+                and any('pre-tool-use-runtime-evidence.sh' in h.get('command', '') for h in x.get('hooks', []))
+                for x in pre
+            )
+            assert any(x.get('matcher') == 'mcp__.*' for x in post)
+            assert any(
+                x.get('matcher') == 'Read'
+                and any('post-tool-use-read-evidence.sh' in h.get('command', '') for h in x.get('hooks', []))
+                for x in post
+            )
+            stop_cmd = s['hooks']['Stop'][0]['hooks'][0]['command']
+            assert 'post-stop-hook.sh' in stop_cmd
+            assert '|| true' not in stop_cmd
+            PY
 
             # Git hooks copied from Engineering OS
             test -x .git/hooks/pre-commit
