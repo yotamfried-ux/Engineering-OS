@@ -17,7 +17,8 @@ def require(condition, message):
         failures.append(message)
 
 require("status: inventory_backed" in registry, "registry status must be inventory_backed")
-require("runtime_enabled: false" in registry, "registry must remain non-runtime in this PR")
+require("runtime_enabled: true" in registry, "registry runtime gate must be enabled")
+require("runtime_scope: plan_level_write_gate" in registry, "registry runtime scope must be plan_level_write_gate")
 require("mcp_auto_install_allowed: false" in registry, "MCP auto-install must stay disabled")
 require("managed_settings_runtime_lockdown_allowed: false" in registry, "managed settings runtime lockdown must stay disabled")
 require("new_project_or_saas:" in registry, "new project / SaaS task class must exist")

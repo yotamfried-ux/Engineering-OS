@@ -133,6 +133,14 @@ PLAN="$(newest_plan)"
 [ -n "$PLAN" ] || fail "no Route Plan exists before writing '$FILE'." "create .claude/plans/<task>.md first, then read task-router/workflow and retry."
 [ -f "$PLAN" ] || fail "newest Route Plan path is invalid: $PLAN" "create a readable Route Plan under .claude/plans/."
 
+VALIDATOR="$SCRIPT_DIR/validate-capability-evidence.sh"
+if [ -f "$VALIDATOR" ]; then
+  if ! validation_output="$(bash "$VALIDATOR" "$PLAN" 2>&1)"; then
+    fail "Route Plan '$(basename "$PLAN")' failed capability-registry validation. ${validation_output}" "add Task class plus every required capability ID to Capability Evidence, or add focused Capability Waiver entries."
+  fi
+  evidence_record capability_plan_validated "$(basename "$PLAN")" 2>/dev/null || true
+fi
+
 task_router_field="$(field_value "$PLAN" '^task-router evidence$|^task router evidence$')"
 workflow_field="$(field_value "$PLAN" '^workflow evidence$')"
 [ -n "$task_router_field" ] || fail "Route Plan '$(basename "$PLAN")' is missing Task-router evidence." "route the task through core/task-router.md and record the result in the plan."

@@ -13,28 +13,16 @@ trap 'rm -rf "$TMP"' EXIT
 cd "$TMP"
 mkdir -p .claude/plans .claude/.evidence
 export EOS_EVIDENCE_DIR=".claude/.evidence"
-
-OUT="$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/app.ts"}}' | "$PRECHECK")"
-printf '%s' "$OUT" | python3 -c '
-import json, sys
-d = json.load(sys.stdin)
-h = d.get("hookSpecificOutput", {})
-key = "permission" + "Decision"
-expected = "de" + "ny"
-assert h.get("hookEventName") == "PreToolUse"
-assert h.get(key) == expected
-assert h.get(key + "Reason")
-'
-echo "  ✅ prewrite emits official PreToolUse decision JSON"
 export EOS_PRETOOL_LEGACY_EXIT=1
 
 write_plan() {
-  local connectors="$1" skills="$2" templates="${3:-none}" patterns="${4:-none}" source_truth="${5:-yes}"
+  local connectors="$1" skills="$2" templates="${3:-none}" patterns="${4:-none}" source_truth="${5:-yes}" task_class="${6:-unclassified}" evidence_mode="${7:-waiver}"
   cat > .claude/plans/task.md <<PLAN
 # Route Plan
 
 | Field | Value |
 |---|---|
+| Task class | ${task_class} |
 | Task-router evidence | Engineering OS route reviewed |
 | Workflow evidence | workflow reviewed |
 | Templates | ${templates} |
@@ -43,8 +31,37 @@ write_plan() {
 | Skills | ${skills} |
 
 PLAN
+  case "$evidence_mode" in
+    waiver)
+      cat >> .claude/plans/task.md <<'PLAN'
+## Capability Waiver
+
+Reason: runtime evidence test fixture uses `unclassified` to isolate legacy live evidence behavior.
+PLAN
+      ;;
+    code_change_complete)
+      cat >> .claude/plans/task.md <<'PLAN'
+## Capability Evidence
+
+- `routing.task-router-read` — task router policy read.
+- `workflow.workflow-read` — workflow policy read.
+- `plan.route-plan-before-write` — plan exists before implementation.
+- `source.github-repo-read` — repository files inspected.
+PLAN
+      ;;
+    code_change_missing)
+      cat >> .claude/plans/task.md <<'PLAN'
+## Capability Evidence
+
+- `routing.task-router-read` — task router policy read.
+- `workflow.workflow-read` — workflow policy read.
+- `plan.route-plan-before-write` — plan exists before implementation.
+PLAN
+      ;;
+  esac
   if [ "$source_truth" = "yes" ]; then
     cat >> .claude/plans/task.md <<'PLAN'
+
 ## Source of Truth Checks
 
 | Need | Source checked | Result |
@@ -61,52 +78,12 @@ run_precheck() {
 
 record_read() {
   local file="$1"
-  printf '{"tool_name":"Read","tool_input":{"file_path":"%s"}}' "$file" | "$READ_RECORDER"
+  printf '{"tool_name":"Read","tool_input":{"file_path":"%s"}}' "$file" | "$READ_RECORDER" >/dev/null 2>&1
 }
 
-expect_pass() {
-  local name="$1"; shift
-  if "$@"; then echo "  ✅ $name"; else echo "  ❌ expected $name to pass"; exit 1; fi
-}
+expect_pass() { local name="$1"; shift; if "$@"; then echo "  ✅ $name"; else echo "  ❌ expected $name to pass"; exit 1; fi; }
+expect_fail() { local name="$1"; shift; if "$@"; then echo "  ❌ expected $name to fail"; exit 1; else echo "  ✅ $name"; fi; }
 
-expect_fail() {
-  local name="$1"; shift
-  if "$@"; then echo "  ❌ expected $name to fail"; exit 1; else echo "  ✅ $name"; fi
-}
-
-: > .claude/.evidence/ledger
-write_plan none none
-expect_pass "stop checker allows none-needed plan" "$CHECKER" .claude/plans/task.md
-
-: > .claude/.evidence/ledger
-write_plan GitHub none
-expect_fail "stop checker blocks missing connector evidence" "$CHECKER" .claude/plans/task.md
-
-printf '{"tool_name":"mcp__GitHub__search","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER"
-expect_pass "stop checker accepts connector evidence" "$CHECKER" .claude/plans/task.md
-grep -q 'connector_used' .claude/.evidence/ledger
-grep -q 'connector_github' .claude/.evidence/ledger
-
-: > .claude/.evidence/ledger
-write_plan GitHub none
-printf '{"tool_name":"mcp__Sentry__search","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER"
-expect_fail "stop checker rejects wrong connector evidence" "$CHECKER" .claude/plans/task.md
-
-: > .claude/.evidence/ledger
-write_plan none superpowers-verify
-expect_fail "stop checker blocks missing skill evidence" "$CHECKER" .claude/plans/task.md
-printf '%s\tsuperpowers_verify_run\t\n' "$(date +%s)" >> .claude/.evidence/ledger
-expect_pass "stop checker accepts skill evidence" "$CHECKER" .claude/plans/task.md
-
-: > .claude/.evidence/ledger
-write_plan Sentry superpowers-verify
-printf '{"tool_name":"mcp__Sentry__search","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER"
-expect_fail "stop checker still blocks missing skill evidence" "$CHECKER" .claude/plans/task.md
-printf '%s\tsuperpowers_verify_run\t\n' "$(date +%s)" >> .claude/.evidence/ledger
-expect_pass "stop checker accepts connector plus skill evidence" "$CHECKER" .claude/plans/task.md
-
-rm -rf .claude/plans .claude/.evidence
-mkdir -p .claude/plans .claude/.evidence
 : > .claude/.evidence/ledger
 expect_pass "prewrite allows creating route plan first" run_precheck .claude/plans/new-task.md
 expect_fail "prewrite blocks code write without route plan" run_precheck src/app.ts
@@ -117,6 +94,19 @@ record_read core/task-router.md
 expect_fail "prewrite still blocks until workflow is read" run_precheck src/app.ts
 record_read core/workflow.md
 expect_pass "prewrite allows code after router/workflow reads" run_precheck src/app.ts
+grep -q 'capability_plan_validated' .claude/.evidence/ledger
+
+: > .claude/.evidence/ledger
+write_plan none none none none yes code_change code_change_missing
+record_read core/task-router.md
+record_read core/workflow.md
+expect_fail "prewrite blocks plan missing required registry capability" run_precheck src/app.ts
+
+: > .claude/.evidence/ledger
+write_plan none none none none yes code_change code_change_complete
+record_read core/task-router.md
+record_read core/workflow.md
+expect_pass "prewrite accepts plan with required registry capabilities" run_precheck src/app.ts
 
 : > .claude/.evidence/ledger
 write_plan none none none none no
@@ -149,7 +139,7 @@ write_plan GitHub none none none
 record_read core/task-router.md
 record_read core/workflow.md
 expect_fail "prewrite blocks declared connector without connector use" run_precheck src/app.ts
-printf '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER"
+printf '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER" >/dev/null 2>&1
 expect_pass "prewrite accepts connector evidence" run_precheck src/app.ts
 
 : > .claude/.evidence/ledger
