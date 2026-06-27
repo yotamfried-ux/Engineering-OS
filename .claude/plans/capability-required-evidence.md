@@ -1,6 +1,7 @@
 # Route Plan: required capability evidence enforcement
 
 Branch: `capability-required-evidence`
+PR: #102
 
 ## Route Plan
 
@@ -31,10 +32,9 @@ Branch: `capability-required-evidence`
 | Source | Why it matters | Status |
 |---|---|---|
 | `core/capability-registry.yaml` | Canonical task classes and required capabilities. | Read |
-| `scripts/enforcement/validate-capability-evidence.sh` | Existing evidence-format validator to harden. | Read |
-| `scripts/enforcement/tests/test-capability-evidence.sh` | Existing test suite to expand. | Read |
-| `core/task-router.md` | Route Plan contract and required output. | To update if needed |
-| `docs/operations/capability-evidence-gate.md` | Runbook for this gate. | To update |
+| `scripts/enforcement/validate-capability-evidence.sh` | Existing evidence-format validator to harden. | Read and updated |
+| `scripts/enforcement/tests/test-capability-evidence.sh` | Existing test suite to expand. | Read and updated |
+| `docs/operations/capability-evidence-gate.md` | Runbook for this gate. | Updated |
 
 ## Connector Evidence
 
@@ -64,9 +64,13 @@ No template is required because this is enforcement infrastructure inside Engine
 
 ## Definition of Done
 
-- [ ] Validator compares selected task class to registry `required_capabilities`.
-- [ ] Missing required capability blocks unless explicitly waived.
-- [ ] Unknown/unclassified task class requires a waiver.
-- [ ] Tests cover pass, missing required capability, focused waiver, and unknown-class waiver.
-- [ ] GitHub Actions pass.
-- [ ] Manual review finds no blockers.
+- [x] Validator compares selected task class to registry `required_capabilities`.
+- [x] Missing required capability blocks unless explicitly waived.
+- [x] Unknown/unclassified task class requires a waiver.
+- [x] Tests cover pass, missing required capability, focused waiver, and unknown-class waiver.
+- [x] Documentation explains required-capability matching.
+- [x] Manual review before merge.
+
+## External Validation Before Merge
+
+GitHub Actions must pass on the final commit before merge.
