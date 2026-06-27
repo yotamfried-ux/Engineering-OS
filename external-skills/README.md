@@ -1,6 +1,7 @@
 # External Skills — Skill Orchestration Layer
 
-> The integration layer that turns Engineering OS from a **knowledge system** into a **Skill Orchestration Framework**. Every external capability — repo, skill, plugin, MCP server, or agent system — enters the OS **only** through a uniform adapter defined here.
+> The integration layer for capabilities that change **Claude's workflow behavior**.
+> Engines/backends and third-party app services live under [`external-systems/`](../external-systems/), not here.
 >
 > **Governing policy:** [`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md) (the SIP — Skill Integration Protocol).
 > **Bootstrap / verification:** [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
@@ -18,7 +19,7 @@ Skill = External Capability + Integration Contract + Execution Rules
 | Layer | What it governs |
 |---|---|
 | `external-skills/*` | Capabilities that change **Claude's own workflow** (this directory) |
-| `external-systems/*` | Third-party **services the target app integrates with** (Stripe, Supabase…) |
+| `external-systems/*` | Third-party **services the target app integrates with** and engines/backends such as Nemotron |
 | `patterns/*` | Reusable **code patterns** for the target app |
 | `core/*` | The OS's own **policies** |
 
