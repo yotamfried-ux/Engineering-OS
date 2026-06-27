@@ -71,6 +71,28 @@ jobs:
           grep -q 'Task routing' CLAUDE.template.md
           echo "✅ CLAUDE.template.md propagates routing and boundary rules"
 
+      - name: Verify capability report generator
+        run: |
+          set -euo pipefail
+          ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash scripts/capability-verify.sh --json > /tmp/capabilities.json
+          python3 - <<'PY'
+          import json
+          data = json.load(open('/tmp/capabilities.json'))
+          caps = data['capabilities']
+          ids = {c['id'] for c in caps}
+          groups = {c['group'] for c in caps}
+          assert 'skill' in groups
+          assert 'engine' in groups
+          assert 'mcp_connector' in groups
+          assert 'service_connector' in groups
+          assert 'template' in groups
+          for required in ['superpowers', 'security-review', 'graphify', 'nemotron', 'github', 'notion', 'sentry', 'stripe', 'supabase', 'claude-template']:
+              assert required in ids, required
+          assert sum(1 for c in caps if c['group'] == 'mcp_connector') >= 12
+          assert sum(1 for c in caps if c['group'] == 'service_connector') >= 26
+          PY
+          echo "✅ capability report generator covers skills, engines, connectors, and templates"
+
       - name: Verify use-in-project output contract
         run: |
           set -euo pipefail
@@ -84,6 +106,7 @@ jobs:
             test -f CLAUDE.md
             test -f .engineering-os/REFERENCE.md
             test -f ENGINEERING_OS_SETUP.md
+            test -f ENGINEERING_OS_CAPABILITIES.md
             grep -q 'Engineering OS — governance layer' CLAUDE.md
             grep -q 'Never modify anything under' CLAUDE.md
             grep -q 'core/task-router.md' CLAUDE.md
@@ -132,6 +155,22 @@ jobs:
           assert '|| true' not in stop_cmd
           PY
 
+            # Capability report covers all capability classes and many connectors.
+            grep -q 'Capability Verification Report' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '## Skills and engines' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '## MCP connectors' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '## Service connector docs' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '## Templates' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '`superpowers`' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '`nemotron`' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '`github`' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '`notion`' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '`sentry`' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '`stripe`' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '`supabase`' ENGINEERING_OS_CAPABILITIES.md
+            grep -q '`claude-template`' ENGINEERING_OS_CAPABILITIES.md
+            grep -q 'ENGINEERING_OS_CAPABILITIES.md' ENGINEERING_OS_SETUP.md
+
             # Git hooks copied from Engineering OS
             test -x .git/hooks/pre-commit
             test -x .git/hooks/commit-msg
@@ -155,5 +194,6 @@ jobs:
             test "$managed_count" -eq 1
             test -f .claude/commands/use-engineering-os.md
             test -f .claude/commands/superpowers-brainstorm.md
+            test -f ENGINEERING_OS_CAPABILITIES.md
           )
           echo "✅ use-in-project.sh installs expected governance contract"
