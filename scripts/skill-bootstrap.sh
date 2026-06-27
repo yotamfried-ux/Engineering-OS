@@ -126,29 +126,66 @@ _install_security_review() {
   mkdir -p "$target/.github/workflows" "$target/.claude/commands"
   cat > "$target/.github/workflows/security-review-nemotron.yml" << 'WORKFLOW'
 name: Security Review — Nemotron
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+
 permissions:
   pull-requests: write
   contents: read
+
 jobs:
   security-review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: Run Nemotron Security Review
         env:
           Nemotron_api_key: ${{ secrets.Nemotron_api_key }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Run /security-review in Claude Code when Nemotron_api_key is unavailable."
+          pip install openai --quiet
+          python3 -c "
+import os, sys, subprocess
+api_key = os.environ.get('Nemotron_api_key') or os.environ.get('NVIDIA_API_KEY')
+if not api_key:
+    print('Nemotron_api_key not set — skipping CI security review. Run /security-review in Claude Code session instead.')
+    sys.exit(0)
+from openai import OpenAI
+diff = subprocess.check_output(['git', 'diff', 'HEAD~1', 'HEAD'], text=True)
+client = OpenAI(base_url='https://integrate.api.nvidia.com/v1', api_key=api_key)
+resp = client.chat.completions.create(
+    model='nvidia/llama-3.1-nemotron-ultra-253b-v1',
+    messages=[{'role':'system','content':'You are a security code reviewer. Analyze the diff for OWASP Top 10, injection, auth gaps, secrets. Rate findings CRITICAL/HIGH/MEDIUM/LOW/INFO. End with go/no-go.'},
+              {'role':'user','content':f'Review this diff:\n{diff[:12000]}'}],
+    max_tokens=2048
+)
+print(resp.choices[0].message.content)
+"
 WORKFLOW
   cat > "$target/.claude/commands/security-review.md" << 'CMD'
 ---
-description: Run a mandatory security review of the pending changes
+description: Run a mandatory security review of the pending changes on the current branch
 ---
 
-Run `/security-review` on all pending changes. The gate may use Nemotron as its engine, but a raw `nemotron_review_code` call is first-pass review only.
+Run `/security-review` on all pending changes in the current branch.
+
+**Routing (in order):**
+1. If `mcp__nemotron__nemotron_review_code` is available through the `/security-review` command context → use it as the engine for this gate.
+2. Otherwise → run the review inline using the current Claude Code session.
+Never use the Anthropic API or CLAUDE_API_KEY for security review.
+
+Steps:
+1. Identify all changed files since the branch diverged from main.
+2. Check for injection vulnerabilities, authentication/authorization gaps, insecure data handling, secrets, unsafe dependencies, and broken access control.
+3. Report findings grouped by severity (CRITICAL / HIGH / MEDIUM / LOW / INFO).
+4. For each finding: file path + line range, description, recommendation.
+5. End with a go/no-go recommendation for merging.
+
+A raw `nemotron_review_code` call outside this `/security-review` command is first-pass review only and does not satisfy the gate.
 CMD
 }
 install_security_review='fn:_install_security_review'
