@@ -1,0 +1,32 @@
+name: capability-evidence-policy
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  capability-evidence:
+    name: Require capability evidence in changed plans
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate capability evidence
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          changed_plans="$(git diff --name-only "$base" "$head" -- '.claude/plans/*.md' || true)"
+
+          if [ -z "$changed_plans" ]; then
+            echo "No changed Engineering OS plan files."
+            exit 0
+          fi
+
+          bash scripts/enforcement/validate-capability-evidence.sh $changed_plans
