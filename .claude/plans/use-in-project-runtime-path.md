@@ -20,9 +20,10 @@ Branch: `fix/use-in-project-runtime-path`
 
 | Source | Why it matters | Status |
 |---|---|---|
-| `scripts/use-in-project.sh` | Installs Engineering OS into target projects. | To inspect/update |
-| `.claude/settings.json` | Source settings copied/rendered into target projects. | To inspect |
-| `scripts/enforcement/tests/` | Location for deterministic regression tests. | To inspect/update |
+| `scripts/use-in-project.sh` | Installs Engineering OS into target projects. | Read and updated |
+| `.claude/settings.json` | Source settings copied/rendered into target projects. | Read |
+| `scripts/install-policy-gates.sh` | Patches target settings with runtime evidence hooks. | Read and updated |
+| `.github/workflows/enforcement-tests.yml` | Existing clean-install contract test. | Read and strengthened |
 | `core/hooks-policy.md` | Hook ownership and behavior boundary. | Reference |
 
 ## Connector Evidence
@@ -39,7 +40,7 @@ No template is required because this is installer/runtime-path hardening, not a 
 
 - Ensure target project `.claude/settings.json` resolves hook commands to the Engineering OS reference path instead of the target repo when `ENGINEERING_OS_HOME` is not exported by the session.
 - Preserve the existing behavior of not overwriting a customized target `.claude/settings.json`.
-- Add a clean-install contract test proving the rendered target settings no longer contain `$(pwd)` fallback for Engineering OS hooks and do include the expected reference path.
+- Strengthen the clean-install contract test to prove rendered target settings no longer contain `$(pwd)` fallback for Engineering OS hooks and do include the expected reference path.
 
 ## Non-goals
 
@@ -51,8 +52,8 @@ No template is required because this is installer/runtime-path hardening, not a 
 
 ## Definition of Done
 
-- [ ] Installer renders or installs target settings with stable Engineering OS reference path.
-- [ ] Target install test proves hook path resolution does not depend on target `pwd`.
-- [ ] Existing installer output contract remains valid.
-- [ ] GitHub Actions pass.
-- [ ] Manual review finds no blockers.
+- [x] Installer renders or installs target settings with stable Engineering OS reference path.
+- [x] Target install test proves hook path resolution does not depend on target `pwd`.
+- [x] Existing installer output contract remains valid.
+- [x] Customized existing target settings are preserved by skipping settings patch/render.
+- [x] Manual review performed before PR open; GitHub Actions must still pass before merge.
