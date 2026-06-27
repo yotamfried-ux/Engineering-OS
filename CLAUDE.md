@@ -116,7 +116,7 @@
 | [`core/resource-management.md`](./core/resource-management.md) | ניהול משאבים, `.claudeignore`, מודל | `enforce-resource.sh` |
 | [`core/scoring-guide.md`](./core/scoring-guide.md) | ניקוד patterns/skills | NONE (maintenance) |
 | [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) | אינטגרציית skills (SIP — 4 קבצים) | `enforce-skill.sh` |
-| [`core/capability-registry.yaml`](./core/capability-registry.yaml) | אוצר ה-capabilities לכל task class | NONE (skeleton) |
+| [`core/capability-registry.yaml`](./core/capability-registry.yaml) | אוצר ה-capabilities לכל task class | `test-capability-registry.sh` (coverage), runtime planned |
 
 ### טבלת בעלות מושגית — מי אחראי על מה
 
@@ -126,16 +126,24 @@
 |---|---|---|
 | ניתוב משימה | `core/task-router.md` | — |
 | הכרעת התנגשויות | `core/precedence.md` | — |
-| אוצר capabilities (task→capability) | `core/capability-registry.yaml` | — |
+| אוצר capabilities (task→capability) | `core/capability-registry.yaml` | Validators/runbooks רק מאמתים או מסבירים |
 | **מדיניות** connectors (מתי/איזה) | `core/connector-policy.md` | אינדקסים מקשרים, לא מגדירים |
 | **מלאי** connectors / systems | `external-systems/README.md` | תיקיות שירות = עלים |
+| engines/backends | `external-systems/<engine>/` | adapters/commands קוראים להם; לא מגדירים אותם מחדש |
 | **מדיניות** skills (SIP) | `core/skill-orchestration-policy.md` | — |
 | **מלאי** skills | `external-skills/README.md` | תיקיות skill = עלים |
+| runtime hooks/settings | `.claude/settings.json`, `scripts/hooks/`, `scripts/enforcement/` | מתועדים דרך `core/hooks-policy.md`; לא policy עצמאי |
+| slash commands | `.claude/commands/` | wrappers ניידים; מפנים למדיניות owner |
+| sub-agent adapters | `.claude/agents/` | adapters בלבד; לא בעלי policy |
 | כללי תיעוד | `core/documentation-policy.md` | — |
+| docs inventory | `docs/README.md` | תתי־תיקיות docs הן חומרי ייחוס, לא core policy |
+| research / source collection | `docs/research/` | חומר גלם; החלטה קנונית עוברת ל-ADR/core/runbook |
+| evals / readiness checks | `evals/` | תרחישי אימות; אינם מחליפים hooks/CI |
+| checkpoints | `.checkpoints/` | snapshots זמניים בלבד; לא מקור אמת |
 | החלטות ארכיטקטורה | `architecture-decisions/` (ADRs) | — |
 | Runbooks תפעוליים | `docs/operations/` | plans הם זמניים, לא runbooks |
 | code patterns | `patterns/` (+ `patterns/registry.yaml`) | — |
-| תבניות פרויקט | `templates/` | examples, לא policy |
+| תבניות פרויקט | `templates/` | examples/scaffolds, לא runtime פעיל |
 | לקחים / כשלים | `lessons-learned/`, `failed-solutions/` | — |
 | plan זמני של PR | `.claude/plans/<task>.md` | נמחק אחרי merge |
 
