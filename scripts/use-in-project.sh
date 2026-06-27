@@ -31,6 +31,40 @@ dim()  { printf '\033[2m%s\033[0m\n' "$*"; }
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
 warn() { printf '\033[33m⚠️  %s\033[0m\n' "$*"; }
 
+render_target_settings() {
+  local settings="$1"
+  [ -f "$settings" ] || return 0
+  python3 - "$settings" "$EOS_HOME" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+settings = Path(sys.argv[1])
+eos_home = sys.argv[2]
+
+data = json.loads(settings.read_text(encoding="utf-8"))
+
+replacements = {
+    "${ENGINEERING_OS_HOME:-$(pwd)}": eos_home,
+    "${ENGINEERING_OS_HOME:-$PWD}": eos_home,
+    "${ENGINEERING_OS_HOME}": eos_home,
+}
+
+
+def rewrite(value):
+    if isinstance(value, dict):
+        return {k: rewrite(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [rewrite(v) for v in value]
+    if isinstance(value, str):
+        for old, new in replacements.items():
+            value = value.replace(old, new)
+    return value
+
+settings.write_text(json.dumps(rewrite(data), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
 git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
 
 # 0. GUARD — never run inside the Engineering OS repo itself.
@@ -73,6 +107,8 @@ else
 fi
 
 # From here on we only READ from $EOS_HOME.
+EOS_HOME="$(cd "$EOS_HOME" && pwd)"
+export ENGINEERING_OS_HOME="$EOS_HOME"
 
 # 2. Record the reference pointer inside the target project.
 mkdir -p "$TARGET/.engineering-os"
@@ -188,9 +224,11 @@ fi
 
 # 7. Install .claude/settings.json with Engineering OS hooks (skip if already customized).
 TARGET_SETTINGS="$TARGET/.claude/settings.json"
+SETTINGS_INSTALLED=0
 if [ ! -f "$TARGET_SETTINGS" ]; then
   mkdir -p "$TARGET/.claude"
   cp "${EOS_HOME}/.claude/settings.json" "$TARGET_SETTINGS"
+  SETTINGS_INSTALLED=1
   grn ".claude/settings.json installed (PreToolUse + Stop hooks active)"
 else
   dim ".claude/settings.json already exists — skipped (preserve customizations)"
@@ -210,8 +248,17 @@ done
 
 # 8b. Install GitHub Actions policy gate workflows.
 if [ -x "$EOS_HOME/scripts/install-policy-gates.sh" ]; then
-  bash "$EOS_HOME/scripts/install-policy-gates.sh" "$TARGET"
+  if [ "$SETTINGS_INSTALLED" -eq 1 ]; then
+    ENGINEERING_OS_HOME="$EOS_HOME" bash "$EOS_HOME/scripts/install-policy-gates.sh" "$TARGET"
+  else
+    EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$EOS_HOME" bash "$EOS_HOME/scripts/install-policy-gates.sh" "$TARGET"
+  fi
   grn "Policy gate workflows installed (.github/workflows/)"
+fi
+
+if [ "$SETTINGS_INSTALLED" -eq 1 ]; then
+  render_target_settings "$TARGET_SETTINGS"
+  grn ".claude/settings.json rendered with Engineering OS reference path"
 fi
 
 # 9. Build graphify knowledge graph (only if not already built).
