@@ -84,12 +84,9 @@
 
 תיעוד עדכני הוא חלק מ-Definition of Done (ראה [`quality-gates.md`](./quality-gates.md) › `<definition_of_done>`): משימה שמשנה התנהגות חיצונית ולא עדכנה תיעוד — אינה גמורה.
 
-> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-documentation.sh`, נקרא מ-`pre-commit`):
-> D1 — קומיט שנוגע ב-`patterns/<domain>/` או `external-systems/<service>/` נחסם אם אין שם `README.md` (`EOS_BYPASS_DOCREADME=1`).
-> D2 — חובה `README.md` בשורש הריפו (`EOS_BYPASS_ROOTREADME=1`).
-> D3 — placeholder עצמאי בקובצי `.md` ב-staged (`TBD`/`FIXME`/`XXX`/`???` לבד או ככותרת/ערך) נחסם (`EOS_BYPASS_TBD=1`).
-> D4 — README אינדקסי מרכזי נחסם אם הוא מוסיף שפת policy/enforcement במקום להפנות ל-`core/` (`EOS_BYPASS_DOCBOUNDARY=1`).
-> D5 — plan תחת `.claude/plans/` חייב metadata מינימלי כדי שלא יהפוך לתיעוד קבוע לא-מנוהל (`EOS_BYPASS_PLANMETA=1`).
-> master: `EOS_BYPASS_DOC=1`. ולידציה index-based.
+> **אכיפה דטרמיניסטית**:
+> - `scripts/enforcement/enforce-documentation.sh` רץ מ-`pre-commit` ומכסה: D1 — README לתיקיות תוכן; D2 — README בשורש; D3 — חסימת placeholder עצמאי בקובצי Markdown.
+> - `scripts/enforcement/tests/test-documentation-ownership.sh` רץ ב-`enforcement-tests` ומכסה: קיום ownership map, גבולות index-only, `frontend-design` כ-replaced, ו-`nemotron` כ-adjacent accelerator.
+> - master bypass ל-pre-commit: `EOS_BYPASS_DOC=1`. ולידציה index-based איפה שה-hook פועל.
 
 </documentation>
