@@ -46,6 +46,9 @@ jobs:
           grep -q '<routing_matrix>' core/task-router.md
           grep -q '<required_output>' core/task-router.md
           grep -q 'Route Plan' core/task-router.md
+          grep -q 'Task class' core/task-router.md
+          grep -q 'Capability Evidence' core/task-router.md
+          grep -q 'Capability Waiver' core/task-router.md
           grep -q 'templates/' core/task-router.md
           grep -q 'patterns/' core/task-router.md
           grep -q 'external-skills/' core/task-router.md
@@ -187,6 +190,7 @@ jobs:
             test -f .github/workflows/plan-policy.yml
             test -f .github/workflows/connector-evidence-policy.yml
             test -f .github/workflows/workflow-evidence-policy.yml
+            test -f .github/workflows/capability-evidence-policy.yml
 
             # Idempotency: re-run should not duplicate managed block or commands.
             EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
