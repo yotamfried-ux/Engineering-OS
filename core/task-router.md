@@ -28,10 +28,15 @@
    - infra / CI / deployment / observability
    - docs / governance / Engineering OS maintenance
 
-2. **חלץ domain tags** — בחר תגיות שמתארות את המשימה בפועל:
+2. **בחר Task class מתוך `core/capability-registry.yaml`**
+   - אם יש task class מתאים — השתמש בשם שלו במפורש ב-Route Plan.
+   - אם אין task class מתאים — רשום `Task class: unclassified` והוסף `Capability Waiver` עם נימוק.
+   - אל תבחר capability לפי זיכרון; ה-registry הוא מקור האמת.
+
+3. **חלץ domain tags** — בחר תגיות שמתארות את המשימה בפועל:
    - `ui`, `api`, `auth`, `database`, `payments`, `notifications`, `files`, `ai-agent`, `mcp`, `mobile`, `testing`, `security`, `observability`, `background-jobs`, `billing`, `workflow`, `governance`
 
-3. **אסוף שכבות ידע לפי הסדר המחייב**
+4. **אסוף שכבות ידע לפי הסדר המחייב**
    1. `templates/` — האם יש template מתאים?
    2. `docs/architecture-guides/` — האם יש guide לדומיין?
    3. `patterns/` — אילו patterns נדרשים?
@@ -39,8 +44,9 @@
    5. `external-skills/` — אילו skills חייבים לרוץ על סוג המשימה הזה?
    6. `core/*` — אילו policies מיוחדות רלוונטיות (debugging, git, quality gates, learning loop)?
 
-4. **הפק Route Plan קצר לפני כתיבה**
+5. **הפק Route Plan קצר לפני כתיבה**
    - `Task type:`
+   - `Task class:` — מתוך `core/capability-registry.yaml` או `unclassified` + waiver
    - `Domain tags:`
    - `Template(s) to consult:`
    - `Architecture guide(s):`
@@ -48,11 +54,13 @@
    - `External system / connector decisions:`
    - `Skills to run:`
    - `Validation gates:`
+   - `Capability Evidence:` — capability IDs שנבחרו + evidence/waiver
 
-5. **אם חסר רכיב חובה — אל תמשיך בשקט**
+6. **אם חסר רכיב חובה — אל תמשיך בשקט**
    - חסר template / architecture guide לפרויקט חדש או החלטה ארכיטקטונית → עצור לפי `CLAUDE.template.md` / `workflow.md`
    - חסר pattern → השתמש באנלוגי הקרוב ביותר ותעד את הפער
    - חסר skill LEVEL 2 → דווח על gap והצע bootstrap / התקנה
+   - capability לא רלוונטי למרות שהוא מופיע ב-registry → רשום `Capability Waiver` עם נימוק.
 
 </routing_algorithm>
 
@@ -179,6 +187,7 @@
 
 ```md
 Task type: <...>
+Task class: <task class from core/capability-registry.yaml, or unclassified + waiver>
 Domain tags: <...>
 Templates: <...>
 Architecture guides: <...>
@@ -186,8 +195,13 @@ Patterns: <...>
 External systems / connectors: <...>
 Skills: <...>
 Validation gates: <...>
+
+## Capability Evidence
+
+- `<capability-id>` — selected/checked evidence, or why it applies.
 ```
 
+אם capability או task class אינו רלוונטי, השתמש ב-`## Capability Waiver` עם סיבה מפורשת.
 המטרה אינה verbosity — אלא **להוכיח שהניתוב בוצע** לפני כתיבה.
 
 </required_output>
