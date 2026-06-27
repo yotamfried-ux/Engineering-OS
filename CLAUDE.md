@@ -87,6 +87,62 @@
 
 ---
 
+## <navigation>
+
+> **זוהי "הטבלה למטה" שאליה מפנה ההקדמה.** לפני כל פעולה — גש לקובץ ה-core הקנוני שלה.
+> CLAUDE.md **מצביע** בלבד; הכלל המלא חי בקובץ הבעלים. אל תשכפל נוהל כאן.
+> שלמות הטבלה נאכפת ע"י [`scripts/validate-orphans.sh`](./scripts/validate-orphans.sh)
+> (כל קובץ `core/*` חייב להופיע כאן). עמודת ה-Enforcer מקורה ב-
+> [`scripts/enforcement/MANIFEST.tsv`](./scripts/enforcement/MANIFEST.tsv).
+
+### טבלת ניווט — core policies
+
+| קובץ | מתי לגשת | Enforcer |
+|---|---|---|
+| [`core/workflow.md`](./core/workflow.md) | לפני כל משימה: תכנון, איסוף מידע, scaffold, DoD | `enforce-workflow.sh` |
+| [`core/task-router.md`](./core/task-router.md) | בתחילת כל משימה: ניתוב ל-templates/patterns/skills/connectors | NONE (routing) |
+| [`core/precedence.md`](./core/precedence.md) | כשהנחיות מתנגשות: סולם ההכרעה המלא | NONE (judgment) |
+| [`core/connector-policy.md`](./core/connector-policy.md) | בחירת מקורות מידע/connectors, env/secrets, fallback, אכיפת Connector Evidence | `enforce-connector.sh` |
+| [`core/coderabbit-policy.md`](./core/coderabbit-policy.md) | שינוי ב-Engineering OS עצמו: branch → PR → review → merge | NONE (process) |
+| [`core/hooks-policy.md`](./core/hooks-policy.md) | אכיפה דטרמיניסטית: מה חוסם ולמה, מבנה hooks | `enforce-workflow.sh` (G6b) |
+| [`core/quality-gates.md`](./core/quality-gates.md) | Definition of Done, שערי איכות, cleanup | `enforce-quality.sh` |
+| [`core/git-policy.md`](./core/git-policy.md) | קומיטים, branches, push, draft PR | `enforce-git.sh` |
+| [`core/debugging-policy.md`](./core/debugging-policy.md) | באג/דיבאגינג: שיטה שיטתית, fix-needs-test | `enforce-debugging.sh` |
+| [`core/documentation-policy.md`](./core/documentation-policy.md) | כתיבת/עדכון README ותיעוד | `enforce-documentation.sh` |
+| [`core/learning-loop.md`](./core/learning-loop.md) | תיעוד לקחים: bugs, postmortems, prevention | `enforce-learning.sh` |
+| [`core/maintenance-routine.md`](./core/maintenance-routine.md) | תחזוקה שוטפת לפני `gh pr create` | `enforce-git.sh` (G6c) |
+| [`core/mcp-servers.md`](./core/mcp-servers.md) | טבלת שרתי MCP זמינים | NONE (reference) |
+| [`core/pattern-lifecycle.md`](./core/pattern-lifecycle.md) | הוספת/שינוי `patterns/` | `enforce-workflow.sh` (G6a) |
+| [`core/resource-management.md`](./core/resource-management.md) | ניהול משאבים, `.claudeignore`, מודל | `enforce-resource.sh` |
+| [`core/scoring-guide.md`](./core/scoring-guide.md) | ניקוד patterns/skills | NONE (maintenance) |
+| [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) | אינטגרציית skills (SIP — 4 קבצים) | `enforce-skill.sh` |
+| [`core/capability-registry.yaml`](./core/capability-registry.yaml) | אוצר ה-capabilities לכל task class | NONE (skeleton) |
+
+### טבלת בעלות מושגית — מי אחראי על מה
+
+לכל מושג **בעלים קנוני אחד**. שאר הקבצים מקשרים אליו ולא מגדירים אותו מחדש.
+
+| מושג | בעלים קנוני | כל השאר |
+|---|---|---|
+| ניתוב משימה | `core/task-router.md` | — |
+| הכרעת התנגשויות | `core/precedence.md` | — |
+| אוצר capabilities (task→capability) | `core/capability-registry.yaml` | — |
+| **מדיניות** connectors (מתי/איזה) | `core/connector-policy.md` | אינדקסים מקשרים, לא מגדירים |
+| **מלאי** connectors / systems | `external-systems/README.md` | תיקיות שירות = עלים |
+| **מדיניות** skills (SIP) | `core/skill-orchestration-policy.md` | — |
+| **מלאי** skills | `external-skills/README.md` | תיקיות skill = עלים |
+| כללי תיעוד | `core/documentation-policy.md` | — |
+| החלטות ארכיטקטורה | `architecture-decisions/` (ADRs) | — |
+| Runbooks תפעוליים | `docs/operations/` | plans הם זמניים, לא runbooks |
+| code patterns | `patterns/` (+ `patterns/registry.yaml`) | — |
+| תבניות פרויקט | `templates/` | examples, לא policy |
+| לקחים / כשלים | `lessons-learned/`, `failed-solutions/` | — |
+| plan זמני של PR | `.claude/plans/<task>.md` | נמחק אחרי merge |
+
+</navigation>
+
+---
+
 ## <boundary_rule>
 
 > **⚠️ BOUNDARY RULE (non-negotiable):**

@@ -92,8 +92,7 @@ Optional: any specifics about how the decision was implemented that future engin
 
 ## Decision Index
 
-*No ADRs recorded yet. Add the first record when a significant architectural decision is made.*
-
 | ID | Title | Status | Date |
 |---|---|---|---|
-| — | — | — | — |
+| [ADR-2026-001](./ADR-2026-001-github-readonly-connector.md) | GitHub read-only connector profile | Accepted | 2026-06-27 |
+| [ADR-2026-002](./ADR-2026-002-managed-settings-rollout.md) | Claude Code managed settings rollout | Accepted | 2026-06-27 |
