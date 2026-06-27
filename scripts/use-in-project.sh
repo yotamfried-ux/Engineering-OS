@@ -279,8 +279,8 @@ fi
 
 # 11. Generate capability verification report from the registry.
 CAP_REPORT="$TARGET/ENGINEERING_OS_CAPABILITIES.md"
-if [ -x "$EOS_HOME/scripts/capability-verify.sh" ]; then
-  ( cd "$TARGET" && ENGINEERING_OS_HOME="$EOS_HOME" "$EOS_HOME/scripts/capability-verify.sh" --output "$CAP_REPORT" ) || true
+if [ -f "$EOS_HOME/scripts/capability-verify.sh" ]; then
+  ( cd "$TARGET" && ENGINEERING_OS_HOME="$EOS_HOME" bash "$EOS_HOME/scripts/capability-verify.sh" --output "$CAP_REPORT" ) || true
   grn "ENGINEERING_OS_CAPABILITIES.md created at $CAP_REPORT"
 else
   warn "capability-verify.sh missing — capability report skipped"
@@ -336,7 +336,7 @@ if [ -f "$TARGET/ENGINEERING_OS_CAPABILITIES.md" ]; then
   grn "capability report — ready: ENGINEERING_OS_CAPABILITIES.md"
   printf '      Review the Action Required section and authenticate only selected tools.\n'
 else
-  warn "capability report missing — run: ENGINEERING_OS_HOME=$EOS_HOME $EOS_HOME/scripts/capability-verify.sh --output ENGINEERING_OS_CAPABILITIES.md"
+  warn "capability report missing — run: ENGINEERING_OS_HOME=$EOS_HOME bash $EOS_HOME/scripts/capability-verify.sh --output ENGINEERING_OS_CAPABILITIES.md"
 fi
 
 echo
