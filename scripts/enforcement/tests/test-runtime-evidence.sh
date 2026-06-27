@@ -81,6 +81,10 @@ record_read() {
   printf '{"tool_name":"Read","tool_input":{"file_path":"%s"}}' "$file" | "$READ_RECORDER" >/dev/null 2>&1
 }
 
+record_github_connector() {
+  printf '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER" >/dev/null 2>&1
+}
+
 expect_pass() { local name="$1"; shift; if "$@"; then echo "  ✅ $name"; else echo "  ❌ expected $name to pass"; exit 1; fi; }
 expect_fail() { local name="$1"; shift; if "$@"; then echo "  ❌ expected $name to fail"; exit 1; else echo "  ✅ $name"; fi; }
 
@@ -106,7 +110,9 @@ expect_fail "prewrite blocks plan missing required registry capability" run_prec
 write_plan none none none none yes code_change code_change_complete
 record_read core/task-router.md
 record_read core/workflow.md
-expect_pass "prewrite accepts plan with required registry capabilities" run_precheck src/app.ts
+expect_fail "prewrite blocks claimed source capability without live source evidence" run_precheck src/app.ts
+record_github_connector
+expect_pass "prewrite accepts required capability after live GitHub evidence" run_precheck src/app.ts
 
 : > .claude/.evidence/ledger
 write_plan none none none none no
@@ -139,7 +145,7 @@ write_plan GitHub none none none
 record_read core/task-router.md
 record_read core/workflow.md
 expect_fail "prewrite blocks declared connector without connector use" run_precheck src/app.ts
-printf '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":{},"tool_response":{"ok":true}}' | "$MCP_RECORDER" >/dev/null 2>&1
+record_github_connector
 expect_pass "prewrite accepts connector evidence" run_precheck src/app.ts
 
 : > .claude/.evidence/ledger
