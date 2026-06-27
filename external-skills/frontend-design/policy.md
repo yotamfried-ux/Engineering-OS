@@ -1,5 +1,9 @@
 # frontend-design — Policy
 
+> ⚠️ **DEPRECATED — superseded by [`ui-ux-pro-max`](../ui-ux-pro-max/).** Do not install in new
+> projects. This wrapper is kept for reference only; the UI/UX execution level now belongs to
+> `ui-ux-pro-max`. See the registry in [`../README.md`](../README.md).
+
 ## Classification
 
 | Field | Value |

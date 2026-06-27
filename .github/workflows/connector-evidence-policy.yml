@@ -21,7 +21,9 @@ jobs:
         run: |
           set -euo pipefail
           changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")"
-          plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' || true)"
+          # Only validate plan files that still exist in the working tree — a deleted plan
+          # is not evidence to validate (git diff --name-only also lists deletions).
+          plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' | while IFS= read -r p; do [ -f "$p" ] && printf '%s\n' "$p"; done || true)"
           code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
           if [ -n "$code" ] && [ -z "$plans" ]; then
             echo "ERROR_FOR_AGENT: code/config/script files changed without a changed .claude/plans/*.md Route Plan."

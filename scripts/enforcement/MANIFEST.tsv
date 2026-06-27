@@ -18,3 +18,6 @@ core/documentation-policy.md	scripts/enforcement/enforce-documentation.sh	README
 core/maintenance-routine.md	scripts/enforcement/enforce-git.sh	G6c evidence gate — read required before gh pr create
 core/mcp-servers.md	NONE	reference table
 CLAUDE.md	NONE	entry/navigation — principles, judgment-based
+core/task-router.md	NONE	routing matrix — judgment-based selection, not deterministically enforceable
+core/coderabbit-policy.md	NONE	OS-change PR process — branch/PR/review/merge, judgment-based
+core/capability-registry.yaml	NONE	skeleton capability vocabulary — non-runtime, no enforcer yet

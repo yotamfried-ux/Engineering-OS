@@ -20,7 +20,7 @@
    אצלנו. בדוק כאן לפני כל כתיבה מאפס. כולל גם
    [`../external-systems/`](../external-systems/) (מערכות חיצוניות שלמות וריפו-ים
    מאושרים לאינטגרציה) ו-[`../docs/`](../docs/) (תיעוד מאושר, כולל
-   `reference-repos/` — מימושי מקור-אמת רשמיים).
+   `reference-repositories/` — מימושי מקור-אמת רשמיים).
 2. **Context7** — תיעוד רשמי עדכני ודוגמאות קוד של ספריות ופריימוורקים.
 3. **קונקטור ייעודי למשימה** — אם קיים קונקטור שמתמחה בנושא (ראה רשימת הקונקטורים למטה).
 4. **חיפוש רשת** — רק כשהמקורות לעיל אינם מספיקים.
@@ -29,7 +29,7 @@
 נוכחי ומדויק; ידע פנימי בלבד עלול להיות מיושן.
 
 **ריפו-ים שלמים ומערכות חיצוניות — שלוש דרכי שימוש.** ריפו או מערכת חיצונית
-מקושרים (ב-[`../external-systems/`](../external-systems/) או ב-`docs/reference-repos/`)
+מקושרים (ב-[`../external-systems/`](../external-systems/) או ב-`docs/reference-repositories/`)
 אינם חייבים להיכנס בשלמותם. בחר את הדרך לפי הצורך:
 
 1. **שילוב מלא** — שלב את כל המערכת/הריפו כבלוק בניין, כשהוא עונה על הצורך כמו-שהוא
@@ -344,6 +344,39 @@ external systems › reference repos › templates › new implementation). כש
 - מתי: כשצריך חיבור לשירות שאין לו קונקטור ישיר — בדוק אם Composio מספק שרת MCP מתאים.
 
 </connectors>
+
+---
+
+## <connector_evidence>
+
+בחירת הקונקטור היא judgment; כדי שלא תישאר רק על הנייר, היא מגובה ב-**Connector Evidence
+gate** דטרמיניסטי. כל שינוי קוד לא-טריוויאלי חייב Route Plan תחת `.claude/plans/*.md` עם הקטע:
+
+```md
+## Connector Evidence
+```
+
+הקטע מפרט אחד מהשניים:
+
+```md
+- [x] <Connector>: <מה נבדק / נוצר / עודכן>
+```
+
+או:
+
+```md
+- [x] Not required: <למה לא נדרש קונקטור חיצוני>
+```
+
+**מה נאכף (Step 1):** ה-gate בודק ש-PR שמשנה קוד גם שינה קובץ plan, ושה-plan מכיל
+`Connector Evidence`. שערים מאוחרים יכולים לאמת הוכחה ספציפית-לקונקטור (Notion page URL,
+Sentry issue ID, Vercel deployment ID, Figma link). פרויקטי יעד מקבלים את אותו gate דרך
+ה-installer של Engineering OS.
+
+> **אכיפה דטרמיניסטית:** `scripts/enforcement/check-connector-evidence.sh` +
+> `.github/workflows/connector-evidence-policy.yml`. בדיקות: `scripts/enforcement/tests/test-connector-evidence.sh`.
+
+</connector_evidence>
 
 ---
 

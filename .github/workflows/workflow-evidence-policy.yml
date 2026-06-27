@@ -23,7 +23,9 @@ jobs:
           base="${{ github.event.pull_request.base.sha }}"
           head="${{ github.event.pull_request.head.sha }}"
           changed="$(git diff --name-only "$base...$head")"
-          plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' || true)"
+          # Only validate plan files that still exist in the working tree — a deleted plan
+          # is not evidence to validate (git diff --name-only also lists deletions).
+          plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' | while IFS= read -r p; do [ -f "$p" ] && printf '%s\n' "$p"; done || true)"
           code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
           knowledge="$(printf '%s\n' "$changed" | grep -E '^(lessons-learned/|failed-solutions/|templates/)' || true)"
 

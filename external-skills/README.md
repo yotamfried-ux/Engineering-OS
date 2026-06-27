@@ -44,7 +44,7 @@ Each wrapper is written from a **verified scan of the real repository** — not 
 | Skill | Classification (`type`) | Level | Install mechanism | What you actually invoke |
 |---|---|---|---|---|
 | **[superpowers](./superpowers/)** | planning, review, orchestration, self-correction | **L2** · default-on every project | Claude Code plugin (`/plugin install`) | 14 skills via the Skill tool (`brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, `verification-before-completion`…) |
-| **[frontend-design](./frontend-design/)** | ui-ux, coding | **L2** for UI / L1 otherwise | plugin marketplace (`example-skills@anthropic-agent-skills`) | `frontend-design` skill (auto-triggers on UI requests) |
+| **[frontend-design](./frontend-design/)** ⚠️ **DEPRECATED → use [ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | — (superseded) | do not install in new projects | superseded by `ui-ux-pro-max`; kept for reference only |
 | **[claude-code-workflows](./claude-code-workflows/)** | review, orchestration | L1 / **L2** for large refactors | manual file copy (templates) | `pragmatic-code-review` & `design-review` subagents, `/design-review`, GitHub Action |
 | **[security-review](./security-review/)** | security, review | **L2** · default-on · pre-commit + pre-merge gate | GitHub Action + slash command | `/security-review`, `anthropics/claude-code-security-review@main` Action |
 | **[claude-mem](./claude-mem/)** | memory, context-persistence | **L2** (passive system dependency) | plugin + MCP + hooks + worker | MCP tools `search`, `timeline`, `get_observations` (+ passive lifecycle hooks) |
