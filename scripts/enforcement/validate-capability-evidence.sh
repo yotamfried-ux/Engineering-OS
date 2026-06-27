@@ -29,15 +29,15 @@ for plan in "${plans[@]}"; do
     failed=1
   fi
 
-  if ! grep -qiE '^#{1,6}[[:space:]]*Capability Evidence\b|^#{1,6}[[:space:]]*Capability Waiver\b' "$plan"; then
+  if ! grep -qiE '^#{1,6}[[:space:]]*Capability Evidence([[:space:]]|$)|^#{1,6}[[:space:]]*Capability Waiver([[:space:]]|$)' "$plan"; then
     echo "ERROR_FOR_AGENT: $plan is missing Capability Evidence / Capability Waiver section."
     echo "ACTION: add '## Capability Evidence' listing selected capabilities and evidence, or '## Capability Waiver' with a justification."
     failed=1
   fi
 
-  if grep -qiE '^#{1,6}[[:space:]]*Capability Evidence\b' "$plan"; then
+  if grep -qiE '^#{1,6}[[:space:]]*Capability Evidence([[:space:]]|$)' "$plan"; then
     if ! awk '
-      /^#{1,6}[[:space:]]*Capability Evidence\b/ { in_section=1; next }
+      /^#{1,6}[[:space:]]*Capability Evidence([[:space:]]|$)/ { in_section=1; next }
       in_section && /^#{1,6}[[:space:]]/ { in_section=0 }
       in_section && /`[^`]+`/ { found=1 }
       END { exit found ? 0 : 1 }
@@ -48,9 +48,9 @@ for plan in "${plans[@]}"; do
     fi
   fi
 
-  if grep -qiE '^#{1,6}[[:space:]]*Capability Waiver\b' "$plan"; then
+  if grep -qiE '^#{1,6}[[:space:]]*Capability Waiver([[:space:]]|$)' "$plan"; then
     if ! awk '
-      /^#{1,6}[[:space:]]*Capability Waiver\b/ { in_section=1; next }
+      /^#{1,6}[[:space:]]*Capability Waiver([[:space:]]|$)/ { in_section=1; next }
       in_section && /^#{1,6}[[:space:]]/ { in_section=0 }
       in_section && /(because|reason|justification|not required|לא נדרש|סיבה|נימוק)/ { found=1 }
       END { exit found ? 0 : 1 }
