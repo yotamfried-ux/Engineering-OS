@@ -1,6 +1,8 @@
 # Docs
 
-Authoritative documentation for architecture decisions, framework selection, external API references, troubleshooting guides, and UI/UX patterns.
+Authoritative documentation for architecture decisions, framework selection, external API references, operational runbooks, research notes, troubleshooting guides, and UI/UX patterns.
+
+`docs/` is a reference/documentation layer. It does not own runtime enforcement. Runtime enforcement is owned by `core/hooks-policy.md`, `.claude/settings.json`, `scripts/hooks/`, and `scripts/enforcement/`.
 
 ---
 
@@ -30,9 +32,24 @@ Authoritative documentation for architecture decisions, framework selection, ext
 | [`frameworks/`](./frameworks/) | Framework comparison and selection guides | Before choosing a framework for a new project or component |
 | [`official-docs/`](./official-docs/) | Indexed links to official API/SDK documentation | Before integrating a service or using an unfamiliar API |
 | [`reference-repositories/`](./reference-repositories/) | Curated external repos to study for implementation patterns | When you need a concrete reference implementation |
+| [`operations/`](./operations/) | Operational runbooks and rollout/verification procedures | Before changing operational behavior, rollout, installation, enforcement, or recovery flows |
+| [`research/`](./research/) | Research notes and source collection before a decision is promoted | When gathering evidence before creating an ADR, policy, runbook, or pattern |
 | [`troubleshooting/`](./troubleshooting/) | Known bugs and domain-specific fixes | Before implementing in a domain with known pitfalls |
 | [`api-design/`](./api-design/) | REST/GraphQL design rules, versioning, auth flows | Before designing or reviewing an API contract |
 | [`ui-ux/`](./ui-ux/) | UX patterns, component library guidance, accessibility rules | Before designing any user-facing surface |
+
+---
+
+## Ownership Rules
+
+| Content type | Canonical location | Notes |
+|---|---|---|
+| Stable policy | `core/` | `docs/` may explain it, but does not redefine it. |
+| Operational runbook | `docs/operations/` | Used for rollout/procedure; hooks and CI own enforcement. |
+| Research / source collection | `docs/research/` | Raw evidence only; promote accepted decisions to ADR/core/runbook. |
+| Architecture decision | `architecture-decisions/` | Use ADRs for accepted decisions and trade-offs. |
+| Official docs index | `docs/official-docs/` | Links and notes only; cite vendor docs when implementing. |
+| Reference implementation | `docs/reference-repositories/` | Examples to study, not copy blindly. |
 
 ---
 
@@ -84,5 +101,3 @@ The following topics are expected based on the OS scope but have no document yet
 |---|---|
 | `architecture-guides/` — top-level domain selection guide | Stub only |
 | `api-references/` — external API quick-reference index | Stub only |
-| `official/` — superseded by `official-docs/`; not yet merged | Legacy stub |
-| `reference-repos/` — superseded by `reference-repositories/`; not yet merged | Legacy stub |
