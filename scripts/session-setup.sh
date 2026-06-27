@@ -29,7 +29,7 @@ git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev
 # Without this block running first, graphify finds no LLM backend and may
 # fall back to ANTHROPIC_API_KEY (present in Claude Code env) — which is
 # explicitly forbidden. Use --no-label instead when Nemotron key is absent.
-# Governing policy: external-skills/nemotron/activation.md
+# Governing policy: external-systems/nvidia-nemotron/activation.md
 if [ -n "${Nemotron_api_key:-}" ]; then
   export OPENAI_API_KEY="${Nemotron_api_key}"
   export OPENAI_BASE_URL="https://integrate.api.nvidia.com/v1"
