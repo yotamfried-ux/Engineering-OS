@@ -14,14 +14,17 @@ cat > .claude/plans/pass.md <<'PLAN'
 
 | Field | Decision |
 |---|---|
-| Task class | engineering_os_maintenance |
+| Task class | engineering_os_governance |
 | Domain tags | governance, enforcement |
 
 ## Capability Evidence
 
-- `superpowers` — required planning/review capability; portable slash commands installed.
-- `github` — connector used for repository evidence.
-- `claude-template` — not applicable to this task, checked as template inventory.
+- `routing.task-router-read` — task router policy read.
+- `workflow.workflow-read` — workflow policy checked.
+- `plan.route-plan-before-write` — plan exists before implementation.
+- `source.github-repo-read` — repository files inspected through GitHub.
+- `validation.policy-change-has-validator` — validator and tests updated.
+- `validation.coderabbit-policy` — manual review fallback recorded.
 PLAN
 
 bash "$VALIDATOR" .claude/plans/pass.md >/tmp/capability-pass.out
@@ -29,21 +32,41 @@ bash "$VALIDATOR" .claude/plans/pass.md >/tmp/capability-pass.out
 cat > .claude/plans/waiver.md <<'PLAN'
 # Route Plan
 
-Task class: docs_governance
+Task class: engineering_os_governance
+
+## Capability Evidence
+
+- `routing.task-router-read` — task router policy read.
+- `workflow.workflow-read` — workflow policy checked.
+- `plan.route-plan-before-write` — plan exists before implementation.
+- `source.github-repo-read` — repository files inspected.
+- `validation.policy-change-has-validator` — validator and tests updated.
 
 ## Capability Waiver
 
-Reason: no external connector capability is required because this is a local documentation-only update.
+- `validation.coderabbit-policy` — reason: CodeRabbit is unavailable/rate-limited, so manual review fallback is used.
 PLAN
 
 bash "$VALIDATOR" .claude/plans/waiver.md >/tmp/capability-waiver.out
+
+cat > .claude/plans/unclassified-waiver.md <<'PLAN'
+# Route Plan
+
+Task class: unclassified
+
+## Capability Waiver
+
+Reason: no registry task class matches this tiny local documentation note.
+PLAN
+
+bash "$VALIDATOR" .claude/plans/unclassified-waiver.md >/tmp/capability-unclassified.out
 
 cat > .claude/plans/missing-task-class.md <<'PLAN'
 # Route Plan
 
 ## Capability Evidence
 
-- `github` — connector evidence.
+- `source.github-repo-read` — connector evidence.
 PLAN
 
 if bash "$VALIDATOR" .claude/plans/missing-task-class.md >/tmp/capability-missing-task.out 2>&1; then
@@ -55,7 +78,7 @@ grep -q 'missing Task class evidence' /tmp/capability-missing-task.out
 cat > .claude/plans/missing-evidence.md <<'PLAN'
 # Route Plan
 
-Task class: feature_implementation
+Task class: code_change
 PLAN
 
 if bash "$VALIDATOR" .claude/plans/missing-evidence.md >/tmp/capability-missing-evidence.out 2>&1; then
@@ -67,7 +90,7 @@ grep -q 'missing Capability Evidence' /tmp/capability-missing-evidence.out
 cat > .claude/plans/evidence-no-ids.md <<'PLAN'
 # Route Plan
 
-Task class: feature_implementation
+Task class: code_change
 
 ## Capability Evidence
 
@@ -80,14 +103,41 @@ if bash "$VALIDATOR" .claude/plans/evidence-no-ids.md >/tmp/capability-no-ids.ou
 fi
 grep -q 'no backticked capability IDs' /tmp/capability-no-ids.out
 
+cat > .claude/plans/missing-required-capability.md <<'PLAN'
+# Route Plan
+
+Task class: code_change
+
+## Capability Evidence
+
+- `routing.task-router-read` — task router policy read.
+- `workflow.workflow-read` — workflow policy checked.
+- `plan.route-plan-before-write` — plan exists.
+PLAN
+
+if bash "$VALIDATOR" .claude/plans/missing-required-capability.md >/tmp/capability-missing-required.out 2>&1; then
+  echo "expected missing required capability to fail" >&2
+  exit 1
+fi
+grep -q 'missing required capability evidence/waiver' /tmp/capability-missing-required.out
+grep -q '`source.github-repo-read`' /tmp/capability-missing-required.out
+
 cat > .claude/plans/waiver-no-reason.md <<'PLAN'
 # Route Plan
 
-Task class: docs_governance
+Task class: engineering_os_governance
+
+## Capability Evidence
+
+- `routing.task-router-read` — task router policy read.
+- `workflow.workflow-read` — workflow policy checked.
+- `plan.route-plan-before-write` — plan exists.
+- `source.github-repo-read` — repository files inspected.
+- `validation.policy-change-has-validator` — validator updated.
 
 ## Capability Waiver
 
-- skipped
+- `validation.coderabbit-policy`
 PLAN
 
 if bash "$VALIDATOR" .claude/plans/waiver-no-reason.md >/tmp/capability-waiver-no-reason.out 2>&1; then
@@ -95,5 +145,21 @@ if bash "$VALIDATOR" .claude/plans/waiver-no-reason.md >/tmp/capability-waiver-n
   exit 1
 fi
 grep -q 'no explicit reason' /tmp/capability-waiver-no-reason.out
+
+cat > .claude/plans/unknown-no-waiver.md <<'PLAN'
+# Route Plan
+
+Task class: docs_governance
+
+## Capability Evidence
+
+- `source.github-repo-read` — connector evidence.
+PLAN
+
+if bash "$VALIDATOR" .claude/plans/unknown-no-waiver.md >/tmp/capability-unknown-no-waiver.out 2>&1; then
+  echo "expected unknown task class without waiver to fail" >&2
+  exit 1
+fi
+grep -q 'unknown/unclassified task class' /tmp/capability-unknown-no-waiver.out
 
 echo "✅ capability evidence validator tests passed"
