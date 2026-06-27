@@ -3,9 +3,9 @@
 # capability-verify.sh — generate a unified Engineering OS capability report.
 #
 # It verifies skills and engines through skill-bootstrap, then inventories
-# connectors and templates from core/capability-registry.yaml. It does not
-# auto-install MCP connectors or request OAuth; it reports what is present,
-# documented, opt-in, or requires authentication.
+# connectors and templates from core/capability-registry.yaml and core/mcp-servers.md.
+# It does not auto-install MCP connectors or request OAuth; it reports what is
+# present, documented, opt-in, or requires authentication.
 
 set -euo pipefail
 
@@ -55,6 +55,8 @@ fmt = sys.argv[5]
 failure_only = sys.argv[6] == "1"
 
 registry = registry_path.read_text(encoding="utf-8")
+mcp_servers_path = eos_home / "core/mcp-servers.md"
+mcp_servers = mcp_servers_path.read_text(encoding="utf-8") if mcp_servers_path.exists() else ""
 try:
     boot = json.loads(boot_path.read_text(encoding="utf-8"))
 except Exception:
@@ -96,6 +98,36 @@ def inline_entries(block: str):
     return entries
 
 
+def slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def mcp_server_entries():
+    entries = []
+    for line in mcp_servers.splitlines():
+        if not line.startswith("|") or "**" not in line:
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 3:
+            continue
+        raw_name = re.sub(r"[*`()]", "", cells[0]).strip()
+        if not raw_name or raw_name.lower() in {"connector", "סקיל"}:
+            continue
+        cid = slug(raw_name.split()[0] if raw_name.lower().startswith("nemotron") else raw_name)
+        if not cid:
+            continue
+        entries.append({"id": cid, "path": "core/mcp-servers.md", "default_mode": "reference_opt_in"})
+    return entries
+
+
+def merge_by_id(*groups):
+    merged = {}
+    for group in groups:
+        for item in group:
+            merged.setdefault(item["id"], item)
+    return list(merged.values())
+
+
 def path_exists(rel: str) -> bool:
     return (eos_home / rel.rstrip("/")).exists()
 
@@ -114,6 +146,7 @@ def env_present(name: str) -> bool:
         "github": ["GITHUB_TOKEN", "GH_TOKEN"],
         "notion": ["NOTION_API_KEY", "NOTION_TOKEN"],
         "sentry": ["SENTRY_AUTH_TOKEN", "SENTRY_DSN"],
+        "context7": ["CONTEXT7_API_KEY"],
         "stripe": ["STRIPE_SECRET_KEY", "STRIPE_API_KEY"],
         "supabase": ["SUPABASE_ACCESS_TOKEN", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_URL"],
         "postgres": ["DATABASE_URL", "POSTGRES_URL"],
@@ -161,7 +194,8 @@ for item in boot.get("capabilities", []):
         "action": action,
     })
 
-mcp_entries = inline_entries(section("mcp_connectors", ["template_capabilities"]))
+registry_mcp = inline_entries(section("mcp_connectors", ["template_capabilities"]))
+mcp_entries = merge_by_id(registry_mcp, mcp_server_entries())
 service_entries = inline_entries(section("service_connectors", ["mcp_connectors"]))
 template_entries = inline_entries(section("template_capabilities", ["rejected_for_now"]))
 
@@ -171,7 +205,7 @@ for item in mcp_entries:
     present = mcp_configured(cid) or env_present(cid)
     mode = item.get("default_mode", "opt_in")
     status = "present" if present else "requires_auth"
-    action = "required" if (not present and mode != "opt_in") else "optional"
+    action = "required" if (not present and mode not in {"opt_in", "reference_opt_in"}) else "optional"
     mcp.append({"group": "mcp_connector", "id": cid, "status": status, "level": "", "profile": mode, "path": item.get("path", ""), "action": action})
 
 services = []
@@ -210,7 +244,7 @@ print()
 print(f"Target: `{target}`")
 print(f"Engineering OS reference: `{eos_home}`")
 print()
-print("> This report is generated from `core/capability-registry.yaml` and `scripts/skill-bootstrap.sh`. It is a verification report, not an auto-install list. Opt-in connectors may require manual auth/OAuth before use.")
+print("> This report is generated from `core/capability-registry.yaml`, `core/mcp-servers.md`, and `scripts/skill-bootstrap.sh`. It is a verification report, not an auto-install list. Opt-in connectors may require manual auth/OAuth before use.")
 print()
 print("## Summary")
 print()
