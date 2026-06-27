@@ -18,6 +18,7 @@ coverage_contract:
     service_connectors: external-systems/README.md
     mcp_connectors: external-systems/README.md
     skills: external-skills/README.md
+    engines: external-systems/README.md
     templates: repository templates and governance assets
 
 principles:
@@ -74,7 +75,7 @@ task_classes:
       - route_plan_created_before_write
       - github_repo_state_checked
       - validator_added_or_updated_or_waived
-      - coderabbit_status_checked
+      - coderabbit_status_checked_or_manual_review_recorded
 
   code_change:
     description: "Implementation, refactor, or behavior change in a target project."
@@ -143,7 +144,7 @@ task_classes:
     required_evidence:
       - pr_head_sha_checked
       - github_actions_checked
-      - coderabbit_status_checked
+      - review_status_checked_or_manual_review_recorded
       - review_threads_checked
       - explicit_user_merge_approval
 
@@ -202,163 +203,136 @@ capabilities:
     official_basis: "Engineering OS core/task-router.md"
     evidence_goal: "record that core/task-router.md was read before implementation"
     runtime_status: planned
-
   workflow.workflow-read:
     kind: source_of_truth
     official_basis: "Engineering OS core/workflow.md"
     evidence_goal: "record that core/workflow.md was read before implementation"
     runtime_status: planned
-
   spec.project-requirements-captured:
     kind: source_of_truth
     official_basis: "Engineering OS workflow requirements capture"
     evidence_goal: "record users, roles, data model, success criteria, risks, and open questions for broad project requests"
     runtime_status: planned
-
   plan.route-plan-before-write:
     kind: validator
     official_basis: "Claude Code PreToolUse / Stop hook lifecycle"
     evidence_goal: "route plan exists before implementation actions"
     runtime_status: planned
-
   source.github-repo-read:
     kind: connector
     official_basis: "GitHub connector / GitHub MCP read-oriented profile"
     evidence_goal: "record repo or PR read operation before repo changes"
     runtime_status: planned
-
   source.official-docs-checked:
     kind: source_of_truth
     official_basis: "Official vendor documentation or repository"
     evidence_goal: "record official source checked for external API/library decisions"
     runtime_status: planned
-
   source.context7-when-available:
     kind: connector
     official_basis: "Context7 documentation connector"
     evidence_goal: "record Context7 lookup or approved fallback when external docs are required"
     runtime_status: planned
-
   registry.service-connector-selected:
     kind: connector
     official_basis: "external-systems/README.md service inventory"
     evidence_goal: "record selected service connector or explain why none applies"
     runtime_status: planned
-
   registry.mcp-connector-selected:
     kind: connector
     official_basis: "external-systems/README.md MCP connector inventory"
     evidence_goal: "record selected MCP connector or explain why no MCP path applies"
     runtime_status: planned
-
   connector.notion-progress-tracking:
     kind: connector
     official_basis: "external-systems/connectors/notion/README.md"
     evidence_goal: "Notion plan is updated and validated across execution milestones"
     runtime_status: planned
-
   skill.superpowers:
     kind: skill
     official_basis: "external-skills/superpowers"
     evidence_goal: "planning/review workflow is used or waived"
     runtime_status: planned
-
   skill.ui-ux-pro-max:
     kind: skill
     official_basis: "external-skills/ui-ux-pro-max"
     evidence_goal: "UI work uses ui-ux-pro-max or records a waiver"
     runtime_status: planned
-
   skill.security-review:
     kind: skill
     official_basis: "external-skills/security-review"
     evidence_goal: "security review is run or explicitly waived where allowed"
     runtime_status: planned
-
   skill.graphify:
     kind: skill
     official_basis: "external-skills/graphify"
     evidence_goal: "code graph or fallback is recorded for context-heavy work"
     runtime_status: planned
-
   skill.rtk:
     kind: skill
     official_basis: "external-skills/rtk"
     evidence_goal: "output compaction availability or waiver is recorded"
     runtime_status: planned
-
   skill.claude-mem:
     kind: skill
     official_basis: "external-skills/claude-mem"
     evidence_goal: "memory context availability or waiver is recorded"
     runtime_status: planned
-
   accelerator.nemotron-optional:
     kind: llm_accelerator
-    official_basis: "external-skills/nemotron currently; PR #96 will move/clarify canonical ownership"
-    evidence_goal: "Nemotron use or waiver is recorded for generation/review/summarization support"
+    official_basis: "external-systems/nvidia-nemotron/orchestration.md"
+    evidence_goal: "Nemotron engine use or waiver is recorded for generation/review/summarization support"
     runtime_status: planned
-
   template.project-template-checked:
     kind: template
     official_basis: "templates/ and docs/architecture-guides inventory"
     evidence_goal: "record applicable template checked or waiver reason"
     runtime_status: planned
-
   pattern.relevant-patterns-checked:
     kind: pattern
     official_basis: "patterns/registry.yaml and patterns/<domain>/"
     evidence_goal: "record relevant patterns checked or waiver reason"
     runtime_status: planned
-
   validation.coderabbit-policy:
     kind: validator
     official_basis: "Engineering OS core/coderabbit-policy.md"
-    evidence_goal: "record that PR workflow follows CodeRabbit policy"
+    evidence_goal: "record CodeRabbit status or manual review waiver when CodeRabbit is unavailable"
     runtime_status: planned
-
   validation.actions-checked:
     kind: validator
     official_basis: "GitHub Actions"
     evidence_goal: "record workflow checks before merge"
     runtime_status: planned
-
   validation.review-checked:
     kind: validator
-    official_basis: "CodeRabbit / reviewer feedback loop"
+    official_basis: "CodeRabbit / reviewer feedback loop / manual review fallback"
     evidence_goal: "record review checked and comments handled"
     runtime_status: planned
-
   validation.user-merge-approval:
     kind: validator
     official_basis: "Yotam explicit approval policy"
     evidence_goal: "record explicit user approval before merge"
     runtime_status: planned
-
   validation.policy-change-has-validator:
     kind: validator
     official_basis: "Engineering OS governance policy"
     evidence_goal: "governance changes include a validator or explicit validator waiver"
     runtime_status: planned
-
   validation.no-broad-mcp-default:
     kind: validator
     official_basis: "MCP profile hardening"
     evidence_goal: "prove no default broad MCP toolset was introduced"
     runtime_status: planned
-
   validation.mcp-opt-in-only:
     kind: validator
     official_basis: "Active MCP verification runbook"
     evidence_goal: "prove target-project MCP activation remains explicit opt-in"
     runtime_status: planned
-
   validation.profile-shape-checked:
     kind: validator
     official_basis: "Connector profile validator pattern"
     evidence_goal: "profile command, args, env, and scopes are checked exactly"
     runtime_status: planned
-
   validation.security-gate-checked:
     kind: validator
     official_basis: "external-skills/security-review policy"
@@ -417,7 +391,7 @@ skill_capabilities:
 
 llm_accelerators:
   nemotron:
-    path: external-skills/nemotron/
+    path: external-systems/nvidia-nemotron/
     type: [llm-accelerator, generation, review, summarization, context-cost-reduction]
     level: L1
     default_profile: when_nemotron_api_key_available
@@ -429,6 +403,12 @@ removed_external_skills:
     replacement: ui-ux-pro-max
     registry_status: deprecated_reference_only
 
+legacy_compatibility:
+  nemotron_legacy_skill_docs:
+    path: external-skills/nemotron/
+    canonical_owner: external-systems/nvidia-nemotron/
+    registry_status: compatibility_redirect_only
+
 service_connectors:
   llm_providers_ai_apis:
     - {id: anthropic, path: external-systems/anthropic/}
@@ -437,6 +417,7 @@ service_connectors:
     - {id: mistral, path: external-systems/mistral/}
     - {id: cohere, path: external-systems/cohere/}
     - {id: nvidia, path: external-systems/nvidia/}
+    - {id: nvidia-nemotron, path: external-systems/nvidia-nemotron/}
   ai_agent_frameworks:
     - {id: langgraph, path: external-systems/langgraph/}
     - {id: crewai, path: external-systems/crewai/}
