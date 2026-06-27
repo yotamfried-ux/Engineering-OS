@@ -2,42 +2,55 @@
 
 Created: 2026-06-26
 Branch: `docs-ownership-architecture`
-Status: in progress
+Status: PR review
 
-## Task type
-Engineering OS maintenance / governance.
+## Route Plan
 
-## Domain tags
-`governance`, `documentation`, `workflow`, `connectors`, `skills`, `validation`.
+| Field | Value |
+|---|---|
+| Task-router evidence | Read `core/task-router.md`; task type is Engineering OS maintenance / governance. |
+| Workflow evidence | Read `core/workflow.md`; plan fallback is `.claude/plans/`. |
+| Templates | N/A for documentation ownership cleanup. |
+| Patterns | Existing core policy and README inventory structure. |
+| External systems/connectors | GitHub. |
+| Skills | Not required. |
+| Validation gates | enforcement tests, plan policy, connector evidence policy, workflow evidence policy, review. |
 
-## Problem
-Documentation ownership is not explicit enough. `CLAUDE.md` is the entry point, but several Markdown families can accidentally behave like competing sources of truth: core policy, inventory READMEs, connector docs, templates, operational runbooks, and temporary PR plans.
+## Source of Truth Checks
 
-The target state is a single canonical owner per concept, with index files staying index-only and temporary plans staying temporary.
+- `CLAUDE.md` is the entry point.
+- `core/documentation-policy.md` owns documentation placement and lifecycle.
+- `core/task-router.md` owns task routing.
+- `core/workflow.md` owns planning workflow.
+- `core/skill-orchestration-policy.md` owns SIP rules.
+- `core/connector-policy.md` owns connector policy.
+- `core/capability-registry.yaml` owns capability vocabulary.
 
-## Canonical route
-- Entry point: `CLAUDE.md`
-- Workflow: `core/workflow.md`
-- Routing: `core/task-router.md`
-- Documentation ownership: `core/documentation-policy.md`
-- Capability routing vocabulary: `core/capability-registry.yaml`
-- Skill integration policy: `core/skill-orchestration-policy.md`
-- Connector policy: `core/connector-policy.md`
+## Connector Evidence
+
+Repository reads and writes were done through GitHub on branch `docs-ownership-architecture`.
+
+## Template Gap Waiver
+
+No scaffold template applies. The reusable structure is the existing `core/` policy pattern and inventory README pattern.
 
 ## Scope
-1. Strengthen `core/documentation-policy.md` with an explicit ownership map.
-2. Keep `external-systems/README.md` as inventory only and point policy decisions back to `core/`.
-3. Keep `external-skills/README.md` as inventory only, separate active skills from deprecated/replaced items and adjacent accelerators.
-4. Clarify `CLAUDE.md` navigation so the entry point routes to owners without duplicating detailed policy.
-5. Add deterministic documentation ownership validation.
 
-## Out of scope
-- No merge to `main` without explicit user approval.
-- No deletion of large documentation families in this PR.
-- No runtime capability-registry enforcement beyond documentation-boundary validation.
-- No vendor documentation rewrite.
+1. Add canonical documentation ownership to `core/documentation-policy.md`.
+2. Keep `external-systems/README.md` as an index-only inventory.
+3. Keep `external-skills/README.md` as an index-only inventory.
+4. Separate active skills, replaced wrappers, and adjacent accelerators.
+5. Add an ownership regression test under `scripts/enforcement/tests/`.
 
-## Validation plan
-- Add or update shell validators under `scripts/enforcement/tests/`.
-- Verify the validators are discoverable from the existing enforcement test structure.
-- Open PR for GitHub Actions and CodeRabbit review.
+## Out of Scope
+
+- Large documentation deletions.
+- Runtime capability-registry enforcement.
+- Vendor documentation rewrite.
+- Direct `CLAUDE.md` edit.
+
+## Validation Plan
+
+- PR policy workflows.
+- `scripts/enforcement/tests/test-documentation-ownership.sh` through the existing enforcement test loop.
+- Review before merge.
