@@ -53,6 +53,16 @@ printf '{"tool_name":"Read","tool_input":{"file_path":"core/task-router.md"}}' \
 printf '{"tool_name":"Read","tool_input":{"file_path":"core/workflow.md"}}' \
   | ENGINEERING_OS_HOME="$ROOT" bash "$ROOT/scripts/enforcement/post-tool-use-read-evidence.sh"
 
+if EOS_PRETOOL_LEGACY_EXIT=1 ENGINEERING_OS_HOME="$ROOT" \
+  bash "$ROOT/scripts/enforcement/pre-tool-use-runtime-evidence.sh" \
+  <<< '{"tool_name":"Write","tool_input":{"file_path":"src/app.ts"}}'; then
+  echo "expected prewrite to fail before live GitHub source evidence"
+  exit 1
+fi
+
+printf '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":{},"tool_response":{"ok":true}}' \
+  | ENGINEERING_OS_HOME="$ROOT" bash "$ROOT/scripts/enforcement/post-tool-use-mcp.sh"
+
 EOS_PRETOOL_LEGACY_EXIT=1 ENGINEERING_OS_HOME="$ROOT" \
   bash "$ROOT/scripts/enforcement/pre-tool-use-runtime-evidence.sh" \
   <<< '{"tool_name":"Write","tool_input":{"file_path":"src/app.ts"}}'
