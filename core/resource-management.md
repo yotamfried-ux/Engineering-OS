@@ -217,3 +217,93 @@ rtk init -g
 גם `session-setup.sh` מטפל בזה אוטומטית.
 
 </rtk>
+
+---
+
+## <ai-agent-quotas>
+
+**רלוונטי כשהאפליקציה שאנחנו בונים כוללת AI agents שמשתמשים עושים בהם שימוש.**
+
+### עקרון
+
+כל user session שמפעיל LLM calls מייצר עלות. ללא caps, עלות בלתי-מבוקרת.
+
+### ארכיטקטורה מומלצת
+
+```
+User request → rate limiter → token counter → LLM call
+                                 ↓
+                        Supabase/Upstash tracking
+```
+
+**Per-user tracking**:
+```sql
+-- Supabase example schema
+CREATE TABLE token_usage (
+  user_id UUID REFERENCES auth.users,
+  date    DATE DEFAULT CURRENT_DATE,
+  tokens  INTEGER DEFAULT 0,
+  PRIMARY KEY (user_id, date)
+);
+```
+
+**Tiers** (לדוגמה):
+| Tier | Daily cap | Monthly cap |
+|---|---|---|
+| Free | 50K tokens | 500K tokens |
+| Pro | 500K tokens | 5M tokens |
+| Enterprise | custom | custom |
+
+**Hard cap**: דחה request עם `429 Too Many Requests` + `Retry-After`.
+**Soft cap (80%)**: הזהר במסרת status header.
+
+**Pattern location**: `patterns/ai-agents/quotas.md` (נוצר כשנדרש).
+
+</ai-agent-quotas>
+
+---
+
+## <remote-session-limitations>
+
+מגבלות ידועות בסביבת remote (Claude Code on the web / GitHub Actions):
+
+| כלי | מגבלה | Workaround |
+|---|---|---|
+| `agent isolation: "worktree"` | נכשל כש-CWD לא git repo תקין | בדוק `git rev-parse --git-dir` לפני שימוש; השתמש ב-`isolation: "none"` |
+| `claude-mem worker` | לא מובטח ב-remote sessions | best-effort; session-setup מנסה אוטומטית |
+| `settings.json` user-level | לא קיים ב-remote | הכל ב-`.claude/settings.json` פרויקטלי |
+| SSH clone | אין SSH agent ב-web sessions | session-setup מגדיר HTTPS override אוטומטית |
+
+ראה גם: [`lessons-learned/bugs/worktree-isolation-remote-session.md`](../lessons-learned/bugs/worktree-isolation-remote-session.md)
+
+### tasks.json — פורמט מחייב (Agent hook בודק שקיים לפני spawn)
+
+```json
+{
+  "task_id": "YYYY-MM-DD-task-name",
+  "agents": {
+    "agent-1": {
+      "goal": "תיאור המטרה",
+      "files": ["paths/to/relevant/files"],
+      "status": "pending|running|done|failed",
+      "result": ""
+    }
+  },
+  "spec_loop_verified": false,
+  "tools_used": [],
+  "failures": []
+}
+```
+
+**כלל:** `spec_loop_verified` מוגדר ל-`true` רק אחרי שוידאת כל DoD item ב-plan file מול התוצר בפועל.
+
+</remote-session-limitations>
+
+---
+
+## חיבור לשאר המערכת
+
+- **session-setup.sh** — מריץ graphify ו-RTK בתחילת כל סשן ([`../scripts/session-setup.sh`](../scripts/session-setup.sh))
+- **skill-orchestration-policy.md** — RTK ו-graphify רשומים כסקילים ([`skill-orchestration-policy.md`](./skill-orchestration-policy.md))
+- **.claudeignore** — baseline ignore file ([`../.claudeignore`](../.claudeignore))
+- **hooks-policy.md** — hooks שמאכפים את הכללים האלה ([`hooks-policy.md`](./hooks-policy.md))
