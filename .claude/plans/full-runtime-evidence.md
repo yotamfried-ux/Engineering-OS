@@ -9,6 +9,7 @@
 | Patterns | none |
 | External systems/connectors | GitHub |
 | Skills | none |
+| Validation gates | enforcement-tests, capability-evidence-policy, workflow-evidence-policy, connector-evidence-policy, target install smoke |
 
 ## Capability Evidence
 
