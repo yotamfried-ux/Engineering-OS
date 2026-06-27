@@ -277,23 +277,24 @@ else
     || printf '  \033[32m✅\033[0m Context7: use the built-in connector in Claude app (claude.ai/code) — no MCP needed there.\n       MCP fallback (CLI/remote only): claude mcp add context7 https://mcp.context7.com/mcp\n'
 fi
 
-# 11. Generate ENGINEERING_OS_SETUP.md checklist.
-if [ -n "${Nemotron_api_key:-}" ]; then
-  _NEMOTRON_LINE="- [x] Nemotron_api_key ✅ already set"
+# 11. Generate capability verification report from the registry.
+CAP_REPORT="$TARGET/ENGINEERING_OS_CAPABILITIES.md"
+if [ -f "$EOS_HOME/scripts/capability-verify.sh" ]; then
+  ( cd "$TARGET" && ENGINEERING_OS_HOME="$EOS_HOME" bash "$EOS_HOME/scripts/capability-verify.sh" --output "$CAP_REPORT" ) || true
+  grn "ENGINEERING_OS_CAPABILITIES.md created at $CAP_REPORT"
 else
-  _NEMOTRON_LINE="- [ ] Nemotron_api_key — claude.ai → Code → ⚙ Default Cloud Environment → Environment variables → Add: \`Nemotron_api_key=nvapi-...\` (get key: build.nvidia.com — NOT GitHub Secrets)"
+  warn "capability-verify.sh missing — capability report skipped"
 fi
+
+# 12. Generate ENGINEERING_OS_SETUP.md checklist.
 cat > "$TARGET/ENGINEERING_OS_SETUP.md" << CHECKLIST
 # Engineering OS — Setup Checklist
 
-## Manual steps (cannot be automated):
+## Required manual follow-up
 - [ ] Fill CLAUDE.md › <project_context> with project details (owner, goal, stack, stage)
-${_NEMOTRON_LINE}
-- [ ] Sentry MCP connected: claude mcp add sentry ... (required for debug_loop step 1)
-- [ ] Notion MCP connected: claude mcp add notion ... (required for spec writing in workflow)
-- [ ] superpowers plugin (optional): /plugin install superpowers@claude-plugins-official
-  Note: /superpowers-brainstorm, /superpowers-verify, /superpowers-plan are auto-installed below
-  and work WITHOUT the plugin in all environments (web, remote, CLI).
+- [ ] Review \`ENGINEERING_OS_CAPABILITIES.md\` › Action Required
+- [ ] Authenticate only the connectors/engines selected for this project or current task
+- [ ] Optional: install the full superpowers plugin if this environment supports plugins
 
 ## Auto-installed by use-in-project.sh:
 - [x] pre-commit hook — staged lint/test stack enforcer via enforce-tests.sh
@@ -301,6 +302,7 @@ ${_NEMOTRON_LINE}
 - [x] post-commit hook — learning_loop reminder on fix: commits
 - [x] .claude/settings.json — Write/Edit/Agent/Bash PreToolUse blockers active
 - [x] /superpowers-brainstorm, /superpowers-verify, /superpowers-plan slash commands
+- [x] ENGINEERING_OS_CAPABILITIES.md — generated verification report for skills, engines, connectors, and templates
 - [x] graphify knowledge graph built (if graphify installed)
 
 ## Hard blockers (exit 1 — will stop work):
@@ -323,13 +325,21 @@ echo
 grn "Engineering OS is now wired into: $TARGET"
 dim "Reference (read-only): $EOS_HOME   —   re-run anytime; this script is idempotent."
 
-# 12. Print next-steps checklist — manual actions that cannot be automated.
+# 13. Print next-steps summary.
 echo
 bold "════════════════════════════════════════════"
-bold "  Next steps — manual actions required"
+bold "  Next steps — capability-driven follow-up"
 bold "════════════════════════════════════════════"
 echo
 
+if [ -f "$TARGET/ENGINEERING_OS_CAPABILITIES.md" ]; then
+  grn "capability report — ready: ENGINEERING_OS_CAPABILITIES.md"
+  printf '      Review the Action Required section and authenticate only selected tools.\n'
+else
+  warn "capability report missing — run: ENGINEERING_OS_HOME=$EOS_HOME bash $EOS_HOME/scripts/capability-verify.sh --output ENGINEERING_OS_CAPABILITIES.md"
+fi
+
+echo
 if [ -f "$TARGET/.claude/commands/superpowers-brainstorm.md" ]; then
   grn "superpowers — portable slash commands ✅ ready (no plugin needed)"
   printf '      /superpowers-brainstorm  /superpowers-verify  /superpowers-plan\n'
@@ -338,32 +348,8 @@ else
   warn "superpowers — portable slash commands missing; install plugin inside Claude Code CLI:"
   printf '      /plugin install superpowers@claude-plugins-official\n'
 fi
+
 echo
-
-if echo "$BOOTSTRAP_OUT" | grep -q "graphify.*✅\|graphify.*מותקן"; then
-  if [ -n "${Nemotron_api_key:-}" ]; then
-    grn "graphify — Nemotron_api_key ✅ already set (semantic extraction enabled)"
-  else
-    warn "graphify — set Nemotron_api_key for semantic extraction + AI node naming:"
-    printf '      claude.ai → Code → ⚙ Default Cloud Environment → Environment variables\n'
-    printf '      Add: Nemotron_api_key=nvapi-...  (get free key at: build.nvidia.com)\n'
-    printf '      session-setup.sh exports it automatically as OPENAI_API_KEY for graphify.\n'
-    echo
-  fi
-fi
-
-if echo "$BOOTSTRAP_OUT" | grep -q "security-review.*✅\|security-review"; then
-  if [ -n "${Nemotron_api_key:-}" ]; then
-    grn "security-review — Nemotron_api_key ✅ already set"
-  else
-    warn "security-review — set Nemotron_api_key for primary Nemotron path:"
-    printf '      claude.ai → Code → ⚙ Default Cloud Environment → Environment variables\n'
-    printf '      Add: Nemotron_api_key=nvapi-...  (get free key at: build.nvidia.com)\n'
-    printf '      Fallback (no key needed): /security-review slash command in Claude Code session\n'
-  fi
-  echo
-fi
-
 bold "════════════════════════════════════════════"
 dim "Learning loop: when a lesson from this project is validated (Medium confidence+),"
 dim "open a PR to $EOS_REPO to share it."
