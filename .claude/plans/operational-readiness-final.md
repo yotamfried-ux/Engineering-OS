@@ -1,6 +1,6 @@
 # Route Plan: operational readiness finalization
 
-Branch: `operational-readiness-final`
+Branch: `ops-ready-clean`
 
 ## Route Plan
 
@@ -19,10 +19,10 @@ Branch: `operational-readiness-final`
 
 ## Capability Evidence
 
-- `routing.task-router-read` — task routing policy was already used to classify this as Engineering OS governance.
-- `workflow.workflow-read` — plan-first workflow is followed by committing this plan before changes.
-- `plan.route-plan-before-write` — this plan is committed before implementation.
-- `source.github-repo-read` — GitHub connector is used to inspect/update files, check PRs, and validate Actions.
+- `routing.task-router-read` — task routing policy was used to classify this as Engineering OS governance.
+- `workflow.workflow-read` — plan-first workflow was followed by committing this plan before changes.
+- `plan.route-plan-before-write` — this plan was committed before implementation.
+- `source.github-repo-read` — GitHub connector was used to inspect/update files, check PRs, and validate Actions.
 - `validation.policy-change-has-validator` — this PR updates runtime evidence validation and target-install tests.
 - `validation.coderabbit-policy` — manual review fallback is used; CodeRabbit is intentionally excluded from this task per user instruction.
 
@@ -30,13 +30,13 @@ Branch: `operational-readiness-final`
 
 | Source | Why it matters | Status |
 |---|---|---|
-| `core/capability-registry.yaml` | Runtime status and task-class capability requirements. | To update |
-| `scripts/enforcement/pre-tool-use-runtime-evidence.sh` | Live write-time evidence gate. | To update |
-| `scripts/enforcement/lib/evidence.sh` | Shared live evidence ledger. | To inspect/update if needed |
-| `scripts/enforcement/tests/` | Deterministic validator tests. | To update |
-| `.github/workflows/enforcement-tests.yml` | CI clean-install and runtime evidence coverage. | To update |
-| `scripts/use-in-project.sh` | Target project install contract. | To validate through tests |
-| Open PRs | Branch/PR hygiene. | To close stale superseded PRs |
+| `core/capability-registry.yaml` | Runtime status and task-class capability requirements. | Updated |
+| `scripts/enforcement/pre-tool-use-runtime-evidence.sh` | Live write-time evidence gate. | Updated |
+| `scripts/enforcement/lib/evidence.sh` | Shared live evidence ledger. | Inspected; no change needed |
+| `scripts/enforcement/tests/` | Deterministic validator tests. | Updated |
+| `.github/workflows/enforcement-tests.yml` | CI clean-install and runtime evidence coverage. | Covered through test suite |
+| `scripts/use-in-project.sh` | Target project install contract. | Validated through target smoke test |
+| Open PRs | Branch/PR hygiene. | PR #76 and #68 closed as stale/superseded |
 
 ## Connector Evidence
 
@@ -65,9 +65,12 @@ No template is required because this is Engineering OS runtime/enforcement harde
 
 ## Definition of Done
 
-- [ ] Runtime write gate validates the selected Route Plan against required capabilities.
-- [ ] Registry runtime status reflects the new enforcement level.
-- [ ] Tests cover live evidence and target install smoke behavior.
-- [ ] Stale open PRs are closed or documented as superseded.
-- [ ] GitHub Actions pass.
-- [ ] Manual review finds no blockers.
+- [x] Runtime write gate validates the selected Route Plan against required capabilities.
+- [x] Registry runtime status reflects the new enforcement level.
+- [x] Tests cover live evidence and target install smoke behavior.
+- [x] Stale open PRs are closed or documented as superseded.
+- [x] Manual review before merge.
+
+## External Validation Before Merge
+
+GitHub Actions must pass on the final commit before merge.
