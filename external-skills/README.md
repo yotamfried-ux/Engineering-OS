@@ -1,118 +1,136 @@
-# External Skills — Skill Orchestration Layer
+# External Skills — inventory
 
-> The integration layer that turns Engineering OS from a **knowledge system** into a **Skill Orchestration Framework**. Every external capability — repo, skill, plugin, MCP server, or agent system — enters the OS **only** through a uniform adapter defined here.
->
-> **Governing policy:** [`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md) (the SIP — Skill Integration Protocol).
-> **Bootstrap / verification:** [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
+Inventory of external capabilities that affect how Claude plans, codes, reviews,
+remembers, secures, or optimizes context inside Engineering OS.
 
----
+This README is **index-only**. It lists active skills, replaced items, and adjacent
+accelerators. The source of truth for orchestration rules is
+[`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md).
+Bootstrap and presence checks live in [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
 
-## What this layer is
+Canonical owners:
 
-A skill is not "code to integrate into the app you are building" (that is [`external-systems/`](../external-systems/) and [`patterns/`](../patterns/)). A **skill** is an external capability that changes **how Claude itself works** — how it plans, codes, reviews, remembers, secures, or optimizes context. This directory holds the *integration contracts* for those capabilities, not the capabilities' source code.
-
-```
-Skill = External Capability + Integration Contract + Execution Rules
-```
-
-| Layer | What it governs |
+| Question | Source of truth |
 |---|---|
-| `external-skills/*` | Capabilities that change **Claude's own workflow** (this directory) |
-| `external-systems/*` | Third-party **services the target app integrates with** (Stripe, Supabase…) |
-| `patterns/*` | Reusable **code patterns** for the target app |
-| `core/*` | The OS's own **policies** |
+| Which skill wrappers exist? | This README |
+| Skill Integration Protocol | `../core/skill-orchestration-policy.md` |
+| Task routing to skills | `../core/task-router.md` |
+| Capability vocabulary | `../core/capability-registry.yaml` |
+| Install / verification mechanics | `../scripts/skill-bootstrap.sh` plus each skill's `activation.md` |
+| One skill's behavior contract | `external-skills/<name>/integration.md` and `policy.md` |
 
 ---
 
-## The standard 4-file contract
+## What belongs here
 
-Every skill lives in `external-skills/<skill-name>/` with exactly four files:
+A SIP-managed skill is an external capability with a local contract that changes
+Claude's own engineering workflow. It is not app code and not a normal third-party
+service integration.
+
+```text
+SIP-managed skill = external capability + local contract + activation notes
+```
+
+| Layer | Responsibility |
+|---|---|
+| `core/*` | OS policy and routing decisions |
+| `external-skills/README.md` | skill inventory and status |
+| `external-skills/<skill>/` | one capability contract |
+| `external-systems/*` | services the target app integrates with |
+| `patterns/*` | reusable implementation patterns for target apps |
+
+---
+
+## Active SIP-managed skills
+
+| Skill | Classification | Level | Install mechanism | Invocation surface |
+|---|---|---|---|---|
+| [superpowers](./superpowers/) | planning, review, orchestration, self-correction | L2 default baseline | Claude Code plugin | Skill tool entries such as `brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, `verification-before-completion` |
+| [security-review](./security-review/) | security, review | L2 for production-bound work | GitHub Action + slash command | `/security-review`, `anthropics/claude-code-security-review@main` Action |
+| [claude-mem](./claude-mem/) | memory, context-persistence | L2 where environment allows persistence | plugin + MCP + hooks + worker | MCP tools `search`, `timeline`, `get_observations` plus passive lifecycle hooks |
+| [graphify](./graphify/) | context-optimization, code-intelligence | L2 default baseline | `uv tool install graphifyy` + MCP | `/graphify .`, MCP tools `query_graph`, `get_node`, `get_pr_impact` |
+| [rtk](./rtk/) | context-optimization | L2 default baseline | `cargo install --git https://github.com/rtk-ai/rtk` | PreToolUse hook output compression |
+| [ui-ux-pro-max](./ui-ux-pro-max/) | ui-ux, coding | L2 for UI projects / L1 otherwise | Claude Code plugin | UI/UX design workflow, component specs, accessibility review |
+| [claude-code-workflows](./claude-code-workflows/) | review, orchestration | L1 / L2 for large refactors | manual file copy templates | `pragmatic-code-review`, `design-review`, `/design-review`, GitHub Action |
+| [gstack](./gstack/) | orchestration, role-simulation | L1 opt-in for complex projects | `git clone` + `./setup` | role commands `/autoplan`, `/review`, `/qa`, `/cso`, `/ship` |
+
+---
+
+## Replaced / deprecated wrappers
+
+| Item | Status | Replacement | Action |
+|---|---|---|---|
+| [frontend-design](./frontend-design/) | replaced | [ui-ux-pro-max](./ui-ux-pro-max/) | keep only as historical wrapper; do not list as active for new projects |
+
+---
+
+## Adjacent accelerators
+
+Adjacent accelerators can support Engineering OS, but they are not listed as active
+SIP-managed skills until their ownership and runtime contract are explicit.
+
+| Item | Current home | Status | Why it is adjacent |
+|---|---|---|---|
+| [nemotron](./nemotron/) | `external-skills/nemotron/` | adjacent accelerator | NVIDIA/NIM-backed LLM support via MCP tools; useful for generation/review/summarization, but not a Claude workflow skill in the same sense as SIP-managed skills |
+
+Follow-up cleanup for adjacent accelerators can either move them to a dedicated
+inventory or keep them here under this section, but they should not appear in the
+active skill table.
+
+---
+
+## Standard SIP contract
+
+Each active SIP-managed skill directory uses four local files:
 
 | File | Answers |
 |---|---|
-| `README.md` | *What is it?* — identity, real structure, install summary, license |
-| `integration.md` | *How & when do I use it?* — behavioral contract + the real tools/commands you invoke |
-| `policy.md` | *How does it fit the orchestration?* — classification, level, composition, override |
-| `activation.md` | *How do I install & verify it?* — exact commands, presence check, secrets, removal |
+| `README.md` | identity, real structure, install summary, license |
+| `integration.md` | when to use it and which real tools/commands are invoked |
+| `policy.md` | classification, level, composition, overrides |
+| `activation.md` | install, verification, required secrets, removal |
 
-Each wrapper is written from a **verified scan of the real repository** — not a marketing description. Where a popular claim was inaccurate, the wrapper says so (see the "Reality check" in `claude-code-workflows`).
-
----
-
-## Skill registry
-
-| Skill | Classification (`type`) | Level | Install mechanism | What you actually invoke |
-|---|---|---|---|---|
-| **[superpowers](./superpowers/)** | planning, review, orchestration, self-correction | **L2** · default-on every project | Claude Code plugin (`/plugin install`) | 14 skills via the Skill tool (`brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, `verification-before-completion`…) |
-| **[frontend-design](./frontend-design/)** | ui-ux, coding | **L2** for UI / L1 otherwise | plugin marketplace (`example-skills@anthropic-agent-skills`) | `frontend-design` skill (auto-triggers on UI requests) |
-| **[claude-code-workflows](./claude-code-workflows/)** | review, orchestration | L1 / **L2** for large refactors | manual file copy (templates) | `pragmatic-code-review` & `design-review` subagents, `/design-review`, GitHub Action |
-| **[security-review](./security-review/)** | security, review | **L2** · default-on · pre-commit + pre-merge gate | GitHub Action + slash command | `/security-review`, `anthropics/claude-code-security-review@main` Action |
-| **[claude-mem](./claude-mem/)** | memory, context-persistence | **L2** (passive system dependency) | plugin + MCP + hooks + worker | MCP tools `search`, `timeline`, `get_observations` (+ passive lifecycle hooks) |
-| **[gstack](./gstack/)** | orchestration, role-simulation | L1 (complex projects) | `git clone` + `./setup` (needs Bun) | role commands `/autoplan`, `/review`, `/qa`, `/cso`, `/ship` (23 specialists + 8 power tools) |
-| **[graphify](./graphify/)** | context-optimization, code-intelligence | **L2** (mandatory default-on every project) | `uv tool install graphifyy` + MCP | `/graphify .`, MCP tools `query_graph`, `get_node`, `get_pr_impact`… |
-| **[rtk](./rtk/)** | context-optimization | **L2** · default-on every project | `cargo install --git https://github.com/rtk-ai/rtk` | PreToolUse hook — auto-compresses all Bash output 60–90% |
-| **[ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | **L2** for UI projects / L1 otherwise | Claude Code plugin (marketplace) | UI/UX design workflow, component specs, accessibility review |
-| **[nemotron](./nemotron/)** | generation, review, context-optimization | L1 (when `Nemotron_api_key` set) | MCP server (`scripts/nemotron-mcp-server.py`) | MCP tools `nemotron_generate_code`, `nemotron_review_code`, `nemotron_summarize`, `nemotron_explain`, `nemotron_brainstorm` |
+Each wrapper is written from a verified scan of the real repository, not from a
+marketing description. Where a popular claim is inaccurate, the wrapper documents
+the reality check locally.
 
 ---
 
 ## Default activation profile
 
-Two separate axes: **execution level** (when a skill runs on a task) vs **default install** (whether the bootstrap installs it in every project). Which skills are default-on, and why:
+Default profile expected by `skill-bootstrap.sh` in a standard project:
 
-| Skill | Default per project | Why |
-|---|---|---|
-| superpowers | ✅ **every project** | Prevents the #1 failure mode (jumping to code without a spec). Always loaded via its SessionStart hook; only the *depth* of process scales with task size. |
-| security-review | ✅ **every production-bound project** | Security is a baseline, not an add-on. Diff-aware, so cheap to run before each commit; mandatory gate before merge to main. |
-| graphify | ✅ **every project** | Saves context cost every session. Always build the graph at session start, no exceptions. If the repo is tiny, Graphify itself warns — that is the tool's feedback, not a skip condition. The graph is in place when the repo grows. |
-| rtk | ✅ **every project** | Saves 60–90% of Bash output tokens via a PreToolUse hook. Zero-config once installed; negligible overhead on every command. |
-| claude-mem | ✅ **where the environment allows** | Cross-session memory helps almost any multi-session project. Opt-out only in locked-down/ephemeral environments or where data must not persist to disk. |
-| ui-ux-pro-max | ⚠️ **conditional — UI projects** | Full UI/UX design workflow. Replaces the deprecated `frontend-design`. Installed when there is a UI surface. |
-| frontend-design | ⚠️ **DEPRECATED — use ui-ux-pro-max** | Superseded by ui-ux-pro-max. Do not install in new projects. |
-| claude-code-workflows | ⚠️ **recommended with PR review** | Provides PR-review subagents + Actions; full value only in a PR-based flow. |
-| gstack | ➖ **opt-in (not default)** | Heavy (Bun + 59 SKILL.md) and overlaps superpowers/security/review. Chosen deliberately for complex multi-role projects, not installed by default. |
-
-**Default profile** that `skill-bootstrap.sh` expects in a standard project: superpowers · security-review · graphify · rtk · claude-mem.
-
----
-
-## Execution levels (summary)
-
-- **LEVEL 0 — optional**: Claude decides.
-- **LEVEL 1 — recommended**: default-on unless there's an explicit reason to skip.
-- **LEVEL 2 — mandatory**: runs whenever its trigger conditions are met **and** it is installed. A missing L2 skill is a reported gap, not a silent skip — see the bootstrap protocol.
-
-Full definitions, the selection pipeline, the composition order, and the security-override rule are in [`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md).
-
----
-
-## Composition order (when several apply)
-
-```
-context-optimization (graphify)   → build/refresh code graph first, cross-cutting
-memory (claude-mem)               → restore at session start, summarize at stop (passive)
-1. planning   (superpowers, gstack /autoplan)   → before any code
-2. coding     (frontend-design, superpowers TDD)
-3. SECURITY GATE (security-review, gstack /cso)  → blocks before production; cannot be overridden
-4. review     (claude-code-workflows, gstack /review, superpowers receiving-code-review) → last
+```text
+superpowers · security-review · graphify · rtk · claude-mem
 ```
 
-**Three rules:** planning first · security always overrides · review runs last.
+Conditional additions:
+
+| Skill | Condition |
+|---|---|
+| ui-ux-pro-max | UI surface exists |
+| claude-code-workflows | PR-review workflow is relevant |
+| gstack | complex multi-role work justifies the heavier setup |
+
+Full execution-level definitions and composition rules live in
+[`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md).
 
 ---
 
-## Adding a new skill
+## Adding a new skill wrapper
 
-1. **Scan the real repo first** (structure, manifests, real commands/tools) — never wrap from a description.
-2. Create `external-skills/<skill-name>/` with the four contract files.
-3. Assign `type` tags and an execution level in `policy.md`.
-4. Add a row to the registry table above.
-5. Add a detection entry to [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
-6. If it is an MCP server, also register it in [`core/mcp-servers.md`](../core/mcp-servers.md).
-7. If it is a significant capability, add it to [`CLAUDE.md`](../CLAUDE.md) navigation.
+1. Scan the real repo first: structure, manifests, commands and tools.
+2. Create `external-skills/<skill-name>/` with the four SIP files.
+3. Assign type tags and execution level in `policy.md`.
+4. Add or update the row in this inventory.
+5. Add detection to [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
+6. For MCP-backed capabilities, keep the MCP server registry aligned with [`core/mcp-servers.md`](../core/mcp-servers.md).
 
 ---
 
 ## Security note
 
-Skill wrappers reference repositories by their **bare URL only**. Share links may carry per-user tokens (e.g. a `mcp_token` query parameter) — these are personal secrets and are **never** committed to any file here. Secrets required by a skill are documented by their env-var **name and purpose**, never their value, in that skill's `activation.md`.
+Skill wrappers reference repositories by their bare URL only. Share links can carry
+per-user tokens, such as an `mcp_token` query parameter; those are personal secrets
+and stay out of committed files. Secrets needed by a skill are documented by env-var
+name and purpose, never by value, in that skill's `activation.md`.
