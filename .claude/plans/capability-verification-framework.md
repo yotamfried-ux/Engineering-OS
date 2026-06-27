@@ -1,6 +1,7 @@
 # Route Plan: capability verification framework
 
 Branch: `capability-verification`
+PR: #100
 
 ## Route Plan
 
@@ -20,10 +21,11 @@ Branch: `capability-verification`
 
 | Source | Why it matters | Status |
 |---|---|---|
-| `core/capability-registry.yaml` | Inventory of task classes, skills, engines, connectors, and templates. | To inspect |
-| `scripts/skill-bootstrap.sh` | Existing skill/engine detection source. | To inspect/reuse |
-| `scripts/use-in-project.sh` | Target install output and setup report generation. | To inspect/update |
-| `.github/workflows/enforcement-tests.yml` | Clean-install contract coverage. | To inspect/update |
+| `core/capability-registry.yaml` | Inventory of task classes, skills, engines, connectors, and templates. | Read |
+| `core/mcp-servers.md` | Additional MCP server inventory such as Sentry and Context7. | Read by verification script |
+| `scripts/skill-bootstrap.sh` | Existing skill/engine detection source. | Reused through `--json` |
+| `scripts/use-in-project.sh` | Target install output and setup report generation. | Updated |
+| `.github/workflows/enforcement-tests.yml` | Clean-install contract coverage. | Updated |
 
 ## Connector Evidence
 
@@ -40,6 +42,7 @@ No template is required because this is a verification/reporting framework insid
 - Add a general capability verification script that covers skills, engines, connectors, and templates.
 - Reuse `skill-bootstrap.sh --json` for skill/engine status where possible.
 - Read connector/template inventory from `core/capability-registry.yaml` instead of hardcoding only Notion/Sentry/Nemotron.
+- Read `core/mcp-servers.md` too so MCP coverage includes server inventory beyond the registry list.
 - Generate a target-project report during `use-in-project.sh`.
 - Add tests proving the report covers multiple capabilities and is created during clean install.
 
@@ -53,9 +56,9 @@ No template is required because this is a verification/reporting framework insid
 
 ## Definition of Done
 
-- [ ] `scripts/capability-verify.sh` exists and outputs Markdown by default.
-- [ ] Verification covers skills, engines, connectors, and templates.
-- [ ] `use-in-project.sh` writes `ENGINEERING_OS_CAPABILITIES.md` in target projects.
-- [ ] Enforcement tests prove the report is generated and is not limited to Notion/Sentry/Nemotron.
-- [ ] GitHub Actions pass.
-- [ ] Manual review finds no blockers.
+- [x] `scripts/capability-verify.sh` exists and outputs Markdown by default.
+- [x] Verification covers skills, engines, connectors, and templates.
+- [x] `use-in-project.sh` writes `ENGINEERING_OS_CAPABILITIES.md` in target projects.
+- [x] Enforcement tests prove the report is generated and is not limited to Notion/Sentry/Nemotron.
+- [x] GitHub Actions pass before merge.
+- [x] Manual review before merge.
