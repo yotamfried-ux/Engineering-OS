@@ -108,3 +108,112 @@ foreground vs. background: foreground כשצריך תוצאה לפני המשך
 
 | סיטואציה | כלל |
 |---|---|
+| תשובה שאינה קוד | משפט אחד–שניים אלא אם יש צורך אמיתי ביותר |
+| עריכת קוד | diff בלבד — לא קבצים שלמים |
+| comments בקוד | רק כש-WHY לא מובן; אף פעם לא WHAT |
+| דוח בסוף משימה | 🧰 בלוק (חובה), ללא הרחבה נוספת |
+| "הסבר לי" / "פרט" | הרחב — המשתמש ביקש |
+| TODO / ניתוח פרויקט | 3–5 bullets; לא דוח מלא |
+
+**אסור:**
+- להחזיר קובץ שלם כשהשינוי הוא 3 שורות.
+- להסביר מה הקוד עושה (שמות מייצגים).
+- לספק "אלטרנטיבות" שלא התבקשו.
+- לסיים ב"האם יש עוד שאלות?"
+
+</token-output>
+
+---
+
+## <claudeignore>
+
+**כל פרויקט חייב `.claudeignore`** — הגדרת מה Claude אינו קורא.
+
+קובץ baseline: [`../.claudeignore`](../.claudeignore) בריפו של Engineering OS.
+
+**מה תמיד לכלול:**
+- `node_modules/`, `vendor/`, `.git/`
+- Lock files (`package-lock.json`, `yarn.lock`, `Cargo.lock`)
+- Build outputs (`dist/`, `build/`, `.next/`)
+- Binary assets (`*.png`, `*.pdf`, `*.mp4`)
+- Secrets (`.env`, `*.pem`, `*.key`)
+- Generated files (`*.min.js`, `__snapshots__/`, `coverage/`)
+
+**מה לשקול לפי פרויקט:**
+- קבצי migration ישנים (מעל 6 חודשים)
+- Generated types (`*.generated.ts`)
+- Storybook stories אם לא רלוונטי לשאלה
+
+**כלל**: אם Claude שאל על קובץ שאינו רלוונטי לשאלה — הוסף אותו ל-`.claudeignore`.
+
+> **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-resource.sh`, נקרא מ-`pre-commit`):
+> קומיט נחסם אם אין `.claudeignore` בשורש הריפו. bypass: `EOS_BYPASS_CLAUDEIGNORE=1`.
+
+</claudeignore>
+
+---
+
+## <graphify-pre-code>
+
+### כשאין קוד בריפו (שלבים מוקדמים)
+
+graphify תמיד רץ — גם אם הגרף ריק. Graphify עצמו מתריע אם הריפו קטן מדי.
+**לא מדלגים עליו, לא מוסיפים תנאי "אם יש מספיק קוד".**
+
+| שלב | מקור חיסכון עיקרי |
+|---|---|
+| לפני commit ראשון | `.claudeignore`, claude-mem, RTK, CLAUDE.md תמציתי |
+| אחרי commit ראשון | הגרף קיים; קאש post-commit hook |
+| ריפו בשל | graphify query במקום grep/read רגיל |
+
+**אחרי כל commit**: hook מריץ `graphify update .` אוטומטית (AST-only, ללא API key).
+
+**Engineering OS ספציפי:** הריפו הוא בעיקר `.md` — graphify עובד על ה-scripts בלבד.
+ה-`.graphifyignore` מוגדר בהתאם.
+
+</graphify-pre-code>
+
+---
+
+## <rtk>
+
+RTK (Rust Token Killer) — proxy CLI שמיירט פלטי Bash ומכווץ אותם לפני שנכנסים
+ל-LLM context. חיסכון: **60–90%** על פלטי `git`, `grep`, `find`, `test`, build.
+
+### מה מכוסה / לא מכוסה
+
+| מכוסה (דרך Bash tool) | לא מכוסה |
+|---|---|
+| `git status/log/diff` | Read tool |
+| `find`, `grep`, `ls` | Grep tool |
+| test runners (pytest, jest, cargo test) | Glob tool |
+| build tools (cargo build, tsc, eslint) | MCP tools |
+| `docker ps`, `kubectl` | |
+
+### שימוש
+
+RTK רץ **שקוף** דרך PreToolUse hook — אין שינוי בנוהל.
+פקודות Bash שוכתבות אוטומטית ל-`rtk <cmd>`.
+
+```bash
+rtk gain          # ניתוח חיסכון מצטבר
+rtk gain --history  # היסטוריה פר פקודה
+rtk discover      # זיהוי הזדמנויות חיסכון שהוחמצו
+```
+
+### התקנה (חד-פעמית)
+
+```bash
+# macOS
+brew install rtk
+# Linux / WSL
+curl -fsSL https://rtk.ai/install.sh | sh
+# מכל מקום עם cargo
+cargo install --git https://github.com/rtk-ai/rtk
+# לאחר מכן — רישום hook גלובלי
+rtk init -g
+```
+
+גם `session-setup.sh` מטפל בזה אוטומטית.
+
+</rtk>
