@@ -50,11 +50,11 @@ No template is required because this is a documentation/governance correction, n
 ## Completed Work
 
 - [x] Route Plan committed before implementation changes.
-- [ ] Nemotron skill registry entry removed or redirected.
-- [ ] Engine documentation added/updated.
-- [ ] Runtime adapters clarified.
-- [ ] `/superpowers-verify` security gate wording fixed.
-- [ ] Stale PR #95 plan removed.
+- [x] Nemotron skill registry entry removed or redirected.
+- [x] Engine documentation added/updated.
+- [x] Runtime adapters clarified.
+- [x] `/superpowers-verify` security gate wording fixed.
+- [x] Stale PR #95 plan removed.
 
 ## Remaining Validation Outside This Plan
 
