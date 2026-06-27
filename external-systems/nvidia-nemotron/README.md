@@ -1,7 +1,10 @@
-# nvidia-nemotron — External System Reference
+# nvidia-nemotron — External System Reference (Engine)
 
-> תיעוד ספק. נטען לפי הצורך, לא אוטומטית.
-> לנוהל האינטגרציה: [`../../external-skills/nemotron/`](../../external-skills/nemotron/)
+> תיעוד ספק/מנוע. נטען לפי הצורך, לא אוטומטית.
+> Nemotron הוא **engine / LLM backend**, לא skill — ראה הבחנה ב-
+> [`../README.md`](../README.md).
+> נוהל האינטגרציה והתזמור: [`./orchestration.md`](./orchestration.md) ·
+> התקנה ואימות: [`./activation.md`](./activation.md)
 
 ---
 
@@ -87,7 +90,9 @@ Rate limits משתנים — בדוק תמיד ב-[build.nvidia.com/docs](https:
 - **MCP Server:** `scripts/nemotron-mcp-server.py` (uv inline deps)
 - **Session Setup:** `scripts/session-setup.sh` — מגדיר `OPENAI_API_KEY` + `OPENAI_BASE_URL`
 - **graphify:** משתמש ב-`OPENAI_API_KEY` לחילוץ non-code content (אפס שינוי קוד)
-- **Skill docs:** `external-skills/nemotron/`
+- **Runtime adapters:** `.claude/agents/nemotron-coder.md`, `.claude/agents/nemotron-code-reviewer.md`
+- **Orchestration / policy:** [`./orchestration.md`](./orchestration.md)
+- **Activation / verify:** [`./activation.md`](./activation.md)
 
 ---
 

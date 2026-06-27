@@ -62,7 +62,7 @@
 - ✅ מותר: graphify עם `--no-label` (ללא LLM naming)
 - ❌ **אסור בהחלט: `ANTHROPIC_API_KEY`** — אף skill, graphify, או כלי אחר לא יופנה ל-Claude API כ-fallback. אם כלי מנסה לגלות `ANTHROPIC_API_KEY` אוטומטית — חסום אותו (למשל `--no-label` ב-graphify).
 
-ראה: [`../external-skills/nemotron/integration.md`](../external-skills/nemotron/integration.md)
+ראה: [`../external-systems/nvidia-nemotron/orchestration.md`](../external-systems/nvidia-nemotron/orchestration.md)
 
 </nemotron-routing>
 

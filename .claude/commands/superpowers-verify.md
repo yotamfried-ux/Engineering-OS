@@ -8,7 +8,9 @@ Before marking any task as done, run this verification workflow:
 2. **Regression check**: Did any existing tests break? Run the test suite and report pass/fail count.
 3. **Edge cases**: Name 2 edge cases for the changes made. Are they handled?
 4. **Security check**: Any new inputs, API endpoints, DB writes, or auth flows introduced?
-   If yes — was security review run (`mcp__nemotron__nemotron_review_code` or `/security-review`)?
+   If yes — was the mandatory security-review **gate** run (`/security-review`)?
+   (A bare `mcp__nemotron__nemotron_review_code` call is first-pass review only and does
+   NOT satisfy the gate — the gate is the `/security-review` skill, which may itself run on Nemotron.)
 5. **Cleanup check**: Dead code, debug logs (`console.log`, `print`), unused imports removed?
 
 Output: checklist with ✅ or ❌ per item. If any ❌ — fix before committing.

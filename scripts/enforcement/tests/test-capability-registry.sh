@@ -43,16 +43,19 @@ for required in [
     "path: external-systems/connectors/notion/",
     "path: external-systems/stripe/",
     "path: external-systems/supabase/",
+    "path: external-systems/nvidia-nemotron/",
     "path: external-skills/superpowers/",
     "path: external-skills/security-review/",
     "path: external-skills/graphify/",
     "path: external-skills/ui-ux-pro-max/",
-    "path: external-skills/nemotron/",
     "path: external-skills/frontend-design/",
     "github-readonly.json",
     "claude-managed-lockdown.json",
 ]:
     require(required in registry, f"required registry anchor missing: {required}")
+
+active_skill_registry = active_skill_block.group(1) if active_skill_block else ""
+require("path: external-skills/nemotron/" not in active_skill_registry, "Nemotron must not be an active skill path")
 
 for forbidden in [
     "skill.ui_ux_pro_max",

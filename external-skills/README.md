@@ -1,6 +1,7 @@
 # External Skills — Skill Orchestration Layer
 
-> The integration layer that turns Engineering OS from a **knowledge system** into a **Skill Orchestration Framework**. Every external capability — repo, skill, plugin, MCP server, or agent system — enters the OS **only** through a uniform adapter defined here.
+> The integration layer for capabilities that change **Claude's workflow behavior**.
+> Engines/backends and third-party app services live under [`external-systems/`](../external-systems/), not here.
 >
 > **Governing policy:** [`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md) (the SIP — Skill Integration Protocol).
 > **Bootstrap / verification:** [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
@@ -18,7 +19,7 @@ Skill = External Capability + Integration Contract + Execution Rules
 | Layer | What it governs |
 |---|---|
 | `external-skills/*` | Capabilities that change **Claude's own workflow** (this directory) |
-| `external-systems/*` | Third-party **services the target app integrates with** (Stripe, Supabase…) |
+| `external-systems/*` | Third-party **services the target app integrates with** and engines/backends such as Nemotron |
 | `patterns/*` | Reusable **code patterns** for the target app |
 | `core/*` | The OS's own **policies** |
 
@@ -52,7 +53,14 @@ Each wrapper is written from a **verified scan of the real repository** — not 
 | **[graphify](./graphify/)** | context-optimization, code-intelligence | **L2** (mandatory default-on every project) | `uv tool install graphifyy` + MCP | `/graphify .`, MCP tools `query_graph`, `get_node`, `get_pr_impact`… |
 | **[rtk](./rtk/)** | context-optimization | **L2** · default-on every project | `cargo install --git https://github.com/rtk-ai/rtk` | PreToolUse hook — auto-compresses all Bash output 60–90% |
 | **[ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | **L2** for UI projects / L1 otherwise | Claude Code plugin (marketplace) | UI/UX design workflow, component specs, accessibility review |
-| **[nemotron](./nemotron/)** | generation, review, context-optimization | L1 (when `Nemotron_api_key` set) | MCP server (`scripts/nemotron-mcp-server.py`) | MCP tools `nemotron_generate_code`, `nemotron_review_code`, `nemotron_summarize`, `nemotron_explain`, `nemotron_brainstorm` |
+
+> **Note — Nemotron is an engine, not a skill.** Nvidia Nemotron is an LLM
+> backend that *runs* capabilities (generation, first-pass review); it is not a
+> process skill and is not listed here. See
+> [`../external-systems/nvidia-nemotron/`](../external-systems/nvidia-nemotron/)
+> for the engine reference, and `.claude/agents/nemotron-*` for the runtime
+> adapters that invoke it. The `security-review` skill *may* use Nemotron as its
+> primary engine, but Nemotron itself is never the security gate.
 
 ---
 

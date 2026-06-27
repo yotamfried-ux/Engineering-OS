@@ -10,7 +10,7 @@
 # compute; Claude validates the result before applying it.
 #
 # Registered via .mcp.json at the project root.
-# Governing policy: external-skills/nemotron/policy.md
+# Governing policy: external-systems/nvidia-nemotron/orchestration.md
 # API key:          Nemotron_api_key (injected by Claude Code secrets)
 
 import os
