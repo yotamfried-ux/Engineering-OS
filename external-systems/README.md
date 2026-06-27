@@ -1,10 +1,20 @@
 # external-systems
 
-Integration guides for third-party services. Each subdirectory contains setup
-instructions, authentication details, key objects/concepts, and usage patterns.
+Inventory of third-party services and connectors known to Engineering OS.
 
-Before choosing a service, check `../core/connector-policy.md` for selection criteria
-and fallback procedures.
+This README is **index-only**. It answers: what exists, where the guide lives,
+and what broad category it belongs to. Workflow requirements, evidence rules,
+and validation gates belong in `../core/`.
+
+Canonical owners:
+
+| Question | Source of truth |
+|---|---|
+| Which service / connector exists? | This README |
+| Connector selection and fallback | `../core/connector-policy.md` |
+| Task class capability vocabulary | `../core/capability-registry.yaml` |
+| Task routing before work starts | `../core/task-router.md` |
+| One connector's practical usage | `connectors/<name>/README.md` |
 
 ---
 
@@ -111,7 +121,7 @@ and fallback procedures.
 
 ## MCP Connectors
 
-Pre-built MCP server wrappers for common services (use with `claude mcp add`):
+Pre-built MCP server wrappers for common services.
 
 | Connector | Path |
 |---|---|
