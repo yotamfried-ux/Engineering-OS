@@ -41,6 +41,10 @@ cat > .claude/plans/smoke.md <<'PLAN'
 - `plan.route-plan-before-write` — plan exists before implementation write.
 - `source.github-repo-read` — repository state was checked before implementation.
 
+## Skill Selection Waiver
+
+- all: install smoke fixture isolates capability and source-evidence flow.
+
 ## Source of Truth Checks
 
 | Need | Source checked | Result |

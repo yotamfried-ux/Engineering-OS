@@ -31,6 +31,12 @@ write_plan() {
 | Skills | ${skills} |
 
 PLAN
+  cat >> .claude/plans/task.md <<'PLAN'
+## Skill Selection Waiver
+
+- all: runtime evidence fixtures isolate non-skill-selection behavior.
+
+PLAN
   case "$evidence_mode" in
     waiver)
       cat >> .claude/plans/task.md <<'PLAN'
@@ -175,5 +181,71 @@ else
   cat .claude/.evidence/ledger
   exit 1
 fi
+
+# Skill selection gate wiring: the precheck must invoke check-required-skills.sh.
+# Isolate the new gate by toggling only the skill-selection waiver (Skills stays None
+# so the declared-skills evidence block is skipped). frontend domain tags require
+# ui-ux-pro-max.
+: > .claude/.evidence/ledger
+cat > .claude/plans/skill-selection.md <<'PLAN'
+# Route Plan
+
+| Field | Value |
+|---|---|
+| Task class | unclassified |
+| Task-router evidence | Engineering OS route reviewed |
+| Workflow evidence | workflow reviewed |
+| Domain tags | frontend, react |
+| Templates | none |
+| Patterns | none |
+| External systems/connectors | none |
+| Skills | None |
+
+## Capability Waiver
+
+Reason: runtime skill-selection fixture isolates the skill-selection gate.
+
+## Source of Truth Checks
+
+| Need | Source checked | Result |
+|---|---|---|
+| Runtime enforcement | local hook evidence | required |
+PLAN
+record_read core/task-router.md
+record_read core/workflow.md
+expect_fail "prewrite blocks write when required skill not declared in plan" run_precheck app/components/Button.tsx
+
+: > .claude/.evidence/ledger
+cat > .claude/plans/skill-selection-waiver.md <<'PLAN'
+# Route Plan
+
+| Field | Value |
+|---|---|
+| Task class | unclassified |
+| Task-router evidence | Engineering OS route reviewed |
+| Workflow evidence | workflow reviewed |
+| Domain tags | frontend, react |
+| Templates | none |
+| Patterns | none |
+| External systems/connectors | none |
+| Skills | None |
+
+## Capability Waiver
+
+Reason: runtime skill-selection fixture isolates the skill-selection gate.
+
+## Skill Selection Waiver
+
+- `ui-ux-pro-max`: fixture waives skill selection for this runtime test.
+
+## Source of Truth Checks
+
+| Need | Source checked | Result |
+|---|---|---|
+| Runtime enforcement | local hook evidence | required |
+PLAN
+record_read core/task-router.md
+record_read core/workflow.md
+expect_pass "prewrite allows write when skill selection waiver present" run_precheck app/components/Button.tsx
 
 echo "runtime evidence checker tests passed"
