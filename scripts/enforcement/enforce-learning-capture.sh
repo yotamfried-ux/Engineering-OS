@@ -3,15 +3,10 @@ set -euo pipefail
 
 # enforce-learning-capture.sh — deterministic capture gate for core/learning-loop.md
 #
-# Blocks bug/debug/incident/rollback implementation commits unless the staged diff
-# includes a new/changed lesson, a failed-solution record, or the active Route Plan
-# contains an explicit ## Learning Capture Waiver.
-#
-# Governing policy: core/learning-loop.md (<learning_loop> / מתי לתעד).
-# Bypass: EOS_BYPASS_LEARNING_CAPTURE=1 or EOS_BYPASS_LEARNING=1.
+# Bug/debug/incident/rollback implementation work must stage a complete lesson.
+# Failed-solutions are additional evidence, not a substitute for the bug lesson.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/evidence.sh
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
 if ! declare -f bypass_active >/dev/null 2>&1; then
   bypass_active() {
@@ -49,26 +44,19 @@ has_heading() {
 }
 
 select_plan() {
-  if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then
-    printf '%s\n' "$EOS_ACTIVE_PLAN"
-    return 0
-  fi
-  if [ -f .claude/plans/active.md ]; then
-    printf '%s\n' .claude/plans/active.md
-    return 0
-  fi
+  if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then printf '%s\n' "$EOS_ACTIVE_PLAN"; return 0; fi
+  if [ -f .claude/plans/active.md ]; then printf '%s\n' .claude/plans/active.md; return 0; fi
   local candidate
   for candidate in $(ls -t .claude/plans/*.md 2>/dev/null || true); do
     case "$(basename "$candidate")" in README.md|_TEMPLATE.md) continue ;; esac
-    printf '%s\n' "$candidate"
-    return 0
+    printf '%s\n' "$candidate"; return 0
   done
 }
 
 plan="$(select_plan || true)"
 [ -n "$plan" ] || exit 0
 
-requires_capture() {
+requires_full_lesson() {
   local plan_file="$1" task tags combined
   task="$(field_value "$plan_file" '^task class$|^task-class$|^type$')"
   tags="$(field_value "$plan_file" '^domain tags$|^domains$|^tags$')"
@@ -76,22 +64,28 @@ requires_capture() {
   printf '%s' "$combined" | grep -qE 'bug|debug|incident|rollback|hotfix|regression|production[ -_]*(failure|bug|incident)|post[ -_]*mortem'
 }
 
-requires_capture "$plan" || exit 0
+requires_full_lesson "$plan" || exit 0
+
+lesson_staged="$(printf '%s\n' "$staged" | grep -E '^lessons-learned/bugs/[^/]+\.md$' | grep -vE '/(README|_TEMPLATE)\.md$' || true)"
+[ -n "$lesson_staged" ] && exit 0
+
+failed_staged="$(printf '%s\n' "$staged" | grep -E '^failed-solutions/[^/]+\.md$' | grep -vE '/(README|_TEMPLATE)\.md$' || true)"
 
 if has_heading "$plan" 'Learning[[:space:]]+Capture[[:space:]]+Waiver'; then
-  exit 0
+  echo "learning capture failed: waiver cannot replace a bug/debug/incident lesson." >&2
+  echo "active plan: $plan" >&2
+  echo "action: stage lessons-learned/bugs/<lesson>.md with the full required schema." >&2
+  exit 1
 fi
 
-capture_staged="$(printf '%s\n' "$staged" | grep -E '^(lessons-learned/bugs/[^/]+\.md|failed-solutions/[^/]+\.md)$' | grep -vE '/(README|_TEMPLATE)\.md$' || true)"
-if [ -n "$capture_staged" ]; then
-  exit 0
+if [ -n "$failed_staged" ]; then
+  echo "learning capture failed: failed-solution staged but no bug lesson staged." >&2
+  echo "active plan: $plan" >&2
+  echo "action: also stage lessons-learned/bugs/<lesson>.md with root cause, evidence, prevention, regression test, and maturity status." >&2
+  exit 1
 fi
 
-echo "❌ COMMIT BLOCKED — learning-loop.md: bug/debug/incident work requires learning capture." >&2
-echo "   Active plan: $plan" >&2
-echo "   ACTION: stage one of:" >&2
-echo "     - lessons-learned/bugs/<lesson>.md with the required lesson schema;" >&2
-echo "     - failed-solutions/<attempt>.md with the required failed-solution schema;" >&2
-echo "     - or add ## Learning Capture Waiver to the active Route Plan explaining why no lesson is required." >&2
-echo "   BYPASS: EOS_BYPASS_LEARNING_CAPTURE=1 — only with explicit user authorization." >&2
+echo "learning capture failed: bug/debug/incident work requires a full lesson." >&2
+echo "active plan: $plan" >&2
+echo "action: stage lessons-learned/bugs/<lesson>.md with the required lesson schema." >&2
 exit 1
