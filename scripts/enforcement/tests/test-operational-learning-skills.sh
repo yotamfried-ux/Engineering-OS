@@ -213,10 +213,10 @@ reuse_both='- lessons-learned/bugs/payment-webhook-raw-body.md
   - Applied because: this failed solution is relevant to the same webhook area.
   - Prevention: do not parse JSON before signature verification.'
 
-pass prerequisites_present test -x "$WORKFLOW"
-pass skill_checker_present test -x "$CHECK_SKILLS"
-pass learning_checker_present test -x "$CHECK_REUSE"
-pass runtime_evidence_gate_present test -x "$RUNTIME"
+pass prerequisites_present test -f "$WORKFLOW"
+pass skill_checker_present test -f "$CHECK_SKILLS"
+pass learning_checker_present test -f "$CHECK_REUSE"
+pass runtime_evidence_gate_present test -f "$RUNTIME"
 
 run_in_sandbox
 pass install_wires_runtime_evidence grep -q 'pre-tool-use-runtime-evidence.sh' .claude/settings.json
