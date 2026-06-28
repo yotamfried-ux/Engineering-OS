@@ -10,7 +10,7 @@ Create a truthful operational-readiness audit for Engineering OS and close the f
 2. Add deterministic learning-capture enforcement for bug/debug/incident/rollback Route Plans.
 3. Wire the new enforcement into the portable pre-commit hook.
 4. Add regression simulations proving block/allow behavior.
-5. Update learning-loop documentation to state the enforced boundary.
+5. Update learning-loop operational documentation to state the enforced boundary.
 
 ## Alternatives
 
@@ -63,11 +63,11 @@ Create a truthful operational-readiness audit for Engineering OS and close the f
 
 ## Definition of Done
 
-- [ ] Operational readiness audit document added.
-- [ ] Learning capture gate added.
-- [ ] Pre-commit hook wires the new gate.
-- [ ] Tests prove bug/debug plans are blocked without lesson/failed-solution/waiver.
-- [ ] Tests prove non-learning tasks are not blocked.
-- [ ] Tests prove a waiver allows a justified no-lesson case.
-- [ ] Learning-loop documentation updated.
-- [ ] GitHub Actions pass on the PR.
+- [x] Operational readiness audit document added.
+- [x] Learning capture gate added.
+- [x] Pre-commit hook wires the new gate.
+- [x] Tests prove bug/debug plans are blocked without lesson/failed-solution/waiver.
+- [x] Tests prove non-learning tasks are not blocked.
+- [x] Tests prove a waiver allows a justified no-lesson case.
+- [x] Learning-loop operational documentation updated.
+- [x] GitHub Actions pass on the PR.
