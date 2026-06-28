@@ -188,6 +188,14 @@ if grep -q 'source.github-repo-read' "$PLAN" 2>/dev/null; then
   connector_has_evidence github || evidence_has source_github_repo_read 2>/dev/null || fail "Route Plan lists source.github-repo-read but this session has no GitHub source evidence." "use the GitHub connector before implementation, or add a focused Capability Waiver."
 fi
 
+SKILL_SELECTION="$SCRIPT_DIR/check-required-skills.sh"
+if [ -f "$SKILL_SELECTION" ]; then
+  if ! skill_selection_output="$(bash "$SKILL_SELECTION" --plan "$PLAN" --target "$FILE" 2>&1)"; then
+    fail "Route Plan '$(basename "$PLAN")' does not declare the skills required for '$FILE'. ${skill_selection_output}" "add the required skill(s) to the plan Skills field, or add a '## Skill Selection Waiver' section."
+  fi
+  evidence_record skill_selection_validated "$(basename "$PLAN")" 2>/dev/null || true
+fi
+
 if ! is_none_value "$skills"; then
   missing=""
   while IFS= read -r skill; do

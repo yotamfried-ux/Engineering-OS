@@ -40,11 +40,11 @@
 
 ## Scope
 
-Add deterministic skill-selection checks so task type/domain/path can require skills before implementation. This PR adds the checker plus enforcement-test coverage first. Runtime wiring to the existing write hook is left as a follow-up for a local development environment because this connector session could not safely edit that hook file.
+Add deterministic skill-selection checks so task type/domain/path can require skills before implementation. This PR adds the checker, enforcement-test coverage, and the runtime wiring: `scripts/enforcement/pre-tool-use-runtime-evidence.sh` now invokes `check-required-skills.sh` against the active Route Plan and write target on every `Write/Edit/MultiEdit/NotebookEdit`, so a plan that fails to declare a required skill is denied at write time (not only in CI).
 
-## Known Limitation
+## Runtime Wiring
 
-The checker is not yet invoked from `scripts/enforcement/pre-tool-use-runtime-evidence.sh`. This PR adds a reusable checker and required enforcement-test coverage for the selection rules.
+`pre-tool-use-runtime-evidence.sh` runs `check-required-skills.sh --plan <newest-plan> --target <file>` and emits the standard deny on failure, just before the existing declared-skill evidence block. Selection (are the right skills declared?) and evidence (were the declared skills run?) are now both enforced at runtime. Integration coverage lives in `scripts/enforcement/tests/test-runtime-evidence.sh` (blocks when a required skill is undeclared; allows when a `## Skill Selection Waiver` is present).
 
 ## Skill Selection Waiver
 
@@ -54,6 +54,7 @@ The checker is not yet invoked from `scripts/enforcement/pre-tool-use-runtime-ev
 
 - [x] Current runtime skill-evidence gate is inspected.
 - [x] Required skill selection checker is added.
-- [x] Runtime write-hook wiring follow-up is documented.
+- [x] Checker is wired into the runtime write hook (`pre-tool-use-runtime-evidence.sh`).
 - [x] Tests prove UI/security/large-change/code/deprecated cases.
+- [x] Integration test proves the runtime hook invokes the checker (block + waiver).
 - [x] CI is checked before merge.
