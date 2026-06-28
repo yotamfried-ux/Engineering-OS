@@ -126,6 +126,25 @@ read-only reference. To update it: \`git -C "$EOS_HOME" pull --ff-only\`.
 Rules to follow: \`$EOS_HOME/CLAUDE.md\`, \`$EOS_HOME/core/task-router.md\`, and \`$EOS_HOME/core/\`.
 EOF
 
+# 2b. Install baseline .claudeignore when the target does not define one.
+# enforce-resource.sh makes this a hard pre-commit requirement, so the installer
+# must create the baseline it requires.
+if [ ! -f "$TARGET/.claudeignore" ]; then
+  if [ -f "$EOS_HOME/.claudeignore" ]; then
+    cp "$EOS_HOME/.claudeignore" "$TARGET/.claudeignore"
+  else
+    cat > "$TARGET/.claudeignore" <<'EOF'
+.git/
+node_modules/
+dist/
+build/
+.env
+.env.*
+EOF
+  fi
+  grn ".claudeignore installed"
+fi
+
 # 3. Wire the rules into the target's CLAUDE.md via an idempotent managed block.
 TARGET_CLAUDE="$TARGET/CLAUDE.md"
 MARK_BEGIN="<!-- BEGIN engineering-os (managed) -->"
