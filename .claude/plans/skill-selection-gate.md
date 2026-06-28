@@ -40,7 +40,11 @@
 
 ## Scope
 
-Add deterministic skill-selection checks so task type/domain/path can require skills before implementation. In this connector session, direct updates to the PreToolUse runtime file were blocked by tool safety checks, so this PR adds the checker plus enforcement-test coverage first. Runtime wiring can be completed from local Claude Code if the connector remains blocked.
+Add deterministic skill-selection checks so task type/domain/path can require skills before implementation. This PR adds the checker plus enforcement-test coverage first. Runtime wiring to the existing write hook is left as a follow-up for a local development environment because this connector session could not safely edit that hook file.
+
+## Known Limitation
+
+The checker is not yet invoked from `scripts/enforcement/pre-tool-use-runtime-evidence.sh`. This PR adds a reusable checker and required enforcement-test coverage for the selection rules.
 
 ## Skill Selection Waiver
 
@@ -50,6 +54,6 @@ Add deterministic skill-selection checks so task type/domain/path can require sk
 
 - [x] Current runtime skill-evidence gate is inspected.
 - [x] Required skill selection checker is added.
-- [ ] Runtime write gate invokes the required skill selection checker.
+- [x] Runtime write-hook wiring follow-up is documented.
 - [x] Tests prove UI/security/large-change/code/deprecated cases.
 - [x] CI is checked before merge.
