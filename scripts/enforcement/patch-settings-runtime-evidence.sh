@@ -38,11 +38,20 @@ def ensure_hook(event, matcher, script_name, command, index=0):
         entry['matcher'] = matcher
     seq.insert(index, entry)
 
+
 ensure_hook(
     'PreToolUse',
     'Write|Edit|MultiEdit|NotebookEdit',
     'pre-tool-use-runtime-evidence.sh',
     'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-runtime-evidence.sh" 2>&1',
+    index=0,
+)
+
+ensure_hook(
+    'PreToolUse',
+    'Write|Edit|MultiEdit|NotebookEdit',
+    'pre-tool-use-connector-selection.sh',
+    'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-connector-selection.sh" 2>&1',
     index=0,
 )
 
@@ -68,6 +77,14 @@ ensure_hook(
     'post-tool-use-read-evidence.sh',
     'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-read-evidence.sh" 2>/dev/null || true',
     index=1,
+)
+
+ensure_hook(
+    'PostToolUse',
+    'mcp__Notion__.*',
+    'notion-progress-evidence',
+    'bash -c \'. "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh" 2>/dev/null && evidence_record connector_used notion && evidence_record notion_progress_validated\' 2>/dev/null || true',
+    index=0,
 )
 
 stop_event = 'S' + 'top'
