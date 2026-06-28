@@ -13,7 +13,26 @@ except Exception:
 [ -n "$FILE" ] || exit 0
 case "$FILE" in .claude/plans/*.md|*/.claude/plans/*.md) exit 0 ;; esac
 
-PLAN="$(ls -t .claude/plans/*.md 2>/dev/null | head -1 || true)"
+select_plan() {
+  if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then
+    printf '%s\n' "$EOS_ACTIVE_PLAN"
+    return 0
+  fi
+  if [ -f .claude/plans/active.md ]; then
+    printf '%s\n' .claude/plans/active.md
+    return 0
+  fi
+  local candidate
+  for candidate in $(ls -t .claude/plans/*.md 2>/dev/null || true); do
+    case "$(basename "$candidate")" in
+      README.md|_TEMPLATE.md|learning-reuse-complete.md) continue ;;
+    esac
+    printf '%s\n' "$candidate"
+    return 0
+  done
+}
+
+PLAN="$(select_plan || true)"
 [ -n "$PLAN" ] || exit 0
 
 CHECK="$SCRIPT_DIR/check-learning-reuse.sh"
