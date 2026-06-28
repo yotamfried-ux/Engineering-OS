@@ -100,6 +100,7 @@ expect_file "$TARGET/.github/workflows/workflow-evidence-policy.yml"
 expect_file "$TARGET/.github/workflows/capability-evidence-policy.yml"
 expect_contains "$TARGET/.claude/settings.json" "pre-tool-use-json-guard.sh"
 expect_contains "$TARGET/.claude/settings.json" "pre-tool-use-runtime-evidence.sh"
+expect_contains "$TARGET/.claude/settings.json" "check-plan-scope.sh"
 expect_contains "$TARGET/.claude/settings.json" "$ROOT/scripts/enforcement"
 
 run_install
