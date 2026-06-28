@@ -43,7 +43,10 @@ path_matches() {
   target="$(printf '%s' "$target" | sed -E 's#^\./##')"
   prefix="$(printf '%s' "$prefix" | sed -E 's#^\./##; s#/$##')"
   [ -z "$prefix" ] && return 1
-  case "$target" in "$prefix"|"$prefix"/*|*/"$prefix"|*/"$prefix"/*) return 0 ;; *) return 1 ;; esac
+  case "$target" in
+    "$prefix"|"$prefix"/*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 normalize_list() {
