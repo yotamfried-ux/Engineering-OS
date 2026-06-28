@@ -7,11 +7,11 @@ Close the next operational-readiness gap: connector/source-of-truth selection mu
 ## Plan
 
 1. Add a required-connector selection checker for Route Plans and write targets.
-2. Wire required connector selection into the existing runtime evidence gate.
+2. Wire required connector selection into installed target-project runtime settings.
 3. Require Notion planning and progress-validation evidence for non-trivial implementation work, not just initial plan creation.
-4. Tighten the learning capture gate so bug/debug/incident/rollback code changes require a staged complete lesson; failed-solutions are additional evidence, not a substitute for the lesson. Waiver is allowed only for non-bug trivial/no-root-cause cases such as feature work or docs-only work.
+4. Tighten the learning capture gate so bug/debug/incident/rollback code changes require a staged complete lesson; failed-solutions are additional evidence, not a substitute for the lesson.
 5. Add regression simulations for connector selection and strict learning capture.
-6. Document Claude experiment/run tracing so experiments can be reviewed and learned from.
+6. Document Claude run tracing so experiments can be reviewed and learned from.
 
 ## Alternatives
 
@@ -70,13 +70,13 @@ Close the next operational-readiness gap: connector/source-of-truth selection mu
 ## Definition of Done
 
 - [x] Connector policy and runtime evidence gate mapped.
-- [ ] Required connector selection checker added.
-- [ ] Runtime evidence gate wires connector selection.
-- [ ] Notion progress validation requirement enforced for non-trivial implementation work.
-- [ ] Learning capture gate tightened so bug/debug/incident code requires a complete lesson.
-- [ ] Tests prove failed-solution alone no longer satisfies bug learning capture.
-- [ ] Tests prove waiver cannot bypass a real bug/debug capture requirement.
-- [ ] Tests prove required connectors are selected by task/domain/path.
-- [ ] Tests prove Notion planning plus progress validation is required for non-trivial work.
-- [ ] Experiment/run trace documentation exists.
+- [x] Required connector selection checker added.
+- [x] Installed target-project settings wire connector selection.
+- [x] Notion progress validation requirement enforced for non-trivial implementation work.
+- [x] Learning capture gate tightened so bug/debug/incident code requires a complete lesson.
+- [x] Tests prove failed-solution alone no longer satisfies bug learning capture.
+- [x] Tests prove waiver cannot bypass a real bug/debug capture requirement.
+- [x] Tests prove required connectors are selected by task/domain/path.
+- [x] Tests prove Notion planning plus progress validation is required for non-trivial work.
+- [x] Experiment/run trace documentation exists.
 - [ ] GitHub Actions pass on the PR.
