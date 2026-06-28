@@ -3,8 +3,18 @@
 > The integration layer for capabilities that change **Claude's workflow behavior**.
 > Engines/backends and third-party app services live under [`external-systems/`](../external-systems/), not here.
 >
-> **Governing policy:** [`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md) (the SIP — Skill Integration Protocol).
-> **Bootstrap / verification:** [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
+> This README is **index-only**. It lists skill wrappers and status. The source of truth for orchestration rules is [`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md), and bootstrap / verification mechanics live in [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
+
+Canonical owners:
+
+| Question | Source of truth |
+|---|---|
+| Which skill wrappers exist? | This README |
+| Skill Integration Protocol | `../core/skill-orchestration-policy.md` |
+| Task routing to skills | `../core/task-router.md` |
+| Capability vocabulary | `../core/capability-registry.yaml` |
+| Install / verification mechanics | `../scripts/skill-bootstrap.sh` plus each skill's `activation.md` |
+| One skill's behavior contract | `external-skills/<name>/integration.md` and `policy.md` |
 
 ---
 
