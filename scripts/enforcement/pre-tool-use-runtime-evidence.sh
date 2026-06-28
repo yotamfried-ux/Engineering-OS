@@ -103,6 +103,13 @@ PY
   exit 0
 }
 
+json_valid() {
+  command -v python3 >/dev/null 2>&1 || return 1
+  printf '%s' "$INPUT" | python3 -c 'import json, sys; json.load(sys.stdin)' >/dev/null 2>&1
+}
+
+json_valid || fail "invalid PreToolUse JSON input; runtime evidence gate cannot safely determine tool/file." "retry with valid hook JSON; do not treat parse failure as a pass."
+
 TOOL="$(json_field tool)"
 case "$TOOL" in
   Write|Edit|MultiEdit|NotebookEdit) ;;
@@ -110,7 +117,7 @@ case "$TOOL" in
 esac
 
 FILE="$(json_field file_path)"
-[ -n "$FILE" ] || exit 0
+[ -n "$FILE" ] || fail "Write/Edit event is missing tool_input.file_path, so the write target cannot be validated." "retry with a valid file_path; do not skip the runtime evidence gate."
 
 case "$FILE" in
   .claude/plans/*.md|*/.claude/plans/*.md) exit 0 ;;

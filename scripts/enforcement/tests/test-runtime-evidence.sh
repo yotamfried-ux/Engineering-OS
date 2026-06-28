@@ -76,6 +76,10 @@ run_precheck() {
   printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$file" | "$PRECHECK" >/dev/null 2>&1
 }
 
+run_precheck_raw() {
+  printf '%s' "$1" | "$PRECHECK" >/dev/null 2>&1
+}
+
 record_read() {
   local file="$1"
   printf '{"tool_name":"Read","tool_input":{"file_path":"%s"}}' "$file" | "$READ_RECORDER" >/dev/null 2>&1
@@ -89,6 +93,8 @@ expect_pass() { local name="$1"; shift; if "$@"; then echo "  ✅ $name"; else e
 expect_fail() { local name="$1"; shift; if "$@"; then echo "  ❌ expected $name to fail"; exit 1; else echo "  ✅ $name"; fi; }
 
 : > .claude/.evidence/ledger
+expect_fail "prewrite fails closed on malformed PreToolUse JSON" run_precheck_raw '{"tool_name":"Write","tool_input":'
+expect_fail "prewrite fails closed on Write event missing file_path" run_precheck_raw '{"tool_name":"Write","tool_input":{}}'
 expect_pass "prewrite allows creating route plan first" run_precheck .claude/plans/new-task.md
 expect_fail "prewrite blocks code write without route plan" run_precheck src/app.ts
 
