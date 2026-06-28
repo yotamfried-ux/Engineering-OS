@@ -7,9 +7,10 @@ RECORD="$ROOT/scripts/enforcement/record-prevented-issue.sh"
 WORKFLOW="$ROOT/scripts/enforcement/enforce-workflow.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+LOG_FILE="$TMP/eos-learning-reuse.log"
 
-pass() { local name="$1"; shift; "$@" >/tmp/eos-learning-reuse.log 2>&1 || { echo "fail: $name"; cat /tmp/eos-learning-reuse.log; exit 1; }; echo "ok: $name"; }
-failcase() { local name="$1"; shift; if "$@" >/tmp/eos-learning-reuse.log 2>&1; then echo "unexpected pass: $name"; cat /tmp/eos-learning-reuse.log; exit 1; else echo "ok: $name"; fi; }
+pass() { local name="$1"; shift; "$@" >"$LOG_FILE" 2>&1 || { echo "fail: $name"; cat "$LOG_FILE"; exit 1; }; echo "ok: $name"; }
+failcase() { local name="$1"; shift; if "$@" >"$LOG_FILE" 2>&1; then echo "unexpected pass: $name"; cat "$LOG_FILE"; exit 1; else echo "ok: $name"; fi; }
 
 make_plan() {
   local file="$1" tags="$2" reuse="$3"
@@ -153,6 +154,7 @@ make_plan neutral.md "profile" ""
 pass no_relevant_area_is_allowed run_check "$TMP/neutral.md" src/profile/user.ts
 
 cp no-reuse.md .claude/plans/active.md
+make_plan .claude/plans/learning-reuse-complete.md "" ""
 failcase runtime_blocks_missing_reuse run_workflow_write src/payments/stripe.ts
 cp with-both.md .claude/plans/active.md
 pass runtime_allows_reused_knowledge run_workflow_write src/payments/stripe.ts
