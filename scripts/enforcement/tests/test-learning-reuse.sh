@@ -133,7 +133,7 @@ EOF
 }
 
 run_check() { (cd "$TMP" && bash "$CHECK" --plan "$1" --target "$2"); }
-run_workflow_write() { (cd "$TMP" && EOS_PLAN_MAX_AGE_H=0 printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$1" | bash "$WORKFLOW"); }
+run_workflow_write() { (cd "$TMP" && printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$1" | bash "$WORKFLOW"); }
 
 cd "$TMP"
 mkdir -p .claude/plans src/payments
@@ -148,7 +148,9 @@ failcase failed_solution_also_requires_reuse run_check "$TMP/with-reuse.md" src/
 make_plan with-both.md "stripe, payments" "lessons-learned/bugs/stripe-webhook-signature.md
 - failed-solutions/stripe-json-first.md"
 pass all_relevant_knowledge_reused run_check "$TMP/with-both.md" src/payments/stripe.ts
-pass no_relevant_area_is_allowed run_check "$TMP/with-both.md" src/profile/user.ts
+
+make_plan neutral.md "profile" ""
+pass no_relevant_area_is_allowed run_check "$TMP/neutral.md" src/profile/user.ts
 
 cp no-reuse.md .claude/plans/active.md
 failcase runtime_blocks_missing_reuse run_workflow_write src/payments/stripe.ts
