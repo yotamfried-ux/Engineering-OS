@@ -15,6 +15,7 @@ cd "$TMP"
 mkdir -p .claude/.evidence core patterns/api .claude/commands
 : > .claude/.evidence/ledger
 export EOS_EVIDENCE_DIR=".claude/.evidence"
+export ENGINEERING_OS_HOME="$ROOT"
 
 evidence_has() {
   local key="$1" value="${2:-}"
@@ -27,25 +28,69 @@ evidence_has() {
 
 reset_ledger() { : > .claude/.evidence/ledger; }
 run_raw() { local script="$1" raw="$2"; printf '%s' "$raw" | "$script" >/dev/null 2>&1; }
+run_raw_allow_fail() {
+  local script="$1" raw="$2"
+  if ! printf '%s' "$raw" | "$script" >/dev/null 2>&1; then
+    :
+  fi
+}
+settings_command() {
+  local matcher="$1" contains="$2"
+  python3 - "$SETTINGS" "$matcher" "$contains" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+settings_path, matcher, contains = sys.argv[1:4]
+settings = json.loads(Path(settings_path).read_text(encoding="utf-8"))
+for block in settings["hooks"].get("PostToolUse", []):
+    if block.get("matcher") != matcher:
+        continue
+    for hook in block.get("hooks", []):
+        command = hook.get("command", "")
+        if contains in command:
+            print(command)
+            raise SystemExit(0)
+raise SystemExit(f"missing PostToolUse command for {matcher} containing {contains}")
+PY
+}
+run_settings_command_allow_fail() {
+  local command="$1" raw="$2"
+  if ! printf '%s' "$raw" | bash -c "$command" >/dev/null 2>&1; then
+    :
+  fi
+}
 expect_pass() { local name="$1"; shift; if "$@"; then echo "  ✅ $name"; else echo "  ❌ expected pass: $name"; exit 1; fi; }
 expect_absent() { local name="$1" key="$2" value="${3:-}"; if evidence_has "$key" "$value"; then echo "  ❌ unexpected evidence for $name: $key $value"; cat .claude/.evidence/ledger; exit 1; else echo "  ✅ $name"; fi; }
+
+CONTEXT7_INLINE="$(settings_command 'mcp__Context7__.*' 'context7')"
+NOTION_INLINE="$(settings_command 'mcp__Notion__.*' 'notion_spec_created')"
 
 # Malformed PostToolUse inputs must be false-evidence-safe: recorder exits may be soft,
 # but they must not create proof that a required source/tool was used.
 reset_ledger
-run_raw "$READ_RECORDER" '{"tool_name":"Read","tool_input":'
+run_raw_allow_fail "$READ_RECORDER" '{"tool_name":"Read","tool_input":'
 expect_absent "malformed Read input records no task-router evidence" task_router_read
 expect_absent "malformed Read input records no workflow evidence" workflow_read
 
 reset_ledger
-run_raw "$MCP_RECORDER" '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":'
+run_raw_allow_fail "$MCP_RECORDER" '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":'
 expect_absent "malformed MCP input records no GitHub connector evidence" connector_used github
 expect_absent "malformed MCP input records no github_used evidence" github_used
 
 reset_ledger
-run_raw "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":'
+run_raw_allow_fail "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":'
 expect_absent "malformed Bash input records no graphify evidence" graphify_used
 expect_absent "malformed Bash input records no test evidence" tests_run
+
+reset_ledger
+run_settings_command_allow_fail "$CONTEXT7_INLINE" '{"tool_name":"mcp__Context7__query_docs","tool_input":'
+expect_absent "malformed inline Context7 recorder records no context7 evidence" context7
+
+reset_ledger
+run_settings_command_allow_fail "$NOTION_INLINE" '{"tool_name":"mcp__Notion__create_page","tool_input":'
+expect_absent "malformed inline Notion recorder records no notion evidence" notion_spec_created
+expect_absent "malformed inline Notion recorder records no notion page id" notion_page_id
 
 # Valid inputs must still record evidence; otherwise hard gates become impossible to satisfy.
 reset_ledger
@@ -64,6 +109,15 @@ expect_pass "valid MCP records connector_github" evidence_has connector_github
 expect_pass "valid MCP records github_used" evidence_has github_used
 
 reset_ledger
+run_settings_command_allow_fail "$CONTEXT7_INLINE" '{"tool_name":"mcp__Context7__query_docs","tool_input":{},"tool_response":{"ok":true}}'
+expect_pass "valid inline Context7 records context7 evidence" evidence_has context7
+
+reset_ledger
+run_settings_command_allow_fail "$NOTION_INLINE" '{"tool_name":"mcp__Notion__create_page","tool_input":{},"tool_response":{"id":"notion-page-1"}}'
+expect_pass "valid inline Notion records notion evidence" evidence_has notion_spec_created
+expect_pass "valid inline Notion records page id" evidence_has notion_page_id notion-page-1
+
+reset_ledger
 run_raw "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":{"command":"pytest -q"},"tool_response":"============================= test session starts =============================\n1 passed in 0.01s"}'
 expect_pass "valid test command records tests_run" evidence_has tests_run
 run_raw "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":{"command":"graphify query architecture"},"tool_response":"Architecture graph query returned multiple nodes and relationships with enough detail."}'
@@ -72,7 +126,6 @@ expect_pass "valid graphify command records graphify_used" evidence_has graphify
 # Machine-readable criticality map must preserve the contract.
 test -f "$CRITICALITY"
 python3 - "$CRITICALITY" <<'PY'
-import csv
 import sys
 from pathlib import Path
 
@@ -114,19 +167,19 @@ hard_scripts = (
     "enforce-git.sh",
 )
 
-def commands_for(matcher):
-    for block in pre:
-        if block.get("matcher") == matcher:
-            return [h.get("command", "") for h in block.get("hooks", [])]
-    raise AssertionError(f"missing PreToolUse matcher {matcher}")
+def blocks_for(matcher):
+    blocks = [block for block in pre if block.get("matcher") == matcher]
+    assert blocks, f"missing PreToolUse matcher {matcher}"
+    return blocks
 
 for matcher in ("Bash", "Write|Edit|MultiEdit|NotebookEdit", "Agent"):
-    cmds = commands_for(matcher)
-    assert cmds, matcher
-    assert "pre-tool-use-json-guard.sh" in cmds[0], f"{matcher} must run JSON guard first"
-    for cmd in cmds:
-        if any(script in cmd for script in hard_scripts):
-            assert "|| true" not in cmd, f"hard PreToolUse command must not be soft-wrapped: {cmd}"
+    for block in blocks_for(matcher):
+        cmds = [h.get("command", "") for h in block.get("hooks", [])]
+        assert cmds, matcher
+        assert "pre-tool-use-json-guard.sh" in cmds[0], f"{matcher} must run JSON guard first"
+        for cmd in cmds:
+            if any(script in cmd for script in hard_scripts):
+                assert "|| true" not in cmd, f"hard PreToolUse command must not be soft-wrapped: {cmd}"
 
 # PostToolUse commands are allowed to be soft recorders, but they must be recorder scripts,
 # not hidden hard gates disguised with || true.
