@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SETTINGS="$ROOT/.claude/settings.json"
+CRITICALITY="$ROOT/scripts/enforcement/hook-criticality.tsv"
 READ_RECORDER="$ROOT/scripts/enforcement/post-tool-use-read-evidence.sh"
 MCP_RECORDER="$ROOT/scripts/enforcement/post-tool-use-mcp.sh"
 BASH_RECORDER="$ROOT/scripts/enforcement/post-tool-use-bash.sh"
@@ -67,6 +68,32 @@ run_raw "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":{"command":"pytest -q
 expect_pass "valid test command records tests_run" evidence_has tests_run
 run_raw "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":{"command":"graphify query architecture"},"tool_response":"Architecture graph query returned multiple nodes and relationships with enough detail."}'
 expect_pass "valid graphify command records graphify_used" evidence_has graphify_used
+
+# Machine-readable criticality map must preserve the contract.
+test -f "$CRITICALITY"
+python3 - "$CRITICALITY" <<'PY'
+import csv
+import sys
+from pathlib import Path
+
+rows = []
+for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+    if not line.strip() or line.startswith("#"):
+        continue
+    parts = line.split("\t")
+    assert len(parts) == 5, f"bad hook-criticality row: {line}"
+    event, matcher, unit, klass, semantics = parts
+    assert klass in {"hard", "advisory", "recorder", "lifecycle"}, line
+    rows.append({"event": event, "matcher": matcher, "unit": unit, "class": klass, "semantics": semantics})
+
+assert any(r["class"] == "hard" and r["event"] == "PreToolUse" for r in rows), "missing hard PreToolUse classification"
+assert any(r["class"] == "recorder" and r["event"] == "PostToolUse" for r in rows), "missing PostToolUse recorder classification"
+assert any(r["class"] == "advisory" for r in rows), "missing advisory classification"
+assert any(r["unit"] == "pre-tool-use-json-guard.sh" and r["class"] == "hard" for r in rows), "JSON guard must be hard"
+assert all(r["semantics"] == "fail_closed" for r in rows if r["class"] == "hard"), "hard hooks must fail closed"
+assert all(r["semantics"] == "false_evidence_safe" for r in rows if r["class"] == "recorder"), "recorders must be false-evidence-safe"
+print("  ✅ hook-criticality.tsv classifies hard/advisory/recorder behavior")
+PY
 
 # Settings criticality contract: hard PreToolUse enforcers must not be wrapped in || true,
 # and write/bash/agent hard paths must run the JSON guard before downstream enforcers.
