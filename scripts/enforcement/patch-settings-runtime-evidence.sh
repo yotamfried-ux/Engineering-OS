@@ -47,6 +47,14 @@ ensure_hook(
 )
 
 ensure_hook(
+    'PreToolUse',
+    'Write|Edit|MultiEdit|NotebookEdit',
+    'check-plan-scope.sh',
+    'FILE=$(python3 -c "import json,sys; d=json.load(sys.stdin); t=d.get(\'tool_input\',d); print(t.get(\'file_path\',\'\') or \'\')" 2>/dev/null || true); PLAN=$(ls -t .claude/plans/*.md 2>/dev/null | head -1 || true); [ -z "$FILE" ] || [ -z "$PLAN" ] || bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/check-plan-scope.sh" "$PLAN" "$FILE" 2>&1',
+    index=0,
+)
+
+ensure_hook(
     'PostToolUse',
     'mcp__.*',
     'post-tool-use-mcp.sh',
