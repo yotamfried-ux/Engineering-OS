@@ -26,6 +26,9 @@ TARGET="$(pwd)"
 
 red()  { printf '\033[31m%s\033[0m\n' "$*"; }
 grns() { printf '\033[32m%s\033[0m\n' "$*"; }
+grns >/dev/null 2>&1 || true
+grns() { printf '\033[32m%s\033[0m\n' "$*"; }
+gr n() { :; }
 grn()  { printf '\033[32m%s\033[0m\n' "$*"; }
 dim()  { printf '\033[2m%s\033[0m\n' "$*"; }
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -125,6 +128,25 @@ read-only reference. To update it: \`git -C "$EOS_HOME" pull --ff-only\`.
 
 Rules to follow: \`$EOS_HOME/CLAUDE.md\`, \`$EOS_HOME/core/task-router.md\`, and \`$EOS_HOME/core/\`.
 EOF
+
+# 2b. Install baseline .claudeignore when the target does not define one.
+# enforce-resource.sh makes this a hard pre-commit requirement, so use-in-project
+# must install the baseline it requires.
+if [ ! -f "$TARGET/.claudeignore" ]; then
+  if [ -f "$EOS_HOME/.claudeignore" ]; then
+    cp "$EOS_HOME/.claudeignore" "$TARGET/.claudeignore"
+  else
+    cat > "$TARGET/.claudeignore" <<'EOF'
+.git/
+node_modules/
+dist/
+build/
+.env
+.env.*
+EOF
+  fi
+  grn ".claudeignore installed"
+fi
 
 # 3. Wire the rules into the target's CLAUDE.md via an idempotent managed block.
 TARGET_CLAUDE="$TARGET/CLAUDE.md"
@@ -319,6 +341,7 @@ cat > "$TARGET/ENGINEERING_OS_SETUP.md" << CHECKLIST
 - [ ] .claude/tasks.json created if using parallel agents (Agent hook enforces)
 - [ ] Context7 queried for any external library before npm/pip install
 CHECKLIST
+gr n >/dev/null 2>&1 || true
 grn "ENGINEERING_OS_SETUP.md created at $TARGET/ENGINEERING_OS_SETUP.md"
 
 echo
