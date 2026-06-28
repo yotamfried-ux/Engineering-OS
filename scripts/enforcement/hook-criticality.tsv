@@ -1,0 +1,29 @@
+# event	matcher	unit	class	failure_semantics
+# class values:
+# - hard: blocks unsafe/tool-changing action; must not be wrapped in `|| true`.
+# - advisory: injects guidance/reminders only; may fail soft without granting permission.
+# - recorder: records evidence for later gates; malformed input must record no evidence.
+# - lifecycle: setup/cleanup/reporting; failure behavior is command-specific.
+PreToolUse	Bash	pre-tool-use-json-guard.sh	hard	fail_closed
+PreToolUse	Bash	enforce-bash-entry.sh	hard	fail_closed
+PreToolUse	Bash	enforce-workflow.sh	hard	fail_closed
+PreToolUse	Bash	enforce-debugging.sh	hard	fail_closed
+PreToolUse	Bash	enforce-git.sh	hard	fail_closed
+PreToolUse	Bash	inline-graphify-grep-reminder	advisory	soft_guidance_only
+PreToolUse	Bash	rtk hook claude	advisory	soft_guidance_only
+PreToolUse	Bash	inline-one-branch-policy	hard	fail_closed
+PreToolUse	Bash	inline-context7-reminder	advisory	soft_guidance_only
+PreToolUse	Read|Glob	inline-graphify-read-reminder	advisory	soft_guidance_only
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	pre-tool-use-json-guard.sh	hard	fail_closed
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	enforce-workflow.sh	hard	fail_closed
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	inline-supabase-reminder	advisory	soft_guidance_only
+PreToolUse	Agent	pre-tool-use-json-guard.sh	hard	fail_closed
+PreToolUse	Agent	enforce-workflow.sh	hard	fail_closed
+PostToolUse	mcp__Context7__.*	inline-context7-recorder	recorder	false_evidence_safe
+PostToolUse	Bash	post-tool-use-bash.sh	recorder	false_evidence_safe
+PostToolUse	Read	inline-read-recorder	recorder	false_evidence_safe
+PostToolUse	Read	post-tool-use-read-evidence.sh	recorder	false_evidence_safe
+PostToolUse	mcp__.*	post-tool-use-mcp.sh	recorder	false_evidence_safe
+PostToolUse	mcp__Notion__.*	inline-notion-recorder	recorder	false_evidence_safe
+SessionStart	*	session-setup.sh	lifecycle	soft_setup
+Stop	*	post-stop-hook.sh	hard	fail_closed
