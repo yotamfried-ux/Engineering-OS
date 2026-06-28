@@ -12,6 +12,30 @@ git init "$TARGET" >/dev/null
 git -C "$TARGET" config user.email test@example.com
 git -C "$TARGET" config user.name test
 
+commit_message() {
+  local subject="$1"
+  cat <<EOF
+$subject
+
+✅ עובד
+- Expected behavior is satisfied for this simulation step.
+
+❌ לא עובד
+- N/A: this fixture records the negative case through explicit blocked commits.
+
+🔄 השתנה
+- Learning-loop E2E fixture state changed.
+
+🧪 בדיקות
+- scripts/enforcement/tests/test-learning-e2e.sh
+EOF
+}
+
+git_commit_valid() {
+  local subject="$1"
+  git -C "$TARGET" commit -F <(commit_message "$subject") >/tmp/eos-learning-commit.log 2>&1
+}
+
 echo "# target" > "$TARGET/README.md"
 git -C "$TARGET" add README.md
 git -C "$TARGET" commit -m "init" >/dev/null
@@ -26,11 +50,11 @@ test -f "$TARGET/.engineering-os/REFERENCE.md"
 test -f "$TARGET/.claude/settings.json"
 
 git -C "$TARGET" add CLAUDE.md .engineering-os/REFERENCE.md ENGINEERING_OS_SETUP.md ENGINEERING_OS_CAPABILITIES.md .claude .github .gitignore .claudeignore 2>/dev/null || true
-git -C "$TARGET" commit -m "install engineering os" >/dev/null
+git_commit_valid "chore: install engineering os"
 
 expect_blocked_commit() {
   local name="$1"
-  if git -C "$TARGET" commit -m "$name" >/tmp/eos-learning-commit.log 2>&1; then
+  if git_commit_valid "test: $name"; then
     echo "  ❌ expected commit to be blocked: $name"
     cat /tmp/eos-learning-commit.log
     exit 1
@@ -40,7 +64,7 @@ expect_blocked_commit() {
 
 expect_allowed_commit() {
   local name="$1"
-  if git -C "$TARGET" commit -m "$name" >/tmp/eos-learning-commit.log 2>&1; then
+  if git_commit_valid "test: $name"; then
     echo "  ✅ allowed: $name"
   else
     echo "  ❌ expected commit to be allowed: $name"
