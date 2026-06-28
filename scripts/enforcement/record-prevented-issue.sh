@@ -11,7 +11,7 @@ from pathlib import Path
 
 path = Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
-pattern = re.compile(r"(##\s+Prevented Future Issues:\s*)(\d+)")
+pattern = re.compile(r"(?m)^(##\s+Prevented Future Issues:\s*)(\d+)\s*$")
 match = pattern.search(text)
 if match:
     text = pattern.sub(lambda m: f"{m.group(1)}{int(m.group(2)) + 1}", text, count=1)
