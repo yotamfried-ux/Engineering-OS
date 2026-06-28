@@ -12,33 +12,9 @@ git init "$TARGET" >/dev/null
 git -C "$TARGET" config user.email test@example.com
 git -C "$TARGET" config user.name test
 
-commit_message() {
-  local subject="$1"
-  cat <<EOF
-$subject
-
-✅ עובד
-- Expected behavior is satisfied for this simulation step.
-
-❌ לא עובד
-- N/A: this fixture records the negative case through explicit blocked commits.
-
-🔄 השתנה
-- Learning-loop E2E fixture state changed.
-
-🧪 בדיקות
-- scripts/enforcement/tests/test-learning-e2e.sh
-EOF
-}
-
-git_commit_valid() {
-  local subject="$1"
-  git -C "$TARGET" commit -F <(commit_message "$subject") >/tmp/eos-learning-commit.log 2>&1
-}
-
 echo "# target" > "$TARGET/README.md"
 git -C "$TARGET" add README.md
-git -C "$TARGET" commit -m "init" >/dev/null
+git -C "$TARGET" commit --no-verify -m "init" >/dev/null
 
 (
   cd "$TARGET"
@@ -49,26 +25,36 @@ test -x "$TARGET/.git/hooks/pre-commit"
 test -f "$TARGET/.engineering-os/REFERENCE.md"
 test -f "$TARGET/.claude/settings.json"
 
-git -C "$TARGET" add CLAUDE.md .engineering-os/REFERENCE.md ENGINEERING_OS_SETUP.md ENGINEERING_OS_CAPABILITIES.md .claude .github .gitignore .claudeignore 2>/dev/null || true
-git_commit_valid "chore: install engineering os"
+git -C "$TARGET" add -A
+git -C "$TARGET" commit --no-verify -m "install engineering os" >/dev/null
 
-expect_blocked_commit() {
+run_precommit() {
+  (cd "$TARGET" && .git/hooks/pre-commit) >/tmp/eos-learning-precommit.log 2>&1
+}
+
+cleanup_case() {
+  git -C "$TARGET" reset -q >/dev/null 2>&1 || true
+  git -C "$TARGET" clean -fdq >/dev/null 2>&1 || true
+}
+
+expect_blocked_precommit() {
   local name="$1"
-  if git_commit_valid "test: $name"; then
-    echo "  ❌ expected commit to be blocked: $name"
-    cat /tmp/eos-learning-commit.log
+  if run_precommit; then
+    echo "  ❌ expected pre-commit to block: $name"
+    cat /tmp/eos-learning-precommit.log
     exit 1
   fi
   echo "  ✅ blocked: $name"
+  cleanup_case
 }
 
-expect_allowed_commit() {
+expect_allowed_precommit() {
   local name="$1"
-  if git_commit_valid "test: $name"; then
+  if run_precommit; then
     echo "  ✅ allowed: $name"
   else
-    echo "  ❌ expected commit to be allowed: $name"
-    cat /tmp/eos-learning-commit.log
+    echo "  ❌ expected pre-commit to allow: $name"
+    cat /tmp/eos-learning-precommit.log
     exit 1
   fi
 }
@@ -99,8 +85,7 @@ Verified Lesson
 ## Prevented Future Issues: 0
 LESSON
 git -C "$TARGET" add lessons-learned/bugs/missing-evidence.md
-expect_blocked_commit "bad lesson is blocked"
-git -C "$TARGET" reset --hard HEAD >/dev/null
+expect_blocked_precommit "bad lesson is blocked"
 
 mkdir -p "$TARGET/lessons-learned/bugs"
 cat > "$TARGET/lessons-learned/bugs/verified-root-cause.md" <<'LESSON'
@@ -137,8 +122,11 @@ Verified Lesson
 ## Prevented Future Issues: 0
 LESSON
 git -C "$TARGET" add lessons-learned/bugs/verified-root-cause.md
-expect_allowed_commit "valid lesson is allowed"
+expect_allowed_precommit "valid lesson is allowed"
+grep -q 'Prevented Future Issues: 0' "$TARGET/lessons-learned/bugs/verified-root-cause.md"
+cleanup_case
 
+mkdir -p "$TARGET/failed-solutions"
 cat > "$TARGET/failed-solutions/no-alternative.md" <<'FAILSOL'
 # Failed solution: no alternative
 
@@ -149,8 +137,7 @@ Tried a broad workaround.
 It did not address the verified root cause.
 FAILSOL
 git -C "$TARGET" add failed-solutions/no-alternative.md
-expect_blocked_commit "bad failed-solution is blocked"
-git -C "$TARGET" reset --hard HEAD >/dev/null
+expect_blocked_precommit "bad failed-solution is blocked"
 
 mkdir -p "$TARGET/failed-solutions"
 cat > "$TARGET/failed-solutions/with-alternative.md" <<'FAILSOL'
@@ -166,11 +153,10 @@ It did not address the verified root cause.
 Check the guard that would have prevented the failure.
 FAILSOL
 git -C "$TARGET" add failed-solutions/with-alternative.md
-expect_allowed_commit "valid failed-solution is allowed"
+expect_allowed_precommit "valid failed-solution is allowed"
+cleanup_case
 
 # Important boundary: today's deterministic loop proves capture/enforcement of verified
 # knowledge structure. It does not yet enforce that an agent read a relevant lesson before
 # touching a matching future area, nor does it auto-increment Prevented Future Issues.
-grep -q 'Prevented Future Issues: 0' "$TARGET/lessons-learned/bugs/verified-root-cause.md"
-
 echo "learning loop E2E simulation passed"
