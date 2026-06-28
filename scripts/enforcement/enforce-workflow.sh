@@ -13,6 +13,8 @@
 #   - Step 2: Context7 before npm/pip install
 #   - <agent_loop>: tasks.json before spawning agents
 
+set -euo pipefail
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
@@ -55,7 +57,7 @@ newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1; }
 plan_missing_sections() {
   local pf="$1" missing=""
   grep -qiE 'מטרה|goal|requirements|דרישות' "$pf" || missing="${missing}Goal/מטרה "
-  grep -qiE 'תכנון|\bplan\b|steps|שלבים' "$pf"     || missing="${missing}Plan/תכנון "
+  grep -qiE 'תכנון|\bplan\b|steps|שלבים'     "$pf" || missing="${missing}Plan/תכנון "
   grep -qiE 'DoD|Definition of Done|תנאי סיום'  "$pf" || missing="${missing}DoD/תנאי-סיום "
   grep -qiE 'brainstorm|חלופות|alternatives'    "$pf" || missing="${missing}Alternatives/חלופות "
   printf '%s' "$missing"
@@ -75,7 +77,7 @@ gate_plan_integrity() {
 
   local fname; fname="$(basename "$file" .md)"
   local initial; initial="$(evidence_get "dod_initial_${fname}" 2>/dev/null || printf '0')"
-  [ "${initial:-0}" -eq 0 ] && return 0  # no snapshot yet — first write is allowed
+  [ "${initial:-0}" -eq 0 ] && return 0
 
   local new_content; new_content="$(read_field content)"
   [ -z "$new_content" ] && return 0
@@ -88,10 +90,6 @@ gate_plan_integrity() {
   fi
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# G9b — gate_tasks_completion: all DoD items must be [x] before marking complete.
-# Fires inside gate_write() when .claude/tasks.json is being written with status=complete.
-# ─────────────────────────────────────────────────────────────────────────────
 gate_tasks_completion() {
   local file="$1"
   case "$file" in
@@ -129,7 +127,6 @@ gate_tasks_completion() {
 gate_write() {
   local FILE="$1"
   if [ -z "$FILE" ]; then
-    # Empty file_path may mean JSON parse failure — warn but allow (avoid false positives).
     case "$TOOL" in
       Write|Edit|MultiEdit|NotebookEdit)
         echo "WARNING_FOR_AGENT: enforce-workflow could not parse file_path — plan gate skipped. Verify python3 is available and hook stdin is valid JSON."
@@ -138,12 +135,9 @@ gate_write() {
     exit 0
   fi
 
-  # G9a/G9b: run before any early exits — plan files and tasks.json match *.md/*.json
-  # and would otherwise exit 0 before reaching the gates at the bottom of this function.
   gate_plan_integrity "$FILE"
   gate_tasks_completion "$FILE"
 
-  # Critical Engineering OS dirs: block regardless of extension (it IS markdown).
   local crit=0
   case "$FILE" in
     core/*|*/core/*|patterns/*|*/patterns/*|external-skills/*|*/external-skills/*|\
@@ -151,13 +145,11 @@ gate_write() {
     .github/*|*/.github/*|.claude/settings.json|*/.claude/settings.json) crit=1 ;;
   esac
 
-  # GitHub Actions workflows are infrastructure code — require a plan like any code file.
   case "$FILE" in
     .github/workflows/*|*/.github/workflows/*) crit=1 ;;
   esac
 
   if [ "$crit" -eq 0 ]; then
-    # Non-critical paths: only enforce for code files; skip docs/config.
     case "$FILE" in
       *.md|*.json|*.yaml|*.yml|*.toml|*.lock|*.env*|*.gitignore|*.editorconfig|*.prettierrc|*.eslintrc) exit 0 ;;
     esac
@@ -180,8 +172,6 @@ gate_write() {
     exit 1
   fi
 
-  # Freshness: block code writes if the newest plan is stale (default 48h; 0 disables).
-  # Uses stat for mtime — reliable across Linux/macOS, no touch -d portability issues.
   local max_age="${EOS_PLAN_MAX_AGE_H:-48}"
   if ! printf '%s' "$max_age" | grep -qE '^[0-9]+$'; then
     echo "ERROR_FOR_AGENT: invalid EOS_PLAN_MAX_AGE_H='$max_age' (expected a non-negative integer)."
@@ -201,7 +191,10 @@ gate_write() {
     fi
   fi
 
-  # G6a: patterns/ writes require reading core/pattern-lifecycle.md this session
+  if [ -f "$SCRIPT_DIR/pre-tool-use-learning-reuse.sh" ]; then
+    printf '%s' "$INPUT" | bash "$SCRIPT_DIR/pre-tool-use-learning-reuse.sh"
+  fi
+
   case "$FILE" in
     patterns/*|*/patterns/*)
       evidence_has read_pattern_lifecycle || {
@@ -213,7 +206,6 @@ gate_write() {
       ;;
   esac
 
-  # G6b: hooks/enforcement/.claude/settings writes require reading core/hooks-policy.md
   case "$FILE" in
     scripts/hooks/*|*/scripts/hooks/*|scripts/enforcement/*|*/scripts/enforcement/*|\
     .claude/settings.json|*/.claude/settings.json)
@@ -226,9 +218,6 @@ gate_write() {
       ;;
   esac
 
-  # G7: graphify must have been successfully queried before first code write (when graph exists).
-  # Evidence is recorded by PostToolUse Bash hook only for graphify query/explain/path/update
-  # with non-trivial output (filters out echo graphify, failed runs, --help flags).
   if [ -f "graphify-out/graph.json" ]; then
     bypass_active EOS_BYPASS_GRAPHIFY || evidence_has graphify_used || {
       echo "ERROR_FOR_AGENT: graphify gate (G7) — graphify-out/graph.json exists but graphify was not queried this session."
@@ -238,9 +227,6 @@ gate_write() {
     }
   fi
 
-  # G8: writing to a recognised domain requires reading the matching patterns/<domain>/ first.
-  # Independent from G7 — graphify provides structural orientation; patterns provide implementation standards.
-  # Evidence 'patterns_searched' is recorded by PostToolUse Read hook when any patterns/** file is read.
   local _domains="auth api billing database frontend security testing ai ai-agents authorization infrastructure integrations ui observability"
   local _g8_matched=0
   for _dom in $_domains; do
@@ -259,11 +245,8 @@ gate_write() {
     esac
   done
 
-  # G12: advisory warning for new generic files with no patterns read at all this session.
-  # Does NOT exit 1 — generic files are legitimate, this is a nudge, not a gate.
   if [ "$_g8_matched" -eq 0 ] && [ ! -f "$FILE" ] && [ -d "patterns" ]; then
     bypass_active EOS_BYPASS_PATTERNS 2>/dev/null || {
-      # Check if ANY patterns_read_* evidence exists this session
       local _any_pattern
       _any_pattern="$(grep -F $'\tpatterns_read_' "$(_evidence_file)" 2>/dev/null | head -1 || true)"
       if [ -z "$_any_pattern" ]; then
@@ -277,16 +260,10 @@ gate_write() {
   exit 0
 }
 
-# ═════════════════════════════════════════════════════════════════════════════
-# Gate 2 — Bash: Context7 before installing a package (workflow.md step 2)
-# ═════════════════════════════════════════════════════════════════════════════
 gate_bash() {
   local CMD="$1"
   [ -z "$CMD" ] && exit 0
 
-  # G3: block if command sets a bypass var — Claude cannot self-disable enforcement.
-  # Matches only at command-start positions: ^ | after ; | & | ( or after `export`.
-  # Does NOT match when EOS_BYPASS_X= appears as an argument (e.g. echo EOS_BYPASS_X=1).
   if printf '%s' "$CMD" | grep -qE '(^[[:space:]]*(export[[:space:]]+)?|[;|&(][[:space:]]*(export[[:space:]]+)?)EOS_BYPASS_[A-Z_]+='; then
     echo "ERROR_FOR_AGENT: this command sets an EOS_BYPASS_* variable — Claude cannot self-disable enforcement."
     echo "Only the human user may set bypass vars outside the Claude Code session."
@@ -294,7 +271,6 @@ gate_bash() {
     exit 1
   fi
 
-  # Only fire for real package installs (a package name follows the verb).
   case "$CMD" in
     *"npm install "[a-zA-Z@]*|*"npm i "[a-zA-Z@]*|*"yarn add "[a-zA-Z@]*|*"pnpm add "[a-zA-Z@]*|*"pip install "[a-zA-Z]*|*"pip3 install "[a-zA-Z]*|*"uv add "[a-zA-Z]*|*"uv pip install "[a-zA-Z]*) ;;
     *) exit 0 ;;
@@ -309,9 +285,6 @@ gate_bash() {
   exit 1
 }
 
-# ═════════════════════════════════════════════════════════════════════════════
-# Gate 3 — Agent: tasks.json before spawning agents (workflow.md <agent_loop>)
-# ═════════════════════════════════════════════════════════════════════════════
 gate_agent() {
   bypass_active EOS_BYPASS_TASKSJSON && exit 0
 
@@ -322,7 +295,6 @@ gate_agent() {
     exit 1
   fi
 
-  # Schema validation: must have a non-empty tasks array; each item needs id, title, status.
   schema_result="$(python3 -c "
 import json, sys
 try:
@@ -355,7 +327,6 @@ except Exception as e:
   exit 0
 }
 
-# ── Route by tool ────────────────────────────────────────────────────────────
 case "$TOOL" in
   Write|Edit|MultiEdit|NotebookEdit) gate_write "$(read_field file_path)" ;;
   Bash)                              gate_bash "$(read_field command)" ;;
