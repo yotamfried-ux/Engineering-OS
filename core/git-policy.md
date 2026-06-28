@@ -29,7 +29,8 @@ branch חדש.
 מיזוג מתבצע **רק** אחרי:
 
 1. שכל ה-`<definition_of_done>` (ראה [`quality-gates.md`](./quality-gates.md)) מתקיים.
-2. **אישור מפורש של המשתמש** — אל תמזג ל-main על דעת עצמך, אף אם כל הבדיקות עברו.
+2. שכל GitHub Actions / policy workflows המחויבים עבור ה-PR head הסתיימו ב-`success`; לפני קריאת merge API חובה להריץ/לתעד את [`scripts/enforcement/check-merge-readiness.sh`](../scripts/enforcement/check-merge-readiness.sh) על workflow-runs של ה-head SHA.
+3. **אישור מפורש של המשתמש** — אל תמזג ל-main על דעת עצמך, אף אם כל הבדיקות עברו.
 
 ---
 
@@ -58,8 +59,7 @@ branch חדש.
 
 ### מיזוג ל-main — בסיום ובאישור
 
-- **מתי:** רק כשכל ה-`<definition_of_done>` נסגר, **שער האבטחה עבר**, **ובאישור מפורש
-  של המשתמש**. אין מיזוג אוטומטי, אף אם הכל ירוק (ראה `<safety>`).
+- **מתי:** רק כשכל ה-`<definition_of_done>` נסגר, **שער האבטחה עבר**, **כל required policy workflow ירוק לפי `check-merge-readiness.sh`**, **ובאישור מפורש של המשתמש**. אין מיזוג אוטומטי, אף אם הכל ירוק (ראה `<safety>`).
 - **קצב:** מזג כשהמשימה הושלמה ואומתה — אל תצבור ברנצ'ים פתוחים ואל תמזג עבודה חלקית.
 
 ### חוק ברנץ' יחיד — נאכף ב-PreToolUse hook (exit 1)
@@ -139,8 +139,8 @@ gh pr create --draft ...
 
 > **אכיפה דטרמיניסטית** (`scripts/enforcement/enforce-git.sh`, PreToolUse Bash):
 > `git push --force`/`-f` ה-plain נחסם (`--force-with-lease` הבטוח מותר). bypass: `EOS_BYPASS_FORCEPUSH=1`.
-> `--no-verify` נחסם ע"י enforce-debugging.sh; one-branch ע"י settings.json. מיזוג ל-main/deploy
-> נשארים אישור-אדם מפורש — לא נאכפים אוטומטית.
+> `--no-verify` נחסם ע"י enforce-debugging.sh; one-branch ע"י settings.json. לפני merge ל-main חובה לתעד תוצאת `check-merge-readiness.sh` על ה-PR head; deploy
+> נשאר אישור-אדם מפורש.
 
 </safety>
 
