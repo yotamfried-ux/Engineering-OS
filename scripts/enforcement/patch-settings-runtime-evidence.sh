@@ -47,6 +47,14 @@ ensure_hook(
 )
 
 ensure_hook(
+    'PreToolUse',
+    'Write|Edit|MultiEdit|NotebookEdit',
+    'check-plan-scope.sh',
+    'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/check-plan-scope.sh" 2>&1',
+    index=0,
+)
+
+ensure_hook(
     'PostToolUse',
     'mcp__.*',
     'post-tool-use-mcp.sh',
