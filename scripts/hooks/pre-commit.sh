@@ -65,6 +65,11 @@ enforcer enforce-connector.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-c
 # and failed-solutions files. Governing policy: core/learning-loop.md. Bypass: EOS_BYPASS_LEARNING=1.
 enforcer enforce-learning.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-learning.sh" ] || exit 1
 
+# learning-loop.md — for bug/debug/incident/rollback implementation work, require
+# a new lesson, failed-solution record, or explicit Learning Capture Waiver.
+# Bypass: EOS_BYPASS_LEARNING_CAPTURE=1.
+enforcer enforce-learning-capture.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-learning-capture.sh" ] || exit 1
+
 # Repo-wide gates above run on every commit (incl. --allow-empty); the remaining
 # checks operate on staged content, so short-circuit empty commits here.
 [ -z "$STAGED" ] && exit 0
