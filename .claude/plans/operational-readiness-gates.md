@@ -23,7 +23,7 @@ Branch: `fix/operational-readiness-gates`
 - `workflow.workflow-read` — workflow policy checked before writes.
 - `plan.route-plan-before-write` — this plan exists before enforcement changes.
 - `source.github-repo-read` — GitHub connector used to inspect PR #107, workflow failures, and source files.
-- `validation.policy-change-has-validator` — this PR will add regression tests for the corrected gates.
+- `validation.policy-change-has-validator` — this PR adds regression tests for the corrected gates.
 - `validation.coderabbit-policy` — PR will be opened ready for review; if CodeRabbit is unavailable, manual review loop is recorded.
 
 ## Source of Truth Checks
@@ -37,14 +37,14 @@ Branch: `fix/operational-readiness-gates`
 | `.github/workflows/workflow-evidence-policy.yml` | Existing workflow evidence gate that failed on PR #107. | Read |
 | `.github/workflows/connector-evidence-policy.yml` | Existing connector evidence gate that failed on PR #107. | Read |
 | `scripts/enforcement/pre-tool-use-runtime-evidence.sh` | Runtime evidence write gate with known malformed JSON fail-open gap. | Read |
-| `scripts/enforcement/enforce-workflow.sh` | Main workflow enforcer with known empty file/command fail-open paths. | Read |
-| `scripts/enforcement/tests/` | Existing enforcement tests to extend with regressions. | Read |
+| `scripts/enforcement/enforce-workflow.sh` | Main workflow enforcer; now protected by a PreToolUse JSON guard before routing. | Read |
+| `scripts/enforcement/tests/` | Existing enforcement tests extended with regressions. | Read |
 
 ## Connector Evidence
 
 | Connector | Evidence |
 |---|---|
-| GitHub | Used to inspect PR #107, workflow status, job logs, branch state, and source files; will be used to commit fixes and open PR. |
+| GitHub | Used to inspect PR #107, workflow status, job logs, branch state, source files, and to commit this enforcement patch. |
 
 ## Skill Evidence
 
@@ -54,7 +54,7 @@ Not required; no external skill is needed for this deterministic enforcement pat
 
 - Add a deterministic pre-merge/self-review checker that fails if required PR workflows failed or are still missing.
 - Add tests proving the PR #107 failure pattern is no longer accepted by the checker.
-- Make malformed or missing PreToolUse JSON fail closed in runtime/workflow gates for enforcement-relevant tools.
+- Make malformed or missing PreToolUse JSON fail closed in runtime/write gates and before workflow routing for enforcement-relevant tools.
 - Add tests proving malformed JSON is blocked.
 
 ## Non-goals
@@ -66,10 +66,10 @@ Not required; no external skill is needed for this deterministic enforcement pat
 
 ## Definition of Done
 
-- [ ] Merge/readiness checker blocks failed workflow runs.
-- [ ] Checker passes when all required workflow runs are successful.
-- [ ] Runtime evidence pre-write gate fails closed on malformed hook JSON.
-- [ ] Workflow enforcer fails closed on malformed hook JSON and missing write file_path / Bash command.
-- [ ] Enforcement tests cover the new negative and positive cases.
+- [x] Merge/readiness checker blocks failed workflow runs.
+- [x] Checker passes when all required workflow runs are successful.
+- [x] Runtime evidence pre-write gate fails closed on malformed hook JSON.
+- [x] PreToolUse JSON guard blocks malformed JSON and missing write file_path / Bash command before workflow routing.
+- [x] Enforcement tests cover the new negative and positive cases.
 - [ ] PR is opened ready for review, not draft.
 - [ ] CodeRabbit or manual review is recorded before merge.
