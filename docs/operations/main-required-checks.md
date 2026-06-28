@@ -35,13 +35,42 @@ plan-policy
 > CodeRabbit is intentionally **not** in this list yet (no active subscription/credits).
 > Add it as a required check once the subscription is active.
 
+## Branch-protection check-run contexts (what to actually select in the UI)
+
+> ⚠️ **The names above are *workflow* names, not the contexts GitHub branch protection requires.**
+> `check-merge-readiness.sh` matches the `name` field returned by the *workflow-runs* API, which is the
+> **workflow name** (`pr-policy`, `plan-policy`, …). GitHub **branch protection / rulesets**, however,
+> require **check-run contexts**, which are the **job `name:` field** of each workflow — a different
+> string. Selecting the workflow name in branch protection would leave the rule matching *nothing*, so
+> the merge button would not actually be gated ("we think it's protected but it isn't").
+
+The mapping below is **verified against the real check runs of PR #115 and #116**
+(`get_check_runs`). When configuring branch protection, add the **right-hand column** values as the
+required status checks:
+
+| Workflow file | Workflow name (client-side gate, `check-merge-readiness.sh`) | **Check-run context to require in branch protection** |
+|---|---|---|
+| `enforcement-tests.yml` | `enforcement-tests` | `enforcement-tests` |
+| `pr-policy.yml` | `pr-policy` | `Require ready-for-review PR` |
+| `plan-policy.yml` | `plan-policy` | `Require completed plan checklists` |
+| `connector-evidence-policy.yml` | `connector-evidence-policy` | `Require connector route plan evidence` |
+| `workflow-evidence-policy.yml` | `workflow-evidence-policy` | `Require Engineering OS workflow evidence` |
+| `capability-evidence-policy.yml` | `capability-evidence-policy` | `Require capability evidence in changed plans` |
+
+> Only `enforcement-tests` is identical in both columns — its job has no `name:`, so GitHub falls back to
+> the job id, which happens to equal the workflow name. All five `policy` workflows differ.
+>
+> If a job's `name:` ever changes, the check-run context changes with it and branch protection must be
+> updated. Re-derive this table from a recent green PR's `get_check_runs` rather than from workflow
+> names.
+
 ## Recommended branch-protection / ruleset settings for `main`
 
 Apply via **Settings → Branches → Branch protection rules** (or a repository ruleset):
 
 - **Require a pull request before merging** — no direct pushes to `main`.
-- **Require status checks to pass before merging** — select every check in the
-  `required-checks` block above.
+- **Require status checks to pass before merging** — select every **check-run context** from the
+  right-hand column of the *Branch-protection check-run contexts* table above (not the workflow names).
 - **Require branches to be up to date before merging** — re-run checks against the
   latest `main` before allowing merge (enable if the team can tolerate the extra reruns).
 - **Block force pushes** to `main`.
@@ -53,8 +82,9 @@ Apply via **Settings → Branches → Branch protection rules** (or a repository
 
 1. Open the repository on GitHub → **Settings** → **Branches** (or **Rules → Rulesets**).
 2. Add/edit a rule targeting `main`.
-3. Enable the items in *Recommended settings* above and add each check from the
-   `required-checks` block as a required status check.
+3. Enable the items in *Recommended settings* above and add each **check-run context** from the
+   right-hand column of the *Branch-protection check-run contexts* table as a required status check.
+   (Tip: GitHub only autocompletes a context after it has run at least once, so trigger a PR first.)
 4. Save. Verify by opening a PR and confirming the merge button is blocked until all
    required checks are green.
 
