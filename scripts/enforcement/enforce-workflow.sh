@@ -201,6 +201,11 @@ gate_write() {
     fi
   fi
 
+  # Learning reuse gate: if a relevant lesson or failed solution exists, the active plan must list it.
+  if [ -f "$SCRIPT_DIR/pre-tool-use-learning-reuse.sh" ]; then
+    printf '%s' "$INPUT" | bash "$SCRIPT_DIR/pre-tool-use-learning-reuse.sh" || exit 1
+  fi
+
   # G6a: patterns/ writes require reading core/pattern-lifecycle.md this session
   case "$FILE" in
     patterns/*|*/patterns/*)

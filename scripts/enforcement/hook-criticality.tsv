@@ -16,6 +16,7 @@ PreToolUse	Bash	inline-context7-reminder	advisory	soft_guidance_only
 PreToolUse	Read|Glob	inline-graphify-read-reminder	advisory	soft_guidance_only
 PreToolUse	Write|Edit|MultiEdit|NotebookEdit	pre-tool-use-json-guard.sh	hard	fail_closed
 PreToolUse	Write|Edit|MultiEdit|NotebookEdit	enforce-workflow.sh	hard	fail_closed
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	pre-tool-use-learning-reuse.sh	hard	fail_closed
 PreToolUse	Write|Edit|MultiEdit|NotebookEdit	inline-supabase-reminder	advisory	soft_guidance_only
 PreToolUse	Agent	pre-tool-use-json-guard.sh	hard	fail_closed
 PreToolUse	Agent	enforce-workflow.sh	hard	fail_closed
