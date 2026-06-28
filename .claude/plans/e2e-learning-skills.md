@@ -24,10 +24,11 @@ Add an end-to-end operational readiness simulation that proves the learning-loop
 | Workflow evidence | read |
 | Domain tags | learning-loop, skills, hooks, enforcement, runtime |
 | Target paths | scripts/enforcement/tests |
-| Templates | none |
+| Templates | not required |
 | Patterns | none |
 | External systems/connectors | github |
 | Skills | superpowers, security-review |
+| Validation gates | enforcement-tests, plan-policy, connector-evidence-policy, workflow-evidence-policy, capability-evidence-policy, pr-policy |
 
 ## Capability Evidence
 
@@ -37,6 +38,15 @@ Add an end-to-end operational readiness simulation that proves the learning-loop
 - `source.github-repo-read`
 - `validation.policy-change-has-validator`
 - `validation.coderabbit-policy`
+
+## Connector Evidence
+
+- `github` — repository files, current workflows, and current enforcement scripts were inspected before writing the simulation.
+
+## Skill Evidence
+
+- `superpowers` — planning-first workflow used: map current behavior, create route plan, add regression simulation.
+- `security-review` — reviewed hook failure modes around runtime gates, evidence bypass, payment/webhook sensitivity, and temp-file safety.
 
 ## Source of Truth Checks
 
@@ -52,8 +62,8 @@ Add an end-to-end operational readiness simulation that proves the learning-loop
 
 - [x] Current learning-loop enforcement mapped.
 - [x] Current skill-selection/runtime evidence enforcement mapped.
-- [ ] Operational E2E simulation test added.
-- [ ] Test proves target install wiring includes runtime evidence and workflow gates.
-- [ ] Test proves missing learning reuse blocks and valid reuse allows.
-- [ ] Test proves missing required skill selection/evidence blocks and valid evidence allows.
-- [ ] GitHub Actions enforcement-tests pass on the PR.
+- [x] Operational E2E simulation test added.
+- [x] Test proves target install wiring includes runtime evidence and workflow gates.
+- [x] Test proves missing learning reuse blocks and valid reuse allows.
+- [x] Test proves missing required skill selection/evidence blocks and valid evidence allows.
+- [x] GitHub Actions enforcement-tests pass on the PR.
