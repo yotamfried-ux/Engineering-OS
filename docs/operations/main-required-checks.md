@@ -58,6 +58,44 @@ Apply via **Settings → Branches → Branch protection rules** (or a repository
 4. Save. Verify by opening a PR and confirming the merge button is blocked until all
    required checks are green.
 
+## Status-check contexts (what to select in branch protection)
+
+GitHub branch protection identifies a required check by its **check-run / job name**, which is
+**not** always the workflow name. Select these contexts (derived from each workflow's job `name:`,
+falling back to the job id):
+
+| Workflow (file) | Branch-protection context |
+|---|---|
+| `enforcement-tests` | `enforcement-tests` |
+| `pr-policy` | `Require ready-for-review PR` |
+| `connector-evidence-policy` | `Require connector route plan evidence` |
+| `workflow-evidence-policy` | `Require Engineering OS workflow evidence` |
+| `capability-evidence-policy` | `Require capability evidence in changed plans` |
+| `plan-policy` | `Require completed plan checklists` |
+
+`scripts/ops/apply-main-branch-protection.sh` derives this mapping automatically from the workflow
+files, so it stays correct if a job is renamed.
+
+## How to apply with the ops scripts
+
+Run from the repo root **with repo-admin credentials** (this is the owner's step — the Engineering
+OS agent environment cannot reach the admin API):
+
+```bash
+# 1. Branch protection (dry-run prints the exact request; --apply performs it)
+bash scripts/ops/apply-main-branch-protection.sh            # preview
+bash scripts/ops/apply-main-branch-protection.sh --apply    # apply (needs gh or $GITHUB_TOKEN)
+
+# 2. Prune merged + superseded branches (dry-run lists them; --apply deletes)
+bash scripts/ops/prune-merged-branches.sh                   # preview
+bash scripts/ops/prune-merged-branches.sh --apply           # delete
+```
+
+Both scripts are **dry-run by default**, idempotent, and self-verifying: the protection script
+derives the 6 contexts from the workflow files, and the prune script only deletes branches that are
+ancestor-merged into `origin/main` or in its explicit superseded allowlist (it never deletes `main`
+or the current branch).
+
 ## Keeping this in sync
 
 Do **not** edit the `required-checks` block by hand to diverge from
