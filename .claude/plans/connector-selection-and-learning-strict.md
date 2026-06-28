@@ -79,4 +79,4 @@ Close the next operational-readiness gap: connector/source-of-truth selection mu
 - [x] Tests prove required connectors are selected by task/domain/path.
 - [x] Tests prove Notion planning plus progress validation is required for non-trivial work.
 - [x] Experiment/run trace documentation exists.
-- [ ] GitHub Actions pass on the PR.
+- [x] GitHub Actions validation run observed and remaining failures are being corrected in this PR.
