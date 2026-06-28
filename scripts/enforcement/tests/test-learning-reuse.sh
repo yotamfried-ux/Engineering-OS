@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 CHECK="$ROOT/scripts/enforcement/check-learning-reuse.sh"
 RECORD="$ROOT/scripts/enforcement/record-prevented-issue.sh"
+WORKFLOW="$ROOT/scripts/enforcement/enforce-workflow.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -14,6 +15,18 @@ make_plan() {
   local file="$1" tags="$2" reuse="$3"
   cat > "$file" <<EOF
 # Route Plan
+
+## Goal
+
+Fixture goal.
+
+## Plan
+
+Run deterministic learning reuse validation.
+
+## Alternatives
+
+Fixture alternative considered.
 
 | Field | Decision |
 |---|---|
@@ -32,6 +45,10 @@ Reason: fixture.
 | Source | Status |
 |---|---|
 | fixture | checked |
+
+## Definition of Done
+
+- [x] fixture complete
 EOF
   if [ -n "$reuse" ]; then
     cat >> "$file" <<EOF
@@ -116,8 +133,10 @@ EOF
 }
 
 run_check() { (cd "$TMP" && bash "$CHECK" --plan "$1" --target "$2"); }
+run_workflow_write() { (cd "$TMP" && EOS_PLAN_MAX_AGE_H=0 printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$1" | bash "$WORKFLOW"); }
 
 cd "$TMP"
+mkdir -p .claude/plans src/payments
 make_lesson lessons-learned/bugs/stripe-webhook-signature.md
 make_failed_solution failed-solutions/stripe-json-first.md
 make_plan no-reuse.md "stripe, payments" ""
@@ -129,8 +148,12 @@ failcase failed_solution_also_requires_reuse run_check "$TMP/with-reuse.md" src/
 make_plan with-both.md "stripe, payments" "lessons-learned/bugs/stripe-webhook-signature.md
 - failed-solutions/stripe-json-first.md"
 pass all_relevant_knowledge_reused run_check "$TMP/with-both.md" src/payments/stripe.ts
-
 pass no_relevant_area_is_allowed run_check "$TMP/with-both.md" src/profile/user.ts
+
+cp no-reuse.md .claude/plans/active.md
+failcase runtime_blocks_missing_reuse run_workflow_write src/payments/stripe.ts
+cp with-both.md .claude/plans/active.md
+pass runtime_allows_reused_knowledge run_workflow_write src/payments/stripe.ts
 
 grep -q 'Prevented Future Issues: 0' lessons-learned/bugs/stripe-webhook-signature.md
 bash "$RECORD" lessons-learned/bugs/stripe-webhook-signature.md
