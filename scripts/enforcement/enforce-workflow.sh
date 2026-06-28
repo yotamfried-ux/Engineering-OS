@@ -112,7 +112,7 @@ gate_write() {
   fi
 
   if [ -f "$SCRIPT_DIR/pre-tool-use-learning-reuse.sh" ]; then
-    printf '%s' "$INPUT" | bash "$SCRIPT_DIR/pre-tool-use-learning-reuse.sh"
+    printf '%s' "$INPUT" | bash "$SCRIPT_DIR/pre-tool-use-learning-reuse.sh" || exit 1
   fi
 
   case "$FILE" in patterns/*|*/patterns/*) evidence_has read_pattern_lifecycle || { echo "ERROR_FOR_AGENT: pattern lifecycle evidence missing."; exit 1; } ;; esac

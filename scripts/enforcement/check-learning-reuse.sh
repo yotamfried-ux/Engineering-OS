@@ -51,10 +51,11 @@ normalize_list() {
 }
 
 plan_mentions_lesson() {
-  local lesson="$1" base
+  local lesson="$1" base section
   base="$(basename "$lesson")"
-  awk '/^##[[:space:]]+Lessons Reused/ { found=1; next } found && /^##[[:space:]]+/ { exit } found { print }' "$PLAN" 2>/dev/null |
-    grep -Eq "(^|[[:space:]`*\-])(${lesson}|${base})([[:space:]`]|$)"
+  section="$(awk '/^##[[:space:]]+Lessons Reused/ { found=1; next } found && /^##[[:space:]]+/ { exit } found { print }' "$PLAN" 2>/dev/null)"
+  printf '%s\n' "$section" | grep -qF "$lesson" && return 0
+  printf '%s\n' "$section" | grep -qF "$base"
 }
 
 plan_tags="$(field_value "$PLAN" '^domain tags$|^domains$|^tags$')"
