@@ -4,8 +4,40 @@
 >
 > **מתי לגשת לקובץ הזה:**
 > - כשכותבים או מעדכנים `README.md` או תיעוד אחר.
+> - כשיש חפיפה בין כמה קבצי Markdown ולא ברור מי מקור האמת.
 > - בהקמת פרויקט — להגדרת קבצי התיעוד הנדרשים.
 > - כשמוסיפים רכיב / חבילה / סקיל / תבנית — לוודא שיש לו README.
+
+---
+
+## <canonical_ownership>
+
+Every durable governance idea has one canonical owner. Other files may link to that owner, but must not duplicate or redefine the rule.
+
+| Area | Canonical owner |
+|---|---|
+| Always-loaded entrypoint | `CLAUDE.md` |
+| Workflow order | `core/workflow.md` |
+| Task routing | `core/task-router.md` |
+| Documentation ownership and lifecycle | `core/documentation-policy.md` |
+| Capability vocabulary | `core/capability-registry.yaml` |
+| Connector policy and fallback | `core/connector-policy.md` |
+| Skill orchestration policy | `core/skill-orchestration-policy.md` |
+| External systems inventory | `external-systems/README.md` |
+| External skills inventory | `external-skills/README.md` |
+| Temporary route plans | `.claude/plans/*` |
+| Operational runbooks | `docs/operations/*` |
+| Reusable templates | `templates/*` |
+
+Boundary rules:
+
+1. `CLAUDE.md` stays a slim entrypoint and points to canonical owners.
+2. Inventory README files list what exists and where it lives; they do not own global workflow rules.
+3. Connector-specific or skill-specific files describe one component only. Cross-component rules belong in `core/`.
+4. `.claude/plans/*` is temporary PR/task evidence, not durable documentation.
+5. New governance concepts should add or update a regression test when deterministic enforcement is possible.
+
+</canonical_ownership>
 
 ---
 
