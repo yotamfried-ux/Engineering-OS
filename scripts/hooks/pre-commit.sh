@@ -18,16 +18,35 @@ if [ -z "$EOS_HOME" ] && [ -f "$REPO_ROOT/.engineering-os/REFERENCE.md" ]; then
 fi
 EOS_HOME="${EOS_HOME:-$REPO_ROOT}"
 
+IS_EOS_REPO=0
+if [ "$(cd "$REPO_ROOT" 2>/dev/null && pwd || true)" = "$(cd "$EOS_HOME" 2>/dev/null && pwd || true)" ]; then
+  IS_EOS_REPO=1
+fi
+
 enforcer() {
   local script="$1"
   [ -f "$EOS_HOME/scripts/enforcement/$script" ] || return 1
   bash "$EOS_HOME/scripts/enforcement/$script"
 }
 
-# md ↔ enforcer sync — changing a policy md requires updating its enforcer.
-# Governing policy: core/hooks-policy.md <hooks>. Bypass: EOS_BYPASS_MDSYNC=1
-enforcer enforce-sync.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-sync.sh" ] || exit 1
+# Engineering OS repo-governance gates. These protect the Engineering OS repo
+# itself; target projects should not be blocked by governance manifests for
+# Engineering OS policy files.
+if [ "$IS_EOS_REPO" -eq 1 ]; then
+  # md ↔ enforcer sync — changing a policy md requires updating its enforcer.
+  # Governing policy: core/hooks-policy.md <hooks>. Bypass: EOS_BYPASS_MDSYNC=1
+  enforcer enforce-sync.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-sync.sh" ] || exit 1
 
+  # skill-orchestration-policy.md — every external-skills/<name>/ needs its 4 contract
+  # files + a registry entry. Governing policy: core/skill-orchestration-policy.md. Bypass: EOS_BYPASS_SKILL=1.
+  enforcer enforce-skill.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-skill.sh" ] || exit 1
+
+  # documentation-policy.md — content dirs + root need README; no TBD placeholders in
+  # staged docs. Governing policy: core/documentation-policy.md. Bypass: EOS_BYPASS_DOC=1.
+  enforcer enforce-documentation.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-documentation.sh" ] || exit 1
+fi
+
+# Portable target-project gates.
 # quality-gates.md <cleanup> — block debug leftovers (debugger/pdb/pry, conflict markers)
 # in the staged diff. Governing policy: core/quality-gates.md. Bypass: EOS_BYPASS_CLEANUP=1.
 enforcer enforce-quality.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-quality.sh" ] || exit 1
@@ -45,14 +64,6 @@ enforcer enforce-connector.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-c
 # learning-loop.md — enforce the fixed lesson schema on staged lessons-learned/bugs
 # and failed-solutions files. Governing policy: core/learning-loop.md. Bypass: EOS_BYPASS_LEARNING=1.
 enforcer enforce-learning.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-learning.sh" ] || exit 1
-
-# skill-orchestration-policy.md — every external-skills/<name>/ needs its 4 contract
-# files + a registry entry. Governing policy: core/skill-orchestration-policy.md. Bypass: EOS_BYPASS_SKILL=1.
-enforcer enforce-skill.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-skill.sh" ] || exit 1
-
-# documentation-policy.md — content dirs + root need README; no TBD placeholders in
-# staged docs. Governing policy: core/documentation-policy.md. Bypass: EOS_BYPASS_DOC=1.
-enforcer enforce-documentation.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-documentation.sh" ] || exit 1
 
 # Repo-wide gates above run on every commit (incl. --allow-empty); the remaining
 # checks operate on staged content, so short-circuit empty commits here.
