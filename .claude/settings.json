@@ -88,7 +88,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c '. \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\" 2>/dev/null && evidence_record context7' 2>/dev/null || true"
+            "command": "INPUT=$(cat 2>/dev/null || true); if printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; sys.exit(0 if name.startswith('mcp__Context7__') else 1)\" >/dev/null 2>&1; then bash -c '. \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\" 2>/dev/null && evidence_record context7' 2>/dev/null; fi || true"
           }
         ]
       },
@@ -115,7 +115,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "INPUT=$(cat 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; PAGE_ID=$(printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); r=d.get('tool_response','') or {}; print((r.get('id','') or r.get('page_id','') or '') if isinstance(r,dict) else '')\" 2>/dev/null || true); . \"$EOS_LIB\" 2>/dev/null && evidence_record notion_spec_created && { [ -n \"$PAGE_ID\" ] && evidence_record notion_page_id \"$PAGE_ID\" || true; } || true"
+            "command": "INPUT=$(cat 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; if PAGE_ID=$(printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; r=d.get('tool_response','') or {}; assert name.startswith('mcp__Notion__'); print((r.get('id','') or r.get('page_id','') or '') if isinstance(r,dict) else '')\" 2>/dev/null); then . \"$EOS_LIB\" 2>/dev/null && evidence_record notion_spec_created && { [ -n \"$PAGE_ID\" ] && evidence_record notion_page_id \"$PAGE_ID\" || true; }; fi 2>/dev/null || true"
           }
         ]
       }
