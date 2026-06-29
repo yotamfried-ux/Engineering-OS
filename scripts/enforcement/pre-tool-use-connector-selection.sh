@@ -34,6 +34,12 @@ field_value() {
   ' "$plan_file" 2>/dev/null || true
 }
 
+is_none_value() {
+  local value
+  value="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[[:space:][:punct:]]+$//' | xargs)"
+  [[ -z "$value" || "$value" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+(external[[:space:]]+)?connectors)$ ]]
+}
+
 normalize_list() {
   printf '%s' "${1:-}" | tr ',;' '\n' | sed -E 's/<[^>]+>//g; s/`//g; s/^[-*[:space:]]+//; s/[[:space:]]+$//' | sed '/^$/d'
 }
@@ -50,6 +56,11 @@ connector_has_evidence() {
 }
 
 select_plan() {
+  local target="${1:-}"
+  case "$target" in .claude/plans/*.md|*/.claude/plans/*.md)
+    [ -f "$target" ] && { printf '%s\n' "$target"; return 0; }
+    ;;
+  esac
   if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then printf '%s\n' "$EOS_ACTIVE_PLAN"; return 0; fi
   if [ -f .claude/plans/active.md ]; then printf '%s\n' .claude/plans/active.md; return 0; fi
   ls -t .claude/plans/*.md 2>/dev/null | head -1 || true
@@ -59,9 +70,8 @@ TOOL="$(json_field tool)"
 case "$TOOL" in Write|Edit|MultiEdit|NotebookEdit) ;; *) exit 0 ;; esac
 FILE="$(json_field file_path)"
 [ -n "$FILE" ] || exit 0
-case "$FILE" in .claude/plans/*.md|*/.claude/plans/*.md) exit 0 ;; esac
 
-PLAN="$(select_plan)"
+PLAN="$(select_plan "$FILE")"
 [ -n "$PLAN" ] && [ -f "$PLAN" ] || exit 0
 CHECK="$SCRIPT_DIR/check-required-connectors.sh"
 [ -f "$CHECK" ] || exit 0
@@ -72,6 +82,11 @@ if ! out="$(bash "$CHECK" --plan "$PLAN" --target "$FILE" 2>&1)"; then
 fi
 
 connectors="$(field_value "$PLAN" '^external systems/connectors$|^external systems$|^external connectors$|^connectors$')"
+if is_none_value "$connectors"; then
+  echo "connector selection checks passed"
+  exit 0
+fi
+
 missing=""
 while IFS= read -r connector; do
   [ -n "$connector" ] || continue
