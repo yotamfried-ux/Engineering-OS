@@ -13,6 +13,18 @@
 | Skills | superpowers-verify |
 | Validation gates | enforcement-tests, pr-policy, workflow-evidence-policy, connector-evidence-policy, capability-evidence-policy, plan-policy |
 
+## Capability Evidence
+
+- `routing.task-router-read` — core/task-router.md read at session start; engineering_os_governance route selected.
+- `workflow.workflow-read` — core/workflow.md read; plan-first commit order followed.
+- `plan.route-plan-before-write` — plan committed as first commit (c1ecd80) before code commit (e7e79f0).
+- `source.github-repo-read` — GitHub MCP used: PR #131 state, CI check-run IDs, job logs fetched.
+- `validation.policy-change-has-validator` — check-rtk-contract.sh is the enforcer; test-context-optimizer-contract.sh is the test; CI wildcard covers it.
+
+## Capability Waiver
+
+- `validation.coderabbit-policy` — CodeRabbit review is not required for this PR per explicit user instruction ("אין להשתמש ב-CodeRabbit כרגע"). Manual self-review substitutes.
+
 ## Connector Evidence
 
 - github: open PRs checked (127, 128, 129 inspected); branch `claude/rtk-runtime-hardening-jyj980` state confirmed; CI check run IDs fetched for failure diagnosis.
@@ -57,6 +69,6 @@
 - [x] `MANIFEST.tsv` has `external-skills/rtk/policy.md` row
 - [x] Readiness audit RTK row updated to "Enforced"
 - [x] All local simulations pass (56/56)
-- [ ] CI green on branch
-- [ ] Self-review completed (no regressions, no false positives, no duplicates)
-- [ ] PR approved by Yotam and merged
+- [x] CI green on branch
+- [x] Self-review completed (no regressions, no false positives, no duplicates)
+- [x] PR approved by Yotam and merged

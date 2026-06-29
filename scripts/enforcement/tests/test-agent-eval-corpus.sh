@@ -29,6 +29,8 @@ required_cases = {
     "managed_settings_without_managed_hooks",
     "mcp_auto_install_without_opt_in",
     "docs_policy_change_without_validator",
+    "rtk_active_when_needed",
+    "graphify_fallback_nolabel",
 }
 required_tokens = {
     "runtime_evidence_missing_for_declared_skill": {
