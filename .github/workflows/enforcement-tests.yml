@@ -96,6 +96,132 @@ jobs:
           PY
           echo "✅ capability report generator covers skills, engines, connectors, and templates"
 
+      - name: Verify operational readiness audit coverage
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          path = Path('docs/operations/operational-readiness-audit.md')
+          text = path.read_text(encoding='utf-8')
+          failures = []
+
+          def require(condition, message):
+              if not condition:
+                  failures.append(message)
+
+          def normalize(value):
+              return re.sub(r'\s+', ' ', value).strip().lower()
+
+          def section_between(start_heading):
+              captured = []
+              in_section = False
+              for line in text.splitlines():
+                  if line == start_heading:
+                      in_section = True
+                      continue
+                  if in_section and line.startswith('## '):
+                      break
+                  if in_section:
+                      captured.append(line)
+              return '\n'.join(captured)
+
+          for heading in [
+              'Readiness statuses',
+              'Coverage contract',
+              'Current status matrix',
+              'Definition of full operational readiness',
+              'Highest-priority gaps by ROI',
+          ]:
+              require(re.search(rf'^## {re.escape(heading)}$', text, re.MULTILINE), f'missing heading: {heading}')
+
+          allowed = {
+              'Enforced',
+              'Partially enforced',
+              'Manual',
+              'Waiver-gated',
+              'Missing enforcement',
+              'Not applicable',
+          }
+          for status in allowed:
+              require(f'**{status}**' in text, f'missing readiness status definition: {status}')
+
+          matrix = section_between('## Current status matrix')
+          rows = []
+          for line in matrix.splitlines():
+              if not line.startswith('|') or line.startswith('|---') or ' Area ' in line:
+                  continue
+              parts = [part.strip() for part in line.strip('|').split('|')]
+              if len(parts) == 4:
+                  rows.append(parts)
+
+          require(len(rows) >= 25, f'expected at least 25 readiness rows, found {len(rows)}')
+          invalid = [(area, status) for area, status, _, _ in rows if status not in allowed]
+          require(not invalid, f'invalid status values: {invalid}')
+          row_areas = {normalize(area) for area, _, _, _ in rows}
+
+          required_terms = [
+              'claude entrypoint',
+              'canonical ownership',
+              'enforcement coverage inventory',
+              'route plan',
+              'dod completion',
+              'progress validation',
+              'connector selection',
+              'connector correctness',
+              'template selection',
+              'pattern usage',
+              'skill selection',
+              'skill runtime evidence',
+              'rtk context optimization',
+              'graphify context graph',
+              'claude memory',
+              'capability registry',
+              'learning schema',
+              'learning reuse',
+              'learning closure',
+              'claude run trace',
+              'positive/negative simulations',
+              'tests/lint',
+              'cleanup debug leftovers',
+              'cleanup semantic hygiene',
+              'project install contract',
+              'git/branch policy',
+              'pr review',
+              'merge safety',
+              'post-merge validation',
+              'known gaps register',
+          ]
+          for term in required_terms:
+              require(any(term in area for area in row_areas), f'audit missing required coverage row: {term}')
+
+          priority_section = section_between('## Highest-priority gaps by ROI').lower()
+          priority_terms = [
+              'coverage map hardening',
+              'rtk runtime hardening',
+              'route plan quality gate',
+              'learning closure gate',
+              'progress lifecycle',
+              'connector correctness',
+              'simulation completeness',
+              'post-merge validation',
+              'documentation hygiene',
+              'semantic cleanup',
+          ]
+          for term in priority_terms:
+              require(term in priority_section, f'audit missing priority gap: {term}')
+
+          if failures:
+              print('❌ operational readiness audit coverage failed')
+              for failure in failures:
+                  print(f' - {failure}')
+              raise SystemExit(1)
+
+          print('✅ operational readiness audit coverage is complete')
+          print(f'   readiness rows: {len(rows)}')
+          PY
+
       - name: Verify use-in-project output contract
         run: |
           set -euo pipefail
@@ -104,8 +230,6 @@ jobs:
           (
             cd "$tmp"
             EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
-
-            # Core governance files
             test -f CLAUDE.md
             test -f .engineering-os/REFERENCE.md
             test -f ENGINEERING_OS_SETUP.md
@@ -113,8 +237,6 @@ jobs:
             grep -q 'Engineering OS — governance layer' CLAUDE.md
             grep -q 'Never modify anything under' CLAUDE.md
             grep -q 'core/task-router.md' CLAUDE.md
-
-            # Claude wiring and portable commands
             test -f .claude/settings.json
             test -f .claude/commands/use-engineering-os.md
             test -f .claude/commands/superpowers-brainstorm.md
@@ -128,18 +250,17 @@ jobs:
             python3 - <<'PY'
           import json
           import os
+          import re
           from pathlib import Path
 
           s = json.loads(Path('.claude/settings.json').read_text())
           serialized = json.dumps(s, ensure_ascii=False)
           workspace = os.environ['GITHUB_WORKSPACE']
-
           assert '${ENGINEERING_OS_HOME:-$(pwd)}' not in serialized
           assert '$(pwd)/scripts/' not in serialized
           assert f'{workspace}/scripts/enforcement/enforce-workflow.sh' in serialized
           assert f'{workspace}/scripts/session-setup.sh' in serialized
           assert f'{workspace}/scripts/enforcement/post-stop-hook.sh' in serialized
-
           pre = s['hooks']['PreToolUse']
           post = s['hooks']['PostToolUse']
           assert any(
@@ -155,10 +276,8 @@ jobs:
           )
           stop_cmd = s['hooks']['Stop'][0]['hooks'][0]['command']
           assert 'post-stop-hook.sh' in stop_cmd
-          assert '|| true' not in stop_cmd
+          assert not re.search(r'\|\|\s*true\b', stop_cmd)
           PY
-
-            # Capability report covers all capability classes and many connectors.
             grep -q 'Capability Verification Report' ENGINEERING_OS_CAPABILITIES.md
             grep -q '## Skills and engines' ENGINEERING_OS_CAPABILITIES.md
             grep -q '## MCP connectors' ENGINEERING_OS_CAPABILITIES.md
@@ -173,26 +292,18 @@ jobs:
             grep -q '`supabase`' ENGINEERING_OS_CAPABILITIES.md
             grep -q '`claude-template`' ENGINEERING_OS_CAPABILITIES.md
             grep -q 'ENGINEERING_OS_CAPABILITIES.md' ENGINEERING_OS_SETUP.md
-
-            # Git hooks copied from Engineering OS
             test -x .git/hooks/pre-commit
             test -x .git/hooks/commit-msg
             test -x .git/hooks/post-commit
             grep -q 'enforce-tests.sh' .git/hooks/pre-commit
             grep -q 'EOS_BYPASS_TESTFILES' .git/hooks/commit-msg
-
-            # Setup checklist reflects current enforcement split after #65
             grep -q 'staged lint/test stack enforcer via enforce-tests.sh' ENGINEERING_OS_SETUP.md
             grep -q 'project test-file scan' ENGINEERING_OS_SETUP.md
-
-            # Policy gate workflows installed by install-policy-gates.sh
             test -f .github/workflows/pr-policy.yml
             test -f .github/workflows/plan-policy.yml
             test -f .github/workflows/connector-evidence-policy.yml
             test -f .github/workflows/workflow-evidence-policy.yml
             test -f .github/workflows/capability-evidence-policy.yml
-
-            # Idempotency: re-run should not duplicate managed block or commands.
             EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/scripts/use-in-project.sh"
             managed_count="$(grep -c '<!-- BEGIN engineering-os (managed) -->' CLAUDE.md)"
             test "$managed_count" -eq 1
