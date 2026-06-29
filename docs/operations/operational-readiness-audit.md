@@ -39,9 +39,9 @@ Required coverage groups:
 | Connector correctness / source-of-truth use | Partially enforced | GitHub, project-tracking, Context7, Sentry, Postman, and Figma-style connector decisions can be represented in Route Plan and trace evidence. | The system cannot fully prove semantic use of returned connector data. |
 | Template selection | Partially enforced | Template fields/evidence/waiver are required in plans and installed policy workflows. | Required-template detection by task class/domain still needs expansion. |
 | Pattern usage | Partially enforced | Runtime gate checks known domains against `patterns/<domain>/` reads. | Domain detection is path/name based and incomplete; generic files can still rely on advisory warnings. |
-| Skill selection | Partially enforced | `check-required-skills.sh` requires task/domain/path-specific skills such as UI, security, graphify, and superpowers. | Coverage must expand as new task classes and skills are added. |
+| Skill selection | Partially enforced | `check-required-skills.sh` requires task/domain/path-specific skills such as UI, security, graphify, superpowers, and RTK for context-heavy work. | Coverage must expand as new task classes and skills are added. |
 | Skill runtime evidence | Enforced | `pre-tool-use-runtime-evidence.sh` checks declared skills for evidence. | Evidence proves recorded activation, not deep semantic use. |
-| RTK context optimization | Partially enforced | RTK is represented in the capability registry and audit; project install and SessionStart wiring are expected to preserve context tooling. | Runtime RTK use/fallback still needs stronger positive and negative simulations, especially when graphify is unavailable or insufficient. |
+| RTK context optimization | Partially enforced | `check-required-skills.sh` now requires RTK for context-heavy and large-repo work; CI includes missing/declared/waiver simulations. | Local RTK installation can still warn instead of blocking when cargo/network is unavailable. |
 | Graphify context graph | Partially enforced | G7 checks writes when `graphify-out/graph.json` exists but graphify has not been queried this session. | Evidence proves graphify ran, not that findings were actually used. |
 | Claude memory / context carryover | Manual | Workflow documents memory/context recovery as part of session behavior. | Runtime availability and evidence are not hard-checked across all environments. |
 | Capability registry | Partially enforced | Registry has task classes/capabilities and CI validates expected anchors through capability report generation. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
@@ -73,8 +73,8 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Highest-priority gaps by ROI
 
-1. **Coverage map hardening** — keep this audit complete and CI-validated so no policy/skill/template/connector/RTK area disappears from the inventory.
-2. **RTK runtime hardening** — prove RTK activation/use/fallback through positive and negative simulations, not only documentation.
+1. **Coverage map hardening** — expand the enforcement coverage inventory so every policy row has a named gate, owner, and CI-verified simulation.
+2. **RTK runtime hardening** — decide whether local RTK install failures should block or remain warnings when cargo/network is unavailable.
 3. **Route Plan quality gate** — require stronger task-class, evidence, connector, skill, template, progress tracking, and lesson reuse coverage before writing.
 4. **Learning closure gate** — require root cause plus lesson plus failed-solution when applicable plus prevention update or waiver.
 5. **Progress lifecycle** — require start/mid/pre-merge progress validation evidence for non-trivial work.
@@ -86,4 +86,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current PR scope
 
-This PR addresses the first gap: making the operational-readiness coverage map complete and CI-validated without creating a new Markdown policy file.
+This PR addresses RTK skill-selection enforcement for covered context-heavy and large-repo work (skill gate + CI simulations + audit update). The install-failure behavior (warn vs. block when cargo/network is unavailable) remains an open gap.

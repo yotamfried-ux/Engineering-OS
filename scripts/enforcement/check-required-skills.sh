@@ -54,7 +54,7 @@ is_none_value() {
 }
 
 plan_has_skill() {
-  local wanted
+  local wanted skill
   wanted="$(canon_key "$1")"
   [ -n "$wanted" ] || return 1
   is_none_value "$SKILLS" && return 1
@@ -100,8 +100,12 @@ if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(security|auth|authentication|au
   need_skill security-review "security, auth, payment, webhook, production, or release-sensitive work"
 fi
 
-if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(large-change|large-code-change|codebase|navigation|architecture|refactor|cross-cutting|multi-file)([^a-z0-9]|$)'; then
+if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(large-change|large-code-change|codebase|navigation|architecture|refactor|cross-cutting|multi-file|large-repo|large repo|context-heavy|impact-analysis|long-running)([^a-z0-9]|$)'; then
   need_skill graphify "large codebase/navigation/architecture work"
+fi
+
+if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(context_or_large_repo_work|large-repo|large repo|context-heavy|impact-analysis|long-running|compaction|output-compaction|token-limit|token-budget)([^a-z0-9]|$)'; then
+  need_skill rtk "context-heavy or large-repo work"
 fi
 
 if printf '%s' "$TASK_CLASS" | tr '[:upper:]' '[:lower:]' | grep -Eq '^(code_change|bug_fix|new_project_or_saas|feature|refactor)$'; then
