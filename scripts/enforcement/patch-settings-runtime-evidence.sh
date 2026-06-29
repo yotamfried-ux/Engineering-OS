@@ -39,53 +39,13 @@ def ensure_hook(event, matcher, script_name, command, index=0):
     seq.insert(index, entry)
 
 
-ensure_hook(
-    'PreToolUse',
-    'Write|Edit|MultiEdit|NotebookEdit',
-    'pre-tool-use-runtime-evidence.sh',
-    'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-runtime-evidence.sh" 2>&1',
-    index=0,
-)
-
-ensure_hook(
-    'PreToolUse',
-    'Write|Edit|MultiEdit|NotebookEdit',
-    'pre-tool-use-connector-selection.sh',
-    'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-connector-selection.sh" 2>&1',
-    index=0,
-)
-
-ensure_hook(
-    'PreToolUse',
-    'Write|Edit|MultiEdit|NotebookEdit',
-    'check-plan-scope.sh',
-    'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/check-plan-scope.sh" 2>&1',
-    index=0,
-)
-
-ensure_hook(
-    'PostToolUse',
-    'mcp__.*',
-    'post-tool-use-mcp.sh',
-    'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-mcp.sh" 2>/dev/null || true',
-    index=0,
-)
-
-ensure_hook(
-    'PostToolUse',
-    'Read',
-    'post-tool-use-read-evidence.sh',
-    'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-read-evidence.sh" 2>/dev/null || true',
-    index=1,
-)
-
-ensure_hook(
-    'PostToolUse',
-    'mcp__Notion__.*',
-    'notion-progress-evidence',
-    'bash -c \'. "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh" && evidence_record connector_used notion && evidence_record notion_progress_validated\' 2>&1',
-    index=0,
-)
+ensure_hook('PreToolUse','Write|Edit|MultiEdit|NotebookEdit','pre-tool-use-runtime-evidence.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-runtime-evidence.sh" 2>&1',index=0)
+ensure_hook('PreToolUse','Write|Edit|MultiEdit|NotebookEdit','pre-tool-use-connector-selection.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-connector-selection.sh" 2>&1',index=0)
+ensure_hook('PreToolUse','Write|Edit|MultiEdit|NotebookEdit','pre-tool-use-template-selection.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-template-selection.sh" 2>&1',index=0)
+ensure_hook('PreToolUse','Write|Edit|MultiEdit|NotebookEdit','check-plan-scope.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/check-plan-scope.sh" 2>&1',index=0)
+ensure_hook('PostToolUse','mcp__.*','post-tool-use-mcp.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-mcp.sh" 2>/dev/null || true',index=0)
+ensure_hook('PostToolUse','Read','post-tool-use-read-evidence.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-read-evidence.sh" 2>/dev/null || true',index=1)
+ensure_hook('PostToolUse','mcp__Notion__.*','notion-progress-evidence','bash -c \'. "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh" && evidence_record connector_used notion && evidence_record notion_progress_validated\' 2>&1',index=0)
 
 stop_event = 'S' + 'top'
 stop_script = ''.join(chr(x) for x in [112, 111, 115, 116, 45, 115, 116, 111, 112, 45, 104, 111, 111, 107, 46, 115, 104])
