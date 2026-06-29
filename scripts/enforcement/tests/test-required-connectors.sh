@@ -14,7 +14,7 @@ failcase() { local name="$1"; shift; if "$@" >"$LOG_FILE" 2>&1; then echo "unexp
 
 setup_repo() {
   rm -rf "$TMP/repo"
-  mkdir -p "$TMP/repo/.claude/plans" "$TMP/repo/src/payments" "$TMP/repo/src/frontend"
+  mkdir -p "$TMP/repo/.claude/plans" "$TMP/repo/src/payments" "$TMP/repo/src/frontend" "$TMP/repo/src/ops"
   cd "$TMP/repo"
   git init >/dev/null
 }
@@ -70,6 +70,16 @@ EOF
   fi
 }
 
+append_connector_waiver() {
+  local body="${1:-}"
+  cat >> .claude/plans/active.md <<EOF
+
+## Connector Selection Waiver
+
+$body
+EOF
+}
+
 write_payload() {
   local file="$1"
   printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$file"
@@ -95,6 +105,24 @@ write_plan bug_fix "payments, webhooks, stripe" "github" yes
 failcase bug_payment_plan_requires_all_source_connectors run_check src/payments/webhook.ts
 
 setup_repo
+write_plan incident "ops" "github, sentry" yes
+failcase incident_requires_notion_progress_connector run_check src/ops/recovery.ts
+
+setup_repo
+write_plan incident "ops" "github, notion, sentry" yes
+pass incident_with_notion_selection_allows_plan run_check src/ops/recovery.ts
+
+setup_repo
+write_plan bug_fix "payments, webhooks, stripe" "github" yes
+append_connector_waiver ""
+failcase empty_connector_waiver_is_rejected run_check src/payments/webhook.ts
+
+setup_repo
+write_plan bug_fix "payments, webhooks, stripe" "github" yes
+append_connector_waiver "Reason: this fixture uses a manual fallback source for the other connector checks."
+pass connector_waiver_requires_real_reason run_check src/payments/webhook.ts
+
+setup_repo
 write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman" no
 failcase notion_requires_progress_validation_section run_check src/payments/webhook.ts
 
@@ -109,6 +137,16 @@ failcase ux_plan_requires_figma run_check src/frontend/ProfileCard.tsx
 setup_repo
 write_plan feature "ui, ux, frontend" "github, notion, figma" yes
 pass ux_plan_with_figma_allows_plan run_check src/frontend/ProfileCard.tsx
+
+setup_repo
+write_plan feature "ui, ux, frontend" "github, notion" yes
+seed_evidence github notion
+seed_notion_progress
+failcase plan_write_enforces_connector_selection run_wrapper .claude/plans/active.md
+
+setup_repo
+write_plan docs "documentation" "none" no
+pass none_placeholder_does_not_require_evidence run_wrapper src/README.md
 
 setup_repo
 write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman" yes
@@ -129,5 +167,6 @@ EOF
 bash "$PATCH" .claude/settings.json
 pass install_patch_wires_connector_selection grep -q 'pre-tool-use-connector-selection.sh' .claude/settings.json
 pass install_patch_wires_notion_progress grep -q 'notion_progress_validated' .claude/settings.json
+pass install_patch_surfaces_notion_errors grep -q '2>&1' .claude/settings.json
 
 echo "required connector simulations passed"
