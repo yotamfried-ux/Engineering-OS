@@ -66,9 +66,13 @@ enforcer enforce-connector.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-c
 enforcer enforce-learning.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-learning.sh" ] || exit 1
 
 # learning-loop.md — for bug/debug/incident/rollback implementation work, require
-# a new lesson, failed-solution record, or explicit Learning Capture Waiver.
+# a full staged lesson; failed-solutions are additional evidence, not a substitute.
 # Bypass: EOS_BYPASS_LEARNING_CAPTURE=1.
 enforcer enforce-learning-capture.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-learning-capture.sh" ] || exit 1
+
+# docs/operations/claude-run-trace.md — enforcement/connector/simulation changes
+# require a Route Plan run trace with connector evidence when applicable.
+enforcer enforce-run-trace.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-run-trace.sh" ] || exit 1
 
 # Repo-wide gates above run on every commit (incl. --allow-empty); the remaining
 # checks operate on staged content, so short-circuit empty commits here.
