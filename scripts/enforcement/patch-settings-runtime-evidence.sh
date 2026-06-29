@@ -83,7 +83,7 @@ ensure_hook(
     'PostToolUse',
     'mcp__Notion__.*',
     'notion-progress-evidence',
-    'bash -c \'. "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh" 2>/dev/null && evidence_record connector_used notion && evidence_record notion_progress_validated\' 2>/dev/null || true',
+    'bash -c \'. "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh" && evidence_record connector_used notion && evidence_record notion_progress_validated\' 2>&1',
     index=0,
 )
 
