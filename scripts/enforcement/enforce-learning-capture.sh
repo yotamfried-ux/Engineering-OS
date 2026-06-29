@@ -40,12 +40,12 @@ field_value() {
 
 has_heading() {
   local file="$1" heading_re="$2"
-  grep -qiE "^#{1,4}[[:space:]]+${heading_re}([[:space:]]|$)" "$file" 2>/dev/null
+  grep -qiE "^#{1,4}[[:space:]]+${heading_re}([[:space:]:]|$)" "$file" 2>/dev/null
 }
 
 staged_blob_has_heading() {
   local path="$1" heading="$2"
-  git show ":$path" 2>/dev/null | grep -qiE "^#{1,4}[[:space:]]+${heading}([[:space:]]|$)"
+  git show ":$path" 2>/dev/null | grep -qiE "^#{1,4}[[:space:]]+${heading}([[:space:]:]|$)"
 }
 
 complete_staged_lesson() {
