@@ -57,7 +57,7 @@ Validation gates: CI audit coverage step, workflow syntax review, audit row and 
 - goal: make the first readiness PR safe for merge review.
 - hypothesis: replacing the stale branch with a new branch from current `main` is safer than force-updating the old branch.
 - connectors: GitHub connector used for compare, branch, file updates, and PR creation.
-- steps: compared old branch, confirmed it was behind `main`, created `ops/readiness-coverage-audit` from current `main`, re-applied the audit and CI changes, opened PR 128, and restored this plan after an accidental placeholder commit.
+- steps: compared old branch, confirmed it was behind `main`, created `ops/readiness-coverage-audit` from current `main`, re-applied the audit and CI changes, opened PR 128, restored this plan after an accidental placeholder commit, and marked the stale PR as superseded.
 - evidence: compare now reports `behind_by: 0` and only three effective changed files.
 - rejected: force-updating `ops/capability-registry-enforcer` after the tool blocked the unsafe ref update.
 - result: PR 128 is the clean replacement; PR 127 should not be merged.
