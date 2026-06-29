@@ -54,7 +54,7 @@ is_none_value() {
 }
 
 plan_has_skill() {
-  local wanted
+  local wanted skill
   wanted="$(canon_key "$1")"
   [ -n "$wanted" ] || return 1
   is_none_value "$SKILLS" && return 1

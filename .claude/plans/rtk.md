@@ -15,12 +15,12 @@
 
 ## Capability Evidence
 
-- routing.task-router-read
-- workflow.workflow-read
-- plan.route-plan-before-write
-- source.github-repo-read
-- validation.policy-change-has-validator
-- validation.coderabbit-policy
+- `routing.task-router-read`
+- `workflow.workflow-read`
+- `plan.route-plan-before-write`
+- `source.github-repo-read`
+- `validation.policy-change-has-validator`
+- `validation.coderabbit-policy`
 
 ## Connector Evidence
 
