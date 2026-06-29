@@ -82,6 +82,15 @@ stage_doc_only() {
   git add NOTE.md
 }
 
+stage_incomplete_lesson() {
+  cat > lessons-learned/bugs/payment-placeholder.md <<'EOF'
+# Placeholder
+
+TODO
+EOF
+  git add lessons-learned/bugs/payment-placeholder.md
+}
+
 stage_valid_lesson() {
   cat > lessons-learned/bugs/payment-regression.md <<'EOF'
 # Payment regression lesson
@@ -143,6 +152,12 @@ setup_repo
 write_plan bug_fix "payments, webhooks"
 stage_code 1
 failcase bug_fix_requires_full_lesson run_gate
+
+setup_repo
+write_plan bug_fix "payments, webhooks"
+stage_code 11
+stage_incomplete_lesson
+failcase placeholder_lesson_does_not_satisfy_capture run_gate
 
 setup_repo
 write_plan debugging "payments, webhooks"
