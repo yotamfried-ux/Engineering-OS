@@ -52,3 +52,13 @@ The expected runtime evidence key is `notion_progress_validated`.
 ## Relationship to learning
 
 A run trace is not a replacement for a lesson. If a run produces verified reusable bug knowledge, create a proper `lessons-learned/bugs/*.md` entry. If it records a rejected approach, create a `failed-solutions/*.md` entry as well.
+
+## Enforcement contract
+
+`enforce-run-trace.sh` blocks staged enforcement, connector, settings, workflow, or simulation changes unless the active Route Plan contains `## Claude Run Trace`.
+
+The trace must include these fields: goal, hypothesis, connectors/tools, steps, evidence, rejected attempts, result, and follow-up enforcement.
+
+Connector-related changes have an extra requirement: the trace must name the connector decision/evidence and mention `notion_progress_validated` when Notion progress tracking is part of the workflow.
+
+The trace can be waived only with a focused `## Run Trace Waiver` section in the active Route Plan, and only when the change is mechanical and produces no reusable experiment/process knowledge.
