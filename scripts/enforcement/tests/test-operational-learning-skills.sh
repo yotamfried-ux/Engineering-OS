@@ -53,6 +53,11 @@ Change the payment webhook safely.
 - \`plan.route-plan-before-write\`
 - \`source.github-repo-read\`
 
+## Connector Selection Waiver
+
+- Scope: this fixture isolates learning-reuse and skill-runtime gates.
+- Reason: connector-selection behavior is covered by test-required-connectors.sh.
+
 ## Source of Truth Checks
 
 | Source | Status |
