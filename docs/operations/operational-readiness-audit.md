@@ -86,4 +86,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current PR scope
 
-This PR addresses the RTK runtime-hardening gap for covered context-heavy work.
+This PR addresses RTK skill-selection enforcement for covered context-heavy and large-repo work (skill gate + CI simulations + audit update). The install-failure behavior (warn vs. block when cargo/network is unavailable) remains an open gap.
