@@ -63,9 +63,9 @@ Close the next operational-readiness gap: template usage must be selected by tas
 - hypothesis: web/API/mobile/AI/data/automation work should fail when required templates are not declared and pass when the matching template or focused waiver exists.
 - connectors: github is used for repo/source validation; notion progress validation is required by the workflow contract where available.
 - steps: add checker, wrapper, settings patch, tests, and audit update.
-- evidence: test-required-templates.sh will simulate missing template, valid template, empty waiver, valid waiver, plan write enforcement, and settings install wiring.
+- evidence: test-required-templates.sh simulates missing template, valid template, empty waiver, valid waiver, plan write enforcement, docs-only non-requirement, and settings install wiring.
 - rejected: evidence-only template behavior is insufficient because an agent can declare `Templates | not required` and skip the search.
-- result: pending CI.
+- result: implementation complete; CI pending.
 - follow-up: expand template rules as new templates are added.
 
 ## Source of Truth Checks
@@ -82,9 +82,9 @@ Close the next operational-readiness gap: template usage must be selected by tas
 
 - [x] Current template inventory inspected.
 - [x] Runtime evidence behavior inspected.
-- [ ] Required-template checker added.
-- [ ] Runtime wrapper added.
-- [ ] Installed target settings patch wires wrapper.
-- [ ] Simulations cover template selection and waiver behavior.
-- [ ] Operational readiness audit updated.
+- [x] Required-template checker added.
+- [x] Runtime wrapper added.
+- [x] Installed target settings patch wires wrapper.
+- [x] Simulations cover template selection and waiver behavior.
+- [x] Operational readiness audit updated.
 - [ ] GitHub Actions pass on the PR.
