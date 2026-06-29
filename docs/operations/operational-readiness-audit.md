@@ -27,6 +27,7 @@ This audit is the source-of-truth status map for whether Engineering OS can hone
 | Tests/lint before commit | Partially enforced | Pre-commit runs stack-specific tests/lint where detected and blocks large unverified commits. | Missing tools can warn rather than fully block in all ecosystems. |
 | Connector evidence and selection | Enforced for covered cases | Required connector selection is checked by task/domain/path; declared connectors require evidence; Notion progress validation is required for non-trivial work in installed target settings. | Coverage should expand as new connectors/task classes are added. |
 | Template evidence and selection | Enforced for covered cases | Required template selection is checked by task/domain/path; declared templates still require read/usage evidence through the runtime evidence gate. | Coverage should expand as new templates/task classes are added. |
+| RTK context optimization | Enforced as wiring contract | RTK policy is mandatory; CI checks the RTK policy, Bash hook wiring, SessionStart setup, and target-project install contract. | Runtime installation can still warn instead of block when the local machine lacks cargo/network. |
 | Pattern usage | Partially enforced | Runtime gate checks known domains against `patterns/<domain>/` reads. | Domain detection is path/name based and incomplete. |
 | Documentation structure | Partially enforced | Documentation policy blocks missing READMEs/TBDs in governed areas. | Duplicate docs, stale docs, and policy sprawl are not fully detected. |
 | Project install contract | Enforced | CI installs Engineering OS into a temp project and checks expected hooks/files. | Only validates the expected contract, not every downstream project behavior. |
@@ -49,7 +50,8 @@ Anything merely documented but silently skippable is not operationally ready.
 2. **Semantic cleanup** — add language-specific analyzers for unused imports/dead code where reliable.
 3. **Pattern selection expansion** — expand domain detection and waiver behavior beyond current path/name rules.
 4. **Connector/template coverage expansion** — add new rules as new task classes and project domains appear.
+5. **RTK runtime hardening** — decide whether local RTK install failures should block or remain warnings on machines without cargo/network.
 
 ## Current PR scope
 
-This PR addresses template selection enforcement.
+This PR addresses template selection enforcement and adds RTK contract enforcement coverage.
