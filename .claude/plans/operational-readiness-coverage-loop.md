@@ -48,9 +48,21 @@ Validation gates: CI audit coverage step, workflow syntax review, audit row and 
 - steps: read the entrypoint, workflow, task router, hooks policy, operational audit, and CI workflow; update audit; add CI coverage validation.
 - evidence: GitHub file reads and branch changes; CI will validate required audit rows and statuses.
 - rejected: new Markdown coverage file; duplicating matrix into `CLAUDE.md`.
-- result: pending CI after branch update.
+- result: PR 127 was behind main, so a clean branch was created from current main and PR 128 opened.
 - follow-up: if CI fails, fix the audit or validator and rerun until green.
 - progress_validated: fallback plan file updated in this branch.
+
+## Merge-Fix Experiment
+
+- goal: make the first readiness PR safe for merge review.
+- hypothesis: replacing the stale branch with a new branch from current `main` is safer than force-updating the old branch.
+- connectors: GitHub connector used for compare, branch, file updates, and PR creation.
+- steps: compared old branch, confirmed it was behind `main`, created `ops/readiness-coverage-audit` from current `main`, re-applied the audit and CI changes, opened PR 128, and restored this plan after an accidental placeholder commit.
+- evidence: compare now reports `behind_by: 0` and only three effective changed files.
+- rejected: force-updating `ops/capability-registry-enforcer` after the tool blocked the unsafe ref update.
+- result: PR 128 is the clean replacement; PR 127 should not be merged.
+- follow-up: check CI, CodeRabbit, review threads, and mergeability before any merge.
+- progress_validated: plan updated after the repair step.
 
 ## Definition of Done
 
