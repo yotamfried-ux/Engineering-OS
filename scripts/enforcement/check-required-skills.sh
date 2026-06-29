@@ -100,8 +100,12 @@ if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(security|auth|authentication|au
   need_skill security-review "security, auth, payment, webhook, production, or release-sensitive work"
 fi
 
-if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(large-change|large-code-change|codebase|navigation|architecture|refactor|cross-cutting|multi-file)([^a-z0-9]|$)'; then
+if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(large-change|large-code-change|codebase|navigation|architecture|refactor|cross-cutting|multi-file|large-repo|large repo|context-heavy|impact-analysis|long-running)([^a-z0-9]|$)'; then
   need_skill graphify "large codebase/navigation/architecture work"
+fi
+
+if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(context_or_large_repo_work|large-repo|large repo|context-heavy|impact-analysis|long-running|token|compaction|output-compaction)([^a-z0-9]|$)'; then
+  need_skill rtk "context-heavy or large-repo work"
 fi
 
 if printf '%s' "$TASK_CLASS" | tr '[:upper:]' '[:lower:]' | grep -Eq '^(code_change|bug_fix|new_project_or_saas|feature|refactor)$'; then
