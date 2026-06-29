@@ -22,6 +22,17 @@
 - superpowers: plan first, test, fix, retest loop.
 - security-review: self-review of CI gate behavior and merge safety.
 
+## Capability Evidence
+
+Task class `engineering_os_governance` required capabilities (from `core/capability-registry.yaml`):
+
+- `routing.task-router-read` — task-router policy read to classify this governance change.
+- `workflow.workflow-read` — workflow policy read for plan-first ordering and DoD.
+- `plan.route-plan-before-write` — this Route Plan is commit 1, before any audit/CI config change.
+- `source.github-repo-read` — PR #130 state, commits, files, check runs, and failed logs were read.
+- `validation.policy-change-has-validator` — the audit coverage validator is added to `.github/workflows/enforcement-tests.yml`.
+- `validation.coderabbit-policy` — CodeRabbit is disabled per instruction; manual self-review is recorded instead.
+
 ## Source of Truth Checks
 
 | Source | Status |
@@ -48,8 +59,8 @@
 
 ## Definition of Done
 
-- [ ] Audit is the readiness coverage inventory.
-- [ ] Audit covers RTK, graphify, skills, templates, connectors, learning, progress, run trace, cleanup, review, post-merge, docs hygiene, and known gaps.
-- [ ] CI validates required rows and statuses.
-- [ ] CI passes.
-- [ ] Self-review completed before merge.
+- [x] Audit is the readiness coverage inventory.
+- [x] Audit covers RTK, graphify, skills, templates, connectors, learning, progress, run trace, cleanup, review, post-merge, docs hygiene, and known gaps.
+- [x] CI validates required rows and statuses.
+- [x] CI passes.
+- [x] Self-review completed before merge.
