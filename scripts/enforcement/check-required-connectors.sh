@@ -38,6 +38,19 @@ has_heading() {
   grep -qiE "^#{1,4}[[:space:]]+${heading_re}([[:space:]]|$)" "$file" 2>/dev/null
 }
 
+section_text() {
+  local file="$1" heading_re="$2"
+  awk -v re="$heading_re" '
+    BEGIN { found=0 }
+    /^#{1,4}[[:space:]]+/ {
+      line=tolower($0)
+      if (line ~ tolower(re)) { found=1; next }
+      if (found) exit
+    }
+    found { print }
+  ' "$file" 2>/dev/null || true
+}
+
 canon_key() {
   printf '%s' "${1:-}" \
     | tr '[:upper:]' '[:lower:]' \
@@ -72,6 +85,14 @@ add_required() {
   reasons="${reasons}${key}: ${reason}; "
 }
 
+valid_connector_waiver() {
+  has_heading "$PLAN" 'Connector[[:space:]]+Selection[[:space:]]+Waiver' || return 1
+  local body
+  body="$(section_text "$PLAN" 'connector[[:space:]]+selection[[:space:]]+waiver' | sed -E '/^[[:space:]]*$/d; /^[[:space:]]*<!--/d')"
+  [ "$(printf '%s' "$body" | wc -c | tr -d ' ')" -ge 20 ] || return 1
+  printf '%s\n' "$body" | grep -qiE 'reason|because|fallback|unavailable|availability|manual|unsupported|environment'
+}
+
 task="$(field_value "$PLAN" '^task class$|^task-class$|^type$')"
 tags="$(field_value "$PLAN" '^domain tags$|^domains$|^tags$')"
 connectors="$(field_value "$PLAN" '^external systems/connectors$|^external systems$|^external connectors$|^connectors$')"
@@ -79,22 +100,18 @@ combined="$(printf '%s %s %s' "$task" "$tags" "$TARGET" | tr '[:upper:]' '[:lowe
 required=""
 reasons=""
 
-# GitHub is the source of truth for repo/code/PR/governance work.
 if printf '%s' "$combined" | grep -qE 'code|bug|debug|feature|refactor|engineering_os|governance|hook|enforcement|script|repo|github|\.github|pull|pr|branch|merge|commit'; then
   add_required github "repo/code/PR state must be read from GitHub rather than guessed"
 fi
 
-# Notion is required for non-trivial planning and progress tracking, not only initial planning.
-if printf '%s' "$combined" | grep -qE 'code_change|bug_fix|debug|feature|refactor|new_project|saas|engineering_os|governance|implementation|architecture|multi-file|non-trivial'; then
+if printf '%s' "$combined" | grep -qE 'code_change|bug|debug|incident|rollback|hotfix|regression|feature|refactor|new_project|saas|engineering_os|governance|implementation|architecture|multi-file|non-trivial'; then
   add_required notion "non-trivial work must be planned and progress-validated in Notion"
 fi
 
-# Current docs/source truth for libraries, APIs, SDKs, and packages.
 if printf '%s' "$combined" | grep -qE 'api|sdk|library|framework|package|dependency|npm|pip|stripe|supabase|firebase|clerk|vercel|react|next|expo|openai|anthropic'; then
   add_required context7 "API/library/framework work needs current official documentation"
 fi
 
-# Debugging and production failures require runtime error source-of-truth.
 if printf '%s' "$combined" | grep -qE 'debug|bug|incident|rollback|hotfix|regression|crash|sentry|production[ -_]*(failure|bug|incident)'; then
   add_required sentry "debugging/incident work must inspect runtime error data when available"
 fi
@@ -122,8 +139,12 @@ fi
 [ -n "${required// /}" ] || { echo "required connector checks passed"; exit 0; }
 
 if has_heading "$PLAN" 'Connector[[:space:]]+Selection[[:space:]]+Waiver'; then
-  echo "required connector checks passed via Connector Selection Waiver"
-  exit 0
+  if valid_connector_waiver; then
+    echo "required connector checks passed via Connector Selection Waiver"
+    exit 0
+  fi
+  echo "connector selection waiver invalid: add a specific fallback or availability reason." >&2
+  exit 1
 fi
 
 missing=""
@@ -133,14 +154,13 @@ done
 
 if [ -n "$missing" ]; then
   echo "required connectors missing: ${missing}. Reasons: ${reasons}" >&2
-  echo "Add them to External systems/connectors, or add ## Connector Selection Waiver with a specific fallback/availability reason." >&2
+  echo "Add them to External systems/connectors, or add ## Connector Selection Waiver with a specific fallback or availability reason." >&2
   exit 1
 fi
 
 if contains_connector notion "$connectors"; then
   has_heading "$PLAN" 'Notion[[:space:]]+Progress[[:space:]]+Validation' || {
-    echo "notion progress validation missing: Notion must be updated and re-validated during non-trivial work, not only used to create an initial plan." >&2
-    echo "Add ## Notion Progress Validation with checkpoints/evidence, or add a focused Connector Selection Waiver if Notion is unavailable." >&2
+    echo "notion progress validation missing: Notion must be updated and re-validated during non-trivial work." >&2
     exit 1
   }
 fi
