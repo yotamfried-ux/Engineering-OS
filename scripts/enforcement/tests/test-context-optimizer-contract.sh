@@ -25,4 +25,17 @@ printf '%s\n' '# setup' 'rtk init -g' 'rtk --version' > "$TMP/good/scripts/sessi
 printf '%s\n' '# policy' 'mandatory' > "$TMP/good/external-skills/rtk/policy.md"
 pass good_fixture_contract_passes bash "$CHECK" "$TMP/good/.claude/settings.json" "$TMP/good/scripts/session-setup.sh" "$TMP/good/external-skills/rtk/policy.md"
 
+# Case 4: valid_waiver_passes — EOS_BYPASS_RTK=1 allows missing hook (waiver mechanism)
+EOS_BYPASS_RTK=1 pass valid_waiver_passes bash "$CHECK" "$TMP/bad/.claude/settings.json" "$TMP/bad/scripts/session-setup.sh" "$TMP/bad/external-skills/rtk/policy.md"
+
+# Case 5: new_project_install_rtk_wired — simulates a project wired by use-in-project.sh / skill-bootstrap
+mkdir -p "$TMP/newproj/.claude" "$TMP/newproj/scripts" "$TMP/newproj/external-skills/rtk"
+printf '%s\n' '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"command":"rtk hook claude"}]}],"SessionStart":[{"hooks":[{"command":"scripts/session-setup.sh"}]}]}}' \
+  > "$TMP/newproj/.claude/settings.json"
+printf '%s\n' '# Engineering OS session setup' 'rtk init -g' 'rtk --version' \
+  > "$TMP/newproj/scripts/session-setup.sh"
+printf '%s\n' '# RTK policy' 'mandatory: yes' \
+  > "$TMP/newproj/external-skills/rtk/policy.md"
+pass new_project_install_rtk_wired bash "$CHECK" "$TMP/newproj/.claude/settings.json" "$TMP/newproj/scripts/session-setup.sh" "$TMP/newproj/external-skills/rtk/policy.md"
+
 echo "context optimizer contract simulations passed"

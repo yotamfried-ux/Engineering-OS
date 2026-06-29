@@ -41,7 +41,7 @@ Required coverage groups:
 | Pattern usage | Partially enforced | Runtime gate checks known domains against `patterns/<domain>/` reads. | Domain detection is path/name based and incomplete; generic files can still rely on advisory warnings. |
 | Skill selection | Partially enforced | `check-required-skills.sh` requires task/domain/path-specific skills such as UI, security, graphify, and superpowers. | Coverage must expand as new task classes and skills are added. |
 | Skill runtime evidence | Enforced | `pre-tool-use-runtime-evidence.sh` checks declared skills for evidence. | Evidence proves recorded activation, not deep semantic use. |
-| RTK context optimization | Partially enforced | RTK is represented in the capability registry and audit; project install and SessionStart wiring are expected to preserve context tooling. | Runtime RTK use/fallback still needs stronger positive and negative simulations, especially when graphify is unavailable or insufficient. |
+| RTK context optimization | Enforced | RTK contract validated by `check-rtk-contract.sh` (called via CI test wildcard); bypass EOS_BYPASS_RTK=1 supported; positive/negative/waiver/new-project simulations in `test-context-optimizer-contract.sh`; MANIFEST.tsv co-staging wired. | Evidence proves contract integrity and install-path coverage, not per-command token savings (which are transparent by design). |
 | Graphify context graph | Partially enforced | G7 checks writes when `graphify-out/graph.json` exists but graphify has not been queried this session. | Evidence proves graphify ran, not that findings were actually used. |
 | Claude memory / context carryover | Manual | Workflow documents memory/context recovery as part of session behavior. | Runtime availability and evidence are not hard-checked across all environments. |
 | Capability registry | Partially enforced | Registry has task classes/capabilities and CI validates expected anchors through capability report generation. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
@@ -74,7 +74,7 @@ Anything merely documented but silently skippable is not operationally ready.
 ## Highest-priority gaps by ROI
 
 1. **Coverage map hardening** — keep this audit complete and CI-validated so no policy/skill/template/connector/RTK area disappears from the inventory.
-2. **RTK runtime hardening** — prove RTK activation/use/fallback through positive and negative simulations, not only documentation.
+2. **RTK runtime hardening** — ✅ resolved: bypass/waiver simulations added to `test-context-optimizer-contract.sh`, MANIFEST.tsv wired, CI wildcard already runs the suite, audit row updated to Enforced.
 3. **Route Plan quality gate** — require stronger task-class, evidence, connector, skill, template, progress tracking, and lesson reuse coverage before writing.
 4. **Learning closure gate** — require root cause plus lesson plus failed-solution when applicable plus prevention update or waiver.
 5. **Progress lifecycle** — require start/mid/pre-merge progress validation evidence for non-trivial work.

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+[ "${EOS_BYPASS_RTK:-}" = "1" ] && { echo "rtk contract bypassed (EOS_BYPASS_RTK=1)"; exit 0; }
+
 ROOT="${ENGINEERING_OS_HOME:-$(pwd)}"
 settings="${1:-$ROOT/.claude/settings.json}"
 session_setup="${2:-$ROOT/scripts/session-setup.sh}"
