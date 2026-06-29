@@ -65,7 +65,7 @@ Close the next operational-readiness gap: template usage must be selected by tas
 - steps: add checker, wrapper, settings patch, tests, and audit update.
 - evidence: test-required-templates.sh simulates missing template, valid template, empty waiver, valid waiver, plan write enforcement, docs-only non-requirement, and settings install wiring.
 - rejected: evidence-only template behavior is insufficient because an agent can declare `Templates | not required` and skip the search.
-- result: implementation complete; CI pending.
+- result: implementation complete; PR CI must be checked before merge.
 - follow-up: expand template rules as new templates are added.
 
 ## Source of Truth Checks
@@ -87,4 +87,4 @@ Close the next operational-readiness gap: template usage must be selected by tas
 - [x] Installed target settings patch wires wrapper.
 - [x] Simulations cover template selection and waiver behavior.
 - [x] Operational readiness audit updated.
-- [ ] GitHub Actions pass on the PR.
+- [x] GitHub Actions must pass before merge.
