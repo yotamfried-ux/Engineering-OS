@@ -61,6 +61,7 @@ jobs:
           grep -q 'core/task-router.md' CLAUDE.md
           grep -q '<boundary_rule>' CLAUDE.md
           grep -q 'ENGINEERING_OS_HOME' CLAUDE.md
+          grep -q 'לעולם אל תכתוב ישירות' CLAUDE.md
           grep -q 'Route' core/task-router.md
           echo "✅ CLAUDE.md is wired to task-router and boundary rules"
 
@@ -249,6 +250,7 @@ jobs:
             python3 - <<'PY'
           import json
           import os
+          import re
           from pathlib import Path
 
           s = json.loads(Path('.claude/settings.json').read_text())
@@ -274,7 +276,7 @@ jobs:
           )
           stop_cmd = s['hooks']['Stop'][0]['hooks'][0]['command']
           assert 'post-stop-hook.sh' in stop_cmd
-          assert not stop_cmd.rstrip().endswith('true')
+          assert not re.search(r'\|\|\s*true\b', stop_cmd)
           PY
             grep -q 'Capability Verification Report' ENGINEERING_OS_CAPABILITIES.md
             grep -q '## Skills and engines' ENGINEERING_OS_CAPABILITIES.md
