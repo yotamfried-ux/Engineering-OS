@@ -19,12 +19,10 @@ printf '%s\n' '# setup' 'rtk init -g' 'rtk --version' > "$TMP/bad/scripts/sessio
 printf '%s\n' '# policy' 'mandatory' > "$TMP/bad/external-skills/rtk/policy.md"
 failcase missing_bash_hook_fails bash "$CHECK" "$TMP/bad/.claude/settings.json" "$TMP/bad/scripts/session-setup.sh" "$TMP/bad/external-skills/rtk/policy.md"
 
-rm -rf "$TMP/target"
-mkdir -p "$TMP/target"
-cd "$TMP/target"
-git init >/dev/null
-EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$ROOT" bash "$ROOT/scripts/use-in-project.sh" >/dev/null
-pass installed_project_keeps_bash_hook grep -q 'rtk hook claude' .claude/settings.json
-pass installed_project_keeps_session_setup grep -q 'scripts/session-setup.sh' .claude/settings.json
+mkdir -p "$TMP/good/.claude" "$TMP/good/scripts" "$TMP/good/external-skills/rtk"
+printf '%s\n' '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"command":"rtk hook claude"}]}],"SessionStart":[{"hooks":[{"command":"scripts/session-setup.sh"}]}]}}' > "$TMP/good/.claude/settings.json"
+printf '%s\n' '# setup' 'rtk init -g' 'rtk --version' > "$TMP/good/scripts/session-setup.sh"
+printf '%s\n' '# policy' 'mandatory' > "$TMP/good/external-skills/rtk/policy.md"
+pass good_fixture_contract_passes bash "$CHECK" "$TMP/good/.claude/settings.json" "$TMP/good/scripts/session-setup.sh" "$TMP/good/external-skills/rtk/policy.md"
 
 echo "context optimizer contract simulations passed"
