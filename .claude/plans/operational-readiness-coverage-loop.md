@@ -10,7 +10,7 @@
 | Templates | not required |
 | Patterns | existing enforcement workflow and operational audit structure |
 | External systems/connectors | github |
-| Skills | superpowers, security-review |
+| Skills | superpowers-verify |
 | Validation gates | enforcement-tests, pr-policy, workflow-evidence-policy, connector-evidence-policy, capability-evidence-policy, plan-policy |
 
 ## Connector Evidence
@@ -19,8 +19,11 @@
 
 ## Skill Evidence
 
-- superpowers: plan first, test, fix, retest loop.
-- security-review: self-review of CI gate behavior and merge safety.
+- superpowers-verify: ran the verification-before-completion workflow this session
+  (DoD, regression, edge-case, security, cleanup checks); evidence recorded as `superpowers_verify_run`.
+- security-review: ran the `/security-review` gate on the branch diff (docs audit + the new
+  read-only CI validation step); no exploitable findings. CodeRabbit is disabled per instruction,
+  so this manual review is the review of record (see `validation.coderabbit-policy` above).
 
 ## Capability Evidence
 
