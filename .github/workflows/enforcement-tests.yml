@@ -96,6 +96,116 @@ jobs:
           PY
           echo "✅ capability report generator covers skills, engines, connectors, and templates"
 
+      - name: Verify operational readiness audit coverage
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          path = Path('docs/operations/operational-readiness-audit.md')
+          text = path.read_text(encoding='utf-8')
+          lower = text.lower()
+          failures = []
+
+          def require(condition, message):
+              if not condition:
+                  failures.append(message)
+
+          for heading in [
+              'Readiness statuses',
+              'Coverage contract',
+              'Current status matrix',
+              'Definition of full operational readiness',
+              'Highest-priority gaps by ROI',
+          ]:
+              require(re.search(rf'^## {re.escape(heading)}$', text, re.MULTILINE), f'missing heading: {heading}')
+
+          allowed = {
+              'Enforced',
+              'Partially enforced',
+              'Manual',
+              'Waiver-gated',
+              'Missing enforcement',
+              'Not applicable',
+          }
+          for status in allowed:
+              require(f'**{status}**' in text, f'missing readiness status definition: {status}')
+
+          rows = []
+          for line in text.splitlines():
+              if not line.startswith('|') or line.startswith('|---') or ' Area ' in line:
+                  continue
+              parts = [part.strip() for part in line.strip('|').split('|')]
+              if len(parts) == 4:
+                  rows.append(parts)
+
+          require(len(rows) >= 25, f'expected at least 25 readiness rows, found {len(rows)}')
+          invalid = [(area, status) for area, status, _, _ in rows if status not in allowed]
+          require(not invalid, f'invalid status values: {invalid}')
+
+          required_terms = [
+              'claude entrypoint',
+              'canonical ownership',
+              'enforcement coverage inventory',
+              'route plan',
+              'dod completion',
+              'progress validation',
+              'connector selection',
+              'connector correctness',
+              'template selection',
+              'pattern usage',
+              'skill selection',
+              'skill runtime evidence',
+              'rtk context optimization',
+              'graphify context graph',
+              'claude memory',
+              'capability registry',
+              'learning schema',
+              'learning reuse',
+              'learning closure',
+              'claude run trace',
+              'positive/negative simulations',
+              'tests/lint',
+              'cleanup debug leftovers',
+              'cleanup semantic hygiene',
+              'project install contract',
+              'git/branch policy',
+              'pr review',
+              'merge safety',
+              'post-merge validation',
+              'known gaps register',
+          ]
+          for term in required_terms:
+              require(term in lower, f'audit missing required coverage term: {term}')
+
+          priority_terms = [
+              'coverage map hardening',
+              'rtk runtime hardening',
+              'route plan quality gate',
+              'learning closure gate',
+              'progress lifecycle',
+              'connector correctness',
+              'simulation completeness',
+              'post-merge validation',
+              'documentation hygiene',
+              'semantic cleanup',
+          ]
+          for term in priority_terms:
+              require(term in lower, f'audit missing priority gap: {term}')
+
+          require('new markdown policy file' in lower, 'audit must document that no new Markdown policy file is created for this gap')
+
+          if failures:
+              print('❌ operational readiness audit coverage failed')
+              for failure in failures:
+                  print(f' - {failure}')
+              raise SystemExit(1)
+
+          print('✅ operational readiness audit coverage is complete')
+          print(f'   readiness rows: {len(rows)}')
+          PY
+
       - name: Verify use-in-project output contract
         run: |
           set -euo pipefail
