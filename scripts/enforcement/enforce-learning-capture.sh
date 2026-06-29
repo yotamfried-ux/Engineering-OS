@@ -43,6 +43,29 @@ has_heading() {
   grep -qiE "^#{1,4}[[:space:]]+${heading_re}([[:space:]]|$)" "$file" 2>/dev/null
 }
 
+staged_blob_has_heading() {
+  local path="$1" heading="$2"
+  git show ":$path" 2>/dev/null | grep -qiE "^#{1,4}[[:space:]]+${heading}([[:space:]]|$)"
+}
+
+complete_staged_lesson() {
+  local path="$1" missing=""
+  for heading in \
+    'מה קרה' \
+    'שורש הבעיה' \
+    'השערות שנבדקו' \
+    'ראיה' \
+    'רמת ביטחון' \
+    'איך מזהים מוקדם' \
+    'איך מונעים בעתיד' \
+    'טסט רגרסיה' \
+    'סטטוס הבשלה' \
+    'Prevented Future Issues'; do
+    staged_blob_has_heading "$path" "$heading" || missing="${missing}${heading}; "
+  done
+  [ -z "$missing" ] || { echo "learning capture failed: staged lesson '$path' is incomplete: ${missing}" >&2; return 1; }
+}
+
 select_plan() {
   if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then printf '%s\n' "$EOS_ACTIVE_PLAN"; return 0; fi
   if [ -f .claude/plans/active.md ]; then printf '%s\n' .claude/plans/active.md; return 0; fi
@@ -67,7 +90,15 @@ requires_full_lesson() {
 requires_full_lesson "$plan" || exit 0
 
 lesson_staged="$(printf '%s\n' "$staged" | grep -E '^lessons-learned/bugs/[^/]+\.md$' | grep -vE '/(README|_TEMPLATE)\.md$' || true)"
-[ -n "$lesson_staged" ] && exit 0
+if [ -n "$lesson_staged" ]; then
+  while IFS= read -r lesson; do
+    [ -n "$lesson" ] || continue
+    complete_staged_lesson "$lesson" || exit 1
+  done <<EOF_LESSONS
+$lesson_staged
+EOF_LESSONS
+  exit 0
+fi
 
 failed_staged="$(printf '%s\n' "$staged" | grep -E '^failed-solutions/[^/]+\.md$' | grep -vE '/(README|_TEMPLATE)\.md$' || true)"
 
