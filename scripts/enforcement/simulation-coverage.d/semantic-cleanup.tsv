@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+semantic-cleanup	cleanup-governance	scripts/enforcement/check-semantic-cleanup.sh	scripts/enforcement/tests/test-semantic-cleanup.sh	covered:clean_code_passes	covered:risky_cleanup_marker_fails	covered:unused_import_fails	covered:explicit_waiver_passes	Semantic cleanup covers deterministic high-confidence cleanup debt: risky cleanup markers, disabled branches, simple Python unused imports, and explicit waiver behavior.
