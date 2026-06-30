@@ -14,6 +14,19 @@ fi
 
 [ -n "$plans" ] || { echo "No changed plan files."; exit 0; }
 
+section_text() {
+  local file="$1" heading_re="$2"
+  awk -v re="$heading_re" '
+    BEGIN { found=0 }
+    /^#{1,4}[[:space:]]+/ {
+      line=tolower($0)
+      if (line ~ tolower(re)) { found=1; next }
+      if (found) exit
+    }
+    found { print }
+  ' "$file" 2>/dev/null || true
+}
+
 bad=0
 for plan in $plans; do
   line="$(grep -iE 'external[[:space:]]*(systems/connectors|systems|connectors)' "$plan" | head -n 1 || true)"
@@ -52,6 +65,16 @@ for plan in $plans; do
     if ! grep -qiE '^#{1,4}[[:space:]]+Connector[[:space:]]+Evidence([[:space:]]|$)' "$plan"; then
       echo "ERROR_FOR_AGENT: $plan declares external connector(s) '$value' but lacks ## Connector Evidence."
       bad=1
+    fi
+    if ! grep -qiE '^#{1,4}[[:space:]]+Connector[[:space:]]+Usage[[:space:]]+Evidence([[:space:]]|$)' "$plan"; then
+      echo "ERROR_FOR_AGENT: $plan declares external connector(s) '$value' but lacks ## Connector Usage Evidence."
+      bad=1
+    else
+      usage="$(section_text "$plan" 'connector[[:space:]]+usage[[:space:]]+evidence')"
+      if ! printf '%s\n' "$usage" | grep -qiE 'used|influenced|validated|checked|read|queried|result|decision|evidence|source'; then
+        echo "ERROR_FOR_AGENT: $plan Connector Usage Evidence must explain how connector output was used."
+        bad=1
+      fi
     fi
   fi
 done

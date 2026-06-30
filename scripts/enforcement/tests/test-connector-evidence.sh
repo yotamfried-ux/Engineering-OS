@@ -121,7 +121,52 @@ git add .claude/plans/task.md
 git commit -qm loose-mention
 expect_fail loose-mention "$(git rev-parse HEAD)"
 
-# A connector declaration with a real Connector Evidence heading should pass.
+# Connector Evidence alone is no longer enough; usage influence is required.
+git checkout -q -b connector-evidence-without-usage "$BASE"
+mkdir -p .claude/plans
+cat > .claude/plans/task.md <<'PLAN'
+# Task
+
+## Route Plan
+
+| Field | Value |
+|---|---|
+| External systems/connectors | GitHub REST API v3 |
+
+## Connector Evidence
+
+- [x] Connector: GitHub REST API v3.
+- [x] Purpose: planning-only validation.
+PLAN
+git add .claude/plans/task.md
+git commit -qm connector-evidence-without-usage
+expect_fail connector-evidence-without-usage "$(git rev-parse HEAD)"
+
+# A loose usage heading with no source/action/result wording must fail.
+git checkout -q -b connector-usage-too-vague "$BASE"
+mkdir -p .claude/plans
+cat > .claude/plans/task.md <<'PLAN'
+# Task
+
+## Route Plan
+
+| Field | Value |
+|---|---|
+| External systems/connectors | GitHub REST API v3 |
+
+## Connector Evidence
+
+- [x] Connector: GitHub REST API v3.
+
+## Connector Usage Evidence
+
+- GitHub.
+PLAN
+git add .claude/plans/task.md
+git commit -qm connector-usage-too-vague
+expect_fail connector-usage-too-vague "$(git rev-parse HEAD)"
+
+# A connector declaration with evidence and usage influence should pass.
 git checkout -q -b connector-with-evidence "$BASE"
 mkdir -p .claude/plans
 cat > .claude/plans/task.md <<'PLAN'
@@ -138,6 +183,10 @@ cat > .claude/plans/task.md <<'PLAN'
 - [x] Connector: GitHub REST API v3.
 - [x] Purpose: planning-only validation.
 - [x] Scope: no secrets or runtime calls.
+
+## Connector Usage Evidence
+
+- GitHub REST API v3: checked repository source state and used the result to choose the implementation path.
 PLAN
 git add .claude/plans/task.md
 git commit -qm connector-with-evidence
