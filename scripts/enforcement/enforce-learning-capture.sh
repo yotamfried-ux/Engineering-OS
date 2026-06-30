@@ -29,7 +29,7 @@ while IFS= read -r lesson; do
   if ! head_has "$lesson" 'Prevention[[:space:]/-]+Enforcement[[:space:]]+Update' && ! head_has "$lesson" 'Prevention[[:space:]/-]+Enforcement[[:space:]]+Waiver' && ! head_has "$lesson" 'עדכון[[:space:]/-]+מניעה[[:space:]/-]+אכיפה' && ! head_has "$lesson" 'ויתור[[:space:]/-]+מניעה[[:space:]/-]+אכיפה'; then
     echo "learning capture failed: $lesson missing prevention update or waiver" >&2; exit 1
   fi
-  "$DIR/check-learning-quality.sh" "$lesson" $attempts >/dev/null || exit 1
+  bash "$DIR/check-learning-quality.sh" "$lesson" $attempts >/dev/null || exit 1
 done <<EOF
 $lessons
 EOF
