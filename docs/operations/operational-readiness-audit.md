@@ -24,41 +24,43 @@ Required coverage groups:
 - Learning: root cause, lesson, failed-solution, prevention update or waiver.
 - Governance: branch/PR/review/CodeRabbit, merge approval, documentation cleanup, known gaps.
 
+Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:` in the enforcement cell. If the gate is manual or missing, the evidence must name the manual review or gap evidence instead of being blank.
+
 ## Current status matrix
 
 | Area | Status | What is enforced or checked | Remaining gap |
 |---|---|---|---|
-| CLAUDE entrypoint and core navigation | Enforced | CI checks keep `CLAUDE.md`, `core/task-router.md`, and template wiring present. `CLAUDE.md` remains the entrypoint and points to canonical core policies. | Semantic correctness of every route still needs review. |
-| Canonical ownership / no policy sprawl | Partially enforced | `CLAUDE.md` contains a conceptual ownership table; `validate-orphans.sh` checks core navigation coverage; docs policy catches some missing READMEs/TBDs. | Duplicate/stale/split policy content across `.md` files is not fully detected. |
-| Enforcement coverage inventory | Enforced | This audit is validated by CI for required readiness areas, allowed statuses, and required priority gaps. | CI proves inventory coverage exists; status accuracy still requires review and evidence. |
-| Route Plan before writing | Enforced | Write/Edit gate stops code writes without a current Route Plan with required sections. | Active-plan selection can still be semantically wrong in complex multi-task sessions. |
-| Route Plan quality | Partially enforced | `check-workflow-evidence.sh` now rejects shallow plans by requiring non-placeholder fields, at least two source-of-truth checks, skill evidence matching declared skills, and Claude Run Trace for code/config/test changes. | Semantic quality of the selected sources and evidence still needs review. |
-| DoD completion | Enforced | Plan-policy and pre-commit gates check incomplete DoD flows in covered cases. | DoD quality is judgment-based. |
-| Progress validation | Partially enforced | Connector/run-trace policy requires progress validation evidence for connector-related enforcement traces; workflow requires project tracking or approved fallback. | Full checkpoint lifecycle, start/middle/pre-merge, is not yet universally hard-checked. |
-| Connector selection | Partially enforced | Task/domain/path rules require covered connectors; connector policy checks sensitive config mistakes; runtime evidence checks declared connectors. | Need broader task-class coverage and stronger proof that connector output influenced the work. |
-| Connector correctness / source-of-truth use | Partially enforced | GitHub, project-tracking, Context7, Sentry, Postman, and Figma-style connector decisions can be represented in Route Plan and trace evidence. | The system cannot fully prove semantic use of returned connector data. |
-| Template selection | Partially enforced | Template fields/evidence/waiver are required in plans and installed policy workflows. | Required-template detection by task class/domain still needs expansion. |
-| Pattern usage | Partially enforced | Runtime gate checks known domains against `patterns/<domain>/` reads. | Domain detection is path/name based and incomplete; generic files can still rely on advisory warnings. |
-| Skill selection | Partially enforced | `check-required-skills.sh` requires task/domain/path-specific skills such as UI, security, graphify, superpowers, and RTK for context-heavy work. | Coverage must expand as new task classes and skills are added. |
-| Skill runtime evidence | Enforced | `pre-tool-use-runtime-evidence.sh` checks declared skills for evidence. | Evidence proves recorded activation, not deep semantic use. |
-| RTK context optimization | Partially enforced | `check-required-skills.sh` now requires RTK for context-heavy and large-repo work; CI includes missing/declared/waiver simulations. | Local RTK installation must become blocking when cargo/network is unavailable. |
-| Graphify context graph | Partially enforced | G7 checks writes when `graphify-out/graph.json` exists but graphify has not been queried this session. | Evidence proves graphify ran, not that findings were actually used. |
-| Claude memory / context carryover | Manual | Workflow documents memory/context recovery as part of session behavior. | Runtime availability and evidence are not hard-checked across all environments. |
-| Capability registry | Partially enforced | Registry has task classes/capabilities and CI validates expected anchors through capability report generation. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
-| Learning schema | Enforced | `enforce-learning.sh` checks malformed staged lessons and failed-solutions. | Semantic lesson quality still needs review. |
-| Learning reuse | Enforced | Relevant existing lessons/failed-solutions must be listed in the Route Plan. | Relevance is path/tag based, not deep semantic code understanding. |
-| Learning closure after bug/debug work | Partially enforced | Learning capture gates require covered bug/debug/incident work to record lessons in covered cases. | Full closure package still needs stricter proof: root cause, failed-solution when applicable, prevention update or waiver. |
-| Claude run trace / experiment log | Partially enforced | Enforcement/connector/simulation changes require a Route Plan run trace with fields for goal, hypothesis, connectors, steps, evidence, rejected attempts, result, and follow-up. | Not all significant agent runs are forced yet. |
-| Positive/negative simulations | Partially enforced | Existing `scripts/enforcement/tests/test-*.sh` suites cover many gates and CI runs them all. | Every policy row does not yet have explicit positive, negative, invalid, and waiver simulations. |
-| Tests/lint before commit | Partially enforced | Pre-commit runs stack-specific tests/lint where detected and checks large unverified commits. | Missing tools can warn rather than fully fail in all ecosystems. |
-| Cleanup debug leftovers | Enforced | `enforce-quality.sh` checks unambiguous debuggers and conflict markers. | None for these narrow cases. |
-| Cleanup semantic hygiene | Manual | Policy says to clean and verify. | Dead code, duplicate logic, unused imports, speculative TODOs, and stale cleanup need analyzers or waiver-gated checklist. |
-| Project install contract | Enforced | CI installs Engineering OS into a temp project and checks expected hooks/files/workflows. | Validates contract shape, not every downstream behavior. |
-| Git/branch policy | Partially enforced | Hooks enforce common branch/process rules; policy requires dedicated branch and no unsafe merge. | GitHub connector operations and PR state still require live checks. |
-| PR review / CodeRabbit / external review | Manual | `coderabbit-policy.md` requires branch, PR, Actions, CodeRabbit review when available, comment handling, and explicit approval. | CodeRabbit can be rate-limited and is not a hard universal gate. |
-| Merge safety | Manual | Policy requires mergeability, green checks, handled review threads, expected head SHA, and explicit approval. | Requires live GitHub/PR checks and human approval. |
-| Post-merge validation | Missing enforcement | Main CI runs after merge. | No automatic repair-loop trigger is enforced when main turns red after merge. |
-| Known gaps register | Partially enforced | `core/hooks-policy.md` has known gaps; this audit lists highest-priority gaps. | Need one consistent lifecycle for gap owner, risk, mitigation, test, and closure. |
+| CLAUDE entrypoint and core navigation | Enforced | Gate: enforcement-tests entrypoint wiring. Owner: core-governance. Evidence: CI checks keep `CLAUDE.md`, `core/task-router.md`, and template wiring present. | Semantic correctness of every route still needs review. |
+| Canonical ownership / no policy sprawl | Partially enforced | Gate: validate-orphans/docs policy. Owner: docs-governance. Evidence: core navigation/docs checks plus manual canonical review. | Duplicate/stale/split policy content across `.md` files is not fully detected. |
+| Enforcement coverage inventory | Enforced | Gate: readiness audit validator plus coverage-map simulation. Owner: ops-readiness. Evidence: CI validates required areas, statuses, priority gaps, gate, owner, and evidence markers. | CI proves inventory coverage exists; status accuracy still requires review. |
+| Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate. Owner: workflow-governance. Evidence: `test-workflow-evidence.sh` order cases. | Active-plan selection can still be semantically wrong in complex multi-task sessions. |
+| Route Plan quality | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh` and `test-workflow-evidence.sh`. | Semantic quality of the selected sources and evidence still needs review. |
+| DoD completion | Enforced | Gate: plan-policy. Owner: delivery-governance. Evidence: checklist policy checks. | DoD quality is judgment-based. |
+| Progress validation | Partially enforced | Gate: connector/workflow trace policies. Owner: progress-governance. Evidence: connector evidence policy plus manual checkpoint review. | Full checkpoint lifecycle, start/middle/pre-merge, is not yet universally hard-checked. |
+| Connector selection | Partially enforced | Gate: connector evidence policy. Owner: connector-governance. Evidence: required connector fields and runtime evidence checks. | Need broader task-class coverage and stronger proof that connector output influenced the work. |
+| Connector correctness / source-of-truth use | Partially enforced | Gate: connector evidence policy plus manual review. Owner: connector-governance. Evidence: connector traces and reviewed plan use. | The system cannot fully prove semantic use of returned connector data. |
+| Template selection | Partially enforced | Gate: template evidence/waiver gates. Owner: template-governance. Evidence: Route Plan template fields and waiver checks. | Required-template detection by task class/domain still needs expansion. |
+| Pattern usage | Partially enforced | Gate: pattern read evidence gate. Owner: pattern-governance. Evidence: runtime pattern evidence checks. | Domain detection is path/name based and incomplete; generic files can still rely on advisory warnings. |
+| Skill selection | Partially enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: required-skills and context-skill simulations. | Coverage must expand as new task classes and skills are added. |
+| Skill runtime evidence | Enforced | Gate: `pre-tool-use-runtime-evidence.sh`. Owner: skill-governance. Evidence: runtime evidence tests. | Evidence proves recorded activation, not deep semantic use. |
+| RTK context optimization | Partially enforced | Gate: `check-required-skills.sh` and session setup. Owner: context-governance. Evidence: context-skill selection simulations. | Local RTK installation must become blocking when cargo/network is unavailable. |
+| Graphify context graph | Partially enforced | Gate: graphify evidence gate. Owner: context-governance. Evidence: graphify gate tests. | Evidence proves graphify ran, not that findings were actually used. |
+| Claude memory / context carryover | Manual | Gate: manual workflow checklist. Owner: context-governance. Evidence: manual session review evidence. | Runtime availability and evidence are not hard-checked across all environments. |
+| Capability registry | Partially enforced | Gate: capability report and capability evidence policy. Owner: capability-governance. Evidence: capability-evidence-policy plus capability report generator. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
+| Learning schema | Enforced | Gate: `enforce-learning.sh`. Owner: learning-governance. Evidence: learning enforcement tests. | Semantic lesson quality still needs review. |
+| Learning reuse | Enforced | Gate: Route Plan lesson reuse gate. Owner: learning-governance. Evidence: learning reuse checks. | Relevance is path/tag based, not deep semantic code understanding. |
+| Learning closure after bug/debug work | Partially enforced | Gate: learning capture gates. Owner: learning-governance. Evidence: learning capture tests plus manual incident review. | Full closure package still needs stricter proof: root cause, failed-solution when applicable, prevention update or waiver. |
+| Claude run trace / experiment log | Partially enforced | Gate: workflow/connector evidence policies. Owner: trace-governance. Evidence: workflow-evidence-policy and connector-evidence-policy. | Not all significant agent runs are forced yet. |
+| Positive/negative simulations | Partially enforced | Gate: enforcement-tests suite. Owner: validation-governance. Evidence: `scripts/enforcement/tests/test-*.sh`. | Every policy row does not yet have explicit positive, negative, invalid, and waiver simulations. |
+| Tests/lint before commit | Partially enforced | Gate: `enforce-tests.sh`. Owner: validation-governance. Evidence: pre-commit and CI enforcement-tests. | Missing tools can warn rather than fully fail in all ecosystems. |
+| Cleanup debug leftovers | Enforced | Gate: `enforce-quality.sh`. Owner: cleanup-governance. Evidence: quality enforcement tests. | None for these narrow cases. |
+| Cleanup semantic hygiene | Manual | Gate: manual cleanup checklist. Owner: cleanup-governance. Evidence: manual review evidence. | Dead code, duplicate logic, unused imports, speculative TODOs, and stale cleanup need analyzers or waiver-gated checklist. |
+| Project install contract | Enforced | Gate: use-in-project output contract. Owner: install-governance. Evidence: enforcement-tests install contract. | Validates contract shape, not every downstream behavior. |
+| Git/branch policy | Partially enforced | Gate: pr-policy plus hooks. Owner: merge-governance. Evidence: pr-policy and live GitHub review. | GitHub connector operations and PR state still require live checks. |
+| PR review / CodeRabbit / external review | Manual | Gate: manual review policy. Owner: review-governance. Evidence: PR comments/review thread evidence. | CodeRabbit can be rate-limited and is not a hard universal gate. |
+| Merge safety | Manual | Gate: manual GitHub merge checklist. Owner: merge-governance. Evidence: mergeability, checks, threads, expected SHA evidence. | Requires live GitHub/PR checks and human approval. |
+| Post-merge validation | Missing enforcement | Gate: missing CI repair-loop gate. Owner: merge-governance. Evidence: gap evidence in this audit. | No automatic repair-loop trigger is enforced when main turns red after merge. |
+| Known gaps register | Partially enforced | Gate: audit plus hooks policy. Owner: ops-readiness. Evidence: audit priority list and hooks-policy gaps. | Need one consistent lifecycle for gap owner, risk, mitigation, test, and closure. |
 
 ## Definition of full operational readiness
 
@@ -86,4 +88,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current PR scope
 
-This PR addresses the Route Plan quality gate for changed plans that accompany code/config/test changes.
+This PR addresses coverage map hardening by requiring each readiness row to name its gate, owner, and simulation/evidence reference.
