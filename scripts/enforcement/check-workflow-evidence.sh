@@ -88,7 +88,7 @@ for plan in $plans; do
       bad=1
     else
       evidence="$(section_body "$plan" 'Skill[[:space:]]+Evidence' | tr '[:upper:]' '[:lower:]')"
-      while read -r raw; do
+      while read -r raw || [ -n "$raw" ]; do
         key="$(norm_item "$raw")"
         [ -z "$key" ] && continue
         if ! printf '%s\n' "$evidence" | grep -Fq -- "$key"; then
