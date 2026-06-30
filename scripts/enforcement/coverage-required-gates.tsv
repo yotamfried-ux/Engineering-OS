@@ -1,0 +1,18 @@
+# gate_id	owner	status	reason
+simulation-coverage	validation-governance	active	Meta-gate validating simulation coverage rows.
+workflow-plan-quality	workflow-governance	active	Route Plan quality must remain covered.
+workflow-semantic-quality	workflow-governance	active	Semantic source relevance checks must remain covered.
+progress-lifecycle	progress-governance	active	Progress checkpoints must remain covered.
+connector-evidence	connector-governance	active	Connector usage evidence must remain covered.
+required-connectors	connector-governance	active	Connector selection requirements must remain covered.
+required-skills	skill-governance	active	Skill selection requirements must remain covered.
+runtime-evidence	skill-governance	active	Runtime evidence checks must remain covered.
+learning-capture	learning-governance	active	Learning closure checks must remain covered.
+run-trace	trace-governance	active	Run trace checks must remain covered.
+rtk-context	context-governance	active	RTK context checks must remain covered.
+readiness-audit	ops-readiness	active	Readiness inventory validation must remain covered.
+use-in-project-contract	install-governance	active	Installer output contract must remain covered.
+post-merge-validation	merge-governance	active	Post-merge validation workflow contract must remain covered.
+documentation-hygiene	docs-governance	active	Documentation ownership hygiene gate must remain covered.
+semantic-cleanup	cleanup-governance	active	Semantic cleanup gate must remain covered.
+coverage-map-hardening	validation-governance	active	Required-gates manifest enforcement must cover itself.
