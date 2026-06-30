@@ -1,0 +1,52 @@
+name: post-merge-validation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate-main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          persist-credentials: false
+
+      - name: Run all enforcement test suites
+        id: validation
+        run: |
+          set -u
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+          fail=0
+          for t in scripts/enforcement/tests/test-*.sh; do
+            echo "──────── $t ────────"
+            if bash "$t"; then :; else fail=1; fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "post-merge validation failed"
+            exit 1
+          fi
+          echo "post-merge validation passed"
+
+      - name: Verify post-merge repair-loop contract
+        run: |
+          set -euo pipefail
+          bash scripts/enforcement/check-post-merge-validation-contract.sh --workflow .github/workflows/post-merge-validation.yml
+
+      - name: Open repair loop issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPAIR_SHA: ${{ github.sha }}
+          REPAIR_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          body="Post-merge validation failed on main. Repair loop required. Commit: ${REPAIR_SHA}. Run: ${REPAIR_RUN_URL}."
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" -f title="Post-merge validation failed on main: ${REPAIR_SHA}" -f body="$body"
