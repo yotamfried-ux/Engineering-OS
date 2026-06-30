@@ -70,8 +70,8 @@ reason: no template applies.
 
 | Source | Status |
 |---|---|
-| core/task-router.md | checked |
 | core/workflow.md | checked |
+| scripts/enforcement/example.sh | checked |
 
 ## Claude Run Trace
 - goal: test progress lifecycle.
