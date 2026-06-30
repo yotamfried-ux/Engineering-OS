@@ -4,7 +4,7 @@ set -euo pipefail
 base="${1:-HEAD~1}"
 head="${2:-HEAD}"
 changed="$(git diff --name-only "$base" "$head")"
-plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' | while IFS= read -r p; do [ -f "$p" ] && printf '%s\n' "$p"; done || true)"
+plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' | while read -r p; do [ -f "$p" ] && echo "$p"; done || true)"
 code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
 knowledge="$(printf '%s\n' "$changed" | grep -E '^(lessons-learned/|failed-solutions/|templates/)' || true)"
 
@@ -14,21 +14,14 @@ if [ -n "$code" ] && [ -z "$plans" ]; then
 fi
 
 if [ -n "$code" ] && [ -n "$plans" ]; then
-  first_plan=0
-  first_code=0
-  idx=0
-  while IFS= read -r commit; do
+  first_plan=0; first_code=0; idx=0
+  while read -r commit; do
     idx=$((idx + 1))
     files="$(git diff-tree --no-commit-id --name-only -r "$commit")"
-    if [ "$first_plan" -eq 0 ] && printf '%s\n' "$files" | grep -q '^\.claude/plans/.*\.md$'; then
-      first_plan="$idx"
-    fi
-    code_files="$(printf '%s\n' "$files" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
-    if [ "$first_code" -eq 0 ] && [ -n "$code_files" ]; then
-      first_code="$idx"
-    fi
+    if [ "$first_plan" -eq 0 ] && echo "$files" | grep -q '^\.claude/plans/.*\.md$'; then first_plan="$idx"; fi
+    code_files="$(echo "$files" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
+    if [ "$first_code" -eq 0 ] && [ -n "$code_files" ]; then first_code="$idx"; fi
   done < <(git rev-list --reverse "$base..$head")
-
   if [ "$first_plan" -eq 0 ] || [ "$first_code" -eq 0 ] || [ "$first_code" -le "$first_plan" ]; then
     echo "ERROR_FOR_AGENT: Route Plan must be committed before the first code/config/test change, not in the same or later commit."
     exit 1
@@ -38,56 +31,21 @@ fi
 [ -n "$plans" ] || { echo "No changed plan files."; exit 0; }
 
 field_value() {
-  local plan="$1"
-  local field_re="$2"
-  awk -F'|' -v re="$field_re" '
-    NF > 1 {
-      for (i = 1; i < NF; i++) {
-        field = tolower($i)
-        gsub(/[*_`]/, "", field)
-        gsub(/^[ \t]+|[ \t]+$/, "", field)
-        if (field ~ re) {
-          value = $(i + 1)
-          gsub(/^[ \t]+|[ \t]+$/, "", value)
-          print value
-          exit
-        }
-      }
-    }
-  ' "$plan"
+  awk -F'|' -v re="$2" 'NF>1{for(i=1;i<NF;i++){f=tolower($i);gsub(/[*_`]/,"",f);gsub(/^[ \t]+|[ \t]+$/,"",f);if(f~re){v=$(i+1);gsub(/^[ \t]+|[ \t]+$/,"",v);print v;exit}}}' "$1"
 }
 
-has_heading() {
-  local plan="$1"
-  local heading="$2"
-  grep -qiE "^#{1,4}[[:space:]]+$heading([[:space:]]|$)" "$plan"
-}
+has_heading() { grep -qiE "^#{1,4}[[:space:]]+$2([[:space:]]|$)" "$1"; }
 
 section_body() {
-  local plan="$1"
-  local heading="$2"
-  awk -v heading="$heading" '
-    BEGIN { found=0 }
-    $0 ~ "^#{1,4}[[:space:]]+" heading "([[:space:]]|$)" { found=1; next }
-    found && $0 ~ "^#{1,4}[[:space:]]+" { exit }
-    found { print }
-  ' "$plan"
+  awk -v h="$2" 'BEGIN{f=0}$0~"^#{1,4}[[:space:]]+"h"([[:space:]]|$)"{f=1;next}f&&$0~"^#{1,4}[[:space:]]+"{exit}f{print}' "$1"
 }
 
-is_placeholder() {
-  local value
-  value="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g; s/^[[:space:]]+|[[:space:]]+$//g; s/[[:space:][:punct:]]+$//')"
-  [[ -z "$value" || "$value" =~ ^(todo|tbd|placeholder|unknown|later|fix[[:space:]]*later|to[[:space:]]*decide)$ ]]
+clean() {
+  printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g;s/^[[:space:]]+|[[:space:]]+$//g;s/[[:space:][:punct:]]+$//'
 }
 
-is_none_like() {
-  local value
-  value="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g; s/^[[:space:]]+|[[:space:]]+$//g; s/[[:space:][:punct:]]+$//')"
-  [[ "$value" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+skills|no[[:space:]]+template|required[[:space:]]+none)$ ]]
-}
-
-normalize_item() {
-  printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/<[^>]+>//g; s/`//g; s/^[[:space:]-*]+//; s/[[:space:][:punct:]]+$//; s/[^a-z0-9_-]+/-/g; s/^-+|-+$//g'
+norm_item() {
+  printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/<[^>]+>//g;s/`//g;s/^[[:space:]*-]+//;s/[[:space:][:punct:]]+$//;s/[^a-z0-9_-]+/-/g;s/^-+|-+$//g'
 }
 
 bad=0
@@ -99,16 +57,9 @@ for plan in $plans; do
   skills="$(field_value "$plan" '^skills$')"
   gates="$(field_value "$plan" '^validation gates$')"
 
-  for pair in \
-    "Task-router evidence::$task_router" \
-    "Workflow evidence::$workflow" \
-    "Templates::$templates" \
-    "Patterns::$patterns" \
-    "Skills::$skills" \
-    "Validation gates::$gates"; do
-    name="${pair%%::*}"
-    value="${pair#*::}"
-    if is_placeholder "$value"; then
+  for pair in "Task-router evidence::$task_router" "Workflow evidence::$workflow" "Templates::$templates" "Patterns::$patterns" "Skills::$skills" "Validation gates::$gates"; do
+    name="${pair%%::*}"; value="$(clean "${pair#*::}")"
+    if [[ -z "$value" || "$value" =~ ^(todo|tbd|placeholder|unknown|later|fix[[:space:]]*later|to[[:space:]]*decide)$ ]]; then
       echo "ERROR_FOR_AGENT: $plan has missing or placeholder $name."
       bad=1
     fi
@@ -118,8 +69,8 @@ for plan in $plans; do
     echo "ERROR_FOR_AGENT: $plan is missing ## Source of Truth Checks."
     bad=1
   else
-    source_count="$(section_body "$plan" 'Source[[:space:]]+of[[:space:]]+Truth[[:space:]]+Checks' | grep -Eci '\|[[:space:]]*[^|]+[[:space:]]*\|[[:space:]]*(checked|read|validated)[[:space:]]*\|' || true)"
-    if [ "$source_count" -lt 2 ]; then
+    count="$(section_body "$plan" 'Source[[:space:]]+of[[:space:]]+Truth[[:space:]]+Checks' | grep -Eci '\|[[:space:]]*[^|]+[[:space:]]*\|[[:space:]]*(checked|read|validated)[[:space:]]*\|' || true)"
+    if [ "$count" -lt 2 ]; then
       echo "ERROR_FOR_AGENT: $plan Source of Truth Checks must include at least two checked/read sources."
       bad=1
     fi
@@ -130,26 +81,26 @@ for plan in $plans; do
     bad=1
   fi
 
-  normalized_skills="$(printf '%s' "$skills" | tr '[:upper:]' '[:lower:]' | sed -E 's/[[:space:][:punct:]]+$//' | xargs)"
-  if [ -n "$normalized_skills" ] && ! is_none_like "$normalized_skills"; then
+  skills_clean="$(clean "$skills")"
+  if [[ -n "$skills_clean" && ! "$skills_clean" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+skills)$ ]]; then
     if ! has_heading "$plan" 'Skill[[:space:]]+Evidence'; then
       echo "ERROR_FOR_AGENT: $plan declares skills '$skills' but lacks ## Skill Evidence."
       bad=1
     else
-      skill_evidence="$(section_body "$plan" 'Skill[[:space:]]+Evidence' | tr '[:upper:]' '[:lower:]')"
-      while IFS= read -r raw_skill; do
-        skill_key="$(normalize_item "$raw_skill")"
-        [ -z "$skill_key" ] && continue
-        if ! printf '%s\n' "$skill_evidence" | grep -Fq -- "$skill_key"; then
-          echo "ERROR_FOR_AGENT: $plan declares skill '$raw_skill' but Skill Evidence does not mention it."
+      evidence="$(section_body "$plan" 'Skill[[:space:]]+Evidence' | tr '[:upper:]' '[:lower:]')"
+      while read -r raw; do
+        key="$(norm_item "$raw")"
+        [ -z "$key" ] && continue
+        if ! printf '%s\n' "$evidence" | grep -Fq -- "$key"; then
+          echo "ERROR_FOR_AGENT: $plan declares skill '$raw' but Skill Evidence does not mention it."
           bad=1
         fi
       done < <(printf '%s' "$skills" | tr ',;' '\n' | sed '/^[[:space:]]*$/d')
     fi
   fi
 
-  normalized_templates="$(printf '%s' "$templates" | tr '[:upper:]' '[:lower:]')"
-  if printf '%s' "$normalized_templates" | grep -qE '(gap|missing|none|no[[:space:]]+template|not[[:space:]]+available|too[[:space:]]+heavy)'; then
+  templates_clean="$(clean "$templates")"
+  if echo "$templates_clean" | grep -qE '(gap|missing|none|no[[:space:]]+template|not[[:space:]]+available|too[[:space:]]+heavy)'; then
     if [ -z "$knowledge" ] && ! has_heading "$plan" 'Template[[:space:]]+Gap[[:space:]]+Waiver'; then
       echo "ERROR_FOR_AGENT: $plan records a template gap but lacks changed learning/template artifact or ## Template Gap Waiver."
       bad=1
