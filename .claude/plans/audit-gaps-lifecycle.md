@@ -48,12 +48,12 @@
 
 | Source | Status |
 |---|---|
-| docs/operations/operational-readiness-audit.md | checked and refreshed |
+| docs/operations/operational-readiness-audit.md | checked |
 | core/hooks-policy.md | checked |
-| scripts/enforcement/coverage-required-gates.tsv | checked and updated |
-| docs/operations/known-gaps.tsv | added |
-| scripts/enforcement/check-known-gaps.sh | added |
-| scripts/enforcement/tests/test-known-gaps.sh | added |
+| scripts/enforcement/coverage-required-gates.tsv | checked |
+| docs/operations/known-gaps.tsv | checked |
+| scripts/enforcement/check-known-gaps.sh | checked |
+| scripts/enforcement/tests/test-known-gaps.sh | checked |
 
 ## Template Gap Waiver
 
@@ -64,7 +64,8 @@ reason: internal governance/audit enforcement change; no project template applie
 - goal: make operational-readiness gaps lifecycle-managed and refresh stale audit status after recent merges.
 - hypothesis: a known-gaps TSV manifest plus validator can force owner, risk, mitigation, test, and closure fields for every open gap.
 - connectors: github, notion fallback.
-- result: ready for PR CI validation.
+- repair loop: workflow-evidence-policy failed because Source of Truth status cells used non-canonical status text; this commit normalizes them to checked.
+- result: pending repaired CI.
 
 ## DoD
 
@@ -75,4 +76,5 @@ reason: internal governance/audit enforcement change; no project template applie
 - [x] Positive/negative/invalid/waiver simulations added.
 - [x] Simulation coverage row and required gate added.
 - [x] Audit refreshed to reflect recent merged gates without overclaiming full semantic readiness.
-- [x] Ready for PR CI validation.
+- [x] Workflow evidence repair applied after first CI failure.
+- [x] Ready for repaired PR CI validation.
