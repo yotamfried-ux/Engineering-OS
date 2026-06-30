@@ -36,6 +36,17 @@ section_body() { awk -v h="$2" 'BEGIN{f=0}$0~"^#{1,4}[[:space:]]+"h"([[:space:]]
 clean() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g;s/^[[:space:]]+|[[:space:]]+$//g;s/[[:space:][:punct:]]+$//'; }
 norm_item() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/<[^>]+>//g;s/`//g;s/^[[:space:]*-]+//;s/[[:space:][:punct:]]+$//;s/[^a-z0-9_./-]+/-/g;s/^-+|-+$//g'; }
 
+list_has_item() {
+  local list="$1" wanted="$2" key
+  wanted="$(norm_item "$wanted")"
+  while read -r raw || [ -n "$raw" ]; do
+    key="$(norm_item "$raw")"
+    [ -n "$key" ] || continue
+    [ "$key" = "$wanted" ] && return 0
+  done < <(printf '%s' "$list" | tr ',;' '\n')
+  return 1
+}
+
 source_matches_target() {
   local sources="$1"
   local targets="$2"
@@ -120,6 +131,31 @@ for plan in $plans; do
           bad=1
         fi
       done < <(printf '%s' "$skills" | tr ',;' '\n' | sed '/^[[:space:]]*$/d')
+    fi
+  fi
+
+  if [ -n "$code" ] && list_has_item "$skills" rtk; then
+    if has_heading "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Waiver'; then
+      waiver="$(section_body "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Waiver')"
+      if ! printf '%s\n' "$waiver" | tr '[:upper:]' '[:lower:]' | grep -q 'rtk'; then
+        echo "ERROR_FOR_AGENT: $plan RTK Usage Waiver must mention RTK."
+        bad=1
+      fi
+      if [ "$(printf '%s' "$waiver" | wc -c | tr -d ' ')" -lt 40 ]; then
+        echo "ERROR_FOR_AGENT: $plan RTK Usage Waiver must explain why RTK decision-impact evidence is not available."
+        bad=1
+      fi
+    elif ! has_heading "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Evidence'; then
+      echo "ERROR_FOR_AGENT: $plan declares rtk for code/config/test changes but lacks ## RTK Usage Evidence."
+      bad=1
+    else
+      rtk_evidence="$(section_body "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Evidence')"
+      for marker in source action result decision; do
+        if ! printf '%s\n' "$rtk_evidence" | grep -Eiq "(^|[^a-z])${marker}[[:space:]]*:"; then
+          echo "ERROR_FOR_AGENT: $plan RTK Usage Evidence must include ${marker}: evidence."
+          bad=1
+        fi
+      done
     fi
   fi
 
