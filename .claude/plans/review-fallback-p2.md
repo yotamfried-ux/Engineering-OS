@@ -29,12 +29,13 @@
 - source: github `.github/workflows/pr-policy.yml`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
 - action: inspected the current PR policy and review fallback gap.
 - result: github showed the PR policy only blocks draft pull requests and does not require review evidence or fallback evidence.
-- decision: add a PR body evidence gate that requires either external review evidence or review fallback evidence with concrete fields.
+- decision: added a PR body evidence gate that requires either external review evidence or review fallback evidence with concrete fields.
 - target: .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed before PR policy changes.
+- mid: PR policy review evidence gate was committed after implementation began.
 
 ## Source of Truth Checks
 
@@ -48,9 +49,11 @@
 
 - goal: close review fallback gap with deterministic PR evidence.
 - hypothesis: requiring structured review or fallback evidence in PR body prevents vague manual review when external review is unavailable.
+- result: PR policy now requires external review evidence or structured fallback evidence.
 
 ## DoD
 
 - [x] Route Plan created before enforcement changes.
 - [x] Current PR policy inspected.
 - [x] Known gaps and audit inspected.
+- [x] PR body review evidence gate committed.
