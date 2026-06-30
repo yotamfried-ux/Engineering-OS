@@ -36,7 +36,7 @@
 
 - start: plan committed before PR policy changes.
 - mid: PR policy review evidence gate was committed after implementation began.
-- pre-merge: this checkpoint was committed after the latest cleanup and documentation changes.
+- pre-merge: this checkpoint was committed after the latest cleanup.
 
 ## Source of Truth Checks
 
