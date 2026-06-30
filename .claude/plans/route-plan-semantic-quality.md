@@ -72,6 +72,11 @@ reason: internal governance validator change; no project template applies.
 - connectors: github, notion fallback.
 - result: ready for PR CI validation.
 
+## Review Evidence
+
+- plan-first commit: `004c2ad111cd764d899f555c8aa83286f350aa9e` created this Route Plan before enforcement code changes.
+- validation: later PR head passed `workflow-evidence-policy` and `plan-policy`, proving the plan-order gate accepts the final range.
+
 ## DoD
 
 - [x] Route Plan created before enforcement changes.
