@@ -6,10 +6,10 @@
 | Task-router evidence | read |
 | Workflow evidence | read |
 | Domain tags | progress, lifecycle, workflow-evidence |
-| Target paths | scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, scripts/enforcement/tests/test-workflow-evidence.sh, scripts/enforcement/tests/test-plan-quality.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, scripts/enforcement/tests/test-rtk-usage-evidence.sh, scripts/enforcement/tests/test-template-pattern-rating-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
+| Target paths | scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, scripts/enforcement/tests/test-workflow-evidence.sh, scripts/enforcement/tests/test-plan-quality.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, scripts/enforcement/tests/test-rtk-usage-evidence.sh, scripts/enforcement/tests/test-template-pattern-rating-evidence.sh, scripts/enforcement/simulation-coverage.d/rtk-usage-evidence.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
 | Templates | not required |
 | Patterns | governance validator pattern |
-| External systems/connectors | github, notion |
+| External systems/connectors | github |
 | Skills | superpowers, security-review |
 | Validation gates | enforcement-tests, workflow-evidence-policy, capability-evidence-policy, connector-evidence-policy, plan-policy, pr-policy |
 
@@ -24,22 +24,21 @@
 
 ## Connector Evidence
 
-- github: read workflow validator, progress tests, legacy workflow evidence tests, plan quality tests, RTK tests, template rating tests, known gaps, and audit files.
-- notion: unavailable; fallback plan file used.
+- github: read workflow validator, progress tests, legacy workflow tests, plan quality tests, RTK tests, template rating tests, simulation coverage, known gaps, and audit files.
 
 ## Connector Usage Evidence
 
-- source: github workflow evidence validator and all test fixtures that call it.
+- source: github workflow validator, test fixtures, and simulation coverage manifest.
 - action: inspected github fixtures after enforcement-tests failed.
-- result: github showed several legacy fixtures still used plan-before-code without ordered lifecycle updates.
-- decision: kept the stronger ordered lifecycle gate and aligned the old fixtures to start, mid, and pre-merge plan updates.
-- target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, scripts/enforcement/tests/test-workflow-evidence.sh, scripts/enforcement/tests/test-plan-quality.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, scripts/enforcement/tests/test-rtk-usage-evidence.sh, scripts/enforcement/tests/test-template-pattern-rating-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
+- result: github showed legacy fixtures still used plan-before-code without ordered lifecycle updates, and one coverage row needed alignment with the repaired tests.
+- decision: kept ordered lifecycle enforcement, aligned legacy fixtures, and aligned coverage metadata for the repaired test set.
+- target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, scripts/enforcement/tests/test-workflow-evidence.sh, scripts/enforcement/tests/test-plan-quality.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, scripts/enforcement/tests/test-rtk-usage-evidence.sh, scripts/enforcement/tests/test-template-pattern-rating-evidence.sh, scripts/enforcement/simulation-coverage.d/rtk-usage-evidence.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
 - start: plan existed before validator changes.
 - mid: validator and first progress fixtures were committed after implementation began.
-- pre-merge: legacy fixture repairs were committed after CI exposed them, then this plan update recorded final progress evidence after the last test change.
+- pre-merge: fixture and coverage repairs were committed after CI exposed them, then this plan update recorded final progress evidence after the last test or coverage change.
 
 ## Skill Evidence
 
@@ -64,19 +63,16 @@
 | scripts/enforcement/tests/test-plan-semantic-quality.sh | checked |
 | scripts/enforcement/tests/test-rtk-usage-evidence.sh | checked |
 | scripts/enforcement/tests/test-template-pattern-rating-evidence.sh | checked |
+| scripts/enforcement/simulation-coverage.d/rtk-usage-evidence.tsv | checked |
 | docs/operations/known-gaps.tsv | checked |
 | docs/operations/operational-readiness-audit.md | checked |
-
-## Template Gap Waiver
-
-reason: internal governance validator change; no project template applies.
 
 ## Claude Run Trace
 
 - goal: close progress lifecycle timing gap.
 - hypothesis: commit order proves start, mid, and pre-merge timing better than final text checks.
-- experiment: added ordered progress fixtures and repaired legacy fixtures that called the workflow evidence checker.
-- result: validator, tests, known-gaps closure, audit update, fixture repair, and final plan checkpoint are staged in ordered commits.
+- experiment: added ordered progress fixtures, repaired legacy fixtures that called the workflow evidence checker, and aligned simulation coverage metadata.
+- result: validator, tests, known-gaps closure, audit update, fixture repair, coverage repair, and final plan checkpoint are staged in ordered commits.
 
 ## DoD
 
@@ -84,8 +80,9 @@ reason: internal governance validator change; no project template applies.
 - [x] Validator update committed.
 - [x] Progress regression fixtures committed.
 - [x] Legacy workflow, plan quality, semantic quality, RTK, and template rating fixtures aligned with ordered lifecycle enforcement.
+- [x] Simulation coverage metadata aligned with the repaired test set.
 - [x] Known-gaps and audit updated.
-- [x] Final progress checkpoint committed after implementation, docs, and fixture repair updates.
+- [x] Final progress checkpoint committed after implementation, docs, fixture, and coverage updates.
 
 ## Live External Gates Before Merge
 
