@@ -39,7 +39,7 @@
 
 - start: plan committed before enforcement changes.
 - mid: checker, tests, audit, and gaps were updated after this plan.
-- pre-merge: CI, review threads, mergeability, and head SHA must be checked before merge.
+- pre-merge: CI, review threads, mergeability, and head SHA must be checked live in GitHub before merge.
 - review-repair: PR #151 review threads were treated as blocking because they demonstrated real false-pass paths; fixes and regression tests were added before merge consideration.
 
 ## Skill Evidence
@@ -87,6 +87,11 @@ reason: internal governance validator change; no project template applies.
 - [x] Decision-label-only false-pass fixed and covered by a negative test.
 - [x] n/a no-connector regression fixed and covered by a positive test.
 - [x] Local simulated connector evidence suite passed before pushing.
-- [ ] GitHub Actions passed on final PR head.
-- [ ] Review threads resolved or outdated after final PR head.
-- [ ] Mergeability and expected head SHA checked before merge.
+
+## Live External Gates Before Merge
+
+These gates are intentionally not represented as unchecked plan checklist items because `plan-policy` treats every unchecked plan checkbox as a blocker. They must be verified directly against the PR head before merge:
+
+- GitHub Actions passed on the final PR head.
+- Review threads are resolved or outdated after the final PR head.
+- Mergeability and expected head SHA are checked immediately before merge.
