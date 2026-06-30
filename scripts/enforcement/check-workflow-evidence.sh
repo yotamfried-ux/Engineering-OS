@@ -86,9 +86,23 @@ for plan in $plans; do
     fi
   fi
 
-  if [ -n "$code" ] && ! has_heading "$plan" 'Claude[[:space:]]+Run[[:space:]]+Trace'; then
-    echo "ERROR_FOR_AGENT: $plan changes code/config/tests but lacks ## Claude Run Trace."
-    bad=1
+  if [ -n "$code" ]; then
+    if ! has_heading "$plan" 'Claude[[:space:]]+Run[[:space:]]+Trace'; then
+      echo "ERROR_FOR_AGENT: $plan changes code/config/tests but lacks ## Claude Run Trace."
+      bad=1
+    fi
+    if ! has_heading "$plan" 'Progress[[:space:]]+Lifecycle[[:space:]]+Evidence'; then
+      echo "ERROR_FOR_AGENT: $plan changes code/config/tests but lacks ## Progress Lifecycle Evidence."
+      bad=1
+    else
+      progress="$(section_body "$plan" 'Progress[[:space:]]+Lifecycle[[:space:]]+Evidence' | tr '[:upper:]' '[:lower:]')"
+      for marker in start mid pre-merge; do
+        if ! printf '%s\n' "$progress" | grep -Eq "(^|[^a-z])${marker}([^a-z]|$)"; then
+          echo "ERROR_FOR_AGENT: $plan Progress Lifecycle Evidence must include ${marker} checkpoint evidence."
+          bad=1
+        fi
+      done
+    fi
   fi
 
   skills_clean="$(clean "$skills")"
