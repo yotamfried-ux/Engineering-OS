@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+coverage-map-hardening	validation-governance	scripts/enforcement/check-simulation-coverage.sh	scripts/enforcement/tests/test-required-gates-map.sh	covered:required_map_ok	covered:required_map_gap	covered:required_map_dup	covered:required_map_waiver	Coverage map hardening covers data-driven required gates manifest behavior.
