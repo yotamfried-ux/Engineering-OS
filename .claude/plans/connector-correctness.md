@@ -6,7 +6,7 @@
 | Task-router evidence | read |
 | Workflow evidence | read |
 | Domain tags | governance, connectors, source-of-truth, evidence, tests |
-| Target paths | scripts/enforcement/check-required-connectors.sh, scripts/enforcement/tests/test-required-connectors.sh, docs/operations/operational-readiness-audit.md |
+| Target paths | scripts/enforcement/check-connector-evidence.sh, scripts/enforcement/tests/test-connector-evidence.sh, docs/operations/operational-readiness-audit.md |
 | Templates | not required |
 | Patterns | shell test pattern |
 | External systems/connectors | github, notion |
@@ -29,13 +29,13 @@
 
 ## Connector Usage Evidence
 
-- github: read `scripts/enforcement/check-required-connectors.sh` and `scripts/enforcement/tests/test-required-connectors.sh`; used that evidence to update the connector-selection gate and its simulations.
+- github: read `scripts/enforcement/check-connector-evidence.sh` and `scripts/enforcement/tests/test-connector-evidence.sh`; used that evidence to move usage evidence enforcement into the plan connector evidence gate.
 - notion: unavailable; used this plan as the documented fallback progress tracker and kept the Notion requirement represented in the plan.
 
 ## Notion Progress Validation
 
 - Planning checkpoint: this Route Plan records the scope before code changes.
-- Mid-work checkpoint: CI/simulation failures will be used to update this loop before merge.
+- Mid-work checkpoint: CI/simulation failures were used to update this loop before merge.
 - Pre-merge checkpoint: final CI, review threads, and expected SHA will be checked before merge.
 
 ## Skill Evidence
@@ -50,7 +50,7 @@
 | CLAUDE.md | checked |
 | core/task-router.md | checked |
 | core/workflow.md | checked |
-| scripts/enforcement/check-required-connectors.sh | checked |
+| scripts/enforcement/check-connector-evidence.sh | checked |
 | docs/operations/operational-readiness-audit.md | checked |
 
 ## Template Gap Waiver
@@ -60,14 +60,14 @@ reason: this is an internal governance gate calibration and no project template 
 ## Progress Lifecycle Evidence
 
 - start: plan created before changing code.
-- mid: CI/simulation loop will validate the checker and tests.
+- mid: CI/simulation loop validated the checker and tests.
 - pre-merge: final PR checks, review threads, expected head SHA, and CI will be verified before merge.
 
 ## Claude Run Trace
 
 - goal: require evidence that selected connectors influenced the plan or implementation.
-- hypothesis: required connector selection is the correct enforcement point because it already maps task/domain/path to source-of-truth connectors.
+- hypothesis: connector evidence policy is the correct enforcement point for plan-level usage evidence because it already validates connector declaration evidence.
 - connectors: github, notion fallback.
-- steps: read connector gate and tests, add connector usage evidence requirement, update simulations, update audit, run CI, self-review, merge.
+- steps: read connector gates and tests, add connector usage evidence requirement, update simulations, update audit, run CI, self-review, merge.
 - evidence: CI.
 - result: pending.
