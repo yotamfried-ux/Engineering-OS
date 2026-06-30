@@ -1,83 +1,153 @@
 #!/usr/bin/env bash
 set -euo pipefail
+python3 - "$@" <<'PY'
+import os, re, subprocess, sys
+base = sys.argv[1] if len(sys.argv) > 1 else 'HEAD~1'
+head = sys.argv[2] if len(sys.argv) > 2 else 'HEAD'
 
-base="${1:-HEAD~1}"
-head="${2:-HEAD}"
-changed="$(git diff --name-only "$base" "$head")"
-plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' || true)"
-code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
+def sh(*args):
+    return subprocess.check_output(args, text=True).splitlines()
 
-if [ -n "$code" ] && [ -z "$plans" ]; then
-  echo "ERROR_FOR_AGENT: code/config/script files changed without a changed .claude/plans/*.md Route Plan."
-  exit 1
-fi
+def clean(s):
+    return re.sub(r'[`*_]', '', s or '').strip()
 
-[ -n "$plans" ] || { echo "No changed plan files."; exit 0; }
+def norm(s):
+    return re.sub(r'[^a-z0-9]+', ' ', clean(s).lower()).strip()
 
-section_text() {
-  local file="$1" heading_re="$2"
-  awk -v re="$heading_re" '
-    BEGIN { found=0 }
-    /^#{1,4}[[:space:]]+/ {
-      line=tolower($0)
-      if (line ~ tolower(re)) { found=1; next }
-      if (found) exit
+def split_items(s):
+    out=[]
+    for part in re.split(r'[,;]|\band\b', s or '', flags=re.I):
+        item=clean(part).strip(' .:-')
+        if item: out.append(item)
+    return out
+
+def field(text, name_re):
+    for line in text.splitlines():
+        if '|' not in line: continue
+        cells=[clean(c) for c in line.split('|')]
+        for i,c in enumerate(cells[:-1]):
+            if re.fullmatch(name_re, c, re.I): return cells[i+1].strip()
+    m=re.search(name_re+r'\s*[:=-]\s*(.+)$', text, re.I|re.M)
+    return m.group(1).strip() if m else ''
+
+def section(text, title_re):
+    lines=text.splitlines(); out=[]; on=False
+    for line in lines:
+        if re.match(r'^#{1,4}\s+'+title_re+r'(\s|$)', line, re.I): on=True; continue
+        if on and re.match(r'^#{1,4}\s+', line): break
+        if on: out.append(line)
+    return '\n'.join(out)
+
+def has_heading(text, title_re):
+    return re.search(r'^#{1,4}\s+'+title_re+r'(\s|$)', text, re.I|re.M) is not None
+
+def noneish(value):
+    v = norm(value) or ''
+    return v in {
+        'none', 'n a', 'na', 'not required',
+        'no external connectors', 'no connectors'
     }
-    found { print }
-  ' "$file" 2>/dev/null || true
-}
 
-bad=0
-for plan in $plans; do
-  line="$(grep -iE 'external[[:space:]]*(systems/connectors|systems|connectors)' "$plan" | head -n 1 || true)"
-  if [ -z "$line" ]; then
-    echo "ERROR_FOR_AGENT: $plan is missing External systems/connectors."
-    bad=1
-    continue
-  fi
-  normalized_line="$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]' | tr -d '*_')"
-  table_value="$(printf '%s' "$normalized_line" | awk -F'|' '
-    NF > 1 {
-      for (i = 1; i < NF; i++) {
-        field = $i
-        gsub(/^[ \t]+|[ \t]+$/, "", field)
-        if (field ~ /^external[ \t]*(systems\/connectors|systems|connectors)$/) {
-          value = $(i + 1)
-          gsub(/^[ \t]+|[ \t]+$/, "", value)
-          print "FOUND:" value
-          exit
-        }
-      }
-    }
-  ')"
-  if [[ "$table_value" == FOUND:* ]]; then
-    value="${table_value#FOUND:}"
-  else
-    value="$(printf '%s' "$normalized_line" | sed -E 's/.*external[[:space:]]*(systems\/connectors|systems|connectors)[[:space:]]*[:=-][[:space:]]*//' | xargs)"
-  fi
-  value="$(printf '%s' "$value" | sed -E 's/[[:space:][:punct:]]+$//' | xargs)"
-  if [ -z "$value" ]; then
-    echo "ERROR_FOR_AGENT: $plan has an empty External systems/connectors value."
-    bad=1
-    continue
-  fi
-  if [[ ! "$value" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+external[[:space:]]+connectors|no[[:space:]]+connectors)$ ]]; then
-    if ! grep -qiE '^#{1,4}[[:space:]]+Connector[[:space:]]+Evidence([[:space:]]|$)' "$plan"; then
-      echo "ERROR_FOR_AGENT: $plan declares external connector(s) '$value' but lacks ## Connector Evidence."
-      bad=1
-    fi
-    if ! grep -qiE '^#{1,4}[[:space:]]+Connector[[:space:]]+Usage[[:space:]]+Evidence([[:space:]]|$)' "$plan"; then
-      echo "ERROR_FOR_AGENT: $plan declares external connector(s) '$value' but lacks ## Connector Usage Evidence."
-      bad=1
-    else
-      usage="$(section_text "$plan" 'connector[[:space:]]+usage[[:space:]]+evidence')"
-      if ! printf '%s\n' "$usage" | grep -qiE 'used|influenced|validated|checked|read|queried|result|decision|evidence|source'; then
-        echo "ERROR_FOR_AGENT: $plan Connector Usage Evidence must explain how connector output was used."
-        bad=1
-      fi
-    fi
-  fi
-done
+def mentioned(needle, hay):
+    n=norm(needle); h=norm(hay)
+    if not n: return False
+    return re.search(r'(?<![a-z0-9])'+re.escape(n)+r'(?![a-z0-9])', h) is not None
 
-[ "$bad" -eq 0 ] || exit 1
-echo "Connector route plan checks passed."
+def connector_contexts(conn, text):
+    lines = text.splitlines()
+    contexts = []
+    for idx, line in enumerate(lines):
+        if not mentioned(conn, line):
+            continue
+        block = [line]
+        base_indent = len(line) - len(line.lstrip())
+        for nxt in lines[idx + 1:]:
+            if not nxt.strip():
+                break
+            if re.match(r'^#{1,4}\s+', nxt):
+                break
+            indent = len(nxt) - len(nxt.lstrip())
+            starts_new_peer_item = re.match(r'^\s*[-*]\s+\S', nxt) and indent <= base_indent
+            if starts_new_peer_item and not mentioned(conn, nxt):
+                break
+            if indent > base_indent or mentioned(conn, nxt):
+                block.append(nxt)
+                continue
+            break
+        contexts.append('\n'.join(block))
+    return contexts
+
+def unavailable(conn, evidence, usage):
+    marker = re.compile(r'\b(unavailable|not available|fallback|waived|waiver|not used)\b', re.I)
+    for text in (evidence, usage):
+        for ctx in connector_contexts(conn, text):
+            if marker.search(ctx):
+                return True
+    return False
+
+def label_values(text, key):
+    pat = re.compile(r'^\s*(?:[-*]\s*)?'+re.escape(key)+r'\s*:\s*(\S.*)$', re.I)
+    values=[]
+    for line in text.splitlines():
+        m = pat.match(line)
+        if m:
+            values.append(m.group(1).strip())
+    return values
+
+def target_matches(target_text, targets):
+    low=target_text.lower()
+    for t in targets:
+        k=t.lower().strip()
+        if not k: continue
+        d=k.rsplit('/',1)[0] if '/' in k else k
+        b=k.rsplit('/',1)[-1]
+        if k in low or d in low or b in low: return True
+    return False
+
+changed=sh('git','diff','--name-only',base,head)
+plans=[p for p in changed if re.match(r'^\.claude/plans/.*\.md$', p) and os.path.exists(p)]
+code=[p for p in changed if p and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE', p)]
+if code and not plans:
+    print('ERROR_FOR_AGENT: code/config/script files changed without a changed .claude/plans/*.md Route Plan.'); sys.exit(1)
+if not plans:
+    print('No changed plan files.'); sys.exit(0)
+
+bad=False
+for plan in plans:
+    text=open(plan,encoding='utf-8').read()
+    value=field(text, r'external\s*(systems/connectors|systems|connectors)')
+    if not value:
+        print(f'ERROR_FOR_AGENT: {plan} is missing External systems/connectors.'); bad=True; continue
+    if noneish(value): continue
+    evidence=section(text, r'Connector\s+Evidence')
+    usage=section(text, r'Connector\s+Usage\s+Evidence')
+    if not has_heading(text, r'Connector\s+Evidence'):
+        print(f"ERROR_FOR_AGENT: {plan} declares external connector(s) '{value}' but lacks ## Connector Evidence."); bad=True
+    if not has_heading(text, r'Connector\s+Usage\s+Evidence'):
+        print(f"ERROR_FOR_AGENT: {plan} declares external connector(s) '{value}' but lacks ## Connector Usage Evidence."); bad=True; continue
+    active=[]
+    for conn in split_items(value):
+        if unavailable(conn, evidence, usage):
+            continue
+        active.append(conn)
+        if not mentioned(conn, evidence):
+            print(f'ERROR_FOR_AGENT: {plan} Connector Evidence must mention declared connector {conn}.'); bad=True
+        if not any(mentioned(conn, val) for key in ['source','action','result','decision'] for val in label_values(usage, key)):
+            print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must mention declared connector {conn} in source/action/result/decision evidence.'); bad=True
+    if active:
+        values_by_key={key: label_values(usage, key) for key in ['source','action','result','decision']}
+        for key, vals in values_by_key.items():
+            if not vals:
+                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must include non-empty {key}: evidence.'); bad=True
+        decision_text='\n'.join(values_by_key.get('decision', []))
+        if not decision_text or not re.search(r'\b(chose|selected|changed|limited|implemented|updated|kept|blocked)\b', decision_text, re.I):
+            print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must show decision impact, not only that data was read.'); bad=True
+        if code:
+            target_vals=label_values(usage, 'target')
+            if not target_vals:
+                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must include non-empty target: evidence for code/config/script changes.'); bad=True
+            elif not target_matches('\n'.join(target_vals), code):
+                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence target must reference a changed target path, directory, or filename.'); bad=True
+if bad: sys.exit(1)
+print('Connector route plan checks passed.')
+PY
