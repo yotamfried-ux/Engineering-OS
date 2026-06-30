@@ -56,10 +56,13 @@ def list_has(s,w): return norm(w) in [norm(x) for x in split_items(s)]
 def has_asset(s): return re.search(r'(^|\s)(templates|patterns)/\S+', s or '') is not None
 def source_matches(src, targets):
     low=src.lower()
-    if re.search(r'CLAUDE\.md|core/task-router\.md|core/workflow\.md', src): return True
     for t in split_items(targets):
-        k=norm(t); d=k.rsplit('/',1)[0] if '/' in k else k; b=k.rsplit('/',1)[-1]
-        if k and (k in low or d in low or b in low): return True
+        k=norm(t)
+        if not k: continue
+        d=k.rsplit('/',1)[0] if '/' in k else k
+        b=k.rsplit('/',1)[-1]
+        if k in low or d in low or b in low: return True
+        if (k.startswith('core/') or k == 'claude.md') and re.search(r'claude\.md|core/task-router\.md|core/workflow\.md', low): return True
     return False
 bad=False
 for plan in plans:
