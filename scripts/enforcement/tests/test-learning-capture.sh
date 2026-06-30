@@ -124,6 +124,9 @@ scripts/enforcement/tests/test-learning-capture.sh
 Verified Lesson
 
 ## Prevented Future Issues: 0
+
+## Prevention/Enforcement Update
+Added or kept a regression/enforcement check that prevents this class of issue.
 EOF
   git add lessons-learned/bugs/payment-regression.md
 }
