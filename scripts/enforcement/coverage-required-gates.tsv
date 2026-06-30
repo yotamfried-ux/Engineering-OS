@@ -18,4 +18,5 @@ documentation-hygiene	docs-governance	active	Documentation ownership hygiene gat
 semantic-cleanup	cleanup-governance	active	Semantic cleanup gate must remain covered.
 coverage-map-hardening	validation-governance	active	Required-gates manifest enforcement must cover itself.
 known-gaps-lifecycle	ops-readiness	active	Known gaps lifecycle manifest must remain covered.
-template-pattern-ratings	reuse-governance	active	Template and pattern rating evidence must remain covered.
+template-pattern-ratings	reuse-governance	active	Template and pattern ratings manifest must remain covered.
+template-pattern-rating-evidence	reuse-governance	active	Template and pattern rating evidence must remain covered.
