@@ -49,7 +49,7 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Capability registry | Partially enforced | Gate: capability report and capability evidence policy. Owner: capability-governance. Evidence: capability-evidence-policy plus capability report generator. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
 | Learning schema | Enforced | Gate: `enforce-learning.sh`. Owner: learning-governance. Evidence: learning enforcement tests. | Semantic lesson quality still needs review. |
 | Learning reuse | Enforced | Gate: Route Plan lesson reuse gate. Owner: learning-governance. Evidence: learning reuse checks. | Relevance is path/tag based, not deep semantic code understanding. |
-| Learning closure after bug/debug work | Partially enforced | Gate: learning capture gates. Owner: learning-governance. Evidence: learning capture tests plus manual incident review. | Full closure package still needs stricter proof: root cause, failed-solution when applicable, prevention update or waiver. |
+| Learning closure after bug/debug work | Partially enforced | Gate: `enforce-learning-capture.sh`. Owner: learning-governance. Evidence: learning capture tests and learning closure marker tests. | Full closure now requires root cause, lesson, failed-solution when staged, and prevention/enforcement update or waiver; deeper semantic quality still needs review. |
 | Claude run trace / experiment log | Partially enforced | Gate: workflow/connector evidence policies. Owner: trace-governance. Evidence: workflow-evidence-policy and connector-evidence-policy. | Not all significant agent runs are forced yet. |
 | Positive/negative simulations | Partially enforced | Gate: enforcement-tests suite. Owner: validation-governance. Evidence: `scripts/enforcement/tests/test-*.sh`. | Every policy row does not yet have explicit positive, negative, invalid, and waiver simulations. |
 | Tests/lint before commit | Partially enforced | Gate: `enforce-tests.sh`. Owner: validation-governance. Evidence: pre-commit and CI enforcement-tests. | Missing tools can warn rather than fully fail in all ecosystems. |
@@ -78,7 +78,7 @@ Anything merely documented but silently skippable is not operationally ready.
 1. **Coverage map hardening** — expand the enforcement coverage inventory so every policy row has a named gate, owner, and CI-verified simulation.
 2. **RTK runtime hardening** — extend RTK checks from availability and hook registration into deeper semantic use evidence where reliable signals become available.
 3. **Route Plan quality gate** — extend structural and target/source evidence checks into deeper semantic quality checks as reliable signals become available.
-4. **Learning closure gate** — require root cause plus lesson plus failed-solution when applicable plus prevention update or waiver.
+4. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
 5. **Progress lifecycle** — require start/mid/pre-merge progress validation evidence for non-trivial work.
 6. **Connector correctness** — verify the right connector was selected and that returned evidence influenced the plan or implementation.
 7. **Simulation completeness** — every new gate needs positive, negative, invalid, and waiver tests.
@@ -88,4 +88,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current PR scope
 
-This PR addresses Route Plan quality by requiring source-of-truth checks to relate to concrete target paths or canonical routing/workflow sources.
+This PR addresses Learning Closure Gate by requiring prevention/enforcement update or waiver evidence in staged bug/debug/incident lessons.
