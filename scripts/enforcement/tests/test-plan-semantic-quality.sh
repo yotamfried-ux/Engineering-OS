@@ -7,8 +7,7 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 make_repo() {
-  local name="$1"
-  local plan_body="$2"
+  local name="$1" plan_body="$2"
   mkdir -p "$TMP/$name"
   cd "$TMP/$name"
   git init -q
@@ -30,9 +29,7 @@ make_repo() {
 }
 
 assert_fail() {
-  local label="$1"
-  local plan="$2"
-  local expected="$3"
+  local label="$1" plan="$2" expected="$3"
   make_repo "$label" "$plan"
   if bash "$CHECK" "$base" "$head" >"$TMP/$label.out" 2>&1; then
     echo "expected failure: $label"
@@ -42,8 +39,7 @@ assert_fail() {
 }
 
 assert_pass() {
-  local label="$1"
-  local plan="$2"
+  local label="$1" plan="$2"
   make_repo "$label" "$plan"
   bash "$CHECK" "$base" "$head"
 }
@@ -65,6 +61,12 @@ reason: no template applies.
 
 ## Skill Evidence
 - superpowers
+
+## Progress Lifecycle Evidence
+
+- start: plan created before code.
+- mid: validation ran.
+- pre-merge: final checks verified.
 
 ## Claude Run Trace
 - goal: test semantic source relevance.
