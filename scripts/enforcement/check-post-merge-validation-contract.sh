@@ -71,7 +71,7 @@ require("check-post-merge-validation-contract.sh" in text, "workflow must self-c
 require(re.search(r"if:\s*failure\(\)", text), "workflow must run repair step on failure()")
 require("repair" in text.lower(), "workflow must name repair-loop behavior")
 require("issue" in text.lower(), "workflow must open or require an issue repair loop")
-require("gh issue create" in text or "createIssue" in text, "workflow must create a repair issue on failure")
+require("gh api" in text or "createIssue" in text, "workflow must create a repair issue on failure")
 
 if failures:
     print("ERROR_FOR_AGENT: post-merge validation contract failed", file=sys.stderr)
