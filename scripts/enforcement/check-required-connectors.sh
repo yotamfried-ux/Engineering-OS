@@ -93,6 +93,14 @@ valid_connector_waiver() {
   printf '%s\n' "$body" | grep -qiE 'reason|because|fallback|unavailable|availability|manual|unsupported|environment'
 }
 
+connector_usage_mentions() {
+  local conn="$1" usage="$2"
+  local key
+  key="$(canon_key "$conn")"
+  printf '%s\n' "$usage" | tr '[:upper:]' '[:lower:]' | grep -Fq -- "$key" || return 1
+  printf '%s\n' "$usage" | grep -qiE 'used|influenced|validated|checked|read|queried|result|decision|evidence|fallback|unavailable|source'
+}
+
 task="$(field_value "$PLAN" '^task class$|^task-class$|^type$')"
 tags="$(field_value "$PLAN" '^domain tags$|^domains$|^tags$')"
 connectors="$(field_value "$PLAN" '^external systems/connectors$|^external systems$|^external connectors$|^connectors$')"
@@ -163,6 +171,22 @@ if contains_connector notion "$connectors"; then
     echo "notion progress validation missing: Notion must be updated and re-validated during non-trivial work." >&2
     exit 1
   }
+fi
+
+if ! has_heading "$PLAN" 'Connector[[:space:]]+Usage[[:space:]]+Evidence'; then
+  echo "connector usage evidence missing: add ## Connector Usage Evidence explaining how each required connector influenced the plan or implementation." >&2
+  exit 1
+fi
+
+usage="$(section_text "$PLAN" 'connector[[:space:]]+usage[[:space:]]+evidence')"
+usage_missing=""
+for conn in $required; do
+  connector_usage_mentions "$conn" "$usage" || usage_missing="${usage_missing}${conn} "
+done
+
+if [ -n "$usage_missing" ]; then
+  echo "connector usage evidence incomplete for: ${usage_missing}. Explain source/action/result or fallback for each connector." >&2
+  exit 1
 fi
 
 echo "required connector checks passed"
