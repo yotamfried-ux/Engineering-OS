@@ -16,8 +16,8 @@ git commit -qm initial
 BASE="$(git rev-parse HEAD)"
 
 reset_workspace() { mkdir -p .claude/plans src; }
-expect_pass() { local name="$1" head="$2"; if ! "$CHECKER" "$BASE" "$head"; then echo "expected $name to pass"; exit 1; fi; echo "ok: $name"; }
-expect_fail() { local name="$1" head="$2"; if "$CHECKER" "$BASE" "$head"; then echo "expected $name to fail"; exit 1; fi; echo "ok: $name"; }
+expect_pass() { local name="$1" head="$2"; if ! bash "$CHECKER" "$BASE" "$head"; then echo "expected $name to pass"; exit 1; fi; echo "ok: $name"; }
+expect_fail() { local name="$1" head="$2"; if bash "$CHECKER" "$BASE" "$head"; then echo "expected $name to fail"; exit 1; fi; echo "ok: $name"; }
 
 write_rtk_plan() {
   local path="$1"
