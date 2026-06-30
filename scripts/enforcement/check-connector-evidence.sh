@@ -42,21 +42,60 @@ def has_heading(text, title_re):
     return re.search(r'^#{1,4}\s+'+title_re+r'(\s|$)', text, re.I|re.M) is not None
 
 def noneish(value):
-    return re.fullmatch(r'(none|n/a|na|not\s+required|no\s+external\s+connectors|no\s+connectors)', norm(value) or '', re.I) is not None
+    v = norm(value) or ''
+    return v in {
+        'none', 'n a', 'na', 'not required',
+        'no external connectors', 'no connectors'
+    }
 
 def mentioned(needle, hay):
     n=norm(needle); h=norm(hay)
     if not n: return False
-    first=n.split()[0]
-    return n in h or (len(first) >= 4 and re.search(r'\b'+re.escape(first)+r'\b', h)) is not None
+    return re.search(r'(?<![a-z0-9])'+re.escape(n)+r'(?![a-z0-9])', h) is not None
+
+def connector_contexts(conn, text):
+    lines = text.splitlines()
+    contexts = []
+    for idx, line in enumerate(lines):
+        if not mentioned(conn, line):
+            continue
+        block = [line]
+        base_indent = len(line) - len(line.lstrip())
+        for nxt in lines[idx + 1:]:
+            if not nxt.strip():
+                break
+            if re.match(r'^#{1,4}\s+', nxt):
+                break
+            indent = len(nxt) - len(nxt.lstrip())
+            starts_new_peer_item = re.match(r'^\s*[-*]\s+\S', nxt) and indent <= base_indent
+            if starts_new_peer_item and not mentioned(conn, nxt):
+                break
+            if indent > base_indent or mentioned(conn, nxt):
+                block.append(nxt)
+                continue
+            break
+        contexts.append('\n'.join(block))
+    return contexts
 
 def unavailable(conn, evidence, usage):
-    blob='\n'.join([evidence, usage]).lower()
-    if not mentioned(conn, blob): return False
-    return re.search(r'\b(unavailable|not available|fallback|waived|waiver|not used)\b', blob, re.I) is not None
+    marker = re.compile(r'\b(unavailable|not available|fallback|waived|waiver|not used)\b', re.I)
+    for text in (evidence, usage):
+        for ctx in connector_contexts(conn, text):
+            if marker.search(ctx):
+                return True
+    return False
 
-def target_matches(usage, targets):
-    low=usage.lower()
+def label_values(text, key):
+    pat = re.compile(r'^\s*(?:[-*]\s*)?'+re.escape(key)+r'\s*:\s*(\S.*)$', re.I)
+    values=[]
+    for line in text.splitlines():
+        m = pat.match(line)
+        if m:
+            values.append(m.group(1).strip())
+    return values
+
+def target_matches(target_text, targets):
+    low=target_text.lower()
     for t in targets:
         k=t.lower().strip()
         if not k: continue
@@ -93,19 +132,22 @@ for plan in plans:
         active.append(conn)
         if not mentioned(conn, evidence):
             print(f'ERROR_FOR_AGENT: {plan} Connector Evidence must mention declared connector {conn}.'); bad=True
-        if not mentioned(conn, usage):
-            print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must mention declared connector {conn}.'); bad=True
+        if not any(mentioned(conn, val) for key in ['source','action','result','decision'] for val in label_values(usage, key)):
+            print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must mention declared connector {conn} in source/action/result/decision evidence.'); bad=True
     if active:
-        for key in ['source','action','result','decision']:
-            if not re.search(r'^\s*([-*]\s*)?'+key+r'\s*:', usage, re.I|re.M):
-                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must include {key}: evidence.'); bad=True
-        if code:
-            if not re.search(r'^\s*([-*]\s*)?target\s*:', usage, re.I|re.M):
-                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must include target: evidence for code/config/script changes.'); bad=True
-            elif not target_matches(usage, code):
-                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence target must reference a changed target path, directory, or filename.'); bad=True
-        if not re.search(r'\b(decision|chose|selected|changed|limited|implemented|updated|kept|blocked)\b', usage, re.I):
+        values_by_key={key: label_values(usage, key) for key in ['source','action','result','decision']}
+        for key, vals in values_by_key.items():
+            if not vals:
+                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must include non-empty {key}: evidence.'); bad=True
+        decision_text='\n'.join(values_by_key.get('decision', []))
+        if not decision_text or not re.search(r'\b(chose|selected|changed|limited|implemented|updated|kept|blocked)\b', decision_text, re.I):
             print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must show decision impact, not only that data was read.'); bad=True
+        if code:
+            target_vals=label_values(usage, 'target')
+            if not target_vals:
+                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must include non-empty target: evidence for code/config/script changes.'); bad=True
+            elif not target_matches('\n'.join(target_vals), code):
+                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence target must reference a changed target path, directory, or filename.'); bad=True
 if bad: sys.exit(1)
 print('Connector route plan checks passed.')
 PY
