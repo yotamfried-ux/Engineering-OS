@@ -42,3 +42,16 @@
 | .github/workflows/workflow-evidence-policy.yml | checked |
 | scripts/enforcement/check-workflow-evidence.sh | checked |
 | docs/operations/operational-readiness-audit.md | checked |
+
+## Template Gap Waiver
+
+reason: this is a governance gate calibration and no project template applies.
+
+## Claude Run Trace
+
+- goal: strengthen Route Plan quality checks.
+- hypothesis: the existing workflow evidence checker is the right enforcement point.
+- connectors: github.
+- steps: read router, workflow, registry, existing workflow gate, update checker, add tests, update audit, run CI.
+- evidence: CI.
+- result: pending.
