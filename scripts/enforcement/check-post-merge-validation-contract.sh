@@ -66,7 +66,7 @@ require(re.search(r"^on:\s*$", text, re.MULTILINE), "workflow must declare trigg
 require(re.search(r"push:\s*\n\s+branches:\s*\[main\]", text), "workflow must run on push to main")
 require("workflow_dispatch:" in text, "workflow must support manual workflow_dispatch")
 require(re.search(r"permissions:\s*\n(?:\s+\w+:\s*\w+\n)*\s+issues:\s*write", text), "workflow must have issues: write permission for repair loop")
-require("scripts/enforcement/tests/test-*.sh" in text, "workflow must run enforcement test suites")
+require("run-post-merge-validation-suite.sh" in text, "workflow must run the full post-merge validation suite")
 require("check-post-merge-validation-contract.sh" in text, "workflow must self-check the post-merge contract")
 require(re.search(r"if:\s*failure\(\)", text), "workflow must run repair step on failure()")
 require("repair" in text.lower(), "workflow must name repair-loop behavior")
