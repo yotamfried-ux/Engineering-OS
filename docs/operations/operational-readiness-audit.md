@@ -40,8 +40,9 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Progress validation | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: progress-governance. Evidence: `test-progress-lifecycle.sh` plus connector evidence policy. | Structural start/mid/pre-merge checkpoints are enforced; deeper semantic proof of progress quality still needs review. |
 | Connector selection | Partially enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: required connector fields and runtime evidence checks. | Need broader task-class coverage as new connector-backed systems are added. |
 | Connector correctness / source-of-truth use | Partially enforced | Gate: `check-connector-evidence.sh`. Owner: connector-governance. Evidence: Connector Usage Evidence is required to state source/action/result for declared connectors. | Structural influence evidence is enforced; the system still cannot fully prove deep semantic use of returned connector data. |
-| Template selection | Partially enforced | Gate: template evidence/waiver gates. Owner: template-governance. Evidence: Route Plan template fields and waiver checks. | Required-template detection by task class/domain still needs expansion. |
-| Pattern usage | Partially enforced | Gate: pattern read evidence gate. Owner: pattern-governance. Evidence: runtime pattern evidence checks. | Domain detection is path/name based and incomplete; generic files can still rely on advisory warnings. |
+| Template selection | Partially enforced | Gate: template evidence/waiver gates plus template/pattern rating lifecycle. Owner: template-governance. Evidence: Route Plan template fields, waiver checks, `template-pattern-ratings.tsv`, and `test-template-pattern-rating-evidence.sh`. | Required-template detection by task class/domain still needs expansion; long-term rating quality still needs review. |
+| Pattern usage | Partially enforced | Gate: pattern read evidence gate plus template/pattern rating lifecycle. Owner: pattern-governance. Evidence: runtime pattern evidence checks, `check-template-pattern-ratings.sh`, and Route Plan rating evidence tests. | Domain detection is path/name based and incomplete; rating quality is structural, not fully semantic. |
+| Template/pattern rating lifecycle | Partially enforced | Gate: `check-template-pattern-ratings.sh` and `check-workflow-evidence.sh` rating evidence. Owner: reuse-governance. Evidence: `docs/operations/template-pattern-ratings.tsv`, `test-template-pattern-ratings.sh`, and `test-template-pattern-rating-evidence.sh`. | Ratings are required structurally; deciding whether a score is truly accurate still requires review and future outcome data. |
 | Skill selection | Partially enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: required-skills and context-skill simulations. | Coverage must expand as new task classes and skills are added. |
 | Skill runtime evidence | Enforced | Gate: `pre-tool-use-runtime-evidence.sh`. Owner: skill-governance. Evidence: runtime evidence tests. | Evidence proves recorded activation, not deep semantic use. |
 | RTK context optimization | Partially enforced | Gate: `check-required-skills.sh`, blocking `session-setup.sh`, and `check-workflow-evidence.sh` RTK Usage Evidence. Owner: context-governance. Evidence: context-skill selection simulations, `test-rtk-session-blocking.sh`, and `test-rtk-usage-evidence.sh`. | Evidence now requires structural RTK source/action/result/decision impact for RTK-declared code changes; deeper semantic proof of actual reasoning impact remains future work. |
@@ -78,15 +79,16 @@ Anything merely documented but silently skippable is not operationally ready.
 
 1. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
 2. **RTK runtime hardening** — partially covered by RTK Usage Evidence; remaining work is deeper semantic proof of actual reasoning impact where reliable signals become available.
-3. **Route Plan quality gate** — extend structural and target/source evidence checks into deeper semantic quality checks as reliable signals become available.
-4. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
-5. **Progress lifecycle** — extend structural start/mid/pre-merge checkpoint evidence into deeper semantic progress validation as reliable signals become available.
-6. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
-7. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
-8. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair issue path on a future failing main run.
-9. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
-10. **Semantic cleanup** — partially covered by `check-semantic-cleanup.sh`; remaining work is deeper analyzers for dead code, duplicates, unused exports, and stale cleanup.
+3. **Template/pattern rating lifecycle** — partially covered by ratings manifest and Route Plan rating evidence; remaining work is long-term score accuracy from real outcomes.
+4. **Route Plan quality gate** — extend structural and target/source evidence checks into deeper semantic quality checks as reliable signals become available.
+5. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
+6. **Progress lifecycle** — extend structural start/mid/pre-merge checkpoint evidence into deeper semantic progress validation as reliable signals become available.
+7. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
+8. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
+9. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair issue path on a future failing main run.
+10. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
+11. **Semantic cleanup** — partially covered by `check-semantic-cleanup.sh`; remaining work is deeper analyzers for dead code, duplicates, unused exports, and stale cleanup.
 
 ## Current audit scope
 
-This audit now includes RTK Usage Evidence as a structural decision-impact gate. It does not claim full semantic proof that RTK changed reasoning outcomes.
+This audit now includes template/pattern rating lifecycle as a structural reuse-feedback gate. It does not claim that rating scores are semantically perfect without real outcome review.
