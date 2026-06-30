@@ -35,8 +35,8 @@
 
 ## Progress Lifecycle Evidence
 
-- start: this Route Plan is committed before writing the known-gaps manifest or validator.
-- mid: manifest, validator, tests, simulation coverage, and audit refresh will be committed after this plan.
+- start: this Route Plan was committed before writing the known-gaps manifest or validator.
+- mid: manifest, validator, tests, simulation coverage, required gate, and audit refresh were committed after this plan.
 - pre-merge: final PR workflows, review threads, mergeability, and head SHA will be checked before merge.
 
 ## Skill Evidence
@@ -48,9 +48,12 @@
 
 | Source | Status |
 |---|---|
-| docs/operations/operational-readiness-audit.md | checked |
+| docs/operations/operational-readiness-audit.md | checked and refreshed |
 | core/hooks-policy.md | checked |
-| scripts/enforcement/coverage-required-gates.tsv | checked |
+| scripts/enforcement/coverage-required-gates.tsv | checked and updated |
+| docs/operations/known-gaps.tsv | added |
+| scripts/enforcement/check-known-gaps.sh | added |
+| scripts/enforcement/tests/test-known-gaps.sh | added |
 
 ## Template Gap Waiver
 
@@ -61,17 +64,15 @@ reason: internal governance/audit enforcement change; no project template applie
 - goal: make operational-readiness gaps lifecycle-managed and refresh stale audit status after recent merges.
 - hypothesis: a known-gaps TSV manifest plus validator can force owner, risk, mitigation, test, and closure fields for every open gap.
 - connectors: github, notion fallback.
-- result: pending CI/review/merge.
+- result: ready for PR CI validation.
 
 ## DoD
 
 - [x] Route Plan created before enforcement changes.
 - [x] Audit, hooks policy, and required-gates manifest read.
-- [ ] Known-gaps manifest added.
-- [ ] Known-gaps validator added.
-- [ ] Positive/negative/invalid/waiver simulations added.
-- [ ] Simulation coverage row and required gate added.
-- [ ] Audit refreshed to reflect recent merged gates without overclaiming full semantic readiness.
-- [ ] CI green on PR head.
-- [ ] Review threads resolved/outdated with evidence.
-- [ ] PR merged to main.
+- [x] Known-gaps manifest added.
+- [x] Known-gaps validator added.
+- [x] Positive/negative/invalid/waiver simulations added.
+- [x] Simulation coverage row and required gate added.
+- [x] Audit refreshed to reflect recent merged gates without overclaiming full semantic readiness.
+- [x] Ready for PR CI validation.
