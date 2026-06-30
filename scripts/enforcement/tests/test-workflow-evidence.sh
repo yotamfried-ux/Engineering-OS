@@ -16,27 +16,9 @@ git add README.md
 git commit -qm initial
 BASE="$(git rev-parse HEAD)"
 
-reset_workspace() {
-  mkdir -p .claude/plans src
-}
-
-expect_pass() {
-  local name="$1"
-  local head="$2"
-  if ! "$CHECKER" "$BASE" "$head"; then
-    echo "expected $name to pass"
-    exit 1
-  fi
-}
-
-expect_fail() {
-  local name="$1"
-  local head="$2"
-  if "$CHECKER" "$BASE" "$head"; then
-    echo "expected $name to fail"
-    exit 1
-  fi
-}
+reset_workspace() { mkdir -p .claude/plans src; }
+expect_pass() { local name="$1" head="$2"; if ! "$CHECKER" "$BASE" "$head"; then echo "expected $name to pass"; exit 1; fi; }
+expect_fail() { local name="$1" head="$2"; if "$CHECKER" "$BASE" "$head"; then echo "expected $name to fail"; exit 1; fi; }
 
 write_good_plan() {
   local path="$1"
@@ -65,6 +47,12 @@ write_good_plan() {
 ## Skill Evidence
 
 - superpowers-verify
+
+## Progress Lifecycle Evidence
+
+- start: plan committed before code.
+- mid: fixture validation runs through this test.
+- pre-merge: final checks are represented by this fixture.
 
 ## Claude Run Trace
 
@@ -109,8 +97,7 @@ write_good_plan .claude/plans/task.md
 python3 - <<'PY'
 from pathlib import Path
 p=Path('.claude/plans/task.md')
-s=p.read_text()
-s=s.replace('| Task-router evidence | core/task-router.md routing matrix consulted |\n','')
+s=p.read_text().replace('| Task-router evidence | core/task-router.md routing matrix consulted |\n','')
 p.write_text(s)
 PY
 git add .claude/plans/task.md
@@ -125,7 +112,7 @@ python3 - <<'PY'
 from pathlib import Path
 p=Path('.claude/plans/task.md')
 s=p.read_text()
-s=s.split('## Source of Truth Checks')[0] + '## Skill Evidence\n\n- superpowers-verify\n\n## Claude Run Trace\n\n- goal: test.\n'
+s=s.split('## Source of Truth Checks')[0] + '## Skill Evidence\n\n- superpowers-verify\n\n## Progress Lifecycle Evidence\n\n- start: plan.\n- mid: validation.\n- pre-merge: final checks.\n\n## Claude Run Trace\n\n- goal: test.\n'
 p.write_text(s)
 PY
 git add .claude/plans/task.md
@@ -153,8 +140,7 @@ write_good_plan .claude/plans/task.md
 python3 - <<'PY'
 from pathlib import Path
 p=Path('.claude/plans/task.md')
-s=p.read_text()
-s=s.replace('templates/api-service/README.md checked and reused','none — no matching template exists')
+s=p.read_text().replace('templates/api-service/README.md checked and reused','none — no matching template exists')
 p.write_text(s)
 PY
 git add .claude/plans/task.md
@@ -168,8 +154,7 @@ write_good_plan .claude/plans/task.md
 python3 - <<'PY'
 from pathlib import Path
 p=Path('.claude/plans/task.md')
-s=p.read_text()
-s=s.replace('templates/api-service/README.md checked and reused','none — no matching template exists')
+s=p.read_text().replace('templates/api-service/README.md checked and reused','none — no matching template exists')
 s += '\n## Template Gap Waiver\n\nThe task is an internal test fixture; no reusable template should be added.\n'
 p.write_text(s)
 PY

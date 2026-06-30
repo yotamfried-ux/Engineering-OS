@@ -7,8 +7,7 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 make_repo() {
-  local name="$1"
-  local plan_body="$2"
+  local name="$1" plan_body="$2"
   mkdir -p "$TMP/$name"
   cd "$TMP/$name"
   git init -q
@@ -23,7 +22,6 @@ make_repo() {
 ' "$plan_body" > .claude/plans/plan.md
   git add .claude/plans/plan.md
   git commit -q -m plan
-  mkdir -p scripts/enforcement
   echo changed > scripts/enforcement/example.sh
   git add scripts/enforcement/example.sh
   git commit -q -m change
@@ -31,9 +29,7 @@ make_repo() {
 }
 
 assert_fail() {
-  local label="$1"
-  local plan="$2"
-  local expected="$3"
+  local label="$1" plan="$2" expected="$3"
   make_repo "$label" "$plan"
   if bash "$CHECK" "$base" "$head" >"$TMP/$label.out" 2>&1; then
     echo "expected failure: $label"
@@ -43,13 +39,19 @@ assert_fail() {
 }
 
 assert_pass() {
-  local label="$1"
-  local plan="$2"
+  local label="$1" plan="$2"
   make_repo "$label" "$plan"
   bash "$CHECK" "$base" "$head"
 }
 
-BAD_SOURCE='# Plan
+PROGRESS='## Progress Lifecycle Evidence
+
+- start: plan created before code.
+- mid: validation ran.
+- pre-merge: final checks verified.
+'
+
+BAD_SOURCE="# Plan
 
 | Field | Value |
 |---|---|
@@ -72,11 +74,12 @@ reason: no template applies.
 |---|---|
 | CLAUDE.md | checked |
 
+$PROGRESS
 ## Claude Run Trace
 - goal: test
-'
+"
 
-BAD_SKILL='# Plan
+BAD_SKILL="# Plan
 
 | Field | Value |
 |---|---|
@@ -100,11 +103,12 @@ reason: no template applies.
 | CLAUDE.md | checked |
 | core/workflow.md | checked |
 
+$PROGRESS
 ## Claude Run Trace
 - goal: test
-'
+"
 
-BAD_TRACE='# Plan
+BAD_TRACE="# Plan
 
 | Field | Value |
 |---|---|
@@ -127,9 +131,11 @@ reason: no template applies.
 |---|---|
 | CLAUDE.md | checked |
 | core/workflow.md | checked |
-'
 
-GOOD='# Plan
+$PROGRESS
+"
+
+GOOD="# Plan
 
 | Field | Value |
 |---|---|
@@ -154,9 +160,10 @@ reason: no template applies.
 | CLAUDE.md | checked |
 | core/workflow.md | checked |
 
+$PROGRESS
 ## Claude Run Trace
 - goal: test
-'
+"
 
 assert_fail bad-source "$BAD_SOURCE" "source of truth"
 assert_fail bad-skill "$BAD_SKILL" "security-review"

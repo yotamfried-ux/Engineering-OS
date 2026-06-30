@@ -7,7 +7,8 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 make_repo() {
-  local name="$1" plan_body="$2"
+  local name="$1"
+  local plan_body="$2"
   mkdir -p "$TMP/$name"
   cd "$TMP/$name"
   git init -q
@@ -29,7 +30,9 @@ make_repo() {
 }
 
 assert_fail() {
-  local label="$1" plan="$2" expected="$3"
+  local label="$1"
+  local plan="$2"
+  local expected="$3"
   make_repo "$label" "$plan"
   if bash "$CHECK" "$base" "$head" >"$TMP/$label.out" 2>&1; then
     echo "expected failure: $label"
@@ -39,7 +42,8 @@ assert_fail() {
 }
 
 assert_pass() {
-  local label="$1" plan="$2"
+  local label="$1"
+  local plan="$2"
   make_repo "$label" "$plan"
   bash "$CHECK" "$base" "$head"
 }
@@ -62,51 +66,42 @@ reason: no template applies.
 ## Skill Evidence
 - superpowers
 
-## Progress Lifecycle Evidence
-
-- start: plan created before code.
-- mid: validation ran.
-- pre-merge: final checks verified.
-
-## Claude Run Trace
-- goal: test semantic source relevance.
-'
-
-BAD="# Plan
-
-$BASE_PLAN
-## Source of Truth Checks
-
-| Source | Status |
-|---|---|
-| docs/operations/other.md | checked |
-| docs/README.md | checked |
-"
-
-GOOD_TARGET="# Plan
-
-$BASE_PLAN
-## Source of Truth Checks
-
-| Source | Status |
-|---|---|
-| scripts/enforcement/check-workflow-evidence.sh | checked |
-| scripts/enforcement/example.sh | checked |
-"
-
-GOOD_CANONICAL="# Plan
-
-$BASE_PLAN
 ## Source of Truth Checks
 
 | Source | Status |
 |---|---|
 | core/task-router.md | checked |
 | core/workflow.md | checked |
+
+## Claude Run Trace
+- goal: test progress lifecycle.
+'
+
+NO_PROGRESS="# Plan
+
+$BASE_PLAN"
+
+MISSING_MID="# Plan
+
+$BASE_PLAN
+## Progress Lifecycle Evidence
+
+- start: plan created before code.
+- pre-merge: final checks verified.
 "
 
-assert_fail bad-generic-sources "$BAD" "target paths"
-assert_pass good-target-source "$GOOD_TARGET"
-assert_pass good-canonical-source "$GOOD_CANONICAL"
+GOOD="# Plan
 
-echo "plan semantic quality checks passed"
+$BASE_PLAN
+## Progress Lifecycle Evidence
+
+- start: plan created before code.
+- mid: CI/simulation loop validated.
+- pre-merge: final checks verified.
+"
+
+assert_fail no-progress "$NO_PROGRESS" "progress lifecycle"
+assert_fail missing-mid "$MISSING_MID" "mid checkpoint"
+assert_pass good-progress "$GOOD"
+
+echo "progress lifecycle checks passed"
