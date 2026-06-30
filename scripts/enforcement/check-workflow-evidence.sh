@@ -136,11 +136,11 @@ for plan in $plans; do
       echo "ERROR_FOR_AGENT: $plan declares skills '$skills' but lacks ## Skill Evidence."
       bad=1
     else
-      skill_evidence="$(section_body "$plan" 'Skill[[:space:]]+Evidence')"
+      skill_evidence="$(section_body "$plan" 'Skill[[:space:]]+Evidence' | tr '[:upper:]' '[:lower:]')"
       while IFS= read -r raw_skill; do
         skill_key="$(normalize_item "$raw_skill")"
         [ -z "$skill_key" ] && continue
-        if ! printf '%s\n' "$skill_evidence" | tr '[:upper:]' '[:lower:]' | grep -q "$(printf '%s' "$skill_key" | sed 's/[][\\.^$*]/\\&/g')"; then
+        if ! printf '%s\n' "$skill_evidence" | grep -Fq -- "$skill_key"; then
           echo "ERROR_FOR_AGENT: $plan declares skill '$raw_skill' but Skill Evidence does not mention it."
           bad=1
         fi
