@@ -8,11 +8,9 @@ MIN_ROWS="${EOS_SIM_COVERAGE_MIN_ROWS:-8}"
 
 failures=0
 seen="$(mktemp)"
+combined="$(mktemp)"
 
-fail() {
-  echo "simulation coverage failed: $*" >&2
-  failures=1
-}
+fail() { echo "simulation coverage failed: $*" >&2; failures=1; }
 
 resolve_path() {
   local path="$1"
@@ -24,9 +22,7 @@ resolve_path() {
 
 require_repo_file() {
   local gate="$1" label="$2" path="$3"
-  case "$path" in
-    NONE|none|n/a|N/A) return 0 ;;
-  esac
+  case "$path" in NONE|none|n/a|N/A) return 0 ;; esac
   local resolved
   resolved="$(resolve_path "$path")"
   [ -f "$resolved" ] || fail "$gate: $label file not found: $path"
@@ -38,15 +34,9 @@ validate_cell() {
     covered:*)
       local token="${cell#covered:}"
       if [ "$(printf '%s' "$token" | wc -c | tr -d ' ')" -lt 3 ]; then
-        fail "$gate: $kind coverage token is too short"
-        return 0
+        fail "$gate: $kind coverage token is too short"; return 0
       fi
-      case "$test_file" in
-        NONE|none|n/a|N/A)
-          fail "$gate: $kind is marked covered but no test_file is provided"
-          return 0
-          ;;
-      esac
+      case "$test_file" in NONE|none|n/a|N/A) fail "$gate: $kind is marked covered but no test_file is provided"; return 0 ;; esac
       local resolved_test
       resolved_test="$(resolve_path "$test_file")"
       if ! grep -Fq "$token" "$resolved_test" 2>/dev/null; then
@@ -59,48 +49,42 @@ validate_cell() {
         fail "$gate: $kind waiver reason is too short"
       fi
       ;;
-    *)
-      fail "$gate: $kind must be covered:<token> or waived:<specific reason>"
-      ;;
+    *) fail "$gate: $kind must be covered:<token> or waived:<specific reason>" ;;
   esac
 }
 
 [ -f "$COVERAGE_FILE" ] || { echo "missing simulation coverage manifest: $COVERAGE_FILE" >&2; exit 1; }
+cat "$COVERAGE_FILE" > "$combined"
+extra_dir="${COVERAGE_FILE%.tsv}.d"
+if [ -d "$extra_dir" ]; then
+  for extra_file in "$extra_dir"/*.tsv; do
+    [ -f "$extra_file" ] || continue
+    printf '\n' >> "$combined"
+    cat "$extra_file" >> "$combined"
+  done
+fi
 
 row_count=0
 while IFS=$'\t' read -r gate owner enforcer test_file positive negative invalid waiver notes extra; do
   case "${gate:-}" in ''|'#'*) continue ;; esac
   row_count=$((row_count + 1))
-
-  if [ -n "${extra:-}" ]; then
-    fail "$gate: too many columns; expected 9 tab-separated fields"
-    continue
-  fi
+  if [ -n "${extra:-}" ]; then fail "$gate: too many columns; expected 9 tab-separated fields"; continue; fi
   for field_name in gate owner enforcer test_file positive negative invalid waiver notes; do
     value="${!field_name:-}"
     [ -n "$value" ] || fail "$gate: missing required field '$field_name'"
   done
-
-  if printf '%s' "$gate" | grep -Eq '[[:space:]]'; then
-    fail "$gate: gate_id must not contain whitespace"
-  fi
-  if grep -Fxq "$gate" "$seen" 2>/dev/null; then
-    fail "$gate: duplicate gate_id"
-  fi
+  if printf '%s' "$gate" | grep -Eq '[[:space:]]'; then fail "$gate: gate_id must not contain whitespace"; fi
+  if grep -Fxq "$gate" "$seen" 2>/dev/null; then fail "$gate: duplicate gate_id"; fi
   printf '%s\n' "$gate" >> "$seen"
-
   require_repo_file "$gate" enforcer "$enforcer"
   require_repo_file "$gate" test_file "$test_file"
   validate_cell "$gate" positive "$positive" "$test_file"
   validate_cell "$gate" negative "$negative" "$test_file"
   validate_cell "$gate" invalid "$invalid" "$test_file"
   validate_cell "$gate" waiver "$waiver" "$test_file"
-done < "$COVERAGE_FILE"
+done < "$combined"
 
-if [ "$row_count" -lt "$MIN_ROWS" ]; then
-  fail "expected at least $MIN_ROWS simulation coverage rows, found $row_count"
-fi
-
+if [ "$row_count" -lt "$MIN_ROWS" ]; then fail "expected at least $MIN_ROWS simulation coverage rows, found $row_count"; fi
 IFS=',' read -r -a required <<< "$REQUIRED_GATES"
 for gate in "${required[@]}"; do
   gate="$(printf '%s' "$gate" | xargs)"
@@ -108,8 +92,5 @@ for gate in "${required[@]}"; do
   grep -Fxq "$gate" "$seen" 2>/dev/null || fail "missing required simulation coverage gate: $gate"
 done
 
-if [ "$failures" -ne 0 ]; then
-  exit 1
-fi
-
+[ "$failures" -eq 0 ] || exit 1
 echo "simulation coverage checks passed ($row_count gates)"

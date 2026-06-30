@@ -1,0 +1,23 @@
+# scope	canonical_owner	path_pattern	status	notes
+entrypoint	core-governance	CLAUDE.md	active	Always-loaded entrypoint; points to canonical owners.
+workflow-order	workflow-governance	core/workflow.md	active	Canonical owner for workflow sequence and agent loop.
+task-routing	workflow-governance	core/task-router.md	active	Canonical owner for routing algorithm and route plan output.
+documentation-hygiene	docs-governance	core/documentation-policy.md	active	Canonical owner for documentation ownership and hygiene rules.
+capability-vocabulary	capability-governance	core/capability-registry.yaml	active	Canonical owner for capability vocabulary and task-class evidence.
+connector-policy	connector-governance	core/connector-policy.md	active	Canonical owner for connector selection and fallback rules.
+skill-policy	skill-governance	core/skill-orchestration-policy.md	active	Canonical owner for skill selection and activation rules.
+hooks-policy	hooks-governance	core/hooks-policy.md	active	Canonical owner for hook criticality and runtime enforcement architecture.
+quality-gates	validation-governance	core/quality-gates.md	active	Canonical owner for DoD, cleanup, and verification gates.
+git-policy	merge-governance	core/git-policy.md	active	Canonical owner for branch, PR, merge, and commit protocol.
+debugging-policy	debug-governance	core/debugging-policy.md	active	Canonical owner for debugging loop and Sentry-first policy.
+learning-loop	learning-governance	core/learning-loop.md	active	Canonical owner for lessons and learning closure.
+resource-management	context-governance	core/resource-management.md	active	Canonical owner for model, resource, and context optimization rules.
+external-systems-inventory	connector-governance	external-systems/README.md	active	Inventory of external systems and connectors.
+external-skills-inventory	skill-governance	external-skills/README.md	active	Inventory of external skills.
+docs-index	docs-governance	docs/README.md	active	Docs directory index and gap protocol.
+operational-readiness-audit	ops-readiness	docs/operations/operational-readiness-audit.md	active	Operational readiness coverage inventory and ROI gap map.
+post-merge-validation	merge-governance	.github/workflows/post-merge-validation.yml	active	Push-to-main repair-loop workflow.
+simulation-coverage	validation-governance	scripts/enforcement/simulation-coverage.tsv	active	Coverage inventory for simulation cases.
+temporary-route-plans	workflow-governance	.claude/plans/*.md	temporary	Task evidence only; never canonical durable policy.
+lessons	learning-governance	lessons-learned/*.md	active	Learning records governed by core/learning-loop.md.
+failed-solutions	learning-governance	failed-solutions/*.md	active	Failed attempt records governed by core/learning-loop.md.

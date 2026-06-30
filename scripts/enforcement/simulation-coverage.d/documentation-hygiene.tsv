@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+documentation-hygiene	docs-governance	scripts/enforcement/check-documentation-hygiene.sh	scripts/enforcement/tests/test-documentation-hygiene.sh	covered:current_manifest_passes	covered:duplicate_scope_fails	covered:missing_path_fails	covered:explicit_waiver_passes	Documentation hygiene gate coverage.
