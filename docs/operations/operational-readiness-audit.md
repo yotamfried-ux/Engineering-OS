@@ -32,7 +32,7 @@ Required coverage groups:
 | Canonical ownership / no policy sprawl | Partially enforced | `CLAUDE.md` contains a conceptual ownership table; `validate-orphans.sh` checks core navigation coverage; docs policy catches some missing READMEs/TBDs. | Duplicate/stale/split policy content across `.md` files is not fully detected. |
 | Enforcement coverage inventory | Enforced | This audit is validated by CI for required readiness areas, allowed statuses, and required priority gaps. | CI proves inventory coverage exists; status accuracy still requires review and evidence. |
 | Route Plan before writing | Enforced | Write/Edit gate stops code writes without a current Route Plan with required sections. | Active-plan selection can still be semantically wrong in complex multi-task sessions. |
-| Route Plan quality | Partially enforced | Required fields such as task class, skills/templates/connectors/evidence are checked by policy workflows and runtime evidence gates. | The plan can still be shallow or technically present but weak. |
+| Route Plan quality | Partially enforced | `check-workflow-evidence.sh` now rejects shallow plans by requiring non-placeholder fields, at least two source-of-truth checks, skill evidence matching declared skills, and Claude Run Trace for code/config/test changes. | Semantic quality of the selected sources and evidence still needs review. |
 | DoD completion | Enforced | Plan-policy and pre-commit gates check incomplete DoD flows in covered cases. | DoD quality is judgment-based. |
 | Progress validation | Partially enforced | Connector/run-trace policy requires progress validation evidence for connector-related enforcement traces; workflow requires project tracking or approved fallback. | Full checkpoint lifecycle, start/middle/pre-merge, is not yet universally hard-checked. |
 | Connector selection | Partially enforced | Task/domain/path rules require covered connectors; connector policy checks sensitive config mistakes; runtime evidence checks declared connectors. | Need broader task-class coverage and stronger proof that connector output influenced the work. |
@@ -41,14 +41,14 @@ Required coverage groups:
 | Pattern usage | Partially enforced | Runtime gate checks known domains against `patterns/<domain>/` reads. | Domain detection is path/name based and incomplete; generic files can still rely on advisory warnings. |
 | Skill selection | Partially enforced | `check-required-skills.sh` requires task/domain/path-specific skills such as UI, security, graphify, superpowers, and RTK for context-heavy work. | Coverage must expand as new task classes and skills are added. |
 | Skill runtime evidence | Enforced | `pre-tool-use-runtime-evidence.sh` checks declared skills for evidence. | Evidence proves recorded activation, not deep semantic use. |
-| RTK context optimization | Partially enforced | `check-required-skills.sh` now requires RTK for context-heavy and large-repo work; CI includes missing/declared/waiver simulations. | Local RTK installation can still warn instead of blocking when cargo/network is unavailable. |
+| RTK context optimization | Partially enforced | `check-required-skills.sh` now requires RTK for context-heavy and large-repo work; CI includes missing/declared/waiver simulations. | Local RTK installation must become blocking when cargo/network is unavailable. |
 | Graphify context graph | Partially enforced | G7 checks writes when `graphify-out/graph.json` exists but graphify has not been queried this session. | Evidence proves graphify ran, not that findings were actually used. |
 | Claude memory / context carryover | Manual | Workflow documents memory/context recovery as part of session behavior. | Runtime availability and evidence are not hard-checked across all environments. |
 | Capability registry | Partially enforced | Registry has task classes/capabilities and CI validates expected anchors through capability report generation. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
 | Learning schema | Enforced | `enforce-learning.sh` checks malformed staged lessons and failed-solutions. | Semantic lesson quality still needs review. |
 | Learning reuse | Enforced | Relevant existing lessons/failed-solutions must be listed in the Route Plan. | Relevance is path/tag based, not deep semantic code understanding. |
 | Learning closure after bug/debug work | Partially enforced | Learning capture gates require covered bug/debug/incident work to record lessons in covered cases. | Full closure package still needs stricter proof: root cause, failed-solution when applicable, prevention update or waiver. |
-| Claude run trace / experiment log | Partially enforced | Enforcement/connector/simulation changes require a Route Plan run trace with fields for goal, hypothesis, connectors, steps, evidence, rejected attempts, result, and follow-up. | Not all significant agent runs are forced through trace yet. |
+| Claude run trace / experiment log | Partially enforced | Enforcement/connector/simulation changes require a Route Plan run trace with fields for goal, hypothesis, connectors, steps, evidence, rejected attempts, result, and follow-up. | Not all significant agent runs are forced yet. |
 | Positive/negative simulations | Partially enforced | Existing `scripts/enforcement/tests/test-*.sh` suites cover many gates and CI runs them all. | Every policy row does not yet have explicit positive, negative, invalid, and waiver simulations. |
 | Tests/lint before commit | Partially enforced | Pre-commit runs stack-specific tests/lint where detected and checks large unverified commits. | Missing tools can warn rather than fully fail in all ecosystems. |
 | Cleanup debug leftovers | Enforced | `enforce-quality.sh` checks unambiguous debuggers and conflict markers. | None for these narrow cases. |
@@ -74,8 +74,8 @@ Anything merely documented but silently skippable is not operationally ready.
 ## Highest-priority gaps by ROI
 
 1. **Coverage map hardening** — expand the enforcement coverage inventory so every policy row has a named gate, owner, and CI-verified simulation.
-2. **RTK runtime hardening** — decide whether local RTK install failures should block or remain warnings when cargo/network is unavailable.
-3. **Route Plan quality gate** — require stronger task-class, evidence, connector, skill, template, progress tracking, and lesson reuse coverage before writing.
+2. **RTK runtime hardening** — make local RTK install failures blocking when cargo/network is unavailable.
+3. **Route Plan quality gate** — extend the new structural quality gate with deeper semantic evidence checks as reliable signals become available.
 4. **Learning closure gate** — require root cause plus lesson plus failed-solution when applicable plus prevention update or waiver.
 5. **Progress lifecycle** — require start/mid/pre-merge progress validation evidence for non-trivial work.
 6. **Connector correctness** — verify the right connector was selected and that returned evidence influenced the plan or implementation.
@@ -86,4 +86,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current PR scope
 
-This PR addresses RTK skill-selection enforcement for covered context-heavy and large-repo work (skill gate + CI simulations + audit update). The install-failure behavior (warn vs. block when cargo/network is unavailable) remains an open gap.
+This PR addresses the Route Plan quality gate for changed plans that accompany code/config/test changes.

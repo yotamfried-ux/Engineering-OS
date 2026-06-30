@@ -57,13 +57,19 @@ write_good_plan() {
 
 ## Source of Truth Checks
 
-| Need | Source checked | Result |
-|---|---|---|
-| Existing API pattern | patterns/api/README.md | request/response shape selected |
+| Source | Status |
+|---|---|
+| patterns/api/README.md | checked |
+| patterns/testing/README.md | checked |
 
 ## Skill Evidence
 
-- [x] DoD check planned and captured.
+- superpowers-verify
+
+## Claude Run Trace
+
+- goal: test workflow evidence gate.
+- hypothesis: plan before code with required evidence passes.
 PLAN
 }
 
@@ -119,7 +125,7 @@ python3 - <<'PY'
 from pathlib import Path
 p=Path('.claude/plans/task.md')
 s=p.read_text()
-s=s.split('## Source of Truth Checks')[0] + '## Skill Evidence\n\n- [x] DoD check planned.\n'
+s=s.split('## Source of Truth Checks')[0] + '## Skill Evidence\n\n- superpowers-verify\n\n## Claude Run Trace\n\n- goal: test.\n'
 p.write_text(s)
 PY
 git add .claude/plans/task.md
