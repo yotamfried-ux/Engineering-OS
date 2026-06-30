@@ -16,10 +16,12 @@ export ENGINEERING_OS_HOME="$EOS_ROOT"
 # Ledger is project-cwd relative (.claude/.evidence/ledger); see lib/evidence.sh.
 . "$EOS_ROOT/scripts/enforcement/lib/evidence.sh" 2>/dev/null && evidence_reset 2>/dev/null || true
 
-G=$'\033[32m'; Y=$'\033[33m'; D=$'\033[2m'; Z=$'\033[0m'
+G=$'\033[32m'; Y=$'\033[33m'; D=$'\033[2m'; R=$'\033[31m'; Z=$'\033[0m'
 ok()   { printf '%s✅%s %s\n' "$G" "$Z" "$1"; }
 warn() { printf '%s⚠️ %s%s\n' "$Y" "$Z" "$1"; }
+fail() { printf '%s❌%s %s\n' "$R" "$Z" "$1"; }
 info() { printf '%s[session]%s %s\n' "$D" "$Z" "$1"; }
+rtk_block() { fail "$1"; printf '%sACTION:%s fix RTK before starting work; RTK is mandatory for every Engineering OS project.\n' "$R" "$Z"; exit 1; }
 
 # ── 1. HTTPS override (no SSH agent in web sessions) ─────────────────────────
 git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
@@ -94,28 +96,29 @@ if command -v graphify >/dev/null 2>&1; then
 fi
 
 # ── 4. RTK ───────────────────────────────────────────────────────────────────
+export PATH="${HOME}/.cargo/bin:${PATH}"
 if ! command -v rtk >/dev/null 2>&1; then
   info "RTK not found — installing..."
   if command -v cargo >/dev/null 2>&1; then
     cargo install --git https://github.com/rtk-ai/rtk --quiet 2>&1 | tail -1 \
       && ok "RTK installed" \
-      || warn "RTK install failed (network/cargo issue)"
+      || rtk_block "RTK install failed (network/cargo issue)"
   else
-    warn "RTK unavailable: cargo not found (install via: brew install rtk)"
+    rtk_block "RTK unavailable: cargo not found"
   fi
 fi
 
-if command -v rtk >/dev/null 2>&1; then
-  # Register global hook if not already present; rtk may have been just installed
-  # so explicitly include cargo bin dir in PATH before checking/running rtk init -g.
-  export PATH="${HOME}/.cargo/bin:${PATH}"
-  if ! grep -q '"rtk hook"' "$HOME/.claude/settings.json" 2>/dev/null; then
-    rtk init -g >/dev/null 2>&1 \
-      && info "RTK global hook registered in ~/.claude/settings.json" \
-      || warn "rtk init -g failed — run manually: rtk init -g"
-  fi
-  ok "RTK $(rtk --version 2>/dev/null | head -1) ready (60-90% Bash token savings)"
+if ! command -v rtk >/dev/null 2>&1; then
+  rtk_block "RTK still unavailable after install attempt"
 fi
+
+# Register global hook if not already present; rtk may have been just installed.
+if ! grep -q '"rtk hook"' "$HOME/.claude/settings.json" 2>/dev/null; then
+  rtk init -g >/dev/null 2>&1 \
+    && info "RTK global hook registered in ~/.claude/settings.json" \
+    || rtk_block "rtk init -g failed"
+fi
+ok "RTK $(rtk --version 2>/dev/null | head -1) ready (60-90% Bash token savings)"
 
 # ── 5. claude-mem (best-effort, non-fatal) ────────────────────────────────────
 if command -v claude-mem >/dev/null 2>&1; then
