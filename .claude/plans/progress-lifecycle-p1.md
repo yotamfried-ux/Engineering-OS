@@ -6,7 +6,7 @@
 | Task-router evidence | read |
 | Workflow evidence | read |
 | Domain tags | progress, lifecycle, workflow-evidence |
-| Target paths | scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
+| Target paths | scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, scripts/enforcement/tests/test-workflow-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
 | Templates | not required |
 | Patterns | governance validator pattern |
 | External systems/connectors | github, notion |
@@ -24,22 +24,22 @@
 
 ## Connector Evidence
 
-- github: read workflow validator, progress tests, known gaps, and audit files.
+- github: read workflow validator, progress tests, workflow evidence tests, known gaps, and audit files.
 - notion: unavailable; fallback plan file used.
 
 ## Connector Usage Evidence
 
-- source: github scripts/enforcement/check-workflow-evidence.sh and scripts/enforcement/tests/test-progress-lifecycle.sh.
-- action: inspected github validator and progress fixtures.
-- result: github showed final-text checks did not prove checkpoint order.
-- decision: implemented ordered progress lifecycle validation.
-- target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
+- source: github scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, and scripts/enforcement/tests/test-workflow-evidence.sh.
+- action: inspected github validator and progress/workflow fixtures.
+- result: github showed final-text checks did not prove checkpoint order and an older workflow fixture still assumed plan-before-code alone was enough.
+- decision: implemented ordered progress lifecycle validation and repaired the legacy workflow fixture to use ordered checkpoints.
+- target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-progress-lifecycle.sh, scripts/enforcement/tests/test-workflow-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
 - start: plan existed before validator changes.
-- mid: validator and tests were committed after implementation began.
-- pre-merge: docs closure was committed after implementation, then this plan update recorded final progress evidence.
+- mid: validator and progress fixtures were committed after implementation began.
+- pre-merge: workflow fixture repair was committed after the first CI failure, then this plan update recorded final progress evidence after the last test change.
 
 ## Skill Evidence
 
@@ -59,6 +59,7 @@
 |---|---|
 | scripts/enforcement/check-workflow-evidence.sh | checked |
 | scripts/enforcement/tests/test-progress-lifecycle.sh | checked |
+| scripts/enforcement/tests/test-workflow-evidence.sh | checked |
 | docs/operations/known-gaps.tsv | checked |
 | docs/operations/operational-readiness-audit.md | checked |
 
@@ -70,16 +71,17 @@ reason: internal governance validator change; no project template applies.
 
 - goal: close progress lifecycle timing gap.
 - hypothesis: commit order proves start, mid, and pre-merge timing better than final text checks.
-- experiment: added fixtures for missing progress, prefilled markers, single final update, stale final evidence, and valid ordered evidence.
-- result: validator, tests, known-gaps closure, audit update, and final plan checkpoint are staged in ordered commits.
+- experiment: added fixtures for missing progress, prefilled markers, single final update, stale final evidence, valid ordered evidence, and repaired the legacy workflow evidence positive fixture.
+- result: validator, tests, known-gaps closure, audit update, fixture repair, and final plan checkpoint are staged in ordered commits.
 
 ## DoD
 
 - [x] Route Plan created before enforcement changes.
 - [x] Validator update committed.
 - [x] Regression fixtures committed.
+- [x] Legacy workflow evidence fixture aligned with ordered lifecycle enforcement.
 - [x] Known-gaps and audit updated.
-- [x] Final progress checkpoint committed after implementation and docs updates.
+- [x] Final progress checkpoint committed after implementation, docs, and fixture repair updates.
 
 ## Live External Gates Before Merge
 
