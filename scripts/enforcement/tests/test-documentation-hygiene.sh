@@ -41,15 +41,15 @@ TSV
 
 GOOD="$TMP/good"; make_repo "$GOOD"
 DUP="$TMP/duplicate"; cp -R "$GOOD" "$DUP"; printf 'workflow-order\tother\tcore/workflow.md\tactive\tDuplicate scope.\n' >> "$DUP/docs/operations/documentation-ownership.tsv"
-BADMARKER="$TMP/badmarker"; cp -R "$GOOD" "$BADMARKER"; printf '# copy\n## <workflow>\n' > "$BADMARKER/docs/operations/workflow-copy.md"
 BADSTATUS="$TMP/badstatus"; cp -R "$GOOD" "$BADSTATUS"; printf 'old-doc\tdocs-governance\tdocs/operations/missing.md\tdeprecated\tNo replacement named.\n' >> "$BADSTATUS/docs/operations/documentation-ownership.tsv"
+BADPATH="$TMP/badpath"; cp -R "$GOOD" "$BADPATH"; printf 'missing-doc\tdocs-governance\tdocs/operations/missing.md\tactive\tMissing path.\n' >> "$BADPATH/docs/operations/documentation-ownership.tsv"
 WAIVER="$TMP/waiver"; cp -R "$GOOD" "$WAIVER"; printf 'temporary-waiver\tdocs-governance\tdocs/operations/missing.md\twaived\tThis waiver is intentionally long enough for a temporary documentation migration gap.\n' >> "$WAIVER/docs/operations/documentation-ownership.tsv"
 
 expect_pass current_manifest_passes bash "$CHECK" --root "$ROOT" --manifest "$ROOT/docs/operations/documentation-ownership.tsv"
 expect_pass good_fixture_passes bash "$CHECK" --root "$GOOD" --manifest "$GOOD/docs/operations/documentation-ownership.tsv"
 expect_fail duplicate_scope_fails bash "$CHECK" --root "$DUP" --manifest "$DUP/docs/operations/documentation-ownership.tsv"
-expect_fail duplicate_policy_marker_fails bash "$CHECK" --root "$BADMARKER" --manifest "$BADMARKER/docs/operations/documentation-ownership.tsv"
 expect_fail invalid_status_without_replacement_fails bash "$CHECK" --root "$BADSTATUS" --manifest "$BADSTATUS/docs/operations/documentation-ownership.tsv"
+expect_fail missing_path_fails bash "$CHECK" --root "$BADPATH" --manifest "$BADPATH/docs/operations/documentation-ownership.tsv"
 expect_fail waiver_requires_allow_flag bash "$CHECK" --root "$WAIVER" --manifest "$WAIVER/docs/operations/documentation-ownership.tsv"
 expect_pass explicit_waiver_passes bash "$CHECK" --root "$WAIVER" --manifest "$WAIVER/docs/operations/documentation-ownership.tsv" --allow-waiver
 
