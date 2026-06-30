@@ -94,11 +94,16 @@ valid_connector_waiver() {
 }
 
 connector_usage_mentions() {
-  local conn="$1" usage="$2"
-  local key
+  local conn="$1" usage="$2" key line
   key="$(canon_key "$conn")"
-  printf '%s\n' "$usage" | tr '[:upper:]' '[:lower:]' | grep -Fq -- "$key" || return 1
-  printf '%s\n' "$usage" | grep -qiE 'used|influenced|validated|checked|read|queried|result|decision|evidence|fallback|unavailable|source'
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')"
+    printf '%s' "$line" | grep -Fq -- "$key" || continue
+    printf '%s' "$line" | grep -qiE 'used|influenced|validated|checked|read|queried|result|decision|evidence|fallback|unavailable|source' && return 0
+  done <<EOF_USAGE
+$usage
+EOF_USAGE
+  return 1
 }
 
 task="$(field_value "$PLAN" '^task class$|^task-class$|^type$')"
