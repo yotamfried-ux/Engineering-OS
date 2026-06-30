@@ -17,23 +17,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run all enforcement test suites
+      - name: Run full post-merge main validation suite
         id: validation
         run: |
-          set -u
-          git config --global user.email "ci@engineering-os.local"
-          git config --global user.name "engineering-os-ci"
-          git config --global init.defaultBranch main
-          fail=0
-          for t in scripts/enforcement/tests/test-*.sh; do
-            echo "──────── $t ────────"
-            if bash "$t"; then :; else fail=1; fi
-          done
-          if [ "$fail" -ne 0 ]; then
-            echo "post-merge validation failed"
-            exit 1
-          fi
-          echo "post-merge validation passed"
+          set -euo pipefail
+          bash scripts/enforcement/run-post-merge-validation-suite.sh
 
       - name: Verify post-merge repair-loop contract
         run: |
