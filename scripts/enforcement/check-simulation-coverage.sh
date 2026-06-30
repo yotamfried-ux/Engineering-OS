@@ -10,7 +10,8 @@ failures=0
 seen="$(mktemp)"
 combined="$(mktemp)"
 required_seen="$(mktemp)"
-trap 'rm -f "$seen" "$combined" "$required_seen"' EXIT
+required_active="$(mktemp)"
+trap 'rm -f "$seen" "$combined" "$required_seen" "$required_active"' EXIT
 
 fail() { echo "simulation coverage failed: $*" >&2; failures=1; }
 resolve_path() { case "$1" in /*) printf '%s\n' "$1" ;; *) printf '%s/%s\n' "$ROOT" "$1" ;; esac; }
@@ -39,9 +40,10 @@ validate_cell() {
 }
 
 load_required_gates() {
+  : > "$required_active"
   if [ -n "${EOS_SIM_COVERAGE_REQUIRED_GATES:-}" ]; then
     IFS=',' read -r -a required <<< "$EOS_SIM_COVERAGE_REQUIRED_GATES"
-    for gate in "${required[@]}"; do printf '%s\n' "$gate" | xargs; done
+    for gate in "${required[@]}"; do printf '%s\n' "$gate" | xargs >> "$required_active"; done
     return 0
   fi
   [ -f "$REQUIRED_GATES_FILE" ] || { fail "required gates manifest missing: $REQUIRED_GATES_FILE"; return 0; }
@@ -52,10 +54,8 @@ load_required_gates() {
     if grep -Fxq "$gate" "$required_seen" 2>/dev/null; then fail "$gate: duplicate required gate"; fi
     printf '%s\n' "$gate" >> "$required_seen"
     case "$status" in
-      active) printf '%s\n' "$gate" ;;
-      waived)
-        [ "$(printf '%s' "$reason" | wc -c | tr -d ' ')" -ge 25 ] || fail "$gate: required gate waiver reason is too short"
-        ;;
+      active) printf '%s\n' "$gate" >> "$required_active" ;;
+      waived) [ "$(printf '%s' "$reason" | wc -c | tr -d ' ')" -ge 25 ] || fail "$gate: required gate waiver reason is too short" ;;
       *) fail "$gate: invalid required gate status '$status'" ;;
     esac
   done < "$REQUIRED_GATES_FILE"
@@ -92,11 +92,12 @@ while IFS=$'\t' read -r gate owner enforcer test_file positive negative invalid 
 done < "$combined"
 
 [ "$row_count" -ge "$MIN_ROWS" ] || fail "expected at least $MIN_ROWS simulation coverage rows, found $row_count"
+load_required_gates
 while IFS= read -r gate; do
   gate="$(printf '%s' "$gate" | xargs)"
   [ -n "$gate" ] || continue
   grep -Fxq "$gate" "$seen" 2>/dev/null || fail "missing required simulation coverage gate: $gate"
-done < <(load_required_gates)
+done < "$required_active"
 
 [ "$failures" -eq 0 ] || exit 1
 echo "simulation coverage checks passed ($row_count gates)"
