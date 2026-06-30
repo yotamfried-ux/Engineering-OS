@@ -1,173 +1,122 @@
 #!/usr/bin/env bash
 set -euo pipefail
+python3 - "$@" <<'PY'
+import os, re, subprocess, sys
+base = sys.argv[1] if len(sys.argv) > 1 else 'HEAD~1'
+head = sys.argv[2] if len(sys.argv) > 2 else 'HEAD'
 
-base="${1:-HEAD~1}"
-head="${2:-HEAD}"
-changed="$(git diff --name-only "$base" "$head")"
-plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' | while read -r p; do [ -f "$p" ] && echo "$p"; done || true)"
-code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
-knowledge="$(printf '%s\n' "$changed" | grep -E '^(lessons-learned/|failed-solutions/|templates/)' || true)"
+def sh(*args):
+    return subprocess.check_output(args, text=True).splitlines()
 
-if [ -n "$code" ] && [ -z "$plans" ]; then
-  echo "ERROR_FOR_AGENT: code/config/test files changed without a changed .claude/plans/*.md Route Plan."
-  exit 1
-fi
+def norm(s):
+    return re.sub(r'[^a-z0-9_./-]+','-', re.sub(r'^[\s*`-]+|[\s`.,;:]+$','',s.lower())).strip('-')
 
-if [ -n "$code" ] && [ -n "$plans" ]; then
-  first_plan=0; first_code=0; idx=0
-  while read -r commit; do
-    idx=$((idx + 1))
-    files="$(git diff-tree --no-commit-id --name-only -r "$commit")"
-    if [ "$first_plan" -eq 0 ] && echo "$files" | grep -q '^\.claude/plans/.*\.md$'; then first_plan="$idx"; fi
-    code_files="$(echo "$files" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
-    if [ "$first_code" -eq 0 ] && [ -n "$code_files" ]; then first_code="$idx"; fi
-  done < <(git rev-list --reverse "$base..$head")
-  if [ "$first_plan" -eq 0 ] || [ "$first_code" -eq 0 ] || [ "$first_code" -le "$first_plan" ]; then
-    echo "ERROR_FOR_AGENT: Route Plan must be committed before the first code/config/test change, not in the same or later commit."
-    exit 1
-  fi
-fi
+def clean(s):
+    return re.sub(r'[`*_]','',s or '').strip().lower()
+changed=sh('git','diff','--name-only',base,head)
+plans=[p for p in changed if re.match(r'^\.claude/plans/.*\.md$',p) and os.path.exists(p)]
+code=[p for p in changed if p and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',p)]
+knowledge=[p for p in changed if re.match(r'^(lessons-learned/|failed-solutions/|templates/)',p)]
+if code and not plans:
+    print('ERROR_FOR_AGENT: code/config/test files changed without a changed .claude/plans/*.md Route Plan.'); sys.exit(1)
+if code and plans:
+    commits=sh('git','rev-list','--reverse',f'{base}..{head}')
+    first_plan=first_code=0
+    for idx,c in enumerate(commits,1):
+        fs=sh('git','diff-tree','--no-commit-id','--name-only','-r',c)
+        if not first_plan and any(re.match(r'^\.claude/plans/.*\.md$',f) for f in fs): first_plan=idx
+        cfs=[f for f in fs if f and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',f)]
+        if not first_code and cfs: first_code=idx
+    if not first_plan or not first_code or first_code <= first_plan:
+        print('ERROR_FOR_AGENT: Route Plan must be committed before the first code/config/test change, not in the same or later commit.'); sys.exit(1)
+if not plans:
+    print('No changed plan files.'); sys.exit(0)
 
-[ -n "$plans" ] || { echo "No changed plan files."; exit 0; }
+def field(text, name_re):
+    for line in text.splitlines():
+        if '|' not in line: continue
+        cells=[re.sub(r'[`*_]','',c).strip() for c in line.split('|')]
+        for i,c in enumerate(cells[:-1]):
+            if re.search(name_re,c.lower()): return cells[i+1].strip()
+    return ''
 
-field_value() { awk -F'|' -v re="$2" 'NF>1{for(i=1;i<NF;i++){f=tolower($i);gsub(/[*_`]/,"",f);gsub(/^[ \t]+|[ \t]+$/,"",f);if(f~re){v=$(i+1);gsub(/^[ \t]+|[ \t]+$/,"",v);print v;exit}}}' "$1"; }
-has_heading() { grep -qiE "^#{1,4}[[:space:]]+$2([[:space:]]|$)" "$1"; }
-section_body() { awk -v h="$2" 'BEGIN{f=0}$0~"^#{1,4}[[:space:]]+"h"([[:space:]]|$)"{f=1;next}f&&$0~"^#{1,4}[[:space:]]+"{exit}f{print}' "$1"; }
-clean() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g;s/^[[:space:]]+|[[:space:]]+$//g;s/[[:space:][:punct:]]+$//'; }
-norm_item() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/<[^>]+>//g;s/`//g;s/^[[:space:]*-]+//;s/[[:space:][:punct:]]+$//;s/[^a-z0-9_./-]+/-/g;s/^-+|-+$//g'; }
+def section(text, title_re):
+    lines=text.splitlines(); out=[]; on=False
+    for line in lines:
+        if re.match(r'^#{1,4}\s+'+title_re+r'(\s|$)', line, re.I): on=True; continue
+        if on and re.match(r'^#{1,4}\s+', line): break
+        if on: out.append(line)
+    return '\n'.join(out)
 
-list_has_item() {
-  local list="$1" wanted="$2" key
-  wanted="$(norm_item "$wanted")"
-  while read -r raw || [ -n "$raw" ]; do
-    key="$(norm_item "$raw")"
-    [ -n "$key" ] || continue
-    [ "$key" = "$wanted" ] && return 0
-  done < <(printf '%s' "$list" | tr ',;' '\n')
-  return 1
-}
+def has_heading(text, title_re):
+    return re.search(r'^#{1,4}\s+'+title_re+r'(\s|$)', text, re.I|re.M) is not None
 
-source_matches_target() {
-  local sources="$1"
-  local targets="$2"
-  printf '%s' "$sources" | grep -Eq 'CLAUDE\.md|core/task-router\.md|core/workflow\.md' && return 0
-  while read -r target; do
-    key="$(norm_item "$target")"
-    [ -z "$key" ] && continue
-    dir="${key%/*}"
-    base="${key##*/}"
-    if printf '%s' "$sources" | tr '[:upper:]' '[:lower:]' | grep -Fq -- "$key"; then return 0; fi
-    if [ "$dir" != "$key" ] && printf '%s' "$sources" | tr '[:upper:]' '[:lower:]' | grep -Fq -- "$dir"; then return 0; fi
-    if [ -n "$base" ] && printf '%s' "$sources" | tr '[:upper:]' '[:lower:]' | grep -Fq -- "$base"; then return 0; fi
-  done < <(printf '%s\n' "$targets" | tr ',;' '\n' | sed '/^[[:space:]]*$/d')
-  return 1
-}
-
-bad=0
-for plan in $plans; do
-  task_router="$(field_value "$plan" '^task-router evidence$')"
-  workflow="$(field_value "$plan" '^workflow evidence$')"
-  templates="$(field_value "$plan" '^templates$')"
-  patterns="$(field_value "$plan" '^patterns$')"
-  skills="$(field_value "$plan" '^skills$')"
-  gates="$(field_value "$plan" '^validation gates$')"
-  targets="$(field_value "$plan" '^target paths$|^target path$')"
-
-  for pair in "Task-router evidence::$task_router" "Workflow evidence::$workflow" "Templates::$templates" "Patterns::$patterns" "Skills::$skills" "Validation gates::$gates"; do
-    name="${pair%%::*}"; value="$(clean "${pair#*::}")"
-    if [[ -z "$value" || "$value" =~ ^(todo|tbd|placeholder|unknown|later|fix[[:space:]]*later|to[[:space:]]*decide)$ ]]; then
-      echo "ERROR_FOR_AGENT: $plan has missing or placeholder $name."
-      bad=1
-    fi
-  done
-
-  if ! has_heading "$plan" 'Source[[:space:]]+of[[:space:]]+Truth[[:space:]]+Checks'; then
-    echo "ERROR_FOR_AGENT: $plan is missing ## Source of Truth Checks."
-    bad=1
-  else
-    source_section="$(section_body "$plan" 'Source[[:space:]]+of[[:space:]]+Truth[[:space:]]+Checks')"
-    count="$(printf '%s\n' "$source_section" | grep -Eci '\|[[:space:]]*[^|]+[[:space:]]*\|[[:space:]]*(checked|read|validated)[[:space:]]*\|' || true)"
-    if [ "$count" -lt 2 ]; then
-      echo "ERROR_FOR_AGENT: $plan Source of Truth Checks must include at least two checked/read sources."
-      bad=1
-    fi
-    if [ -n "$code" ] && [ -n "$(clean "$targets")" ] && ! source_matches_target "$source_section" "$targets"; then
-      echo "ERROR_FOR_AGENT: $plan Source of Truth Checks do not reference any Target paths or canonical routing/workflow source."
-      bad=1
-    fi
-  fi
-
-  if [ -n "$code" ]; then
-    if ! has_heading "$plan" 'Claude[[:space:]]+Run[[:space:]]+Trace'; then
-      echo "ERROR_FOR_AGENT: $plan changes code/config/tests but lacks ## Claude Run Trace."
-      bad=1
-    fi
-    if ! has_heading "$plan" 'Progress[[:space:]]+Lifecycle[[:space:]]+Evidence'; then
-      echo "ERROR_FOR_AGENT: $plan changes code/config/tests but lacks ## Progress Lifecycle Evidence."
-      bad=1
-    else
-      progress="$(section_body "$plan" 'Progress[[:space:]]+Lifecycle[[:space:]]+Evidence' | tr '[:upper:]' '[:lower:]')"
-      for marker in start mid pre-merge; do
-        if ! printf '%s\n' "$progress" | grep -Eq "(^|[^a-z])${marker}([^a-z]|$)"; then
-          echo "ERROR_FOR_AGENT: $plan Progress Lifecycle Evidence must include ${marker} checkpoint evidence."
-          bad=1
-        fi
-      done
-    fi
-  fi
-
-  skills_clean="$(clean "$skills")"
-  if [[ -n "$skills_clean" && ! "$skills_clean" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+skills)$ ]]; then
-    if ! has_heading "$plan" 'Skill[[:space:]]+Evidence'; then
-      echo "ERROR_FOR_AGENT: $plan declares skills '$skills' but lacks ## Skill Evidence."
-      bad=1
-    else
-      evidence="$(section_body "$plan" 'Skill[[:space:]]+Evidence' | tr '[:upper:]' '[:lower:]')"
-      while read -r raw || [ -n "$raw" ]; do
-        key="$(norm_item "$raw")"
-        [ -z "$key" ] && continue
-        if ! printf '%s\n' "$evidence" | grep -Fq -- "$key"; then
-          echo "ERROR_FOR_AGENT: $plan declares skill '$raw' but Skill Evidence does not mention it."
-          bad=1
-        fi
-      done < <(printf '%s' "$skills" | tr ',;' '\n' | sed '/^[[:space:]]*$/d')
-    fi
-  fi
-
-  if [ -n "$code" ] && list_has_item "$skills" rtk; then
-    if has_heading "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Waiver'; then
-      waiver="$(section_body "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Waiver')"
-      if ! printf '%s\n' "$waiver" | tr '[:upper:]' '[:lower:]' | grep -q 'rtk'; then
-        echo "ERROR_FOR_AGENT: $plan RTK Usage Waiver must mention RTK."
-        bad=1
-      fi
-      if [ "$(printf '%s' "$waiver" | wc -c | tr -d ' ')" -lt 40 ]; then
-        echo "ERROR_FOR_AGENT: $plan RTK Usage Waiver must explain why RTK decision-impact evidence is not available."
-        bad=1
-      fi
-    elif ! has_heading "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Evidence'; then
-      echo "ERROR_FOR_AGENT: $plan declares rtk for code/config/test changes but lacks ## RTK Usage Evidence."
-      bad=1
-    else
-      rtk_evidence="$(section_body "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Evidence')"
-      for marker in source action result decision; do
-        if ! printf '%s\n' "$rtk_evidence" | grep -Eiq '^[[:space:]]*([-*][[:space:]]*)?'"${marker}"'[[:space:]]*:'; then
-          echo "ERROR_FOR_AGENT: $plan RTK Usage Evidence must include ${marker}: evidence."
-          bad=1
-        fi
-      done
-    fi
-  fi
-
-  templates_clean="$(clean "$templates")"
-  if echo "$templates_clean" | grep -qE '(gap|missing|none|no[[:space:]]+template|not[[:space:]]+available|too[[:space:]]+heavy)'; then
-    if [ -z "$knowledge" ] && ! has_heading "$plan" 'Template[[:space:]]+Gap[[:space:]]+Waiver'; then
-      echo "ERROR_FOR_AGENT: $plan records a template gap but lacks changed learning/template artifact or ## Template Gap Waiver."
-      bad=1
-    fi
-  fi
-
-done
-
-[ "$bad" -eq 0 ] || exit 1
-echo "Workflow evidence checks passed."
+def split_items(s): return [x for x in re.split(r'[,;]\s*',s or '') if x.strip()]
+def list_has(s,w): return norm(w) in [norm(x) for x in split_items(s)]
+def has_asset(s): return re.search(r'(^|\s)(templates|patterns)/\S+', s or '') is not None
+def source_matches(src, targets):
+    low=src.lower()
+    if re.search(r'CLAUDE\.md|core/task-router\.md|core/workflow\.md', src): return True
+    for t in split_items(targets):
+        k=norm(t); d=k.rsplit('/',1)[0] if '/' in k else k; b=k.rsplit('/',1)[-1]
+        if k and (k in low or d in low or b in low): return True
+    return False
+bad=False
+for plan in plans:
+    text=open(plan,encoding='utf-8').read()
+    vals={n:field(text,r'^'+re.escape(n.lower())+r'$') for n in ['Task-router evidence','Workflow evidence','Templates','Patterns','Skills','Validation gates']}
+    targets=field(text,r'^target paths?$')
+    for n,v in vals.items():
+        cv=clean(v)
+        if not cv or re.match(r'^(todo|tbd|placeholder|unknown|later|fix\s*later|to\s*decide)$',cv):
+            print(f'ERROR_FOR_AGENT: {plan} has missing or placeholder {n}.'); bad=True
+    if not has_heading(text,r'Source\s+of\s+Truth\s+Checks'):
+        print(f'ERROR_FOR_AGENT: {plan} is missing ## Source of Truth Checks.'); bad=True
+    else:
+        src=section(text,r'Source\s+of\s+Truth\s+Checks')
+        if len(re.findall(r'\|\s*[^|]+\s*\|\s*(checked|read|validated)\s*\|', src, re.I)) < 2:
+            print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must include at least two checked/read sources.'); bad=True
+        if code and clean(targets) and not source_matches(src, targets):
+            print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks do not reference any Target paths or canonical routing/workflow source.'); bad=True
+    if code:
+        if not has_heading(text,r'Claude\s+Run\s+Trace'):
+            print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Claude Run Trace.'); bad=True
+        if not has_heading(text,r'Progress\s+Lifecycle\s+Evidence'):
+            print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Progress Lifecycle Evidence.'); bad=True
+        else:
+            prog=section(text,r'Progress\s+Lifecycle\s+Evidence').lower()
+            for m in ['start','mid','pre-merge']:
+                if not re.search(r'(^|[^a-z])'+re.escape(m)+r'([^a-z]|$)',prog): print(f'ERROR_FOR_AGENT: {plan} Progress Lifecycle Evidence must include {m} checkpoint evidence.'); bad=True
+    skills=vals['Skills']; sc=clean(skills)
+    if sc and not re.match(r'^(none|n/a|na|not\s+required|no\s+skills)$',sc):
+        if not has_heading(text,r'Skill\s+Evidence'):
+            print(f"ERROR_FOR_AGENT: {plan} declares skills '{skills}' but lacks ## Skill Evidence."); bad=True
+        else:
+            ev=section(text,r'Skill\s+Evidence').lower()
+            for raw in split_items(skills):
+                if norm(raw) and norm(raw) not in ev: print(f"ERROR_FOR_AGENT: {plan} declares skill '{raw}' but Skill Evidence does not mention it."); bad=True
+    if code and list_has(skills,'rtk'):
+        if has_heading(text,r'RTK\s+Usage\s+Waiver'):
+            w=section(text,r'RTK\s+Usage\s+Waiver')
+            if 'rtk' not in w.lower() or len(w)<40: print(f'ERROR_FOR_AGENT: {plan} RTK Usage Waiver must explain why RTK decision-impact evidence is not available.'); bad=True
+        elif not has_heading(text,r'RTK\s+Usage\s+Evidence'):
+            print(f'ERROR_FOR_AGENT: {plan} declares rtk for code/config/test changes but lacks ## RTK Usage Evidence.'); bad=True
+        else:
+            ev=section(text,r'RTK\s+Usage\s+Evidence')
+            for m in ['source','action','result','decision']:
+                if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} RTK Usage Evidence must include {m}: evidence.'); bad=True
+    if code and (has_asset(vals['Templates']) or has_asset(vals['Patterns'])):
+        if has_heading(text,r'Template/Pattern\s+Rating\s+Waiver'):
+            if len(section(text,r'Template/Pattern\s+Rating\s+Waiver')) < 40: print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Waiver must explain why rating evidence is unavailable.'); bad=True
+        elif not has_heading(text,r'Template/Pattern\s+Rating\s+Evidence'):
+            print(f'ERROR_FOR_AGENT: {plan} uses templates/patterns assets but lacks ## Template/Pattern Rating Evidence.'); bad=True
+        else:
+            ev=section(text,r'Template/Pattern\s+Rating\s+Evidence')
+            for m in ['asset','rating','outcome','decision']:
+                if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must include {m}: evidence.'); bad=True
+    tc=clean(vals['Templates'])
+    if re.search(r'(gap|missing|none|no\s+template|not\s+available|too\s+heavy)',tc) and not knowledge and not has_heading(text,r'Template\s+Gap\s+Waiver'):
+        print(f'ERROR_FOR_AGENT: {plan} records a template gap but lacks changed learning/template artifact or ## Template Gap Waiver.'); bad=True
+if bad: sys.exit(1)
+print('Workflow evidence checks passed.')
+PY
