@@ -19,8 +19,23 @@ setup_repo() {
   git init >/dev/null
 }
 
+write_usage_section() {
+  local connectors="$1"
+  echo
+  echo "## Connector Usage Evidence"
+  echo
+  printf '%s' "$connectors" | tr ',;' '\n' | while read -r raw; do
+    c="$(printf '%s' "$raw" | xargs)"
+    [ -z "$c" ] && continue
+    case "$(printf '%s' "$c" | tr '[:upper:]' '[:lower:]')" in
+      none|n/a|na|not\ required|no\ connectors) continue ;;
+    esac
+    echo "- $c: checked source-of-truth data and used the result to decide this fixture path."
+  done
+}
+
 write_plan() {
-  local task_class="$1" tags="$2" connectors="$3" notion_section="${4:-yes}"
+  local task_class="$1" tags="$2" connectors="$3" notion_section="${4:-yes}" usage_section="${5:-yes}"
   cat > .claude/plans/active.md <<EOF
 # Route Plan
 
@@ -68,6 +83,9 @@ EOF
 - Pre-merge checkpoint: Notion reflects final status.
 EOF
   fi
+  if [ "$usage_section" = "yes" ]; then
+    write_usage_section "$connectors" >> .claude/plans/active.md
+  fi
 }
 
 append_connector_waiver() {
@@ -111,6 +129,10 @@ failcase incident_requires_notion_progress_connector run_check src/ops/recovery.
 setup_repo
 write_plan incident "ops" "github, notion, sentry" yes
 pass incident_with_notion_selection_allows_plan run_check src/ops/recovery.ts
+
+setup_repo
+write_plan incident "ops" "github, notion, sentry" yes no
+failcase selected_connectors_require_usage_evidence run_check src/ops/recovery.ts
 
 setup_repo
 write_plan bug_fix "payments, webhooks, stripe" "github" yes
