@@ -47,12 +47,15 @@ if failures:
 print(f'coverage map metadata validated: {len(rows)} rows')
 PY
 
-# Negative simulation: removing a marker must fail.
+# Negative simulation: removing a marker from a matrix row must fail.
 python3 - "$AUDIT" "$TMP/bad.md" <<'PY'
 import sys
 from pathlib import Path
 text = Path(sys.argv[1]).read_text(encoding='utf-8')
-Path(sys.argv[2]).write_text(text.replace('Gate:', 'Gate-', 1), encoding='utf-8')
+needle = '| CLAUDE entrypoint and core navigation | Enforced | Gate:'
+if needle not in text:
+    raise SystemExit('expected CLAUDE entrypoint row marker not found')
+Path(sys.argv[2]).write_text(text.replace(needle, '| CLAUDE entrypoint and core navigation | Enforced | Gate-', 1), encoding='utf-8')
 PY
 
 if python3 - "$TMP/bad.md" <<'PY'
