@@ -57,10 +57,10 @@
 
 | Source | Status |
 |---|---|
-| docs/operations/known-gaps.tsv | checked and updated |
-| docs/operations/operational-readiness-audit.md | checked and updated |
-| scripts/enforcement/check-known-gaps.sh | checked and updated |
-| scripts/enforcement/tests/test-known-gaps.sh | checked and updated |
+| docs/operations/known-gaps.tsv | checked |
+| docs/operations/operational-readiness-audit.md | checked |
+| scripts/enforcement/check-known-gaps.sh | checked |
+| scripts/enforcement/tests/test-known-gaps.sh | checked |
 | .github/workflows/enforcement-tests.yml | checked |
 
 ## Template Gap Waiver
