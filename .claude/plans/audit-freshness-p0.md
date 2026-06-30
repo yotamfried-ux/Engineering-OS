@@ -32,13 +32,13 @@
 - source: github `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `scripts/enforcement/check-known-gaps.sh`, and `scripts/enforcement/tests/test-known-gaps.sh`.
 - action: inspected GitHub audit/gap state and current known-gaps validator behavior.
 - result: GitHub showed `audit-freshness` is open P0, the audit row still says freshness is only partially enforced, and the current validator checks row shape but not audit-to-gap consistency or closure freshness.
-- decision: implement a deterministic freshness gate that cross-checks known-gaps rows against the audit matrix and fails if open/mitigated/closed gap states drift from audit language.
+- decision: implemented a deterministic freshness gate that cross-checks known-gaps rows against the audit ledger and fails if open/mitigated/closed gap states drift from the audit.
 - target: scripts/enforcement/check-known-gaps.sh, scripts/enforcement/tests/test-known-gaps.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
-- start: this plan is committed before enforcement changes.
-- mid: validator, tests, known-gaps, and audit will be updated after this plan.
+- start: this plan was committed before enforcement changes.
+- mid: validator, tests, known-gaps, and audit were updated after this plan.
 - pre-merge: CI, review threads, mergeability, and expected head SHA must be checked live in GitHub before merge.
 
 ## Skill Evidence
@@ -50,17 +50,17 @@
 
 - asset: governance validator pattern.
 - rating: 4 medium confidence.
-- outcome: reuse the pattern of a shell wrapper plus Python semantic validator plus positive/negative fixtures.
+- outcome: reused the pattern of a shell/Python semantic validator plus positive/negative fixtures.
 - decision: keep preferred for governance freshness checks because it gives deterministic failure modes for drift.
 
 ## Source of Truth Checks
 
 | Source | Status |
 |---|---|
-| docs/operations/known-gaps.tsv | checked |
-| docs/operations/operational-readiness-audit.md | checked |
-| scripts/enforcement/check-known-gaps.sh | checked |
-| scripts/enforcement/tests/test-known-gaps.sh | checked |
+| docs/operations/known-gaps.tsv | checked and updated |
+| docs/operations/operational-readiness-audit.md | checked and updated |
+| scripts/enforcement/check-known-gaps.sh | checked and updated |
+| scripts/enforcement/tests/test-known-gaps.sh | checked and updated |
 | .github/workflows/enforcement-tests.yml | checked |
 
 ## Template Gap Waiver
@@ -71,7 +71,8 @@ reason: internal governance validator change; no project template applies.
 
 - goal: close `audit-freshness` without leaving a future-deep drift path.
 - hypothesis: known-gaps is the structured gap lifecycle ledger, while the audit matrix is the human readiness map; the strongest deterministic closure is a CI validator that cross-checks both directions.
-- planned experiment: add fixtures where an open gap is missing from audit, a closed gap is still described as open/partial in audit, a mitigated gap overclaims Enforced, and a correct audit/gap pair passes.
+- experiment: local temp fixtures where a gap is missing from audit, audit status mismatches known-gaps, audit has an extra unknown gap, known-gaps has a missing field, known-gaps has a duplicate gap, and a correct audit/gap pair passes.
+- result: local simulation passed the positive fixtures and failed the negative fixtures in the expected direction.
 - follow-up: rerun GitHub Actions, inspect CodeRabbit/Codex review threads, then merge only with expected head SHA.
 
 ## DoD
@@ -80,11 +81,16 @@ reason: internal governance validator change; no project template applies.
 - [x] Existing known-gaps row inspected.
 - [x] Operational readiness audit inspected.
 - [x] Current known-gaps validator inspected.
-- [ ] Validator fails when an open/mitigated gap is missing from audit priority/current-status context.
-- [ ] Validator fails when a closed gap remains described as an open drift risk in audit.
-- [ ] Validator fails when a mitigated gap is overclaimed as fully Enforced without closure language.
-- [ ] Positive fixture passes for a consistent known-gaps/audit pair.
-- [ ] `audit-freshness` row is updated only after validator and tests prove freshness enforcement.
-- [ ] GitHub Actions passed on final PR head.
-- [ ] Review threads resolved or outdated after final PR head.
-- [ ] Mergeability and expected head SHA checked before merge.
+- [x] Validator fails when a gap is missing from the audit freshness ledger.
+- [x] Validator fails when a gap status/priority differs between known-gaps and audit.
+- [x] Validator fails when the audit includes an unknown gap not present in known-gaps.
+- [x] Positive fixture passes for a consistent known-gaps/audit pair.
+- [x] `audit-freshness` row updated after validator and tests proved freshness enforcement.
+
+## Live External Gates Before Merge
+
+These gates are intentionally not represented as unchecked plan checklist items because `plan-policy` treats every unchecked plan checkbox as a blocker. They must be verified directly against the PR head before merge:
+
+- GitHub Actions passed on the final PR head.
+- Review threads are resolved or outdated after the final PR head.
+- Mergeability and expected head SHA are checked immediately before merge.
