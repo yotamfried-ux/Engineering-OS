@@ -4,7 +4,7 @@ set -euo pipefail
 base="${1:-HEAD~1}"
 head="${2:-HEAD}"
 changed="$(git diff --name-only "$base" "$head")"
-plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' || true)"
+plans="$(printf '%s\n' "$changed" | grep '^\.claude/plans/.*\.md$' | while IFS= read -r p; do [ -f "$p" ] && printf '%s\n' "$p"; done || true)"
 code="$(printf '%s\n' "$changed" | grep -v '^$' | grep -v '^\.claude/plans/' | grep -v '^docs/' | grep -v '^README\.md$' | grep -v '^CHANGELOG\.md$' | grep -v '^LICENSE' || true)"
 knowledge="$(printf '%s\n' "$changed" | grep -E '^(lessons-learned/|failed-solutions/|templates/)' || true)"
 
@@ -63,6 +63,33 @@ has_heading() {
   grep -qiE "^#{1,4}[[:space:]]+$heading([[:space:]]|$)" "$plan"
 }
 
+section_body() {
+  local plan="$1"
+  local heading="$2"
+  awk -v heading="$heading" '
+    BEGIN { found=0 }
+    $0 ~ "^#{1,4}[[:space:]]+" heading "([[:space:]]|$)" { found=1; next }
+    found && $0 ~ "^#{1,4}[[:space:]]+" { exit }
+    found { print }
+  ' "$plan"
+}
+
+is_placeholder() {
+  local value
+  value="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g; s/^[[:space:]]+|[[:space:]]+$//g; s/[[:space:][:punct:]]+$//')"
+  [[ -z "$value" || "$value" =~ ^(todo|tbd|placeholder|unknown|later|fix[[:space:]]*later|to[[:space:]]*decide)$ ]]
+}
+
+is_none_like() {
+  local value
+  value="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g; s/^[[:space:]]+|[[:space:]]+$//g; s/[[:space:][:punct:]]+$//')"
+  [[ "$value" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+skills|no[[:space:]]+template|required[[:space:]]+none)$ ]]
+}
+
+normalize_item() {
+  printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/<[^>]+>//g; s/`//g; s/^[[:space:]-*]+//; s/[[:space:][:punct:]]+$//; s/[^a-z0-9_-]+/-/g; s/^-+|-+$//g'
+}
+
 bad=0
 for plan in $plans; do
   task_router="$(field_value "$plan" '^task-router evidence$')"
@@ -72,23 +99,52 @@ for plan in $plans; do
   skills="$(field_value "$plan" '^skills$')"
   gates="$(field_value "$plan" '^validation gates$')"
 
-  if [ -z "$task_router" ]; then echo "ERROR_FOR_AGENT: $plan is missing Task-router evidence."; bad=1; fi
-  if [ -z "$workflow" ]; then echo "ERROR_FOR_AGENT: $plan is missing Workflow evidence."; bad=1; fi
-  if [ -z "$templates" ]; then echo "ERROR_FOR_AGENT: $plan is missing Templates."; bad=1; fi
-  if [ -z "$patterns" ]; then echo "ERROR_FOR_AGENT: $plan is missing Patterns."; bad=1; fi
-  if [ -z "$skills" ]; then echo "ERROR_FOR_AGENT: $plan is missing Skills."; bad=1; fi
-  if [ -z "$gates" ]; then echo "ERROR_FOR_AGENT: $plan is missing Validation gates."; bad=1; fi
+  for pair in \
+    "Task-router evidence::$task_router" \
+    "Workflow evidence::$workflow" \
+    "Templates::$templates" \
+    "Patterns::$patterns" \
+    "Skills::$skills" \
+    "Validation gates::$gates"; do
+    name="${pair%%::*}"
+    value="${pair#*::}"
+    if is_placeholder "$value"; then
+      echo "ERROR_FOR_AGENT: $plan has missing or placeholder $name."
+      bad=1
+    fi
+  done
 
   if ! has_heading "$plan" 'Source[[:space:]]+of[[:space:]]+Truth[[:space:]]+Checks'; then
     echo "ERROR_FOR_AGENT: $plan is missing ## Source of Truth Checks."
     bad=1
+  else
+    source_count="$(section_body "$plan" 'Source[[:space:]]+of[[:space:]]+Truth[[:space:]]+Checks' | grep -Eci '\|[[:space:]]*[^|]+[[:space:]]*\|[[:space:]]*(checked|read|validated)[[:space:]]*\|' || true)"
+    if [ "$source_count" -lt 2 ]; then
+      echo "ERROR_FOR_AGENT: $plan Source of Truth Checks must include at least two checked/read sources."
+      bad=1
+    fi
+  fi
+
+  if [ -n "$code" ] && ! has_heading "$plan" 'Claude[[:space:]]+Run[[:space:]]+Trace'; then
+    echo "ERROR_FOR_AGENT: $plan changes code/config/tests but lacks ## Claude Run Trace."
+    bad=1
   fi
 
   normalized_skills="$(printf '%s' "$skills" | tr '[:upper:]' '[:lower:]' | sed -E 's/[[:space:][:punct:]]+$//' | xargs)"
-  if [ -n "$normalized_skills" ] && [[ ! "$normalized_skills" =~ ^(none|n/a|na|not[[:space:]]+required|no[[:space:]]+skills)$ ]]; then
+  if [ -n "$normalized_skills" ] && ! is_none_like "$normalized_skills"; then
     if ! has_heading "$plan" 'Skill[[:space:]]+Evidence'; then
       echo "ERROR_FOR_AGENT: $plan declares skills '$skills' but lacks ## Skill Evidence."
       bad=1
+    else
+      skill_evidence="$(section_body "$plan" 'Skill[[:space:]]+Evidence')"
+      while IFS= read -r raw_skill; do
+        skill_key="$(normalize_item "$raw_skill")"
+        [ -z "$skill_key" ] && continue
+        if ! printf '%s\n' "$skill_evidence" | tr '[:upper:]' '[:lower:]' | grep -q "$(printf '%s' "$skill_key" | sed 's/[][\\.^$*]/\\&/g')"; then
+          echo "ERROR_FOR_AGENT: $plan declares skill '$raw_skill' but Skill Evidence does not mention it."
+          bad=1
+        fi
+      done < <(printf '%s' "$skills" | tr ',;' '\n' | sed '/^[[:space:]]*$/d')
     fi
   fi
 
@@ -99,6 +155,7 @@ for plan in $plans; do
       bad=1
     fi
   fi
+
 done
 
 [ "$bad" -eq 0 ] || exit 1
