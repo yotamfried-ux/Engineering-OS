@@ -81,8 +81,10 @@ Anything merely documented but silently skippable is not operationally ready.
 4. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
 5. **Progress lifecycle** — extend structural start/mid/pre-merge checkpoint evidence into deeper semantic progress validation as reliable signals become available.
 6. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
-7. **Documentation hygiene** — detect duplicate/stale policy spread and force canonical ownership.
-8. **Semantic cleanup** — add reliable analyzers/checklists for unused imports, dead code, duplicates, temporary code, and risky TODOs.
+7. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
+8. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair issue path on a future failing main run.
+9. **Documentation hygiene** — detect duplicate/stale policy spread and force canonical ownership.
+10. **Semantic cleanup** — add reliable analyzers/checklists for unused imports, dead code, duplicates, temporary code, and risky TODOs.
 
 ## Current PR scope
 
