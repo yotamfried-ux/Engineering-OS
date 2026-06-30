@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COVERAGE_FILE="${1:-$ROOT/scripts/enforcement/simulation-coverage.tsv}"
 REQUIRED_GATES="${EOS_SIM_COVERAGE_REQUIRED_GATES:-simulation-coverage,workflow-plan-quality,workflow-semantic-quality,progress-lifecycle,connector-evidence,required-connectors,required-skills,runtime-evidence,learning-capture,run-trace,rtk-context,readiness-audit,use-in-project-contract}"
+MIN_ROWS="${EOS_SIM_COVERAGE_MIN_ROWS:-8}"
 
 failures=0
 seen="$(mktemp)"
@@ -96,8 +97,8 @@ while IFS=$'\t' read -r gate owner enforcer test_file positive negative invalid 
   validate_cell "$gate" waiver "$waiver" "$test_file"
 done < "$COVERAGE_FILE"
 
-if [ "$row_count" -lt 8 ]; then
-  fail "expected at least 8 simulation coverage rows, found $row_count"
+if [ "$row_count" -lt "$MIN_ROWS" ]; then
+  fail "expected at least $MIN_ROWS simulation coverage rows, found $row_count"
 fi
 
 IFS=',' read -r -a required <<< "$REQUIRED_GATES"
