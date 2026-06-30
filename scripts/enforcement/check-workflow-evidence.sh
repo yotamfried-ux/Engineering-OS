@@ -30,22 +30,26 @@ fi
 
 [ -n "$plans" ] || { echo "No changed plan files."; exit 0; }
 
-field_value() {
-  awk -F'|' -v re="$2" 'NF>1{for(i=1;i<NF;i++){f=tolower($i);gsub(/[*_`]/,"",f);gsub(/^[ \t]+|[ \t]+$/,"",f);if(f~re){v=$(i+1);gsub(/^[ \t]+|[ \t]+$/,"",v);print v;exit}}}' "$1"
-}
-
+field_value() { awk -F'|' -v re="$2" 'NF>1{for(i=1;i<NF;i++){f=tolower($i);gsub(/[*_`]/,"",f);gsub(/^[ \t]+|[ \t]+$/,"",f);if(f~re){v=$(i+1);gsub(/^[ \t]+|[ \t]+$/,"",v);print v;exit}}}' "$1"; }
 has_heading() { grep -qiE "^#{1,4}[[:space:]]+$2([[:space:]]|$)" "$1"; }
+section_body() { awk -v h="$2" 'BEGIN{f=0}$0~"^#{1,4}[[:space:]]+"h"([[:space:]]|$)"{f=1;next}f&&$0~"^#{1,4}[[:space:]]+"{exit}f{print}' "$1"; }
+clean() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g;s/^[[:space:]]+|[[:space:]]+$//g;s/[[:space:][:punct:]]+$//'; }
+norm_item() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/<[^>]+>//g;s/`//g;s/^[[:space:]*-]+//;s/[[:space:][:punct:]]+$//;s/[^a-z0-9_./-]+/-/g;s/^-+|-+$//g'; }
 
-section_body() {
-  awk -v h="$2" 'BEGIN{f=0}$0~"^#{1,4}[[:space:]]+"h"([[:space:]]|$)"{f=1;next}f&&$0~"^#{1,4}[[:space:]]+"{exit}f{print}' "$1"
-}
-
-clean() {
-  printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g;s/^[[:space:]]+|[[:space:]]+$//g;s/[[:space:][:punct:]]+$//'
-}
-
-norm_item() {
-  printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/<[^>]+>//g;s/`//g;s/^[[:space:]*-]+//;s/[[:space:][:punct:]]+$//;s/[^a-z0-9_-]+/-/g;s/^-+|-+$//g'
+source_matches_target() {
+  local sources="$1"
+  local targets="$2"
+  printf '%s' "$sources" | grep -Eq 'CLAUDE\.md|core/task-router\.md|core/workflow\.md' && return 0
+  while read -r target; do
+    key="$(norm_item "$target")"
+    [ -z "$key" ] && continue
+    dir="${key%/*}"
+    base="${key##*/}"
+    if printf '%s' "$sources" | tr '[:upper:]' '[:lower:]' | grep -Fq -- "$key"; then return 0; fi
+    if [ "$dir" != "$key" ] && printf '%s' "$sources" | tr '[:upper:]' '[:lower:]' | grep -Fq -- "$dir"; then return 0; fi
+    if [ -n "$base" ] && printf '%s' "$sources" | tr '[:upper:]' '[:lower:]' | grep -Fq -- "$base"; then return 0; fi
+  done < <(printf '%s\n' "$targets" | tr ',;' '\n' | sed '/^[[:space:]]*$/d')
+  return 1
 }
 
 bad=0
@@ -56,6 +60,7 @@ for plan in $plans; do
   patterns="$(field_value "$plan" '^patterns$')"
   skills="$(field_value "$plan" '^skills$')"
   gates="$(field_value "$plan" '^validation gates$')"
+  targets="$(field_value "$plan" '^target paths$|^target path$')"
 
   for pair in "Task-router evidence::$task_router" "Workflow evidence::$workflow" "Templates::$templates" "Patterns::$patterns" "Skills::$skills" "Validation gates::$gates"; do
     name="${pair%%::*}"; value="$(clean "${pair#*::}")"
@@ -69,9 +74,14 @@ for plan in $plans; do
     echo "ERROR_FOR_AGENT: $plan is missing ## Source of Truth Checks."
     bad=1
   else
-    count="$(section_body "$plan" 'Source[[:space:]]+of[[:space:]]+Truth[[:space:]]+Checks' | grep -Eci '\|[[:space:]]*[^|]+[[:space:]]*\|[[:space:]]*(checked|read|validated)[[:space:]]*\|' || true)"
+    source_section="$(section_body "$plan" 'Source[[:space:]]+of[[:space:]]+Truth[[:space:]]+Checks')"
+    count="$(printf '%s\n' "$source_section" | grep -Eci '\|[[:space:]]*[^|]+[[:space:]]*\|[[:space:]]*(checked|read|validated)[[:space:]]*\|' || true)"
     if [ "$count" -lt 2 ]; then
       echo "ERROR_FOR_AGENT: $plan Source of Truth Checks must include at least two checked/read sources."
+      bad=1
+    fi
+    if [ -n "$code" ] && [ -n "$(clean "$targets")" ] && ! source_matches_target "$source_section" "$targets"; then
+      echo "ERROR_FOR_AGENT: $plan Source of Truth Checks do not reference any Target paths or canonical routing/workflow source."
       bad=1
     fi
   fi
