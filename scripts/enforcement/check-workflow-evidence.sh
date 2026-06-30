@@ -35,6 +35,7 @@ has_heading() { grep -qiE "^#{1,4}[[:space:]]+$2([[:space:]]|$)" "$1"; }
 section_body() { awk -v h="$2" 'BEGIN{f=0}$0~"^#{1,4}[[:space:]]+"h"([[:space:]]|$)"{f=1;next}f&&$0~"^#{1,4}[[:space:]]+"{exit}f{print}' "$1"; }
 clean() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[`*_]//g;s/^[[:space:]]+|[[:space:]]+$//g;s/[[:space:][:punct:]]+$//'; }
 norm_item() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | sed -E 's/<[^>]+>//g;s/`//g;s/^[[:space:]*-]+//;s/[[:space:][:punct:]]+$//;s/[^a-z0-9_./-]+/-/g;s/^-+|-+$//g'; }
+has_rating_asset() { printf '%s' "${1:-}" | tr ',;' '\n' | grep -Eq '(^|[[:space:]])(templates|patterns)/[^[:space:]]+'; }
 
 list_has_item() {
   local list="$1" wanted="$2" key
@@ -153,6 +154,27 @@ for plan in $plans; do
       for marker in source action result decision; do
         if ! printf '%s\n' "$rtk_evidence" | grep -Eiq '^[[:space:]]*([-*][[:space:]]*)?'"${marker}"'[[:space:]]*:'; then
           echo "ERROR_FOR_AGENT: $plan RTK Usage Evidence must include ${marker}: evidence."
+          bad=1
+        fi
+      done
+    fi
+  fi
+
+  if [ -n "$code" ] && ( has_rating_asset "$templates" || has_rating_asset "$patterns" ); then
+    if has_heading "$plan" 'Template/Pattern[[:space:]]+Rating[[:space:]]+Waiver'; then
+      rating_waiver="$(section_body "$plan" 'Template/Pattern[[:space:]]+Rating[[:space:]]+Waiver')"
+      if [ "$(printf '%s' "$rating_waiver" | wc -c | tr -d ' ')" -lt 40 ]; then
+        echo "ERROR_FOR_AGENT: $plan Template/Pattern Rating Waiver must explain why rating evidence is unavailable."
+        bad=1
+      fi
+    elif ! has_heading "$plan" 'Template/Pattern[[:space:]]+Rating[[:space:]]+Evidence'; then
+      echo "ERROR_FOR_AGENT: $plan uses templates/patterns assets but lacks ## Template/Pattern Rating Evidence."
+      bad=1
+    else
+      rating_evidence="$(section_body "$plan" 'Template/Pattern[[:space:]]+Rating[[:space:]]+Evidence')"
+      for marker in asset rating outcome decision; do
+        if ! printf '%s\n' "$rating_evidence" | grep -Eiq '^[[:space:]]*([-*][[:space:]]*)?'"${marker}"'[[:space:]]*:'; then
+          echo "ERROR_FOR_AGENT: $plan Template/Pattern Rating Evidence must include ${marker}: evidence."
           bad=1
         fi
       done
