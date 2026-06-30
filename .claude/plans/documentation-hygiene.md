@@ -31,12 +31,13 @@
 
 - github: existing documentation enforcement checks README presence and standalone placeholders, but not canonical ownership or duplicate policy locations.
 - github: `core/documentation-policy.md` defines canonical ownership, so this change adds validation for that policy.
+- github: CI/audit coverage files were updated so documentation hygiene is not only documented but enforced and tested.
 
 ## Notion Progress Validation
 
 - start: plan created before adding validator files.
-- mid: CI findings will be recorded in commit messages.
-- pre-merge: final checks will be recorded before merge.
+- mid: ownership manifest, validator, tests, enforcer wiring, coverage extension, and audit update were added before PR creation.
+- pre-merge: final checks will be recorded on the PR before merge.
 
 ## Skill Evidence
 
@@ -51,6 +52,8 @@
 | scripts/enforcement/enforce-documentation.sh | checked |
 | docs/README.md | checked |
 | docs/operations/operational-readiness-audit.md | checked |
+| scripts/enforcement/simulation-coverage.tsv | checked |
+| docs/operations/documentation-ownership.tsv | added |
 
 ## Template Gap Waiver
 
@@ -59,18 +62,18 @@ reason: internal governance change; no project template applies.
 ## Progress Lifecycle Evidence
 
 - start: plan created before validator/test/manifest changes.
-- mid: validator and fixtures will be added and repaired against CI evidence.
-- pre-merge: workflows, review threads, and expected head SHA will be checked.
+- mid: validator and fixtures were added and wired into existing documentation enforcement.
+- pre-merge: workflows, review threads, and expected head SHA will be checked before merge.
 
 ## Claude Run Trace
 
 - goal: require durable documentation to have canonical ownership and block stale or duplicate policy documentation.
 - hypothesis: TSV ownership manifest plus a shell validator can catch high-risk documentation hygiene failures deterministically.
 - connectors: github, notion fallback.
-- steps: plan, manifest, validator, simulations, CI, review, merge.
+- steps: plan, manifest, validator, simulations, enforcer wiring, simulation coverage extension, audit update, CI, review, merge.
 - evidence: pending GitHub CI and review evidence.
 - rejected attempts: existing documentation gate alone is not enough.
-- result: pending.
+- result: pending CI/review/merge validation.
 - follow-up enforcement: future doc governance changes must update this gate.
 
 ## DoD
@@ -78,10 +81,10 @@ reason: internal governance change; no project template applies.
 - [x] Route Plan created before enforcement changes.
 - [x] Existing documentation policy and enforcer read.
 - [x] Required validation gates selected.
-- [ ] Ownership manifest added.
-- [ ] Documentation hygiene validator added.
-- [ ] Positive/negative/invalid/waiver simulations added.
-- [ ] Documentation enforcer wired to the hygiene validator.
-- [ ] Simulation coverage manifest updated.
-- [ ] Operational readiness audit updated.
-- [ ] CI green on PR head.
+- [x] Ownership manifest added.
+- [x] Documentation hygiene validator added.
+- [x] Positive/negative/invalid/waiver simulations added.
+- [x] Documentation enforcer wired to the hygiene validator.
+- [x] Simulation coverage manifest updated through extension file.
+- [x] Operational readiness audit updated.
+- [x] Ready for PR CI validation.
