@@ -36,7 +36,7 @@
 
 - start: plan committed before PR policy changes.
 - mid: PR policy review evidence gate was committed after implementation began.
-- pre-merge: known-gaps and audit status updates were committed after the PR policy change, then this final checkpoint was committed after those documentation updates.
+- pre-merge: this final checkpoint was committed after the latest branch cleanup and documentation changes.
 
 ## Source of Truth Checks
 
@@ -60,4 +60,4 @@
 - [x] PR body review evidence gate committed.
 - [x] Known gaps updated after policy gate.
 - [x] Audit ledger and status row updated after policy gate.
-- [x] Final checkpoint committed after policy and docs updates.
+- [x] Final checkpoint committed after latest branch changes.
