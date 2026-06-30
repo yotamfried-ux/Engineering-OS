@@ -37,8 +37,8 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Route Plan quality | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh`, `test-plan-semantic-quality.sh`, and `test-workflow-evidence.sh`. | Deep semantic quality of the selected evidence still needs review beyond reliable target/source matching. |
 | DoD completion | Enforced | Gate: plan-policy. Owner: delivery-governance. Evidence: checklist policy checks. | DoD quality is judgment-based. |
 | Progress validation | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: progress-governance. Evidence: `test-progress-lifecycle.sh` plus connector evidence policy. | Structural start/mid/pre-merge checkpoints are enforced for non-trivial plan-backed code changes; deeper semantic proof of progress quality still needs review. |
-| Connector selection | Partially enforced | Gate: connector evidence policy. Owner: connector-governance. Evidence: required connector fields and runtime evidence checks. | Need broader task-class coverage and stronger proof that connector output influenced the work. |
-| Connector correctness / source-of-truth use | Partially enforced | Gate: connector evidence policy plus manual review. Owner: connector-governance. Evidence: connector traces and reviewed plan use. | The system cannot fully prove semantic use of returned connector data. |
+| Connector selection | Partially enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: required connector fields, usage evidence, and runtime evidence checks. | Need broader task-class coverage as new connector-backed systems are added. |
+| Connector correctness / source-of-truth use | Partially enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: Connector Usage Evidence is required to state source/action/result or fallback for every required connector. | Structural influence evidence is enforced; the system still cannot fully prove deep semantic use of returned connector data. |
 | Template selection | Partially enforced | Gate: template evidence/waiver gates. Owner: template-governance. Evidence: Route Plan template fields and waiver checks. | Required-template detection by task class/domain still needs expansion. |
 | Pattern usage | Partially enforced | Gate: pattern read evidence gate. Owner: pattern-governance. Evidence: runtime pattern evidence checks. | Domain detection is path/name based and incomplete; generic files can still rely on advisory warnings. |
 | Skill selection | Partially enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: required-skills and context-skill simulations. | Coverage must expand as new task classes and skills are added. |
@@ -80,7 +80,7 @@ Anything merely documented but silently skippable is not operationally ready.
 3. **Route Plan quality gate** — extend structural and target/source evidence checks into deeper semantic quality checks as reliable signals become available.
 4. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
 5. **Progress lifecycle** — extend structural start/mid/pre-merge checkpoint evidence into deeper semantic progress validation as reliable signals become available.
-6. **Connector correctness** — verify the right connector was selected and that returned evidence influenced the plan or implementation.
+6. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
 7. **Simulation completeness** — every new gate needs positive, negative, invalid, and waiver tests.
 8. **Post-merge validation** — verify `main` after merge and open a repair loop if it turns red.
 9. **Documentation hygiene** — detect duplicate/stale policy spread and force canonical ownership.
@@ -88,4 +88,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current PR scope
 
-This PR addresses Progress Lifecycle by requiring start, mid, and pre-merge checkpoint evidence for non-trivial plan-backed code/config/test changes.
+This PR addresses Connector Correctness by requiring Connector Usage Evidence for each required connector, including source/action/result or fallback evidence.
