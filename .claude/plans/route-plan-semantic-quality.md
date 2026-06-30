@@ -6,7 +6,7 @@
 | Task-router evidence | read |
 | Workflow evidence | read |
 | Domain tags | route-plan, semantic-quality, source-target-relevance |
-| Target paths | scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, scripts/enforcement/simulation-coverage.d/route-plan-semantic-quality.tsv, scripts/enforcement/coverage-required-gates.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
+| Target paths | scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, scripts/enforcement/simulation-coverage.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
 | Templates | not required |
 | Patterns | workflow evidence validator pattern |
 | External systems/connectors | github, notion |
@@ -24,18 +24,19 @@
 
 ## Connector Evidence
 
-- github: read known-gaps and workflow evidence checker before implementation.
+- github: read known-gaps, workflow evidence checker, semantic-quality tests, and readiness audit before implementation.
 - notion: unavailable; this plan is fallback tracker.
 
 ## Connector Usage Evidence
 
 - github: checked `docs/operations/known-gaps.tsv` and selected `route-plan-semantic-quality` as next open P1 gap.
 - github: checked `scripts/enforcement/check-workflow-evidence.sh` and found canonical sources could satisfy source/target relevance even without referencing target paths.
+- github: checked `scripts/enforcement/tests/test-plan-semantic-quality.sh` and updated canonical-only behavior to fail for non-canonical targets.
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed before enforcement changes.
-- mid: checker, tests, coverage, audit, and known-gaps will be updated after this plan.
+- mid: checker, tests, audit, and known-gaps were updated after this plan.
 - pre-merge: CI, review threads, mergeability, and head SHA will be checked before merge.
 
 ## Skill Evidence
@@ -57,7 +58,8 @@
 | docs/operations/known-gaps.tsv | checked |
 | scripts/enforcement/check-workflow-evidence.sh | checked |
 | scripts/enforcement/tests/test-plan-semantic-quality.sh | checked |
-| scripts/enforcement/coverage-required-gates.tsv | checked |
+| scripts/enforcement/simulation-coverage.tsv | checked |
+| docs/operations/operational-readiness-audit.md | checked |
 
 ## Template Gap Waiver
 
@@ -68,16 +70,14 @@ reason: internal governance validator change; no project template applies.
 - goal: prevent structurally valid Route Plans from passing with generic canonical sources that do not reference changed targets.
 - hypothesis: requiring target-path relevance beyond generic canonical references closes the next reliable semantic-quality gap.
 - connectors: github, notion fallback.
-- result: ready for implementation and CI validation.
+- result: ready for PR CI validation.
 
 ## DoD
 
 - [x] Route Plan created before enforcement changes.
 - [x] Existing gap and checker inspected.
-- [ ] Source/target relevance gate tightened.
-- [ ] Positive and negative fixtures added.
-- [ ] Simulation coverage and required gates updated.
-- [ ] Known gaps and audit updated.
-- [ ] CI green.
-- [ ] Review checked.
-- [ ] PR merged to main.
+- [x] Source/target relevance gate tightened.
+- [x] Positive and negative fixtures updated.
+- [x] Existing simulation coverage row and required gate checked.
+- [x] Known gaps and audit updated.
+- [x] Ready for PR CI validation.
