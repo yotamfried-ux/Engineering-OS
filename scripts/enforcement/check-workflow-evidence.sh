@@ -75,7 +75,7 @@ def source_matches(src, targets):
         if (k.startswith('core/') or k == 'claude.md') and re.search(r'claude\.md|core/task-router\.md|core/workflow\.md', low): return True
     return False
 
-FUTURE_RE=re.compile(r'\b(will|planned|pending|todo|tbd|later|must\s+be|needs?\s+to|before\s+merge|to\s+be)\b', re.I)
+FUTURE_RE=re.compile(r'\b(will|planned|pending|todo|tbd|later|must\s+be|needs?\s+to|to\s+be)\b', re.I)
 def checkpoint_lines(text, marker):
     prog=section(text,r'Progress\s+Lifecycle\s+Evidence')
     out=[]
@@ -84,8 +84,14 @@ def checkpoint_lines(text, marker):
             out.append(line.strip())
     return out
 
+def real_checkpoint_lines(text, marker):
+    return {line for line in checkpoint_lines(text, marker) if line and not FUTURE_RE.search(line)}
+
 def has_real_checkpoint(text, marker):
-    return any(line and not FUTURE_RE.search(line) for line in checkpoint_lines(text, marker))
+    return bool(real_checkpoint_lines(text, marker))
+
+def checkpoint_introduced(prev, cur, marker):
+    return bool(real_checkpoint_lines(cur, marker) - real_checkpoint_lines(prev, marker))
 
 def plan_events(plan):
     events=[]
@@ -95,8 +101,9 @@ def plan_events(plan):
         if plan not in commit_files.get(c, sh('git','diff-tree','--no-commit-id','--name-only','-r',c)):
             continue
         content=git_text('git','show',f'{c}:{plan}')
+        prev=git_text('git','show',f'{c}^:{plan}')
         if content:
-            events.append((idx,c,content))
+            events.append((idx,c,prev,content))
     return events
 
 def enforce_progress_order(plan):
@@ -106,15 +113,15 @@ def enforce_progress_order(plan):
     first_code=min(code_commit_indexes)
     last_code=max(code_commit_indexes)
     events=plan_events(plan)
-    start=[idx for idx,_,content in events if idx < first_code and has_real_checkpoint(content,'start')]
-    mid=[idx for idx,_,content in events if idx > first_code and has_real_checkpoint(content,'mid')]
-    pre=[idx for idx,_,content in events if idx > last_code and has_real_checkpoint(content,'pre-merge')]
+    start=[idx for idx,_,prev,content in events if idx < first_code and checkpoint_introduced(prev,content,'start')]
+    mid=[idx for idx,_,prev,content in events if idx > first_code and checkpoint_introduced(prev,content,'mid')]
+    pre=[idx for idx,_,prev,content in events if idx > last_code and checkpoint_introduced(prev,content,'pre-merge')]
     if not start:
-        failures.append('start checkpoint evidence must be committed in the Route Plan before the first code/config/test change.')
+        failures.append('start checkpoint evidence must be introduced in the Route Plan before the first code/config/test change.')
     if not mid:
-        failures.append('mid checkpoint evidence must be committed in a Route Plan update after work begins, not only pre-filled before implementation.')
+        failures.append('mid checkpoint evidence must be introduced or materially updated after work begins, not only copied from a prefilled plan.')
     if not pre:
-        failures.append('pre-merge checkpoint evidence must be committed in a Route Plan update after the last code/config/test change.')
+        failures.append('pre-merge checkpoint evidence must be introduced or materially updated after the last code/config/test change.')
     if mid and pre and not any(m < p for m in mid for p in pre):
         failures.append('mid and pre-merge checkpoint evidence must be committed as ordered lifecycle updates, not a single final backfill.')
     return failures
