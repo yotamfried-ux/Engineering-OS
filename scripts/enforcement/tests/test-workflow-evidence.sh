@@ -48,6 +48,13 @@ write_good_plan() {
 
 - superpowers-verify
 
+## Template/Pattern Rating Evidence
+
+- asset: patterns/api/README.md and patterns/testing/README.md
+- rating: 4 medium confidence for this workflow fixture.
+- outcome: workflow evidence fixture reused the patterns successfully.
+- decision: keep these patterns preferred for API/testing workflow fixtures.
+
 ## Progress Lifecycle Evidence
 
 - start: plan committed before code.
