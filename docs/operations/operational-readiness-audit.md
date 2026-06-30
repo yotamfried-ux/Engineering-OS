@@ -44,7 +44,7 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Pattern usage | Partially enforced | Gate: pattern read evidence gate. Owner: pattern-governance. Evidence: runtime pattern evidence checks. | Domain detection is path/name based and incomplete; generic files can still rely on advisory warnings. |
 | Skill selection | Partially enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: required-skills and context-skill simulations. | Coverage must expand as new task classes and skills are added. |
 | Skill runtime evidence | Enforced | Gate: `pre-tool-use-runtime-evidence.sh`. Owner: skill-governance. Evidence: runtime evidence tests. | Evidence proves recorded activation, not deep semantic use. |
-| RTK context optimization | Enforced | Gate: `check-required-skills.sh` and blocking `session-setup.sh`. Owner: context-governance. Evidence: context-skill selection simulations and `test-rtk-session-blocking.sh`. | Evidence proves RTK availability and hook registration, not deep semantic use. |
+| RTK context optimization | Partially enforced | Gate: `check-required-skills.sh`, blocking `session-setup.sh`, and `check-workflow-evidence.sh` RTK Usage Evidence. Owner: context-governance. Evidence: context-skill selection simulations, `test-rtk-session-blocking.sh`, and `test-rtk-usage-evidence.sh`. | Evidence now requires structural RTK source/action/result/decision impact for RTK-declared code changes; deeper semantic proof of actual reasoning impact remains future work. |
 | Graphify context graph | Partially enforced | Gate: graphify evidence gate. Owner: context-governance. Evidence: graphify gate tests. | Evidence proves graphify ran, not that findings were actually used. |
 | Claude memory / context carryover | Manual | Gate: manual workflow checklist. Owner: context-governance. Evidence: manual session review evidence and known-gaps manifest entry. | Runtime availability and evidence are not hard-checked across all environments. |
 | Capability registry | Partially enforced | Gate: capability report and capability evidence policy. Owner: capability-governance. Evidence: capability-evidence-policy plus capability report generator. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
@@ -77,7 +77,7 @@ Anything merely documented but silently skippable is not operationally ready.
 ## Highest-priority gaps by ROI
 
 1. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
-2. **RTK runtime hardening** — extend RTK checks from availability and hook registration into deeper semantic use evidence where reliable signals become available.
+2. **RTK runtime hardening** — partially covered by RTK Usage Evidence; remaining work is deeper semantic proof of actual reasoning impact where reliable signals become available.
 3. **Route Plan quality gate** — extend structural and target/source evidence checks into deeper semantic quality checks as reliable signals become available.
 4. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
 5. **Progress lifecycle** — extend structural start/mid/pre-merge checkpoint evidence into deeper semantic progress validation as reliable signals become available.
@@ -89,4 +89,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current audit scope
 
-This audit now includes the merged coverage-map and semantic-cleanup gates, and introduces a lifecycle-backed known gaps register. It does not claim full semantic readiness for gaps that still require judgment or deeper analyzers.
+This audit now includes RTK Usage Evidence as a structural decision-impact gate. It does not claim full semantic proof that RTK changed reasoning outcomes.
