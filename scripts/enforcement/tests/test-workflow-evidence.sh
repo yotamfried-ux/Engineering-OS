@@ -22,7 +22,8 @@ expect_fail() { local name="$1" head="$2"; if "$CHECKER" "$BASE" "$head"; then e
 
 write_good_plan() {
   local path="$1"
-  cat > "$path" <<'PLAN'
+  local progress_body="${2:-full}"
+  cat > "$path" <<PLAN
 # Route Plan
 
 | Field | Value |
@@ -55,11 +56,29 @@ write_good_plan() {
 - outcome: workflow evidence fixture reused the patterns successfully.
 - decision: keep these patterns preferred for API/testing workflow fixtures.
 
+$(case "$progress_body" in
+  start) cat <<'PROGRESS'
 ## Progress Lifecycle Evidence
 
 - start: plan committed before code.
-- mid: fixture validation runs through this test.
-- pre-merge: final checks are represented by this fixture.
+PROGRESS
+  ;;
+  mid) cat <<'PROGRESS'
+## Progress Lifecycle Evidence
+
+- start: plan committed before code.
+- mid: fixture implementation update recorded after code began.
+PROGRESS
+  ;;
+  full|*) cat <<'PROGRESS'
+## Progress Lifecycle Evidence
+
+- start: plan committed before code.
+- mid: fixture implementation update recorded after code began.
+- pre-merge: fixture final validation recorded after code changes.
+PROGRESS
+  ;;
+esac)
 
 ## Claude Run Trace
 
@@ -85,16 +104,22 @@ git add .claude/plans/task.md src/app.js
 git commit -qm plan-and-code-same-commit
 expect_fail plan-and-code-same-commit "$(git rev-parse HEAD)"
 
-# Plan before code passes.
+# Ordered plan lifecycle passes: start before code, mid after work starts, pre-merge after code.
 git checkout -q -b plan-before-code "$BASE"
 reset_workspace
-write_good_plan .claude/plans/task.md
+write_good_plan .claude/plans/task.md start
 git add .claude/plans/task.md
 git commit -qm plan-first
 reset_workspace
 echo 'console.log("hello")' > src/app.js
 git add src/app.js
 git commit -qm code-second
+write_good_plan .claude/plans/task.md mid
+git add .claude/plans/task.md
+git commit -qm plan-mid
+write_good_plan .claude/plans/task.md full
+git add .claude/plans/task.md
+git commit -qm plan-pre-merge
 expect_pass plan-before-code "$(git rev-parse HEAD)"
 
 # Missing task-router evidence fails.

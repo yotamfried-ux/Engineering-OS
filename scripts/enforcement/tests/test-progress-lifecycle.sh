@@ -6,48 +6,6 @@ CHECK="$ROOT/scripts/enforcement/check-workflow-evidence.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-make_repo() {
-  local name="$1"
-  local plan_body="$2"
-  mkdir -p "$TMP/$name"
-  cd "$TMP/$name"
-  git init -q
-  git config user.email test@example.com
-  git config user.name test
-  mkdir -p .claude/plans scripts/enforcement
-  echo base > README.md
-  git add .
-  git commit -q -m base
-  base="$(git rev-parse HEAD)"
-  printf '%s
-' "$plan_body" > .claude/plans/plan.md
-  git add .claude/plans/plan.md
-  git commit -q -m plan
-  echo changed > scripts/enforcement/example.sh
-  git add scripts/enforcement/example.sh
-  git commit -q -m change
-  head="$(git rev-parse HEAD)"
-}
-
-assert_fail() {
-  local label="$1"
-  local plan="$2"
-  local expected="$3"
-  make_repo "$label" "$plan"
-  if bash "$CHECK" "$base" "$head" >"$TMP/$label.out" 2>&1; then
-    echo "expected failure: $label"
-    exit 1
-  fi
-  grep -qi "$expected" "$TMP/$label.out"
-}
-
-assert_pass() {
-  local label="$1"
-  local plan="$2"
-  make_repo "$label" "$plan"
-  bash "$CHECK" "$base" "$head"
-}
-
 BASE_PLAN='| Field | Value |
 |---|---|
 | Task class | engineering_os_governance |
@@ -77,31 +35,74 @@ reason: no template applies.
 - goal: test progress lifecycle.
 '
 
-NO_PROGRESS="# Plan
+START_PROGRESS='## Progress Lifecycle Evidence
 
-$BASE_PLAN"
+- start: route plan committed before implementation work.
+'
 
-MISSING_MID="# Plan
+REAL_PROGRESS='## Progress Lifecycle Evidence
 
-$BASE_PLAN
-## Progress Lifecycle Evidence
+- start: route plan committed before implementation work.
+- mid: implementation loop updated after first code change.
+- pre-merge: final validation evidence recorded after implementation changes.
+'
 
-- start: plan created before code.
-- pre-merge: final checks verified.
-"
+MID_PROGRESS='## Progress Lifecycle Evidence
 
-GOOD="# Plan
+- start: route plan committed before implementation work.
+- mid: implementation loop updated after first code change.
+'
 
-$BASE_PLAN
-## Progress Lifecycle Evidence
+init_repo() { local name="$1"; mkdir -p "$TMP/$name"; cd "$TMP/$name"; git init -q; git config user.email test@example.com; git config user.name test; mkdir -p .claude/plans scripts/enforcement; echo base > README.md; git add .; git commit -q -m base; base="$(git rev-parse HEAD)"; }
+commit_plan() { local body="$1"; local extra="${2:-}"; printf '%s
+' "# Plan" "" "$BASE_PLAN" "$body" "$extra" > .claude/plans/plan.md; git add .claude/plans/plan.md; git commit -q -m "plan update"; }
+commit_code() { local label="$1"; echo "$label" >> scripts/enforcement/example.sh; git add scripts/enforcement/example.sh; git commit -q -m "code $label"; }
+finish_head() { head="$(git rev-parse HEAD)"; }
+assert_fail() { local label="$1"; local expected="$2"; if bash "$CHECK" "$base" "$head" >"$TMP/$label.out" 2>&1; then echo "expected failure: $label"; exit 1; fi; grep -qi "$expected" "$TMP/$label.out" || { echo "missing expected error for $label"; cat "$TMP/$label.out"; exit 1; }; echo "ok: $label"; }
+assert_pass() { local label="$1"; bash "$CHECK" "$base" "$head" >"$TMP/$label.out" 2>&1 || { echo "expected pass: $label"; cat "$TMP/$label.out"; exit 1; }; echo "ok: $label"; }
 
-- start: plan created before code.
-- mid: CI/simulation loop validated.
-- pre-merge: final checks verified.
-"
+init_repo no-progress
+commit_plan ''
+commit_code one
+finish_head
+assert_fail no-progress "progress lifecycle"
 
-assert_fail no-progress "$NO_PROGRESS" "progress lifecycle"
-assert_fail missing-mid "$MISSING_MID" "mid checkpoint"
-assert_pass good-progress "$GOOD"
+init_repo all-markers-prefilled
+commit_plan "$REAL_PROGRESS"
+commit_code one
+finish_head
+assert_fail all-markers-prefilled "mid checkpoint"
+
+init_repo unchanged-progress-snapshots
+commit_plan "$REAL_PROGRESS"
+commit_code one
+commit_plan "$REAL_PROGRESS" 'note: unrelated plan edit after code.'
+commit_plan "$REAL_PROGRESS" 'note: second unrelated plan edit after code.'
+finish_head
+assert_fail unchanged-progress-snapshots "materially updated"
+
+init_repo single-final-backfill
+commit_plan "$START_PROGRESS"
+commit_code one
+commit_plan "$REAL_PROGRESS"
+finish_head
+assert_fail single-final-backfill "single final backfill"
+
+init_repo code-after-premerge
+commit_plan "$START_PROGRESS"
+commit_code one
+commit_plan "$MID_PROGRESS"
+commit_plan "$REAL_PROGRESS"
+commit_code two
+finish_head
+assert_fail code-after-premerge "after the last code"
+
+init_repo ordered-progress
+commit_plan "$START_PROGRESS"
+commit_code one
+commit_plan "$MID_PROGRESS"
+commit_plan "$REAL_PROGRESS"
+finish_head
+assert_pass ordered-progress
 
 echo "progress lifecycle checks passed"

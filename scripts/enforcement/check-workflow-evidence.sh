@@ -8,6 +8,12 @@ head = sys.argv[2] if len(sys.argv) > 2 else 'HEAD'
 def sh(*args):
     return subprocess.check_output(args, text=True).splitlines()
 
+def git_text(*args):
+    try:
+        return subprocess.check_output(args, text=True, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        return ''
+
 def norm(s):
     return re.sub(r'[^a-z0-9_./-]+','-', re.sub(r'^[\s*`-]+|[\s`.,;:]+$','',s.lower())).strip('-')
 
@@ -17,15 +23,19 @@ changed=sh('git','diff','--name-only',base,head)
 plans=[p for p in changed if re.match(r'^\.claude/plans/.*\.md$',p) and os.path.exists(p)]
 code=[p for p in changed if p and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',p)]
 knowledge=[p for p in changed if re.match(r'^(lessons-learned/|failed-solutions/|templates/)',p)]
-if code and not plans:
-    print('ERROR_FOR_AGENT: code/config/test files changed without a changed .claude/plans/*.md Route Plan.'); sys.exit(1)
-if code and plans:
+commits=[]
+commit_files={}
+code_commit_indexes=[]
+if code:
     commits=sh('git','rev-list','--reverse',f'{base}..{head}')
     first_plan=first_code=0
     for idx,c in enumerate(commits,1):
         fs=sh('git','diff-tree','--no-commit-id','--name-only','-r',c)
+        commit_files[c]=fs
         if not first_plan and any(re.match(r'^\.claude/plans/.*\.md$',f) for f in fs): first_plan=idx
         cfs=[f for f in fs if f and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',f)]
+        if cfs:
+            code_commit_indexes.append(idx)
         if not first_code and cfs: first_code=idx
     if not first_plan or not first_code or first_code <= first_plan:
         print('ERROR_FOR_AGENT: Route Plan must be committed before the first code/config/test change, not in the same or later commit.'); sys.exit(1)
@@ -64,6 +74,58 @@ def source_matches(src, targets):
         if k in low or d in low or b in low: return True
         if (k.startswith('core/') or k == 'claude.md') and re.search(r'claude\.md|core/task-router\.md|core/workflow\.md', low): return True
     return False
+
+FUTURE_RE=re.compile(r'\b(will|planned|pending|todo|tbd|later|must\s+be|needs?\s+to|to\s+be)\b', re.I)
+def checkpoint_lines(text, marker):
+    prog=section(text,r'Progress\s+Lifecycle\s+Evidence')
+    out=[]
+    for line in prog.splitlines():
+        if re.search(r'(^|[^a-z])'+re.escape(marker)+r'\s*:', line, re.I):
+            out.append(line.strip())
+    return out
+
+def real_checkpoint_lines(text, marker):
+    return {line for line in checkpoint_lines(text, marker) if line and not FUTURE_RE.search(line)}
+
+def has_real_checkpoint(text, marker):
+    return bool(real_checkpoint_lines(text, marker))
+
+def checkpoint_introduced(prev, cur, marker):
+    return bool(real_checkpoint_lines(cur, marker) - real_checkpoint_lines(prev, marker))
+
+def plan_events(plan):
+    events=[]
+    if not commits:
+        return events
+    for idx,c in enumerate(commits,1):
+        if plan not in commit_files.get(c, sh('git','diff-tree','--no-commit-id','--name-only','-r',c)):
+            continue
+        content=git_text('git','show',f'{c}:{plan}')
+        prev=git_text('git','show',f'{c}^:{plan}')
+        if content:
+            events.append((idx,c,prev,content))
+    return events
+
+def enforce_progress_order(plan):
+    if not code_commit_indexes:
+        return []
+    failures=[]
+    first_code=min(code_commit_indexes)
+    last_code=max(code_commit_indexes)
+    events=plan_events(plan)
+    start=[idx for idx,_,prev,content in events if idx < first_code and checkpoint_introduced(prev,content,'start')]
+    mid=[idx for idx,_,prev,content in events if idx > first_code and checkpoint_introduced(prev,content,'mid')]
+    pre=[idx for idx,_,prev,content in events if idx > last_code and checkpoint_introduced(prev,content,'pre-merge')]
+    if not start:
+        failures.append('start checkpoint evidence must be introduced in the Route Plan before the first code/config/test change.')
+    if not mid:
+        failures.append('mid checkpoint evidence must be introduced or materially updated after work begins, not only copied from a prefilled plan.')
+    if not pre:
+        failures.append('pre-merge checkpoint evidence must be introduced or materially updated after the last code/config/test change.')
+    if mid and pre and not any(m < p for m in mid for p in pre):
+        failures.append('mid and pre-merge checkpoint evidence must be committed as ordered lifecycle updates, not a single final backfill.')
+    return failures
+
 bad=False
 for plan in plans:
     text=open(plan,encoding='utf-8').read()
@@ -87,9 +149,10 @@ for plan in plans:
         if not has_heading(text,r'Progress\s+Lifecycle\s+Evidence'):
             print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Progress Lifecycle Evidence.'); bad=True
         else:
-            prog=section(text,r'Progress\s+Lifecycle\s+Evidence').lower()
             for m in ['start','mid','pre-merge']:
-                if not re.search(r'(^|[^a-z])'+re.escape(m)+r'([^a-z]|$)',prog): print(f'ERROR_FOR_AGENT: {plan} Progress Lifecycle Evidence must include {m} checkpoint evidence.'); bad=True
+                if not has_real_checkpoint(text,m): print(f'ERROR_FOR_AGENT: {plan} Progress Lifecycle Evidence must include concrete {m} checkpoint evidence, not a future/pending placeholder.'); bad=True
+            for failure in enforce_progress_order(plan):
+                print(f'ERROR_FOR_AGENT: {plan} {failure}'); bad=True
     skills=vals['Skills']; sc=clean(skills)
     if sc and not re.match(r'^(none|n/a|na|not\s+required|no\s+skills)$',sc):
         if not has_heading(text,r'Skill\s+Evidence'):
