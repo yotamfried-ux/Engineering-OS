@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+known-gaps-lifecycle	ops-readiness	scripts/enforcement/check-known-gaps.sh	scripts/enforcement/tests/test-known-gaps.sh	covered:current_known_gaps_pass	covered:missing_field_fails	covered:duplicate_gap_fails	covered:accepted_manual_passes	Known gaps lifecycle covers current manifest, missing required fields, duplicate gap ids, and accepted-manual waiver behavior.
