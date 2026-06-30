@@ -20,6 +20,7 @@ Every durable governance idea has one canonical owner. Other files may link to t
 | Workflow order | `core/workflow.md` |
 | Task routing | `core/task-router.md` |
 | Documentation ownership and lifecycle | `core/documentation-policy.md` |
+| Documentation ownership manifest | `docs/operations/documentation-ownership.tsv` |
 | Capability vocabulary | `core/capability-registry.yaml` |
 | Connector policy and fallback | `core/connector-policy.md` |
 | Skill orchestration policy | `core/skill-orchestration-policy.md` |
@@ -36,6 +37,7 @@ Boundary rules:
 3. Connector-specific or skill-specific files describe one component only. Cross-component rules belong in `core/`.
 4. `.claude/plans/*` is temporary PR/task evidence, not durable documentation.
 5. New governance concepts should add or update a regression test when deterministic enforcement is possible.
+6. Durable Markdown policy/docs must be listed in `docs/operations/documentation-ownership.tsv`; stale or deprecated docs require explicit replacement evidence.
 
 </canonical_ownership>
 
@@ -76,6 +78,7 @@ README שמסביר מה הוא ואיך מריצים אותו הוא חוב ש�
 - **כל קובץ/תיקייה חדשים** שצריך הסבר כדי להבין — צרף README.
 - **אל תשאיר `TBD`** — או שכותבים תוכן אמיתי, או שלא יוצרים את הקטע. קטע ריק מסמן
   שלמות מדומה.
+- **אל תיצור owner כפול למדיניות** — אם רעיון מדיניות כבר קיים ב-`core/`, עדכן את ה-owner או הפנה אליו.
 
 ### סגנון
 
@@ -92,6 +95,7 @@ README שמסביר מה הוא ואיך מריצים אותו הוא חוב ש�
 > D1 — קומיט שנוגע ב-`patterns/<domain>/` או `external-systems/<service>/` נחסם אם אין שם `README.md`
 > (`EOS_BYPASS_DOCREADME=1`). D2 — חובה `README.md` בשורש הריפו (`EOS_BYPASS_ROOTREADME=1`).
 > D3 — placeholder עצמאי בקובצי `.md` ב-staged (`TBD`/`FIXME`/`XXX`/`???` לבד או ככותרת/ערך) נחסם
-> (`EOS_BYPASS_TBD=1`); אזכור באמצע משפט אינו נחסם. master: `EOS_BYPASS_DOC=1`. ולידציה index-based.
+> (`EOS_BYPASS_TBD=1`). D4 — `check-documentation-hygiene.sh` בודק canonical ownership, duplicate scopes,
+> stale/deprecated markers, ו-policy-marker sprawl (`EOS_BYPASS_DOCHYGIENE=1`). master: `EOS_BYPASS_DOC=1`.
 
 </documentation>
