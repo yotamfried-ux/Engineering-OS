@@ -36,6 +36,7 @@
 
 - start: plan committed before PR policy changes.
 - mid: PR policy review evidence gate was committed after implementation began.
+- pre-merge: known-gaps and audit status updates were committed after the PR policy change, then this final checkpoint was committed after those documentation updates.
 
 ## Source of Truth Checks
 
@@ -49,7 +50,7 @@
 
 - goal: close review fallback gap with deterministic PR evidence.
 - hypothesis: requiring structured review or fallback evidence in PR body prevents vague manual review when external review is unavailable.
-- result: PR policy now requires external review evidence or structured fallback evidence.
+- result: PR policy now requires external review evidence or structured fallback evidence; known-gaps and audit mark the structural gap closed.
 
 ## DoD
 
@@ -57,3 +58,6 @@
 - [x] Current PR policy inspected.
 - [x] Known gaps and audit inspected.
 - [x] PR body review evidence gate committed.
+- [x] Known gaps updated after policy gate.
+- [x] Audit ledger and status row updated after policy gate.
+- [x] Final checkpoint committed after policy and docs updates.
