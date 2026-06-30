@@ -20,18 +20,20 @@ setup_repo() {
 }
 
 write_usage_section() {
-  local connectors="$1"
+  local connectors="$1" raw c
   echo
   echo "## Connector Usage Evidence"
   echo
-  printf '%s' "$connectors" | tr ',;' '\n' | while read -r raw; do
+  while IFS= read -r raw || [ -n "$raw" ]; do
     c="$(printf '%s' "$raw" | xargs)"
     [ -z "$c" ] && continue
     case "$(printf '%s' "$c" | tr '[:upper:]' '[:lower:]')" in
       none|n/a|na|not\ required|no\ connectors) continue ;;
     esac
     echo "- $c: checked source-of-truth data and used the result to decide this fixture path."
-  done
+  done <<EOF_CONNECTORS
+$(printf '%s\n' "$connectors" | tr ',;' '\n')
+EOF_CONNECTORS
 }
 
 write_plan() {
@@ -133,6 +135,17 @@ pass incident_with_notion_selection_allows_plan run_check src/ops/recovery.ts
 setup_repo
 write_plan incident "ops" "github, notion, sentry" yes no
 failcase selected_connectors_require_usage_evidence run_check src/ops/recovery.ts
+
+setup_repo
+write_plan incident "ops" "github, notion, sentry" yes yes
+python3 - <<'PY'
+from pathlib import Path
+p=Path('.claude/plans/active.md')
+s=p.read_text()
+s=s.replace('- github: checked source-of-truth data and used the result to decide this fixture path.','- github')
+p.write_text(s)
+PY
+failcase connector_usage_verbs_must_be_per_connector run_check src/ops/recovery.ts
 
 setup_repo
 write_plan bug_fix "payments, webhooks, stripe" "github" yes
