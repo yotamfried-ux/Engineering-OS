@@ -31,7 +31,7 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Area | Status | What is enforced or checked | Remaining gap |
 |---|---|---|---|
 | CLAUDE entrypoint and core navigation | Enforced | Gate: enforcement-tests entrypoint wiring. Owner: core-governance. Evidence: CI checks keep `CLAUDE.md`, `core/task-router.md`, and template wiring present. | Semantic correctness of every route still needs review. |
-| Canonical ownership / no policy sprawl | Partially enforced | Gate: validate-orphans/docs policy. Owner: docs-governance. Evidence: core navigation/docs checks plus manual canonical review. | Duplicate/stale/split policy content across `.md` files is not fully detected. |
+| Canonical ownership / no policy sprawl | Enforced | Gate: `check-documentation-hygiene.sh`. Owner: docs-governance. Evidence: documentation ownership manifest, policy-marker sprawl checks, stale/deprecated checks, and `test-documentation-hygiene.sh`. | Semantic contradictions that do not reuse known policy markers still require review. |
 | Enforcement coverage inventory | Enforced | Gate: readiness audit validator plus coverage-map simulation. Owner: ops-readiness. Evidence: CI validates required areas, statuses, priority gaps, gate, owner, and evidence markers. | CI proves inventory coverage exists; status accuracy still requires review. |
 | Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate. Owner: workflow-governance. Evidence: `test-workflow-evidence.sh` order cases. | Active-plan selection can still be semantically wrong in complex multi-task sessions. |
 | Route Plan quality | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh`, `test-plan-semantic-quality.sh`, and `test-workflow-evidence.sh`. | Deep semantic quality of the selected evidence still needs review beyond reliable target/source matching. |
@@ -51,7 +51,7 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Learning reuse | Enforced | Gate: Route Plan lesson reuse gate. Owner: learning-governance. Evidence: learning reuse checks. | Relevance is path/tag based, not deep semantic code understanding. |
 | Learning closure after bug/debug work | Partially enforced | Gate: `enforce-learning-capture.sh`. Owner: learning-governance. Evidence: learning capture tests and learning closure marker tests. | Full closure now requires root cause, lesson, failed-solution when staged, and prevention/enforcement update or waiver; deeper semantic quality still needs review. |
 | Claude run trace / experiment log | Partially enforced | Gate: workflow/connector evidence policies. Owner: trace-governance. Evidence: workflow-evidence-policy and connector-evidence-policy. | Not all significant agent runs are forced yet. |
-| Positive/negative simulations | Partially enforced | Gate: `check-simulation-coverage.sh`. Owner: validation-governance. Evidence: `simulation-coverage.tsv` plus `test-simulation-coverage.sh` require positive, negative, invalid, and waiver coverage cells for critical gates. | Coverage is explicit for critical gates; remaining work is replacing coverage waivers with dedicated fixtures and requiring every future gate in the manifest. |
+| Positive/negative simulations | Partially enforced | Gate: `check-simulation-coverage.sh`. Owner: validation-governance. Evidence: `simulation-coverage.tsv`, extension rows under `simulation-coverage.d/`, and `test-simulation-coverage.sh` require positive, negative, invalid, and waiver coverage cells for critical gates. | Coverage is explicit for critical gates; remaining work is replacing coverage waivers with dedicated fixtures and requiring every future gate in the manifest. |
 | Tests/lint before commit | Partially enforced | Gate: `enforce-tests.sh`. Owner: validation-governance. Evidence: pre-commit and CI enforcement-tests. | Missing tools can warn rather than fully fail in all ecosystems. |
 | Cleanup debug leftovers | Enforced | Gate: `enforce-quality.sh`. Owner: cleanup-governance. Evidence: quality enforcement tests. | None for these narrow cases. |
 | Cleanup semantic hygiene | Manual | Gate: manual cleanup checklist. Owner: cleanup-governance. Evidence: manual review evidence. | Dead code, duplicate logic, unused imports, speculative TODOs, and stale cleanup need analyzers or waiver-gated checklist. |
@@ -83,9 +83,9 @@ Anything merely documented but silently skippable is not operationally ready.
 6. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
 7. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
 8. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair issue path on a future failing main run.
-9. **Documentation hygiene** — detect duplicate/stale policy spread and force canonical ownership.
+9. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic policy markers.
 10. **Semantic cleanup** — add reliable analyzers/checklists for unused imports, dead code, duplicates, temporary code, and risky TODOs.
 
 ## Current PR scope
 
-This PR addresses Post-merge Validation by adding a push-to-main validation workflow, a static repair-loop contract checker, and positive/negative/invalid/waiver simulations.
+This PR addresses Documentation Hygiene by adding canonical ownership enforcement for durable documentation, duplicate policy-marker detection, stale/deprecated marker checks, simulation coverage, and CI-backed tests.
