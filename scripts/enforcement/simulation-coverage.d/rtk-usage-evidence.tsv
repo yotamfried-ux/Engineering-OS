@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+rtk-usage-evidence	context-governance	scripts/enforcement/check-workflow-evidence.sh	scripts/enforcement/tests/test-rtk-usage-evidence.sh	covered:rtk_usage_evidence_passes	covered:rtk_usage_evidence_missing_fails	covered:rtk_usage_evidence_invalid_fails	covered:rtk_usage_waiver_passes	RTK usage evidence covers decision-impact evidence and waiver behavior.

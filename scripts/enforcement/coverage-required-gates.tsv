@@ -10,6 +10,7 @@ runtime-evidence	skill-governance	active	Runtime evidence checks must remain cov
 learning-capture	learning-governance	active	Learning closure checks must remain covered.
 run-trace	trace-governance	active	Run trace checks must remain covered.
 rtk-context	context-governance	active	RTK context checks must remain covered.
+rtk-usage-evidence	context-governance	active	RTK usage evidence must remain covered.
 readiness-audit	ops-readiness	active	Readiness inventory validation must remain covered.
 use-in-project-contract	install-governance	active	Installer output contract must remain covered.
 post-merge-validation	merge-governance	active	Post-merge validation workflow contract must remain covered.
