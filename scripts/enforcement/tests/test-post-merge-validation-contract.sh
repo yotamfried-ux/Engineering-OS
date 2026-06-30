@@ -21,9 +21,8 @@ permissions:
 jobs:
   validate-main:
     steps:
-      - name: Run all enforcement test suites
-        run: |
-          for t in scripts/enforcement/tests/test-*.sh; do bash "$t"; done
+      - name: Run full post-merge main validation suite
+        run: bash scripts/enforcement/run-post-merge-validation-suite.sh
       - name: Verify post-merge repair-loop contract
         run: bash scripts/enforcement/check-post-merge-validation-contract.sh --workflow .github/workflows/post-merge-validation.yml
       - name: Open repair loop issue
@@ -56,7 +55,7 @@ permissions:
 jobs:
   validate-main:
     steps:
-      - run: for t in scripts/enforcement/tests/test-*.sh; do bash "$t"; done
+      - run: bash scripts/enforcement/run-post-merge-validation-suite.sh
       - run: bash scripts/enforcement/check-post-merge-validation-contract.sh --workflow .github/workflows/post-merge-validation.yml
 YAML
 
