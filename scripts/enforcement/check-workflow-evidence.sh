@@ -13,11 +13,7 @@ def norm(s):
 
 def clean(s):
     return re.sub(r'[`*_]','',s or '').strip().lower()
-
-def files_changed():
-    try: return sh('git','diff','--name-only',base,head)
-    except subprocess.CalledProcessError: return []
-changed=files_changed()
+changed=sh('git','diff','--name-only',base,head)
 plans=[p for p in changed if re.match(r'^\.claude/plans/.*\.md$',p) and os.path.exists(p)]
 code=[p for p in changed if p and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',p)]
 knowledge=[p for p in changed if re.match(r'^(lessons-learned/|failed-solutions/|templates/)',p)]
