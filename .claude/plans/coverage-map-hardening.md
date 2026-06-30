@@ -6,7 +6,7 @@
 | Task-router evidence | read |
 | Workflow evidence | read |
 | Domain tags | validation, simulation-coverage, coverage-map, enforcement-inventory |
-| Target paths | scripts/enforcement/check-simulation-coverage.sh, scripts/enforcement/tests/test-simulation-coverage.sh, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/simulation-coverage.d/coverage-map.tsv |
+| Target paths | scripts/enforcement/check-simulation-coverage.sh, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/tests/test-required-gates-map.sh, scripts/enforcement/simulation-coverage.d/coverage-map-hardening.tsv |
 | Templates | not required |
 | Patterns | TSV manifest validator pattern, simulation coverage manifest pattern |
 | External systems/connectors | github, notion |
@@ -29,14 +29,15 @@
 
 ## Connector Usage Evidence
 
-- github: current simulation coverage required gates are hard-coded in `check-simulation-coverage.sh`, while newer gate rows can live in extension files. The next hardening step is to make required gates data-driven and versioned in a manifest.
-- github: the audit says Positive/negative simulations are partially enforced and remaining work is requiring every future gate in the manifest. This PR targets that exact gap by adding a required-gates manifest and validator behavior.
+- github: current required gates were hidden in `check-simulation-coverage.sh` defaults while newer coverage rows live in extension files.
+- github: this change makes required gates data-driven through `coverage-required-gates.tsv` and includes newer gates such as documentation-hygiene, semantic-cleanup, and coverage-map-hardening.
+- github: the audit says Positive/negative simulations are partially enforced and remaining work is requiring every future gate in the manifest; this PR targets that gap without claiming full policy-row semantic mapping.
 - notion: unavailable; progress lifecycle is tracked in this plan.
 
 ## Notion Progress Validation
 
 - start: plan created before modifying coverage map enforcement.
-- mid: required-gates manifest, validator update, and tests will be added before PR creation.
+- mid: required-gates manifest, validator update, dedicated tests, and coverage row were added before PR creation.
 - pre-merge: workflows, review threads, mergeability, and head SHA will be checked before merge.
 
 ## Skill Evidence
@@ -48,8 +49,11 @@
 
 | Source | Status |
 |---|---|
-| scripts/enforcement/check-simulation-coverage.sh | checked |
+| scripts/enforcement/check-simulation-coverage.sh | checked and updated |
 | scripts/enforcement/tests/test-simulation-coverage.sh | checked |
+| scripts/enforcement/coverage-required-gates.tsv | added |
+| scripts/enforcement/tests/test-required-gates-map.sh | added |
+| scripts/enforcement/simulation-coverage.d/coverage-map-hardening.tsv | added |
 | docs/operations/operational-readiness-audit.md | checked |
 
 ## Template Gap Waiver
@@ -59,7 +63,7 @@ reason: internal validation/governance change; no project template applies.
 ## Claude Run Trace
 
 - goal: harden coverage map so required gates are not hidden inside script defaults and can be updated as a manifest.
-- hypothesis: a `coverage-required-gates.tsv` manifest plus tests for missing/duplicate/waived required gates will make future gate coverage drift visible in CI.
+- hypothesis: a `coverage-required-gates.tsv` manifest plus tests for active, missing, duplicate, and waived required gates will make future gate coverage drift visible in CI.
 - connectors: github, notion fallback.
 - result: pending CI and review.
 - follow-up enforcement: deeper policy-row-to-gate mapping can build on this manifest.
@@ -69,10 +73,8 @@ reason: internal validation/governance change; no project template applies.
 - [x] Route Plan created before enforcement changes.
 - [x] Current simulation coverage checker and tests read.
 - [x] Audit gap mapped to implementation scope.
-- [ ] Required gates manifest added.
-- [ ] Checker reads required gates from manifest.
-- [ ] Positive/negative/invalid/waiver simulations added.
-- [ ] Simulation coverage row added for coverage-map hardening.
-- [ ] CI green on PR head.
-- [ ] Review threads resolved/outdated with evidence.
-- [ ] PR merged to main.
+- [x] Required gates manifest added.
+- [x] Checker reads required gates from manifest.
+- [x] Positive/negative/invalid/waiver simulations added.
+- [x] Simulation coverage row added for coverage-map hardening.
+- [x] Ready for PR CI validation.
