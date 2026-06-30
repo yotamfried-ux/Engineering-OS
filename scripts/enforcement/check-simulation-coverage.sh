@@ -7,11 +7,18 @@ REQUIRED_GATES="${EOS_SIM_COVERAGE_REQUIRED_GATES:-simulation-coverage,workflow-
 
 failures=0
 seen="$(mktemp)"
-trap 'rm -f "$seen"' EXIT
 
 fail() {
   echo "simulation coverage failed: $*" >&2
   failures=1
+}
+
+resolve_path() {
+  local path="$1"
+  case "$path" in
+    /*) printf '%s\n' "$path" ;;
+    *) printf '%s/%s\n' "$ROOT" "$path" ;;
+  esac
 }
 
 require_repo_file() {
@@ -19,7 +26,9 @@ require_repo_file() {
   case "$path" in
     NONE|none|n/a|N/A) return 0 ;;
   esac
-  [ -f "$ROOT/$path" ] || fail "$gate: $label file not found: $path"
+  local resolved
+  resolved="$(resolve_path "$path")"
+  [ -f "$resolved" ] || fail "$gate: $label file not found: $path"
 }
 
 validate_cell() {
@@ -37,7 +46,9 @@ validate_cell() {
           return 0
           ;;
       esac
-      if ! grep -Fq "$token" "$ROOT/$test_file" 2>/dev/null; then
+      local resolved_test
+      resolved_test="$(resolve_path "$test_file")"
+      if ! grep -Fq "$token" "$resolved_test" 2>/dev/null; then
         fail "$gate: $kind coverage token '$token' not found in $test_file"
       fi
       ;;
