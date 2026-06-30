@@ -35,7 +35,7 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Enforcement coverage inventory | Enforced | Gate: readiness audit validator plus coverage-map simulation. Owner: ops-readiness. Evidence: CI validates required areas, statuses, priority gaps, gate, owner, evidence markers, and required simulation gates. | CI proves inventory coverage exists; status accuracy still needs review. |
 | Audit freshness / status accuracy | Partially enforced | Gate: `check-known-gaps.sh`. Owner: ops-readiness. Evidence: `docs/operations/known-gaps.tsv` tracks open drift risks with owner, risk, mitigation, test, and closure. | Status accuracy still requires review when enforcement changes land. |
 | Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate. Owner: workflow-governance. Evidence: `test-workflow-evidence.sh` order cases. | Active-plan selection can still be semantically wrong in complex multi-task sessions. |
-| Route Plan quality | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh`, `test-plan-semantic-quality.sh`, and `test-workflow-evidence.sh`. | Deep semantic quality of the selected evidence still needs review beyond reliable target/source matching. |
+| Route Plan quality | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh`, `test-plan-semantic-quality.sh`, and `test-workflow-evidence.sh` now require Source of Truth evidence to reference changed target paths or canonical sources only for canonical targets. | Deep intent quality of the selected evidence still needs review beyond reliable path/source matching. |
 | DoD completion | Enforced | Gate: plan-policy. Owner: delivery-governance. Evidence: checklist policy checks. | DoD quality is judgment-based. |
 | Progress validation | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: progress-governance. Evidence: `test-progress-lifecycle.sh` plus connector evidence policy. | Structural start/mid/pre-merge checkpoints are enforced; deeper semantic proof of progress quality still needs review. |
 | Connector selection | Partially enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: required connector fields and runtime evidence checks. | Need broader task-class coverage as new connector-backed systems are added. |
@@ -79,8 +79,8 @@ Anything merely documented but silently skippable is not operationally ready.
 
 1. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
 2. **RTK runtime hardening** — partially covered by RTK Usage Evidence; remaining work is deeper semantic proof of actual reasoning impact where reliable signals become available.
-3. **Template/pattern rating lifecycle** — partially covered by ratings manifest and Route Plan rating evidence; remaining work is long-term score accuracy from real outcomes.
-4. **Route Plan quality gate** — extend structural and target/source evidence checks into deeper semantic quality checks as reliable signals become available.
+3. **Route Plan quality gate** — partially covered by stricter source/target relevance; remaining work is deeper intent validation beyond path matching.
+4. **Template/pattern rating lifecycle** — partially covered by ratings manifest and Route Plan rating evidence; remaining work is long-term score accuracy from real outcomes.
 5. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
 6. **Progress lifecycle** — extend structural start/mid/pre-merge checkpoint evidence into deeper semantic progress validation as reliable signals become available.
 7. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
@@ -91,4 +91,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current audit scope
 
-This audit now includes template/pattern rating lifecycle as a structural reuse-feedback gate. It does not claim that rating scores are semantically perfect without real outcome review.
+This audit now includes stricter Route Plan source/target semantic relevance. It does not claim full intent-level validation beyond reliable path/source matching.

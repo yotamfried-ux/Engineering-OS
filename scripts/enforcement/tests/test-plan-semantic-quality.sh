@@ -94,7 +94,7 @@ $BASE_PLAN
 | scripts/enforcement/example.sh | checked |
 "
 
-GOOD_CANONICAL="# Plan
+CANONICAL_ONLY="# Plan
 
 $BASE_PLAN
 ## Source of Truth Checks
@@ -107,6 +107,6 @@ $BASE_PLAN
 
 assert_fail bad-generic-sources "$BAD" "target paths"
 assert_pass good-target-source "$GOOD_TARGET"
-assert_pass good-canonical-source "$GOOD_CANONICAL"
+assert_fail canonical-only-sources-fail "$CANONICAL_ONLY" "target paths"
 
 echo "plan semantic quality checks passed"
