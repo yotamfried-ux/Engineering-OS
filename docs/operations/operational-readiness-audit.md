@@ -34,7 +34,7 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Canonical ownership / no policy sprawl | Partially enforced | Gate: validate-orphans/docs policy. Owner: docs-governance. Evidence: core navigation/docs checks plus manual canonical review. | Duplicate/stale/split policy content across `.md` files is not fully detected. |
 | Enforcement coverage inventory | Enforced | Gate: readiness audit validator plus coverage-map simulation. Owner: ops-readiness. Evidence: CI validates required areas, statuses, priority gaps, gate, owner, and evidence markers. | CI proves inventory coverage exists; status accuracy still requires review. |
 | Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate. Owner: workflow-governance. Evidence: `test-workflow-evidence.sh` order cases. | Active-plan selection can still be semantically wrong in complex multi-task sessions. |
-| Route Plan quality | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh` and `test-workflow-evidence.sh`. | Semantic quality of the selected sources and evidence still needs review. |
+| Route Plan quality | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh`, `test-plan-semantic-quality.sh`, and `test-workflow-evidence.sh`. | Deep semantic quality of the selected evidence still needs review beyond reliable target/source matching. |
 | DoD completion | Enforced | Gate: plan-policy. Owner: delivery-governance. Evidence: checklist policy checks. | DoD quality is judgment-based. |
 | Progress validation | Partially enforced | Gate: connector/workflow trace policies. Owner: progress-governance. Evidence: connector evidence policy plus manual checkpoint review. | Full checkpoint lifecycle, start/middle/pre-merge, is not yet universally hard-checked. |
 | Connector selection | Partially enforced | Gate: connector evidence policy. Owner: connector-governance. Evidence: required connector fields and runtime evidence checks. | Need broader task-class coverage and stronger proof that connector output influenced the work. |
@@ -77,7 +77,7 @@ Anything merely documented but silently skippable is not operationally ready.
 
 1. **Coverage map hardening** — expand the enforcement coverage inventory so every policy row has a named gate, owner, and CI-verified simulation.
 2. **RTK runtime hardening** — extend RTK checks from availability and hook registration into deeper semantic use evidence where reliable signals become available.
-3. **Route Plan quality gate** — extend the new structural quality gate with deeper semantic evidence checks as reliable signals become available.
+3. **Route Plan quality gate** — extend structural and target/source evidence checks into deeper semantic quality checks as reliable signals become available.
 4. **Learning closure gate** — require root cause plus lesson plus failed-solution when applicable plus prevention update or waiver.
 5. **Progress lifecycle** — require start/mid/pre-merge progress validation evidence for non-trivial work.
 6. **Connector correctness** — verify the right connector was selected and that returned evidence influenced the plan or implementation.
@@ -88,4 +88,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current PR scope
 
-This PR addresses RTK runtime hardening by making RTK setup failures blocking in session setup.
+This PR addresses Route Plan quality by requiring source-of-truth checks to relate to concrete target paths or canonical routing/workflow sources.
