@@ -16,3 +16,4 @@ post-merge-validation	merge-governance	active	Post-merge validation workflow con
 documentation-hygiene	docs-governance	active	Documentation ownership hygiene gate must remain covered.
 semantic-cleanup	cleanup-governance	active	Semantic cleanup gate must remain covered.
 coverage-map-hardening	validation-governance	active	Required-gates manifest enforcement must cover itself.
+known-gaps-lifecycle	ops-readiness	active	Known gaps lifecycle manifest must remain covered.
