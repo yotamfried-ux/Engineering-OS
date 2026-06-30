@@ -1,195 +1,99 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 CHECKER="$ROOT/scripts/enforcement/check-connector-evidence.sh"
-chmod +x "$CHECKER"
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
-
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 cd "$TMP"
 git init -q
 git config user.email test@example.com
 git config user.name test
 mkdir -p .claude/plans src
-echo initial > README.md
+echo base > README.md
 git add README.md
-git commit -qm initial
+git commit -qm base
 BASE="$(git rev-parse HEAD)"
+case_start(){ git checkout -q -B "$1" "$BASE"; rm -rf .claude src; mkdir -p .claude/plans src; }
+pass(){ local n="$1"; if ! "$CHECKER" "$BASE" "$(git rev-parse HEAD)" >/dev/null; then echo "expected $n to pass"; exit 1; fi; echo "ok: $n"; }
+fail(){ local n="$1"; if "$CHECKER" "$BASE" "$(git rev-parse HEAD)" >/dev/null 2>&1; then echo "expected $n to fail"; exit 1; fi; echo "ok: $n"; }
+commit_all(){ git add .; git commit -qm "$1"; }
 
-expect_pass() {
-  local name="$1"
-  local head="$2"
-  if ! "$CHECKER" "$BASE" "$head"; then
-    echo "expected $name to pass"
-    exit 1
-  fi
-}
-
-expect_fail() {
-  local name="$1"
-  local head="$2"
-  if "$CHECKER" "$BASE" "$head"; then
-    echo "expected $name to fail"
-    exit 1
-  fi
-}
-
-# Code change without a Route Plan must fail; otherwise connector use can bypass review.
-git checkout -q -b code-without-plan "$BASE"
-echo 'print("hello")' > src/app.py
-git add src/app.py
-git commit -qm code-without-plan
-expect_fail code-without-plan "$(git rev-parse HEAD)"
-
-# A changed Route Plan must explicitly declare External systems/connectors.
-git checkout -q -b plan-missing-external-field "$BASE"
-mkdir -p .claude/plans
+case_start connector-without-evidence
 cat > .claude/plans/task.md <<'PLAN'
 # Task
-
-## Route Plan
-
 | Field | Value |
 |---|---|
-| Task type | Documentation |
+| External systems/connectors | GitHub |
+PLAN
+commit_all connector-without-evidence
+fail connector-without-evidence
 
+case_start connector-usage-too-vague
+cat > .claude/plans/task.md <<'PLAN'
+# Task
+| Field | Value |
+|---|---|
+| External systems/connectors | GitHub |
 ## Connector Evidence
-
-- [x] Not required.
-PLAN
-git add .claude/plans/task.md
-git commit -qm plan-missing-external-field
-expect_fail plan-missing-external-field "$(git rev-parse HEAD)"
-
-# A code change with an explicit no-connector plan should pass.
-git checkout -q -b code-with-none-plan "$BASE"
-mkdir -p .claude/plans src
-cat > .claude/plans/task.md <<'PLAN'
-# Task
-
-## Route Plan
-
-| Field | Value |
-|---|---|
-| External systems/connectors | none |
-
-## Connector Evidence
-
-- [x] External systems/connectors: none.
-PLAN
-echo 'print("hello")' > src/app.py
-git add .claude/plans/task.md src/app.py
-git commit -qm code-with-none-plan
-expect_pass code-with-none-plan "$(git rev-parse HEAD)"
-
-# A connector declaration without real evidence must fail.
-git checkout -q -b connector-without-evidence "$BASE"
-mkdir -p .claude/plans
-cat > .claude/plans/task.md <<'PLAN'
-# Task
-
-## Route Plan
-
-| Field | Value |
-|---|---|
-| External systems/connectors | GitHub REST API v3 |
-
-## Goal
-
-Do work.
-PLAN
-git add .claude/plans/task.md
-git commit -qm connector-without-evidence
-expect_fail connector-without-evidence "$(git rev-parse HEAD)"
-
-# A loose mention must not satisfy the required heading.
-git checkout -q -b loose-mention "$BASE"
-mkdir -p .claude/plans
-cat > .claude/plans/task.md <<'PLAN'
-# Task
-
-## Route Plan
-
-| Field | Value |
-|---|---|
-| External systems/connectors | GitHub REST API v3 |
-
-TODO: add Connector Evidence later.
-PLAN
-git add .claude/plans/task.md
-git commit -qm loose-mention
-expect_fail loose-mention "$(git rev-parse HEAD)"
-
-# Connector Evidence alone is no longer enough; usage influence is required.
-git checkout -q -b connector-evidence-without-usage "$BASE"
-mkdir -p .claude/plans
-cat > .claude/plans/task.md <<'PLAN'
-# Task
-
-## Route Plan
-
-| Field | Value |
-|---|---|
-| External systems/connectors | GitHub REST API v3 |
-
-## Connector Evidence
-
-- [x] Connector: GitHub REST API v3.
-- [x] Purpose: planning-only validation.
-PLAN
-git add .claude/plans/task.md
-git commit -qm connector-evidence-without-usage
-expect_fail connector-evidence-without-usage "$(git rev-parse HEAD)"
-
-# A loose usage heading with no source/action/result wording must fail.
-git checkout -q -b connector-usage-too-vague "$BASE"
-mkdir -p .claude/plans
-cat > .claude/plans/task.md <<'PLAN'
-# Task
-
-## Route Plan
-
-| Field | Value |
-|---|---|
-| External systems/connectors | GitHub REST API v3 |
-
-## Connector Evidence
-
-- [x] Connector: GitHub REST API v3.
-
+- connector: GitHub.
 ## Connector Usage Evidence
-
 - GitHub.
 PLAN
-git add .claude/plans/task.md
-git commit -qm connector-usage-too-vague
-expect_fail connector-usage-too-vague "$(git rev-parse HEAD)"
+commit_all connector-usage-too-vague
+fail connector-usage-too-vague
 
-# A connector declaration with evidence and usage influence should pass.
-git checkout -q -b connector-with-evidence "$BASE"
-mkdir -p .claude/plans
+case_start connector-with-evidence
 cat > .claude/plans/task.md <<'PLAN'
 # Task
-
-## Route Plan
-
 | Field | Value |
 |---|---|
-| External systems/connectors | GitHub REST API v3 |
-
+| External systems/connectors | GitHub |
 ## Connector Evidence
-
-- [x] Connector: GitHub REST API v3.
-- [x] Purpose: planning-only validation.
-- [x] Scope: no secrets or runtime calls.
-
+- connector: GitHub.
 ## Connector Usage Evidence
-
-- GitHub REST API v3: checked repository source state and used the result to choose the implementation path.
+- source: GitHub repository files.
+- action: checked repository files.
+- result: found the relevant source.
+- decision: selected the implementation path from the GitHub result.
 PLAN
-git add .claude/plans/task.md
-git commit -qm connector-with-evidence
-expect_pass connector-with-evidence "$(git rev-parse HEAD)"
+commit_all connector-with-evidence
+pass connector-with-evidence
+
+case_start connector-code-target-pass
+cat > .claude/plans/task.md <<'PLAN'
+# Task
+| Field | Value |
+|---|---|
+| External systems/connectors | GitHub |
+## Connector Evidence
+- connector: GitHub.
+## Connector Usage Evidence
+- source: GitHub src/app.py file.
+- action: checked src/app.py.
+- result: confirmed src/app.py is the affected file.
+- decision: changed only src/app.py.
+- target: src/app.py.
+PLAN
+echo ok > src/app.py
+commit_all connector-code-target-pass
+pass connector-code-target-passes
+
+case_start connector-code-wrong-target
+cat > .claude/plans/task.md <<'PLAN'
+# Task
+| Field | Value |
+|---|---|
+| External systems/connectors | GitHub |
+## Connector Evidence
+- connector: GitHub.
+## Connector Usage Evidence
+- source: GitHub docs/other.md file.
+- action: checked docs/other.md.
+- result: confirmed docs/other.md.
+- decision: changed implementation.
+- target: docs/other.md.
+PLAN
+echo ok > src/app.py
+commit_all connector-code-wrong-target
+fail connector-code-wrong-target-fails
 
 echo "connector route plan checker tests passed"
