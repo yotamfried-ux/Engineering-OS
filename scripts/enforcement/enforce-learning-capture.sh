@@ -63,6 +63,12 @@ complete_staged_lesson() {
     'Prevented Future Issues'; do
     staged_blob_has_heading "$path" "$heading" || missing="${missing}${heading}; "
   done
+  if ! staged_blob_has_heading "$path" 'Prevention[[:space:]/-]+Enforcement[[:space:]]+Update' \
+     && ! staged_blob_has_heading "$path" 'Prevention[[:space:]/-]+Enforcement[[:space:]]+Waiver' \
+     && ! staged_blob_has_heading "$path" 'עדכון[[:space:]/-]+מניעה[[:space:]/-]+אכיפה' \
+     && ! staged_blob_has_heading "$path" 'ויתור[[:space:]/-]+מניעה[[:space:]/-]+אכיפה'; then
+    missing="${missing}Prevention/Enforcement Update or Waiver; "
+  fi
   [ -z "$missing" ] || { echo "learning capture failed: staged lesson '$path' is incomplete: ${missing}" >&2; return 1; }
 }
 
