@@ -75,13 +75,14 @@ Anything merely documented but silently skippable is not operationally ready.
 
 1. **Coverage map hardening** — expand the enforcement coverage inventory so every policy row has a named gate, owner, and CI-verified simulation.
 2. **RTK runtime hardening** — make local RTK install failures blocking when cargo/network is unavailable.
-3. **Learning closure gate** — require root cause plus lesson plus failed-solution when applicable plus prevention update or waiver.
-4. **Progress lifecycle** — require start/mid/pre-merge progress validation evidence for non-trivial work.
-5. **Connector correctness** — verify the right connector was selected and that returned evidence influenced the plan or implementation.
-6. **Simulation completeness** — every new gate needs positive, negative, invalid, and waiver tests.
-7. **Post-merge validation** — verify `main` after merge and open a repair loop if it turns red.
-8. **Documentation hygiene** — detect duplicate/stale policy spread and force canonical ownership.
-9. **Semantic cleanup** — add reliable analyzers/checklists for unused imports, dead code, duplicates, temporary code, and risky TODOs.
+3. **Route Plan quality gate** — extend the new structural quality gate with deeper semantic evidence checks as reliable signals become available.
+4. **Learning closure gate** — require root cause plus lesson plus failed-solution when applicable plus prevention update or waiver.
+5. **Progress lifecycle** — require start/mid/pre-merge progress validation evidence for non-trivial work.
+6. **Connector correctness** — verify the right connector was selected and that returned evidence influenced the plan or implementation.
+7. **Simulation completeness** — every new gate needs positive, negative, invalid, and waiver tests.
+8. **Post-merge validation** — verify `main` after merge and open a repair loop if it turns red.
+9. **Documentation hygiene** — detect duplicate/stale policy spread and force canonical ownership.
+10. **Semantic cleanup** — add reliable analyzers/checklists for unused imports, dead code, duplicates, temporary code, and risky TODOs.
 
 ## Current PR scope
 
