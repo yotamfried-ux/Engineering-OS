@@ -151,7 +151,7 @@ for plan in $plans; do
     else
       rtk_evidence="$(section_body "$plan" 'RTK[[:space:]]+Usage[[:space:]]+Evidence')"
       for marker in source action result decision; do
-        if ! printf '%s\n' "$rtk_evidence" | grep -Eiq "(^|[^a-z])${marker}[[:space:]]*:"; then
+        if ! printf '%s\n' "$rtk_evidence" | grep -Eiq '^[[:space:]]*([-*][[:space:]]*)?'"${marker}"'[[:space:]]*:'; then
           echo "ERROR_FOR_AGENT: $plan RTK Usage Evidence must include ${marker}: evidence."
           bad=1
         fi
