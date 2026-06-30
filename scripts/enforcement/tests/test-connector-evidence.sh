@@ -7,43 +7,39 @@ cd "$TMP"
 git init -q
 git config user.email test@example.com
 git config user.name test
-mkdir -p .claude/plans src
 echo base > README.md
 git add README.md
 git commit -qm base
 BASE="$(git rev-parse HEAD)"
-case_start(){ git checkout -q -B "$1" "$BASE"; rm -rf .claude src; mkdir -p .claude/plans src; }
-pass(){ local n="$1"; if ! "$CHECKER" "$BASE" "$(git rev-parse HEAD)" >/dev/null; then echo "expected $n to pass"; exit 1; fi; echo "ok: $n"; }
-fail(){ local n="$1"; if "$CHECKER" "$BASE" "$(git rev-parse HEAD)" >/dev/null 2>&1; then echo "expected $n to fail"; exit 1; fi; echo "ok: $n"; }
-commit_all(){ git add .; git commit -qm "$1"; }
+mk(){ git checkout -q -B "$1" "$BASE"; rm -rf .claude src; mkdir -p .claude/plans src; }
+put(){ printf '%s
+' "$1" > .claude/plans/task.md; }
+ci(){ git add .; git commit -qm "$1"; }
+ok(){ bash "$CHECKER" "$BASE" "$(git rev-parse HEAD)" >/dev/null || { echo "expected $1 to pass"; exit 1; }; echo "ok: $1"; }
+no(){ if bash "$CHECKER" "$BASE" "$(git rev-parse HEAD)" >/dev/null 2>&1; then echo "expected $1 to fail"; exit 1; fi; echo "ok: $1"; }
 
-case_start connector-without-evidence
-cat > .claude/plans/task.md <<'PLAN'
-# Task
+mk connector-without-evidence
+put '# Task
 | Field | Value |
 |---|---|
-| External systems/connectors | GitHub |
-PLAN
-commit_all connector-without-evidence
-fail connector-without-evidence
+| External systems/connectors | GitHub |'
+ci connector-without-evidence
+no connector-without-evidence
 
-case_start connector-usage-too-vague
-cat > .claude/plans/task.md <<'PLAN'
-# Task
+mk connector-usage-too-vague
+put '# Task
 | Field | Value |
 |---|---|
 | External systems/connectors | GitHub |
 ## Connector Evidence
 - connector: GitHub.
 ## Connector Usage Evidence
-- GitHub.
-PLAN
-commit_all connector-usage-too-vague
-fail connector-usage-too-vague
+- GitHub.'
+ci connector-usage-too-vague
+no connector-usage-too-vague
 
-case_start connector-with-evidence
-cat > .claude/plans/task.md <<'PLAN'
-# Task
+mk connector-with-evidence
+put '# Task
 | Field | Value |
 |---|---|
 | External systems/connectors | GitHub |
@@ -53,14 +49,12 @@ cat > .claude/plans/task.md <<'PLAN'
 - source: GitHub repository files.
 - action: checked repository files.
 - result: found the relevant source.
-- decision: selected the implementation path from the GitHub result.
-PLAN
-commit_all connector-with-evidence
-pass connector-with-evidence
+- decision: selected the implementation path from the GitHub result.'
+ci connector-with-evidence
+ok connector-with-evidence
 
-case_start connector-code-target-pass
-cat > .claude/plans/task.md <<'PLAN'
-# Task
+mk connector-code-target-pass
+put '# Task
 | Field | Value |
 |---|---|
 | External systems/connectors | GitHub |
@@ -71,15 +65,13 @@ cat > .claude/plans/task.md <<'PLAN'
 - action: checked src/app.py.
 - result: confirmed src/app.py is the affected file.
 - decision: changed only src/app.py.
-- target: src/app.py.
-PLAN
+- target: src/app.py.'
 echo ok > src/app.py
-commit_all connector-code-target-pass
-pass connector-code-target-passes
+ci connector-code-target-pass
+ok connector-code-target-passes
 
-case_start connector-code-wrong-target
-cat > .claude/plans/task.md <<'PLAN'
-# Task
+mk connector-code-wrong-target
+put '# Task
 | Field | Value |
 |---|---|
 | External systems/connectors | GitHub |
@@ -90,10 +82,9 @@ cat > .claude/plans/task.md <<'PLAN'
 - action: checked docs/other.md.
 - result: confirmed docs/other.md.
 - decision: changed implementation.
-- target: docs/other.md.
-PLAN
+- target: docs/other.md.'
 echo ok > src/app.py
-commit_all connector-code-wrong-target
-fail connector-code-wrong-target-fails
+ci connector-code-wrong-target
+no connector-code-wrong-target-fails
 
 echo "connector route plan checker tests passed"
