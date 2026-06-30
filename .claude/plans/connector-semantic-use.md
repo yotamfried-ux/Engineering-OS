@@ -24,22 +24,23 @@
 
 ## Connector Evidence
 
-- github: read known-gaps and connector evidence checker before implementation.
+- github: read known-gaps, connector evidence checker, PR #151 review threads, and connector evidence regression tests before implementation.
 - notion: unavailable; fallback plan file used.
 
 ## Connector Usage Evidence
 
-- source: github `docs/operations/known-gaps.tsv`, `scripts/enforcement/check-connector-evidence.sh`, and `scripts/enforcement/tests/test-connector-evidence.sh`.
-- action: inspected current connector evidence semantics.
-- result: found usage evidence only checks loose words and does not require per-connector decision impact or target path linkage.
-- decision: tighten the checker and fixtures so connector use must prove source/action/result/decision/target for changed targets.
+- source: github `scripts/enforcement/check-connector-evidence.sh`, `scripts/enforcement/tests/test-connector-evidence.sh`, PR #151 review threads, and `docs/operations/known-gaps.tsv`.
+- action: inspected GitHub checker code, GitHub review feedback, and GitHub regression-test coverage for connector evidence semantics.
+- result: GitHub review showed three valid false-pass paths: first-token connector matching, cross-connector fallback/unavailable leakage, and empty source/action/result/decision labels; GitHub test coverage lacked these regressions.
+- decision: changed the checker and tests based on GitHub evidence so active connectors require full-name evidence, scoped fallback handling, non-empty usage fields, impact-bearing decisions, and changed-target linkage.
 - target: scripts/enforcement/check-connector-evidence.sh, scripts/enforcement/tests/test-connector-evidence.sh.
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed before enforcement changes.
-- mid: checker, tests, audit, and gaps will be updated after this plan.
-- pre-merge: CI, review threads, mergeability, and head SHA will be checked before merge.
+- mid: checker, tests, audit, and gaps were updated after this plan.
+- pre-merge: CI, review threads, mergeability, and head SHA must be checked before merge.
+- review-repair: PR #151 review threads were treated as blocking because they demonstrated real false-pass paths; fixes and regression tests were added before merge consideration.
 
 ## Skill Evidence
 
@@ -50,16 +51,17 @@
 
 - asset: connector evidence validator pattern.
 - rating: 4 medium confidence.
-- outcome: reused to make connector usage evidence strict and target-linked.
-- decision: keep preferred for connector governance checks.
+- outcome: reused and hardened to make connector usage evidence strict, scoped, and target-linked.
+- decision: keep preferred for connector governance checks after adding false-pass regression coverage.
 
 ## Source of Truth Checks
 
 | Source | Status |
 |---|---|
 | docs/operations/known-gaps.tsv | checked |
-| scripts/enforcement/check-connector-evidence.sh | checked |
-| scripts/enforcement/tests/test-connector-evidence.sh | checked |
+| scripts/enforcement/check-connector-evidence.sh | checked and updated |
+| scripts/enforcement/tests/test-connector-evidence.sh | checked and updated |
+| PR #151 review threads | checked and addressed in code/tests |
 | docs/operations/operational-readiness-audit.md | checked |
 
 ## Template Gap Waiver
@@ -70,10 +72,21 @@ reason: internal governance validator change; no project template applies.
 
 - goal: close connector-semantic-use without leaving a structural future-deep gap.
 - hypothesis: per-connector source/action/result/decision/target evidence plus changed-target linkage is the strongest deterministic closure available.
-- result: ready for implementation.
+- experiment: local connector evidence regression suite with positive/negative cases for missing evidence, vague usage, target mismatch, n/a, full connector names, scoped unavailable fallback, empty labels, and read-only decisions.
+- result: local simulated connector evidence suite passed 11/11 cases before pushing fixes to PR #151.
+- follow-up: rerun GitHub Actions and verify review threads are resolved/outdated before merge consideration.
 
 ## DoD
 
 - [x] Route Plan created before enforcement changes.
 - [x] Existing gap and checker inspected.
-- [x] Ready for implementation and PR CI validation.
+- [x] PR #151 review threads inspected.
+- [x] Full connector-name false-pass fixed and covered by a negative test.
+- [x] Cross-connector unavailable/fallback false-pass fixed and covered by negative/positive tests.
+- [x] Empty source/action/result/decision placeholder false-pass fixed and covered by a negative test.
+- [x] Decision-label-only false-pass fixed and covered by a negative test.
+- [x] n/a no-connector regression fixed and covered by a positive test.
+- [x] Local simulated connector evidence suite passed before pushing.
+- [ ] GitHub Actions passed on final PR head.
+- [ ] Review threads resolved or outdated after final PR head.
+- [ ] Mergeability and expected head SHA checked before merge.
