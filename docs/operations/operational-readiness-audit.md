@@ -51,7 +51,7 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Learning reuse | Enforced | Gate: Route Plan lesson reuse gate. Owner: learning-governance. Evidence: learning reuse checks. | Relevance is path/tag based, not deep semantic code understanding. |
 | Learning closure after bug/debug work | Partially enforced | Gate: `enforce-learning-capture.sh`. Owner: learning-governance. Evidence: learning capture tests and learning closure marker tests. | Full closure now requires root cause, lesson, failed-solution when staged, and prevention/enforcement update or waiver; deeper semantic quality still needs review. |
 | Claude run trace / experiment log | Partially enforced | Gate: workflow/connector evidence policies. Owner: trace-governance. Evidence: workflow-evidence-policy and connector-evidence-policy. | Not all significant agent runs are forced yet. |
-| Positive/negative simulations | Partially enforced | Gate: enforcement-tests suite. Owner: validation-governance. Evidence: `scripts/enforcement/tests/test-*.sh`. | Every policy row does not yet have explicit positive, negative, invalid, and waiver simulations. |
+| Positive/negative simulations | Partially enforced | Gate: `check-simulation-coverage.sh`. Owner: validation-governance. Evidence: `simulation-coverage.tsv` plus `test-simulation-coverage.sh` require positive, negative, invalid, and waiver coverage cells for critical gates. | Coverage is explicit for critical gates; remaining work is replacing coverage waivers with dedicated fixtures and requiring every future gate in the manifest. |
 | Tests/lint before commit | Partially enforced | Gate: `enforce-tests.sh`. Owner: validation-governance. Evidence: pre-commit and CI enforcement-tests. | Missing tools can warn rather than fully fail in all ecosystems. |
 | Cleanup debug leftovers | Enforced | Gate: `enforce-quality.sh`. Owner: cleanup-governance. Evidence: quality enforcement tests. | None for these narrow cases. |
 | Cleanup semantic hygiene | Manual | Gate: manual cleanup checklist. Owner: cleanup-governance. Evidence: manual review evidence. | Dead code, duplicate logic, unused imports, speculative TODOs, and stale cleanup need analyzers or waiver-gated checklist. |
@@ -59,7 +59,7 @@ Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:`
 | Git/branch policy | Partially enforced | Gate: pr-policy plus hooks. Owner: merge-governance. Evidence: pr-policy and live GitHub review. | GitHub connector operations and PR state still require live checks. |
 | PR review / CodeRabbit / external review | Manual | Gate: manual review policy. Owner: review-governance. Evidence: PR comments/review thread evidence. | CodeRabbit can be rate-limited and is not a hard universal gate. |
 | Merge safety | Manual | Gate: manual GitHub merge checklist. Owner: merge-governance. Evidence: mergeability, checks, threads, expected SHA evidence. | Requires live GitHub/PR checks and human approval. |
-| Post-merge validation | Missing enforcement | Gate: missing CI repair-loop gate. Owner: merge-governance. Evidence: gap evidence in this audit. | No automatic repair-loop trigger is enforced when main turns red after merge. |
+| Post-merge validation | Enforced | Gate: `post-merge-validation` workflow plus `check-post-merge-validation-contract.sh`. Owner: merge-governance. Evidence: push-to-main validation workflow, failure-triggered repair issue path, and `test-post-merge-validation-contract.sh`. | Actual issue creation path is only exercised on a future failing main run. |
 | Known gaps register | Partially enforced | Gate: audit plus hooks policy. Owner: ops-readiness. Evidence: audit priority list and hooks-policy gaps. | Need one consistent lifecycle for gap owner, risk, mitigation, test, and closure. |
 
 ## Definition of full operational readiness
@@ -81,11 +81,9 @@ Anything merely documented but silently skippable is not operationally ready.
 4. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
 5. **Progress lifecycle** — extend structural start/mid/pre-merge checkpoint evidence into deeper semantic progress validation as reliable signals become available.
 6. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
-7. **Simulation completeness** — every new gate needs positive, negative, invalid, and waiver tests.
-8. **Post-merge validation** — verify `main` after merge and open a repair loop if it turns red.
-9. **Documentation hygiene** — detect duplicate/stale policy spread and force canonical ownership.
-10. **Semantic cleanup** — add reliable analyzers/checklists for unused imports, dead code, duplicates, temporary code, and risky TODOs.
+7. **Documentation hygiene** — detect duplicate/stale policy spread and force canonical ownership.
+8. **Semantic cleanup** — add reliable analyzers/checklists for unused imports, dead code, duplicates, temporary code, and risky TODOs.
 
 ## Current PR scope
 
-This PR addresses Connector Correctness by requiring Connector Usage Evidence with source/action/result wording for declared connectors in changed Route Plans.
+This PR addresses Post-merge Validation by adding a push-to-main validation workflow, a static repair-loop contract checker, and positive/negative/invalid/waiver simulations.
