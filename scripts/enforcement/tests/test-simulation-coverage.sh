@@ -38,9 +38,9 @@ waiver-gate	validation-governance	NONE	NONE	waived:Positive simulation is not ap
 EOF
 
 pass current-manifest-passes bash "$CHECK"
-pass single-fixture-manifest-passes env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate bash "$CHECK" "$good_manifest"
-failcase missing-token-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate bash "$CHECK" "$missing_token_manifest"
-failcase malformed-row-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate bash "$CHECK" "$malformed_manifest"
-pass waiver-row-passes env EOS_SIM_COVERAGE_REQUIRED_GATES=waiver-gate bash "$CHECK" "$waiver_manifest"
+pass single-fixture-manifest-passes env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$good_manifest"
+failcase missing-token-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$missing_token_manifest"
+failcase malformed-row-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$malformed_manifest"
+pass waiver-row-passes env EOS_SIM_COVERAGE_REQUIRED_GATES=waiver-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$waiver_manifest"
 
 echo "simulation coverage validator tests passed"
