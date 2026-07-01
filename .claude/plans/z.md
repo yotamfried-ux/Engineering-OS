@@ -12,9 +12,31 @@
 | External systems/connectors | github |
 | Validation gates | pr-policy, workflow-evidence-policy, connector-evidence-policy, capability-evidence-policy, plan-policy, enforcement-tests |
 
+## Capability Evidence
+
+- `routing.task-router-read` checked.
+- `workflow.workflow-read` checked.
+- `plan.route-plan-before-write` checked.
+- `source.github-repo-read` checked.
+- `validation.policy-change-has-validator` checked.
+- `validation.coderabbit-policy` checked.
+
+## Connector Evidence
+
+- github: checked repository files.
+
+## Connector Usage Evidence
+
+- source: github repository files.
+- action: github inspected docs.
+- result: github selected doc update.
+- decision: github kept doc update.
+- target: docs/operations/.
+
 ## Progress Lifecycle Evidence
 
 - start: plan before docs.
+- pre-merge: evidence completed after status docs update.
 
 ## Source of Truth Checks
 
@@ -25,8 +47,10 @@
 
 ## Claude Run Trace
 
-- result: started.
+- result: status docs updated.
 
 ## DoD
 
 - [x] Plan created.
+- [x] Status docs updated.
+- [x] Evidence completed.
