@@ -36,7 +36,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | route-plan-semantic-quality | mitigated | P1 | Route Plan quality. |
 | connector-semantic-use | closed | P1 | Connector correctness / source-of-truth use. |
 | progress-semantic-lifecycle | closed | P1 | Progress validation. |
-| learning-semantic-closure | open | P1 | Learning closure after bug/debug work. |
+| learning-semantic-closure | closed | P1 | Learning closure after bug/debug work. |
 | template-pattern-rating-lifecycle | mitigated | P1 | Template/pattern rating lifecycle. |
 | rtk-semantic-use | mitigated | P2 | RTK context optimization. |
 | graphify-semantic-use | open | P2 | Graphify context graph. |
@@ -67,9 +67,9 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Graphify context graph | Partially enforced | Gate: graphify evidence gate. Owner: context-governance. Evidence: graphify gate tests. | Evidence proves graphify ran, not that findings were actually used. |
 | Claude memory / context carryover | Manual | Gate: manual workflow checklist. Owner: context-governance. Evidence: manual session review evidence and known-gaps manifest entry. | Runtime availability and evidence are not hard-checked across all environments. |
 | Capability registry | Partially enforced | Gate: capability report and capability evidence policy. Owner: capability-governance. Evidence: capability-evidence-policy plus capability report generator. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
-| Learning schema | Enforced | Gate: `enforce-learning.sh`. Owner: learning-governance. Evidence: learning enforcement tests. | Semantic lesson quality still needs review. |
+| Learning schema | Enforced | Gate: `enforce-learning.sh`. Owner: learning-governance. Evidence: learning enforcement tests. | Schema shape is enforced; content quality is covered by the closure gate. |
 | Learning reuse | Enforced | Gate: Route Plan lesson reuse gate. Owner: learning-governance. Evidence: learning reuse checks. | Relevance is path/tag based, not deep semantic code understanding. |
-| Learning closure after bug/debug work | Partially enforced | Gate: `enforce-learning-capture.sh`. Owner: learning-governance. Evidence: learning capture tests and learning closure marker tests. | Full closure now requires root cause, lesson, failed-solution when staged, and prevention/enforcement update or waiver; deeper semantic quality still needs review. |
+| Learning closure after bug/debug work | Enforced | Gate: `enforce-learning-capture.sh`. Owner: learning-governance. Evidence: `test-learning-capture.sh` and `test-learning-quality-157.sh` require required sections plus concrete root cause, evidence, regression test, prevention, and enforcement/waiver content. | No remaining structural learning closure gap; truthfulness of the claim still needs reviewer judgment. |
 | Claude run trace / experiment log | Partially enforced | Gate: workflow/connector evidence policies. Owner: trace-governance. Evidence: workflow-evidence-policy and connector-evidence-policy. | Not all significant agent runs are forced yet. |
 | Positive/negative simulations | Partially enforced | Gate: `check-simulation-coverage.sh`. Owner: validation-governance. Evidence: `simulation-coverage.tsv`, extension rows under `simulation-coverage.d/`, `coverage-required-gates.tsv`, and `test-simulation-coverage.sh`. | Required gates are manifest-backed; remaining work is replacing explicit coverage waivers with dedicated fixtures where feasible. |
 | Tests/lint before commit | Partially enforced | Gate: `enforce-tests.sh`. Owner: validation-governance. Evidence: pre-commit and CI enforcement-tests. | Missing tools can warn rather than fully fail in all ecosystems. |
@@ -77,7 +77,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Cleanup semantic hygiene | Partially enforced | Gate: `check-semantic-cleanup.sh`. Owner: cleanup-governance. Evidence: `test-semantic-cleanup.sh` covers risky cleanup markers, disabled branches, simple Python unused imports, and waiver behavior. | Deeper dead code, duplicate logic, unused exports, and stale cleanup across all languages still need analyzers or waiver-gated checklist. |
 | Project install contract | Enforced | Gate: use-in-project output contract. Owner: install-governance. Evidence: enforcement-tests install contract. | Validates contract shape, not every downstream behavior. |
 | Git/branch policy | Partially enforced | Gate: pr-policy plus hooks. Owner: merge-governance. Evidence: pr-policy and live GitHub review. | GitHub connector operations and PR state still require live checks. |
-| PR review / external review | Enforced | Gate: `pr-policy`. Owner: review-governance. Evidence: PR body requires external review evidence or structured review fallback evidence. | Deep review quality still requires reviewer judgment, but missing fallback evidence is blocked. |
+| PR review / external review | Enforced | Gate: `pr-policy`. Owner: review-governance. Evidence: PR body requires external review evidence or structured self-review evidence. | Deep review quality still requires reviewer judgment, but missing evidence is blocked. |
 | Merge safety | Manual | Gate: manual GitHub merge checklist. Owner: merge-governance. Evidence: mergeability, checks, threads, expected SHA evidence. | Requires live GitHub/PR checks and human approval. |
 | Post-merge validation | Enforced | Gate: `post-merge-validation` workflow plus `check-post-merge-validation-contract.sh`. Owner: merge-governance. Evidence: push-to-main validation workflow, failure-triggered repair path, and `test-post-merge-validation-contract.sh`. | Actual repair path is only exercised on a future negative main run. |
 | Known gaps register | Enforced | Gate: `check-known-gaps.sh`. Owner: ops-readiness. Evidence: `docs/operations/known-gaps.tsv`, this audit's Known gaps freshness ledger, `test-known-gaps.sh`, and simulation coverage row `known-gaps-lifecycle`. | Lifecycle shape and audit freshness are enforced; the human decision to close a gap still needs review. |
@@ -99,14 +99,13 @@ Anything merely documented but silently skippable is not operationally ready.
 2. **RTK runtime hardening** — partially covered by RTK Usage Evidence; remaining work is deeper semantic proof of actual reasoning impact where reliable signals become available.
 3. **Route Plan quality gate** — partially covered by stricter source/target relevance; remaining work is deeper intent validation beyond path matching.
 4. **Template/pattern rating lifecycle** — partially covered by ratings manifest and Route Plan rating evidence; remaining work is long-term score accuracy from real outcomes.
-5. **Learning closure gate** — extend closure evidence from structural fields into deeper semantic validation as reliable signals become available.
-6. **Progress lifecycle** — covered by ordered progress lifecycle evidence; remaining work is deeper qualitative interpretation if reliable signals become available.
-7. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
-8. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
-9. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair path on a future negative main run.
-10. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
-11. **Semantic cleanup** — partially covered by `check-semantic-cleanup.sh`; remaining work is deeper analyzers for dead code, duplicates, unused exports, and stale cleanup.
+5. **Graphify context graph** — prove graph findings influence route plans or run traces when graph data is available.
+6. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
+7. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
+8. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair path on a future negative main run.
+9. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
+10. **Semantic cleanup** — partially covered by `check-semantic-cleanup.sh`; remaining work is deeper analyzers for dead code, duplicates, unused exports, and stale cleanup.
 
 ## Current audit scope
 
-This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, and PR review fallback evidence validation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
+This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, and learning closure content validation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
