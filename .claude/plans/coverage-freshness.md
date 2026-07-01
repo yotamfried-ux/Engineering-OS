@@ -56,6 +56,7 @@
 - mid: checker update recorded after implementation began.
 - pre-merge: tests, manifest, and audit updates recorded after implementation.
 - pre-merge: final branch review recorded after the last file change.
+- pre-merge: marker cleanup was completed and this plan was updated afterward.
 
 ## Claude Run Trace
 
