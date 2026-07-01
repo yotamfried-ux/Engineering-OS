@@ -28,16 +28,16 @@
 ## Connector Usage Evidence
 
 - source: github PR policy, known gaps, and audit files.
-- action: inspected current policy and gap row.
+- action: github inspection covered current policy and gap row.
 - result: github showed review evidence was not hard-gated.
-- decision: added required evidence validation to the existing PR policy check.
+- decision: github evidence led to required evidence validation in the existing PR policy check.
 - target: .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed before workflow changes.
 - mid: PR policy gate was committed after implementation began.
-- pre-merge: this checkpoint was committed after the final workflow change.
+- pre-merge: this checkpoint was committed after connector evidence wording was fixed.
 
 ## Source of Truth Checks
 
@@ -59,4 +59,5 @@
 - [x] Policy gate updated.
 - [x] Known gaps updated.
 - [x] Audit updated.
-- [x] Final checkpoint committed after final workflow change.
+- [x] Connector usage evidence wording fixed.
+- [x] Final checkpoint committed after connector evidence wording fix.
