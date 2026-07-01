@@ -1,0 +1,24 @@
+name: documentation-asset-policy
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  documentation-asset-evidence:
+    name: Require documentation/reference asset evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check documentation asset evidence
+        run: |
+          set -euo pipefail
+          bash scripts/enforcement/check-documentation-asset-evidence.sh \
+            "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"

@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+documentation-asset-evidence	asset-governance	scripts/enforcement/check-documentation-asset-evidence.sh	scripts/enforcement/tests/test-documentation-asset-evidence.sh	covered:doc_asset_evidence_valid_passes	covered:doc_asset_no_evidence_or_waiver_fails	covered:doc_asset_placeholder_values_fails	covered:doc_asset_waiver_valid_passes	Documentation/reference asset evidence covers valid evidence, missing evidence, placeholder rejection, and waiver behavior.
