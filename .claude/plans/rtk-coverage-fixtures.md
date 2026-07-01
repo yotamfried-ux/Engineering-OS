@@ -30,7 +30,7 @@
 - source: GitHub files `scripts/enforcement/check-rtk-contract.sh`, `scripts/enforcement/tests/test-context-optimizer-contract.sh`, and `scripts/enforcement/simulation-coverage.tsv`.
 - action: checked the RTK gate and coverage rows to identify separated invalid-policy fixture coverage.
 - result: the checker already has deterministic failures for missing policy, setup, or settings content.
-- decision: added a direct invalid fixture for a non-mandatory policy and a manifest row for the RTK contract fixture.
+- decision: implemented a direct invalid fixture for a non-mandatory policy and updated coverage with a manifest row for the RTK contract fixture.
 - target: scripts/enforcement/tests/test-rtk-contract-invalid-policy.sh, scripts/enforcement/simulation-coverage.d/rtk-context-invalid-policy.tsv
 
 ## Documentation Asset Evidence
@@ -52,7 +52,7 @@
 
 - start: plan committed before modifying RTK fixture tests or simulation coverage fragments.
 - mid: invalid-policy fixture and coverage fragment were added after implementation began.
-- pre-merge: branch diff reviewed after all fixture and coverage edits; enforcement-tests completed successfully on PR #170 head SHA `9d7fb9fcefb57b5e53dc4da65e39041d5feabadd`, and draft/metadata policy failures remain the active merge blockers.
+- pre-merge: final ordered checkpoint refreshed after the prior lifecycle update; PR #170 branch now separates mid and pre-merge evidence across commits, and only PR metadata/draft state should remain after policy rerun.
 
 ## Claude Run Trace
 
