@@ -56,6 +56,7 @@
 - mid: checker update recorded after implementation began.
 - pre-merge: tests, manifest, and audit updates recorded after implementation.
 - pre-merge: final manifest alignment commit was reviewed and this route plan was updated after the last target-file change.
+- pre-merge: PR creation is the remaining external validation step and will be checked by PR policy.
 
 ## Claude Run Trace
 
@@ -75,4 +76,4 @@
 - [x] Test fixture covers the freshness rule.
 - [x] Manifest row uses existing fixture token.
 - [x] Audit records the freshness check.
-- [x] PR opening evidence will be validated by PR policy and CI before merge.
+- [x] PR policy will validate review evidence before merge.
