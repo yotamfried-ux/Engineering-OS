@@ -23,21 +23,21 @@
 
 ## Connector Evidence
 
-- GitHub: inspected the current required workflow list, main required checks documentation, operational readiness fixtures, ops branch-protection fixtures, and the existing documentation asset workflow before implementation.
+- GitHub: inspected required workflow, documentation, readiness fixture, branch protection fixture, and documentation asset workflow sources before implementation.
 
 ## Connector Usage Evidence
 
 - source: GitHub files `scripts/enforcement/check-merge-readiness.sh`, `docs/operations/main-required-checks.md`, `scripts/enforcement/tests/test-operational-readiness-gates.sh`, `scripts/enforcement/tests/test-ops-branch-protection.sh`, and `.github/workflows/documentation-asset-policy.yml`.
-- action: checked the workflow/source-of-truth gap where `documentation-asset-policy` exists but is absent from the deterministic required workflow list and branch-protection context docs.
-- result: GitHub showed the documentation asset workflow name and job context are available, while merge-readiness and operational fixtures still require only six workflows.
-- decision: implement the documentation asset workflow as a required merge-readiness workflow and update the matching human docs plus fixture tests.
+- action: checked why the documentation asset workflow existed but was absent from the required workflow contract.
+- result: GitHub showed the workflow and its job context were available and the required contract still had six workflows.
+- decision: implemented the workflow as a required merge-readiness workflow and updated docs plus fixtures.
 - target: scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh, scripts/enforcement/tests/test-ops-branch-protection.sh
 
 ## Documentation Asset Evidence
 
-- internal: all target files plus `.github/workflows/documentation-asset-policy.yml` and `scripts/enforcement/tests/test-required-workflows-contract.sh` were read.
-- context7: not required because this is an internal CI/workflow contract change and does not use external library, SDK, framework, or API behavior.
-- decision: update the repository source-of-truth contract and its tests rather than only documenting the gap.
+- internal: target files, `.github/workflows/documentation-asset-policy.yml`, and `scripts/enforcement/tests/test-required-workflows-contract.sh` were read.
+- context7: not required because this is an internal CI contract change.
+- decision: update the enforced contract and tests.
 
 ## Source of Truth Checks
 
@@ -55,23 +55,24 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before modifying merge-readiness, operations docs, or enforcement fixture tests.
+- mid: required workflow contract, required checks doc, merge readiness fixture, and branch protection fixture were updated after implementation began.
 
 ## Claude Run Trace
 
-- goal: make `documentation-asset-policy` a required gate instead of a non-required workflow.
-- hypothesis: adding the workflow to `REQUIRED_WORKFLOWS_DEFAULT` and updating docs/fixtures will make missing or failing documentation asset evidence block merge-readiness deterministically.
-- connectors: GitHub used for repository source inspection and branch updates.
-- steps: read routing/workflow/capability registry, read current workflow and tests, create branch, commit this plan before implementation.
-- evidence: pending implementation commits and CI.
-- rejected: claiming server-side branch protection is already changed is rejected because this environment lacks branch protection admin write access.
-- result: pending implementation.
+- goal: make the documentation asset workflow part of merge readiness.
+- hypothesis: adding the workflow to the required list and fixtures makes missing or failing documentation asset evidence block merge-readiness.
+- connectors: GitHub was used for source inspection and branch updates.
+- steps: read routing/workflow/capability sources, read current workflow and tests, create plan, update contract files.
+- evidence: implementation updates required workflow list, required-check docs, merge-readiness fixtures, and branch-protection expected contexts.
+- rejected: admin branch protection application remains outside this connector scope.
+- result: implementation complete; final PR CI validation pending.
 - follow-up: run CI and merge only after green checks and review evidence.
 
 ## DoD
 
-- [ ] Route Plan committed before code/config/test/doc changes.
-- [ ] `documentation-asset-policy` added to `REQUIRED_WORKFLOWS_DEFAULT`.
-- [ ] Main required checks doc mirrors the required workflow and branch-protection context.
-- [ ] Operational readiness fixtures require the documentation asset workflow.
-- [ ] Ops branch-protection fixture expects `Require documentation/reference asset evidence`.
+- [x] Route Plan committed before code/config/test/doc changes.
+- [x] `documentation-asset-policy` added to `REQUIRED_WORKFLOWS_DEFAULT`.
+- [x] Main required checks doc mirrors the required workflow and branch-protection context.
+- [x] Operational readiness fixtures require the documentation asset workflow.
+- [x] Ops branch-protection fixture expects `Require documentation/reference asset evidence`.
 - [ ] PR opened and CI green before merge.
