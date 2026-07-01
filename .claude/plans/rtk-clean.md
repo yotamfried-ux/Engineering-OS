@@ -14,12 +14,12 @@
 
 ## Capability Evidence
 
-- routing.task-router-read
-- workflow.workflow-read
-- plan.route-plan-before-write
-- source.github-repo-read
-- validation.policy-change-has-validator
-- validation.coderabbit-policy
+- `routing.task-router-read`
+- `workflow.workflow-read`
+- `plan.route-plan-before-write`
+- `source.github-repo-read`
+- `validation.policy-change-has-validator`
+- `validation.coderabbit-policy`
 
 ## Connector Evidence
 
@@ -57,16 +57,17 @@
 - start: plan committed before modifying the clean install fixture.
 - mid: clean-install fixture updated after implementation began to assert installed RTK hook and SessionStart wiring plus source setup commands.
 - pre-merge: branch review completed after fixture update; clean branch carries forward safe RTK install verification only.
+- pre-merge: PR policy failures were inspected after CI completed; capability evidence now uses backticked registry IDs and lifecycle evidence has a separate final checkpoint update after the implementation commit.
 
 ## Claude Run Trace
 
 - goal: carry forward safe RTK install-contract coverage from old PR work.
 - hypothesis: clean-install assertions for RTK hook and SessionStart wiring catch installer drift without adding an RTK bypass.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect PR #131 changes, compare with current main, read installer/settings/session setup, create this plan, update the clean-install fixture, review the clean branch diff, then open PR #173.
-- evidence: implementation added assertions for `rtk hook claude`, `SessionStart`, `scripts/session-setup.sh`, `rtk init -g`, and `rtk --version`.
+- steps: inspect PR #131 changes, compare with current main, read installer/settings/session setup, create this plan, update the clean-install fixture, review the clean branch diff, open PR #173, then repair CI evidence formatting.
+- evidence: implementation added assertions for `rtk hook claude`, `SessionStart`, `scripts/session-setup.sh`, `rtk init -g`, and `rtk --version`; CI failure analysis identified capability ID formatting and lifecycle ordering, both corrected in this commit.
 - rejected: carrying forward the bypass path is rejected because mandatory RTK should not gain a fail-open test contract.
-- result: implementation complete and PR opened; CI validation pending.
+- result: implementation complete and PR CI evidence repaired.
 - follow-up: merge only after green checks and review evidence.
 
 ## DoD
