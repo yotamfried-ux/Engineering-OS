@@ -38,7 +38,7 @@
 
 - start: plan committed before script, test, gap, and audit edits.
 - mid: CI showed workflow ordering needed a distinct mid checkpoint after implementation and before final pre-merge evidence.
-- pre-merge: this checkpoint was committed after script, test, known-gaps, and audit edits.
+- pre-merge: final checkpoint refreshed after the separate mid checkpoint commit and before final CI validation.
 
 ## Source of Truth Checks
 
@@ -64,4 +64,4 @@
 - [x] Known gaps updated.
 - [x] Audit ledger and matrix updated.
 - [x] Mid checkpoint refreshed after workflow-order diagnosis.
-- [x] Final checkpoint committed after all target edits.
+- [x] Final checkpoint refreshed after separate mid checkpoint.
