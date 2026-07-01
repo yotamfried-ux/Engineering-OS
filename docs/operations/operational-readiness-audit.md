@@ -33,7 +33,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | gap_id | status | priority | audit row / readiness context |
 |---|---|---|---|
 | audit-freshness | closed | P0 | Audit freshness / status accuracy. |
-| route-plan-semantic-quality | mitigated | P1 | Route Plan quality. |
+| route-plan-semantic-quality | closed | P1 | Route Plan quality. |
 | connector-semantic-use | closed | P1 | Connector correctness / source-of-truth use. |
 | progress-semantic-lifecycle | closed | P1 | Progress validation. |
 | learning-semantic-closure | closed | P1 | Learning closure after bug/debug work. |
@@ -53,7 +53,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Enforcement coverage inventory | Enforced | Gate: readiness audit validator plus coverage-map simulation. Owner: ops-readiness. Evidence: CI validates required areas, statuses, priority gaps, gate, owner, evidence markers, and required simulation gates. | CI proves inventory coverage exists; status accuracy is cross-checked against the known gaps ledger. |
 | Audit freshness / status accuracy | Enforced | Gate: `check-known-gaps.sh`. Owner: ops-readiness. Evidence: `docs/operations/known-gaps.tsv` is cross-checked against this audit's Known gaps freshness ledger; missing rows, stale status/priority, duplicate rows, and audit-only rows fail `test-known-gaps.sh`. | Deep judgment about whether a human should close a gap still requires review, but merged status drift is blocked deterministically. |
 | Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate. Owner: workflow-governance. Evidence: `test-workflow-evidence.sh` order cases. | Active-plan selection can still be semantically wrong in complex multi-task sessions. |
-| Route Plan quality | Partially enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh`, `test-plan-semantic-quality.sh`, and `test-workflow-evidence.sh` require Source of Truth evidence to reference changed target paths or canonical sources only for canonical targets. | Deep intent quality of the selected evidence still needs review beyond reliable path/source matching. |
+| Route Plan quality | Enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh`, `test-plan-semantic-quality.sh`, and `test-workflow-evidence.sh` require concrete Source of Truth evidence for changed targets or canonical sources. | Intent quality still needs review beyond reliable path/source matching. |
 | DoD completion | Enforced | Gate: plan-policy. Owner: delivery-governance. Evidence: checklist policy checks. | DoD quality is judgment-based. |
 | Progress validation | Enforced | Gate: `check-workflow-evidence.sh`. Owner: progress-governance. Evidence: `test-progress-lifecycle.sh` requires ordered lifecycle commits: start before code/config/test, mid after work begins, and pre-merge after the last code/config/test change. | Deep qualitative meaning of the progress notes still needs review, but structural backfill is blocked. |
 | Connector selection | Partially enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: required connector fields and runtime evidence checks. | Need broader task-class coverage as new connector-backed systems are added. |
@@ -97,7 +97,7 @@ Anything merely documented but silently skippable is not operationally ready.
 
 1. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
 2. **RTK runtime hardening** — partially covered by RTK Usage Evidence; remaining work is deeper semantic proof of actual reasoning impact where reliable signals become available.
-3. **Route Plan quality gate** — partially covered by stricter source/target relevance; remaining work is deeper intent validation beyond path matching.
+3. **Route Plan quality gate** — closed structurally by concrete source and target relevance checks; maintain it as policy evolves.
 4. **Template/pattern rating lifecycle** — partially covered by ratings manifest and Route Plan rating evidence; remaining work is long-term score accuracy from real outcomes.
 5. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures whenever the lesson schema changes.
 6. **Progress lifecycle** — covered by ordered progress lifecycle evidence; keep start/mid/pre-merge order tests active for future policy changes.
