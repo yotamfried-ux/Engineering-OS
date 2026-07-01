@@ -30,7 +30,7 @@
 - source: GitHub files `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md`.
 - action: checked the simulation coverage freshness hardening target.
 - result: coverage rows can retain deferred-language after a direct fixture already exists.
-- decision: add a freshness check, negative fixture, manifest alignment, and audit update.
+- decision: added a freshness check, negative fixture, manifest alignment, and audit update.
 - target: scripts/enforcement/check-simulation-coverage.sh, scripts/enforcement/tests/test-simulation-coverage.sh, scripts/enforcement/simulation-coverage.tsv, docs/operations/operational-readiness-audit.md
 
 ## Documentation Asset Evidence
@@ -53,23 +53,25 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before modifying checker, tests, manifest, or audit files.
+- mid: checker update recorded after implementation began.
+- pre-merge: tests, manifest, and audit updates recorded after implementation.
 
 ## Claude Run Trace
 
 - goal: harden simulation coverage freshness.
 - hypothesis: detecting stale deferred-language in coverage rows will keep the manifest aligned with actual fixtures.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect checker, tests, manifest, and audit; create this plan before implementation.
-- evidence: implementation pending.
+- steps: inspect checker, tests, manifest, and audit; create this plan; update checker, tests, manifest, and audit.
+- evidence: checker, test fixture, manifest, and audit were updated on this branch.
 - rejected: claiming all qualitative simulation depth is solved is rejected; this loop targets row freshness only.
-- result: pending implementation.
-- follow-up: update checker, tests, manifest, audit, PR, CI, review, and merge.
+- result: implementation complete.
+- follow-up: open PR, run CI, address review, and merge.
 
 ## DoD
 
 - [x] Route Plan committed before code/test/doc changes.
-- [ ] Checker validates deferred-language coverage rows.
-- [ ] Test fixture covers the freshness rule.
-- [ ] Manifest row uses existing fixture token.
-- [ ] Audit records the freshness check.
+- [x] Checker validates deferred-language coverage rows.
+- [x] Test fixture covers the freshness rule.
+- [x] Manifest row uses existing fixture token.
+- [x] Audit records the freshness check.
 - [ ] PR opened and all required checks are green before merge.
