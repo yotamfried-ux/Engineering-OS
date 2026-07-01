@@ -31,7 +31,7 @@ fi
 # Each required workflow's resolved context must be non-empty and present in the body.
 for c in "enforcement-tests" "Require ready-for-review PR" "Require connector route plan evidence" \
          "Require Engineering OS workflow evidence" "Require capability evidence in changed plans" \
-         "Require completed plan checklists"; do
+         "Require completed plan checklists" "Require documentation/reference asset evidence"; do
   printf '%s\n' "$apply_out" | grep -qF "$c" \
     && ok "apply lists context: $c" \
     || bad "apply missing expected context: $c"

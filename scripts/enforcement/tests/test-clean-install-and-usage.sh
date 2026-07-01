@@ -74,7 +74,8 @@ make_runs_json() {
  {"name":"connector-evidence-policy","status":"completed","conclusion":"success"},
  {"name":"workflow-evidence-policy","status":"completed","conclusion":"success"},
  {"name":"capability-evidence-policy","status":"completed","conclusion":"success"},
- {"name":"plan-policy","status":"completed","conclusion":"success"}
+ {"name":"plan-policy","status":"completed","conclusion":"success"},
+ {"name":"documentation-asset-policy","status":"completed","conclusion":"success"}
 ]}
 JSON
 }
@@ -98,6 +99,7 @@ expect_file "$TARGET/.github/workflows/plan-policy.yml"
 expect_file "$TARGET/.github/workflows/connector-evidence-policy.yml"
 expect_file "$TARGET/.github/workflows/workflow-evidence-policy.yml"
 expect_file "$TARGET/.github/workflows/capability-evidence-policy.yml"
+expect_file "$TARGET/.github/workflows/documentation-asset-policy.yml"
 expect_contains "$TARGET/.claude/settings.json" "pre-tool-use-json-guard.sh"
 expect_contains "$TARGET/.claude/settings.json" "pre-tool-use-runtime-evidence.sh"
 expect_contains "$TARGET/.claude/settings.json" "check-plan-scope.sh"

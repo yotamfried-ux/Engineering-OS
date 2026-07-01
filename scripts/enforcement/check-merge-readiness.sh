@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-REQUIRED_WORKFLOWS_DEFAULT="enforcement-tests pr-policy connector-evidence-policy workflow-evidence-policy capability-evidence-policy plan-policy"
+REQUIRED_WORKFLOWS_DEFAULT="enforcement-tests pr-policy connector-evidence-policy workflow-evidence-policy capability-evidence-policy plan-policy documentation-asset-policy"
 REQUIRED_WORKFLOWS="${EOS_REQUIRED_WORKFLOWS:-$REQUIRED_WORKFLOWS_DEFAULT}"
 RUNS_JSON=""
 
