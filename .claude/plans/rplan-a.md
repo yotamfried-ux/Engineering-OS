@@ -55,3 +55,4 @@
 
 - [x] Plan created before edits.
 - [x] Workflow evidence gate updated.
+- [x] Touch recorded.
