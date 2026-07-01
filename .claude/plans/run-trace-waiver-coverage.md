@@ -53,18 +53,18 @@
 
 - start: plan committed before modifying the run trace test fixture or simulation coverage manifest.
 - mid: run trace waiver fixture, coverage fragment, and simulation coverage regression were added after implementation began.
-- pre-merge: final plan audit completed after all test and manifest changes; PR CI will run the full enforcement suite and the PR body records fallback review evidence.
+- pre-merge: branch diff reviewed after all test and manifest edits; enforcement-tests completed successfully on PR #169 head SHA `9ff9c9d522bf269bd5013ac24ac7065142ca655e`, and workflow-evidence/pr-policy failures remain the active merge blockers.
 
 ## Claude Run Trace
 
 - goal: close the explicit run trace waiver simulation coverage gap.
-- hypothesis: a direct waiver fixture will let simulation coverage require a concrete covered token.
+- hypothesis: a direct waiver fixture lets simulation coverage require a concrete covered token.
 - connectors: GitHub used for repo source inspection; no external runtime connector is needed for this internal shell fixture.
-- steps: read the enforcer, test fixture, and simulation coverage contract; then add the missing waiver case and manifest fragment.
+- steps: read the enforcer, test fixture, and simulation coverage contract; then added the missing waiver case and manifest fragment.
 - evidence: implementation added `focused_run_trace_waiver_allows_connector_change` and a current-manifest regression requiring `run-trace-waiver`.
 - rejected: changing the root simulation TSV directly was rejected because the supported `.d/` fragment path gives a smaller, safer change.
-- result: ready for PR CI validation.
-- follow-up: if PR checks fail, fix the specific failing fixture before final approval.
+- result: code/test implementation is complete; remaining blockers are PR metadata, draft state, and policy reruns.
+- follow-up: fix failing policy evidence before approval.
 
 ## DoD
 
