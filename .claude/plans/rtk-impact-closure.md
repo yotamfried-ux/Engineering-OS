@@ -55,22 +55,23 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before modifying enforcement code, tests, coverage, or audit files.
+- mid: workflow evidence checker updated after implementation began to require RTK prior assumption, finding, impact, target, confidence, and limitation evidence.
 
 ## Claude Run Trace
 
 - goal: close the RTK semantic-use gap without creating a false claim of hidden-reasoning proof.
 - hypothesis: requiring prior assumption, RTK finding, decision impact, target, confidence, and limitation evidence makes RTK use auditable and prevents generic RTK mentions from satisfying the gate.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect current known gap, readiness audit, workflow checker, RTK usage fixture, and simulation coverage; then commit this plan before implementation.
-- evidence: implementation pending.
+- steps: inspect current known gap, readiness audit, workflow checker, RTK usage fixture, simulation coverage; commit this plan; then update the checker.
+- evidence: checker now requires source/action/result/decision plus prior assumption/finding/impact/target/confidence/limitation, verifies target linkage, and requires impact wording to show changed/confirmed/rejected/limited/selected/avoided/narrowed decision effect.
 - rejected: automatic proof that RTK changed private reasoning is rejected because hidden chain-of-thought is not observable; the closure must be an auditable impact-evidence contract.
-- result: pending implementation.
-- follow-up: add checker fields, fixtures, coverage alignment, readiness updates, PR, CI, review, and merge.
+- result: checker update complete; fixtures, coverage, and readiness records pending.
+- follow-up: add fixtures, coverage alignment, readiness updates, PR, CI, review, and merge.
 
 ## DoD
 
 - [x] Route Plan committed before code/test/doc changes.
-- [ ] RTK usage evidence requires prior assumption, finding, impact, target, confidence, and limitation evidence.
+- [x] RTK usage evidence requires prior assumption, finding, impact, target, confidence, and limitation evidence.
 - [ ] Fixtures cover valid, missing, invalid, missing-impact, missing-target, missing-confidence, and waiver behavior.
 - [ ] Simulation coverage row points to present fixture tokens.
 - [ ] Known-gaps and audit records are updated honestly.
