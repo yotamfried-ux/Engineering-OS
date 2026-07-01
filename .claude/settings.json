@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\" 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
           },
           {
             "type": "command",
@@ -18,7 +18,7 @@
           },
           {
             "type": "command",
-            "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *\"git checkout -b\"*|*\"git switch -c\"*|*\"git branch \"[!-]*) COUNT=$(git branch -r 2>/dev/null | grep -v 'HEAD\\|->\\|main\\|master' | grep -v '^ *$' | wc -l | xargs); [ \"${COUNT:-0}\" -gt 1 ] && echo \"❌ ONE-BRANCH POLICY: ${COUNT} remote branches besides main exist. Merge+delete first. See core/git-policy.md\" && exit 1 || true ;; esac"
+            "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *\"git checkout -b\"*|*\"git switch -c\"*|*\"git branch \"[!-]*) COUNT=$(git branch -r 2>/dev/null | grep -v 'HEAD\\|->\\|main\\|master' | grep -v '^ *$' | wc -l | xargs); [ \"${COUNT:-0}\" -gt 1 ] && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"ONE-BRANCH POLICY: more than one remote branch besides main exists. Merge and delete stale branches before creating a new one. See core/git-policy.md.\"}}' || true ;; esac"
           },
           {
             "type": "command",
@@ -26,19 +26,19 @@
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-bash-entry.sh\" 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-bash-entry.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-workflow.sh\" 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-workflow.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-debugging.sh\" pretooluse 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-debugging.sh\" pretooluse"
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-git.sh\" pretooluse 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-git.sh\" pretooluse"
           }
         ]
       },
@@ -56,11 +56,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\" 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-workflow.sh\" 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-workflow.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/check-plan-scope.sh\""
           },
           {
             "type": "command",
@@ -73,11 +77,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\" 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-workflow.sh\" 2>&1"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-workflow.sh\""
           }
         ]
       }
