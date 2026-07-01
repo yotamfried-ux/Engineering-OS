@@ -249,9 +249,22 @@ if [ ! -f "$TARGET_SETTINGS" ]; then
   cp "${EOS_HOME}/.claude/settings.json" "$TARGET_SETTINGS"
   SETTINGS_INSTALLED=1
   grn ".claude/settings.json installed (PreToolUse + Stop hooks active)"
+elif [ "${EOS_UPDATE_SETTINGS:-0}" = "1" ]; then
+  # Refresh EOS-managed settings so template fixes (e.g. new/hardened gates) reach an
+  # EXISTING governed target — otherwise stale fail-open settings persist forever.
+  # The refresh relies on the backup to be safe, so ABORT if the backup cannot be
+  # written rather than clobber the target's settings with no recovery.
+  _EOS_BAK="${TARGET_SETTINGS}.bak.$(date +%Y%m%d%H%M%S)"
+  if cp "$TARGET_SETTINGS" "$_EOS_BAK" 2>/dev/null; then
+    cp "${EOS_HOME}/.claude/settings.json" "$TARGET_SETTINGS"
+    SETTINGS_INSTALLED=1
+    grn ".claude/settings.json refreshed from Engineering OS template (EOS_UPDATE_SETTINGS=1; backup: ${_EOS_BAK##*/})"
+  else
+    red "Refusing to refresh .claude/settings.json — could not write backup ${_EOS_BAK}. Existing settings left untouched."
+  fi
 else
   dim ".claude/settings.json already exists — skipped (preserve customizations)"
-  dim "  To update manually: cp ${EOS_HOME}/.claude/settings.json $TARGET_SETTINGS"
+  dim "  Refresh from the template with: EOS_UPDATE_SETTINGS=1 bash ${EOS_HOME}/scripts/use-in-project.sh"
 fi
 
 # 8. Copy superpowers slash commands (portable — work without plugin in all environments).
