@@ -37,7 +37,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | connector-semantic-use | closed | P1 | Connector correctness / source-of-truth use. |
 | progress-semantic-lifecycle | closed | P1 | Progress validation. |
 | learning-semantic-closure | closed | P1 | Learning closure after bug/debug work. |
-| template-pattern-rating-lifecycle | mitigated | P1 | Template/pattern rating lifecycle. |
+| template-pattern-rating-lifecycle | closed | P1 | Template/pattern rating lifecycle. |
 | documentation-asset-selection-lifecycle | closed | P1 | Documentation/reference asset selection lifecycle. |
 | rtk-semantic-use | mitigated | P2 | RTK context optimization. |
 | graphify-semantic-use | closed | P2 | Graphify context graph. |
@@ -59,9 +59,9 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Progress validation | Enforced | Gate: `check-workflow-evidence.sh`. Owner: progress-governance. Evidence: `test-progress-lifecycle.sh` requires ordered lifecycle commits: start before code/config/test, mid after work begins, and pre-merge after the last code/config/test change. | Deep qualitative meaning of the progress notes still needs review, but structural backfill is blocked. |
 | Connector selection | Partially enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: required connector fields and runtime evidence checks. | Need broader task-class coverage as new connector-backed systems are added. |
 | Connector correctness / source-of-truth use | Partially enforced | Gate: `check-connector-evidence.sh`. Owner: connector-governance. Evidence: Connector Usage Evidence requires source/action/result/decision for declared active connectors and target linkage for code/config/script changes. | Structural influence evidence is enforced; the system still cannot fully prove deep semantic use of returned connector data. |
-| Template selection | Partially enforced | Gate: template evidence/waiver gates plus template/pattern rating lifecycle. Owner: template-governance. Evidence: Route Plan template fields, waiver checks, `template-pattern-ratings.tsv`, and `test-template-pattern-rating-evidence.sh`. | Required-template detection by task class/domain still needs expansion; long-term rating quality still needs review. |
-| Pattern usage | Partially enforced | Gate: pattern read evidence gate plus template/pattern rating lifecycle. Owner: pattern-governance. Evidence: runtime pattern evidence checks, `check-template-pattern-ratings.sh`, and Route Plan rating evidence tests. | Domain detection is path/name based and incomplete; rating quality is structural, not fully semantic. |
-| Template/pattern rating lifecycle | Partially enforced | Gate: `check-template-pattern-ratings.sh` and `check-workflow-evidence.sh` rating evidence. Owner: reuse-governance. Evidence: `docs/operations/template-pattern-ratings.tsv`, `test-template-pattern-ratings.sh`, and `test-template-pattern-rating-evidence.sh`. | Ratings are required structurally; deciding whether a score is truly accurate still requires review and future outcome data. |
+| Template selection | Partially enforced | Gate: template evidence/waiver gates plus template/pattern rating lifecycle. Owner: template-governance. Evidence: Route Plan template fields, waiver checks, `template-pattern-ratings.tsv`, and `test-template-pattern-rating-evidence.sh`. | Required-template detection by task class/domain still needs expansion. |
+| Pattern usage | Partially enforced | Gate: pattern read evidence gate plus template/pattern rating lifecycle. Owner: pattern-governance. Evidence: runtime pattern evidence checks, `check-template-pattern-ratings.sh`, and Route Plan rating evidence tests. | Domain detection is path/name based and incomplete. |
+| Template/pattern rating lifecycle | Enforced | Gate: `check-template-pattern-ratings.sh` and `check-workflow-evidence.sh` rating evidence. Owner: reuse-governance. Evidence: `docs/operations/template-pattern-ratings.tsv`, `test-template-pattern-ratings.sh`, and `test-template-pattern-rating-evidence.sh` require exact declared asset coverage, confidence, outcome, decision, or waiver. | Score truthfulness still needs reviewer judgment, but missing, partial, extra, or unrelated reusable asset feedback is blocked. |
 | Documentation/reference asset selection lifecycle | Enforced | Gate: documentation-asset-policy / `check-documentation-asset-evidence.sh`. Owner: asset-governance. Evidence: `test-documentation-asset-evidence.sh` covers valid evidence, valid waiver, missing fields, and placeholder rejection. | Deep judgment about whether the chosen documentation was the best possible source still requires review, but structurally skipping documentation/reference asset evidence on code/config/test changes is now blocked. |
 | Skill selection | Partially enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: required-skills and context-skill simulations. | Coverage must expand as new task classes and skills are added. |
 | Skill runtime evidence | Enforced | Gate: `pre-tool-use-runtime-evidence.sh`. Owner: skill-governance. Evidence: runtime evidence tests. | Evidence proves recorded activation, not deep semantic use. |
@@ -97,11 +97,11 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Highest-priority gaps by ROI
 
-1. **Documentation/reference asset selection** — add a deterministic gate for planning docs, architecture docs, integration docs, deployment docs, and domain reference docs.
+1. **Documentation/reference asset selection** — covered by deterministic documentation/reference asset evidence or waiver gates.
 2. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
 3. **RTK runtime hardening** — partially covered by RTK Usage Evidence; remaining work is deeper semantic proof of actual reasoning impact where reliable signals become available.
 4. **Route Plan quality gate** — closed structurally by concrete source and target relevance checks; maintain it as policy evolves.
-5. **Template/pattern rating lifecycle** — partially covered by ratings manifest and Route Plan rating evidence; remaining work is long-term score accuracy from real outcomes and wider asset coverage.
+5. **Template/pattern rating lifecycle** — closed structurally by exact declared asset coverage, confidence, outcome, decision, and waiver evidence; score truthfulness remains a review-quality concern.
 6. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures whenever the lesson schema changes.
 7. **Progress lifecycle** — covered by ordered progress lifecycle evidence; keep start/mid/pre-merge order tests active for future policy changes.
 8. **Graphify context graph** — covered by target-linked graph usage evidence; maintain the negative fixtures when graph evidence policy changes.
@@ -113,4 +113,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current audit scope
 
-This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, target-linked Graphify usage validation, cleanup-depth CI policy validation, explicit tracking for documentation/reference asset selection, and safe simulated post-merge repair issue observation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
+This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, exact reusable asset feedback evidence, target-linked Graphify usage validation, cleanup-depth CI policy validation, explicit tracking for documentation/reference asset selection, and safe simulated post-merge repair issue observation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
