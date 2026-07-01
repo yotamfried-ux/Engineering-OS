@@ -46,6 +46,7 @@
 - mid: simulation test and readiness docs were added after implementation began.
 - pre-merge: final checkpoint after simulation test and readiness docs updates.
 - pre-merge: evidence paths tightened after CI reported plan evidence gaps.
+- pre-merge: final checkpoint refreshed after mid lifecycle correction.
 
 ## Source of Truth Checks
 
@@ -70,3 +71,4 @@
 - [x] Pre-merge checkpoint recorded.
 - [x] Evidence paths tightened.
 - [x] Mid checkpoint refreshed after implementation.
+- [x] Final checkpoint refreshed after mid correction.
