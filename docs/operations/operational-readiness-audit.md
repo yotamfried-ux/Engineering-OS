@@ -40,7 +40,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | template-pattern-rating-lifecycle | mitigated | P1 | Template/pattern rating lifecycle. |
 | rtk-semantic-use | mitigated | P2 | RTK context optimization. |
 | graphify-semantic-use | closed | P2 | Graphify context graph. |
-| semantic-cleanup-depth | open | P2 | Cleanup semantic hygiene. |
+| semantic-cleanup-depth | closed | P2 | Cleanup semantic hygiene. |
 | review-fallback | closed | P2 | PR review / external review. |
 | post-merge-repair-observation | open | P3 | Post-merge validation. |
 
@@ -74,7 +74,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Positive/negative simulations | Partially enforced | Gate: `check-simulation-coverage.sh`. Owner: validation-governance. Evidence: `simulation-coverage.tsv`, extension rows under `simulation-coverage.d/`, `coverage-required-gates.tsv`, and `test-simulation-coverage.sh`. | Required gates are manifest-backed; remaining work is replacing explicit coverage waivers with dedicated fixtures where feasible. |
 | Tests/lint before commit | Partially enforced | Gate: `enforce-tests.sh`. Owner: validation-governance. Evidence: pre-commit and CI enforcement-tests. | Missing tools can warn rather than fully fail in all ecosystems. |
 | Cleanup debug leftovers | Enforced | Gate: `enforce-quality.sh`. Owner: cleanup-governance. Evidence: quality enforcement tests. | None for these narrow cases. |
-| Cleanup semantic hygiene | Partially enforced | Gate: `check-semantic-cleanup.sh`. Owner: cleanup-governance. Evidence: `test-semantic-cleanup.sh` covers risky cleanup markers, disabled branches, simple Python unused imports, and waiver behavior. | Deeper dead code, duplicate logic, unused exports, and stale cleanup across all languages still need analyzers or waiver-gated checklist. |
+| Cleanup semantic hygiene | Enforced | Gate: `semantic-cleanup-policy` and `import-cleanup-policy`. Owner: cleanup-governance. Evidence: duplicate-definition policy and stale-reference policy run in CI for PR changes. | No remaining structural cleanup-depth gap; deeper semantic judgment still needs review. |
 | Project install contract | Enforced | Gate: use-in-project output contract. Owner: install-governance. Evidence: enforcement-tests install contract. | Validates contract shape, not every downstream behavior. |
 | Git/branch policy | Partially enforced | Gate: pr-policy plus hooks. Owner: merge-governance. Evidence: pr-policy and live GitHub review. | GitHub connector operations and PR state still require live checks. |
 | PR review / external review | Enforced | Gate: `pr-policy`. Owner: review-governance. Evidence: PR body requires external review evidence or structured self-review evidence. | Deep review quality still requires reviewer judgment, but missing evidence is blocked. |
@@ -106,8 +106,8 @@ Anything merely documented but silently skippable is not operationally ready.
 9. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
 10. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair path on a future negative main run.
 11. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
-12. **Semantic cleanup** — partially covered by `check-semantic-cleanup.sh`; remaining work is deeper analyzers for dead code, duplicates, unused exports, and stale cleanup.
+12. **Semantic cleanup** — covered by CI policy gates; maintain deeper hygiene checks when analyzers expand.
 
 ## Current audit scope
 
-This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, and target-linked Graphify usage validation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
+This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, target-linked Graphify usage validation, and cleanup-depth CI policy validation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
