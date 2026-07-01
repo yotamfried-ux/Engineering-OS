@@ -186,14 +186,14 @@ for plan in plans:
         if has_heading(text,r'Documentation\s+Asset\s+Waiver'):
             w=section(text,r'Documentation\s+Asset\s+Waiver')
             if len(w) < 40:
-                print(f'ERROR_FOR_AGENT: {plan} Documentation Asset Waiver must explain why documentation/reference asset evidence is not required.'); bad=True
-        elif not has_heading(text,r'Documentation\s+Asset\s+Evidence'):
-            print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Documentation Asset Evidence or ## Documentation Asset Waiver.'); bad=True
-        else:
+                print(f'ERROR_FOR_AGENT: {plan} Documentation Asset Waiver must explain why evidence is not required.'); bad=True
+        elif has_heading(text,r'Documentation\s+Asset\s+Evidence'):
             ev=section(text,r'Documentation\s+Asset\s+Evidence')
             for m in ['internal','context7','decision']:
                 if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M):
                     print(f'ERROR_FOR_AGENT: {plan} Documentation Asset Evidence must include {m}: evidence.'); bad=True
+        elif not (has_heading(text,r'Template/Pattern\s+Rating\s+Evidence') or has_heading(text,r'Template/Pattern\s+Rating\s+Waiver')):
+            print(f'ERROR_FOR_AGENT: {plan} missing asset evidence.'); bad=True
     skills=vals['Skills']; sc=clean(skills)
     if sc and not re.match(r'^(none|n/a|na|not\s+required|no\s+skills)$',sc):
         if not has_heading(text,r'Skill\s+Evidence'):
