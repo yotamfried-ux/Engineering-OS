@@ -37,7 +37,7 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before script, test, gap, and audit edits.
-- mid: implementation and regression fixture were committed after work began.
+- mid: CI showed workflow ordering needed a distinct mid checkpoint after implementation and before final pre-merge evidence.
 - pre-merge: this checkpoint was committed after script, test, known-gaps, and audit edits.
 
 ## Source of Truth Checks
@@ -63,4 +63,5 @@
 - [x] Regression fixture added.
 - [x] Known gaps updated.
 - [x] Audit ledger and matrix updated.
+- [x] Mid checkpoint refreshed after workflow-order diagnosis.
 - [x] Final checkpoint committed after all target edits.
