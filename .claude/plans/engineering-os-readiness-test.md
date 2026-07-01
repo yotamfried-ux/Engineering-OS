@@ -83,6 +83,7 @@ Required capabilities for task class `engineering_os_governance`:
 ## Progress Lifecycle Evidence
 
 - **start:** session start — ENGINEERING_OS_HOME unset, `.git/hooks` empty, no gate fired on writes; runtime-enforcement gap confirmed live.
+- **mid:** hook-gate.sh + settings wiring + session-setup bootstrap implemented; test-hook-gate.sh 5/5; use-in-project contract green locally.
 
 
 ## Definition of Done / תנאי סיום
