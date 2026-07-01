@@ -30,7 +30,7 @@
 - source: GitHub files `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `scripts/enforcement/check-workflow-evidence.sh`, `scripts/enforcement/tests/test-rtk-usage-evidence.sh`, and `scripts/enforcement/simulation-coverage.d/rtk-usage-evidence.tsv`.
 - action: checked the remaining `rtk-semantic-use` gap after PR #174 merged.
 - result: RTK evidence currently requires source, action, result, and decision, but does not require the agent to record the prior assumption, the RTK finding, the impact on the decision, the target affected, confidence, and a reviewer-verifiable limitation.
-- decision: require structured RTK impact evidence for RTK-declared code changes, add negative fixtures for missing impact/target/confidence and waiver behavior, align simulation coverage, and close the gap only as a structural impact-evidence gate while keeping true hidden-reasoning proof out of scope.
+- decision: updated the checker, fixtures, simulation coverage, known-gaps ledger, and readiness audit to require structured RTK impact evidence while keeping hidden-reasoning proof out of scope.
 - target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-rtk-usage-evidence.sh, scripts/enforcement/simulation-coverage.d/rtk-usage-evidence.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md
 
 ## Documentation Asset Evidence
@@ -58,16 +58,17 @@
 - mid: workflow evidence checker updated after implementation began to require RTK prior assumption, finding, impact, target, confidence, and limitation evidence.
 - pre-merge: RTK usage fixtures, simulation coverage, known-gaps ledger, and readiness audit were updated after the checker change; the branch now covers valid, missing, invalid, missing-impact, weak-impact, missing-target, wrong-target, missing-confidence, and waiver behavior.
 - pre-merge: PR #175 opened after implementation and structured self-review evidence was added to the PR body.
+- pre-merge: connector-evidence failure was inspected after CI and the Connector Usage Evidence decision field was corrected to state the concrete updated targets.
 
 ## Claude Run Trace
 
 - goal: close the RTK semantic-use gap without creating a false claim of hidden-reasoning proof.
 - hypothesis: requiring prior assumption, RTK finding, decision impact, target, confidence, and limitation evidence makes RTK use auditable and prevents generic RTK mentions from satisfying the gate.
-- connectors: GitHub used for source inspection and branch updates.
-- steps: inspect current known gap, readiness audit, workflow checker, RTK usage fixture, simulation coverage; commit this plan; update the checker; add fixture coverage; align simulation coverage; update known-gaps and audit records; open PR #175.
+- connectors: GitHub used for source inspection, CI status, failure analysis, and branch updates.
+- steps: inspect current known gap, readiness audit, workflow checker, RTK usage fixture, simulation coverage; commit this plan; update the checker; add fixture coverage; align simulation coverage; update known-gaps and audit records; open PR #175; then repair Connector Usage Evidence after CI failure.
 - evidence: checker now requires source/action/result/decision plus prior assumption/finding/impact/target/confidence/limitation, verifies target linkage, and requires impact wording to show changed/confirmed/rejected/limited/selected/avoided/narrowed decision effect; fixtures cover missing and weak impact signals plus waiver behavior.
 - rejected: automatic proof that RTK changed private reasoning is rejected because hidden chain-of-thought is not observable; the closure is an auditable impact-evidence contract.
-- result: implementation complete and PR opened; CI validation pending.
+- result: implementation complete and connector evidence repaired; CI validation pending.
 - follow-up: run CI, address review, and merge.
 
 ## DoD
