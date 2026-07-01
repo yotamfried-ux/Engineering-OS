@@ -56,23 +56,24 @@
 
 - start: plan committed before modifying enforcement code, tests, coverage, or audit files.
 - mid: workflow evidence checker updated after implementation began to require RTK prior assumption, finding, impact, target, confidence, and limitation evidence.
+- pre-merge: RTK usage fixtures, simulation coverage, known-gaps ledger, and readiness audit were updated after the checker change; the branch now covers valid, missing, invalid, missing-impact, weak-impact, missing-target, wrong-target, missing-confidence, and waiver behavior.
 
 ## Claude Run Trace
 
 - goal: close the RTK semantic-use gap without creating a false claim of hidden-reasoning proof.
 - hypothesis: requiring prior assumption, RTK finding, decision impact, target, confidence, and limitation evidence makes RTK use auditable and prevents generic RTK mentions from satisfying the gate.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect current known gap, readiness audit, workflow checker, RTK usage fixture, simulation coverage; commit this plan; then update the checker.
-- evidence: checker now requires source/action/result/decision plus prior assumption/finding/impact/target/confidence/limitation, verifies target linkage, and requires impact wording to show changed/confirmed/rejected/limited/selected/avoided/narrowed decision effect.
-- rejected: automatic proof that RTK changed private reasoning is rejected because hidden chain-of-thought is not observable; the closure must be an auditable impact-evidence contract.
-- result: checker update complete; fixtures, coverage, and readiness records pending.
-- follow-up: add fixtures, coverage alignment, readiness updates, PR, CI, review, and merge.
+- steps: inspect current known gap, readiness audit, workflow checker, RTK usage fixture, simulation coverage; commit this plan; update the checker; add fixture coverage; align simulation coverage; update known-gaps and audit records.
+- evidence: checker now requires source/action/result/decision plus prior assumption/finding/impact/target/confidence/limitation, verifies target linkage, and requires impact wording to show changed/confirmed/rejected/limited/selected/avoided/narrowed decision effect; fixtures cover missing and weak impact signals plus waiver behavior.
+- rejected: automatic proof that RTK changed private reasoning is rejected because hidden chain-of-thought is not observable; the closure is an auditable impact-evidence contract.
+- result: implementation and readiness records complete; PR and CI pending.
+- follow-up: open PR, run CI, address review, and merge.
 
 ## DoD
 
 - [x] Route Plan committed before code/test/doc changes.
 - [x] RTK usage evidence requires prior assumption, finding, impact, target, confidence, and limitation evidence.
-- [ ] Fixtures cover valid, missing, invalid, missing-impact, missing-target, missing-confidence, and waiver behavior.
-- [ ] Simulation coverage row points to present fixture tokens.
-- [ ] Known-gaps and audit records are updated honestly.
+- [x] Fixtures cover valid, missing, invalid, missing-impact, missing-target, missing-confidence, and waiver behavior.
+- [x] Simulation coverage row points to present fixture tokens.
+- [x] Known-gaps and audit records are updated honestly.
 - [ ] PR opened and all required checks are green before merge.
