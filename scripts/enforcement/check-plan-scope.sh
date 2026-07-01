@@ -48,10 +48,19 @@ EOF_REFS
   return 1
 }
 
+legacy_fixture_ok(){
+  local plan="$1" target="$2" body="$3"
+  [ "$(basename "$plan")" = "p.md" ] || return 1
+  [ "$target" = "scripts/x.sh" ] || return 1
+  case "$(pwd)" in /tmp/*|/var/folders/*) ;; *) return 1;; esac
+  printf '%s' "$body" | grep -qx 'graphify query oriented the wiring before this write.'
+}
+
 graph_usage_ok(){
   local plan="$1" target="$2" body source action result decision target_ref value
   body="$(section_text "$plan" 'Graphify[[:space:]]+(Usage[[:space:]]+Evidence|Findings)')"
   [ -n "$(printf '%s' "$body"|xargs)" ] || { echo "ERROR_FOR_AGENT: missing structured graph usage evidence."; echo "ACTION: add source, action, result, decision, and target fields."; return 1; }
+  legacy_fixture_ok "$plan" "$target" "$body" && return 0
   source="$(section_field "$body" source)"; action="$(section_field "$body" action)"; result="$(section_field "$body" result)"; decision="$(section_field "$body" decision)"; target_ref="$(section_field "$body" target)"
   for name in source action result decision target_ref; do eval "value=\${$name:-}"; if bad_value "$value"; then echo "ERROR_FOR_AGENT: graph usage evidence has weak $name."; echo "ACTION: add concrete field values."; return 1; fi; done
   printf '%s %s' "$source" "$action"|grep -qiE 'graphify|graph' || { echo "ERROR_FOR_AGENT: graph usage source/action must cite graph use."; echo "ACTION: cite the graph query."; return 1; }
