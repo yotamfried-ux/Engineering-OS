@@ -42,6 +42,7 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before script, test, and docs edits.
+- mid: workflow evidence gate updated after implementation began.
 
 ## Source of Truth Checks
 
@@ -59,3 +60,4 @@
 ## DoD
 
 - [x] Plan created before edits.
+- [x] Mid checkpoint recorded after gate update.
