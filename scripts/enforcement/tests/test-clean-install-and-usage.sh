@@ -103,6 +103,11 @@ expect_file "$TARGET/.github/workflows/documentation-asset-policy.yml"
 expect_contains "$TARGET/.claude/settings.json" "pre-tool-use-json-guard.sh"
 expect_contains "$TARGET/.claude/settings.json" "pre-tool-use-runtime-evidence.sh"
 expect_contains "$TARGET/.claude/settings.json" "check-plan-scope.sh"
+expect_contains "$TARGET/.claude/settings.json" "rtk hook claude"
+expect_contains "$TARGET/.claude/settings.json" "SessionStart"
+expect_contains "$TARGET/.claude/settings.json" "scripts/session-setup.sh"
+expect_contains "$ROOT/scripts/session-setup.sh" "rtk init -g"
+expect_contains "$ROOT/scripts/session-setup.sh" "rtk --version"
 expect_contains "$TARGET/.claude/settings.json" "$ROOT/scripts/enforcement"
 
 run_install
