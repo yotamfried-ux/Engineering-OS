@@ -19,7 +19,8 @@ cat > "$TMP/runs-good.json" <<'JSON'
     {"name":"connector-evidence-policy","status":"completed","conclusion":"success"},
     {"name":"workflow-evidence-policy","status":"completed","conclusion":"success"},
     {"name":"capability-evidence-policy","status":"completed","conclusion":"success"},
-    {"name":"plan-policy","status":"completed","conclusion":"success"}
+    {"name":"plan-policy","status":"completed","conclusion":"success"},
+    {"name":"documentation-asset-policy","status":"completed","conclusion":"success"}
   ]
 }
 JSON
@@ -32,7 +33,8 @@ cat > "$TMP/runs-pr107-bad.json" <<'JSON'
     {"name":"capability-evidence-policy","status":"completed","conclusion":"success"},
     {"name":"workflow-evidence-policy","status":"completed","conclusion":"failure"},
     {"name":"connector-evidence-policy","status":"completed","conclusion":"failure"},
-    {"name":"plan-policy","status":"completed","conclusion":"success"}
+    {"name":"plan-policy","status":"completed","conclusion":"success"},
+    {"name":"documentation-asset-policy","status":"completed","conclusion":"success"}
   ]
 }
 JSON
