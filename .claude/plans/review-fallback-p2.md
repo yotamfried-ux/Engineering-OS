@@ -19,6 +19,7 @@
 - `plan.route-plan-before-write` — this plan was committed before the PR policy implementation commit.
 - `source.github-repo-read` — GitHub source files were inspected before updating the workflow and audit files.
 - `validation.policy-change-has-validator` — the policy change includes a deterministic PR workflow gate that validates review evidence.
+- `validation.coderabbit-policy` — PR body fallback evidence records reviewer, scope, checks, risks, decision, and evidence when external review is unavailable.
 
 ## Connector Evidence
 
@@ -36,7 +37,7 @@
 
 - start: plan committed before PR policy changes.
 - mid: PR policy review evidence gate was committed after implementation began.
-- pre-merge: this checkpoint was committed after the capability evidence repair.
+- pre-merge: this checkpoint was committed after the review capability evidence repair.
 
 ## Source of Truth Checks
 
@@ -61,4 +62,5 @@
 - [x] Known gaps updated after policy gate.
 - [x] Audit ledger and status row updated after policy gate.
 - [x] Capability evidence expanded after CI failure.
-- [x] Final checkpoint committed after capability evidence repair.
+- [x] Review capability evidence added after capability gate diagnosis.
+- [x] Final checkpoint committed after review capability evidence repair.
