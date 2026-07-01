@@ -58,3 +58,4 @@
 - [x] Workflow evidence gate updated.
 - [x] Touch recorded.
 - [x] Pre-merge checkpoint refreshed.
+- [x] Checks requested.
