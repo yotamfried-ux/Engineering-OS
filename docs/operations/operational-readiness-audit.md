@@ -39,7 +39,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | learning-semantic-closure | closed | P1 | Learning closure after bug/debug work. |
 | template-pattern-rating-lifecycle | closed | P1 | Template/pattern rating lifecycle. |
 | documentation-asset-selection-lifecycle | closed | P1 | Documentation/reference asset selection lifecycle. |
-| rtk-semantic-use | mitigated | P2 | RTK context optimization. |
+| rtk-semantic-use | closed | P2 | RTK context optimization. |
 | graphify-semantic-use | closed | P2 | Graphify context graph. |
 | semantic-cleanup-depth | closed | P2 | Cleanup semantic hygiene. |
 | review-fallback | closed | P2 | PR review / external review. |
@@ -65,7 +65,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Documentation/reference asset selection lifecycle | Enforced | Gate: documentation-asset-policy / `check-documentation-asset-evidence.sh`. Owner: asset-governance. Evidence: `test-documentation-asset-evidence.sh` covers valid evidence, valid waiver, missing fields, and placeholder rejection. | Deep judgment about whether the chosen documentation was the best possible source still requires review, but structurally skipping documentation/reference asset evidence on code/config/test changes is now blocked. |
 | Skill selection | Partially enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: required-skills and context-skill simulations. | Coverage must expand as new task classes and skills are added. |
 | Skill runtime evidence | Enforced | Gate: `pre-tool-use-runtime-evidence.sh`. Owner: skill-governance. Evidence: runtime evidence tests. | Evidence proves recorded activation, not deep semantic use. |
-| RTK context optimization | Partially enforced | Gate: `check-required-skills.sh`, blocking `session-setup.sh`, and `check-workflow-evidence.sh` RTK Usage Evidence. Owner: context-governance. Evidence: context-skill selection simulations, `test-rtk-session-blocking.sh`, and `test-rtk-usage-evidence.sh`. | Evidence now requires structural RTK source/action/result/decision impact for RTK-declared code changes; deeper semantic proof of actual reasoning impact remains future work. |
+| RTK context optimization | Enforced | Gate: `check-required-skills.sh`, blocking `session-setup.sh`, and `check-workflow-evidence.sh` RTK Usage Evidence. Owner: context-governance. Evidence: context-skill selection simulations, `test-rtk-session-blocking.sh`, and `test-rtk-usage-evidence.sh` require prior assumption, finding, impact, target, confidence, limitation, and explicit waiver coverage. | Hidden reasoning cannot be proven directly, but generic RTK mentions and missing auditable impact records are blocked. |
 | Graphify context graph | Enforced | Gate: `check-plan-scope.sh`. Owner: context-governance. Evidence: `test-graph-use.sh` blocks heading-only graph notes, missing target evidence, and wrong-target graph evidence while allowing structured target-linked graph use. | No remaining structural Graphify-use gap; qualitative accuracy of the graph finding still needs reviewer judgment. |
 | Claude memory / context carryover | Manual | Gate: manual workflow checklist. Owner: context-governance. Evidence: manual session review evidence and known-gaps manifest entry. | Runtime availability and evidence are not hard-checked across all environments. |
 | Capability registry | Partially enforced | Gate: capability report and capability evidence policy. Owner: capability-governance. Evidence: capability-evidence-policy plus capability report generator. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
@@ -99,7 +99,7 @@ Anything merely documented but silently skippable is not operationally ready.
 
 1. **Documentation/reference asset selection** — covered by deterministic documentation/reference asset evidence or waiver gates.
 2. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
-3. **RTK runtime hardening** — partially covered by RTK Usage Evidence; remaining work is deeper semantic proof of actual reasoning impact where reliable signals become available.
+3. **RTK runtime hardening** — covered structurally by required RTK usage impact evidence and mandatory session setup contract; maintain it when RTK signals change.
 4. **Route Plan quality gate** — closed structurally by concrete source and target relevance checks; maintain it as policy evolves.
 5. **Template/pattern rating lifecycle** — closed structurally by exact declared asset coverage, confidence, outcome, decision, and waiver evidence; score truthfulness remains a review-quality concern.
 6. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures whenever the lesson schema changes.
@@ -113,4 +113,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current audit scope
 
-This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, exact reusable asset feedback evidence, target-linked Graphify usage validation, cleanup-depth CI policy validation, explicit tracking for documentation/reference asset selection, and safe simulated post-merge repair issue observation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
+This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, exact reusable asset feedback evidence, auditable RTK impact evidence, target-linked Graphify usage validation, cleanup-depth CI policy validation, explicit tracking for documentation/reference asset selection, and safe simulated post-merge repair issue observation. It does not claim hidden chain-of-thought validation beyond reliable path/source/status/commit-order/evidence-field matching.
