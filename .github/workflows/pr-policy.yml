@@ -22,10 +22,6 @@ jobs:
           fi
           echo "✅ pull request is ready for review"
 
-  review-evidence:
-    name: Require review evidence or fallback
-    runs-on: ubuntu-latest
-    steps:
       - name: Validate PR review evidence
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
