@@ -1,4 +1,4 @@
-# Review Fallback P2
+# RF P2
 
 | Field | Value |
 |---|---|
@@ -14,30 +14,30 @@
 
 ## Capability Evidence
 
-- `routing.task-router-read` — task routing requirements were checked before selecting the review-governance gap.
-- `workflow.workflow-read` — workflow requirements were checked before changing PR policy behavior.
-- `plan.route-plan-before-write` — this plan was committed before the PR policy implementation commit.
-- `source.github-repo-read` — GitHub source files were inspected before updating the workflow and audit files.
-- `validation.policy-change-has-validator` — the policy change includes a deterministic PR workflow gate that validates review evidence.
-- `validation.coderabbit-policy` — PR body fallback evidence records reviewer, scope, checks, risks, decision, and evidence when external review is unavailable.
+- `routing.task-router-read` — routing policy checked.
+- `workflow.workflow-read` — workflow policy checked.
+- `plan.route-plan-before-write` — plan existed before workflow changes.
+- `source.github-repo-read` — GitHub files inspected before edits.
+- `validation.policy-change-has-validator` — PR policy validates required evidence.
+- `validation.coderabbit-policy` — fallback review evidence is recorded in the PR.
 
 ## Connector Evidence
 
-- github: checked `.github/workflows/pr-policy.yml`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md` before changes.
+- github: checked PR policy, known gaps, and audit files.
 
 ## Connector Usage Evidence
 
-- source: github `.github/workflows/pr-policy.yml`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
-- action: inspected the current PR policy and review fallback gap.
-- result: github showed the PR policy only blocks draft pull requests and does not require review evidence or fallback evidence.
-- decision: added a PR body evidence gate that requires either external review evidence or review fallback evidence with concrete fields.
+- source: github PR policy, known gaps, and audit files.
+- action: inspected current policy and gap row.
+- result: github showed review evidence was not hard-gated.
+- decision: added required evidence validation to the existing PR policy check.
 - target: .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
-- start: plan committed before PR policy changes.
-- mid: PR policy review evidence gate was committed after implementation began.
-- pre-merge: this checkpoint was committed after the review capability evidence repair.
+- start: plan committed before workflow changes.
+- mid: PR policy gate was committed after implementation began.
+- pre-merge: this checkpoint was committed after the final workflow change.
 
 ## Source of Truth Checks
 
@@ -49,18 +49,14 @@
 
 ## Claude Run Trace
 
-- goal: close review fallback gap with deterministic PR evidence.
-- hypothesis: requiring structured review or fallback evidence in PR body prevents vague manual review when external review is unavailable.
-- result: PR policy now requires external review evidence or structured fallback evidence; known-gaps and audit mark the structural gap closed.
+- goal: close review evidence gap.
+- hypothesis: required structured evidence blocks vague manual review.
+- result: PR policy, known gaps, and audit were updated.
 
 ## DoD
 
-- [x] Route Plan created before enforcement changes.
-- [x] Current PR policy inspected.
-- [x] Known gaps and audit inspected.
-- [x] PR body review evidence gate committed.
-- [x] Known gaps updated after policy gate.
-- [x] Audit ledger and status row updated after policy gate.
-- [x] Capability evidence expanded after CI failure.
-- [x] Review capability evidence added after capability gate diagnosis.
-- [x] Final checkpoint committed after review capability evidence repair.
+- [x] Plan created before edits.
+- [x] Policy gate updated.
+- [x] Known gaps updated.
+- [x] Audit updated.
+- [x] Final checkpoint committed after final workflow change.
