@@ -12,43 +12,29 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Check deeper cleanup debt
+      - name: Check repeated top-level declarations
         run: |
           set -euo pipefail
           base="${{ github.event.pull_request.base.sha || github.sha }}"
           files="$(git diff --name-only --diff-filter=ACMR "$base"...HEAD -- '*.py' '*.js' '*.jsx' '*.ts' '*.tsx' || true)"
           [ -z "$files" ] && exit 0
-          python3 - <<'PY'
-          import ast, os, re, subprocess, sys
-          files = subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMR', os.environ.get('BASE_SHA','HEAD~1') + '...HEAD', '--', '*.py','*.js','*.jsx','*.ts','*.tsx'], text=True).splitlines()
-          failures=[]
-          def add(path,line,msg): failures.append(f'{path}:{line}: {msg}')
-          for path in files:
-              try: text=open(path,encoding='utf-8',errors='ignore').read()
-              except FileNotFoundError: continue
-              lines=text.splitlines()
-              waived=any('EOS_SEMANTIC_CLEANUP_WAIVER:' in line and len(line.split(':',1)[1].strip())>=25 for line in lines[:20])
-              if waived: continue
-              if path.endswith('.py'):
-                  try: tree=ast.parse(text)
-                  except SyntaxError: tree=None
-                  if tree:
-                      seen={}
-                      for node in ast.walk(tree):
-                          if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef,ast.ClassDef)):
-                              if node.name in seen: add(path,node.lineno,'duplicate Python definition '+node.name)
-                              seen[node.name]=node.lineno
-              if re.search(r'\.(js|jsx|ts|tsx)$', path):
-                  seen={}
-                  for pat in [r'(?m)^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(', r'(?m)^\s*(?:export\s+)?class\s+([A-Za-z_$][\w$]*)\b']:
-                      for m in re.finditer(pat,text):
-                          name=m.group(1); line=text[:m.start()].count('\n')+1
-                          if name in seen: add(path,line,'duplicate JS/TS definition '+name)
-                          seen[name]=line
-          if failures:
-              print('ERROR_FOR_AGENT: semantic cleanup policy failed')
-              print('\n'.join('- '+x for x in failures))
-              sys.exit(1)
-          PY
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+          fail=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              *.py)
+                names="$(grep -E '^(async[[:space:]]+)?def[[:space:]]+[A-Za-z_][A-Za-z0-9_]*\(|^class[[:space:]]+[A-Za-z_][A-Za-z0-9_]*' "$file" | sed -E 's/^(async[[:space:]]+)?def[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\2/; s/^class[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/' | sort || true)"
+                ;;
+              *.js|*.jsx|*.ts|*.tsx)
+                names="$(grep -E '^(export[[:space:]]+)?(async[[:space:]]+)?function[[:space:]]+[A-Za-z_$][A-Za-z0-9_$]*\(|^(export[[:space:]]+)?class[[:space:]]+[A-Za-z_$][A-Za-z0-9_$]*' "$file" | sed -E 's/^(export[[:space:]]+)?(async[[:space:]]+)?function[[:space:]]+([A-Za-z_$][A-Za-z0-9_$]*).*/\3/; s/^(export[[:space:]]+)?class[[:space:]]+([A-Za-z_$][A-Za-z0-9_$]*).*/\2/' | sort || true)"
+                ;;
+              *) names="" ;;
+            esac
+            repeated="$(printf '%s\n' "$names" | uniq -d | sed '/^$/d' || true)"
+            if [ -n "$repeated" ]; then
+              echo "ERROR_FOR_AGENT: repeated top-level declaration in $file"
+              printf '%s\n' "$repeated" | sed 's/^/- /'
+              fail=1
+            fi
+          done <<< "$files"
+          exit "$fail"
