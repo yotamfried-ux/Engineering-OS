@@ -84,6 +84,7 @@ Required capabilities for task class `engineering_os_governance`:
 
 - **start:** session start — ENGINEERING_OS_HOME unset, `.git/hooks` empty, no gate fired on writes; runtime-enforcement gap confirmed live.
 - **mid:** hook-gate.sh + settings wiring + session-setup bootstrap implemented; test-hook-gate.sh 5/5; use-in-project contract green locally.
+- **pre-merge:** enforcement suite 59/59; no-plan Write returns permissionDecision=deny; commit-msg aborts a non-compliant message; Codex review addressed.
 
 
 ## Definition of Done / תנאי סיום
