@@ -33,6 +33,7 @@ def assets(value,kind=None):
         for m in re.finditer(r'('+pat+r')/[^\s,;`]+',raw or '',re.I):
             out.append(m.group(0).strip('`.,;:)]}'))
     return out
+def has_asset(value): return bool(assets(value))
 def rating_assets(ev):
     out=[]
     for line in ev.splitlines():
