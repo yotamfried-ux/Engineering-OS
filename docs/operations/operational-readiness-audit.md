@@ -43,7 +43,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | graphify-semantic-use | closed | P2 | Graphify context graph. |
 | semantic-cleanup-depth | closed | P2 | Cleanup semantic hygiene. |
 | review-fallback | closed | P2 | PR review / external review. |
-| post-merge-repair-observation | open | P3 | Post-merge validation. |
+| post-merge-repair-observation | closed | P3 | Post-merge validation. |
 
 ## Current status matrix
 
@@ -81,7 +81,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Git/branch policy | Partially enforced | Gate: pr-policy plus hooks. Owner: merge-governance. Evidence: pr-policy and live GitHub review. | GitHub connector operations and PR state still require live checks. |
 | PR review / external review | Enforced | Gate: `pr-policy`. Owner: review-governance. Evidence: PR body requires external review evidence or structured self-review evidence. | Deep review quality still requires reviewer judgment, but missing evidence is blocked. |
 | Merge safety | Manual | Gate: manual GitHub merge checklist. Owner: merge-governance. Evidence: mergeability, checks, threads, expected SHA evidence. | Requires live GitHub/PR checks and human approval. |
-| Post-merge validation | Enforced | Gate: `post-merge-validation` workflow plus `check-post-merge-validation-contract.sh`. Owner: merge-governance. Evidence: push-to-main validation workflow, failure-triggered repair path, and `test-post-merge-validation-contract.sh`. | Actual repair path is only exercised on a future negative main run. |
+| Post-merge validation | Enforced | Gate: `post-merge-validation` workflow plus `check-post-merge-validation-contract.sh`. Owner: merge-governance. Evidence: push-to-main validation workflow, failure-triggered repair path, `test-post-merge-validation-contract.sh`, and fake-gh repair issue simulation. | The repair issue path is simulated safely; actual live negative main failures should still be reviewed when they occur. |
 | Known gaps register | Enforced | Gate: `check-known-gaps.sh`. Owner: ops-readiness. Evidence: `docs/operations/known-gaps.tsv`, this audit's Known gaps freshness ledger, `test-known-gaps.sh`, and simulation coverage row `known-gaps-lifecycle`. | Lifecycle shape and audit freshness are enforced; the human decision to close a gap still needs review. |
 
 ## Definition of full operational readiness
@@ -107,10 +107,9 @@ Anything merely documented but silently skippable is not operationally ready.
 8. **Graphify context graph** — covered by target-linked graph usage evidence; maintain the negative fixtures when graph evidence policy changes.
 9. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
 10. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
-11. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair path on a future negative main run.
-12. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
-13. **Semantic cleanup** — covered by CI policy gates; maintain deeper hygiene checks when analyzers expand.
+11. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
+12. **Semantic cleanup** — covered by CI policy gates; maintain deeper hygiene checks when analyzers expand.
 
 ## Current audit scope
 
-This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, target-linked Graphify usage validation, cleanup-depth CI policy validation, and explicit tracking for documentation/reference asset selection. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
+This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, target-linked Graphify usage validation, cleanup-depth CI policy validation, explicit tracking for documentation/reference asset selection, and safe simulated post-merge repair issue observation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
