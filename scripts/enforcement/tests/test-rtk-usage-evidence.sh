@@ -41,21 +41,65 @@ write_plan(){ local mode="$1" step="$2"; cat > .claude/plans/rtk.md <<PLAN
 - rtk
 
 PLAN
-if [ "$mode" != missing ]; then cat >> .claude/plans/rtk.md <<'PLAN'
+if [ "$mode" = waiver ]; then cat >> .claude/plans/rtk.md <<'PLAN'
+## RTK Usage Waiver
+
+RTK impact evidence is waived in this isolated fixture because the test case validates the explicit waiver path rather than a real RTK run.
+
+PLAN
+elif [ "$mode" != missing ]; then cat >> .claude/plans/rtk.md <<'PLAN'
 ## RTK Usage Evidence
 - source: RTK context summary was checked.
 - action: RTK was used before editing the fixture.
 - result: RTK confirmed src/app.js is in scope.
 - decision: limit the fixture change to src/app.js.
+- prior assumption: src/app.js might require broader context.
+- finding: RTK indicated the fixture scope is limited to src/app.js.
+- impact: RTK confirmed and narrowed the decision to only update src/app.js.
+- target: src/app.js
+- confidence: medium because this fixture has direct target evidence.
+- limitation: fixture evidence proves an auditable RTK impact record, not hidden reasoning.
 
 PLAN
 fi
-if [ "$mode" = invalid ]; then python3 - <<'PY'
+case "$mode" in
+  invalid) python3 - <<'PY'
 from pathlib import Path
 p=Path('.claude/plans/rtk.md')
 p.write_text(p.read_text().replace('- decision: limit the fixture change to src/app.js.\n',''))
 PY
-fi
+  ;;
+  noimpact) python3 - <<'PY'
+from pathlib import Path
+p=Path('.claude/plans/rtk.md')
+p.write_text(p.read_text().replace('- impact: RTK confirmed and narrowed the decision to only update src/app.js.\n',''))
+PY
+  ;;
+  badimpact) python3 - <<'PY'
+from pathlib import Path
+p=Path('.claude/plans/rtk.md')
+p.write_text(p.read_text().replace('- impact: RTK confirmed and narrowed the decision to only update src/app.js.\n','- impact: RTK was present.\n'))
+PY
+  ;;
+  notarget) python3 - <<'PY'
+from pathlib import Path
+p=Path('.claude/plans/rtk.md')
+p.write_text(p.read_text().replace('- target: src/app.js\n',''))
+PY
+  ;;
+  wrongtarget) python3 - <<'PY'
+from pathlib import Path
+p=Path('.claude/plans/rtk.md')
+p.write_text(p.read_text().replace('- target: src/app.js\n','- target: src/other.js\n'))
+PY
+  ;;
+  noconfidence) python3 - <<'PY'
+from pathlib import Path
+p=Path('.claude/plans/rtk.md')
+p.write_text(p.read_text().replace('- confidence: medium because this fixture has direct target evidence.\n',''))
+PY
+  ;;
+esac
 printf '%s
 ' '## Progress Lifecycle Evidence' '' >> .claude/plans/rtk.md
 progress "$step" >> .claude/plans/rtk.md
@@ -67,3 +111,9 @@ case_run(){ local b="$1" m="$2"; git checkout -q -B "$b" "$BASE"; reset_workspac
 case_run good good; expect_pass rtk_usage_evidence_passes "$(git rev-parse HEAD)"
 case_run missing missing; expect_fail rtk_usage_evidence_missing_fails "$(git rev-parse HEAD)"
 case_run invalid invalid; expect_fail rtk_usage_evidence_invalid_fails "$(git rev-parse HEAD)"
+case_run noimpact noimpact; expect_fail rtk_usage_evidence_missing_impact_fails "$(git rev-parse HEAD)"
+case_run badimpact badimpact; expect_fail rtk_usage_evidence_weak_impact_fails "$(git rev-parse HEAD)"
+case_run notarget notarget; expect_fail rtk_usage_evidence_missing_target_fails "$(git rev-parse HEAD)"
+case_run wrongtarget wrongtarget; expect_fail rtk_usage_evidence_wrong_target_fails "$(git rev-parse HEAD)"
+case_run noconfidence noconfidence; expect_fail rtk_usage_evidence_missing_confidence_fails "$(git rev-parse HEAD)"
+case_run waiver waiver; expect_pass rtk_usage_waiver_passes "$(git rev-parse HEAD)"
