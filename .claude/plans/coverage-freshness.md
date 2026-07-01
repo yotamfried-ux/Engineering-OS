@@ -23,21 +23,21 @@
 
 ## Connector Evidence
 
-- GitHub: inspected target files before implementation.
+- GitHub: inspected `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md` before implementation.
 
 ## Connector Usage Evidence
 
-- source: GitHub files for checker, test, manifest, and audit.
-- action: checked coverage hardening target.
-- result: coverage rows needed stronger validation.
-- decision: added checker, tests, manifest alignment, and audit update.
+- source: GitHub files `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md`.
+- action: checked simulation coverage row freshness against current checker, test, manifest, and audit behavior.
+- result: coverage rows could keep stale wording even after direct fixture coverage existed.
+- decision: added checker validation, a negative test fixture, manifest row alignment, and readiness audit text for the target files.
 - target: scripts/enforcement/check-simulation-coverage.sh, scripts/enforcement/tests/test-simulation-coverage.sh, scripts/enforcement/simulation-coverage.tsv, docs/operations/operational-readiness-audit.md
 
 ## Documentation Asset Evidence
 
-- internal: target files were read.
-- context7: not required for an internal policy change.
-- decision: use enforcement tests as validation source.
+- internal: `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md` were read.
+- context7: not required because this is an internal policy, test, and audit change.
+- decision: use enforcement tests and manifest validation as the source of truth for this policy change.
 
 ## Source of Truth Checks
 
@@ -52,19 +52,21 @@
 
 ## Progress Lifecycle Evidence
 
-- start: plan committed before implementation files changed.
+- start: plan committed before modifying checker, tests, manifest, or audit files.
 - mid: checker update recorded after implementation began.
-- pre-merge: test, manifest, audit, and branch review were recorded after implementation.
+- pre-merge: tests, manifest, and audit updates recorded after implementation.
+- pre-merge: final branch review recorded after all non-plan file changes.
+- pre-merge: PR #177 opened and failing evidence-policy checks were inspected; connector and documentation evidence were repaired with concrete target-file references.
 
 ## Claude Run Trace
 
 - goal: harden simulation coverage freshness.
 - hypothesis: row text validation keeps the manifest aligned with fixtures.
-- connectors: GitHub used for source inspection and branch updates.
-- steps: inspect targets; create plan; update checker, tests, manifest, and audit; review branch.
-- evidence: checker, test fixture, manifest, and audit were updated.
-- result: implementation complete.
-- follow-up: open PR, run CI, address review, and merge.
+- connectors: GitHub used for source inspection, branch updates, PR creation, and CI failure analysis.
+- steps: inspect checker, tests, manifest, and audit; create this plan; update checker, tests, manifest, and audit; review final branch diff; open PR #177; repair evidence fields after CI feedback.
+- evidence: checker, test fixture, manifest, and audit were updated on this branch; PR #177 runs validate the policy gates.
+- result: implementation complete; CI rerun pending after evidence repair.
+- follow-up: run CI, address review, and merge after green checks.
 
 ## DoD
 
@@ -73,4 +75,4 @@
 - [x] Test fixture covers the freshness rule.
 - [x] Manifest row uses existing fixture token.
 - [x] Audit records the freshness check.
-- [x] PR policy will validate review evidence before merge.
+- [x] PR opened; CI remains the merge gate.
