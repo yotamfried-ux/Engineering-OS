@@ -59,16 +59,17 @@
 - pre-merge: RTK usage fixtures, simulation coverage, known-gaps ledger, and readiness audit were updated after the checker change; the branch now covers valid, missing, invalid, missing-impact, weak-impact, missing-target, wrong-target, missing-confidence, and waiver behavior.
 - pre-merge: PR #175 opened after implementation and structured self-review evidence was added to the PR body.
 - pre-merge: connector-evidence failure was inspected after CI and the Connector Usage Evidence decision field was corrected to state the concrete updated targets.
+- pre-merge: enforcement-tests failure was inspected after CI and RTK target matching was tightened to require exact declared target path or filename evidence, preventing directory-only matches such as `src/other.js` from satisfying `src/app.js`.
 
 ## Claude Run Trace
 
 - goal: close the RTK semantic-use gap without creating a false claim of hidden-reasoning proof.
 - hypothesis: requiring prior assumption, RTK finding, decision impact, target, confidence, and limitation evidence makes RTK use auditable and prevents generic RTK mentions from satisfying the gate.
 - connectors: GitHub used for source inspection, CI status, failure analysis, and branch updates.
-- steps: inspect current known gap, readiness audit, workflow checker, RTK usage fixture, simulation coverage; commit this plan; update the checker; add fixture coverage; align simulation coverage; update known-gaps and audit records; open PR #175; then repair Connector Usage Evidence after CI failure.
-- evidence: checker now requires source/action/result/decision plus prior assumption/finding/impact/target/confidence/limitation, verifies target linkage, and requires impact wording to show changed/confirmed/rejected/limited/selected/avoided/narrowed decision effect; fixtures cover missing and weak impact signals plus waiver behavior.
+- steps: inspect current known gap, readiness audit, workflow checker, RTK usage fixture, simulation coverage; commit this plan; update the checker; add fixture coverage; align simulation coverage; update known-gaps and audit records; open PR #175; repair Connector Usage Evidence after CI failure; then tighten exact RTK target matching after enforcement-tests exposed the directory-only match weakness.
+- evidence: checker now requires source/action/result/decision plus prior assumption/finding/impact/target/confidence/limitation, verifies exact target linkage, and requires impact wording to show changed/confirmed/rejected/limited/selected/avoided/narrowed decision effect; fixtures cover missing and weak impact signals plus waiver behavior.
 - rejected: automatic proof that RTK changed private reasoning is rejected because hidden chain-of-thought is not observable; the closure is an auditable impact-evidence contract.
-- result: implementation complete and connector evidence repaired; CI validation pending.
+- result: implementation complete and exact target matching repaired; CI validation pending.
 - follow-up: run CI, address review, and merge.
 
 ## DoD
