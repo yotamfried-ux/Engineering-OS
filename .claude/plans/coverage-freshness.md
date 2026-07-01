@@ -55,15 +55,14 @@
 - start: plan committed before modifying checker, tests, manifest, or audit files.
 - mid: checker update recorded after implementation began.
 - pre-merge: tests, manifest, and audit updates recorded after implementation.
-- pre-merge: final manifest alignment commit was reviewed and this route plan was updated after the last target-file change.
-- pre-merge: PR creation is the remaining external validation step and will be checked by PR policy.
+- pre-merge: final branch cleanup completed and this route plan was updated after the last non-plan change.
 
 ## Claude Run Trace
 
 - goal: harden simulation coverage freshness.
 - hypothesis: detecting stale deferred-language in coverage rows will keep the manifest aligned with actual fixtures.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect checker, tests, manifest, and audit; create this plan; update checker, tests, manifest, and audit; re-check final manifest alignment.
+- steps: inspect checker, tests, manifest, and audit; create this plan; update checker, tests, manifest, and audit; clean final branch diff.
 - evidence: checker, test fixture, manifest, and audit were updated on this branch.
 - rejected: claiming all qualitative simulation depth is solved is rejected; this loop targets row freshness only.
 - result: implementation complete.
