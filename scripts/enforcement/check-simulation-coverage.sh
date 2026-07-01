@@ -39,6 +39,13 @@ validate_cell() {
   esac
 }
 
+validate_freshness() {
+  local gate="$1" text="$2"
+  if printf '%s\n' "$text" | grep -Eiq '\b(future loop|pending|not yet|todo|tbd)\b'; then
+    fail "$gate: coverage row contains deferred-language; use a coverage token or a by-design reason"
+  fi
+}
+
 load_required_gates() {
   : > "$required_active"
   if [ -n "${EOS_SIM_COVERAGE_REQUIRED_GATES:-}" ]; then
@@ -80,6 +87,7 @@ while IFS=$'\t' read -r gate owner enforcer test_file positive negative invalid 
   for field_name in gate owner enforcer test_file positive negative invalid waiver notes; do
     value="${!field_name:-}"; [ -n "$value" ] || fail "$gate: missing required field '$field_name'"
   done
+  validate_freshness "$gate" "$positive $negative $invalid $waiver $notes"
   printf '%s' "$gate" | grep -Eq '[[:space:]]' && fail "$gate: gate_id must not contain whitespace"
   grep -Fxq "$gate" "$seen" 2>/dev/null && fail "$gate: duplicate gate_id"
   printf '%s\n' "$gate" >> "$seen"
