@@ -29,7 +29,7 @@
 
 - source: github scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 - action: github inspected route quality gate and gap row.
-- result: github found source checks still allow generic directory evidence.
+- result: github selected stricter source evidence checks.
 - decision: github selected workflow evidence gate for update.
 - target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
