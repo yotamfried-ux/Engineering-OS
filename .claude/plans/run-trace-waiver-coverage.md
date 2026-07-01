@@ -5,7 +5,7 @@
 | Task class | engineering_os_governance |
 | Task-router evidence | core/task-router.md read |
 | Workflow evidence | core/workflow.md read |
-| Target paths | scripts/enforcement/tests/test-run-trace.sh, scripts/enforcement/simulation-coverage.tsv |
+| Target paths | scripts/enforcement/tests/test-run-trace.sh, scripts/enforcement/tests/test-simulation-coverage.sh, scripts/enforcement/simulation-coverage.d/run-trace-waiver.tsv |
 | Templates | not required |
 | Patterns | existing run trace simulation fixture style |
 | External systems/connectors | GitHub |
@@ -27,17 +27,17 @@
 
 ## Connector Usage Evidence
 
-- source: GitHub files `scripts/enforcement/enforce-run-trace.sh`, `scripts/enforcement/tests/test-run-trace.sh`, and `scripts/enforcement/simulation-coverage.tsv`.
+- source: GitHub files `scripts/enforcement/enforce-run-trace.sh`, `scripts/enforcement/tests/test-run-trace.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, and `scripts/enforcement/simulation-coverage.tsv`.
 - action: checked GitHub source and coverage rows to identify the run trace waiver fixture gap.
 - result: GitHub showed the gate supports `## Run Trace Waiver`, while `simulation-coverage.tsv` still marks waiver coverage as pending.
-- decision: update the run trace test with a focused waiver fixture and update the simulation manifest to require it.
-- target: scripts/enforcement/tests/test-run-trace.sh, scripts/enforcement/simulation-coverage.tsv
+- decision: added a focused run trace waiver fixture, a coverage fragment for that fixture, and a simulation-coverage regression that requires the new fragment.
+- target: scripts/enforcement/tests/test-run-trace.sh, scripts/enforcement/tests/test-simulation-coverage.sh, scripts/enforcement/simulation-coverage.d/run-trace-waiver.tsv
 
 ## Documentation Asset Evidence
 
-- internal: `scripts/enforcement/enforce-run-trace.sh`, `scripts/enforcement/tests/test-run-trace.sh`, `scripts/enforcement/check-simulation-coverage.sh`, and `scripts/enforcement/simulation-coverage.tsv` were read.
+- internal: `scripts/enforcement/enforce-run-trace.sh`, `scripts/enforcement/tests/test-run-trace.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/check-simulation-coverage.sh`, and `scripts/enforcement/simulation-coverage.tsv` were read.
 - context7: not required because this is an internal shell fixture and manifest change with no external framework, SDK, API, library, or service behavior.
-- decision: the current sources confirm that a direct waiver fixture plus manifest update is the minimal complete fix.
+- decision: the current sources confirm that a direct waiver fixture plus manifest fragment is the minimal complete fix under the available GitHub editing path.
 
 ## Source of Truth Checks
 
@@ -45,28 +45,30 @@
 |---|---|
 | scripts/enforcement/enforce-run-trace.sh | checked |
 | scripts/enforcement/tests/test-run-trace.sh | checked |
+| scripts/enforcement/tests/test-simulation-coverage.sh | checked |
 | scripts/enforcement/check-simulation-coverage.sh | checked |
 | scripts/enforcement/simulation-coverage.tsv | checked |
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed before modifying the run trace test fixture or simulation coverage manifest.
+- mid: run trace waiver fixture, coverage fragment, and simulation coverage regression were added after implementation began.
 
 ## Claude Run Trace
 
 - goal: close the explicit run trace waiver simulation coverage gap.
-- hypothesis: a direct waiver fixture will let the coverage manifest replace the waiver note with a concrete covered token.
+- hypothesis: a direct waiver fixture will let simulation coverage require a concrete covered token.
 - connectors: GitHub used for repo source inspection; no external runtime connector is needed for this internal shell fixture.
-- steps: read the enforcer, test fixture, and simulation coverage contract; then add the missing waiver case.
-- evidence: implementation and validation will be recorded in later lifecycle updates.
-- rejected: leaving the manifest waiver in place was rejected because feasible coverage waivers should become fixtures.
-- result: pending implementation.
-- follow-up: update the manifest token and verify the related test suites.
+- steps: read the enforcer, test fixture, and simulation coverage contract; then add the missing waiver case and manifest fragment.
+- evidence: implementation added `focused_run_trace_waiver_allows_connector_change` and a current-manifest regression requiring `run-trace-waiver`.
+- rejected: editing the root simulation TSV directly was rejected because the GitHub write layer blocked that large TSV update; the `.d/` fragment path is already supported by `check-simulation-coverage.sh`.
+- result: implementation complete; final validation pending.
+- follow-up: verify the related test suites and PR checks.
 
 ## DoD
 
-- [ ] Route Plan committed before code/config/test changes.
-- [ ] Run trace waiver fixture added.
-- [ ] Simulation coverage manifest points to the new waiver fixture.
+- [x] Route Plan committed before code/config/test changes.
+- [x] Run trace waiver fixture added.
+- [x] Simulation coverage manifest points to the new waiver fixture.
 - [ ] Relevant enforcement tests verified.
 - [ ] PR checks reviewed before merge decision.
