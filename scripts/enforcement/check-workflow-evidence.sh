@@ -168,7 +168,7 @@ for plan in plans:
             print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must include at least two checked/read sources.'); bad=True
         for source in source_entries(src):
             if not is_concrete_source(source):
-                print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must reference concrete files, not generic directory/source "{source}".'); bad=True
+                print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must reference concrete files, not broad source "{source}".'); bad=True
         if code and clean(targets) and not source_matches(src, targets):
             print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks do not reference any Target paths or canonical routing/workflow source.'); bad=True
     if code:
