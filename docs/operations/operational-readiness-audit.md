@@ -99,12 +99,14 @@ Anything merely documented but silently skippable is not operationally ready.
 2. **RTK runtime hardening** — partially covered by RTK Usage Evidence; remaining work is deeper semantic proof of actual reasoning impact where reliable signals become available.
 3. **Route Plan quality gate** — partially covered by stricter source/target relevance; remaining work is deeper intent validation beyond path matching.
 4. **Template/pattern rating lifecycle** — partially covered by ratings manifest and Route Plan rating evidence; remaining work is long-term score accuracy from real outcomes.
-5. **Graphify context graph** — prove graph findings influence route plans or run traces when graph data is available.
-6. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
-7. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
-8. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair path on a future negative main run.
-9. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
-10. **Semantic cleanup** — partially covered by `check-semantic-cleanup.sh`; remaining work is deeper analyzers for dead code, duplicates, unused exports, and stale cleanup.
+5. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures whenever the lesson schema changes.
+6. **Progress lifecycle** — covered by ordered progress lifecycle evidence; keep start/mid/pre-merge order tests active for future policy changes.
+7. **Graphify context graph** — prove graph findings influence route plans or run traces when graph data is available.
+8. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
+9. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
+10. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair path on a future negative main run.
+11. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
+12. **Semantic cleanup** — partially covered by `check-semantic-cleanup.sh`; remaining work is deeper analyzers for dead code, duplicates, unused exports, and stale cleanup.
 
 ## Current audit scope
 
