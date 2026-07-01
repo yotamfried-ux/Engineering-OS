@@ -27,15 +27,15 @@
 
 ## Connector Usage Evidence
 
-- source: github post-merge workflow, contract test, known gaps, and audit files.
+- source: github .github/workflows/post-merge-validation.yml, scripts/enforcement/check-post-merge-validation-contract.sh, scripts/enforcement/tests/test-post-merge-validation-contract.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 - action: github inspected current validation contract and open gap.
 - result: github selected safe fake-gh simulation evidence.
-- decision: github will update only test and readiness status files.
+- decision: github updated the test fixture and readiness status files.
 - target: scripts/enforcement/tests/test-post-merge-validation-contract.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Documentation Asset Evidence
 
-- internal: .github/workflows/post-merge-validation.yml, scripts/enforcement/check-post-merge-validation-contract.sh, scripts/enforcement/tests/test-post-merge-validation-contract.sh, and docs/operations/known-gaps.tsv checked.
+- internal: .github/workflows/post-merge-validation.yml, scripts/enforcement/check-post-merge-validation-contract.sh, scripts/enforcement/tests/test-post-merge-validation-contract.sh, docs/operations/known-gaps.tsv, and docs/operations/operational-readiness-audit.md checked.
 - context7: not required because this is internal shell and workflow contract enforcement.
 - decision: add deterministic safe simulation evidence for the post-merge failure path.
 
@@ -44,6 +44,7 @@
 - start: plan before test and docs edits.
 - mid: safe fake-gh simulation selected after source inspection.
 - pre-merge: final checkpoint after simulation test and readiness docs updates.
+- pre-merge: evidence paths tightened after CI reported plan evidence gaps.
 
 ## Source of Truth Checks
 
@@ -53,6 +54,7 @@
 | scripts/enforcement/check-post-merge-validation-contract.sh | checked |
 | scripts/enforcement/tests/test-post-merge-validation-contract.sh | checked |
 | docs/operations/known-gaps.tsv | checked |
+| docs/operations/operational-readiness-audit.md | checked |
 
 ## Claude Run Trace
 
@@ -65,3 +67,4 @@
 - [x] Safe simulation added.
 - [x] Known gaps and audit synced.
 - [x] Pre-merge checkpoint recorded.
+- [x] Evidence paths tightened.
