@@ -56,6 +56,14 @@ def source_matches(src,targets):
         if k in low or d in low or b in low: return True
         if (k.startswith('core/') or k=='claude.md') and re.search(r'claude\.md|core/task-router\.md|core/workflow\.md',low): return True
     return False
+def exact_target_matches(value,targets):
+    low=norm(value)
+    for t in split_items(targets):
+        k=norm(t)
+        if not k: continue
+        b=k.rsplit('/',1)[-1]
+        if k in low or ('.' in b and b in low): return True
+    return False
 def source_entries(src):
     out=[]
     for line in src.splitlines():
@@ -158,7 +166,7 @@ for plan in plans:
             else:
                 for m in ['source','action','result','decision','prior assumption','finding','impact','target','confidence','limitation']:
                     if not evidence_has(ev,m): print(f'ERROR_FOR_AGENT: {plan} RTK Usage Evidence must include {m}: evidence.'); bad=True
-                if evidence_value(ev,'target') and not source_matches(evidence_value(ev,'target'),targets):
+                if evidence_value(ev,'target') and not exact_target_matches(evidence_value(ev,'target'),targets):
                     print(f'ERROR_FOR_AGENT: {plan} RTK Usage Evidence target must match a declared Target path.'); bad=True
                 impact=evidence_value(ev,'impact')
                 if impact and not re.search(r'\b(changed|confirmed|rejected|limited|selected|avoided|narrowed)\b',impact,re.I):
