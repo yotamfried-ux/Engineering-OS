@@ -43,6 +43,7 @@
 
 - start: plan committed before script, test, and docs edits.
 - mid: workflow evidence gate updated after implementation began.
+- pre-merge: checkpoint recorded after file updates.
 
 ## Source of Truth Checks
 
@@ -61,3 +62,4 @@
 
 - [x] Plan created before edits.
 - [x] Mid checkpoint recorded after gate update.
+- [x] Final checkpoint recorded.
