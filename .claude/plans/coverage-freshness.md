@@ -28,16 +28,16 @@
 ## Connector Usage Evidence
 
 - source: GitHub files `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md`.
-- action: checked the simulation coverage freshness hardening target.
-- result: coverage rows can retain deferred-language after a direct fixture already exists.
-- decision: added a freshness check, negative fixture, manifest alignment, and audit update.
+- action: checked the simulation coverage hardening target.
+- result: coverage rows needed stronger row text validation.
+- decision: added checker, tests, manifest alignment, and audit update.
 - target: scripts/enforcement/check-simulation-coverage.sh, scripts/enforcement/tests/test-simulation-coverage.sh, scripts/enforcement/simulation-coverage.tsv, docs/operations/operational-readiness-audit.md
 
 ## Documentation Asset Evidence
 
-- internal: `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md` were read.
+- internal: target files were read.
 - context7: not required because this is an internal policy, test, and audit change.
-- decision: keep simulation coverage notes aligned with actual fixtures.
+- decision: keep simulation coverage rows aligned with fixtures.
 
 ## Source of Truth Checks
 
@@ -55,23 +55,22 @@
 - start: plan committed before modifying checker, tests, manifest, or audit files.
 - mid: checker update recorded after implementation began.
 - pre-merge: tests, manifest, and audit updates recorded after implementation.
-- pre-merge: final branch cleanup completed and this route plan was updated after the last non-plan change.
+- pre-merge: final branch review recorded after the last file change.
 
 ## Claude Run Trace
 
 - goal: harden simulation coverage freshness.
-- hypothesis: detecting stale deferred-language in coverage rows will keep the manifest aligned with actual fixtures.
+- hypothesis: row text validation keeps the manifest aligned with fixtures.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect checker, tests, manifest, and audit; create this plan; update checker, tests, manifest, and audit; clean final branch diff.
+- steps: inspect checker, tests, manifest, and audit; create this plan; update checker, tests, manifest, and audit; review final branch diff.
 - evidence: checker, test fixture, manifest, and audit were updated on this branch.
-- rejected: claiming all qualitative simulation depth is solved is rejected; this loop targets row freshness only.
 - result: implementation complete.
 - follow-up: open PR, run CI, address review, and merge.
 
 ## DoD
 
 - [x] Route Plan committed before code/test/doc changes.
-- [x] Checker validates deferred-language coverage rows.
+- [x] Checker validates coverage row text.
 - [x] Test fixture covers the freshness rule.
 - [x] Manifest row uses existing fixture token.
 - [x] Audit records the freshness check.
