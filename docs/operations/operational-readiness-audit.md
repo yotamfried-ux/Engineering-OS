@@ -39,7 +39,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | learning-semantic-closure | closed | P1 | Learning closure after bug/debug work. |
 | template-pattern-rating-lifecycle | mitigated | P1 | Template/pattern rating lifecycle. |
 | rtk-semantic-use | mitigated | P2 | RTK context optimization. |
-| graphify-semantic-use | open | P2 | Graphify context graph. |
+| graphify-semantic-use | closed | P2 | Graphify context graph. |
 | semantic-cleanup-depth | open | P2 | Cleanup semantic hygiene. |
 | review-fallback | closed | P2 | PR review / external review. |
 | post-merge-repair-observation | open | P3 | Post-merge validation. |
@@ -64,7 +64,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Skill selection | Partially enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: required-skills and context-skill simulations. | Coverage must expand as new task classes and skills are added. |
 | Skill runtime evidence | Enforced | Gate: `pre-tool-use-runtime-evidence.sh`. Owner: skill-governance. Evidence: runtime evidence tests. | Evidence proves recorded activation, not deep semantic use. |
 | RTK context optimization | Partially enforced | Gate: `check-required-skills.sh`, blocking `session-setup.sh`, and `check-workflow-evidence.sh` RTK Usage Evidence. Owner: context-governance. Evidence: context-skill selection simulations, `test-rtk-session-blocking.sh`, and `test-rtk-usage-evidence.sh`. | Evidence now requires structural RTK source/action/result/decision impact for RTK-declared code changes; deeper semantic proof of actual reasoning impact remains future work. |
-| Graphify context graph | Partially enforced | Gate: graphify evidence gate. Owner: context-governance. Evidence: graphify gate tests. | Evidence proves graphify ran, not that findings were actually used. |
+| Graphify context graph | Enforced | Gate: `check-plan-scope.sh`. Owner: context-governance. Evidence: `test-graph-use.sh` blocks heading-only graph notes, missing target evidence, and wrong-target graph evidence while allowing structured target-linked graph use. | No remaining structural Graphify-use gap; qualitative accuracy of the graph finding still needs reviewer judgment. |
 | Claude memory / context carryover | Manual | Gate: manual workflow checklist. Owner: context-governance. Evidence: manual session review evidence and known-gaps manifest entry. | Runtime availability and evidence are not hard-checked across all environments. |
 | Capability registry | Partially enforced | Gate: capability report and capability evidence policy. Owner: capability-governance. Evidence: capability-evidence-policy plus capability report generator. | Registry-to-runtime enforcement is still plan-level and needs stronger staged-change guards. |
 | Learning schema | Enforced | Gate: `enforce-learning.sh`. Owner: learning-governance. Evidence: learning enforcement tests. | Schema shape is enforced; content quality is covered by the closure gate. |
@@ -101,7 +101,7 @@ Anything merely documented but silently skippable is not operationally ready.
 4. **Template/pattern rating lifecycle** — partially covered by ratings manifest and Route Plan rating evidence; remaining work is long-term score accuracy from real outcomes.
 5. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures whenever the lesson schema changes.
 6. **Progress lifecycle** — covered by ordered progress lifecycle evidence; keep start/mid/pre-merge order tests active for future policy changes.
-7. **Graphify context graph** — prove graph findings influence route plans or run traces when graph data is available.
+7. **Graphify context graph** — covered by target-linked graph usage evidence; maintain the negative fixtures when graph evidence policy changes.
 8. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
 9. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
 10. **Post-merge validation** — covered by `post-merge-validation` workflow; remaining work is to observe the repair path on a future negative main run.
@@ -110,4 +110,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current audit scope
 
-This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, and learning closure content validation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
+This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, and target-linked Graphify usage validation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
