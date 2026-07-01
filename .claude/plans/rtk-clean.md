@@ -63,11 +63,11 @@
 - goal: carry forward safe RTK install-contract coverage from old PR work.
 - hypothesis: clean-install assertions for RTK hook and SessionStart wiring catch installer drift without adding an RTK bypass.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect PR #131 changes, compare with current main, read installer/settings/session setup, create this plan, update the clean-install fixture, then review the clean branch diff.
+- steps: inspect PR #131 changes, compare with current main, read installer/settings/session setup, create this plan, update the clean-install fixture, review the clean branch diff, then open PR #173.
 - evidence: implementation added assertions for `rtk hook claude`, `SessionStart`, `scripts/session-setup.sh`, `rtk init -g`, and `rtk --version`.
 - rejected: carrying forward the bypass path is rejected because mandatory RTK should not gain a fail-open test contract.
-- result: implementation complete; PR and CI pending.
-- follow-up: run CI and merge only after green checks and review evidence.
+- result: implementation complete and PR opened; CI validation pending.
+- follow-up: merge only after green checks and review evidence.
 
 ## DoD
 
@@ -75,4 +75,4 @@
 - [x] Clean-install fixture asserts RTK hook command is present in installed target settings.
 - [x] Clean-install fixture asserts SessionStart setup remains wired.
 - [x] Clean-install fixture asserts source session setup still contains `rtk init -g` and `rtk --version`.
-- [ ] PR opened and CI green before merge.
+- [x] PR opened; CI remains the merge gate.
