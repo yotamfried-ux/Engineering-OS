@@ -61,15 +61,15 @@
 - goal: strengthen template/pattern rating lifecycle.
 - hypothesis: rating evidence should cite the declared reusable asset.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect sources, commit plan, update checker, then add wrong-asset fixture coverage.
+- steps: inspect sources, commit plan, update checker, add wrong-asset fixture coverage, then open PR.
 - evidence: checker compares declared reusable assets with rating evidence asset, and fixture coverage includes a wrong-asset rejection.
 - rejected: score accuracy remains reviewer based.
-- result: implementation complete; PR and CI pending.
-- follow-up: open PR, run CI, and merge only after green checks.
+- result: implementation complete and PR opened; CI validation pending.
+- follow-up: merge only after green checks.
 
 ## DoD
 
 - [x] Route Plan committed before code/test changes.
 - [x] Checker requires rating evidence asset linkage.
 - [x] Fixture includes wrong-asset negative case.
-- [ ] PR opened and CI green before merge.
+- [x] PR opened; CI remains the gate before merge.
