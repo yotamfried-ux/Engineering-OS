@@ -47,6 +47,7 @@
 - pre-merge: final checkpoint after simulation test and readiness docs updates.
 - pre-merge: evidence paths tightened after CI reported plan evidence gaps.
 - pre-merge: final checkpoint refreshed after mid lifecycle correction.
+- pre-merge: final CI trigger checkpoint after ordered lifecycle repair.
 
 ## Source of Truth Checks
 
@@ -72,3 +73,4 @@
 - [x] Evidence paths tightened.
 - [x] Mid checkpoint refreshed after implementation.
 - [x] Final checkpoint refreshed after mid correction.
+- [x] Final CI trigger checkpoint recorded.
