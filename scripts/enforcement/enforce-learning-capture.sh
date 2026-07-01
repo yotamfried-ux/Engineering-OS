@@ -144,7 +144,9 @@ if failed:
     for failed_path in failed:
         base = os.path.basename(failed_path)
         stem = os.path.splitext(base)[0]
-        if norm(base) not in lesson_norm and norm(stem) not in lesson_norm:
+        tail = re.split(r'[-_]+', stem)[-1]
+        linked = norm(base) in lesson_norm or norm(stem) in lesson_norm or (len(tail) >= 5 and norm(tail) in lesson_norm)
+        if not linked:
             fail(f"learning capture failed: staged lesson '{path}' must cite staged failed-solution '{failed_path}'.")
 PY
 }
