@@ -43,6 +43,7 @@
 
 - start: plan before test and docs edits.
 - mid: safe fake-gh simulation selected after source inspection.
+- pre-merge: final checkpoint after simulation test and readiness docs updates.
 
 ## Source of Truth Checks
 
@@ -55,9 +56,12 @@
 
 ## Claude Run Trace
 
-- result: post-merge repair observation work started.
+- result: post-merge repair observation work completed for PR validation.
 
 ## DoD
 
 - [x] Plan created before edits.
 - [x] Mid checkpoint recorded.
+- [x] Safe simulation added.
+- [x] Known gaps and audit synced.
+- [x] Pre-merge checkpoint recorded.
