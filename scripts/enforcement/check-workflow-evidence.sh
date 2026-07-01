@@ -64,6 +64,24 @@ def has_heading(text, title_re):
 def split_items(s): return [x for x in re.split(r'[,;]\s*',s or '') if x.strip()]
 def list_has(s,w): return norm(w) in [norm(x) for x in split_items(s)]
 def has_asset(s): return re.search(r'(^|\s)(templates|patterns)/\S+', s or '') is not None
+def declared_reuse_assets(*values):
+    assets=[]
+    for value in values:
+        for raw in split_items(value):
+            for match in re.finditer(r'(templates|patterns)/[^\s,;`]+', raw or '', re.I):
+                asset=match.group(0).strip('`.,;:)]}')
+                if asset:
+                    assets.append(asset)
+    return assets
+
+def rating_evidence_assets(ev):
+    assets=[]
+    for line in ev.splitlines():
+        m=re.match(r'^\s*(?:[-*]\s*)?asset\s*:\s*(.+)$', line, re.I)
+        if m:
+            assets.extend(declared_reuse_assets(m.group(1)))
+    return assets
+
 def source_matches(src, targets):
     low=src.lower()
     for t in split_items(targets):
@@ -210,6 +228,10 @@ for plan in plans:
             ev=section(text,r'Template/Pattern\s+Rating\s+Evidence')
             for m in ['asset','rating','outcome','decision']:
                 if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must include {m}: evidence.'); bad=True
+            declared={norm(a) for a in declared_reuse_assets(vals['Templates'], vals['Patterns'])}
+            rated={norm(a) for a in rating_evidence_assets(ev)}
+            if declared and not (declared & rated):
+                print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence asset must match a declared template or pattern asset.'); bad=True
     tc=clean(vals['Templates'])
     if re.search(r'(gap|missing|none|no\s+template|not\s+available|too\s+heavy)',tc) and not knowledge and not has_heading(text,r'Template\s+Gap\s+Waiver'):
         print(f'ERROR_FOR_AGENT: {plan} records a template gap but lacks changed learning/template artifact or ## Template Gap Waiver.'); bad=True
