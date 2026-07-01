@@ -17,7 +17,47 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event.pull_request.draft }}" = "true" ]; then
             echo "ERROR_FOR_AGENT: Pull requests must be ready for review, not draft."
-            echo "ACTION: mark the PR ready for review so CodeRabbit and CI review gates can run."
+            echo "ACTION: mark the PR ready for review so review gates can run."
             exit 1
           fi
           echo "✅ pull request is ready for review"
+
+      - name: Validate PR review evidence
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, re, sys
+          body = os.environ.get('PR_BODY') or ''
+          placeholder = re.compile(r'\b(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\b', re.I)
+          def section(title):
+              m = re.search(r'^##\s+' + re.escape(title) + r'\s*$', body, re.I | re.M)
+              if not m:
+                  return ''
+              rest = body[m.end():]
+              n = re.search(r'^##\s+', rest, re.M)
+              return rest[:n.start()] if n else rest
+          def require_fields(text, title, fields):
+              if not text.strip():
+                  print(f'ERROR_FOR_AGENT: PR body must include ## {title}.')
+                  return False
+              ok = True
+              for field in fields:
+                  m = re.search(r'(^|\n)\s*[-*]?\s*' + re.escape(field) + r'\s*:\s*(.+)', text, re.I)
+                  if not m or len(m.group(2).strip()) < 12 or placeholder.search(m.group(2)):
+                      print(f'ERROR_FOR_AGENT: ## {title} must include a concrete {field}: value.')
+                      ok = False
+              return ok
+          external = section('External Review Evidence')
+          fallback = section('Review Fallback Evidence')
+          if external and require_fields(external, 'External Review Evidence', ['source', 'result', 'decision']):
+              print('review evidence present')
+              sys.exit(0)
+          if fallback and require_fields(fallback, 'Review Fallback Evidence', ['reviewer', 'scope', 'checks', 'risks', 'decision', 'evidence']):
+              print('review fallback evidence present')
+              sys.exit(0)
+          print('ERROR_FOR_AGENT: PR body must include either ## External Review Evidence or ## Review Fallback Evidence with required fields.')
+          print('ACTION: add structured review evidence. Fallback must include reviewer, scope, checks, risks, decision, and evidence.')
+          sys.exit(1)
+          PY

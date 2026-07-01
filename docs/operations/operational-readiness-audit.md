@@ -41,7 +41,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | rtk-semantic-use | mitigated | P2 | RTK context optimization. |
 | graphify-semantic-use | open | P2 | Graphify context graph. |
 | semantic-cleanup-depth | open | P2 | Cleanup semantic hygiene. |
-| review-fallback | open | P2 | PR review / external review. |
+| review-fallback | closed | P2 | PR review / external review. |
 | post-merge-repair-observation | open | P3 | Post-merge validation. |
 
 ## Current status matrix
@@ -77,7 +77,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Cleanup semantic hygiene | Partially enforced | Gate: `check-semantic-cleanup.sh`. Owner: cleanup-governance. Evidence: `test-semantic-cleanup.sh` covers risky cleanup markers, disabled branches, simple Python unused imports, and waiver behavior. | Deeper dead code, duplicate logic, unused exports, and stale cleanup across all languages still need analyzers or waiver-gated checklist. |
 | Project install contract | Enforced | Gate: use-in-project output contract. Owner: install-governance. Evidence: enforcement-tests install contract. | Validates contract shape, not every downstream behavior. |
 | Git/branch policy | Partially enforced | Gate: pr-policy plus hooks. Owner: merge-governance. Evidence: pr-policy and live GitHub review. | GitHub connector operations and PR state still require live checks. |
-| PR review / external review | Manual | Gate: manual review policy. Owner: review-governance. Evidence: PR comments/review thread evidence and known-gaps manifest entry. | External review can be unavailable and is not a hard universal gate. |
+| PR review / external review | Enforced | Gate: `pr-policy`. Owner: review-governance. Evidence: PR body requires external review evidence or structured review fallback evidence. | Deep review quality still requires reviewer judgment, but missing fallback evidence is blocked. |
 | Merge safety | Manual | Gate: manual GitHub merge checklist. Owner: merge-governance. Evidence: mergeability, checks, threads, expected SHA evidence. | Requires live GitHub/PR checks and human approval. |
 | Post-merge validation | Enforced | Gate: `post-merge-validation` workflow plus `check-post-merge-validation-contract.sh`. Owner: merge-governance. Evidence: push-to-main validation workflow, failure-triggered repair path, and `test-post-merge-validation-contract.sh`. | Actual repair path is only exercised on a future negative main run. |
 | Known gaps register | Enforced | Gate: `check-known-gaps.sh`. Owner: ops-readiness. Evidence: `docs/operations/known-gaps.tsv`, this audit's Known gaps freshness ledger, `test-known-gaps.sh`, and simulation coverage row `known-gaps-lifecycle`. | Lifecycle shape and audit freshness are enforced; the human decision to close a gap still needs review. |
@@ -109,4 +109,4 @@ Anything merely documented but silently skippable is not operationally ready.
 
 ## Current audit scope
 
-This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, and ordered progress lifecycle validation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order matching.
+This audit now includes stricter Route Plan source/target semantic relevance, deterministic known-gaps freshness validation, ordered progress lifecycle validation, and PR review fallback evidence validation. It does not claim full intent-level validation beyond reliable path/source/status/commit-order/evidence-field matching.
