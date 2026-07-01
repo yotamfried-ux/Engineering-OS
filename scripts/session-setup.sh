@@ -23,6 +23,41 @@ fail() { printf '%s❌%s %s\n' "$R" "$Z" "$1"; }
 info() { printf '%s[session]%s %s\n' "$D" "$Z" "$1"; }
 rtk_block() { fail "$1"; printf '%sACTION:%s fix RTK before starting work; RTK is mandatory for every Engineering OS project.\n' "$R" "$Z"; exit 1; }
 
+# ── 0b. Self git-hooks (idempotent) ──────────────────────────────────────────
+# The deterministic commit-time gates (pre-commit, commit-msg, post-commit) only
+# run if installed into this repo's .git/hooks/. A fresh clone / web session has
+# none, so the genuinely-blocking git layer is dormant until installed. Do it here.
+# Idempotent: only (re)copies a hook when it is missing or differs from source.
+# Governing policy: core/hooks-policy.md
+_install_self_hooks() {
+  local hooks_dir common src dst h
+  git -C "$EOS_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    || { info "self-hooks: $EOS_ROOT is not a git repo — skipping hook install"; return; }
+  # git runs hooks from core.hooksPath (if set) or <common-git-dir>/hooks — NOT the
+  # per-worktree --git-dir. Resolve accordingly so linked worktrees install where git
+  # actually looks (otherwise the hooks land in a dir git ignores).
+  hooks_dir="$(git -C "$EOS_ROOT" config --get core.hooksPath 2>/dev/null || true)"
+  if [ -n "$hooks_dir" ]; then
+    case "$hooks_dir" in /*) ;; *) hooks_dir="$EOS_ROOT/$hooks_dir" ;; esac
+  else
+    common="$(git -C "$EOS_ROOT" rev-parse --git-common-dir 2>/dev/null || true)"
+    [ -n "$common" ] || common="$(git -C "$EOS_ROOT" rev-parse --git-dir 2>/dev/null || true)"
+    case "$common" in /*) ;; *) common="$EOS_ROOT/$common" ;; esac
+    hooks_dir="$common/hooks"
+  fi
+  mkdir -p "$hooks_dir" 2>/dev/null || true
+  for h in pre-commit commit-msg post-commit; do
+    src="$EOS_ROOT/scripts/hooks/$h.sh"; dst="$hooks_dir/$h"
+    [ -f "$src" ] || continue
+    if ! cmp -s "$src" "$dst" 2>/dev/null; then
+      cp "$src" "$dst" 2>/dev/null && chmod +x "$dst" 2>/dev/null \
+        && info "self-hooks: installed/updated $h" \
+        || warn "self-hooks: failed to install $h"
+    fi
+  done
+}
+_install_self_hooks
+
 # ── 1. HTTPS override (no SSH agent in web sessions) ─────────────────────────
 git config --global url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
 
