@@ -54,24 +54,25 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before modifying enforcement code, tests, or audit files.
+- mid: workflow evidence checker updated after implementation began to require exact reusable asset coverage and confidence evidence.
 
 ## Claude Run Trace
 
 - goal: strengthen reusable asset feedback evidence.
 - hypothesis: exact asset matching plus confidence evidence blocks unrelated or partial feedback from satisfying the gate.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: read routing, workflow, capability, checker, tests, and readiness files; then create this plan before implementation.
-- evidence: implementation pending.
+- steps: read routing, workflow, capability, checker, tests, and readiness files; create this plan; then update the checker.
+- evidence: checker now compares declared reusable assets with assets named in evidence and requires confidence evidence.
 - rejected: score accuracy remains review based.
-- result: pending implementation.
-- follow-up: add enforcement plus fixtures, update readiness records, run CI, address review, and merge after green checks.
+- result: checker update complete; fixture and readiness updates pending.
+- follow-up: add fixtures, update readiness records, run CI, address review, and merge after green checks.
 
 ## DoD
 
 - [x] Route Plan committed before code/test/doc changes.
-- [ ] Checker requires exact reusable asset coverage.
-- [ ] Checker rejects extra rated assets.
-- [ ] Checker requires confidence evidence.
+- [x] Checker requires exact reusable asset coverage.
+- [x] Checker rejects extra rated assets.
+- [x] Checker requires confidence evidence.
 - [ ] Fixtures cover valid, missing, invalid, wrong, extra, partial, and waiver cases.
 - [ ] Known-gaps and audit records are updated.
 - [ ] PR opened and all required checks are green before merge.
