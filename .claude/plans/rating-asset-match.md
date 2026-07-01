@@ -35,9 +35,9 @@
 
 ## Documentation Asset Evidence
 
-- internal: target files and readiness gap rows were read.
-- context7: not required for internal enforcement.
-- decision: strengthen structural rating evidence.
+- internal: `scripts/enforcement/check-workflow-evidence.sh`, `scripts/enforcement/tests/test-template-pattern-rating-evidence.sh`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md` were read.
+- context7: not required because this internal enforcement change does not implement or integrate external library, framework, SDK, API, or service behavior.
+- decision: strengthen structural rating evidence by requiring the rated reusable asset to match the asset declared in the Route Plan.
 
 ## Source of Truth Checks
 
