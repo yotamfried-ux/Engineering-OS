@@ -30,12 +30,13 @@
 - source: github scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 - action: github inspected route quality gate and gap row.
 - result: github found source checks still allow generic directory evidence.
-- decision: github selected workflow evidence gate and fixtures for update.
+- decision: github selected workflow evidence gate for update.
 - target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-plan-semantic-quality.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed before script, test, gap, and audit edits.
+- mid: workflow evidence gate was updated after implementation began.
 
 ## Source of Truth Checks
 
@@ -53,3 +54,4 @@
 ## DoD
 
 - [x] Plan created before edits.
+- [x] Workflow evidence gate updated.
