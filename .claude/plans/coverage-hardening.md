@@ -54,22 +54,23 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before modifying checker, tests, coverage manifest, or audit files.
+- mid: simulation coverage checker updated after implementation began to reject deferred-language in coverage rows.
 
 ## Claude Run Trace
 
 - goal: harden simulation coverage freshness.
 - hypothesis: rejecting old future/pending language in coverage rows will keep the manifest aligned with actual fixtures.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect coverage checker/tests/manifests, run-trace tests, and audit row; then create this Route Plan before implementation.
-- evidence: implementation pending.
+- steps: inspect coverage checker/tests/manifests, run-trace tests, and audit row; create this Route Plan; then update the simulation coverage checker.
+- evidence: checker now rejects coverage rows that still mention future loop, pending, not yet, todo, or tbd language.
 - rejected: claiming all qualitative simulation depth is solved is rejected; this loop targets stale coverage notes only.
-- result: pending implementation.
-- follow-up: update checker, fixtures, manifest, audit, open PR, run CI, address review, and merge.
+- result: checker update complete; tests, manifest, and audit pending.
+- follow-up: update fixtures, manifest, audit, open PR, run CI, address review, and merge.
 
 ## DoD
 
 - [x] Route Plan committed before code/test/doc changes.
-- [ ] Checker rejects stale pending/future coverage language.
+- [x] Checker rejects stale pending/future coverage language.
 - [ ] Test fixture covers stale coverage rejection.
 - [ ] Run trace base coverage row uses the existing fixture token.
 - [ ] Audit records stale coverage notes as blocked.
