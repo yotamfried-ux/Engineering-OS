@@ -2,244 +2,170 @@
 set -euo pipefail
 python3 - "$@" <<'PY'
 import os, re, subprocess, sys
-base = sys.argv[1] if len(sys.argv) > 1 else 'HEAD~1'
-head = sys.argv[2] if len(sys.argv) > 2 else 'HEAD'
-
-def sh(*args):
-    return subprocess.check_output(args, text=True).splitlines()
-
-def git_text(*args):
-    try:
-        return subprocess.check_output(args, text=True, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
-        return ''
-
-def norm(s):
-    return re.sub(r'[^a-z0-9_./-]+','-', re.sub(r'^[\s*`-]+|[\s`.,;:]+$','',(s or '').lower())).strip('-')
-
-def clean(s):
-    return re.sub(r'[`*_]','',s or '').strip().lower()
-
-changed=sh('git','diff','--name-only',base,head)
-plans=[p for p in changed if re.match(r'^\.claude/plans/.*\.md$',p) and os.path.exists(p)]
-code=[p for p in changed if p and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',p)]
-knowledge=[p for p in changed if re.match(r'^(lessons-learned/|failed-solutions/|templates/)',p)]
-commits=[]
-commit_files={}
-code_commit_indexes=[]
-if code:
-    commits=sh('git','rev-list','--reverse',f'{base}..{head}')
-    first_plan=first_code=0
-    for idx,c in enumerate(commits,1):
-        fs=sh('git','diff-tree','--no-commit-id','--name-only','-r',c)
-        commit_files[c]=fs
-        if not first_plan and any(re.match(r'^\.claude/plans/.*\.md$',f) for f in fs): first_plan=idx
-        cfs=[f for f in fs if f and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',f)]
-        if cfs:
-            code_commit_indexes.append(idx)
-        if not first_code and cfs: first_code=idx
-    if not first_plan or not first_code or first_code <= first_plan:
-        print('ERROR_FOR_AGENT: Route Plan must be committed before the first code/config/test change, not in the same or later commit.'); sys.exit(1)
-if not plans:
-    print('No changed plan files.'); sys.exit(0)
-
-def field(text, name_re):
+base=sys.argv[1] if len(sys.argv)>1 else 'HEAD~1'
+head=sys.argv[2] if len(sys.argv)>2 else 'HEAD'
+def sh(*a): return subprocess.check_output(a,text=True).splitlines()
+def gt(*a):
+    try: return subprocess.check_output(a,text=True,stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError: return ''
+def norm(s): return re.sub(r'[^a-z0-9_./-]+','-',re.sub(r'^[\s*`-]+|[\s`.,;:]+$','',(s or '').lower())).strip('-')
+def clean(s): return re.sub(r'[`*_]','',s or '').strip().lower()
+def split_items(s): return [x for x in re.split(r'[,;]\s*|\s+and\s+',s or '',flags=re.I) if x.strip()]
+def field(text,name_re):
     for line in text.splitlines():
         if '|' not in line: continue
         cells=[re.sub(r'[`*_]','',c).strip() for c in line.split('|')]
         for i,c in enumerate(cells[:-1]):
             if re.search(name_re,c.lower()): return cells[i+1].strip()
     return ''
-
-def section(text, title_re):
-    lines=text.splitlines(); out=[]; on=False
-    for line in lines:
-        if re.match(r'^#{1,4}\s+'+title_re+r'(\s|$)', line, re.I): on=True; continue
-        if on and re.match(r'^#{1,4}\s+', line): break
+def section(text,title_re):
+    out=[]; on=False
+    for line in text.splitlines():
+        if re.match(r'^#{1,4}\s+'+title_re+r'(\s|$)',line,re.I): on=True; continue
+        if on and re.match(r'^#{1,4}\s+',line): break
         if on: out.append(line)
     return '\n'.join(out)
-
-def has_heading(text, title_re):
-    return re.search(r'^#{1,4}\s+'+title_re+r'(\s|$)', text, re.I|re.M) is not None
-
-def split_items(s): return [x for x in re.split(r'[,;]\s*',s or '') if x.strip()]
-def list_has(s,w): return norm(w) in [norm(x) for x in split_items(s)]
-def has_asset(s): return re.search(r'(^|\s)(templates|patterns)/\S+', s or '') is not None
-
-def declared_reuse_assets(*values):
-    assets=[]
-    for value in values:
-        for raw in split_items(value):
-            for match in re.finditer(r'(templates|patterns)/[^\s,;`]+', raw or '', re.I):
-                asset=match.group(0).strip('`.,;:)]}')
-                if asset:
-                    assets.append(asset)
-    return assets
-
-def rating_evidence_assets(ev):
-    assets=[]
+def has_heading(text,title_re): return re.search(r'^#{1,4}\s+'+title_re+r'(\s|$)',text,re.I|re.M) is not None
+def assets(value,kind=None):
+    out=[]
+    pat=(kind or r'templates|patterns')
+    for raw in split_items(value):
+        for m in re.finditer(r'('+pat+r')/[^\s,;`]+',raw or '',re.I):
+            out.append(m.group(0).strip('`.,;:)]}'))
+    return out
+def rating_assets(ev):
+    out=[]
     for line in ev.splitlines():
-        m=re.match(r'^\s*(?:[-*]\s*)?asset\s*:\s*(.+)$', line, re.I)
-        if m:
-            assets.extend(declared_reuse_assets(m.group(1)))
-    return assets
-
-def source_matches(src, targets):
+        m=re.match(r'^\s*(?:[-*]\s*)?asset\s*:\s*(.+)$',line,re.I)
+        if m: out.extend(assets(m.group(1),'patterns'))
+    return out
+def source_matches(src,targets):
     low=src.lower()
     for t in split_items(targets):
         k=norm(t)
         if not k: continue
-        d=k.rsplit('/',1)[0] if '/' in k else k
-        b=k.rsplit('/',1)[-1]
+        d=k.rsplit('/',1)[0] if '/' in k else k; b=k.rsplit('/',1)[-1]
         if k in low or d in low or b in low: return True
-        if (k.startswith('core/') or k == 'claude.md') and re.search(r'claude\.md|core/task-router\.md|core/workflow\.md', low): return True
+        if (k.startswith('core/') or k=='claude.md') and re.search(r'claude\.md|core/task-router\.md|core/workflow\.md',low): return True
     return False
-
 def source_entries(src):
-    entries=[]
+    out=[]
     for line in src.splitlines():
         if '|' not in line: continue
         cells=[re.sub(r'[`*_]','',c).strip() for c in line.split('|')]
         cells=[c for c in cells if c]
-        if len(cells) < 2: continue
-        source,status=cells[0],cells[1].lower()
-        if source.lower() == 'source' or re.match(r'^-+$', source): continue
-        if re.match(r'^(checked|read|validated)$', status, re.I):
-            entries.append(source)
-    return entries
-
-def is_concrete_source(value):
-    s=(value or '').strip()
-    n=norm(s)
-    if not n: return False
-    if any(ord(ch) in (42, 63, 91, 93) for ch in s):
-        return False
-    if s.endswith('/') or n.endswith('/'):
-        return False
-    if re.match(r'^(docs|docs/operations|scripts|scripts/enforcement|\.github|\.github/workflows|core)$', n):
-        return False
-    if re.match(r'^[a-z0-9_.-]+/[a-z0-9_.-]+$', n) and '.' not in n.rsplit('/',1)[-1]:
-        return False
-    return bool('/' in n or '.' in n)
-
-FUTURE_RE=re.compile(r'\b(will|planned|pending|todo|tbd|later|must\s+be|needs?\s+to|to\s+be)\b', re.I)
-def checkpoint_lines(text, marker):
-    prog=section(text,r'Progress\s+Lifecycle\s+Evidence')
-    out=[]
-    for line in prog.splitlines():
-        if re.search(r'(^|[^a-z])'+re.escape(marker)+r'\s*:', line, re.I):
-            out.append(line.strip())
+        if len(cells)<2: continue
+        if cells[0].lower()=='source' or re.match(r'^-+$',cells[0]): continue
+        if re.match(r'^(checked|read|validated)$',cells[1],re.I): out.append(cells[0])
     return out
-
-def real_checkpoint_lines(text, marker):
-    return {line for line in checkpoint_lines(text, marker) if line and not FUTURE_RE.search(line)}
-
-def has_real_checkpoint(text, marker):
-    return bool(real_checkpoint_lines(text, marker))
-
-def checkpoint_introduced(prev, cur, marker):
-    return bool(real_checkpoint_lines(cur, marker) - real_checkpoint_lines(prev, marker))
-
-def plan_events(plan):
-    events=[]
-    if not commits:
-        return events
+def concrete_source(v):
+    s=(v or '').strip(); n=norm(s)
+    if not n or any(ord(ch) in (42,63,91,93) for ch in s) or s.endswith('/') or n.endswith('/'): return False
+    if re.match(r'^(docs|docs/operations|scripts|scripts/enforcement|\.github|\.github/workflows|core)$',n): return False
+    if re.match(r'^[a-z0-9_.-]+/[a-z0-9_.-]+$',n) and '.' not in n.rsplit('/',1)[-1]: return False
+    return bool('/' in n or '.' in n)
+changed=sh('git','diff','--name-only',base,head)
+plans=[p for p in changed if re.match(r'^\.claude/plans/.*\.md$',p) and os.path.exists(p)]
+code=[p for p in changed if p and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',p)]
+knowledge=[p for p in changed if re.match(r'^(lessons-learned/|failed-solutions/|templates/)',p)]
+commits=[]; commit_files={}; code_idxs=[]
+if code:
+    commits=sh('git','rev-list','--reverse',f'{base}..{head}')
+    first_plan=first_code=0
     for idx,c in enumerate(commits,1):
-        if plan not in commit_files.get(c, sh('git','diff-tree','--no-commit-id','--name-only','-r',c)):
-            continue
-        content=git_text('git','show',f'{c}:{plan}')
-        prev=git_text('git','show',f'{c}^:{plan}')
-        if content:
-            events.append((idx,c,prev,content))
-    return events
-
-def enforce_progress_order(plan):
-    if not code_commit_indexes:
-        return []
-    failures=[]
-    first_code=min(code_commit_indexes)
-    last_code=max(code_commit_indexes)
-    events=plan_events(plan)
-    start=[idx for idx,_,prev,content in events if idx < first_code and checkpoint_introduced(prev,content,'start')]
-    mid=[idx for idx,_,prev,content in events if idx > first_code and checkpoint_introduced(prev,content,'mid')]
-    pre=[idx for idx,_,prev,content in events if idx > last_code and checkpoint_introduced(prev,content,'pre-merge')]
-    if not start:
-        failures.append('start checkpoint evidence must be introduced in the Route Plan before the first code/config/test change.')
-    if not mid:
-        failures.append('mid checkpoint evidence must be introduced or materially updated after work begins, not only copied from a prefilled plan.')
-    if not pre:
-        failures.append('pre-merge checkpoint evidence must be introduced or materially updated after the last code/config/test change.')
-    if mid and pre and not any(m < p for m in mid for p in pre):
-        failures.append('mid and pre-merge checkpoint evidence must be committed as ordered lifecycle updates, not a single final backfill.')
-    return failures
-
+        fs=sh('git','diff-tree','--no-commit-id','--name-only','-r',c); commit_files[c]=fs
+        if not first_plan and any(re.match(r'^\.claude/plans/.*\.md$',f) for f in fs): first_plan=idx
+        cfs=[f for f in fs if f and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',f)]
+        if cfs: code_idxs.append(idx)
+        if not first_code and cfs: first_code=idx
+    if not first_plan or not first_code or first_code<=first_plan:
+        print('ERROR_FOR_AGENT: Route Plan must be committed before the first code/config/test change, not in the same or later commit.'); sys.exit(1)
+if not plans:
+    print('No changed plan files.'); sys.exit(0)
+FUTURE_RE=re.compile(r'\b(will|planned|pending|todo|tbd|later|must\s+be|needs?\s+to|to\s+be)\b',re.I)
+def checkpoint_lines(text,marker):
+    return [l.strip() for l in section(text,r'Progress\s+Lifecycle\s+Evidence').splitlines() if re.search(r'(^|[^a-z])'+re.escape(marker)+r'\s*:',l,re.I)]
+def real_lines(text,marker): return {l for l in checkpoint_lines(text,marker) if l and not FUTURE_RE.search(l)}
+def introduced(prev,cur,marker): return bool(real_lines(cur,marker)-real_lines(prev,marker))
+def plan_events(plan):
+    out=[]
+    for idx,c in enumerate(commits,1):
+        if plan not in commit_files.get(c,[]): continue
+        cur=gt('git','show',f'{c}:{plan}'); prev=gt('git','show',f'{c}^:{plan}')
+        if cur: out.append((idx,prev,cur))
+    return out
+def progress_failures(plan):
+    if not code_idxs: return []
+    events=plan_events(plan); first=min(code_idxs); last=max(code_idxs); fails=[]
+    start=[i for i,p,c in events if i<first and introduced(p,c,'start')]
+    mid=[i for i,p,c in events if i>first and introduced(p,c,'mid')]
+    pre=[i for i,p,c in events if i>last and introduced(p,c,'pre-merge')]
+    if not start: fails.append('start checkpoint evidence must be introduced in the Route Plan before the first code/config/test change.')
+    if not mid: fails.append('mid checkpoint evidence must be introduced or materially updated after work begins, not only copied from a prefilled plan.')
+    if not pre: fails.append('pre-merge checkpoint evidence must be introduced or materially updated after the last code/config/test change.')
+    if mid and pre and not any(m<p for m in mid for p in pre): fails.append('mid and pre-merge checkpoint evidence must be committed as ordered lifecycle updates, not a single final backfill.')
+    return fails
 bad=False
 for plan in plans:
     text=open(plan,encoding='utf-8').read()
     vals={n:field(text,r'^'+re.escape(n.lower())+r'$') for n in ['Task-router evidence','Workflow evidence','Templates','Patterns','Skills','Validation gates']}
     targets=field(text,r'^target paths?$')
     for n,v in vals.items():
-        cv=clean(v)
-        if not cv or re.match(r'^(todo|tbd|placeholder|unknown|later|fix\s*later|to\s*decide)$',cv):
+        if not clean(v) or re.match(r'^(todo|tbd|placeholder|unknown|later|fix\s*later|to\s*decide)$',clean(v)):
             print(f'ERROR_FOR_AGENT: {plan} has missing or placeholder {n}.'); bad=True
+    src=section(text,r'Source\s+of\s+Truth\s+Checks')
     if not has_heading(text,r'Source\s+of\s+Truth\s+Checks'):
         print(f'ERROR_FOR_AGENT: {plan} is missing ## Source of Truth Checks.'); bad=True
     else:
-        src=section(text,r'Source\s+of\s+Truth\s+Checks')
-        if len(re.findall(r'\|\s*[^|]+\s*\|\s*(checked|read|validated)\s*\|', src, re.I)) < 2:
+        if len(re.findall(r'\|\s*[^|]+\s*\|\s*(checked|read|validated)\s*\|',src,re.I))<2:
             print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must include at least two checked/read sources.'); bad=True
         for source in source_entries(src):
-            if not is_concrete_source(source):
-                print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must reference concrete files, not broad source "{source}".'); bad=True
-        if code and clean(targets) and not source_matches(src, targets):
+            if not concrete_source(source): print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must reference concrete files, not broad source "{source}".'); bad=True
+        if code and clean(targets) and not source_matches(src,targets):
             print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks do not reference any Target paths or canonical routing/workflow source.'); bad=True
     if code:
-        if not has_heading(text,r'Claude\s+Run\s+Trace'):
-            print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Claude Run Trace.'); bad=True
+        if not has_heading(text,r'Claude\s+Run\s+Trace'): print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Claude Run Trace.'); bad=True
         if not has_heading(text,r'Progress\s+Lifecycle\s+Evidence'):
             print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Progress Lifecycle Evidence.'); bad=True
         else:
             for m in ['start','mid','pre-merge']:
-                if not has_real_checkpoint(text,m): print(f'ERROR_FOR_AGENT: {plan} Progress Lifecycle Evidence must include concrete {m} checkpoint evidence, not a future/pending placeholder.'); bad=True
-            for failure in enforce_progress_order(plan):
-                print(f'ERROR_FOR_AGENT: {plan} {failure}'); bad=True
-    skills=vals['Skills']; sc=clean(skills)
+                if not real_lines(text,m): print(f'ERROR_FOR_AGENT: {plan} Progress Lifecycle Evidence must include concrete {m} checkpoint evidence, not a future/pending placeholder.'); bad=True
+            for f in progress_failures(plan): print(f'ERROR_FOR_AGENT: {plan} {f}'); bad=True
+    sc=clean(vals['Skills'])
     if sc and not re.match(r'^(none|n/a|na|not\s+required|no\s+skills)$',sc):
+        ev=section(text,r'Skill\s+Evidence').lower()
         if not has_heading(text,r'Skill\s+Evidence'):
-            print(f"ERROR_FOR_AGENT: {plan} declares skills '{skills}' but lacks ## Skill Evidence."); bad=True
+            print(f"ERROR_FOR_AGENT: {plan} declares skills '{vals['Skills']}' but lacks ## Skill Evidence."); bad=True
         else:
-            ev=section(text,r'Skill\s+Evidence').lower()
-            for raw in split_items(skills):
+            for raw in split_items(vals['Skills']):
                 if norm(raw) and norm(raw) not in ev: print(f"ERROR_FOR_AGENT: {plan} declares skill '{raw}' but Skill Evidence does not mention it."); bad=True
-    if code and list_has(skills,'rtk'):
+    if code and any(norm(x)=='rtk' for x in split_items(vals['Skills'])):
         if has_heading(text,r'RTK\s+Usage\s+Waiver'):
             w=section(text,r'RTK\s+Usage\s+Waiver')
             if 'rtk' not in w.lower() or len(w)<40: print(f'ERROR_FOR_AGENT: {plan} RTK Usage Waiver must explain why RTK decision-impact evidence is not available.'); bad=True
-        elif not has_heading(text,r'RTK\s+Usage\s+Evidence'):
-            print(f'ERROR_FOR_AGENT: {plan} declares rtk for code/config/test changes but lacks ## RTK Usage Evidence.'); bad=True
         else:
             ev=section(text,r'RTK\s+Usage\s+Evidence')
+            if not has_heading(text,r'RTK\s+Usage\s+Evidence'): print(f'ERROR_FOR_AGENT: {plan} declares rtk for code/config/test changes but lacks ## RTK Usage Evidence.'); bad=True
             for m in ['source','action','result','decision']:
-                if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} RTK Usage Evidence must include {m}: evidence.'); bad=True
-    declared={norm(a) for a in declared_reuse_assets(vals['Templates'], vals['Patterns'])}
-    if code and declared:
+                if has_heading(text,r'RTK\s+Usage\s+Evidence') and not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} RTK Usage Evidence must include {m}: evidence.'); bad=True
+    declared={norm(a) for a in assets(vals['Patterns'],'patterns')}
+    if code and (declared or has_asset(vals['Templates'])):
         if has_heading(text,r'Template/Pattern\s+Rating\s+Waiver'):
-            if len(section(text,r'Template/Pattern\s+Rating\s+Waiver')) < 40: print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Waiver must explain why rating evidence is unavailable.'); bad=True
-        elif not has_heading(text,r'Template/Pattern\s+Rating\s+Evidence'):
-            print(f'ERROR_FOR_AGENT: {plan} uses templates/patterns assets but lacks ## Template/Pattern Rating Evidence.'); bad=True
+            if len(section(text,r'Template/Pattern\s+Rating\s+Waiver'))<40: print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Waiver must explain why rating evidence is unavailable.'); bad=True
         else:
             ev=section(text,r'Template/Pattern\s+Rating\s+Evidence')
-            for m in ['asset','rating','outcome','decision','confidence']:
-                if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must include {m}: evidence.'); bad=True
-            rated={norm(a) for a in rating_evidence_assets(ev)}
-            missing=sorted(declared-rated)
-            extra=sorted(rated-declared)
-            if missing:
-                print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence is missing declared assets: {", ".join(missing)}.'); bad=True
-            if extra:
-                print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence names undeclared assets: {", ".join(extra)}.'); bad=True
-            if not rated:
-                print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must name concrete templates/ or patterns/ assets.'); bad=True
+            if not has_heading(text,r'Template/Pattern\s+Rating\s+Evidence'):
+                print(f'ERROR_FOR_AGENT: {plan} uses templates/patterns assets but lacks ## Template/Pattern Rating Evidence.'); bad=True
+            else:
+                for m in ['asset','rating','outcome','decision']:
+                    if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must include {m}: evidence.'); bad=True
+                if not re.search(r'^\s*([-*]\s*)?confidence\s*:',ev,re.I|re.M) and not re.search(r'\bconfidence\b',ev,re.I):
+                    print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must include confidence evidence.'); bad=True
+                rated={norm(a) for a in rating_assets(ev)}
+                missing=sorted(declared-rated); extra=sorted(rated-declared)
+                if missing: print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence is missing declared pattern assets: {", ".join(missing)}.'); bad=True
+                if extra: print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence names undeclared pattern assets: {", ".join(extra)}.'); bad=True
+                if declared and not rated: print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must name concrete patterns/ assets.'); bad=True
     tc=clean(vals['Templates'])
     if re.search(r'(gap|missing|none|no\s+template|not\s+available|too\s+heavy)',tc) and not knowledge and not has_heading(text,r'Template\s+Gap\s+Waiver'):
         print(f'ERROR_FOR_AGENT: {plan} records a template gap but lacks changed learning/template artifact or ## Template Gap Waiver.'); bad=True
