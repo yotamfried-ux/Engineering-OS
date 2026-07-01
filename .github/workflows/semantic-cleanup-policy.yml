@@ -1,0 +1,39 @@
+name: semantic-cleanup-policy
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  semantic-cleanup-policy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check top-level declarations
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha || github.sha }}"
+          files="$(git diff --name-only --diff-filter=ACMR "$base"...HEAD -- '*.py' '*.js' '*.jsx' '*.ts' '*.tsx' || true)"
+          [ -z "$files" ] && exit 0
+          fail=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              *.py) pattern='^(async[[:space:]]+)?def[[:space:]]+|^class[[:space:]]+' ;;
+              *.js|*.jsx|*.ts|*.tsx) pattern='^(export[[:space:]]+)?(async[[:space:]]+)?function[[:space:]]+|^(export[[:space:]]+)?class[[:space:]]+' ;;
+              *) continue ;;
+            esac
+            names="$(grep -E "$pattern" "$file" | sed -E 's/^.*(def|function|class)[[:space:]]+([A-Za-z_$][A-Za-z0-9_$]*).*/\2/' | sort || true)"
+            repeated="$(printf '%s\n' "$names" | uniq -d | sed '/^$/d' || true)"
+            if [ -n "$repeated" ]; then
+              echo "ERROR_FOR_AGENT: repeated top-level declaration in $file"
+              printf '%s\n' "$repeated" | sed 's/^/- /'
+              fail=1
+            fi
+          done <<< "$files"
+          exit "$fail"
