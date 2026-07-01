@@ -15,10 +15,11 @@ def git_text(*args):
         return ''
 
 def norm(s):
-    return re.sub(r'[^a-z0-9_./-]+','-', re.sub(r'^[\s*`-]+|[\s`.,;:]+$','',s.lower())).strip('-')
+    return re.sub(r'[^a-z0-9_./-]+','-', re.sub(r'^[\s*`-]+|[\s`.,;:]+$','',(s or '').lower())).strip('-')
 
 def clean(s):
     return re.sub(r'[`*_]','',s or '').strip().lower()
+
 changed=sh('git','diff','--name-only',base,head)
 plans=[p for p in changed if re.match(r'^\.claude/plans/.*\.md$',p) and os.path.exists(p)]
 code=[p for p in changed if p and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',p)]
@@ -64,6 +65,25 @@ def has_heading(text, title_re):
 def split_items(s): return [x for x in re.split(r'[,;]\s*',s or '') if x.strip()]
 def list_has(s,w): return norm(w) in [norm(x) for x in split_items(s)]
 def has_asset(s): return re.search(r'(^|\s)(templates|patterns)/\S+', s or '') is not None
+
+def declared_reuse_assets(*values):
+    assets=[]
+    for value in values:
+        for raw in split_items(value):
+            for match in re.finditer(r'(templates|patterns)/[^\s,;`]+', raw or '', re.I):
+                asset=match.group(0).strip('`.,;:)]}')
+                if asset:
+                    assets.append(asset)
+    return assets
+
+def rating_evidence_assets(ev):
+    assets=[]
+    for line in ev.splitlines():
+        m=re.match(r'^\s*(?:[-*]\s*)?asset\s*:\s*(.+)$', line, re.I)
+        if m:
+            assets.extend(declared_reuse_assets(m.group(1)))
+    return assets
+
 def source_matches(src, targets):
     low=src.lower()
     for t in split_items(targets):
@@ -201,15 +221,25 @@ for plan in plans:
             ev=section(text,r'RTK\s+Usage\s+Evidence')
             for m in ['source','action','result','decision']:
                 if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} RTK Usage Evidence must include {m}: evidence.'); bad=True
-    if code and (has_asset(vals['Templates']) or has_asset(vals['Patterns'])):
+    declared={norm(a) for a in declared_reuse_assets(vals['Templates'], vals['Patterns'])}
+    if code and declared:
         if has_heading(text,r'Template/Pattern\s+Rating\s+Waiver'):
             if len(section(text,r'Template/Pattern\s+Rating\s+Waiver')) < 40: print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Waiver must explain why rating evidence is unavailable.'); bad=True
         elif not has_heading(text,r'Template/Pattern\s+Rating\s+Evidence'):
             print(f'ERROR_FOR_AGENT: {plan} uses templates/patterns assets but lacks ## Template/Pattern Rating Evidence.'); bad=True
         else:
             ev=section(text,r'Template/Pattern\s+Rating\s+Evidence')
-            for m in ['asset','rating','outcome','decision']:
+            for m in ['asset','rating','outcome','decision','confidence']:
                 if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M): print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must include {m}: evidence.'); bad=True
+            rated={norm(a) for a in rating_evidence_assets(ev)}
+            missing=sorted(declared-rated)
+            extra=sorted(rated-declared)
+            if missing:
+                print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence is missing declared assets: {", ".join(missing)}.'); bad=True
+            if extra:
+                print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence names undeclared assets: {", ".join(extra)}.'); bad=True
+            if not rated:
+                print(f'ERROR_FOR_AGENT: {plan} Template/Pattern Rating Evidence must name concrete templates/ or patterns/ assets.'); bad=True
     tc=clean(vals['Templates'])
     if re.search(r'(gap|missing|none|no\s+template|not\s+available|too\s+heavy)',tc) and not knowledge and not has_heading(text,r'Template\s+Gap\s+Waiver'):
         print(f'ERROR_FOR_AGENT: {plan} records a template gap but lacks changed learning/template artifact or ## Template Gap Waiver.'); bad=True
