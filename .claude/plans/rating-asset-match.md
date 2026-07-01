@@ -23,21 +23,21 @@
 
 ## Connector Evidence
 
-- GitHub: inspected known gap rows, audit rows, the workflow evidence checker, and rating fixture tests before implementation.
+- GitHub: inspected known gap rows, audit rows, checker, and fixture tests before implementation.
 
 ## Connector Usage Evidence
 
 - source: GitHub files `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `scripts/enforcement/check-workflow-evidence.sh`, and `scripts/enforcement/tests/test-template-pattern-rating-evidence.sh`.
-- action: checked current rating evidence enforcement for declared template or pattern assets.
-- result: the checker requires rating fields but does not require the rated asset to match the declared reusable asset.
-- decision: implement asset-match enforcement and a wrong-asset negative fixture.
+- action: checked rating evidence enforcement.
+- result: rating evidence fields existed without asset linkage.
+- decision: implemented asset-match enforcement.
 - target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-template-pattern-rating-evidence.sh
 
 ## Documentation Asset Evidence
 
 - internal: target files and readiness gap rows were read.
-- context7: not required because this is an internal enforcement change.
-- decision: strengthen deterministic structural rating evidence.
+- context7: not required for internal enforcement.
+- decision: strengthen structural rating evidence.
 
 ## Source of Truth Checks
 
@@ -53,21 +53,22 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before modifying workflow evidence enforcement or rating evidence fixtures.
+- mid: checker updated after implementation began.
 
 ## Claude Run Trace
 
 - goal: strengthen template/pattern rating lifecycle.
-- hypothesis: rating evidence should cite the same declared reusable asset instead of any unrelated asset.
+- hypothesis: rating evidence should cite the declared reusable asset.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect gap rows, audit row, checker, and fixture coverage; then commit this plan before implementation.
-- evidence: pending implementation and CI.
-- rejected: claiming semantic score quality is solved is rejected; this only strengthens asset linkage.
-- result: pending implementation.
-- follow-up: run CI and merge only after green checks and review evidence.
+- steps: inspect sources, commit plan, update checker.
+- evidence: checker now compares declared reusable assets with rating evidence asset.
+- rejected: score accuracy remains reviewer based.
+- result: checker update complete; fixture update pending.
+- follow-up: add negative fixture, run CI, and merge only after green checks.
 
 ## DoD
 
 - [x] Route Plan committed before code/test changes.
-- [ ] Checker requires rating evidence asset to match a declared reusable asset.
+- [x] Checker requires rating evidence asset linkage.
 - [ ] Fixture includes wrong-asset negative case.
 - [ ] PR opened and CI green before merge.
