@@ -43,6 +43,7 @@
 
 - start: plan before test and docs edits.
 - mid: safe fake-gh simulation selected after source inspection.
+- mid: simulation test and readiness docs were added after implementation began.
 - pre-merge: final checkpoint after simulation test and readiness docs updates.
 - pre-merge: evidence paths tightened after CI reported plan evidence gaps.
 
@@ -68,3 +69,4 @@
 - [x] Known gaps and audit synced.
 - [x] Pre-merge checkpoint recorded.
 - [x] Evidence paths tightened.
+- [x] Mid checkpoint refreshed after implementation.
