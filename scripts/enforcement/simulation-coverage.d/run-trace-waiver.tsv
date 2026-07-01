@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+run-trace-waiver	trace-governance	scripts/enforcement/enforce-run-trace.sh	scripts/enforcement/tests/test-run-trace.sh	covered:complete_connector_trace_allows_change	covered:connector_change_requires_run_trace	covered:incomplete_trace_blocks_connector_change	covered:focused_run_trace_waiver_allows_connector_change	Direct Run Trace Waiver fixture coverage for connector/enforcement changes.
