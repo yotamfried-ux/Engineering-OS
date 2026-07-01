@@ -30,7 +30,7 @@
 - source: GitHub files `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `scripts/enforcement/check-workflow-evidence.sh`, and `scripts/enforcement/tests/test-template-pattern-rating-evidence.sh`.
 - action: checked rating evidence enforcement.
 - result: rating evidence fields existed without asset linkage.
-- decision: implemented asset-match enforcement.
+- decision: implemented asset-match enforcement and wrong-asset fixture coverage.
 - target: scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-template-pattern-rating-evidence.sh
 
 ## Documentation Asset Evidence
@@ -54,21 +54,22 @@
 
 - start: plan committed before modifying workflow evidence enforcement or rating evidence fixtures.
 - mid: checker updated after implementation began.
+- pre-merge: fixture tests updated after checker change; branch now covers correct, missing, invalid, wrong-asset, and waiver rating cases.
 
 ## Claude Run Trace
 
 - goal: strengthen template/pattern rating lifecycle.
 - hypothesis: rating evidence should cite the declared reusable asset.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect sources, commit plan, update checker.
-- evidence: checker now compares declared reusable assets with rating evidence asset.
+- steps: inspect sources, commit plan, update checker, then add wrong-asset fixture coverage.
+- evidence: checker compares declared reusable assets with rating evidence asset, and fixture coverage includes a wrong-asset rejection.
 - rejected: score accuracy remains reviewer based.
-- result: checker update complete; fixture update pending.
-- follow-up: add negative fixture, run CI, and merge only after green checks.
+- result: implementation complete; PR and CI pending.
+- follow-up: open PR, run CI, and merge only after green checks.
 
 ## DoD
 
 - [x] Route Plan committed before code/test changes.
 - [x] Checker requires rating evidence asset linkage.
-- [ ] Fixture includes wrong-asset negative case.
+- [x] Fixture includes wrong-asset negative case.
 - [ ] PR opened and CI green before merge.
