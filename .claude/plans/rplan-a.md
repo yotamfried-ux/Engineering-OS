@@ -37,7 +37,7 @@
 
 - start: plan committed before script, test, gap, and audit edits.
 - mid: workflow evidence gate was updated after implementation began.
-- pre-merge: final verification refreshed after wording update.
+- pre-merge: final verification refreshed after wildcard source fix.
 
 ## Source of Truth Checks
 
@@ -59,3 +59,4 @@
 - [x] Touch recorded.
 - [x] Pre-merge checkpoint refreshed.
 - [x] Checks requested.
+- [x] Wildcard source fix added.
