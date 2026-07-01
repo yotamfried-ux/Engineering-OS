@@ -1,4 +1,4 @@
-# RF P2
+# P2
 
 | Field | Value |
 |---|---|
@@ -14,12 +14,12 @@
 
 ## Capability Evidence
 
-- `routing.task-router-read` — routing policy checked.
-- `workflow.workflow-read` — workflow policy checked.
-- `plan.route-plan-before-write` — plan existed before workflow changes.
-- `source.github-repo-read` — GitHub files inspected before edits.
-- `validation.policy-change-has-validator` — PR policy validates required evidence.
-- `validation.coderabbit-policy` — PR review evidence recorded.
+- `routing.task-router-read` — checked.
+- `workflow.workflow-read` — checked.
+- `plan.route-plan-before-write` — checked.
+- `source.github-repo-read` — checked.
+- `validation.policy-change-has-validator` — checked.
+- `validation.coderabbit-policy` — checked.
 
 ## Connector Evidence
 
@@ -29,15 +29,15 @@
 
 - source: github .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 - action: github checked .github/workflows/pr-policy.yml and docs/operations.
-- result: github showed the policy gap.
-- decision: github evidence led to .github/workflows/pr-policy.yml changes.
+- result: github showed P2 policy gap.
+- decision: github implemented .github/workflows/pr-policy.yml update.
 - target: .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed before workflow changes.
-- mid: PR policy gate was committed after implementation began.
-- pre-merge: this checkpoint was committed after connector path repair.
+- mid: workflow update committed after implementation began.
+- pre-merge: this checkpoint was committed after final evidence wording.
 
 ## Source of Truth Checks
 
@@ -49,15 +49,13 @@
 
 ## Claude Run Trace
 
-- goal: close review evidence gap.
-- hypothesis: required structured evidence blocks vague manual review.
-- result: PR policy, known gaps, and audit were updated.
+- goal: close P2 gap.
+- hypothesis: structured policy evidence blocks vague process.
+- result: workflow and docs updated.
 
 ## DoD
 
 - [x] Plan created before edits.
-- [x] Policy gate updated.
-- [x] Known gaps updated.
-- [x] Audit updated.
-- [x] Connector paths restored.
-- [x] Final checkpoint committed after connector path repair.
+- [x] Workflow updated.
+- [x] Docs updated.
+- [x] Final checkpoint committed after final evidence wording.
