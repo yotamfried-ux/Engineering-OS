@@ -45,6 +45,12 @@ write_good_plan() {
 | patterns/api/README.md | checked |
 | patterns/testing/README.md | checked |
 
+## Documentation Asset Evidence
+
+- internal: patterns/api/README.md and patterns/testing/README.md checked for fixture planning.
+- context7: not required because this fixture does not implement an external library API.
+- decision: use internal pattern assets for API and test planning.
+
 ## Skill Evidence
 
 - superpowers-verify
@@ -150,6 +156,23 @@ PY
 git add .claude/plans/task.md
 git commit -qm missing-source-checks
 expect_fail missing-source-checks "$(git rev-parse HEAD)"
+
+# Missing documentation asset evidence fails for code changes.
+git checkout -q -b missing-documentation-asset-evidence "$BASE"
+reset_workspace
+write_good_plan .claude/plans/task.md
+python3 - <<'PY'
+from pathlib import Path
+p=Path('.claude/plans/task.md')
+s=p.read_text()
+start=s.index('## Documentation Asset Evidence')
+end=s.index('## Skill Evidence')
+s=s[:start] + s[end:]
+p.write_text(s)
+PY
+git add .claude/plans/task.md
+git commit -qm missing-documentation-asset-evidence
+expect_fail missing-documentation-asset-evidence "$(git rev-parse HEAD)"
 
 # Declared skill without evidence fails.
 git checkout -q -b missing-skill-evidence "$BASE"
