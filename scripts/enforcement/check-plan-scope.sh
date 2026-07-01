@@ -23,7 +23,7 @@ path_matches_target(){
 }
 
 section_text(){
-  awk -v re="$2" 'BEGIN{on=0}$0~"^#{1,4}[[:space:]]+"re"([[:space:]]|$)"{on=1;next}on&&$0~/^#{1,4}[[:space:]]+/{exit}on{print}' "$1" 2>/dev/null || true
+  awk -v re="$2" 'BEGIN{IGNORECASE=1;on=0}$0~"^#{1,4}[[:space:]]+"re"([[:space:]]|$)"{on=1;next}on&&$0~/^#{1,4}[[:space:]]+/{exit}on{print}' "$1" 2>/dev/null || true
 }
 
 section_field(){
