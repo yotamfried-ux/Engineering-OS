@@ -49,7 +49,7 @@ staged_blob_has_heading() {
 }
 
 complete_staged_lesson() {
-  local path="$1" missing=""
+  local path="$1" failed_paths="${2:-}" missing=""
   for heading in \
     'מה קרה' \
     'שורש הבעיה' \
@@ -70,6 +70,83 @@ complete_staged_lesson() {
     missing="${missing}Prevention/Enforcement Update or Waiver; "
   fi
   [ -z "$missing" ] || { echo "learning capture failed: staged lesson '$path' is incomplete: ${missing}" >&2; return 1; }
+
+  FAILED_STAGED="$failed_paths" python3 - "$path" <<'PY'
+import os, re, subprocess, sys
+
+path = sys.argv[1]
+try:
+    text = subprocess.check_output(['git', 'show', f':{path}'], text=True, stderr=subprocess.DEVNULL)
+except Exception:
+    try:
+        text = open(path, encoding='utf-8').read()
+    except FileNotFoundError:
+        text = ''
+
+placeholder = re.compile(r'\b(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\b', re.I)
+
+def norm(value):
+    return re.sub(r'[^a-z0-9א-ת_.\-\/]+', ' ', value.lower()).strip()
+
+headings = []
+for match in re.finditer(r'(?m)^#{1,4}\s+(.+?)\s*$', text):
+    headings.append({'title': match.group(1).strip(), 'start': match.end(), 'end': len(text)})
+for idx in range(len(headings) - 1):
+    headings[idx]['end'] = headings[idx + 1]['start']
+
+def section(patterns):
+    for item in headings:
+        title = item['title']
+        if any(re.search(pattern, title, re.I) for pattern in patterns):
+            return text[item['start']:item['end']].strip()
+    return ''
+
+def visible(value):
+    lines = []
+    for line in value.splitlines():
+        stripped = re.sub(r'^[\s>*`_\-#]+', '', line).strip()
+        if stripped:
+            lines.append(stripped)
+    return ' '.join(lines).strip()
+
+def fail(message):
+    print(message, file=sys.stderr)
+    sys.exit(1)
+
+def require_content(label, patterns, min_chars, cue_re):
+    value = visible(section(patterns))
+    if len(value) < min_chars or placeholder.search(value):
+        fail(f"learning capture failed: staged lesson '{path}' has weak or placeholder content for {label}.")
+    if cue_re and not re.search(cue_re, value, re.I):
+        fail(f"learning capture failed: staged lesson '{path}' {label} must include concrete evidence words.")
+
+require_content('root cause', [r'שורש הבעיה'], 30, r'root cause|caused|because|verified|reproduced|regression|mutation|race|state|dependency|mismatch|missing|גרם|גורם|סיבה|נבע|אומת|שוחזר')
+require_content('evidence', [r'ראיה'], 30, r'test|tests|log|logs|trace|ci|fail|failed|pass|passed|repro|fixture|assert|command|בדיקה|לוג|נכשל|עבר|שוחזר')
+require_content('regression test', [r'טסט רגרסיה'], 10, r'test|pytest|npm|bash|script|ci|workflow|spec|fixture|\.sh|\.py|\.ts|בדיקה|סקריפט')
+require_content('prevention', [r'איך מונעים בעתיד'], 30, r'prevent|enforce|guard|gate|check|test|ci|monitor|alert|block|מנע|אכיפ|בדיקה|חסם|התראה')
+
+update = section([r'Prevention[\s/-]+Enforcement[\s]+Update', r'עדכון[\s/-]+מניעה[\s/-]+אכיפה'])
+waiver = section([r'Prevention[\s/-]+Enforcement[\s]+Waiver', r'ויתור[\s/-]+מניעה[\s/-]+אכיפה'])
+if update:
+    value = visible(update)
+    if len(value) < 30 or placeholder.search(value) or not re.search(r'added|kept|updated|created|blocked|implemented|enforce|gate|guard|test|ci|check|הוספ|עדכנ|אכיפ|חסם|בדיקה', value, re.I):
+        fail(f"learning capture failed: staged lesson '{path}' Prevention/Enforcement Update must describe a concrete prevention change.")
+elif waiver:
+    value = visible(waiver)
+    if len(value) < 30 or placeholder.search(value) or not re.search(r'because|reason|out of scope|not applicable|low risk|manual|סיבה|כי|לא רלוונטי|מחוץ להיקף', value, re.I):
+        fail(f"learning capture failed: staged lesson '{path}' Prevention/Enforcement Waiver must explain the reason.")
+else:
+    fail(f"learning capture failed: staged lesson '{path}' needs Prevention/Enforcement Update or Waiver content.")
+
+failed = [line.strip() for line in os.environ.get('FAILED_STAGED', '').splitlines() if line.strip()]
+if failed:
+    lesson_norm = norm(text)
+    for failed_path in failed:
+        base = os.path.basename(failed_path)
+        stem = os.path.splitext(base)[0]
+        if norm(base) not in lesson_norm and norm(stem) not in lesson_norm:
+            fail(f"learning capture failed: staged lesson '{path}' must cite staged failed-solution '{failed_path}'.")
+PY
 }
 
 select_plan() {
@@ -96,17 +173,17 @@ requires_full_lesson() {
 requires_full_lesson "$plan" || exit 0
 
 lesson_staged="$(printf '%s\n' "$staged" | grep -E '^lessons-learned/bugs/[^/]+\.md$' | grep -vE '/(README|_TEMPLATE)\.md$' || true)"
+failed_staged="$(printf '%s\n' "$staged" | grep -E '^failed-solutions/[^/]+\.md$' | grep -vE '/(README|_TEMPLATE)\.md$' || true)"
+
 if [ -n "$lesson_staged" ]; then
   while IFS= read -r lesson; do
     [ -n "$lesson" ] || continue
-    complete_staged_lesson "$lesson" || exit 1
+    complete_staged_lesson "$lesson" "$failed_staged" || exit 1
   done <<EOF_LESSONS
 $lesson_staged
 EOF_LESSONS
   exit 0
 fi
-
-failed_staged="$(printf '%s\n' "$staged" | grep -E '^failed-solutions/[^/]+\.md$' | grep -vE '/(README|_TEMPLATE)\.md$' || true)"
 
 if has_heading "$plan" 'Learning[[:space:]]+Capture[[:space:]]+Waiver'; then
   echo "learning capture failed: waiver cannot replace a bug/debug/incident lesson." >&2
