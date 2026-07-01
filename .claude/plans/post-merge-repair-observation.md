@@ -42,6 +42,7 @@
 ## Progress Lifecycle Evidence
 
 - start: plan before script, test, and docs edits.
+- mid: simulation approach selected after source inspection.
 
 ## Source of Truth Checks
 
@@ -59,3 +60,4 @@
 ## DoD
 
 - [x] Plan created before edits.
+- [x] Mid checkpoint recorded.
