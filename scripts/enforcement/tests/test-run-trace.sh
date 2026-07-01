@@ -79,6 +79,18 @@ write_plan_complete_trace() {
 EOF
 }
 
+write_plan_trace_waiver() {
+  write_plan_without_trace
+  cat >> .claude/plans/active.md <<'EOF'
+
+## Run Trace Waiver
+
+- reason: this fixture intentionally exercises the documented waiver branch for a connector enforcement change.
+- scope: scripts/enforcement/check-required-connectors.sh in this temporary simulation repository.
+- risk: low; this case verifies that explicit waivers remain visible rather than silently bypassing the gate.
+EOF
+}
+
 stage_connector_change() {
   mkdir -p scripts/enforcement
   echo '# connector change' > scripts/enforcement/check-required-connectors.sh
@@ -145,6 +157,11 @@ setup_repo
 write_plan_complete_trace
 stage_connector_change
 pass complete_connector_trace_allows_change run_gate
+
+setup_repo
+write_plan_trace_waiver
+stage_connector_change
+pass focused_run_trace_waiver_allows_connector_change run_gate
 
 setup_repo
 stage_non_trace_change
