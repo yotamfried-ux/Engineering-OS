@@ -23,21 +23,21 @@
 
 ## Connector Evidence
 
-- GitHub: inspected simulation coverage checker, tests, manifest, and readiness audit before implementation.
+- GitHub: inspected target files before implementation.
 
 ## Connector Usage Evidence
 
-- source: GitHub files `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md`.
-- action: checked the simulation coverage hardening target.
-- result: coverage rows needed stronger row text validation.
+- source: GitHub files for checker, test, manifest, and audit.
+- action: checked coverage hardening target.
+- result: coverage rows needed stronger validation.
 - decision: added checker, tests, manifest alignment, and audit update.
 - target: scripts/enforcement/check-simulation-coverage.sh, scripts/enforcement/tests/test-simulation-coverage.sh, scripts/enforcement/simulation-coverage.tsv, docs/operations/operational-readiness-audit.md
 
 ## Documentation Asset Evidence
 
 - internal: target files were read.
-- context7: not required because this is an internal policy, test, and audit change.
-- decision: keep simulation coverage rows aligned with fixtures.
+- context7: not required for an internal policy change.
+- decision: use enforcement tests as validation source.
 
 ## Source of Truth Checks
 
@@ -52,19 +52,17 @@
 
 ## Progress Lifecycle Evidence
 
-- start: plan committed before modifying checker, tests, manifest, or audit files.
+- start: plan committed before implementation files changed.
 - mid: checker update recorded after implementation began.
-- pre-merge: tests, manifest, and audit updates recorded after implementation.
-- pre-merge: final branch review recorded after the last file change.
-- pre-merge: marker cleanup was completed and this plan was updated afterward.
+- pre-merge: test, manifest, audit, and branch review were recorded after implementation.
 
 ## Claude Run Trace
 
 - goal: harden simulation coverage freshness.
 - hypothesis: row text validation keeps the manifest aligned with fixtures.
 - connectors: GitHub used for source inspection and branch updates.
-- steps: inspect checker, tests, manifest, and audit; create this plan; update checker, tests, manifest, and audit; review final branch diff.
-- evidence: checker, test fixture, manifest, and audit were updated on this branch.
+- steps: inspect targets; create plan; update checker, tests, manifest, and audit; review branch.
+- evidence: checker, test fixture, manifest, and audit were updated.
 - result: implementation complete.
 - follow-up: open PR, run CI, address review, and merge.
 
