@@ -183,6 +183,17 @@ for plan in plans:
                 if not has_real_checkpoint(text,m): print(f'ERROR_FOR_AGENT: {plan} Progress Lifecycle Evidence must include concrete {m} checkpoint evidence, not a future/pending placeholder.'); bad=True
             for failure in enforce_progress_order(plan):
                 print(f'ERROR_FOR_AGENT: {plan} {failure}'); bad=True
+        if has_heading(text,r'Documentation\s+Asset\s+Waiver'):
+            w=section(text,r'Documentation\s+Asset\s+Waiver')
+            if len(w) < 40:
+                print(f'ERROR_FOR_AGENT: {plan} Documentation Asset Waiver must explain why documentation/reference asset evidence is not required.'); bad=True
+        elif not has_heading(text,r'Documentation\s+Asset\s+Evidence'):
+            print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Documentation Asset Evidence or ## Documentation Asset Waiver.'); bad=True
+        else:
+            ev=section(text,r'Documentation\s+Asset\s+Evidence')
+            for m in ['internal','context7','decision']:
+                if not re.search(r'^\s*([-*]\s*)?'+m+r'\s*:',ev,re.I|re.M):
+                    print(f'ERROR_FOR_AGENT: {plan} Documentation Asset Evidence must include {m}: evidence.'); bad=True
     skills=vals['Skills']; sc=clean(skills)
     if sc and not re.match(r'^(none|n/a|na|not\s+required|no\s+skills)$',sc):
         if not has_heading(text,r'Skill\s+Evidence'):
