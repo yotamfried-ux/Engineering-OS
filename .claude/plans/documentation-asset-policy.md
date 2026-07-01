@@ -68,6 +68,7 @@ reason: internal governance validator change; no project code template applies t
 ## Progress Lifecycle Evidence
 
 - start: plan committed before any checker/test/workflow/coverage changes.
+- mid: checker, test, workflow, and coverage fragment implemented and the local test suite executed after the plan.
 
 ## Claude Run Trace
 
