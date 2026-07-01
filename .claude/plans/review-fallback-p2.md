@@ -19,25 +19,25 @@
 - `plan.route-plan-before-write` — plan existed before workflow changes.
 - `source.github-repo-read` — GitHub files inspected before edits.
 - `validation.policy-change-has-validator` — PR policy validates required evidence.
-- `validation.coderabbit-policy` — fallback review evidence is recorded in the PR.
+- `validation.coderabbit-policy` — PR review evidence recorded.
 
 ## Connector Evidence
 
-- github: checked PR policy, known gaps, and audit files.
+- github: checked .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Connector Usage Evidence
 
-- source: github PR policy, known gaps, and audit files.
-- action: github inspection covered current policy and gap row.
-- result: github showed review evidence was not hard-gated.
-- decision: github evidence led to required evidence validation in the existing PR policy check.
+- source: github .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
+- action: github checked .github/workflows/pr-policy.yml and docs/operations.
+- result: github showed the policy gap.
+- decision: github evidence led to .github/workflows/pr-policy.yml changes.
 - target: .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed before workflow changes.
 - mid: PR policy gate was committed after implementation began.
-- pre-merge: this checkpoint was committed after connector evidence wording was fixed.
+- pre-merge: this checkpoint was committed after connector path repair.
 
 ## Source of Truth Checks
 
@@ -59,5 +59,5 @@
 - [x] Policy gate updated.
 - [x] Known gaps updated.
 - [x] Audit updated.
-- [x] Connector usage evidence wording fixed.
-- [x] Final checkpoint committed after connector evidence wording fix.
+- [x] Connector paths restored.
+- [x] Final checkpoint committed after connector path repair.
