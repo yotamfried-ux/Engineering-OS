@@ -107,8 +107,9 @@ Anything merely documented but silently skippable is not operationally ready.
 8. **Graphify context graph** — covered by target-linked graph usage evidence; maintain the negative fixtures when graph evidence policy changes.
 9. **Connector correctness** — extend structural source/action/result evidence into deeper semantic proof of connector use when reliable signals become available.
 10. **Simulation completeness** — maintained by `simulation-coverage.tsv`; remaining work is to replace explicit coverage waivers with dedicated fixtures where feasible.
-11. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
-12. **Semantic cleanup** — covered by CI policy gates; maintain deeper hygiene checks when analyzers expand.
+11. **Post-merge validation** — covered by safe fake-gh repair issue simulation; keep observing future live negative main failures when they occur.
+12. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; remaining work is deeper semantic contradiction detection beyond deterministic ownership/deprecation signals.
+13. **Semantic cleanup** — covered by CI policy gates; maintain deeper hygiene checks when analyzers expand.
 
 ## Current audit scope
 
