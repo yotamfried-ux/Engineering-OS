@@ -66,8 +66,8 @@
 - steps: read routing/workflow/capability sources, read current workflow and tests, create plan, update contract files, then review final branch diff evidence.
 - evidence: implementation updates required workflow list, required-check docs, merge-readiness fixtures, and expected context fixtures.
 - rejected: admin rule application remains outside this connector scope.
-- result: implementation complete; CI validation through PR remains.
-- follow-up: run CI and merge only after green checks and review evidence.
+- result: implementation complete and PR opened for CI validation.
+- follow-up: use green PR checks as the merge gate.
 
 ## DoD
 
@@ -76,4 +76,4 @@
 - [x] Main required checks doc mirrors the required workflow and context.
 - [x] Operational readiness fixtures require the documentation asset workflow.
 - [x] Ops fixture expects `Require documentation/reference asset evidence`.
-- [ ] PR opened and CI green before merge.
+- [x] PR opened; CI remains the gate before merge.
