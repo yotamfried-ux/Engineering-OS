@@ -68,6 +68,7 @@ Required capabilities for task class `engineering_os_governance`:
 
 - **start:** readiness report P1 confirmed the skip-if-exists gap; before this change no path refreshes an existing target's managed settings.
 - **mid:** EOS_UPDATE_SETTINGS refresh branch + backup implemented; test-use-in-project-update.sh 4/4; use-in-project contract still green.
+- **pre-merge:** full enforcement suite green; default-preserve and update-refresh paths verified; Codex backup-abort finding addressed (refuse to overwrite when the backup cannot be written).
 
 ## Definition of Done / תנאי סיום
 
