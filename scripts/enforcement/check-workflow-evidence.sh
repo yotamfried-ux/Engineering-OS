@@ -92,6 +92,8 @@ def is_concrete_source(value):
     s=(value or '').strip()
     n=norm(s)
     if not n: return False
+    if any(ord(ch) in (42, 63, 91, 93) for ch in s):
+        return False
     if s.endswith('/') or n.endswith('/'):
         return False
     if re.match(r'^(docs|docs/operations|scripts|scripts/enforcement|\.github|\.github/workflows|core)$', n):
