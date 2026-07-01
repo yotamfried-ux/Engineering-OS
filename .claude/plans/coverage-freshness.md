@@ -27,6 +27,7 @@
 
 ## Connector Usage Evidence
 
+- GitHub: source `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md`; action checked coverage row freshness; result identified stale row-text risk; decision updated the checker, fixture, manifest, and audit; target `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, `docs/operations/operational-readiness-audit.md`.
 - source: GitHub files `scripts/enforcement/check-simulation-coverage.sh`, `scripts/enforcement/tests/test-simulation-coverage.sh`, `scripts/enforcement/simulation-coverage.tsv`, and `docs/operations/operational-readiness-audit.md`.
 - action: checked simulation coverage row freshness against current checker, test, manifest, and audit behavior.
 - result: coverage rows could keep stale wording even after direct fixture coverage existed.
@@ -57,6 +58,7 @@
 - pre-merge: tests, manifest, and audit updates recorded after implementation.
 - pre-merge: final branch review recorded after all non-plan file changes.
 - pre-merge: PR #177 opened and failing evidence-policy checks were inspected; connector and documentation evidence were repaired with concrete target-file references.
+- pre-merge: connector evidence was expanded with an explicit GitHub source-action-result-decision-target record.
 
 ## Claude Run Trace
 
