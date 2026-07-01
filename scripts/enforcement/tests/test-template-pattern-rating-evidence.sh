@@ -46,19 +46,27 @@ if [ "$mode" = allow ]; then cat >> .claude/plans/rating.md <<'PLAN'
 Rating evidence is waived because this isolated fixture has no real reusable asset outcome yet.
 
 PLAN
+elif [ "$mode" = wrong ]; then cat >> .claude/plans/rating.md <<'PLAN'
+## Template/Pattern Rating Evidence
+- asset: patterns/infrastructure/README.md
+- rating: 4 medium confidence after fixture use.
+- outcome: rating fixture reused the pattern successfully.
+- decision: keep this pattern preferred for matching changes.
+
+PLAN
 elif [ "$mode" != missing ]; then cat >> .claude/plans/rating.md <<'PLAN'
 ## Template/Pattern Rating Evidence
 - asset: patterns/security/README.md
 - rating: 4 medium confidence after fixture use.
 - outcome: rating fixture reused the pattern successfully.
-- decision: keep this pattern preferred for security-surface changes.
+- decision: keep this pattern preferred for matching changes.
 
 PLAN
 fi
 if [ "$mode" = invalid ]; then python3 - <<'PY'
 from pathlib import Path
 p=Path('.claude/plans/rating.md')
-p.write_text(p.read_text().replace('- decision: keep this pattern preferred for security-surface changes.\n',''))
+p.write_text(p.read_text().replace('- decision: keep this pattern preferred for matching changes.\n',''))
 PY
 fi
 printf '%s
@@ -74,4 +82,5 @@ run_case(){ local branch="$1" mode="$2"; git checkout -q -B "$branch" "$BASE"; m
 run_case good good; ok rating_asset_evidence_passes bash "$CHECK" "$BASE" "$(git rev-parse HEAD)"
 run_case missing missing; no rating_asset_missing_fails bash "$CHECK" "$BASE" "$(git rev-parse HEAD)"
 run_case invalid invalid; no rating_asset_invalid_fails bash "$CHECK" "$BASE" "$(git rev-parse HEAD)"
+run_case wrong wrong; no rating_asset_wrong_asset_fails bash "$CHECK" "$BASE" "$(git rev-parse HEAD)"
 run_case waiver allow; ok rating_asset_waiver_passes bash "$CHECK" "$BASE" "$(git rev-parse HEAD)"
