@@ -75,6 +75,33 @@ def source_matches(src, targets):
         if (k.startswith('core/') or k == 'claude.md') and re.search(r'claude\.md|core/task-router\.md|core/workflow\.md', low): return True
     return False
 
+def source_entries(src):
+    entries=[]
+    for line in src.splitlines():
+        if '|' not in line: continue
+        cells=[re.sub(r'[`*_]','',c).strip() for c in line.split('|')]
+        cells=[c for c in cells if c]
+        if len(cells) < 2: continue
+        source,status=cells[0],cells[1].lower()
+        if source.lower() == 'source' or re.match(r'^-+$', source): continue
+        if re.match(r'^(checked|read|validated)$', status, re.I):
+            entries.append(source)
+    return entries
+
+def is_concrete_source(value):
+    s=(value or '').strip()
+    n=norm(s)
+    if not n: return False
+    if any(ord(ch) in (42, 63, 91, 93) for ch in s):
+        return False
+    if s.endswith('/') or n.endswith('/'):
+        return False
+    if re.match(r'^(docs|docs/operations|scripts|scripts/enforcement|\.github|\.github/workflows|core)$', n):
+        return False
+    if re.match(r'^[a-z0-9_.-]+/[a-z0-9_.-]+$', n) and '.' not in n.rsplit('/',1)[-1]:
+        return False
+    return bool('/' in n or '.' in n)
+
 FUTURE_RE=re.compile(r'\b(will|planned|pending|todo|tbd|later|must\s+be|needs?\s+to|to\s+be)\b', re.I)
 def checkpoint_lines(text, marker):
     prog=section(text,r'Progress\s+Lifecycle\s+Evidence')
@@ -141,6 +168,9 @@ for plan in plans:
         src=section(text,r'Source\s+of\s+Truth\s+Checks')
         if len(re.findall(r'\|\s*[^|]+\s*\|\s*(checked|read|validated)\s*\|', src, re.I)) < 2:
             print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must include at least two checked/read sources.'); bad=True
+        for source in source_entries(src):
+            if not is_concrete_source(source):
+                print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks must reference concrete files, not broad source "{source}".'); bad=True
         if code and clean(targets) and not source_matches(src, targets):
             print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks do not reference any Target paths or canonical routing/workflow source.'); bad=True
     if code:
