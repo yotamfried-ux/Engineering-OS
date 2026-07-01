@@ -14,11 +14,11 @@
 
 ## Capability Evidence
 
-- `routing.task-router-read`
-- `workflow.workflow-read`
-- `plan.route-plan-before-write`
-- `source.github-repo-read`
-- `validation.policy-change-has-validator`
+- `routing.task-router-read` — task routing requirements were checked before selecting the review-governance gap.
+- `workflow.workflow-read` — workflow requirements were checked before changing PR policy behavior.
+- `plan.route-plan-before-write` — this plan was committed before the PR policy implementation commit.
+- `source.github-repo-read` — GitHub source files were inspected before updating the workflow and audit files.
+- `validation.policy-change-has-validator` — the policy change includes a deterministic PR workflow gate that validates review evidence.
 
 ## Connector Evidence
 
@@ -36,7 +36,7 @@
 
 - start: plan committed before PR policy changes.
 - mid: PR policy review evidence gate was committed after implementation began.
-- pre-merge: this checkpoint was committed after the final cleanup pass.
+- pre-merge: this checkpoint was committed after the capability evidence repair.
 
 ## Source of Truth Checks
 
@@ -60,4 +60,5 @@
 - [x] PR body review evidence gate committed.
 - [x] Known gaps updated after policy gate.
 - [x] Audit ledger and status row updated after policy gate.
-- [x] Final checkpoint committed after final cleanup pass.
+- [x] Capability evidence expanded after CI failure.
+- [x] Final checkpoint committed after capability evidence repair.
