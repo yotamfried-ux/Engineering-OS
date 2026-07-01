@@ -73,4 +73,24 @@ expect_fail missing_repair_issue_fails bash "$CHECK" --workflow "$TMP/missing-re
 expect_fail waiver_requires_allow_flag bash "$CHECK" --workflow "$TMP/waiver.yml"
 expect_pass explicit_waiver_passes bash "$CHECK" --workflow "$TMP/waiver.yml" --allow-waiver
 
+fakebin="$TMP/fakebin"
+mkdir -p "$fakebin"
+cat > "$fakebin/gh" <<'SH'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$GH_CAPTURE"
+SH
+chmod +x "$fakebin/gh"
+GH_CAPTURE="$TMP/gh-call.txt" \
+PATH="$fakebin:$PATH" \
+GITHUB_REPOSITORY="owner/repo" \
+REPAIR_SHA="abc123" \
+REPAIR_RUN_URL="https://example.invalid/run/1" \
+bash -c 'body="Post-merge validation failed on main. Repair loop required. Commit: ${REPAIR_SHA}. Run: ${REPAIR_RUN_URL}."; gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" -f title="Post-merge validation failed on main: ${REPAIR_SHA}" -f body="$body"'
+
+grep -q -- '--method POST' "$TMP/gh-call.txt"
+grep -q 'repos/owner/repo/issues' "$TMP/gh-call.txt"
+grep -q 'abc123' "$TMP/gh-call.txt"
+grep -q 'https://example.invalid/run/1' "$TMP/gh-call.txt"
+echo "ok: simulated_repair_issue_path"
+
 echo "post-merge validation contract tests passed"
