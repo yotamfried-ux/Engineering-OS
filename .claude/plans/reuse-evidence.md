@@ -59,16 +59,17 @@
 - pre-merge: PR #174 opened after implementation and self-review evidence was added to the PR body.
 - pre-merge: failed documentation and connector evidence runs were inspected, then plan evidence fields were corrected with concrete internal file paths and an explicit implemented decision.
 - pre-merge: checker compatibility update completed after the evidence repair; existing workflow fixture compatibility is preserved while dedicated reuse fixtures cover wrong, extra, and partial pattern feedback.
+- pre-merge: missing helper failure was diagnosed from the workflow evidence run and fixed after the compatibility update.
 
 ## Claude Run Trace
 
 - goal: strengthen reusable asset feedback evidence.
 - hypothesis: exact pattern-asset matching plus confidence evidence blocks unrelated or partial pattern feedback from satisfying the gate.
 - connectors: GitHub used for source inspection, CI status, CI failure analysis, and branch updates.
-- steps: read routing, workflow, capability, checker, tests, and readiness files; create this plan; update the checker; add fixture coverage; update known gaps and readiness audit records; open PR #174; inspect failed evidence checks; repair plan evidence fields; then adapt checker compatibility after the workflow fixture update was blocked by tool safety.
+- steps: read routing, workflow, capability, checker, tests, and readiness files; create this plan; update the checker; add fixture coverage; update known gaps and readiness audit records; open PR #174; inspect failed evidence checks; repair plan evidence fields; adapt checker compatibility after the workflow fixture update was blocked by tool safety; then add the missing helper used by the compatibility checker.
 - evidence: checker now compares declared pattern assets with pattern assets named in evidence, requires confidence evidence, and tests cover valid, multi-asset, missing, invalid, wrong, extra, partial, and waiver cases.
 - rejected: automatic score truth and forced template exactness without updating the legacy workflow fixture are rejected; score accuracy stays review based and template assets still require rating evidence plus manifest coverage.
-- result: implementation complete and CI evidence repaired.
+- result: implementation complete and missing helper repair recorded.
 - follow-up: run CI, address review, and merge after green checks.
 
 ## DoD
