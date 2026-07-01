@@ -7,6 +7,8 @@ on:
 jobs:
   import-cleanup-policy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
@@ -28,16 +30,16 @@ jobs:
               except FileNotFoundError: continue
               if any('EOS_SEMANTIC_CLEANUP_WAIVER:' in line and len(line.split(':',1)[1].strip())>=25 for line in text.splitlines()[:20]): continue
               spans=[]; names=[]
-              for m in re.finditer(r'(?m)^\s*import\s+([^;\n]+)\s*;?', text):
+              for m in re.finditer(r'(?ms)^\s*import\s+(.+?)\s*;', text):
                   clause=m.group(1).strip(); line=text[:m.start()].count('\n')+1; spans.append(m.span())
                   if clause.startswith(('"',"'")): continue
                   left=clause.split(' from ',1)[0].strip() if ' from ' in clause else clause
-                  named=re.search(r'\{([^}]*)\}', left)
+                  named=re.search(r'\{([^}]*)\}', left, re.S)
                   if named:
                       for part in named.group(1).split(','):
                           part=part.strip()
                           if part: names.append((part.rsplit(' as ',1)[1].strip() if ' as ' in part else part,line))
-                  default=re.sub(r'\{[^}]*\}','',left).strip().strip(',')
+                  default=re.sub(r'\{[^}]*\}','',left,flags=re.S).strip().strip(',')
                   if default and not default.startswith('*'): names.append((default.split(',',1)[0].strip(),line))
               body=text
               for start,end in reversed(spans): body=body[:start]+' '*(end-start)+body[end:]
