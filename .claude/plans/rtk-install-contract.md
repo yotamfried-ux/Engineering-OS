@@ -55,22 +55,24 @@
 ## Progress Lifecycle Evidence
 
 - start: plan committed before modifying the clean install fixture.
+- mid: clean-install fixture updated after implementation began to assert installed RTK hook and SessionStart wiring plus source setup commands.
+- pre-merge: branch review completed after fixture update; this carries forward safe RTK install verification while rejecting the fail-open bypass from PR #131.
 
 ## Claude Run Trace
 
 - goal: salvage safe RTK install-contract coverage without weakening mandatory RTK enforcement.
 - hypothesis: adding explicit clean-install assertions for RTK hook/session setup evidence catches target-project installer drift without introducing a bypass.
 - connectors: GitHub used for source inspection, open PR inspection, and branch updates.
-- steps: inspect PR #131 changes, compare with current main, read installer/settings/session setup, then create this plan before implementation.
-- evidence: implementation pending.
+- steps: inspect PR #131 changes, compare with current main, read installer/settings/session setup, create this plan, then update the clean-install fixture.
+- evidence: implementation added assertions for `rtk hook claude`, `SessionStart`, `scripts/session-setup.sh`, `rtk init -g`, and `rtk --version`.
 - rejected: carrying forward `EOS_BYPASS_RTK=1` is rejected because it creates a fail-open contract bypass for mandatory RTK.
-- result: pending implementation.
+- result: implementation complete; PR and CI pending.
 - follow-up: run CI and merge only after green checks and review evidence.
 
 ## DoD
 
 - [x] Route Plan committed before test changes.
-- [ ] Clean-install fixture asserts RTK hook command is present in installed target settings.
-- [ ] Clean-install fixture asserts SessionStart setup remains wired.
-- [ ] Clean-install fixture asserts source session setup still contains `rtk init -g` and `rtk --version`.
+- [x] Clean-install fixture asserts RTK hook command is present in installed target settings.
+- [x] Clean-install fixture asserts SessionStart setup remains wired.
+- [x] Clean-install fixture asserts source session setup still contains `rtk init -g` and `rtk --version`.
 - [ ] PR opened and CI green before merge.
