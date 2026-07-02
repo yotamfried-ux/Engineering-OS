@@ -29,6 +29,7 @@ PR D closes the two remaining P1/P2 governance gaps from the readiness program: 
 - `routing.task-router-read` — core/task-router.md read this session before writes.
 - `workflow.workflow-read` — core/workflow.md read this session before writes.
 - `plan.route-plan-before-write` — this plan is committed before the first code change of PR D.
+- `source.github-repo-read` — GitHub MCP read merged main state (PR #181/#182 merge commits, known-gaps.tsv, operational-readiness-audit.md, merge-readiness-checklist.md) before branching for PR D.
 - `validation.policy-change-has-validator` — the extracted PR-review-evidence validator and the new merge-readiness-artifact validator both ship with fixture suites.
 - `validation.actions-checked` — pr-policy.yml changes and CI results for the head SHA are verified before merge readiness.
 - `validation.coderabbit-policy` — dedicated branch, draft PR, review evidence in PR body, merge only on explicit approval.
