@@ -7,7 +7,7 @@
 | Domain tags | readiness, enforcement |
 | Task-router evidence | core/task-router.md checked; routed via routing_matrix section 7 |
 | Workflow evidence | core/workflow.md checked; plan-file fallback carries the spec |
-| Target paths | scripts/enforcement/enforce-run-trace.sh, scripts/enforcement/enforce-tests.sh, scripts/enforcement/check-simulation-coverage.sh, scripts/enforcement/lib/evidence.sh, scripts/enforcement/pre-tool-use-runtime-evidence.sh, scripts/enforcement/check-plan-scope.sh, scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/check-documentation-asset-evidence.sh, scripts/enforcement/simulation-coverage.tsv, scripts/enforcement/simulation-coverage.d, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/tests, docs/operations/claude-run-trace.md, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
+| Target paths | scripts/enforcement/enforce-run-trace.sh, scripts/enforcement/enforce-tests.sh, scripts/enforcement/check-simulation-coverage.sh, scripts/enforcement/lib/evidence.sh, scripts/enforcement/pre-tool-use-runtime-evidence.sh, scripts/enforcement/check-plan-scope.sh, scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/check-documentation-asset-evidence.sh, scripts/enforcement/simulation-coverage.tsv, scripts/enforcement/simulation-coverage.d, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/tests, docs/operations/claude-run-trace.md, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, lessons-learned/bugs |
 | Templates | not required |
 | Patterns | not required |
 | Skills | none |
@@ -63,7 +63,7 @@ Notion is required for governance-class work by connector policy, but the Notion
 - action: graphify query oriented the select_plan/newest_plan call sites and the enforce-tests warn_missing callers before edits.
 - result: the graph showed plan selection duplicated across enforce-run-trace.sh, pre-tool-use-runtime-evidence.sh, and check-plan-scope.sh, confirming a shared lib/evidence.sh selector is the right consolidation point.
 - decision: graph finding selected the shared eos_select_plan approach and scoped the write set to scripts/enforcement, its lib and tests, and docs/operations.
-- target: scripts/enforcement, scripts/enforcement/lib, scripts/enforcement/tests, docs/operations
+- target: scripts/enforcement, scripts/enforcement/lib, scripts/enforcement/tests, docs/operations, lessons-learned/bugs
 
 ## Template Gap Waiver
 
@@ -98,15 +98,22 @@ No project template applies: this is internal governance/enforcement maintenance
 - connectors: github MCP re-verified PR state after re-auth and closed superseded PR #180 per owner decision; notion_progress_validated: waived — Notion unavailable in this environment, plan-file fallback carries progress validation per the Connector Selection Waiver.
 - steps: read gate sources; extend run-trace triggers and waiver-body validation; add none-by-design token and replace two waived cells with fixtures; implement the missing-tool contract; add eos_select_plan and wire three gates; add DoD schema and broad-claim rejection; flip gaps and audit rows.
 - evidence: scripts/enforcement gate scripts, lib/evidence.sh, simulation manifests, fixture suites, docs/operations/claude-run-trace.md, known-gaps.tsv, and the audit change in this branch.
-- rejected: quality-gates.md documentation coupling, universal DoD verb requirements, and failing no-match plan selection were rejected as over-coupled or false-block-prone.
+- rejected: quality-gates.md documentation coupling, universal DoD verb requirements, and failing no-match plan selection were rejected as over-coupled or false-block-prone; blaming the CI=true logic and the plan-selection change for the CI failure in run 28596073361 were both rejected during the repair loop after log extraction pointed at test-tests.sh fixture premises.
 - result: four gaps close with deterministic checkers and fixtures; three gaps remain for PRs D and E.
 - follow-up: PR D hardens PR-review schema and the merge-readiness artifact; PR E adds install downstream behavior tests.
+
+## Lessons Reused
+
+- lessons-learned/bugs/ci-environment-dependent-fixture-premise.md
+  - Applied because: this PR's missing-tool fixtures are exactly the absence-dependent case the lesson covers; the runE_min sandbox implements its prevention.
+  - Prevention: construct tool absence hermetically instead of assuming host inventory.
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed on claude/engineering-os-readiness-pr-c before any gate, manifest, doc, or test edits.
 - mid: run-trace hardening landed in b472945, simulation token work in 5c2c746, tests-tool contract in 6b761e8, shared plan selection in ac615cd, DoD schema and broad-claim rejection in 0a87b8d, gap closures in 2d660e7; targeted suites re-ran green after each step.
 - pre-merge: after the last code change the full enforcement suite ran green except the pre-existing test-plan-scope environment case that fails identically on pristine main in this container; readiness, known-gaps, simulation-coverage validators and the range-level evidence policies re-verified before push.
+- pre-merge: after the CI repair commit de0e32c (hermetic missing-tool fixtures diagnosed from run 28596073361), test-tests.sh re-ran 16/16 in both env modes, the lesson was captured in lessons-learned/bugs/ci-environment-dependent-fixture-premise.md, and CI re-verification on the new head is the final gate.
 
 ## DoD
 
