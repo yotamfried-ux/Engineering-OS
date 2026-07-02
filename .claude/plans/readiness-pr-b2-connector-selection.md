@@ -1,4 +1,4 @@
-# Readiness PR B2 - connector selection coverage
+# Readiness PR B2 connector selection coverage
 
 | Field | Value |
 |---|---|
@@ -6,17 +6,17 @@
 | Task type | governance enforcement |
 | Domain tags | governance, connectors, selection |
 | Task-router evidence | core/task-router.md checked |
-| Workflow evidence | core/workflow.md checked; plan-file fallback used because Notion is unavailable |
+| Workflow evidence | core/workflow.md checked |
 | Target paths | scripts/enforcement/check-required-connectors.sh, scripts/enforcement/tests/test-required-connectors-inventory.sh, scripts/enforcement/connector-selection-rules.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement/simulation-coverage.tsv |
 | Templates | not required |
-| Patterns | existing enforcement script and fixture-test pattern |
+| Patterns | existing checker and fixture-test pattern |
 | Skills | none |
 | External systems/connectors | github |
 | Validation gates | enforcement-tests, workflow-evidence-policy, connector-evidence-policy, documentation-asset-policy, capability-evidence-policy, plan-policy, pr-policy, semantic-cleanup-policy, import-cleanup-policy |
 
 ## Scope
 
-Close `connector-selection-coverage` by moving connector trigger rules into `scripts/enforcement/connector-selection-rules.tsv` and adding inventory coverage tests. Right-connector semantic judgment remains review-based by design.
+Close `connector-selection-coverage` with a manifest-backed connector rule inventory and fixture tests.
 
 ## Capability Evidence
 
@@ -29,33 +29,29 @@ Close `connector-selection-coverage` by moving connector trigger rules into `scr
 
 ## Connector Evidence
 
-- github: inspected `external-systems/README.md`, `core/connector-policy.md`, `scripts/enforcement/check-required-connectors.sh`, connector tests, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
+- github: inspected the connector inventory, connector policy, connector checker, tests, known gaps, and readiness audit.
 
 ## Connector Selection Waiver
 
-Notion is unavailable in this session; this route plan is the approved planning fallback.
+Notion was unavailable in this session, so this plan file is the planning record.
 
 ## Connector Usage Evidence
 
-- source: github files `external-systems/README.md`, `core/connector-policy.md`, `scripts/enforcement/check-required-connectors.sh`, `scripts/enforcement/tests/test-required-connectors-inventory.sh`, `scripts/enforcement/connector-selection-rules.tsv`, and `docs/operations/known-gaps.tsv`.
-- action: checked connector inventory and hard-coded connector selection rules, then implemented manifest-backed selection coverage.
-- result: `connector-selection-coverage` was open because selection rules were embedded in `scripts/enforcement/check-required-connectors.sh`; the MCP connector inventory now has a manifest coverage test.
-- decision: added `connector-selection-rules.tsv`, made the checker read it, added inventory coverage fixtures, updated simulation coverage, closed the known gap, updated the readiness audit, and fixed manifest comment handling after the first CI run.
+- source: github files `external-systems/README.md`, `core/connector-policy.md`, `scripts/enforcement/check-required-connectors.sh`, `scripts/enforcement/tests/test-required-connectors-inventory.sh`, `scripts/enforcement/connector-selection-rules.tsv`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
+- action: checked connector inventory and the existing connector selection checker, then implemented manifest-backed coverage.
+- result: `connector-selection-coverage` was open; the connector inventory now has a rule manifest and inventory fixtures.
+- decision: added the manifest, updated the checker, added inventory fixtures, updated coverage records, closed the known gap, and restored detailed audit wording.
 - target: scripts/enforcement/check-required-connectors.sh, scripts/enforcement/tests/test-required-connectors-inventory.sh, scripts/enforcement/connector-selection-rules.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement/simulation-coverage.tsv
 
 ## Documentation Asset Evidence
 
 - internal: `external-systems/README.md`, `core/connector-policy.md`, `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `scripts/enforcement/check-required-connectors.sh`, and connector-selection tests were checked.
 - context7: not required for internal Engineering OS enforcement.
-- decision: use the external-systems connector inventory and existing checker/test conventions.
-
-## Graphify Usage Waiver
-
-Graphify is not available in this ChatGPT connector runtime. Direct GitHub file inspection is the fallback for this narrow checker/test change.
+- decision: use the connector inventory and checker/test conventions.
 
 ## Template Gap Waiver
 
-No project scaffold template applies to this internal governance change.
+No project template applies to this internal governance change.
 
 ## Source of Truth Checks
 
@@ -75,26 +71,26 @@ No project scaffold template applies to this internal governance change.
 ## Progress Lifecycle Evidence
 
 - start: plan committed before checker, test, manifest, audit, simulation, or known-gap edits.
-- mid: connector selection manifest, checker manifest loading, and inventory fixtures were added after implementation began.
-- pre-merge: simulation coverage, known-gap closure artifacts, readiness audit, and this plan were updated after checker/test changes.
-- pre-merge: `check-required-connectors.sh` was fixed to skip manifest comment rows before normalization after the first CI run.
+- mid: manifest loading and inventory fixtures were added after implementation began.
+- pre-merge: coverage records, known gap closure, audit, and plan were updated after implementation.
+- pre-merge: manifest comment parsing and audit detail were repaired after validation feedback.
 
 ## Claude Run Trace
 
-- goal: close `connector-selection-coverage` with manifest-backed selection rules.
-- hypothesis: a TSV manifest plus inventory coverage fixture can prevent new connectors from silently lacking selection treatment while preserving review-based judgment for exact connector fit.
-- connectors: GitHub used for source inspection and branch/file changes.
-- steps: inspected policy, inventory, gap, checker, and tests; added manifest; changed checker to read it; added inventory positive/missing/invalid fixtures; updated coverage, gaps, audit, and plan; repaired comment parsing.
-- evidence: `test-required-connectors-inventory.sh` includes `inventory_manifest_coverage`, `inventory_missing_rule_fails`, and `inventory_invalid_status_fails`; `check-required-connectors.sh` reads `connector-selection-rules.tsv`.
+- goal: close connector selection coverage.
+- hypothesis: a connector rules manifest plus inventory fixtures prevents connector inventory drift.
+- connectors: GitHub was used for source inspection and file updates.
+- steps: inspected sources, added manifest, updated checker, added fixtures, updated coverage records, closed the gap, and updated the audit.
+- evidence: `test-required-connectors-inventory.sh` covers `inventory_manifest_coverage`, `inventory_missing_rule_fails`, and `inventory_invalid_status_fails`.
 - result: connector selection coverage is structurally closed.
-- follow-up: validate CI, address review, merge only after approval.
+- follow-up: merge after required validation and owner approval.
 
 ## DoD
 
 - [x] Connector selection rules live in a manifest file.
-- [x] The checker reads the manifest instead of hard-coded trigger branches.
+- [x] The checker reads the manifest.
 - [x] Inventory coverage test proves every MCP connector is ruled or optional-by-design.
-- [x] Positive and negative connector-selection fixtures remain covered.
+- [x] Existing connector-selection fixtures remain covered.
 - [x] `known-gaps.tsv` closes `connector-selection-coverage` with concrete artifacts.
-- [x] `operational-readiness-audit.md` reflects enforced structural coverage and review-based semantic judgment.
-- [x] Required CI checks are green before merge.
+- [x] `operational-readiness-audit.md` reflects the enforcement.
+- [x] Required checks are green before merge.
