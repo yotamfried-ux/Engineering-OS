@@ -107,6 +107,7 @@ No project template applies: this is internal governance/enforcement maintenance
 - start: plan committed on claude/engineering-os-readiness-pr-b before any checker, manifest, workflow, gaps, or test edits.
 - mid: connector/template manifests landed in b2f3166, pattern and skill gates in 22e6c50, staged capability guard in c947eca, learning-reuse citation rule and gap closures in 7567cd6; targeted suites re-ran green after each step.
 - pre-merge: after the last code change the full enforcement suite ran green except the pre-existing test-plan-scope environment case that fails identically on pristine main in this container; readiness, known-gaps, simulation-coverage, and range-level evidence policies re-verified.
+- pre-merge: after the CodeRabbit/Codex repair-loop fixes (capability boundary match, manual-mode manifest validation, pattern boundary match, connector coverage restoration, learning-reuse citation consistency, skill-coverage assertion strength) the full enforcement suite and range-level evidence policies were re-verified green.
 
 ## DoD
 

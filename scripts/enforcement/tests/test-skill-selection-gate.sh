@@ -83,6 +83,8 @@ make_plan "$TMP/leak.md" unclassified "memory leak, debugging" "superpowers"
 # inventory coverage: every external-skills/<name>/ has a rule or documented entry.
 bash "$CHECK" --check-coverage
 mkdir -p "$TMP/skills-extra/new-unmapped-skill"
-! bash "$CHECK" --check-coverage --skills-dir "$TMP/skills-extra"
+if bash "$CHECK" --check-coverage --skills-dir "$TMP/skills-extra"; then
+  echo "unexpected pass: unmapped_skill_dir_should_fail_coverage"; exit 1
+fi
 
 echo "skill selection checks passed"

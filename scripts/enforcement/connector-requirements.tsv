@@ -16,7 +16,7 @@ slack	auto	(^|[^a-z0-9])slack([^a-z0-9]|$)	Slack-integrated work must read and s
 linear	auto	linear[ -]?(issue|ticket|app|project)|linear\.app	Linear-tracked work must read issue state from Linear
 jira	auto	(^|[^a-z0-9])jira([^a-z0-9]|$)	Jira-tracked work must read issue state from Jira
 stripe	auto	(^|[^a-z0-9])stripe([^a-z0-9]|$)|payment webhook|billing integration	payment/billing integration state must be validated against Stripe
-postgres	auto	postgres|postgresql	direct Postgres work must query the live schema and state
-google-drive	auto	google[ -]drive|gdrive	Drive-stored assets must be read through the Drive connector
-google-sheets	auto	google[ -]sheets?|sheets sync	sheet-driven data must be read through the Sheets connector
+postgres	auto	postgres|postgresql|sql|database|migration|schema|query|index|rls	direct Postgres work must query the live schema and state
+google-drive	auto	google[ -]drive|gdrive|drive file|document asset|docs asset|shared document|uploaded document	Drive-stored assets must be read through the Drive connector
+google-sheets	auto	google[ -]sheets?|sheets sync|spreadsheet|sheet row|sheet data|csv import|worksheet	sheet-driven data must be read through the Sheets connector
 discord	auto	(^|[^a-z0-9])discord([^a-z0-9]|$)	Discord-integrated work must use the Discord connector
