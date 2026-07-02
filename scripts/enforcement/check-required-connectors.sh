@@ -3,16 +3,22 @@ set -euo pipefail
 
 PLAN=""
 TARGET=""
+RULES_FILE="${EOS_CONNECTOR_SELECTION_RULES:-}"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --plan) PLAN="${2:-}"; shift 2 ;;
     --target) TARGET="${2:-}"; shift 2 ;;
+    --rules) RULES_FILE="${2:-}"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
 
 [ -n "$PLAN" ] && [ -f "$PLAN" ] || { echo "missing readable --plan" >&2; exit 2; }
 [ -n "$TARGET" ] || { echo "missing --target" >&2; exit 2; }
+if [ -z "$RULES_FILE" ]; then
+  RULES_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/connector-selection-rules.tsv"
+fi
+[ -f "$RULES_FILE" ] || { echo "missing connector selection rules manifest: $RULES_FILE" >&2; exit 2; }
 
 field_value() {
   local plan_file="$1" field_re="$2"
@@ -100,41 +106,24 @@ combined="$(printf '%s %s %s' "$task" "$tags" "$TARGET" | tr '[:upper:]' '[:lowe
 required=""
 reasons=""
 
-if printf '%s' "$combined" | grep -qE 'code|bug|debug|feature|refactor|engineering_os|governance|hook|enforcement|script|repo|github|\.github|pull|pr|branch|merge|commit'; then
-  add_required github "repo/code/PR state must be read from GitHub rather than guessed"
-fi
-
-if printf '%s' "$combined" | grep -qE 'code_change|bug|debug|incident|rollback|hotfix|regression|feature|refactor|new_project|saas|engineering_os|governance|implementation|architecture|multi-file|non-trivial'; then
-  add_required notion "non-trivial work must be planned and progress-validated in Notion"
-fi
-
-if printf '%s' "$combined" | grep -qE 'api|sdk|library|framework|package|dependency|npm|pip|stripe|supabase|firebase|clerk|vercel|react|next|expo|openai|anthropic'; then
-  add_required context7 "API/library/framework work needs current official documentation"
-fi
-
-if printf '%s' "$combined" | grep -qE 'debug|bug|incident|rollback|hotfix|regression|crash|sentry|production[ -_]*(failure|bug|incident)'; then
-  add_required sentry "debugging/incident work must inspect runtime error data when available"
-fi
-
-if printf '%s' "$combined" | grep -qE 'supabase|database|db|sql|migration|rls|storage|data|auth table|row level'; then
-  add_required supabase "database/auth/data state must be queried from the configured backend"
-fi
-
-if printf '%s' "$combined" | grep -qE 'vercel|deploy|deployment|hosting|production|env|environment variable|release'; then
-  add_required vercel "deployment/environment state must be validated from the hosting platform"
-fi
-
-if printf '%s' "$combined" | grep -qE 'figma|ui|ux|design|frontend|component|screen|wireframe|prototype'; then
-  add_required figma "UI/UX/design work must use the design source-of-truth when available"
-fi
-
-if printf '%s' "$combined" | grep -qE 'expo|mobile|android|ios|react native|app build|apk|ipa'; then
-  add_required expo "mobile build/deploy state must be validated through Expo when applicable"
-fi
-
-if printf '%s' "$combined" | grep -qE 'postman|endpoint|http|rest|api test|webhook|request|response'; then
-  add_required postman "API endpoints/integrations need request/response validation"
-fi
+while IFS=$'\t' read -r connector status pattern reason extra; do
+  connector="$(canon_key "$connector")"
+  status="$(printf '%s' "${status:-}" | tr '[:upper:]' '[:lower:]')"
+  [ -n "$connector" ] || continue
+  case "$connector" in \#*) continue ;; esac
+  if [ "$status" = "required" ]; then
+    [ -n "${pattern:-}" ] || { echo "connector rule missing pattern for $connector" >&2; exit 1; }
+    [ -n "${reason:-}" ] || { echo "connector rule missing reason for $connector" >&2; exit 1; }
+    if printf '%s' "$combined" | grep -qE "$pattern"; then
+      add_required "$connector" "$reason"
+    fi
+  elif [ "$status" = "optional" ]; then
+    :
+  else
+    echo "invalid connector rule status for $connector: $status" >&2
+    exit 1
+  fi
+done < "$RULES_FILE"
 
 [ -n "${required// /}" ] || { echo "required connector checks passed"; exit 0; }
 
