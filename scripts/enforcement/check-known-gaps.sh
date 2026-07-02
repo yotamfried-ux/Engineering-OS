@@ -65,6 +65,10 @@ for raw in file_path.read_text(encoding='utf-8').splitlines():
         err(f'{gap}: evidence path not found: {evidence}')
     if status == 'closed' and not re.search(r'merged|verified|closed|done|complete', closure, re.I):
         err(f'{gap}: closed gap needs closure proof')
+    if status == 'closed' and test_path is None:
+        err(f'{gap}: closed gap requires a concrete test artifact, not NONE')
+    if status == 'closed' and evidence_path is None:
+        err(f'{gap}: closed gap requires a concrete evidence artifact, not NONE')
     rows.append((gap, status, priority))
 
 if len(rows) < min_rows:
