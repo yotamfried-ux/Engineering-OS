@@ -140,6 +140,21 @@ for plan in plans:
         if code and clean(targets) and not source_matches(src,targets):
             print(f'ERROR_FOR_AGENT: {plan} Source of Truth Checks do not reference any Target paths or canonical routing/workflow source.'); bad=True
     if code:
+        # DoD quality schema: items must be concrete and at least one must name a
+        # verification signal. Deep DoD quality stays review-based by design.
+        dod_re=r'(DoD|Definition\s+of\s+Done)'
+        if not has_heading(text,dod_re):
+            print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks a ## DoD / Definition of Done section.'); bad=True
+        else:
+            dod=section(text,dod_re)
+            items=[re.sub(r'^\s*[-*]\s*(\[[ xX]\]\s*)?','',l).strip() for l in dod.splitlines() if re.match(r'^\s*[-*]',l)]
+            if not items:
+                print(f'ERROR_FOR_AGENT: {plan} DoD section must contain checklist items.'); bad=True
+            for it in items:
+                if len(clean(it))<12 or re.search(r'\b(todo|tbd|placeholder|later|unknown|etc)\b',it,re.I):
+                    print(f'ERROR_FOR_AGENT: {plan} DoD item is vague or placeholder: "{it}".'); bad=True
+            if items and not any(re.search(r'\b(test|tests|tested|fixture|fixtures|ci|checker|suite|gate|gates|validator)\b',it,re.I) for it in items):
+                print(f'ERROR_FOR_AGENT: {plan} DoD must include at least one item naming a concrete verification signal (test/fixture/CI/checker/suite/gate).'); bad=True
         if not has_heading(text,r'Claude\s+Run\s+Trace'): print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Claude Run Trace.'); bad=True
         if not has_heading(text,r'Progress\s+Lifecycle\s+Evidence'):
             print(f'ERROR_FOR_AGENT: {plan} changes code/config/tests but lacks ## Progress Lifecycle Evidence.'); bad=True

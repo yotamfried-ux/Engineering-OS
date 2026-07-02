@@ -28,6 +28,10 @@ mkplan(){ local mode="$1" step="$2"; local patterns; patterns="$(patterns_for "$
 | Task-router evidence | read |
 | Workflow evidence | read |
 
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 | Source | Status |
 |---|---|

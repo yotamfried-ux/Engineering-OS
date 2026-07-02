@@ -38,6 +38,10 @@ write_good_plan() {
 | Task-router evidence | core/task-router.md routing matrix consulted |
 | Workflow evidence | core/workflow.md steps consulted before coding |
 
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 
 | Source | Status |

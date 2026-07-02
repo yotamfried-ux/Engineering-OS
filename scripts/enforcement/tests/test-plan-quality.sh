@@ -86,6 +86,10 @@ reason: no template applies.
 ## Skill Evidence
 - superpowers
 
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 | Source | Status |
 |---|---|
@@ -113,6 +117,10 @@ reason: no template applies.
 
 ## Skill Evidence
 - superpowers
+
+## DoD
+
+- [x] fixture verified by this suite checker run.
 
 ## Source of Truth Checks
 | Source | Status |
@@ -143,6 +151,10 @@ reason: no template applies.
 ## Skill Evidence
 - superpowers
 
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 | Source | Status |
 |---|---|
@@ -171,6 +183,10 @@ reason: no template applies.
 - superpowers
 - security-review
 
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 | Source | Status |
 |---|---|
@@ -186,5 +202,24 @@ assert_fail bad-source "$BAD_SOURCE" "source of truth"
 assert_fail bad-skill "$BAD_SKILL" "security-review"
 assert_fail bad-trace "$BAD_TRACE" "run trace"
 assert_pass good "$GOOD"
+
+# DoD quality schema: vague items, missing verification signal, and a missing
+# section all fail; the GOOD fixture above is the passing shape.
+DOD_BLOCK="## DoD
+
+- [x] fixture verified by this suite checker run."
+DOD_VAGUE="${GOOD/"$DOD_BLOCK"/"## DoD
+
+- [x] done"}"
+DOD_NO_SIGNAL="${GOOD/"$DOD_BLOCK"/"## DoD
+
+- [x] everything works correctly and the change is complete now."}"
+DOD_MISSING="${GOOD/"$DOD_BLOCK"/"## Notes
+
+- [x] fixture note without any completion section."}"
+
+assert_fail dod-vague-item "$DOD_VAGUE" "vague or placeholder"
+assert_fail dod-no-verification-signal "$DOD_NO_SIGNAL" "verification signal"
+assert_fail dod-section-missing "$DOD_MISSING" "definition of done"
 
 echo "plan quality checks passed"
