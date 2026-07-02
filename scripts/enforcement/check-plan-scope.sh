@@ -102,7 +102,16 @@ PY
   tool="$(json_field tool)"; case "$tool" in Write|Edit|MultiEdit|NotebookEdit);; *) exit 0;; esac
   file="$(json_field file_path)"; [ -n "$file" ] || exit 0
   case "$file" in .claude/plans/*.md|*/.claude/plans/*.md) exit 0;; esac
-  plan="$(ls -t .claude/plans/*.md 2>/dev/null|head -1||true)"; [ -n "$plan" ] && [ -f "$plan" ] || exit 0
+  # Target-aware selection via lib/evidence.sh; newest-by-mtime fallback keeps
+  # old installs working when the lib predates eos_select_plan.
+  _scope_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  . "$_scope_dir/lib/evidence.sh" 2>/dev/null || true
+  if declare -f eos_select_plan >/dev/null 2>&1; then
+    plan="$(eos_select_plan "$file")"
+  else
+    plan="$(ls -t .claude/plans/*.md 2>/dev/null|head -1||true)"
+  fi
+  [ -n "$plan" ] && [ -f "$plan" ] || exit 0
   if ! reason="$(check_plan_scope "$plan" "$file")"; then deny "plan scope gate — $(printf '%s' "$reason"|tr '\n' ' ') Manual override needs current user approval."; fi
   exit 0
 fi

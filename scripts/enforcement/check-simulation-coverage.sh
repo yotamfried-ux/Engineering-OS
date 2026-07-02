@@ -34,18 +34,28 @@ validate_cell() {
     waived:*)
       local reason="${cell#waived:}"
       [ "$(printf '%s' "$reason" | wc -c | tr -d ' ')" -ge 20 ] || fail "$gate: $kind waiver reason is too short"
+      # A waived cell is coverage debt. Design decisions must use none-by-design:
+      # so debt and deliberate non-waivability stay machine-distinguishable.
+      if printf '%s\n' "$reason" | grep -Eiq 'no .*waiver path|not supported|by design|non-waivable'; then
+        fail "$gate: $kind waiver reason describes a design decision; use none-by-design:<reason> instead of waived:"
+      fi
       ;;
-    *) fail "$gate: $kind must be covered:<token> or waived:<specific reason>" ;;
+    none-by-design:*)
+      local design_reason="${cell#none-by-design:}"
+      [ "$(printf '%s' "$design_reason" | wc -c | tr -d ' ')" -ge 20 ] || fail "$gate: $kind none-by-design reason is too short"
+      ;;
+    *) fail "$gate: $kind must be covered:<token>, waived:<specific reason>, or none-by-design:<reason>" ;;
   esac
 }
 
 freshness_prose() {
-  # Only surface prose meant for human review (waiver reasons); literal
-  # covered:<token> values are exact test-file tokens, not deferred prose,
-  # so they must not trip the stale-language scan below.
+  # Only surface prose meant for human review (waiver/none-by-design reasons);
+  # literal covered:<token> values are exact test-file tokens, not deferred
+  # prose, so they must not trip the stale-language scan below.
   case "$1" in
     covered:*) printf '' ;;
     waived:*) printf '%s' "${1#waived:}" ;;
+    none-by-design:*) printf '%s' "${1#none-by-design:}" ;;
     *) printf '%s' "$1" ;;
   esac
 }

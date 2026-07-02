@@ -24,6 +24,10 @@ reason: no template applies.
 ## Skill Evidence
 - superpowers
 
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 
 | Source | Status |

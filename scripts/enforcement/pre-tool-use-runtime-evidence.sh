@@ -65,7 +65,15 @@ canon_key() {
     | sed -E 's/^mcp__//; s/__.*$//; s/^[[:space:]]+|[[:space:]]+$//g; s/[^a-z0-9_-]+/-/g; s/^-+|-+$//g'
 }
 
-newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1 || true; }
+# Target-aware selection via lib/evidence.sh; legacy newest-by-mtime fallback
+# keeps old installs working when the lib predates eos_select_plan.
+newest_plan() {
+  if declare -f eos_select_plan >/dev/null 2>&1; then
+    eos_select_plan "${1:-}"
+  else
+    ls -t .claude/plans/*.md 2>/dev/null | head -1 || true
+  fi
+}
 
 any_evidence_matching() {
   local pattern="$1"
@@ -136,7 +144,7 @@ if [ "$critical" -eq 0 ]; then
   printf '%s' "$FILE" | grep -qE '\.(ts|tsx|js|jsx|py|go|rs|java|swift|kt|rb|cs|cpp|c|h|php|scala|lua|sh|bash|zsh|json|ya?ml|toml|sql)$' || exit 0
 fi
 
-PLAN="$(newest_plan)"
+PLAN="$(newest_plan "$FILE")"
 [ -n "$PLAN" ] || fail "no Route Plan exists before writing '$FILE'." "create .claude/plans/<task>.md first, then read task-router/workflow and retry."
 [ -f "$PLAN" ] || fail "newest Route Plan path is invalid: $PLAN" "create a readable Route Plan under .claude/plans/."
 

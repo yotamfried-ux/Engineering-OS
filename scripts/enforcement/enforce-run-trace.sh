@@ -22,7 +22,15 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 staged="$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)"
 [ -n "$staged" ] || exit 0
 
+# Target-aware selection via lib/evidence.sh (hint = first staged non-plan file);
+# legacy precedence fallback keeps old installs working.
 select_plan() {
+  if declare -f eos_select_plan >/dev/null 2>&1; then
+    local hint
+    hint="$(printf '%s\n' "$staged" | grep -v '^\.claude/plans/' | head -1 || true)"
+    eos_select_plan "$hint"
+    return 0
+  fi
   if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then printf '%s\n' "$EOS_ACTIVE_PLAN"; return 0; fi
   if [ -f .claude/plans/active.md ]; then printf '%s\n' .claude/plans/active.md; return 0; fi
   local candidate
@@ -52,10 +60,11 @@ section_text() {
 
 requires_trace=0
 requires_connector_trace=0
+code_count=0
 while IFS= read -r path; do
   [ -n "$path" ] || continue
   case "$path" in
-    scripts/enforcement/*|scripts/hooks/*|.claude/settings.json|.github/workflows/*|core/*|external-systems/*|docs/operations/claude-run-trace.md)
+    scripts/enforcement/*|scripts/hooks/*|.claude/settings.json|.github/workflows/*|core/*|external-systems/*|patterns/*|templates/*|.claude/commands/*|evals/*|docs/operations/claude-run-trace.md)
       requires_trace=1 ;;
   esac
   case "$path" in
@@ -63,9 +72,17 @@ while IFS= read -r path; do
       requires_trace=1
       requires_connector_trace=1 ;;
   esac
+  case "$path" in
+    .claude/plans/*|docs/*|README.md|CHANGELOG.md|LICENSE*) ;;
+    *) code_count=$((code_count + 1)) ;;
+  esac
 done <<EOF_STAGED
 $staged
 EOF_STAGED
+
+# Size trigger: a significant agent run is also any staged range touching more
+# than 5 code/config files, regardless of path.
+[ "$code_count" -gt 5 ] && requires_trace=1
 
 if printf '%s\n' "$staged" | grep -q '^docs/operations/claude-run-trace.md$'; then
   doc_blob="$(git show :docs/operations/claude-run-trace.md 2>/dev/null || true)"
@@ -89,8 +106,15 @@ plan="$(select_plan || true)"
 [ -n "$plan" ] || { echo "run trace required: no active Route Plan found" >&2; exit 1; }
 
 if has_heading "$plan" 'Run[[:space:]]+Trace[[:space:]]+Waiver'; then
-  echo "run trace checks passed via focused waiver"
-  exit 0
+  # A waiver heading alone is not a waiver: the body must carry a concrete reason.
+  waiver_body="$(section_text "$plan" 'run[[:space:]]+trace[[:space:]]+waiver' | sed -E '/^[[:space:]]*$/d; /^[[:space:]]*<!--/d')"
+  if [ "$(printf '%s' "$waiver_body" | wc -c | tr -d ' ')" -ge 40 ] \
+     && printf '%s\n' "$waiver_body" | grep -qiE 'reason|because|fallback|unavailable|scope'; then
+    echo "run trace checks passed via focused waiver"
+    exit 0
+  fi
+  echo "run trace waiver invalid: the waiver body must state a concrete reason (>=40 chars with reason/because/fallback/unavailable/scope)." >&2
+  exit 1
 fi
 
 has_heading "$plan" '(Claude[[:space:]]+)?Run[[:space:]]+Trace' || {

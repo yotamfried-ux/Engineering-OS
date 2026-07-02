@@ -63,6 +63,12 @@ mkplan(){
         echo '- context7: none'
         echo '- decision: tbd'
         ;;
+      broad_claim)
+        echo '## Documentation Asset Evidence'
+        echo '- internal: core/workflow.md and scripts/enforcement/check-workflow-evidence.sh reviewed.'
+        echo '- context7: /vercel/next.js routing docs checked for the external handler behavior.'
+        echo '- decision: searched everything and reviewed everything relevant before deciding.'
+        ;;
       waiver_missing_field)
         echo '## Documentation Asset Waiver'
         echo '- reason: this change only touches an isolated test fixture with no reference material to consult.'
@@ -122,6 +128,10 @@ no doc_asset_missing_decision_fails bash "$CHECK" "$BASE" "$(git rev-parse HEAD)
 # Negative 6: evidence with placeholder values fails.
 run_code_case ph placeholder
 no doc_asset_placeholder_values_fails bash "$CHECK" "$BASE" "$(git rev-parse HEAD)"
+
+# Negative 6b: a decision that is only a broad search claim fails.
+run_code_case broad broad_claim
+no doc_asset_broad_claim_decision_fails bash "$CHECK" "$BASE" "$(git rev-parse HEAD)"
 
 # Negative 7: waiver missing a required field fails.
 run_code_case wv_miss waiver_missing_field

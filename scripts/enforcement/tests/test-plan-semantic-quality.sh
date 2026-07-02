@@ -94,6 +94,10 @@ $PROGRESS
 BAD="# Plan
 
 $BASE_PLAN
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 
 | Source | Status |
@@ -105,6 +109,10 @@ $BASE_PLAN
 GOOD_TARGET="# Plan
 
 $BASE_PLAN
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 
 | Source | Status |
@@ -116,6 +124,10 @@ $BASE_PLAN
 CANONICAL_ONLY="# Plan
 
 $BASE_PLAN
+## DoD
+
+- [x] fixture verified by this suite checker run.
+
 ## Source of Truth Checks
 
 | Source | Status |

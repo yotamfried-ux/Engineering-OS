@@ -82,6 +82,13 @@ SOURCE_TOKEN_RE = re.compile(
 def names_concrete_source(value):
     return bool(SOURCE_TOKEN_RE.search(clean(value)))
 
+# Broad search-strategy claims carry no auditable information; a decision that is
+# only such a claim (with no concrete source token) is rejected.
+BROAD_CLAIM_RE = re.compile(
+    r'\b(searched\s+everything|checked\s+everything|reviewed\s+everything|'
+    r'all\s+docs\s+(were\s+)?(checked|reviewed)|every\s+doc\s+(was\s+)?(checked|reviewed))\b',
+    re.I)
+
 def validate_evidence(text, plan):
     """Return (ok, [messages]) for the ## Documentation Asset Evidence section."""
     sec = section(text, r'Documentation\s+Asset\s+Evidence')
@@ -123,6 +130,9 @@ def validate_evidence(text, plan):
     elif is_placeholder(decision) or len(clean(decision)) < 15:
         msgs.append(f'ERROR_FOR_AGENT: {plan} Documentation Asset Evidence decision: must explain how the '
                     f'documentation changed the plan or confirmed the approach, not a placeholder.')
+    elif BROAD_CLAIM_RE.search(clean(decision)) and not names_concrete_source(decision):
+        msgs.append(f'ERROR_FOR_AGENT: {plan} Documentation Asset Evidence decision: is a broad search claim '
+                    f'with no concrete source; name the specific docs/assets that shaped the decision.')
 
     return (not msgs, msgs)
 
