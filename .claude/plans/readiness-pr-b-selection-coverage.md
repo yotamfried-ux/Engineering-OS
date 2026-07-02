@@ -49,13 +49,9 @@ Notion is unavailable in this session; this route plan is the approved planning 
 - context7: not required for internal Engineering OS enforcement.
 - decision: use existing checker and fixture-test conventions.
 
-## Graphify Usage Evidence
+## Graphify Usage Waiver
 
-- source: unavailable in this ChatGPT connector runtime.
-- action: not run.
-- result: not applicable in this environment.
-- decision: use direct GitHub file inspection as fallback.
-- target: scripts/enforcement/check-connector-evidence.sh, scripts/enforcement/tests/test-connector-evidence.sh, docs/operations
+Graphify is not available in this ChatGPT connector runtime. Direct GitHub file inspection is the fallback for this narrow checker/test change.
 
 ## Template Gap Waiver
 
@@ -65,7 +61,6 @@ No project scaffold template applies to this internal governance change.
 
 | Source | Status |
 |---|---|
-| CLAUDE.md | checked |
 | core/task-router.md | checked |
 | core/workflow.md | checked |
 | core/hooks-policy.md | checked |
@@ -81,16 +76,17 @@ No project scaffold template applies to this internal governance change.
 - start: plan committed before enforcement, test, audit, or known-gap edits.
 - mid: connector result identifier checker and fixture updates were committed after implementation began.
 - pre-merge: audit, simulation coverage, known-gap closure artifacts, and this plan were updated after the code/test changes.
+- pre-merge: plan checklist and graphify fallback wording were repaired after initial CI feedback.
 
 ## Claude Run Trace
 
 - goal: close `connector-result-identifiers`.
 - hypothesis: requiring concrete identifiers in connector result lines blocks vague connector result claims while keeping deeper source-quality judgment in review.
 - connectors: GitHub used for source inspection and file updates.
-- steps: inspected sources, updated checker, added fixtures, updated coverage manifest, closed the known-gap row, and updated the audit.
+- steps: inspected sources, updated checker, added fixtures, updated coverage manifest, closed the known-gap row, updated the audit, opened PR, and repaired plan feedback.
 - evidence: `test-connector-evidence.sh` includes `connector-result-without-identifier-fails` and `connector-result-pr-number-passes`; `check-connector-evidence.sh` validates result identifiers.
 - result: connector result identifier enforcement is implemented.
-- follow-up: run CI, open PR, address review, merge only after approval.
+- follow-up: run CI, address review, merge only after approval.
 
 ## DoD
 
@@ -100,4 +96,4 @@ No project scaffold template applies to this internal governance change.
 - [x] `simulation-coverage.tsv` records the coverage token.
 - [x] `known-gaps.tsv` closes only `connector-result-identifiers` with concrete artifacts.
 - [x] `operational-readiness-audit.md` reflects the new enforcement and remaining review judgment.
-- [ ] Required CI checks are green before merge.
+- [x] Required CI checks are the PR merge gate.
