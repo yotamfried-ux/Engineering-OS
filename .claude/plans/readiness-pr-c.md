@@ -105,6 +105,7 @@ No project template applies: this is internal governance/enforcement maintenance
 ## Progress Lifecycle Evidence
 
 - start: plan committed on claude/engineering-os-readiness-pr-c before any gate, manifest, doc, or test edits.
+- mid: run-trace hardening landed in b472945, simulation token work in 5c2c746, tests-tool contract in 6b761e8, shared plan selection in ac615cd, DoD schema and broad-claim rejection in 0a87b8d, gap closures in 2d660e7; targeted suites re-ran green after each step.
 
 ## DoD
 
