@@ -84,6 +84,7 @@
 - pre-merge: connector evidence was expanded with an explicit GitHub source-action-result-decision-target record.
 - pre-merge: root-caused the remaining `connector-evidence-policy` CI failure to `check-connector-evidence.sh` missing "added" from its accepted decision-impact verbs; extended the checker and added a passing fixture in `test-connector-evidence.sh`, instead of rewording the plan around the gap.
 - pre-merge: addressed the unresolved chatgpt-codex-connector review thread by narrowing `validate_freshness` in `check-simulation-coverage.sh` to scan only waiver-reason prose and notes, not literal covered:<token> values, with a new passing fixture in `test-simulation-coverage.sh` proving tokens containing deferred-language substrings are no longer false-flagged.
+- pre-merge: after the code/test commit, ran `test-connector-evidence.sh`, `test-simulation-coverage.sh`, `check-connector-evidence.sh origin/main HEAD`, and `check-documentation-asset-evidence.sh origin/main HEAD` locally; all passed, confirming the fixes are ready for CI rerun.
 
 ## Claude Run Trace
 
