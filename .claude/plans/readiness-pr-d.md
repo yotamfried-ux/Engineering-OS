@@ -103,14 +103,14 @@ No project template applies: this is internal governance/enforcement maintenance
 
 ## DoD
 
-- [ ] check-pr-review-evidence.sh extracted from pr-policy.yml with byte-for-byte preserved existing behavior — verified by test-pr-review-evidence.sh positive fixtures.
-- [ ] checks: field must name a real gate/workflow token (cross-checked against .github/workflows/*.yml names or check-*/enforcement-tests script basenames) — verified by shallow-checks negative fixtures.
-- [ ] evidence: field must contain a concrete artifact reference (path, run URL, or #<PR/issue number>) — verified by vague-evidence negative fixtures.
-- [ ] `## Merge Readiness` PR-body section required with base/expected-head-sha/ci/threads/approval fields, cross-checked against github.event.pull_request.head.sha — verified by test-pr-review-evidence.sh fixtures.
-- [ ] merge-readiness-checklist.md cross-reference updated to point at the new deterministic validator.
-- [ ] Two gaps flipped to closed with concrete artifacts; audit rows (PR review / external review, Merge safety, Git/branch policy) updated; readiness validator green.
-- [ ] Full local enforcement suite green except the known pre-existing test-plan-scope environment case.
-- [ ] Draft PR opened with review evidence; merge deferred to explicit approval.
+- [x] check-pr-review-evidence.sh extracted from pr-policy.yml with byte-for-byte preserved existing behavior — verified by test-pr-review-evidence.sh positive fixtures (external_review_with_merge_readiness_passes, fallback_with_real_gate_and_concrete_evidence_passes).
+- [x] checks: field must name a real gate/workflow token (cross-checked against .github/workflows/*.yml names or check-*/enforcement-tests script basenames) — verified by fallback_shallow_checks_fails and merge_readiness_ci_not_real_gate_fails.
+- [x] evidence: field must contain a concrete artifact reference (path, run URL, or #<PR/issue number>) — verified by fallback_vague_evidence_fails.
+- [x] `## Merge Readiness` PR-body section required with base/expected-head-sha/ci/threads/approval fields, cross-checked against github.event.pull_request.head.sha — verified by missing_merge_readiness_section_fails, merge_readiness_placeholder_approval_fails, merge_readiness_non_sha_value_fails, merge_readiness_sha_mismatch_fails.
+- [x] merge-readiness-checklist.md cross-reference updated to point at the new deterministic validator.
+- [x] Two gaps flipped to closed with concrete artifacts; audit rows (PR review / external review, Merge safety, Git/branch policy) updated; check-readiness-audit.sh and check-known-gaps.sh green.
+- [x] Full local enforcement suite green except the known pre-existing test-plan-scope environment case.
+- [x] Draft PR opened with review evidence; merge deferred to explicit approval.
 
 ## Scope note — branch reuse
 
