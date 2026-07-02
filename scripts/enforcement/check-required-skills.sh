@@ -1,15 +1,49 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PLAN=""
 TARGET=""
+SKILLS_DIR="$ROOT/external-skills"
+CHECK_COVERAGE=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --plan) PLAN="${2:-}"; shift 2 ;;
     --target) TARGET="${2:-}"; shift 2 ;;
+    --skills-dir) SKILLS_DIR="${2:-}"; shift 2 ;;
+    --check-coverage) CHECK_COVERAGE=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
+
+# Inventory coverage: every external-skills/<name>/ directory must either have a
+# selection rule in this checker (a need_skill/deprecation literal below) or an
+# explicit entry here documenting why it is never auto-required. New skills
+# cannot be silently unselectable.
+NOT_AUTO_REQUIRED="gstack:opt-in orchestration for complex multi-role projects, selected manually per task
+nemotron:optional L1 accelerator backend, never a required workflow skill
+frontend-design:deprecated, flagged by the deprecation rule and replaced by ui-ux-pro-max"
+
+check_coverage() {
+  local bad=0 name
+  [ -d "$SKILLS_DIR" ] || { echo "missing skills inventory dir: $SKILLS_DIR" >&2; return 1; }
+  for dir in "$SKILLS_DIR"/*/; do
+    [ -d "$dir" ] || continue
+    name="$(basename "$dir")"
+    if grep -qE "(need_skill|plan_has_skill) ${name}( |\$)" "${BASH_SOURCE[0]}"; then continue; fi
+    if printf '%s\n' "$NOT_AUTO_REQUIRED" | grep -qE "^${name}:.{20,}"; then continue; fi
+    echo "skill inventory coverage failed: external-skills/${name}/ has no selection rule and no documented not-auto-required entry" >&2
+    bad=1
+  done
+  return "$bad"
+}
+
+if [ "$CHECK_COVERAGE" -eq 1 ]; then
+  check_coverage || exit 1
+  echo "skill requirements coverage passed"
+  exit 0
+fi
 
 [ -n "$PLAN" ] && [ -f "$PLAN" ] || { echo "missing readable --plan" >&2; exit 2; }
 [ -n "$TARGET" ] || { echo "missing --target" >&2; exit 2; }
@@ -110,6 +144,14 @@ fi
 
 if printf '%s' "$TASK_CLASS" | tr '[:upper:]' '[:lower:]' | grep -Eq '^(code_change|bug_fix|new_project_or_saas|feature|refactor)$'; then
   need_skill superpowers "code/planning task class"
+fi
+
+if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(multi-session|cross-session|context[ -]persistence|context[ -]carryover|session[ -]memory)([^a-z0-9]|$)'; then
+  need_skill claude-mem "multi-session/context-carryover work (waivable when the environment lacks claude-mem)"
+fi
+
+if printf '%s' "$BLOB" | grep -Eq '(^|[^a-z0-9])(large[ -]refactor|repo-wide[ -]refactor|multi-pr[ -]review|pr-review-heavy)([^a-z0-9]|$)'; then
+  need_skill claude-code-workflows "large-refactor or review-heavy work"
 fi
 
 if [ -n "$missing" ]; then

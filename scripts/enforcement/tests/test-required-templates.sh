@@ -129,6 +129,28 @@ write_plan docs "documentation" "none"
 pass docs_task_does_not_require_template run_wrapper docs/README.md
 
 setup_repo
+write_plan feature "machine learning, training pipeline" "none"
+failcase ml_plan_requires_machine_learning_template run_check src/train.py
+
+setup_repo
+write_plan feature "machine learning, training pipeline" "machine-learning"
+pass ml_plan_with_ml_template_passes run_check src/train.py
+
+setup_repo
+write_plan feature "vector search, retrieval-augmented" "rag-system"
+pass rag_plan_with_rag_template_passes run_check src/rag/index.py
+
+setup_repo
+write_plan feature "fragrance catalog content" "none"
+pass fragrance_does_not_force_rag_template run_check content/fragrance.md
+
+pass repo_template_coverage_passes bash "$CHECK" --check-coverage
+mkdir -p "$TMP/templates-extra/new-shiny"
+failcase unmapped_template_dir_fails_coverage bash "$CHECK" --check-coverage --templates-dir "$TMP/templates-extra"
+printf 'bad-row\tproject\n' > "$TMP/bad-template-manifest.tsv"
+failcase malformed_template_manifest_fails bash "$CHECK" --check-coverage --manifest "$TMP/bad-template-manifest.tsv"
+
+setup_repo
 mkdir -p .claude
 cat > .claude/settings.json <<'EOF'
 {"hooks":{"PreToolUse":[{"matcher":"Write|Edit|MultiEdit|NotebookEdit","hooks":[]}]}}

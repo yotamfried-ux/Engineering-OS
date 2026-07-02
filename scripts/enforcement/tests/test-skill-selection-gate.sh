@@ -54,4 +54,37 @@ make_plan "$TMP/code-miss.md" code_change "backend" "None"
 make_plan "$TMP/dep.md" unclassified "frontend" "frontend-design"
 (cd "$TMP" && ! bash "$CHECK" --plan "$TMP/dep.md" --target app/page.tsx)
 
+# claude-mem: multi-session/context-carryover work requires the memory skill.
+make_plan "$TMP/mem.md" unclassified "multi-session, context-carryover" "claude-mem"
+(cd "$TMP" && bash "$CHECK" --plan "$TMP/mem.md" --target scripts/session.sh)
+make_plan "$TMP/mem-miss.md" unclassified "multi-session, context-carryover" "None"
+(cd "$TMP" && ! bash "$CHECK" --plan "$TMP/mem-miss.md" --target scripts/session.sh)
+
+# unavailable-environment waiver covers claude-mem.
+make_plan "$TMP/mem-waiver.md" unclassified "multi-session, context-carryover" "None"
+cat >> "$TMP/mem-waiver.md" <<'EOF'
+
+## Skill Selection Waiver
+
+- claude-mem: environment lacks claude-mem in this remote session; manual context record is used instead.
+EOF
+(cd "$TMP" && bash "$CHECK" --plan "$TMP/mem-waiver.md" --target scripts/session.sh)
+
+# claude-code-workflows: large-refactor work requires the review workflow skill.
+make_plan "$TMP/lr-miss.md" unclassified "large-refactor" "superpowers, graphify"
+(cd "$TMP" && ! bash "$CHECK" --plan "$TMP/lr-miss.md" --target src/modules/index.ts)
+make_plan "$TMP/lr.md" unclassified "large-refactor" "superpowers, graphify, claude-code-workflows"
+(cd "$TMP" && bash "$CHECK" --plan "$TMP/lr.md" --target src/modules/index.ts)
+
+# precision: a plain memory-leak bug does not force claude-mem.
+make_plan "$TMP/leak.md" unclassified "memory leak, debugging" "superpowers"
+(cd "$TMP" && bash "$CHECK" --plan "$TMP/leak.md" --target src/leak.ts)
+
+# inventory coverage: every external-skills/<name>/ has a rule or documented entry.
+bash "$CHECK" --check-coverage
+mkdir -p "$TMP/skills-extra/new-unmapped-skill"
+if bash "$CHECK" --check-coverage --skills-dir "$TMP/skills-extra"; then
+  echo "unexpected pass: unmapped_skill_dir_should_fail_coverage"; exit 1
+fi
+
 echo "skill selection checks passed"

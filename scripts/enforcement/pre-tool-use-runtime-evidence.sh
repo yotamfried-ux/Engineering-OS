@@ -196,6 +196,14 @@ if [ -f "$SKILL_SELECTION" ]; then
   evidence_record skill_selection_validated "$(basename "$PLAN")" 2>/dev/null || true
 fi
 
+PATTERN_SELECTION="$SCRIPT_DIR/check-required-patterns.sh"
+if [ -f "$PATTERN_SELECTION" ] && [ -f "$SCRIPT_DIR/../../patterns/registry.yaml" ]; then
+  if ! pattern_selection_output="$(bash "$PATTERN_SELECTION" --plan "$PLAN" --target "$FILE" 2>&1)"; then
+    fail "Route Plan '$(basename "$PLAN")' does not consult the patterns required for '$FILE'. ${pattern_selection_output}" "add the domain's patterns/ asset to the plan Patterns field, or add a '## Pattern Selection Waiver' section."
+  fi
+  evidence_record pattern_selection_validated "$(basename "$PLAN")" 2>/dev/null || true
+fi
+
 if ! is_none_value "$skills"; then
   missing=""
   while IFS= read -r skill; do

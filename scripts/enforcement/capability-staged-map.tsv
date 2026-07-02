@@ -1,0 +1,17 @@
+# path_prefix	capability_id
+# High-confidence staged-change implications only: a changed file under path_prefix
+# implies the capability, which must appear in a changed plan's Capability Evidence
+# or Capability Waiver. Stale declared capabilities are deliberately NOT failed here
+# (false-block risk); only missing implied capabilities fail.
+# Every capability_id must exist in core/capability-registry.yaml
+# (validated by check-capability-staged-changes.sh).
+scripts/enforcement/	validation.policy-change-has-validator
+scripts/hooks/	validation.policy-change-has-validator
+.github/workflows/	validation.actions-checked
+external-systems/	registry.service-connector-selected
+external-skills/superpowers/	skill.superpowers
+external-skills/ui-ux-pro-max/	skill.ui-ux-pro-max
+external-skills/security-review/	skill.security-review
+external-skills/graphify/	skill.graphify
+external-skills/rtk/	skill.rtk
+external-skills/claude-mem/	skill.claude-mem

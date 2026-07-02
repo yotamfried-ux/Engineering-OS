@@ -26,7 +26,8 @@ jobs:
 
           if [ -z "$changed_plans" ]; then
             echo "No changed Engineering OS plan files."
-            exit 0
+          else
+            bash scripts/enforcement/validate-capability-evidence.sh $changed_plans
           fi
 
-          bash scripts/enforcement/validate-capability-evidence.sh $changed_plans
+          bash scripts/enforcement/check-capability-staged-changes.sh "$base" "$head"
