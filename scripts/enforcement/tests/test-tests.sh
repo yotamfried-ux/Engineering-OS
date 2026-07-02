@@ -39,6 +39,15 @@ EOF
 # runE — run the enforcer in REPO with a controlled PATH (only our stubs + coreutils).
 runE() { ( cd "$REPO" && PATH="$STUBDIR:/usr/bin:/bin" bash "$ENFORCER" ) >/dev/null 2>&1; echo $?; }
 
+# runE_min — hermetic variant for missing-tool cases: PATH holds only our stubs
+# plus a minimal symlink dir, so a stack tool is GUARANTEED absent even on CI
+# runners that preinstall go/shellcheck/etc. in /usr/bin.
+MINBIN="$REPO/.minbin"; mkdir -p "$MINBIN"
+for b in bash git grep xargs sed awk tr wc date mkdir ls cat head sort uniq dirname basename echo; do
+  p="$(command -v "$b" 2>/dev/null)" && ln -sf "$p" "$MINBIN/$b"
+done
+runE_min() { ( cd "$REPO" && PATH="$STUBDIR:$MINBIN" bash "$ENFORCER" ) >/dev/null 2>&1; echo $?; }
+
 # reset_case — clear repo state between test cases (index, fixtures, stubs, log).
 reset_case() {
   git reset -q >/dev/null 2>&1 || true
@@ -68,11 +77,11 @@ echo "── declared stack, tool missing → environment contract ──"
 reset_case
 printf 'module example\n' > go.mod; printf 'package main\n' > main.go
 git add go.mod main.go 2>/dev/null   # no go stub on PATH
-expect "missing tool in CI hard-fails" 1 "$(CI=true runE)"
-expect "missing tool in CI fails even with waiver var" 1 "$(CI=true EOS_ALLOW_MISSING_TOOLS=go runE)"
-expect "missing tool locally without waiver fails" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS= runE)"
-expect "missing tool locally with named waiver warns and passes" 0 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=go runE)"
-expect "waiver for a different tool does not cover go" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=shellcheck runE)"
+expect "missing tool in CI hard-fails" 1 "$(CI=true runE_min)"
+expect "missing tool in CI fails even with waiver var" 1 "$(CI=true EOS_ALLOW_MISSING_TOOLS=go runE_min)"
+expect "missing tool locally without waiver fails" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS= runE_min)"
+expect "missing tool locally with named waiver warns and passes" 0 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=go runE_min)"
+expect "waiver for a different tool does not cover go" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=shellcheck runE_min)"
 
 echo "── shell syntax gate ──"
 reset_case
@@ -87,9 +96,9 @@ mkstub shellcheck
 expect "clean staged .sh allowed"       0 "$(runE)"
 reset_case
 printf '#!/usr/bin/env bash\necho hi\n' > ok.sh
-git add ok.sh 2>/dev/null                    # no shellcheck stub
-expect "missing shellcheck locally without waiver fails" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS= runE)"
-expect "missing shellcheck locally with waiver passes" 0 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=shellcheck runE)"
+git add ok.sh 2>/dev/null                    # no shellcheck stub; hermetic PATH guarantees absence
+expect "missing shellcheck locally without waiver fails" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS= runE_min)"
+expect "missing shellcheck locally with waiver passes" 0 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=shellcheck runE_min)"
 
 echo "── general ──"
 reset_case

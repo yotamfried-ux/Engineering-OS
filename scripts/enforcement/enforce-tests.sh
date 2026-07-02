@@ -59,7 +59,9 @@ tool_waived() {
   local tool="$1" entry
   IFS=',' read -r -a waived_tools <<< "${EOS_ALLOW_MISSING_TOOLS:-}"
   for entry in ${waived_tools[@]+"${waived_tools[@]}"}; do
-    [ "$(printf '%s' "$entry" | xargs)" = "$tool" ] && return 0
+    entry="${entry#"${entry%%[![:space:]]*}"}"
+    entry="${entry%"${entry##*[![:space:]]}"}"
+    [ "$entry" = "$tool" ] && return 0
   done
   return 1
 }
