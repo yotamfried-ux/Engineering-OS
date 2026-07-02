@@ -47,7 +47,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | semantic-cleanup-depth | closed | P2 | Cleanup semantic hygiene. |
 | review-fallback | closed | P2 | PR review / external review. |
 | post-merge-repair-observation | closed | P3 | Post-merge validation. |
-| connector-selection-coverage | open | P2 | Connector selection. |
+| connector-selection-coverage | closed | P2 | Connector selection. |
 | connector-result-identifiers | closed | P2 | Connector correctness / source-of-truth use. |
 | template-selection-coverage | open | P2 | Template selection. |
 | pattern-required-manifest | open | P2 | Pattern usage. |
@@ -73,7 +73,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Route Plan quality | Enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: `test-plan-quality.sh`, `test-plan-semantic-quality.sh`, and `test-workflow-evidence.sh` require concrete Source of Truth evidence for changed targets or canonical sources. | Intent quality beyond reliable path/source matching is review-based by design. |
 | DoD completion | Enforced | Gate: plan-policy. Owner: delivery-governance. Evidence: checklist policy checks. | DoD quality is review-based by design; structural checklist completion is blocked deterministically. |
 | Progress validation | Enforced | Gate: `check-workflow-evidence.sh`. Owner: progress-governance. Evidence: `test-progress-lifecycle.sh` requires ordered lifecycle commits: start before code/config/test, mid after work begins, and pre-merge after the last code/config/test change. | Deep qualitative meaning of the progress notes is review-based by design; structural backfill is blocked. |
-| Connector selection | Partially enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: required connector fields and runtime evidence checks. | gap:connector-selection-coverage — selection rules cover nine connectors; manifest-driven inventory coverage is registered as an open gap. Right-connector judgment stays review-based by design. |
+| Connector selection | Enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: `connector-selection-rules.tsv` plus inventory coverage fixtures in `test-required-connectors-inventory.sh`; the checker reads manifest rules for required and optional connectors. | Right-connector judgment stays review-based by design; inventory coverage cannot silently drift. |
 | Connector correctness / source-of-truth use | Enforced | Gate: `check-connector-evidence.sh`. Owner: connector-governance. Evidence: Connector Usage Evidence requires source/action/result/decision for declared active connectors, concrete result identifiers such as paths/PRs/SHAs, and target linkage for code/config/script changes; fixtures in `test-connector-evidence.sh` cover vague-result failures. | Deep semantic use of returned connector data is review-based by design; hidden-reasoning proof is never claimed, but identifier-free result prose is now blocked. |
 | Template selection | Partially enforced | Gate: template evidence/waiver gates plus template/pattern rating lifecycle. Owner: template-governance. Evidence: Route Plan template fields, waiver checks, `template-pattern-ratings.tsv`, and `test-template-pattern-rating-evidence.sh`. | gap:template-selection-coverage — required-template detection maps eleven of roughly twenty-six inventory templates. |
 | Pattern usage | Partially enforced | Gate: pattern read evidence gate plus template/pattern rating lifecycle. Owner: pattern-governance. Evidence: runtime pattern evidence checks, `check-template-pattern-ratings.sh`, and Route Plan rating evidence tests. | gap:pattern-required-manifest — required-pattern detection lacks a registry-driven manifest; read evidence and exact rating feedback are enforced today. |
@@ -113,22 +113,19 @@ Anything merely documented but silently skippable is not operationally ready. Th
 
 ## Highest-priority gaps by ROI
 
-1. **Selection coverage hardening** — gap:connector-selection-coverage, gap:template-selection-coverage, gap:pattern-required-manifest, gap:skill-selection-coverage, and gap:capability-staged-guard move selection rules to inventory-tied manifests with fixtures.
-2. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
-3. **RTK runtime hardening** — covered structurally by required RTK usage impact evidence and mandatory session setup contract; maintain it when RTK signals change.
-4. **Route Plan quality gate** — closed structurally by concrete source and target relevance checks; active-plan targeting is tracked as gap:active-plan-selection.
-5. **Template/pattern rating lifecycle** — closed structurally by exact declared asset coverage, confidence, outcome, decision, and waiver evidence; score truthfulness remains a review-quality concern.
-6. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures whenever the lesson schema changes.
-7. **Progress lifecycle** — covered by ordered progress lifecycle evidence; keep start/mid/pre-merge order tests active for future policy changes.
-8. **Graphify context graph** — covered by target-linked graph usage evidence; maintain the negative fixtures when graph evidence policy changes.
-9. **Connector correctness** — structural source/action/result/decision evidence, concrete result identifiers, and target linkage are enforced by `check-connector-evidence.sh`; deep semantic use remains review-based by design.
-10. **Simulation completeness** — maintained by `simulation-coverage.tsv`; stale deferred coverage notes are blocked, and replaceable waived cells are tracked as gap:simulation-waiver-fixtures.
-11. **Post-merge validation** — covered by safe fake-gh repair issue simulation; live failures are triaged per docs/operations/post-merge-incident-checklist.md.
-12. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; deeper semantic contradiction detection is review-based by design.
-13. **Semantic cleanup** — covered by CI policy gates; maintain deeper hygiene checks when analyzers expand.
-14. **Trace and test contracts** — gap:run-trace-significant-scope, gap:tests-tool-environment-contract, and gap:active-plan-selection harden run tracing, tool contracts, and plan selection.
-15. **Governance evidence** — gap:pr-review-quality-schema, gap:merge-readiness-artifact, and gap:install-downstream-behavior harden review, merge, and install evidence.
+1. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
+2. **RTK runtime hardening** — covered structurally by required RTK usage impact evidence and mandatory session setup contract; maintain it when RTK signals change.
+3. **Route Plan quality gate** — closed structurally by concrete source and target relevance checks; active-plan targeting is tracked as gap:active-plan-selection.
+4. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures whenever the lesson schema changes.
+5. **Progress lifecycle** — covered by ordered progress lifecycle evidence; keep start/mid/pre-merge order tests active for future policy changes.
+6. **Connector correctness** — structural source/action/result/decision evidence, concrete result identifiers, connector selection inventory coverage, and target linkage are enforced by `check-connector-evidence.sh` and `check-required-connectors.sh`; deep semantic use remains review-based by design.
+7. **Simulation completeness** — maintained by `simulation-coverage.tsv`; stale deferred coverage notes are blocked, and replaceable waived cells are tracked as gap:simulation-waiver-fixtures.
+8. **Post-merge validation** — covered by safe fake-gh repair issue simulation; live failures are triaged per docs/operations/post-merge-incident-checklist.md.
+9. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`; deeper semantic contradiction detection is review-based by design.
+10. **Semantic cleanup** — covered by CI policy gates; maintain deeper hygiene checks when analyzers expand.
+11. **Trace and test contracts** — gap:run-trace-significant-scope, gap:tests-tool-environment-contract, and gap:active-plan-selection harden run tracing, tool contracts, and plan selection.
+12. **Governance evidence** — gap:pr-review-quality-schema, gap:merge-readiness-artifact, and gap:install-downstream-behavior harden review, merge, and install evidence.
 
 ## Current audit scope
 
-This audit now enforces its own classification contract: every matrix row is Enforced, Manual by design (with an existing checklist doc), Waiver-gated, or linked to a non-closed known gap, validated by `scripts/enforcement/check-readiness-audit.sh` with fixtures in `scripts/enforcement/tests/test-readiness-audit.sh`. It also includes stricter Route Plan source/target semantic relevance, connector result identifier enforcement, deterministic known-gaps freshness and closure-artifact validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, exact reusable asset feedback evidence, auditable RTK impact evidence, target-linked Graphify usage validation, cleanup-depth CI policy validation, simulation coverage freshness checks, explicit tracking for documentation/reference asset selection, and safe simulated post-merge repair issue observation. It does not claim hidden chain-of-thought validation beyond reliable path/source/status/commit-order/evidence-field matching.
+This audit now enforces its own classification contract: every matrix row is Enforced, Manual by design (with an existing checklist doc), Waiver-gated, or linked to a non-closed known gap, validated by `scripts/enforcement/check-readiness-audit.sh` with fixtures in `scripts/enforcement/tests/test-readiness-audit.sh`. It also includes stricter Route Plan source/target semantic relevance, connector selection inventory coverage, connector result identifier enforcement, deterministic known-gaps freshness and closure-artifact validation, ordered progress lifecycle validation, PR review evidence validation, learning closure content validation, exact reusable asset feedback evidence, auditable RTK impact evidence, target-linked Graphify usage validation, cleanup-depth CI policy validation, simulation coverage freshness checks, explicit tracking for documentation/reference asset selection, and safe simulated post-merge repair issue observation. It does not claim hidden chain-of-thought validation beyond reliable path/source/status/commit-order/evidence-field matching.
