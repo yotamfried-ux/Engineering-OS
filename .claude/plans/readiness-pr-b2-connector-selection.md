@@ -39,7 +39,7 @@ Notion was unavailable in this session, so this plan file is the planning record
 
 - source: github files `external-systems/README.md`, `core/connector-policy.md`, `scripts/enforcement/check-required-connectors.sh`, `scripts/enforcement/tests/test-required-connectors-inventory.sh`, `scripts/enforcement/connector-selection-rules.tsv`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
 - action: checked connector inventory and the existing connector selection checker, then implemented manifest-backed coverage.
-- result: `connector-selection-coverage` was open; the connector inventory now has a rule manifest and inventory fixtures.
+- result: `docs/operations/known-gaps.tsv` showed `connector-selection-coverage` open; `scripts/enforcement/connector-selection-rules.tsv` now records inventory-backed connector selection coverage.
 - decision: added the manifest, updated the checker, added inventory fixtures, updated coverage records, closed the known gap, and restored detailed audit wording.
 - target: scripts/enforcement/check-required-connectors.sh, scripts/enforcement/tests/test-required-connectors-inventory.sh, scripts/enforcement/connector-selection-rules.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement/simulation-coverage.tsv
 
@@ -74,6 +74,7 @@ No project template applies to this internal governance change.
 - mid: manifest loading and inventory fixtures were added after implementation began.
 - pre-merge: coverage records, known gap closure, audit, and plan were updated after implementation.
 - pre-merge: manifest comment parsing and audit detail were repaired after validation feedback.
+- pre-merge: Connector Usage Evidence result was updated with concrete file paths after connector-evidence feedback.
 
 ## Claude Run Trace
 
