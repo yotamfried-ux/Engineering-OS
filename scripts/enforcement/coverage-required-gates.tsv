@@ -24,3 +24,4 @@ documentation-asset-evidence	asset-governance	active	Documentation/reference ass
 required-patterns	pattern-governance	active	Registry-driven pattern selection must remain covered.
 capability-staged-changes	capability-governance	active	Staged-change capability guard must remain covered.
 tests-tool-contract	validation-governance	active	Missing-tool environment contract must remain covered.
+active-plan-selection	workflow-governance	active	Target-aware plan selection must remain covered.

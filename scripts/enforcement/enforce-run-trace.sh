@@ -22,7 +22,15 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 staged="$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)"
 [ -n "$staged" ] || exit 0
 
+# Target-aware selection via lib/evidence.sh (hint = first staged non-plan file);
+# legacy precedence fallback keeps old installs working.
 select_plan() {
+  if declare -f eos_select_plan >/dev/null 2>&1; then
+    local hint
+    hint="$(printf '%s\n' "$staged" | grep -v '^\.claude/plans/' | head -1 || true)"
+    eos_select_plan "$hint"
+    return 0
+  fi
   if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then printf '%s\n' "$EOS_ACTIVE_PLAN"; return 0; fi
   if [ -f .claude/plans/active.md ]; then printf '%s\n' .claude/plans/active.md; return 0; fi
   local candidate

@@ -68,6 +68,41 @@ evidence_get() {
   grep -F "$(printf '\t%s\t' "$key")" "$f" | tail -1 | cut -f3
 }
 
+# eos_select_plan [target-hint] — select the active Route Plan deterministically.
+# Precedence: (1) EOS_ACTIVE_PLAN when readable; (2) .claude/plans/active.md;
+# (3) newest plan whose "Target paths" field matches the target hint;
+# (4) newest plan (legacy behavior) when nothing matches or no hint is given.
+# Corrective only: a session holding an older matching plan and a newer unrelated
+# plan now selects the matching one; with no match, behavior is unchanged.
+eos_select_plan() {
+  local hint="${1:-}" candidate targets t file prefix newest=""
+  if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then
+    printf '%s\n' "$EOS_ACTIVE_PLAN"; return 0
+  fi
+  if [ -f .claude/plans/active.md ]; then
+    printf '%s\n' .claude/plans/active.md; return 0
+  fi
+  file="$(printf '%s' "$hint" | sed -E 's#^\./##')"
+  for candidate in $(ls -t .claude/plans/*.md 2>/dev/null || true); do
+    case "$(basename "$candidate")" in README.md|_TEMPLATE.md) continue ;; esac
+    [ -n "$newest" ] || newest="$candidate"
+    [ -n "$file" ] || continue
+    targets="$(awk -F'|' 'NF>1{for(i=1;i<NF;i++){f=tolower($i);gsub(/[*_`]/,"",f);gsub(/^[ \t]+|[ \t]+$/,"",f);if(f ~ /^target paths?$|^target files$|^target scope$/){v=$(i+1);gsub(/^[ \t]+|[ \t]+$/,"",v);print v;exit}}}' "$candidate" 2>/dev/null)"
+    [ -n "$targets" ] || continue
+    while IFS= read -r t; do
+      [ -n "$t" ] || continue
+      prefix="$(printf '%s' "$t" | sed -E 's/<[^>]+>//g; s/`//g; s#^\./##; s#/$##; s/^[-*[:space:]]+//; s/[[:space:]]+$//')"
+      [ -n "$prefix" ] || continue
+      case "$file" in
+        "$prefix"|"$prefix"/*|*/"$prefix"|*/"$prefix"/*) printf '%s\n' "$candidate"; return 0 ;;
+      esac
+    done <<EOF_TARGETS
+$(printf '%s' "$targets" | tr ',;' '\n')
+EOF_TARGETS
+  done
+  [ -n "$newest" ] && printf '%s\n' "$newest"
+}
+
 # bypass_active <ENV_VAR_NAME> — exit 0 if that env var is set to a truthy value.
 # Side effect: logs to evidence ledger + stderr when bypass is active (audit trail).
 bypass_active() {
