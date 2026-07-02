@@ -21,7 +21,15 @@ for a human) must capture before any merge to `main`.
 4. **Review threads resolved.** No unresolved review threads remain, or each remaining
    thread is explicitly acknowledged with a reason in the PR conversation.
 5. **Review evidence present.** The PR body carries `## External Review Evidence` or
-   `## Review Fallback Evidence` per the pr-policy gate.
+   `## Review Fallback Evidence` per the pr-policy gate, validated deterministically by
+   [`scripts/enforcement/check-pr-review-evidence.sh`](../../scripts/enforcement/check-pr-review-evidence.sh)
+   (fixtures: `scripts/enforcement/tests/test-pr-review-evidence.sh`). The same script also
+   validates a required `## Merge Readiness` PR-body section — `base:`, `expected-head-sha:`,
+   `ci:`, `threads:`, and `approval:` fields, with `expected-head-sha:` cross-checked against
+   the PR's live head SHA and `checks:`/`ci:` required to name a real gate/workflow. This
+   makes items 3 and 5 below deterministic; the `approval:` field records intent (e.g.
+   "pending" or the owner's explicit go-ahead) — it documents the merge decision, it does
+   not automate it.
 6. **Superseded PRs closed.** No other open PR targets the same change; superseded PRs
    are closed or linked with a resolution note.
 7. **Human approval captured.** The repository owner's explicit approval to merge is
