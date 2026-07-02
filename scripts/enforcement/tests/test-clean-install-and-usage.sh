@@ -234,6 +234,18 @@ expect_contains "$TARGET/CLAUDE.md" "$ROOT/patterns/"
 echo "  ✅ templates/ and patterns/ exist at the reference path CLAUDE.md points to"
 
 echo "── Experiment 6: enforce-tests.sh missing-tool contract inside the installed target ──"
+# Build a hermetic PATH: only the specific tools enforce-tests.sh needs to run
+# at all (bash, git, coreutils), deliberately excluding ruff/pytest. A plain
+# "/usr/bin:/bin" guess is not reliable — a CI runner's base image can (and did)
+# have ruff/pytest preinstalled there, making the "missing" premise false and
+# the fixture fail for an unrelated reason (see
+# lessons-learned/bugs/ci-environment-dependent-fixture-premise.md).
+ISOLATED_BIN="$TMP/isolated-bin"
+mkdir -p "$ISOLATED_BIN"
+for tool in bash sh git grep sed awk cat cut tr wc head tail mkdir rm cp mv printf xargs find sort uniq dirname basename pwd env true false expr; do
+  src="$(command -v "$tool" 2>/dev/null || true)"
+  [ -n "$src" ] && ln -sf "$src" "$ISOLATED_BIN/$tool"
+done
 STACK_REPO="$TMP/stack-repo"
 rm -rf "$STACK_REPO"
 git init -q "$STACK_REPO"
@@ -243,24 +255,20 @@ printf 'requests\n' > "$STACK_REPO/requirements.txt"
 printf 'print(1)\n' > "$STACK_REPO/app.py"
 git -C "$STACK_REPO" add requirements.txt app.py
 expect_fail "declared python stack with missing ruff hard-fails under CI=true" \
-  bash -c "cd '$STACK_REPO' && CI=true PATH=/usr/bin:/bin bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
+  env -i PATH="$ISOLATED_BIN" HOME="$HOME" CI=true bash -c "cd '$STACK_REPO' && bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
 expect_pass "declared python stack with missing ruff waives locally via EOS_ALLOW_MISSING_TOOLS" \
-  bash -c "cd '$STACK_REPO' && PATH=/usr/bin:/bin EOS_ALLOW_MISSING_TOOLS=ruff,pytest bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
+  env -i PATH="$ISOLATED_BIN" HOME="$HOME" EOS_ALLOW_MISSING_TOOLS=ruff,pytest bash -c "cd '$STACK_REPO' && bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
 
 echo "── Experiment 7: learning-loop fix-needs-test gate fires inside the installed target ──"
-LEARN_REPO="$TMP/learn-repo"
-rm -rf "$LEARN_REPO"
-git init -q "$LEARN_REPO"
-git -C "$LEARN_REPO" config user.email t@t
-git -C "$LEARN_REPO" config user.name t
-mkdir -p "$LEARN_REPO/.engineering-os"
-cat > "$LEARN_REPO/.engineering-os/REFERENCE.md" <<EOF
-# Engineering OS — reference (READ-ONLY)
-- Reference location: \`$ROOT\`
-EOF
-git -C "$LEARN_REPO" commit --allow-empty -q -m "chore: base"
-printf 'def broken():\n    return 1\n' > "$LEARN_REPO/fix.py"
-git -C "$LEARN_REPO" add fix.py
+# Exercise the ACTUAL installed hook file at $TARGET/.git/hooks/commit-msg (the
+# one use-in-project.sh copied), not the source scripts/hooks/commit-msg.sh —
+# otherwise this fixture would stay green even if the installer stopped
+# copying/updating the hook or the installed path drifted (Codex review finding
+# on PR #184).
+expect_file "$TARGET/.git/hooks/commit-msg"
+expect_executable "$TARGET/.git/hooks/commit-msg"
+printf 'def broken():\n    return 1\n' > "$TARGET/fix.py"
+git -C "$TARGET" add fix.py
 FIX_MSG_NO_TEST="$TMP/fix-msg-no-test.txt"
 cat > "$FIX_MSG_NO_TEST" <<'EOF'
 fix: correct a broken calculation
@@ -271,6 +279,8 @@ fix: correct a broken calculation
 🧪 בדיקות: manually verified.
 EOF
 expect_fail "installed commit-msg hook blocks a fix: commit with no regression test (learning-loop gate fires downstream)" \
-  bash -c "cd '$LEARN_REPO' && bash '$ROOT/scripts/hooks/commit-msg.sh' '$FIX_MSG_NO_TEST'"
+  bash -c "cd '$TARGET' && '$TARGET/.git/hooks/commit-msg' '$FIX_MSG_NO_TEST'"
+git -C "$TARGET" reset -q fix.py
+rm -f "$TARGET/fix.py"
 
 echo "clean install and usage experiments passed"
