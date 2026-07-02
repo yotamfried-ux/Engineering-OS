@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+required-patterns	pattern-governance	scripts/enforcement/check-required-patterns.sh	scripts/enforcement/tests/test-required-patterns.sh	covered:billing_tag_with_billing_pattern_passes	covered:billing_tag_without_pattern_fails	covered:malformed_registry_fails_closed	covered:billing_waiver_naming_domain_passes	Required-pattern gate covers domain hit, missing pattern, malformed registry fail-closed, and domain-named waiver behavior.

@@ -238,6 +238,10 @@ Reason: runtime skill-selection fixture isolates the skill-selection gate.
 
 - `ui-ux-pro-max`: fixture waives skill selection for this runtime test.
 
+## Pattern Selection Waiver
+
+- frontend: fixture waives pattern consultation to isolate the skill-selection gate.
+
 ## Source of Truth Checks
 
 | Need | Source checked | Result |
