@@ -26,22 +26,24 @@ done
 # is the single source of truth for which files each workflow needs, so a new
 # dependency is a manifest row here, not a one-off copy block.
 manifest="$home_dir/scripts/enforcement/policy-gate-dependencies.tsv"
-if [ -f "$manifest" ]; then
-  while IFS=$'\t' read -r workflow dep; do
-    case "${workflow:-}" in ''|'#'*) continue ;; esac
-    [ -n "${dep:-}" ] || continue
-    dep_src="$home_dir/$dep"
-    if [ ! -f "$dep_src" ]; then
-      echo "missing policy-gate dependency: $dep_src (declared for $workflow)" >&2
-      exit 1
-    fi
-    dep_dst="$target/$dep"
-    mkdir -p "$(dirname "$dep_dst")"
-    cp "$dep_src" "$dep_dst"
-    case "$dep" in *.sh) chmod +x "$dep_dst" ;; esac
-    echo "installed $dep (for $workflow)"
-  done < "$manifest"
+if [ ! -f "$manifest" ]; then
+  echo "missing policy-gate dependency manifest: $manifest" >&2
+  exit 1
 fi
+while IFS=$'\t' read -r workflow dep; do
+  case "${workflow:-}" in ''|'#'*) continue ;; esac
+  [ -n "${dep:-}" ] || continue
+  dep_src="$home_dir/$dep"
+  if [ ! -f "$dep_src" ]; then
+    echo "missing policy-gate dependency: $dep_src (declared for $workflow)" >&2
+    exit 1
+  fi
+  dep_dst="$target/$dep"
+  mkdir -p "$(dirname "$dep_dst")"
+  cp "$dep_src" "$dep_dst"
+  case "$dep" in *.sh) chmod +x "$dep_dst" ;; esac
+  echo "installed $dep (for $workflow)"
+done < "$manifest"
 
 if [ "${EOS_SKIP_SETTINGS_PATCH:-0}" = "1" ]; then
   echo "settings patch skipped (preserving existing .claude/settings.json)"

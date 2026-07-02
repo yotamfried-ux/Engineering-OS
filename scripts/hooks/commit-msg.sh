@@ -49,12 +49,16 @@ fi
 # Governing policy: core/debugging-policy.md. Bypass: EOS_BYPASS_FIXTEST=1 (or EOS_BYPASS_DEBUG=1).
 if [ -f "$EOS_HOME/scripts/enforcement/enforce-debugging.sh" ]; then
   bash "$EOS_HOME/scripts/enforcement/enforce-debugging.sh" commit-msg "$MSG_FILE" || exit 1
+else
+  echo "warning: enforce-debugging.sh not found under $EOS_HOME/scripts/enforcement (debugging-policy check skipped)" >&2
 fi
 
 # resource-management.md <model-selection> — no model identifier in commit messages.
 # Governing policy: core/resource-management.md. Bypass: EOS_BYPASS_MODELID=1.
 if [ -f "$EOS_HOME/scripts/enforcement/enforce-resource.sh" ]; then
   bash "$EOS_HOME/scripts/enforcement/enforce-resource.sh" commit-msg "$MSG_FILE" || exit 1
+else
+  echo "warning: enforce-resource.sh not found under $EOS_HOME/scripts/enforcement (model-id check skipped)" >&2
 fi
 
 # quality-gates.md — block a large code commit when the project has ZERO test files.

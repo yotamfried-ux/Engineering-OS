@@ -28,7 +28,7 @@ while IFS=$'\t' read -r workflow dep; do
   [ -n "${dep:-}" ] || { echo "  fail: malformed row for $workflow (empty dependency)"; bad=1; continue; }
   [ -f "$ROOT/$dep" ] || { echo "  fail: $workflow declares missing dependency $dep"; bad=1; }
 done < "$MANIFEST"
-[ "$bad" -eq 0 ] && pass all_manifest_dependencies_exist || fail all_manifest_dependencies_exist
+if [ "$bad" -eq 0 ]; then pass all_manifest_dependencies_exist; else fail all_manifest_dependencies_exist; fi
 
 # Every real `bash scripts/enforcement/<name>.sh` (or .py) call site inside an
 # installed policy workflow must have a matching manifest row for that workflow,
@@ -46,7 +46,7 @@ for wf in "$WORKFLOWS_DIR"/*.yml; do
       || { echo "  fail: $name calls scripts/enforcement/$called with no matching manifest row"; bad=1; }
   done < <(grep -oE 'scripts/enforcement/[A-Za-z0-9_.-]+\.(sh|py)' "$wf" | sed 's#scripts/enforcement/##' | sort -u)
 done
-[ "$bad" -eq 0 ] && pass every_real_call_site_has_a_manifest_row || fail every_real_call_site_has_a_manifest_row
+if [ "$bad" -eq 0 ]; then pass every_real_call_site_has_a_manifest_row; else fail every_real_call_site_has_a_manifest_row; fi
 
 # Negative: a workflow calling an undeclared script must be caught by the same
 # cross-check logic used above (regression guard for the coverage check itself).

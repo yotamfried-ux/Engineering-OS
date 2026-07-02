@@ -211,11 +211,11 @@ NO_RTK_GRAPHIFY_PATH="/usr/bin:/bin"
 rtk_cmd="$(extract_hook_cmds 'rtk hook claude' | head -1)"
 [ -n "$rtk_cmd" ] || { echo "  ❌ no rtk hook command found in installed settings.json"; exit 1; }
 expect_pass "rtk-absent PreToolUse hook does not crash (warns/no-ops per contract)" \
-  env -i PATH="$NO_RTK_GRAPHIFY_PATH" bash -c "cd '$TARGET' && $rtk_cmd" </dev/null
+  env -i PATH="$NO_RTK_GRAPHIFY_PATH" HOME="$HOME" bash -c "cd '$TARGET' && $rtk_cmd" </dev/null
 graphify_cmd="$(extract_hook_cmds 'graphify-out/graph.json' | head -1)"
 [ -n "$graphify_cmd" ] || { echo "  ❌ no graphify hook command found in installed settings.json"; exit 1; }
 expect_pass "graphify-absent PreToolUse hook does not crash (file-existence check, no binary call)" \
-  env -i PATH="$NO_RTK_GRAPHIFY_PATH" bash -c "cd '$TARGET' && $graphify_cmd" </dev/null
+  env -i PATH="$NO_RTK_GRAPHIFY_PATH" HOME="$HOME" bash -c "cd '$TARGET' && $graphify_cmd" </dev/null
 
 echo "── Experiment 4: installed slash commands exist and parse ──"
 for cmd_file in use-engineering-os.md superpowers-brainstorm.md superpowers-verify.md superpowers-plan.md; do
@@ -256,6 +256,11 @@ printf 'print(1)\n' > "$STACK_REPO/app.py"
 git -C "$STACK_REPO" add requirements.txt app.py
 expect_fail "declared python stack with missing ruff hard-fails under CI=true" \
   env -i PATH="$ISOLATED_BIN" HOME="$HOME" CI=true bash -c "cd '$STACK_REPO' && bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
+# Isolate the waiver variable itself: hold CI unset in both of the next two
+# invocations and vary only EOS_ALLOW_MISSING_TOOLS, so the pass below is
+# proven to come from the waiver and not from CI being absent.
+expect_fail "declared python stack with missing ruff fails locally without a waiver" \
+  env -i PATH="$ISOLATED_BIN" HOME="$HOME" bash -c "cd '$STACK_REPO' && bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
 expect_pass "declared python stack with missing ruff waives locally via EOS_ALLOW_MISSING_TOOLS" \
   env -i PATH="$ISOLATED_BIN" HOME="$HOME" EOS_ALLOW_MISSING_TOOLS=ruff,pytest bash -c "cd '$STACK_REPO' && bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
 
