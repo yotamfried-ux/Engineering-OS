@@ -107,6 +107,7 @@ No project template applies: this is internal governance/enforcement maintenance
 ## Progress Lifecycle Evidence
 
 - start: plan committed on claude/engineering-os-readiness-pr-c (reused for PR E after branch-deletion was blocked at the git-proxy level, same as PR D's branch reuse on pr-b; see Scope note below) before any script, manifest, or test edits.
+- mid: policy-gate-dependencies.tsv, the manifest-driven install-policy-gates.sh rewrite, the commit-msg.sh EOS_HOME fix, both new/extended test files, and the gap closure landed in commit 8a5e552; full and targeted suites re-ran green after the step.
 
 ## Lessons Reused
 
