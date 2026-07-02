@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+tests-tool-contract	validation-governance	scripts/enforcement/enforce-tests.sh	scripts/enforcement/tests/test-tests.sh	covered:both stacks pass → commit allowed	covered:node failure blocks commit	covered:missing tool in CI hard-fails	covered:missing tool locally with named waiver warns and passes	Missing-tool environment contract: CI hard-fails, local requires a named EOS_ALLOW_MISSING_TOOLS waiver, clean repos with no declared stack stay unaffected.

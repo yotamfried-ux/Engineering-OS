@@ -6,7 +6,14 @@
 # only ONE stack ran (and a bash/md repo ran nothing). This runs EVERY detected
 # stack whose source files are staged, aggregates failures, and:
 #   - a check that RUNS and fails        → blocks the commit (exit 1)
-#   - a declared stack whose tool is MISSING → loud warning, does NOT block
+#   - a declared stack whose tool is MISSING → environment contract below
+#
+# Missing-tool environment contract (no silent skip anywhere):
+#   - CI (CI=true or EOS_ENV=ci): a declared stack with a missing tool HARD-FAILS.
+#   - local: a missing tool fails unless EOS_ALLOW_MISSING_TOOLS names it
+#     (comma-separated tool names, e.g. EOS_ALLOW_MISSING_TOOLS=shellcheck),
+#     in which case it warns loudly and proceeds.
+#   - repos with no declared stack are untouched, so clean installs stay possible.
 #
 # Invoked from scripts/hooks/pre-commit.sh. Master bypass: EOS_BYPASS_TESTS=1.
 # Governing policy: core/quality-gates.md <pre_commit_review>.
@@ -45,8 +52,29 @@ run() {
     fail=1
   fi
 }
-# warn_missing <stack> <tool> — declared stack but tool absent: warn, never block.
-warn_missing() { echo "⚠️  ${1}: '${2}' not installed — skipping (install it so this gate can run)."; }
+# missing_tool <stack> <tool> — declared stack but tool absent: environment contract.
+# CI hard-fails; local fails unless EOS_ALLOW_MISSING_TOOLS names the tool.
+in_ci() { [ "${CI:-}" = "true" ] || [ "${EOS_ENV:-}" = "ci" ]; }
+tool_waived() {
+  local tool="$1" entry
+  IFS=',' read -r -a waived_tools <<< "${EOS_ALLOW_MISSING_TOOLS:-}"
+  for entry in ${waived_tools[@]+"${waived_tools[@]}"}; do
+    [ "$(printf '%s' "$entry" | xargs)" = "$tool" ] && return 0
+  done
+  return 1
+}
+missing_tool() {
+  local stack="$1" tool="$2"
+  if in_ci; then
+    echo "❌ ${stack}: '${tool}' not installed in CI — a declared stack must have its tools in CI."
+    fail=1
+  elif tool_waived "$tool"; then
+    echo "⚠️  ${stack}: '${tool}' not installed — waived via EOS_ALLOW_MISSING_TOOLS (install it so this gate can run)."
+  else
+    echo "❌ ${stack}: '${tool}' not installed — install it, or waive explicitly with EOS_ALLOW_MISSING_TOOLS=${tool}."
+    fail=1
+  fi
+}
 
 # has_npm_script <name> — true if package.json defines the given script.
 # Prefers node (accurate JSON parsing); falls back to grep when node is absent
@@ -70,21 +98,21 @@ if [ -f "$ROOT/package.json" ] && staged_match '\.(js|jsx|ts|tsx|mjs|cjs|vue|sve
     has_npm_script lint && run "node lint ($pm)" "$pm" run lint
     has_npm_script test && run "node test ($pm)" "$pm" test
   else
-    warn_missing node "$pm"
+    missing_tool node "$pm"
   fi
 fi
 
 # ── python ───────────────────────────────────────────────────────────────────
 if { [ -f "$ROOT/pyproject.toml" ] || [ -f "$ROOT/setup.py" ] || [ -f "$ROOT/requirements.txt" ]; } \
    && staged_match '\.py$'; then
-  if have ruff; then run "python lint (ruff)" ruff check "$ROOT"; else warn_missing python ruff; fi
+  if have ruff; then run "python lint (ruff)" ruff check "$ROOT"; else missing_tool python ruff; fi
   if have pytest; then
     echo "── python test (pytest) ──"
     pytest -q "$ROOT"; prc=$?
     # exit 5 = "no tests collected" → not a failure (the test-file gate lives in commit-msg).
     if [ "$prc" -eq 0 ] || [ "$prc" -eq 5 ]; then echo "  ✅ python test (pytest)"; else echo "  ❌ python test (pytest) FAILED"; fail=1; fi
   else
-    warn_missing python pytest
+    missing_tool python pytest
   fi
 fi
 
@@ -94,7 +122,7 @@ if [ -f "$ROOT/go.mod" ] && staged_match '\.go$'; then
     run "go vet" go vet ./...
     run "go test" go test ./...
   else
-    warn_missing go go
+    missing_tool go go
   fi
 fi
 
@@ -104,7 +132,7 @@ if [ -f "$ROOT/Cargo.toml" ] && staged_match '\.rs$'; then
     have rustup && cargo clippy --version >/dev/null 2>&1 && run "rust clippy" cargo clippy --quiet
     run "rust test" cargo test --quiet
   else
-    warn_missing rust cargo
+    missing_tool rust cargo
   fi
 fi
 
@@ -114,7 +142,7 @@ if [ -f "$ROOT/Makefile" ] && staged_match '(^|/)Makefile$|\.mk$'; then
     make_target lint && run "make lint" make -C "$ROOT" lint
     make_target test && run "make test" make -C "$ROOT" test
   else
-    warn_missing make make
+    missing_tool make make
   fi
 fi
 
@@ -137,7 +165,7 @@ if [ -n "$shells" ]; then
   done <<EOF
 $shells
 EOF
-  have shellcheck || warn_missing shell shellcheck
+  have shellcheck || missing_tool shell shellcheck
 fi
 
 if [ "$fail" -ne 0 ]; then

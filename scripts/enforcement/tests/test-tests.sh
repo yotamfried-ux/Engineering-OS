@@ -64,21 +64,32 @@ expect "node failure blocks commit" 1 "$rc"
 rc="$(STUB_NPM=0 STUB_GO=1 runE)"
 expect "go failure blocks commit"   1 "$rc"
 
-echo "── declared stack, tool missing → warn, not block ──"
+echo "── declared stack, tool missing → environment contract ──"
 reset_case
 printf 'module example\n' > go.mod; printf 'package main\n' > main.go
 git add go.mod main.go 2>/dev/null   # no go stub on PATH
-expect "missing go tool warns (exit 0)" 0 "$(runE)"
+expect "missing tool in CI hard-fails" 1 "$(CI=true runE)"
+expect "missing tool in CI fails even with waiver var" 1 "$(CI=true EOS_ALLOW_MISSING_TOOLS=go runE)"
+expect "missing tool locally without waiver fails" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS= runE)"
+expect "missing tool locally with named waiver warns and passes" 0 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=go runE)"
+expect "waiver for a different tool does not cover go" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=shellcheck runE)"
 
 echo "── shell syntax gate ──"
 reset_case
 printf 'if then fi\n' > broken.sh           # invalid bash syntax
 git add broken.sh 2>/dev/null
+mkstub shellcheck
 expect "staged .sh syntax error blocks" 1 "$(runE)"
 reset_case
 printf '#!/usr/bin/env bash\necho hi\n' > ok.sh
 git add ok.sh 2>/dev/null
+mkstub shellcheck
 expect "clean staged .sh allowed"       0 "$(runE)"
+reset_case
+printf '#!/usr/bin/env bash\necho hi\n' > ok.sh
+git add ok.sh 2>/dev/null                    # no shellcheck stub
+expect "missing shellcheck locally without waiver fails" 1 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS= runE)"
+expect "missing shellcheck locally with waiver passes" 0 "$(CI=false EOS_ENV= EOS_ALLOW_MISSING_TOOLS=shellcheck runE)"
 
 echo "── general ──"
 reset_case
