@@ -89,6 +89,10 @@ eos_select_plan() {
     [ -n "$file" ] || continue
     targets="$(awk -F'|' 'NF>1{for(i=1;i<NF;i++){f=tolower($i);gsub(/[*_`]/,"",f);gsub(/^[ \t]+|[ \t]+$/,"",f);if(f ~ /^target paths?$|^target files$|^target scope$/){v=$(i+1);gsub(/^[ \t]+|[ \t]+$/,"",v);print v;exit}}}' "$candidate" 2>/dev/null)"
     [ -n "$targets" ] || continue
+    targets_norm="$(printf '%s' "$targets" | tr '[:upper:]' '[:lower:]' | sed -E 's/[[:space:][:punct:]]+$//' | sed -E 's/^[[:space:]]+//')"
+    case "$targets_norm" in
+      none|n/a|na|not\ required|any) printf '%s\n' "$candidate"; return 0 ;;
+    esac
     while IFS= read -r t; do
       [ -n "$t" ] || continue
       prefix="$(printf '%s' "$t" | sed -E 's/<[^>]+>//g; s/`//g; s#^\./##; s#/$##; s/^[-*[:space:]]+//; s/[[:space:]]+$//')"

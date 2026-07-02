@@ -61,6 +61,14 @@ EOF
 expect_selected "field-less newest plan is fallback only" "scripts/x/tool.sh" ".claude/plans/older-scripts.md"
 expect_selected "field-less newest plan wins when nothing matches" "src/unrelated.ts" ".claude/plans/no-targets.md"
 
+# Unscoped Target paths ("none"/"any"/"n/a") mean match-all: a newer unscoped
+# plan must win over an older plan with a literal, unrelated prefix match.
+sleep 1
+write_plan .claude/plans/newer-unscoped.md "none"
+expect_selected "newer unscoped plan matches any target" "scripts/x/tool.sh" ".claude/plans/newer-unscoped.md"
+expect_selected "newer unscoped plan matches unrelated target too" "src/unrelated.ts" ".claude/plans/newer-unscoped.md"
+rm .claude/plans/newer-unscoped.md
+
 # Hook-mode integration: check-plan-scope selects the matching plan, so a write
 # inside the older plan's scope is allowed even though a newer unrelated plan exists.
 rm .claude/plans/no-targets.md
