@@ -48,10 +48,40 @@ put '# Task
 ## Connector Usage Evidence
 - source: GitHub repository files.
 - action: checked GitHub repository files.
-- result: GitHub showed the relevant source.
+- result: GitHub showed README.md as the relevant source.
 - decision: selected the implementation path from the GitHub result.'
 ci connector-with-evidence
 ok connector-with-evidence
+
+mk connector-result-without-identifier-fails
+put '# Task
+| Field | Value |
+|---|---|
+| External systems/connectors | GitHub |
+## Connector Evidence
+- connector: GitHub.
+## Connector Usage Evidence
+- source: GitHub repository files.
+- action: checked GitHub repository files.
+- result: GitHub showed the relevant source.
+- decision: selected the implementation path from the GitHub result.'
+ci connector-result-without-identifier-fails
+no connector-result-without-identifier-fails
+
+mk connector-result-pr-number-passes
+put '# Task
+| Field | Value |
+|---|---|
+| External systems/connectors | GitHub |
+## Connector Evidence
+- connector: GitHub.
+## Connector Usage Evidence
+- source: GitHub PR data.
+- action: checked GitHub PR #178.
+- result: GitHub showed PR #178 as the relevant source.
+- decision: selected the implementation path from the GitHub result.'
+ci connector-result-pr-number-passes
+ok connector-result-pr-number-passes
 
 mk connector-decision-added-passes
 put '# Task
@@ -63,7 +93,7 @@ put '# Task
 ## Connector Usage Evidence
 - source: GitHub repository files.
 - action: checked GitHub repository files.
-- result: GitHub showed the relevant source.
+- result: GitHub showed scripts/enforcement/check-connector-evidence.sh as the relevant source.
 - decision: added connector-backed validation based on GitHub evidence.'
 ci connector-decision-added-passes
 ok connector-decision-added-passes
@@ -121,7 +151,7 @@ put '# Task
 ## Connector Usage Evidence
 - source: GitHub repository files.
 - action: checked GitHub repository files.
-- result: GitHub showed the relevant source.
+- result: GitHub showed README.md as the relevant source.
 - decision: selected the implementation path from the GitHub result.'
 ci connector-full-name-required
 no connector-full-name-required
@@ -150,7 +180,7 @@ put '# Task
 ## Connector Usage Evidence
 - source: GitHub scripts/enforcement/check-connector-evidence.sh.
 - action: checked GitHub checker behavior.
-- result: GitHub showed connector evidence validation code.
+- result: GitHub showed scripts/enforcement/check-connector-evidence.sh validation code.
 - decision: changed the checker based on GitHub evidence.
 - target: scripts/enforcement/check-connector-evidence.sh.'
 echo ok > scripts/enforcement/check-connector-evidence.sh
@@ -182,7 +212,7 @@ put '# Task
 ## Connector Usage Evidence
 - source: GitHub repository files.
 - action: checked GitHub repository files.
-- result: GitHub showed the relevant source.
+- result: GitHub showed README.md as the relevant source.
 - decision: read GitHub data.'
 ci connector-decision-label-only-fail
 no connector-decision-label-only-fail
