@@ -106,17 +106,18 @@ No project template applies: this is internal governance/enforcement maintenance
 
 - start: plan committed on claude/engineering-os-readiness-pr-c before any gate, manifest, doc, or test edits.
 - mid: run-trace hardening landed in b472945, simulation token work in 5c2c746, tests-tool contract in 6b761e8, shared plan selection in ac615cd, DoD schema and broad-claim rejection in 0a87b8d, gap closures in 2d660e7; targeted suites re-ran green after each step.
+- pre-merge: after the last code change the full enforcement suite ran green except the pre-existing test-plan-scope environment case that fails identically on pristine main in this container; readiness, known-gaps, simulation-coverage validators and the range-level evidence policies re-verified before push.
 
 ## DoD
 
-- Run-trace triggers cover patterns, templates, commands, evals, and >5-file ranges, with waiver bodies validated — verified by test-run-trace.sh fixtures.
-- Simulation manifest distinguishes none-by-design from waived, with the two replaceable cells covered by real fixtures — verified by test-simulation-coverage.sh and test-connector-evidence.sh.
-- Missing test tools hard-fail in CI and require a named local waiver — verified by test-tests.sh fixtures.
-- Target-aware plan selection runs in all three gates — verified by test-active-plan-selection.sh fixtures.
-- DoD schema and broad-claim rejection land with negative fixtures in test-plan-quality.sh and test-documentation-asset-evidence.sh.
-- Four gaps flipped to closed with concrete artifacts; audit and ledger updated; check-readiness-audit.sh green.
-- Full local enforcement suite green except any disclosed pre-existing environment case.
-- Draft PR opened with review evidence; merge deferred to explicit approval.
+- [x] Run-trace triggers cover patterns, templates, commands, evals, and >5-file ranges, with waiver bodies validated — verified by test-run-trace.sh fixtures.
+- [x] Simulation manifest distinguishes none-by-design from waived, with the two replaceable cells covered by real fixtures — verified by test-simulation-coverage.sh and test-connector-evidence.sh.
+- [x] Missing test tools hard-fail in CI and require a named local waiver — verified by test-tests.sh fixtures.
+- [x] Target-aware plan selection runs in all three gates — verified by test-active-plan-selection.sh fixtures.
+- [x] DoD schema and broad-claim rejection landed with negative fixtures in test-plan-quality.sh and test-documentation-asset-evidence.sh.
+- [x] Four gaps flipped to closed with concrete artifacts; audit and ledger updated; check-readiness-audit.sh green.
+- [x] Full local enforcement suite green except the disclosed pre-existing test-plan-scope environment case.
+- [x] Draft PR opened with review evidence; merge deferred to explicit approval.
 
 ## Completed Work
 
