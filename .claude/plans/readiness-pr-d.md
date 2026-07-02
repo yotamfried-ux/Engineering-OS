@@ -94,6 +94,7 @@ No project template applies: this is internal governance/enforcement maintenance
 ## Progress Lifecycle Evidence
 
 - start: plan committed on claude/engineering-os-readiness-pr-b (reused for PR D after branch-deletion was blocked at the git-proxy level; see Scope note below) before any checker, workflow, or doc edits for PR D.
+- mid: check-pr-review-evidence.sh extracted and hardened, test-pr-review-evidence.sh (13 fixtures) added, pr-policy.yml rewired, merge-readiness-checklist.md cross-referenced, and both gaps flipped to closed in commit 513fb0b; targeted and full suites re-ran green after the step.
 
 ## Lessons Reused
 
