@@ -104,6 +104,13 @@ def target_matches(target_text, targets):
         if k in low or d in low or b in low: return True
     return False
 
+def has_identifier(text):
+    if re.search(r'(?<![A-Za-z0-9_])#\d+(?![A-Za-z0-9_])', text or ''): return True
+    if re.search(r'\b[0-9a-f]{7,40}\b', text or ''): return True
+    if re.search(r'\b[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+\b', text or ''): return True
+    if re.search(r'\b[A-Za-z0-9_.-]+\.(?:md|sh|py|ts|tsx|js|jsx|json|ya?ml|toml|tsv|csv|sql|txt)\b', text or ''): return True
+    return False
+
 changed=sh('git','diff','--name-only',base,head)
 plans=[p for p in changed if re.match(r'^\.claude/plans/.*\.md$', p) and os.path.exists(p)]
 code=[p for p in changed if p and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE', p)]
@@ -139,6 +146,9 @@ for plan in plans:
         for key, vals in values_by_key.items():
             if not vals:
                 print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must include non-empty {key}: evidence.'); bad=True
+        for result in values_by_key.get('result', []):
+            if not has_identifier(result):
+                print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence result must include a concrete identifier such as a path, PR or issue number, or SHA.'); bad=True
         decision_text='\n'.join(values_by_key.get('decision', []))
         if not decision_text or not re.search(r'\b(chose|selected|changed|limited|implemented|updated|kept|blocked|added)\b', decision_text, re.I):
             print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must show decision impact, not only that data was read.'); bad=True
