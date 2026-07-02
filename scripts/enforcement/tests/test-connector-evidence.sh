@@ -217,4 +217,16 @@ put '# Task
 ci connector-decision-label-only-fail
 no connector-decision-label-only-fail
 
+mk connector-marked-unavailable-passes
+put '# Task
+| Field | Value |
+|---|---|
+| External systems/connectors | Notion |
+## Connector Evidence
+- connector: Notion is unavailable in this session; the plan-file fallback carries the spec.
+## Connector Usage Evidence
+- note: no Notion usage because the connector was unavailable; fallback recorded above.'
+ci connector-marked-unavailable-passes
+ok connector-marked-unavailable-passes
+
 echo "connector route plan checker tests passed"
