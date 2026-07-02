@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+capability-staged-changes	capability-governance	scripts/enforcement/check-capability-staged-changes.sh	scripts/enforcement/tests/test-capability-staged-changes.sh	covered:declared_implied_capability_passes	covered:missing_implied_capability_fails	covered:stale_map_capability_fails	covered:waived_implied_capability_passes	Staged-change capability guard covers declared, missing, stale-map, malformed-map, no-plan, and waived behavior; stale declared capabilities are not failed by design.

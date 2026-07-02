@@ -32,6 +32,7 @@ PR B closes the five open selection-coverage gaps: manifest-driven connector sel
 - `plan.route-plan-before-write` — this plan is committed before the first code change of PR B.
 - `source.github-repo-read` — GitHub MCP read merged main state: commit 721024f, merge 0960973, docs/operations/known-gaps.tsv (12 open gaps).
 - `validation.policy-change-has-validator` — every selection policy change in this PR ships its own checker plus fixture tests.
+- `validation.actions-checked` — capability-evidence-policy.yml changes and CI results for the head SHA are verified before merge readiness.
 - `validation.coderabbit-policy` — dedicated branch, draft PR, review evidence in PR body, merge only on explicit approval.
 
 ## Connector Evidence

@@ -22,3 +22,4 @@ template-pattern-ratings	reuse-governance	active	Template and pattern ratings ma
 template-pattern-rating-evidence	reuse-governance	active	Template and pattern rating evidence must remain covered.
 documentation-asset-evidence	asset-governance	active	Documentation/reference asset evidence enforcement must remain covered.
 required-patterns	pattern-governance	active	Registry-driven pattern selection must remain covered.
+capability-staged-changes	capability-governance	active	Staged-change capability guard must remain covered.
