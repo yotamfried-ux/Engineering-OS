@@ -104,18 +104,19 @@ No project template applies: this is internal governance/enforcement maintenance
 
 - start: plan committed on claude/engineering-os-readiness-pr-b before any checker, manifest, workflow, gaps, or test edits.
 - mid: connector/template manifests landed in b2f3166, pattern and skill gates in 22e6c50, staged capability guard in c947eca, learning-reuse citation rule and gap closures in 7567cd6; targeted suites re-ran green after each step.
+- pre-merge: after the last code change the full enforcement suite ran green except the pre-existing test-plan-scope environment case that fails identically on pristine main in this container; readiness, known-gaps, simulation-coverage, and range-level evidence policies re-verified.
 
 ## DoD
 
-- Connector selection is manifest-driven with inventory coverage and fixtures.
-- Template selection is manifest-driven with per-directory coverage and fixtures.
-- Required-pattern gate runs in the write gate and CI with fixtures.
-- Skill selection rules extended with inventory coverage note and fixtures.
-- Staged-change capability guard runs in CI with fixtures.
-- Irrelevant lesson citation fails with a fixture.
-- Five gaps flipped to closed with concrete artifacts; audit rows and ledger updated; readiness validator green.
-- Full local suite green except the known pre-existing test-plan-scope environment case.
-- Draft PR opened with review evidence; merge deferred to explicit approval.
+- [x] Connector selection is manifest-driven with inventory coverage and fixtures.
+- [x] Template selection is manifest-driven with per-directory coverage and fixtures.
+- [x] Required-pattern gate runs in the write gate with fixtures and a registry-presence guard.
+- [x] Skill selection rules extended with inventory coverage and fixtures.
+- [x] Staged-change capability guard runs in capability-evidence-policy CI with fixtures.
+- [x] Irrelevant lesson citation fails with a fixture.
+- [x] Five gaps flipped to closed with concrete artifacts; audit rows and ledger updated; readiness validator green.
+- [x] Full local suite green except the known pre-existing test-plan-scope environment case.
+- [x] Draft PR opened with review evidence; merge deferred to explicit approval.
 
 ## Completed Work
 
