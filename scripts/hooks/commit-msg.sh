@@ -7,6 +7,18 @@ MSG_FILE="$1"
 MSG=$(cat "$MSG_FILE")
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
+# Resolve the Engineering OS reference the same way pre-commit.sh does: inside
+# the Engineering OS repo this is the repo root; inside a target project
+# installed with use-in-project.sh, the shared read-only reference path is
+# stored in .engineering-os/REFERENCE.md. Without this, enforce-debugging.sh
+# and enforce-resource.sh below would look for themselves inside the TARGET
+# repo (which never has them) and silently no-op in every installed project.
+EOS_HOME="${ENGINEERING_OS_HOME:-}"
+if [ -z "$EOS_HOME" ] && [ -f "$REPO_ROOT/.engineering-os/REFERENCE.md" ]; then
+  EOS_HOME="$(sed -n 's/^- Reference location: `\(.*\)`/\1/p' "$REPO_ROOT/.engineering-os/REFERENCE.md" | head -1)"
+fi
+EOS_HOME="${EOS_HOME:-$REPO_ROOT}"
+
 # Exempt merge/revert commits
 case "$MSG" in "Merge "*|"Revert "*) exit 0 ;; esac
 
@@ -35,14 +47,18 @@ fi
 
 # debugging-policy.md — a `fix:` commit must add a regression test (debug_loop step 7).
 # Governing policy: core/debugging-policy.md. Bypass: EOS_BYPASS_FIXTEST=1 (or EOS_BYPASS_DEBUG=1).
-if [ -f "$REPO_ROOT/scripts/enforcement/enforce-debugging.sh" ]; then
-  bash "$REPO_ROOT/scripts/enforcement/enforce-debugging.sh" commit-msg "$MSG_FILE" || exit 1
+if [ -f "$EOS_HOME/scripts/enforcement/enforce-debugging.sh" ]; then
+  bash "$EOS_HOME/scripts/enforcement/enforce-debugging.sh" commit-msg "$MSG_FILE" || exit 1
+else
+  echo "warning: enforce-debugging.sh not found under $EOS_HOME/scripts/enforcement (debugging-policy check skipped)" >&2
 fi
 
 # resource-management.md <model-selection> — no model identifier in commit messages.
 # Governing policy: core/resource-management.md. Bypass: EOS_BYPASS_MODELID=1.
-if [ -f "$REPO_ROOT/scripts/enforcement/enforce-resource.sh" ]; then
-  bash "$REPO_ROOT/scripts/enforcement/enforce-resource.sh" commit-msg "$MSG_FILE" || exit 1
+if [ -f "$EOS_HOME/scripts/enforcement/enforce-resource.sh" ]; then
+  bash "$EOS_HOME/scripts/enforcement/enforce-resource.sh" commit-msg "$MSG_FILE" || exit 1
+else
+  echo "warning: enforce-resource.sh not found under $EOS_HOME/scripts/enforcement (model-id check skipped)" >&2
 fi
 
 # quality-gates.md — block a large code commit when the project has ZERO test files.
