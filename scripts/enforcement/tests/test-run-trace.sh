@@ -177,4 +177,60 @@ write_plan_complete_trace
 stage_trace_doc yes
 pass trace_doc_with_contract_section_passes run_gate
 
+# extended significant-run triggers: patterns/, templates/, and >5-file ranges.
+stage_pattern_change() {
+  mkdir -p patterns/api
+  echo '# pattern change' > patterns/api/README.md
+  git add patterns/api/README.md
+}
+
+stage_template_change() {
+  mkdir -p templates/api-service
+  echo '# template change' > templates/api-service/README.md
+  git add templates/api-service/README.md
+}
+
+stage_many_code_files() {
+  mkdir -p src
+  for i in 1 2 3 4 5 6; do echo "code $i" > "src/file$i.ts"; git add "src/file$i.ts"; done
+}
+
+write_plan_empty_waiver() {
+  write_plan_without_trace
+  cat >> .claude/plans/active.md <<'EOF'
+
+## Run Trace Waiver
+EOF
+}
+
+setup_repo
+write_plan_without_trace
+stage_pattern_change
+failcase pattern_change_requires_run_trace run_gate
+
+setup_repo
+write_plan_complete_trace
+stage_pattern_change
+pass pattern_change_with_trace_passes run_gate
+
+setup_repo
+write_plan_without_trace
+stage_template_change
+failcase template_change_requires_run_trace run_gate
+
+setup_repo
+write_plan_without_trace
+stage_many_code_files
+failcase large_range_requires_run_trace run_gate
+
+setup_repo
+write_plan_complete_trace
+stage_many_code_files
+pass large_range_with_trace_passes run_gate
+
+setup_repo
+write_plan_empty_waiver
+stage_connector_change
+failcase heading_only_waiver_is_rejected run_gate
+
 echo "run trace simulations passed"

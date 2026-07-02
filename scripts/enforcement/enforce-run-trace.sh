@@ -52,10 +52,11 @@ section_text() {
 
 requires_trace=0
 requires_connector_trace=0
+code_count=0
 while IFS= read -r path; do
   [ -n "$path" ] || continue
   case "$path" in
-    scripts/enforcement/*|scripts/hooks/*|.claude/settings.json|.github/workflows/*|core/*|external-systems/*|docs/operations/claude-run-trace.md)
+    scripts/enforcement/*|scripts/hooks/*|.claude/settings.json|.github/workflows/*|core/*|external-systems/*|patterns/*|templates/*|.claude/commands/*|evals/*|docs/operations/claude-run-trace.md)
       requires_trace=1 ;;
   esac
   case "$path" in
@@ -63,9 +64,17 @@ while IFS= read -r path; do
       requires_trace=1
       requires_connector_trace=1 ;;
   esac
+  case "$path" in
+    .claude/plans/*|docs/*|README.md|CHANGELOG.md|LICENSE*) ;;
+    *) code_count=$((code_count + 1)) ;;
+  esac
 done <<EOF_STAGED
 $staged
 EOF_STAGED
+
+# Size trigger: a significant agent run is also any staged range touching more
+# than 5 code/config files, regardless of path.
+[ "$code_count" -gt 5 ] && requires_trace=1
 
 if printf '%s\n' "$staged" | grep -q '^docs/operations/claude-run-trace.md$'; then
   doc_blob="$(git show :docs/operations/claude-run-trace.md 2>/dev/null || true)"
@@ -89,8 +98,15 @@ plan="$(select_plan || true)"
 [ -n "$plan" ] || { echo "run trace required: no active Route Plan found" >&2; exit 1; }
 
 if has_heading "$plan" 'Run[[:space:]]+Trace[[:space:]]+Waiver'; then
-  echo "run trace checks passed via focused waiver"
-  exit 0
+  # A waiver heading alone is not a waiver: the body must carry a concrete reason.
+  waiver_body="$(section_text "$plan" 'run[[:space:]]+trace[[:space:]]+waiver' | sed -E '/^[[:space:]]*$/d; /^[[:space:]]*<!--/d')"
+  if [ "$(printf '%s' "$waiver_body" | wc -c | tr -d ' ')" -ge 40 ] \
+     && printf '%s\n' "$waiver_body" | grep -qiE 'reason|because|fallback|unavailable|scope'; then
+    echo "run trace checks passed via focused waiver"
+    exit 0
+  fi
+  echo "run trace waiver invalid: the waiver body must state a concrete reason (>=40 chars with reason/because/fallback/unavailable/scope)." >&2
+  exit 1
 fi
 
 has_heading "$plan" '(Claude[[:space:]]+)?Run[[:space:]]+Trace' || {

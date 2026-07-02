@@ -4,12 +4,20 @@ Engineering OS already mentions run traces in `core/learning-loop.md`. This guid
 
 ## When to record a trace
 
-Record a trace for:
+A **significant agent run** is defined deterministically — `enforce-run-trace.sh` requires a trace when staged changes touch any of:
+
+- `scripts/enforcement/`, `scripts/hooks/`, `.claude/settings.json`, `.github/workflows/`, `core/`, `external-systems/`;
+- `patterns/`, `templates/`, `.claude/commands/`, `evals/`;
+- any connector-named path (which additionally requires connector decisions and `notion_progress_validated` in the trace);
+- or more than 5 code/config files in one staged range, regardless of path.
+
+Beyond the enforced cases, record a trace for:
 
 - enforcement-loop simulations;
 - workflow experiments;
 - connector-selection decisions;
-- multi-step debugging or validation runs;
+- multi-step debugging or validation runs, including CI failure diagnosis and repair loops;
+- external review rounds whose feedback changed the change;
 - any run that should teach future agents how the system behaved.
 
 ## Where traces live
@@ -61,4 +69,4 @@ The trace must include these fields: goal, hypothesis, connectors/tools, steps, 
 
 Connector-related changes have an extra requirement: the trace must name the connector decision/evidence and mention `notion_progress_validated` when Notion progress tracking is part of the workflow.
 
-The trace can be waived only with a focused `## Run Trace Waiver` section in the active Route Plan, and only when the change is mechanical and produces no reusable experiment/process knowledge.
+The trace can be waived only with a focused `## Run Trace Waiver` section in the active Route Plan, and only when the change is mechanical and produces no reusable experiment/process knowledge. The waiver body itself is validated: it must state a concrete reason (at least 40 characters containing reason/because/fallback/unavailable/scope) — a bare heading does not waive the gate.
