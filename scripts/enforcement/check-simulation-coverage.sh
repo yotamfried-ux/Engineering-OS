@@ -39,6 +39,24 @@ validate_cell() {
   esac
 }
 
+freshness_prose() {
+  # Only surface prose meant for human review (waiver reasons); literal
+  # covered:<token> values are exact test-file tokens, not deferred prose,
+  # so they must not trip the stale-language scan below.
+  case "$1" in
+    covered:*) printf '' ;;
+    waived:*) printf '%s' "${1#waived:}" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+validate_freshness() {
+  local gate="$1" text="$2"
+  if printf '%s\n' "$text" | grep -Eiq '\b(future loop|pending|not yet|todo|tbd)\b'; then
+    fail "$gate: coverage row contains deferred-language; use a coverage token or a by-design reason"
+  fi
+}
+
 load_required_gates() {
   : > "$required_active"
   if [ -n "${EOS_SIM_COVERAGE_REQUIRED_GATES:-}" ]; then
@@ -80,6 +98,7 @@ while IFS=$'\t' read -r gate owner enforcer test_file positive negative invalid 
   for field_name in gate owner enforcer test_file positive negative invalid waiver notes; do
     value="${!field_name:-}"; [ -n "$value" ] || fail "$gate: missing required field '$field_name'"
   done
+  validate_freshness "$gate" "$(freshness_prose "$positive") $(freshness_prose "$negative") $(freshness_prose "$invalid") $(freshness_prose "$waiver") $notes"
   printf '%s' "$gate" | grep -Eq '[[:space:]]' && fail "$gate: gate_id must not contain whitespace"
   grep -Fxq "$gate" "$seen" 2>/dev/null && fail "$gate: duplicate gate_id"
   printf '%s\n' "$gate" >> "$seen"

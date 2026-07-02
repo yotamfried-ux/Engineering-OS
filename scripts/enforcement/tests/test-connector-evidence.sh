@@ -53,6 +53,21 @@ put '# Task
 ci connector-with-evidence
 ok connector-with-evidence
 
+mk connector-decision-added-passes
+put '# Task
+| Field | Value |
+|---|---|
+| External systems/connectors | GitHub |
+## Connector Evidence
+- connector: GitHub.
+## Connector Usage Evidence
+- source: GitHub repository files.
+- action: checked GitHub repository files.
+- result: GitHub showed the relevant source.
+- decision: added connector-backed validation based on GitHub evidence.'
+ci connector-decision-added-passes
+ok connector-decision-added-passes
+
 mk connector-code-target-pass
 put '# Task
 | Field | Value |

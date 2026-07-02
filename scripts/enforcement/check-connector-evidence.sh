@@ -140,7 +140,7 @@ for plan in plans:
             if not vals:
                 print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must include non-empty {key}: evidence.'); bad=True
         decision_text='\n'.join(values_by_key.get('decision', []))
-        if not decision_text or not re.search(r'\b(chose|selected|changed|limited|implemented|updated|kept|blocked)\b', decision_text, re.I):
+        if not decision_text or not re.search(r'\b(chose|selected|changed|limited|implemented|updated|kept|blocked|added)\b', decision_text, re.I):
             print(f'ERROR_FOR_AGENT: {plan} Connector Usage Evidence must show decision impact, not only that data was read.'); bad=True
         if code:
             target_vals=label_values(usage, 'target')

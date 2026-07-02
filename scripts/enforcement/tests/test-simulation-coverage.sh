@@ -12,6 +12,7 @@ cat > "$TMP/fixture-test.sh" <<'EOF'
 # positive-case-token
 # negative-case-token
 # invalid-case-token
+# not-yet-token
 EOF
 
 good_manifest="$TMP/good.tsv"
@@ -37,11 +38,25 @@ cat > "$waiver_manifest" <<'EOF'
 waiver-gate	validation-governance	NONE	NONE	waived:Positive simulation is not applicable for this manual-only fixture gate.	waived:Negative simulation is not applicable for this manual-only fixture gate.	waived:Invalid simulation is not applicable for this manual-only fixture gate.	waived:Waiver simulation is not applicable because this row itself validates explicit waiver text.	Fixture waiver row.
 EOF
 
+stale_manifest="$TMP/stale.tsv"
+cat > "$stale_manifest" <<EOF
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+stale-gate	validation-governance	NONE	$TMP/fixture-test.sh	covered:positive-case-token	covered:negative-case-token	covered:invalid-case-token	waived:This fixture intentionally keeps old pending coverage text for validation.	Fixture still says future loop should add a direct test.
+EOF
+
+token_with_stale_substring_manifest="$TMP/token-with-stale-substring.tsv"
+cat > "$token_with_stale_substring_manifest" <<EOF
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+token-not-stale-gate	validation-governance	NONE	$TMP/fixture-test.sh	covered:not-yet-token	covered:negative-case-token	covered:invalid-case-token	waived:This fixture intentionally waives waiver coverage because the gate has no waiver path.	Literal covered tokens are not scanned for deferred language.
+EOF
+
 pass current-manifest-passes bash "$CHECK"
 pass current-manifest-includes-run-trace-waiver env EOS_SIM_COVERAGE_REQUIRED_GATES=run-trace-waiver bash "$CHECK"
 pass single-fixture-manifest-passes env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$good_manifest"
 failcase missing-token-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$missing_token_manifest"
 failcase malformed-row-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$malformed_manifest"
 pass waiver-row-passes env EOS_SIM_COVERAGE_REQUIRED_GATES=waiver-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$waiver_manifest"
+failcase stale-coverage-language-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=stale-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$stale_manifest"
+pass covered-token-with-stale-substring-passes env EOS_SIM_COVERAGE_REQUIRED_GATES=token-not-stale-gate EOS_SIM_COVERAGE_MIN_ROWS=1 bash "$CHECK" "$token_with_stale_substring_manifest"
 
 echo "simulation coverage validator tests passed"
