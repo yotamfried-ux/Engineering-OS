@@ -46,4 +46,11 @@ if check_inventory_manifest_coverage "$TMP/rules-missing.tsv" >/dev/null 2>&1; t
 fi
 echo "ok: inventory_missing_rule_fails"
 
+sed 's/^google-drive[[:space:]][^[:space:]]*/google-drive\tinvalid/' "$RULES" > "$TMP/rules-invalid.tsv"
+if check_inventory_manifest_coverage "$TMP/rules-invalid.tsv" >/dev/null 2>&1; then
+  echo "expected inventory_invalid_status_fails to fail"
+  exit 1
+fi
+echo "ok: inventory_invalid_status_fails"
+
 echo "required connector inventory tests passed"
