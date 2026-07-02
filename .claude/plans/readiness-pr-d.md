@@ -7,7 +7,7 @@
 | Domain tags | readiness, enforcement, governance |
 | Task-router evidence | core/task-router.md checked; routed via routing_matrix section 7 |
 | Workflow evidence | core/workflow.md checked; plan-file fallback carries the spec |
-| Target paths | .github/workflows/pr-policy.yml, scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, scripts/enforcement/check-merge-readiness.sh, scripts/enforcement/tests/test-merge-readiness.sh, docs/operations/merge-readiness-checklist.md, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
+| Target paths | .github/workflows/pr-policy.yml, scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, scripts/enforcement/check-merge-readiness.sh, scripts/enforcement/tests/test-merge-readiness.sh, scripts/install-policy-gates.sh, scripts/enforcement/tests/test-clean-install-and-usage.sh, docs/operations/merge-readiness-checklist.md, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
 | Templates | not required |
 | Patterns | not required |
 | Skills | none |
@@ -62,7 +62,7 @@ Notion is required for governance-class work by connector policy, but the Notion
 - action: graphify query oriented the workflow-to-checker dependency map before reading pr-policy.yml and check-merge-readiness.sh.
 - result: the graph confirmed check-merge-readiness.sh has no sibling test-merge-readiness.sh yet and pr-policy.yml has no extracted script sibling, consistent with the two open gap rows.
 - decision: graph finding confirmed both extractions are genuinely new (not a rename of existing tested code), so this PR must ship both scripts with full fixture suites rather than only adding cases to an existing test file.
-- target: .github/workflows, scripts/enforcement, scripts/enforcement/tests, docs/operations
+- target: .github/workflows, scripts/enforcement, scripts/enforcement/tests, scripts/install-policy-gates.sh, docs/operations
 
 ## Template Gap Waiver
 
@@ -86,17 +86,19 @@ No project template applies: this is internal governance/enforcement maintenance
 - goal: close gap:pr-review-quality-schema and gap:merge-readiness-artifact with fixture-tested, behavior-preserving-then-hardened validators.
 - hypothesis: extracting the inline pr-policy.yml python into a standalone script first (no behavior change) makes it fixture-testable, then adding a `checks:` real-gate-name requirement and a `## Merge Readiness` schema closes both gaps without weakening the existing review-evidence contract.
 - connectors: github MCP confirmed merged main state and the exact open-gap rows before branching; notion_progress_validated: waived — Notion unavailable in this environment, plan-file fallback carries progress validation per the Connector Selection Waiver.
-- steps: extract check-pr-review-evidence.sh behavior-preserving from pr-policy.yml; add shallow/vague-checks negative fixtures; add the checks-name-a-real-gate requirement; add the Merge Readiness schema (base/expected-head-sha/ci/threads/approval) to the same validator; cross-check expected-head-sha against github.event.pull_request.head.sha in the workflow; update merge-readiness-checklist.md's cross-reference; flip both gaps to closed with concrete artifacts; update audit rows.
-- evidence: scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md.
+- steps: extract check-pr-review-evidence.sh behavior-preserving from pr-policy.yml; add shallow/vague-checks negative fixtures; add the checks-name-a-real-gate requirement; add the Merge Readiness schema (base/expected-head-sha/ci/threads/approval) to the same validator; cross-check expected-head-sha against github.event.pull_request.head.sha in the workflow; update merge-readiness-checklist.md's cross-reference; flip both gaps to closed with concrete artifacts; update audit rows; fix a Codex-flagged downstream install gap where the extracted script was not copied to installed target projects; fix a CodeRabbit-flagged vague-value detection bug and real-gate-token narrowness that this very PR's own CI run hit.
+- evidence: scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, .github/workflows/pr-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/install-policy-gates.sh, scripts/enforcement/tests/test-clean-install-and-usage.sh.
 - rejected: automating the merge decision itself, and length-only field validation, were rejected as violating the human-merge-decision rule and as insufficient to catch the quality gap respectively.
-- result: pending — recorded once the extraction and hardening land and the full suite is green.
-- follow-up: PR E covers install-downstream-behavior, the final open gap.
+- result: the extraction and hardening landed; CI and reviewer feedback caught four real gaps (missing capability evidence, missing downstream install copy, an overbroad vague-value regex, a too-narrow real-gate token matcher), all fixed and re-verified.
+- follow-up: PR E covers install-downstream-behavior comprehensively across the other pre-existing workflow/script dependencies (connector-evidence-policy.yml, workflow-evidence-policy.yml, capability-evidence-policy.yml, documentation-asset-policy.yml all have the same latent installer gap, not introduced by this PR and out of this PR's scope).
 
 ## Progress Lifecycle Evidence
 
 - start: plan committed on claude/engineering-os-readiness-pr-b (reused for PR D after branch-deletion was blocked at the git-proxy level; see Scope note below) before any checker, workflow, or doc edits for PR D.
 - mid: check-pr-review-evidence.sh extracted and hardened, test-pr-review-evidence.sh (13 fixtures) added, pr-policy.yml rewired, merge-readiness-checklist.md cross-referenced, and both gaps flipped to closed in commit 513fb0b; targeted and full suites re-ran green after the step.
 - pre-merge: after the last code/config/test change the full enforcement suite ran green except the pre-existing test-plan-scope environment case that fails identically on pristine main in this container; check-known-gaps.sh, check-readiness-audit.sh, and range-level workflow/documentation-asset/capability evidence policies re-verified before push.
+- pre-merge: after CI caught two real gaps (missing source.github-repo-read capability evidence; install-policy-gates.sh not copying check-pr-review-evidence.sh to installed targets, flagged by Codex on PR #183), both were fixed with a regression fixture and the full suite was re-verified green.
+- pre-merge: after CodeRabbit flagged the vague-value detection regex (now anchored to the whole field value, since substring matching rejected legitimate answers containing common generic words) and the real-gate token matcher (broadened to enforce-*.sh with word-boundary matching, deduplicated into a shared helper) plus a persist-credentials hardening nitpick on the Checkout step, all four were fixed and the full suite plus test-pr-review-evidence.sh were re-verified green.
 
 ## Lessons Reused
 
@@ -107,13 +109,17 @@ No project template applies: this is internal governance/enforcement maintenance
 ## DoD
 
 - [x] check-pr-review-evidence.sh extracted from pr-policy.yml with byte-for-byte preserved existing behavior — verified by test-pr-review-evidence.sh positive fixtures (external_review_with_merge_readiness_passes, fallback_with_real_gate_and_concrete_evidence_passes).
-- [x] checks: field must name a real gate/workflow token (cross-checked against .github/workflows/*.yml names or check-*/enforcement-tests script basenames) — verified by fallback_shallow_checks_fails and merge_readiness_ci_not_real_gate_fails.
+- [x] checks: field must name a real gate/workflow token (cross-checked against .github/workflows/*.yml names or check-*/enforce-*/enforcement-tests script basenames, word-boundary matched) — verified by fallback_shallow_checks_fails and merge_readiness_ci_not_real_gate_fails.
 - [x] evidence: field must contain a concrete artifact reference (path, run URL, or #<PR/issue number>) — verified by fallback_vague_evidence_fails.
 - [x] `## Merge Readiness` PR-body section required with base/expected-head-sha/ci/threads/approval fields, cross-checked against github.event.pull_request.head.sha — verified by missing_merge_readiness_section_fails, merge_readiness_placeholder_approval_fails, merge_readiness_non_sha_value_fails, merge_readiness_sha_mismatch_fails.
 - [x] merge-readiness-checklist.md cross-reference updated to point at the new deterministic validator.
 - [x] Two gaps flipped to closed with concrete artifacts; audit rows (PR review / external review, Merge safety, Git/branch policy) updated; check-readiness-audit.sh and check-known-gaps.sh green.
 - [x] Full local enforcement suite green except the known pre-existing test-plan-scope environment case.
 - [x] Draft PR opened with review evidence; merge deferred to explicit approval.
+- [x] install-policy-gates.sh copies check-pr-review-evidence.sh to installed target projects so pr-policy.yml stays runnable downstream (Codex review finding on PR #183) — verified by test-clean-install-and-usage.sh's installed-target smoke check.
+- [x] Vague-value detection anchored to the whole field value so substantive answers containing generic words in passing are not rejected (CodeRabbit critical finding, confirmed by this PR's own first CI failure) — verified by re-running test-pr-review-evidence.sh and a targeted repro of the shallow-checks fixture's error message.
+- [x] Real-gate token matcher broadened to all enforce-*.sh gates with word-boundary matching, deduplicated into require_real_gate() (CodeRabbit major + nitpick findings) — verified by the full test-pr-review-evidence.sh suite.
+- [x] Checkout step sets persist-credentials: false (CodeRabbit security nitpick).
 
 ## Scope note — branch reuse
 
@@ -125,4 +131,4 @@ PR A's branch was deleted after explicit authorization; PR B and PR C's merged b
 
 ## Remaining Validation Outside This Plan
 
-- PR E covers install-downstream-behavior per the approved program.
+- PR E covers install-downstream-behavior per the approved program, including the broader pre-existing installer gap shared by connector-evidence-policy.yml, workflow-evidence-policy.yml, capability-evidence-policy.yml, and documentation-asset-policy.yml.
