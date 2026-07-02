@@ -10,7 +10,7 @@ vercel	required	vercel|deploy|deployment|hosting|production|env|environment vari
 figma	required	figma|ui|ux|design|frontend|component|screen|wireframe|prototype	UI/UX/design work must use the design source-of-truth when available
 expo	required	expo|mobile|android|ios|react native|app build|apk|ipa	mobile build/deploy state must be validated through Expo when applicable
 postman	required	postman|endpoint|http|rest|api test|webhook|request|response	API endpoints/integrations need request/response validation
-stripe	required	stripe|payment|billing|checkout|subscription|invoice|webhook	payment/billing state must be validated through Stripe when applicable
+stripe	optional	stripe|payment|billing|checkout|subscription|invoice|webhook	Stripe is selected when the task explicitly depends on live Stripe account state
 google-drive	required	google drive|drive file|document asset|docs asset|shared document|uploaded document	Drive-backed documents/files must be read from Google Drive when applicable
 google-sheets	required	google sheets|spreadsheet|sheet row|sheet data|csv import|worksheet	Sheets-backed data must be read from Google Sheets when applicable
 slack	optional	communication|team discussion|slack	Slack is selected only when the task explicitly depends on Slack workspace state
