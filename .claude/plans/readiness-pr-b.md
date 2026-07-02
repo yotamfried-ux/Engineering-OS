@@ -103,6 +103,7 @@ No project template applies: this is internal governance/enforcement maintenance
 ## Progress Lifecycle Evidence
 
 - start: plan committed on claude/engineering-os-readiness-pr-b before any checker, manifest, workflow, gaps, or test edits.
+- mid: connector/template manifests landed in b2f3166, pattern and skill gates in 22e6c50, staged capability guard in c947eca, learning-reuse citation rule and gap closures in 7567cd6; targeted suites re-ran green after each step.
 
 ## DoD
 
