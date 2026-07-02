@@ -24,7 +24,7 @@ Make the operational-readiness audit incapable of holding an unclassified partia
 4. Re-add 13 official open gaps to `docs/operations/known-gaps.tsv` and mirror them in the audit freshness ledger.
 5. Strengthen `check-known-gaps.sh`: a `closed` gap requires concrete test and evidence artifacts (not NONE).
 6. New checklist docs: memory-context, merge-readiness, post-merge-incident; register them in `docs/operations/documentation-ownership.tsv`.
-7. New `tests/test-readiness-audit.sh` fixtures (positive, missing gap link, closed-gap link, plain Manual, missing checklist, deferred token, missing required row); extend `tests/test-known-gaps.sh` with closed-gap artifact negatives; point the `readiness-audit` simulation-coverage row at the new script/test.
+7. New `tests/test-readiness-audit.sh` fixtures (positive, missing gap link, closed-gap link, accepted-manual gap link and hidden-gap cases, plain Manual, missing checklist, deferred token, missing required row); extend `tests/test-known-gaps.sh` with closed-gap artifact negatives; point the `readiness-audit` simulation-coverage row at the new script/test.
 
 ## Alternatives
 
@@ -45,6 +45,7 @@ Make the operational-readiness audit incapable of holding an unclassified partia
 ## Connector Evidence
 
 - github: read repository state via GitHub MCP (get_me, list_pull_requests for yotamfried-ux/Engineering-OS) and repository files for the audit, gaps register, validators, and workflows.
+- github: read PR #178 CI/review state and Codex review thread after the PR was marked ready for review.
 
 ## Connector Selection Waiver
 
@@ -52,10 +53,10 @@ Notion is required for governance-class work by connector policy, but the Notion
 
 ## Connector Usage Evidence
 
-- source: github repository yotamfried-ux/Engineering-OS — docs/operations/operational-readiness-audit.md, docs/operations/known-gaps.tsv, .github/workflows/enforcement-tests.yml, scripts/enforcement/check-known-gaps.sh.
-- action: github state read via MCP get_me and list_pull_requests (confirmed zero open PRs so PR A is not superseding an open PR), plus repository file inspection of the audit validator and gaps register.
-- result: github inspection found the validator at .github/workflows/enforcement-tests.yml accepts Partially enforced rows with no gap linkage, and docs/operations/known-gaps.tsv holds 12 closed rows with no open tracking for the remaining partial areas.
-- decision: github findings selected the PR A shape — extracted validator scripts/enforcement/check-readiness-audit.sh with gap-link enforcement, 13 re-added open gaps, and strengthened closed-gap artifact checks in scripts/enforcement/check-known-gaps.sh.
+- source: github repository yotamfried-ux/Engineering-OS — docs/operations/operational-readiness-audit.md, docs/operations/known-gaps.tsv, .github/workflows/enforcement-tests.yml, scripts/enforcement/check-known-gaps.sh, scripts/enforcement/check-readiness-audit.sh, scripts/enforcement/tests/test-readiness-audit.sh, and PR #178 review thread.
+- action: github state read via MCP get_me and list_pull_requests (confirmed zero open PRs so PR A is not superseding an open PR), repository file inspection of the audit validator and gaps register, then PR #178 review-thread inspection after Codex feedback.
+- result: github inspection found the validator at .github/workflows/enforcement-tests.yml accepts Partially enforced rows with no gap linkage, and docs/operations/known-gaps.tsv holds 12 closed rows with no open tracking for the remaining partial areas; later Codex review found `accepted-manual` was valid in known-gaps but not counted as non-closed by the hidden-gap check.
+- decision: github findings selected the PR A shape — extracted validator scripts/enforcement/check-readiness-audit.sh with gap-link enforcement, 13 re-added open gaps, and strengthened closed-gap artifact checks in scripts/enforcement/check-known-gaps.sh; Codex review updated the readiness validator so `accepted-manual` also counts as non-closed and added fixture coverage for referenced and hidden accepted-manual gaps.
 - target: docs/operations/operational-readiness-audit.md, docs/operations/known-gaps.tsv, scripts/enforcement/check-readiness-audit.sh, scripts/enforcement/check-known-gaps.sh, scripts/enforcement/tests/test-readiness-audit.sh, .github/workflows/enforcement-tests.yml.
 
 ## Documentation Asset Evidence
@@ -83,24 +84,27 @@ No project template applies: this is internal governance/enforcement maintenance
 | docs/operations/operational-readiness-audit.md | checked |
 | docs/operations/known-gaps.tsv | checked |
 | scripts/enforcement/check-known-gaps.sh | checked |
+| scripts/enforcement/check-readiness-audit.sh | checked |
 | .github/workflows/enforcement-tests.yml | checked |
 | scripts/enforcement/simulation-coverage.tsv | checked |
 | scripts/enforcement/tests/test-known-gaps.sh | checked |
+| scripts/enforcement/tests/test-readiness-audit.sh | checked |
 | scripts/enforcement/tests/test-readiness-coverage-map.sh | checked |
 | docs/operations/documentation-ownership.tsv | checked |
 | core/task-router.md | checked |
 | core/workflow.md | checked |
 | core/hooks-policy.md | checked |
+| PR #178 review thread | checked |
 
 ## Claude Run Trace
 
 - goal: make every operational-readiness audit row deterministically classified — Enforced, Manual by design with checklist, Waiver-gated, or gap-linked — with a validator that fails CI on unclassified partial rows.
 - hypothesis: extracting the inline workflow validator into a parameterized script allows fixture tests for gap-link and checklist rules without weakening any existing check.
-- connectors: github via MCP (get_me, list_pull_requests) confirmed repo state and zero open PRs before branching work.
-- steps: graphify orientation, gate-by-gate inspection of check/enforce scripts and manifests, reconciliation table for all 31 rows, then validator extraction, audit rewrite, gaps re-registration, checklist docs, fixtures.
-- evidence: enforcement-tests.yml lines 139-161 accept Partially enforced without gap linkage; known-gaps.tsv has 12 closed rows and no open rows; 10 waived simulation cells inventoried.
+- connectors: github via MCP (get_me, list_pull_requests) confirmed repo state and zero open PRs before branching work; GitHub PR review thread inspection identified the accepted-manual hidden-gap defect after ready-for-review.
+- steps: graphify orientation, gate-by-gate inspection of check/enforce scripts and manifests, reconciliation table for all 31 rows, validator extraction, audit rewrite, gaps re-registration, checklist docs, fixtures, then Codex review feedback repair for accepted-manual gap visibility.
+- evidence: enforcement-tests.yml lines 139-161 accept Partially enforced without gap linkage; known-gaps.tsv has 12 closed rows and no open rows; 10 waived simulation cells inventoried; PR #178 Codex thread identified `accepted-manual` as a non-closed status that could hide outside the matrix.
 - rejected: editing core/documentation-policy.md for the contradiction-review bullet was rejected in PR A because MANIFEST md-sync would force a same-commit enforcer change; the review guidance lives in the audit row text instead. Also rejected: banning all judgment wording — only deterministic deferred tokens are banned.
-- result: PR A ships the classification contract; selection-coverage, trace/simulation, governance, and install-depth hardening follow in PRs B-E per the approved reconciliation plan.
+- result: PR A ships the classification contract, including accepted-manual gap visibility; selection-coverage, trace/simulation, governance, and install-depth hardening follow in PRs B-E per the approved reconciliation plan.
 - follow-up: PRs B-E close the 13 re-registered gaps; each flips its audit rows and gap statuses with closure artifacts.
 
 ## Progress Lifecycle Evidence
@@ -108,15 +112,16 @@ No project template applies: this is internal governance/enforcement maintenance
 - start: plan committed on claude/engineering-os-readiness-audit-xt362m before any validator, audit, gaps, checklist, or test edits.
 - mid: validator extraction, audit reclassification, 13 re-registered gaps, checklists, and fixtures landed in commit 535140a; targeted gates re-ran green after implementation began.
 - pre-merge: final verification after the last code change re-ran check-readiness-audit, check-known-gaps, simulation coverage, documentation hygiene, coverage map, readiness and known-gaps fixture suites, and the range-level evidence policies — all green; the single local test-plan-scope failure reproduces identically on pristine main bed4f74 and is environment-borne, unrelated to this change.
+- pre-merge: after Codex review, `accepted-manual` was added to the readiness validator's non-closed gap set and `test-readiness-audit.sh` gained referenced/hidden accepted-manual fixtures; this plan was updated after those code/test changes.
 
 ## DoD
 
 - [x] check-readiness-audit.sh extracted and strengthened; enforcement-tests.yml calls it.
 - [x] Audit matrix reclassified: no plain Manual rows; partial rows gap-linked; Manual by design rows name existing checklists.
 - [x] known-gaps.tsv carries 13 open gaps mirrored in the audit ledger; check-known-gaps.sh requires artifacts for closed gaps.
-- [x] New fixtures pass: test-readiness-audit.sh (14 cases), test-known-gaps.sh closed-gap negatives.
+- [x] New fixtures pass: test-readiness-audit.sh accepted-manual, gap-link, checklist, deferred-language, and required-row cases; test-known-gaps.sh closed-gap negatives.
 - [x] Full local enforcement test suite passes except one test-plan-scope case that fails identically on pristine main in this environment; no existing test weakened or removed.
-- [x] Draft PR opened with review evidence; merge deferred to explicit user approval.
+- [x] PR opened with review evidence; merge deferred to explicit user approval.
 
 ## Completed Work
 
