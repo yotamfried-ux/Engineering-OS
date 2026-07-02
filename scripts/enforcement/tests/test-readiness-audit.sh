@@ -35,7 +35,8 @@ Fixture coverage contract.
 | Area | Status | What is enforced or checked | Remaining gap |
 |---|---|---|---|
 HEAD
-    printf '%s\n' "$@"
+    printf '%s
+' "$@"
     cat <<'TAIL'
 
 ## Definition of full operational readiness
@@ -53,6 +54,10 @@ cat > "$TMP/gaps-open.tsv" <<'EOF'
 # gap_id	owner	status	priority
 fixture-open	owner-one	open	P2
 EOF
+cat > "$TMP/gaps-accepted-manual.tsv" <<'EOF'
+# gap_id	owner	status	priority
+fixture-manual	owner-one	accepted-manual	P2
+EOF
 cat > "$TMP/gaps-closed.tsv" <<'EOF'
 # gap_id	owner	status	priority
 fixture-closed	owner-one	closed	P2
@@ -69,6 +74,10 @@ ok current_audit_passes bash "$CHECK"
 write_audit "$TMP/good-partial.md" \
   '| Fixture area | Partially enforced | Gate: fixture. Owner: fixture. Evidence: fixture. | gap:fixture-open tracks the residual. |'
 ok partial_with_open_gap_passes "${FIX_ENV[@]}" bash "$CHECK" "$TMP/good-partial.md" "$TMP/gaps-open.tsv"
+
+write_audit "$TMP/accepted-manual-linked.md" \
+  '| Fixture area | Manual by design | Gate: fixture. Owner: fixture. Evidence: Checklist: docs/operations/memory-context-checklist.md review evidence. | gap:fixture-manual is accepted as manual but still tracked. |'
+ok accepted_manual_gap_referenced_by_matrix_passes "${FIX_ENV[@]}" bash "$CHECK" "$TMP/accepted-manual-linked.md" "$TMP/gaps-accepted-manual.tsv"
 
 write_audit "$TMP/bad-partial.md" \
   '| Fixture area | Partially enforced | Gate: fixture. Owner: fixture. Evidence: fixture. | residual text with no link. |'
@@ -105,6 +114,10 @@ no deferred_token_without_gap_fails "${FIX_ENV[@]}" bash "$CHECK" "$TMP/deferred
 write_audit "$TMP/hidden-gap.md" \
   '| Fixture area | Enforced | Gate: fixture. Owner: fixture. Evidence: fixture. | fully covered. |'
 no unreferenced_open_gap_fails "${FIX_ENV[@]}" bash "$CHECK" "$TMP/hidden-gap.md" "$TMP/gaps-open.tsv"
+
+write_audit "$TMP/hidden-accepted-manual-gap.md" \
+  '| Fixture area | Enforced | Gate: fixture. Owner: fixture. Evidence: fixture. | fully covered. |'
+no unreferenced_accepted_manual_gap_fails "${FIX_ENV[@]}" bash "$CHECK" "$TMP/hidden-accepted-manual-gap.md" "$TMP/gaps-accepted-manual.tsv"
 
 write_audit "$TMP/no-mbd-def.md" \
   '| Fixture area | Enforced | Gate: fixture. Owner: fixture. Evidence: fixture. | fully covered. |'
