@@ -65,6 +65,15 @@ EOF
 cat > "$TMP/manual.tsv" <<EOF
 manual-gap	owner-one	accepted-manual	P3	Risk description is long enough.	Mitigation description is long enough.	NONE	Closure description is long enough.	NONE	accepted_manual_passes
 EOF
+cat > "$TMP/closed-none-test.tsv" <<EOF
+closed-gap	owner-one	closed	P2	Risk description is long enough.	Mitigation description is long enough.	NONE	Closed and verified by fixture closure text.	$TMP/test.sh	closed_gap_without_test_fails
+EOF
+cat > "$TMP/closed-none-evidence.tsv" <<EOF
+closed-gap	owner-one	closed	P2	Risk description is long enough.	Mitigation description is long enough.	$TMP/test.sh	Closed and verified by fixture closure text.	NONE	closed_gap_without_evidence_fails
+EOF
+cat > "$TMP/closed-artifacts.tsv" <<EOF
+closed-gap	owner-one	closed	P2	Risk description is long enough.	Mitigation description is long enough.	$TMP/test.sh	Closed and verified by fixture closure text.	$TMP/test.sh	closed_gap_with_artifacts_passes
+EOF
 cat > "$TMP/manual-audit.md" <<'EOF'
 # Audit
 
@@ -83,5 +92,8 @@ no audit_extra_gap_fails env EOS_KNOWN_GAPS_MIN_ROWS=1 bash "$CHECK" "$TMP/good.
 no missing_field_fails env EOS_KNOWN_GAPS_MIN_ROWS=1 EOS_SKIP_AUDIT_FRESHNESS=1 bash "$CHECK" "$TMP/missing.tsv"
 no duplicate_gap_fails env EOS_KNOWN_GAPS_MIN_ROWS=1 EOS_SKIP_AUDIT_FRESHNESS=1 bash "$CHECK" "$TMP/dup.tsv"
 ok accepted_manual_passes env EOS_KNOWN_GAPS_MIN_ROWS=1 bash "$CHECK" "$TMP/manual.tsv" "$TMP/manual-audit.md"
+no closed_gap_without_test_fails env EOS_KNOWN_GAPS_MIN_ROWS=1 EOS_SKIP_AUDIT_FRESHNESS=1 bash "$CHECK" "$TMP/closed-none-test.tsv"
+no closed_gap_without_evidence_fails env EOS_KNOWN_GAPS_MIN_ROWS=1 EOS_SKIP_AUDIT_FRESHNESS=1 bash "$CHECK" "$TMP/closed-none-evidence.tsv"
+ok closed_gap_with_artifacts_passes env EOS_KNOWN_GAPS_MIN_ROWS=1 EOS_SKIP_AUDIT_FRESHNESS=1 bash "$CHECK" "$TMP/closed-artifacts.tsv"
 
 echo "known gaps tests passed"

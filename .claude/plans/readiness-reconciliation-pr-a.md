@@ -26,6 +26,13 @@ Make the operational-readiness audit incapable of holding an unclassified partia
 6. New checklist docs: memory-context, merge-readiness, post-merge-incident; register them in `docs/operations/documentation-ownership.tsv`.
 7. New `tests/test-readiness-audit.sh` fixtures (positive, missing gap link, closed-gap link, plain Manual, missing checklist, deferred token, missing required row); extend `tests/test-known-gaps.sh` with closed-gap artifact negatives; point the `readiness-audit` simulation-coverage row at the new script/test.
 
+## Alternatives
+
+- Extend the inline workflow python instead of extracting a script — rejected: inline CI python cannot be fixture-tested, so negative classification cases would stay unproven.
+- Reclassify rows without re-registering gaps — rejected: partial rows would again be terminal free-text states, which is the exact failure PR A removes.
+- Edit core/documentation-policy.md for the contradiction-review bullet — rejected for PR A: MANIFEST md-sync requires a same-commit enforcer change; the review guidance lives in the audit row text instead.
+- Ban all judgment wording in the audit — rejected: only deterministic deferred tokens are banned; review-based-by-design wording stays legitimate.
+
 ## Capability Evidence
 
 - `routing.task-router-read` — core/task-router.md read this session before any write.
@@ -63,7 +70,7 @@ Notion is required for governance-class work by connector policy, but the Notion
 - action: graphify query "enforcement gates and coverage manifests" oriented the dependency map before file reads.
 - result: the graph surfaced enforce-tests.sh and the tests community as the callers/owners of the gate wiring, confirming validators live in scripts/enforcement with sibling fixture tests rather than inline CI python.
 - decision: graph finding selected the extract-to-script approach for the readiness validator and informed which test files the new fixtures join; it scoped the write set to scripts/enforcement, its tests, the workflows dir, and docs/operations.
-- target: scripts/enforcement, scripts/enforcement/tests, .github/workflows, docs/operations.
+- target: scripts/enforcement, scripts/enforcement/tests, .github/workflows, docs/operations
 
 ## Template Gap Waiver
 

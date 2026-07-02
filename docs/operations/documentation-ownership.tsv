@@ -17,6 +17,9 @@ external-skills-inventory	skill-governance	external-skills/README.md	active	Inve
 docs-index	docs-governance	docs/README.md	active	Docs directory index and gap protocol.
 operational-readiness-audit	ops-readiness	docs/operations/operational-readiness-audit.md	active	Operational readiness coverage inventory and ROI gap map.
 post-merge-validation	merge-governance	.github/workflows/post-merge-validation.yml	active	Push-to-main repair-loop workflow.
+memory-context-checklist	context-governance	docs/operations/memory-context-checklist.md	active	Manual-by-design memory/context carryover evidence checklist.
+merge-readiness-checklist	merge-governance	docs/operations/merge-readiness-checklist.md	active	Manual-by-design merge safety evidence checklist.
+post-merge-incident-checklist	merge-governance	docs/operations/post-merge-incident-checklist.md	active	Manual-by-design live post-merge incident triage checklist.
 simulation-coverage	validation-governance	scripts/enforcement/simulation-coverage.tsv	active	Coverage inventory for simulation cases.
 temporary-route-plans	workflow-governance	.claude/plans/*.md	temporary	Task evidence only; never canonical durable policy.
 lessons	learning-governance	lessons-learned/*.md	active	Learning records governed by core/learning-loop.md.
