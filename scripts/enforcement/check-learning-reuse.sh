@@ -115,12 +115,13 @@ EOF_TAGS
 }
 
 irrelevant=""
-while IFS= read -r cited; do
-  [ -n "$cited" ] || continue
-  [ -f "$cited" ] || continue
-  lesson_relevant "$cited" || irrelevant="${irrelevant}${cited} "
-done < <(awk '/^##[[:space:]]+Lessons Reused/ { found=1; next } found && /^##[[:space:]]+/ { exit } found { print }' "$PLAN" 2>/dev/null \
-  | grep -oE '(lessons-learned|failed-solutions)/[A-Za-z0-9_./-]+\.md' | sort -u)
+for root in lessons-learned failed-solutions; do
+  [ -d "$root" ] || continue
+  while IFS= read -r lesson; do
+    plan_mentions_lesson "$lesson" || continue
+    lesson_relevant "$lesson" || irrelevant="${irrelevant}${lesson} "
+  done < <(find "$root" -type f -name '*.md' ! -name README.md ! -name _TEMPLATE.md | sort)
+done
 
 if [ -n "$irrelevant" ]; then
   echo "learning reuse citation invalid: cited lesson(s) match neither the write target paths nor the plan domain tags: ${irrelevant}" >&2

@@ -175,6 +175,27 @@ setup_repo
 write_plan analysis "math, linear algebra" "none" no
 pass linear_algebra_does_not_force_linear_connector run_check src/math/solver.py
 
+setup_repo
+write_plan feature "database migration schema" "github, notion" yes
+failcase database_migration_requires_postgres_connector run_check src/db/migrate.sql
+setup_repo
+write_plan feature "database migration schema" "github, notion, postgres, supabase" yes
+pass database_migration_with_postgres_passes run_check src/db/migrate.sql
+
+setup_repo
+write_plan feature "drive file document asset" "github, notion" yes
+failcase drive_document_asset_requires_google_drive_connector run_check src/import/drive.ts
+setup_repo
+write_plan feature "drive file document asset" "github, notion, google-drive" yes
+pass drive_document_asset_with_google_drive_passes run_check src/import/drive.ts
+
+setup_repo
+write_plan feature "spreadsheet csv import worksheet" "github, notion" yes
+failcase csv_import_requires_google_sheets_connector run_check src/import/sheet.ts
+setup_repo
+write_plan feature "spreadsheet csv import worksheet" "github, notion, google-sheets" yes
+pass csv_import_with_google_sheets_passes run_check src/import/sheet.ts
+
 pass repo_inventory_coverage_passes bash "$CHECK" --check-coverage
 cat > "$TMP/inv-extra.md" <<'EOF'
 | Foo | `connectors/foo-service/` |

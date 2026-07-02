@@ -72,6 +72,14 @@ pass non_domain_tags_are_not_forced run_check src/docs/guide.md
 write_plan "readiness, enforcement" "not required"
 pass governance_tags_do_not_force_patterns run_check scripts/enforcement/foo.sh
 
+# precision: a prefix-colliding pattern directory does not satisfy an exact domain
+# (ai != ai-agents); this must fail, not pass via substring match.
+write_plan "ai, agents" "patterns/ai-agents/README.md"
+failcase prefix_colliding_pattern_dir_does_not_satisfy_exact_domain run_check src/agent/router.ts
+
+write_plan "ai, agents" "patterns/ai/README.md"
+pass exact_domain_pattern_dir_passes run_check src/agent/router.ts
+
 # invalid: registry with no domain entries fails closed.
 printf 'patterns: []\n' > "$TMP/empty-registry.yaml"
 write_plan "billing" "none"

@@ -70,7 +70,7 @@ missing=""
 while IFS= read -r tag; do
   [ -n "$tag" ] || continue
   printf '%s\n' "$DOMAINS" | grep -qxF "$tag" || continue
-  if printf '%s' "$PATTERNS" | tr '[:upper:]' '[:lower:]' | grep -q "patterns/${tag}"; then
+  if printf '%s' "$PATTERNS" | tr '[:upper:]' '[:lower:]' | grep -qE "patterns/${tag}(/|\$|[^a-z0-9_-])"; then
     continue
   fi
   plan_waives_domain "$tag" && continue
