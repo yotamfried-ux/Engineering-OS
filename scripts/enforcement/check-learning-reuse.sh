@@ -92,4 +92,40 @@ if [ -n "$missing" ]; then
   exit 1
 fi
 
+# Citation direction: a lesson cited in "Lessons Reused" must actually be
+# relevant (path- or tag-matched) to this write, so unrelated citations cannot
+# wash the reuse evidence.
+lesson_relevant() {
+  local lesson="$1" path tag
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    path_matches "$TARGET" "$path" && return 0
+  done <<EOF_PATHS
+$(section_items "$lesson" "Applies To Paths")
+EOF_PATHS
+  if [ -n "$plan_tags" ]; then
+    while IFS= read -r tag; do
+      [ -z "$tag" ] && continue
+      normalize_list "$plan_tags" | grep -qxF "$tag" && return 0
+    done <<EOF_TAGS
+$(section_items "$lesson" "Domain Tags" | tr '[:upper:]' '[:lower:]')
+EOF_TAGS
+  fi
+  return 1
+}
+
+irrelevant=""
+while IFS= read -r cited; do
+  [ -n "$cited" ] || continue
+  [ -f "$cited" ] || continue
+  lesson_relevant "$cited" || irrelevant="${irrelevant}${cited} "
+done < <(awk '/^##[[:space:]]+Lessons Reused/ { found=1; next } found && /^##[[:space:]]+/ { exit } found { print }' "$PLAN" 2>/dev/null \
+  | grep -oE '(lessons-learned|failed-solutions)/[A-Za-z0-9_./-]+\.md' | sort -u)
+
+if [ -n "$irrelevant" ]; then
+  echo "learning reuse citation invalid: cited lesson(s) match neither the write target paths nor the plan domain tags: ${irrelevant}" >&2
+  echo "Remove the unrelated citation, or add matching Applies To Paths / Domain Tags to the lesson if it truly applies." >&2
+  exit 1
+fi
+
 echo "learning reuse checks passed"

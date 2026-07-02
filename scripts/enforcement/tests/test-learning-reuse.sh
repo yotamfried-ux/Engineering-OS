@@ -153,6 +153,9 @@ pass all_relevant_knowledge_reused run_check "$TMP/with-both.md" src/payments/st
 make_plan neutral.md "profile" ""
 pass no_relevant_area_is_allowed run_check "$TMP/neutral.md" src/profile/user.ts
 
+make_plan irrelevant-cite.md "profile" "lessons-learned/bugs/stripe-webhook-signature.md"
+failcase irrelevant_lesson_citation_fails run_check "$TMP/irrelevant-cite.md" src/profile/user.ts
+
 cp no-reuse.md .claude/plans/active.md
 make_plan .claude/plans/learning-reuse-complete.md "" ""
 failcase runtime_blocks_missing_reuse run_workflow_write src/payments/stripe.ts
