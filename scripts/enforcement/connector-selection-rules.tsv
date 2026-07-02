@@ -1,0 +1,19 @@
+# connector	status	pattern	reason
+# status: required = matching tasks must declare the connector; optional = inventory-covered but not hard-required by deterministic selection.
+github	required	code|bug|debug|feature|refactor|engineering_os|governance|hook|enforcement|script|repo|github|\.github|pull|pr|branch|merge|commit	repo/code/PR state must be read from GitHub rather than guessed
+notion	required	code_change|bug|debug|incident|rollback|hotfix|regression|feature|refactor|new_project|saas|engineering_os|governance|implementation|architecture|multi-file|non-trivial	non-trivial work must be planned and progress-validated in Notion
+context7	required	api|sdk|library|framework|package|dependency|npm|pip|stripe|supabase|firebase|clerk|vercel|react|next|expo|openai|anthropic	API/library/framework work needs current official documentation
+sentry	required	debug|bug|incident|rollback|hotfix|regression|crash|sentry|production[ -_]*(failure|bug|incident)	debugging/incident work must inspect runtime error data when available
+supabase	required	supabase|database|db|sql|migration|rls|storage|data|auth table|row level	database/auth/data state must be queried from the configured backend
+postgres	required	postgres|postgresql|sql|database|migration|schema|query|index|rls	Postgres-backed database state must be queried from the configured backend
+vercel	required	vercel|deploy|deployment|hosting|production|env|environment variable|release	deployment/environment state must be validated from the hosting platform
+figma	required	figma|ui|ux|design|frontend|component|screen|wireframe|prototype	UI/UX/design work must use the design source-of-truth when available
+expo	required	expo|mobile|android|ios|react native|app build|apk|ipa	mobile build/deploy state must be validated through Expo when applicable
+postman	required	postman|endpoint|http|rest|api test|webhook|request|response	API endpoints/integrations need request/response validation
+stripe	required	stripe|payment|billing|checkout|subscription|invoice|webhook	payment/billing state must be validated through Stripe when applicable
+google-drive	required	google drive|drive file|document asset|docs asset|shared document|uploaded document	Drive-backed documents/files must be read from Google Drive when applicable
+google-sheets	required	google sheets|spreadsheet|sheet row|sheet data|csv import|worksheet	Sheets-backed data must be read from Google Sheets when applicable
+slack	optional	communication|team discussion|slack	Slack is selected only when the task explicitly depends on Slack workspace state
+linear	optional	linear|issue tracker|roadmap|product backlog	Linear is selected only when the task depends on Linear project state
+jira	optional	jira|ticket|sprint|issue tracker	Jira is selected only when the task depends on Jira project state
+discord	optional	discord|community|server message	Discord is selected only when the task depends on Discord server state
