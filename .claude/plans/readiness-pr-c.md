@@ -113,7 +113,8 @@ No project template applies: this is internal governance/enforcement maintenance
 - start: plan committed on claude/engineering-os-readiness-pr-c before any gate, manifest, doc, or test edits.
 - mid: run-trace hardening landed in b472945, simulation token work in 5c2c746, tests-tool contract in 6b761e8, shared plan selection in ac615cd, DoD schema and broad-claim rejection in 0a87b8d, gap closures in 2d660e7; targeted suites re-ran green after each step.
 - pre-merge: after the last code change the full enforcement suite ran green except the pre-existing test-plan-scope environment case that fails identically on pristine main in this container; readiness, known-gaps, simulation-coverage validators and the range-level evidence policies re-verified before push.
-- pre-merge: after the CI repair commit de0e32c (hermetic missing-tool fixtures diagnosed from run 28596073361), test-tests.sh re-ran 16/16 in both env modes, the lesson was captured in lessons-learned/bugs/ci-environment-dependent-fixture-premise.md, and CI re-verification on the new head is the final gate.
+- pre-merge: after the CI repair commit de0e32c (hermetic missing-tool fixtures diagnosed from run 28596075449), test-tests.sh re-ran 16/16 in both env modes, the lesson was captured in lessons-learned/bugs/ci-environment-dependent-fixture-premise.md, and CI re-verification on the new head is the final gate.
+- pre-merge: final range verification after the lesson commit 51efec7 re-ran the lifecycle, learning-reuse, and range evidence policies green before the repair push.
 
 ## DoD
 
