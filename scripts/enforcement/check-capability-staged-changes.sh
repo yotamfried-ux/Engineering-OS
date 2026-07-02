@@ -114,7 +114,8 @@ fi
 
 missing=""
 for cap in $implied; do
-  printf '%s' "$evidence_text" | grep -qF "$cap" || missing="${missing}${cap} "
+  esc_cap="$(printf '%s' "$cap" | sed 's/[.[\*^$]/\\&/g')"
+  printf '%s' "$evidence_text" | grep -qE "(^|[^A-Za-z0-9_.-])${esc_cap}([^A-Za-z0-9_.-]|\$)" || missing="${missing}${cap} "
 done
 
 if [ -n "$missing" ]; then

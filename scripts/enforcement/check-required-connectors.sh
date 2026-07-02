@@ -28,9 +28,9 @@ validate_manifest() {
   while IFS=$'\t' read -r conn mode ere reason extra; do
     case "${conn:-}" in ''|'#'*) continue ;; esac
     if [ -n "${extra:-}" ]; then echo "connector manifest malformed: $conn has too many columns" >&2; bad=1; continue; fi
-    [ -n "$mode" ] && [ -n "$ere" ] && [ -n "$reason" ] || { echo "connector manifest malformed: $conn is missing fields" >&2; bad=1; continue; }
+    [ -n "$mode" ] && [ -n "$reason" ] || { echo "connector manifest malformed: $conn is missing fields" >&2; bad=1; continue; }
     case "$mode" in
-      auto) : ;;
+      auto) [ -n "$ere" ] || { echo "connector manifest malformed: $conn is mode=auto but has no keyword_ere" >&2; bad=1; } ;;
       manual) : ;;
       *) echo "connector manifest malformed: $conn has invalid mode '$mode'" >&2; bad=1 ;;
     esac

@@ -49,6 +49,10 @@ failcase missing_implied_capability_fails bash "$CHECK" --files-from "$TMP/files
 write_plan "$TMP/plan-waived.md" '- `routing.task-router-read` — routed.' '- `validation.policy-change-has-validator` — not required because this fixture change is a comment-only edit.'
 pass waived_implied_capability_passes bash "$CHECK" --files-from "$TMP/files-enforcement.txt" --plan "$TMP/plan-waived.md"
 
+# precision: a superstring capability id must not satisfy a shorter implied id by substring.
+write_plan "$TMP/plan-superstring.md" '- `validation.policy-change-has-validator-extra` — an unrelated, longer capability id.'
+failcase superstring_capability_does_not_satisfy_implied_id bash "$CHECK" --files-from "$TMP/files-enforcement.txt" --plan "$TMP/plan-superstring.md"
+
 # irrelevant path: no implied capability, no plan needed.
 printf 'docs/README.md\nsrc/app.ts\n' > "$TMP/files-none.txt"
 pass irrelevant_paths_are_noop bash "$CHECK" --files-from "$TMP/files-none.txt"

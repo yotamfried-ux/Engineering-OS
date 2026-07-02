@@ -155,6 +155,7 @@ pass no_relevant_area_is_allowed run_check "$TMP/neutral.md" src/profile/user.ts
 
 make_plan irrelevant-cite.md "profile" "lessons-learned/bugs/stripe-webhook-signature.md"
 failcase irrelevant_lesson_citation_fails run_check "$TMP/irrelevant-cite.md" src/profile/user.ts
+grep -q "learning reuse citation invalid" "$LOG_FILE" || { echo "expected irrelevant-citation error message"; cat "$LOG_FILE"; exit 1; }
 
 make_plan irrelevant-basename-cite.md "profile" "stripe-webhook-signature.md"
 failcase irrelevant_basename_only_citation_fails run_check "$TMP/irrelevant-basename-cite.md" src/profile/user.ts
