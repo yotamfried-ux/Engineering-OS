@@ -107,10 +107,11 @@ required=""
 reasons=""
 
 while IFS=$'\t' read -r connector status pattern reason extra; do
-  connector="$(canon_key "$connector")"
+  raw_connector="${connector:-}"
+  case "$raw_connector" in ''|'#'*) continue ;; esac
+  connector="$(canon_key "$raw_connector")"
   status="$(printf '%s' "${status:-}" | tr '[:upper:]' '[:lower:]')"
   [ -n "$connector" ] || continue
-  case "$connector" in \#*) continue ;; esac
   if [ "$status" = "required" ]; then
     [ -n "${pattern:-}" ] || { echo "connector rule missing pattern for $connector" >&2; exit 1; }
     [ -n "${reason:-}" ] || { echo "connector rule missing reason for $connector" >&2; exit 1; }
