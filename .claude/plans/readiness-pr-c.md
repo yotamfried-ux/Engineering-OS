@@ -115,6 +115,7 @@ No project template applies: this is internal governance/enforcement maintenance
 - pre-merge: after the last code change the full enforcement suite ran green except the pre-existing test-plan-scope environment case that fails identically on pristine main in this container; readiness, known-gaps, simulation-coverage validators and the range-level evidence policies re-verified before push.
 - pre-merge: after the CI repair commit de0e32c (hermetic missing-tool fixtures diagnosed from run 28596075449), test-tests.sh re-ran 16/16 in both env modes, the lesson was captured in lessons-learned/bugs/ci-environment-dependent-fixture-premise.md, and CI re-verification on the new head is the final gate.
 - pre-merge: final range verification after the lesson commit 51efec7 re-ran the lifecycle, learning-reuse, and range evidence policies green before the repair push.
+- pre-merge: after merging PR B's CodeRabbit repair-loop fixes forward and fixing the Codex finding on eos_select_plan (unscoped Target paths now treated as match-all, with regression fixtures in test-active-plan-selection.sh), the full enforcement suite and range-level evidence policies were re-verified green.
 
 ## DoD
 
