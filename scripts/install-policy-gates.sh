@@ -18,6 +18,17 @@ for name in pr-policy.yml plan-policy.yml connector-evidence-policy.yml workflow
   echo "installed $name"
 done
 
+# pr-policy.yml calls this script instead of carrying its review-evidence logic
+# inline, so an installed target project needs the script too or the workflow
+# step exits 127 before validating the PR body.
+mkdir -p "$target/scripts/enforcement"
+pr_review_src="$home_dir/scripts/enforcement/check-pr-review-evidence.sh"
+if [ -f "$pr_review_src" ]; then
+  cp "$pr_review_src" "$target/scripts/enforcement/check-pr-review-evidence.sh"
+  chmod +x "$target/scripts/enforcement/check-pr-review-evidence.sh"
+  echo "installed scripts/enforcement/check-pr-review-evidence.sh"
+fi
+
 if [ "${EOS_SKIP_SETTINGS_PATCH:-0}" = "1" ]; then
   echo "settings patch skipped (preserving existing .claude/settings.json)"
   exit 0

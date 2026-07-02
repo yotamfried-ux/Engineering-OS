@@ -110,6 +110,33 @@ expect_contains "$ROOT/scripts/session-setup.sh" "rtk init -g"
 expect_contains "$ROOT/scripts/session-setup.sh" "rtk --version"
 expect_contains "$TARGET/.claude/settings.json" "$ROOT/scripts/enforcement"
 
+# pr-policy.yml calls check-pr-review-evidence.sh instead of inline python; the
+# installed target must carry the script or the workflow step exits 127 before
+# validating any PR body.
+expect_contains "$TARGET/.github/workflows/pr-policy.yml" "scripts/enforcement/check-pr-review-evidence.sh"
+expect_executable "$TARGET/scripts/enforcement/check-pr-review-evidence.sh"
+write_body() { printf '%s\n' "$2" > "$1"; }
+write_body "$TMP/installed-body.md" "
+## Review Fallback Evidence
+
+- reviewer: installed-target smoke check.
+- scope: check-pr-review-evidence.sh.
+- checks: enforcement-tests all green.
+- risks: extraction could change behavior.
+- decision: safe to merge after CI is green.
+- evidence: scripts/enforcement/tests/test-clean-install-and-usage.sh.
+
+## Merge Readiness
+
+- base: main
+- expected-head-sha: 0000000000000000000000000000000000000f
+- ci: enforcement-tests all green.
+- threads: no unresolved review threads remain on the PR.
+- approval: owner explicit go-ahead recorded in chat.
+"
+expect_pass "installed check-pr-review-evidence.sh runs from the target project" \
+  bash "$TARGET/scripts/enforcement/check-pr-review-evidence.sh" --body "$TMP/installed-body.md"
+
 run_install
 managed_count="$(grep -c '<!-- BEGIN engineering-os (managed) -->' "$TARGET/CLAUDE.md")"
 [ "$managed_count" = "1" ] || { echo "  ❌ managed CLAUDE block duplicated: $managed_count"; exit 1; }

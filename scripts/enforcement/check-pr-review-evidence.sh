@@ -37,7 +37,10 @@ import os, re, sys
 body_file, head_sha, workflows_dir, checks_dir = sys.argv[1:5]
 body = open(body_file, encoding='utf-8').read()
 
-placeholder = re.compile(r'\b(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\b', re.I)
+# Anchored to the whole value (optionally with surrounding punctuation/whitespace)
+# so a substantive answer that merely contains a banned word ("risks: none that
+# I could find, ...") is not rejected — only values that ARE placeholder text.
+placeholder = re.compile(r'^\s*(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\W*$', re.I)
 
 def gate_tokens():
     out = set()
@@ -54,7 +57,7 @@ def gate_tokens():
                     pass
     if os.path.isdir(checks_dir):
         for fn in os.listdir(checks_dir):
-            if re.match(r'^check-.+\.(sh|py)$', fn) or fn in ('enforce-tests.sh',):
+            if re.match(r'^(check|enforce)-.+\.(sh|py)$', fn):
                 out.add(fn.rsplit('.', 1)[0].lower())
     out.add('enforcement-tests')
     return out
@@ -63,7 +66,14 @@ GATE_TOKENS = gate_tokens()
 
 def names_real_gate(value):
     low = value.lower()
-    return any(tok in low for tok in GATE_TOKENS)
+    return any(re.search(r'\b' + re.escape(tok) + r'\b', low) for tok in GATE_TOKENS)
+
+def require_real_gate(title, field, value):
+    if names_real_gate(value):
+        return True
+    print(f'ERROR_FOR_AGENT: ## {title} {field}: must name at least one real gate/workflow '
+          f'(matched against .github/workflows/*.yml names or check-*/enforce-*/enforcement-tests script basenames).')
+    return False
 
 CONCRETE_REF = re.compile(r'(https?://\S+|#\d+|[\w.\-/]+/[\w.\-]+\.[a-zA-Z0-9]+)')
 
@@ -96,9 +106,7 @@ def require_fields(text, title, fields):
             print(f'ERROR_FOR_AGENT: ## {title} must include a concrete {field}: value.')
             ok = False
             continue
-        if field == 'checks' and not names_real_gate(value):
-            print(f'ERROR_FOR_AGENT: ## {title} checks: must name at least one real gate/workflow '
-                  f'(matched against .github/workflows/*.yml names or check-*/enforcement-tests script basenames).')
+        if field == 'checks' and not require_real_gate(title, 'checks', value):
             ok = False
         if field == 'evidence' and not concrete_evidence(value):
             print(f'ERROR_FOR_AGENT: ## {title} evidence: must be a concrete artifact reference '
@@ -133,8 +141,7 @@ if merge_ok:
               f'docs/operations/merge-readiness-checklist.md item 3.')
         merge_ok = False
     ci_value = field_value(merge, 'ci') or ''
-    if not names_real_gate(ci_value):
-        print('ERROR_FOR_AGENT: ## Merge Readiness ci: must name at least one real gate/workflow.')
+    if not require_real_gate('Merge Readiness', 'ci', ci_value):
         merge_ok = False
 
 if not (review_ok and merge_ok):
