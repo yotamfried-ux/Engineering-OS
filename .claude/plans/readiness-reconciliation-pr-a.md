@@ -106,6 +106,7 @@ No project template applies: this is internal governance/enforcement maintenance
 ## Progress Lifecycle Evidence
 
 - start: plan committed on claude/engineering-os-readiness-audit-xt362m before any validator, audit, gaps, checklist, or test edits.
+- mid: validator extraction, audit reclassification, 13 re-registered gaps, checklists, and fixtures landed in commit 535140a; targeted gates re-ran green after implementation began.
 
 ## DoD
 
