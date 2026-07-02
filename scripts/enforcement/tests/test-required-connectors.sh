@@ -123,11 +123,15 @@ append_connector_waiver "Reason: this fixture uses a manual fallback source for 
 pass connector_waiver_requires_real_reason run_check src/payments/webhook.ts
 
 setup_repo
-write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman" no
+write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman, stripe" no
 failcase notion_requires_progress_validation_section run_check src/payments/webhook.ts
 
 setup_repo
 write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman" yes
+failcase stripe_tagged_plan_requires_stripe_connector run_check src/payments/webhook.ts
+
+setup_repo
+write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman, stripe" yes
 pass complete_bug_payment_connector_selection_allows_plan run_check src/payments/webhook.ts
 
 setup_repo
@@ -149,15 +153,35 @@ write_plan docs "documentation" "none" no
 pass none_placeholder_does_not_require_evidence run_wrapper src/README.md
 
 setup_repo
-write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman" yes
-seed_evidence github notion context7 sentry postman
+write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman, stripe" yes
+seed_evidence github notion context7 sentry postman stripe
 failcase runtime_requires_notion_progress_evidence run_wrapper src/payments/webhook.ts
 
 setup_repo
-write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman" yes
-seed_evidence github notion context7 sentry postman
+write_plan bug_fix "payments, webhooks, stripe" "github, notion, context7, sentry, postman, stripe" yes
+seed_evidence github notion context7 sentry postman stripe
 seed_notion_progress
 pass runtime_allows_required_connectors_and_progress run_wrapper src/payments/webhook.ts
+
+setup_repo
+write_plan integration "slack, ops" "github, notion" yes
+failcase slack_tagged_plan_requires_slack_connector run_check src/ops/notify.ts
+
+setup_repo
+write_plan integration "slack, ops" "github, notion, slack" yes
+pass slack_tagged_plan_with_slack_passes run_check src/ops/notify.ts
+
+setup_repo
+write_plan analysis "math, linear algebra" "none" no
+pass linear_algebra_does_not_force_linear_connector run_check src/math/solver.py
+
+pass repo_inventory_coverage_passes bash "$CHECK" --check-coverage
+cat > "$TMP/inv-extra.md" <<'EOF'
+| Foo | `connectors/foo-service/` |
+EOF
+failcase unmapped_inventory_connector_fails_coverage bash "$CHECK" --check-coverage --inventory "$TMP/inv-extra.md"
+printf 'badconn\tauto\n' > "$TMP/bad-manifest.tsv"
+failcase malformed_manifest_row_fails bash "$CHECK" --manifest "$TMP/bad-manifest.tsv" --check-coverage
 
 setup_repo
 mkdir -p .claude

@@ -1,0 +1,32 @@
+# template_id	kind	keyword_ere	reason
+# kind=project: template is required when the ERE matches task class + domain tags + target.
+# kind=exempt: directory is not a standalone project scaffold; ere column is NONE and the
+# reason documents why no selection rule applies.
+# Directory coverage: every templates/<dir>/ must have a row here
+# (validated by check-required-templates.py --check-coverage).
+saas-platform	project	saas|multi-tenant|subscription|billing	SaaS scaffolds must start from the platform template
+booking-system	project	booking|appointment|scheduler|calendar	booking work must start from the booking template
+api-service	project	(^|[^a-z0-9])(api|rest|endpoint|microservice|server)([^a-z0-9]|$)	API/backend work must consult the api-service template
+web-application	project	(^|[^a-z0-9])(web|frontend|ui|ux|component|screen|page|react|next)([^a-z0-9]|$)	web/frontend work must consult the web-application template
+admin-dashboard	project	admin|dashboard|backoffice|control panel	admin/backoffice work must consult the admin-dashboard template
+mobile-application	project	mobile|android|ios|expo|react native	mobile work must consult the mobile-application template
+ai-agent	project	agent|ai-agent|multi-agent|llm|tool-calling	agent/LLM work must consult the ai-agent template
+data-pipeline	project	data pipeline|etl|elt|analytics|warehouse|reporting	data pipeline work must consult the data-pipeline template
+automation-system	project	automation|workflow|zapier|make|n8n	automation work must consult the automation-system template
+browser-extension	project	extension|browser extension|chrome	extension work must consult the browser-extension template
+cli-tool	project	cli|command line|terminal tool	CLI work must consult the cli-tool template
+analytics-platform	project	analytics platform|analytics dashboard|product analytics|event analytics	analytics platform work must consult the analytics-platform template
+computer-vision	project	computer vision|image classification|object detection|opencv	vision work must consult the computer-vision template
+crm-system	project	(^|[^a-z0-9])crm([^a-z0-9]|$)|customer relationship	CRM work must consult the crm-system template
+desktop-application	project	desktop app|desktop application|electron|tauri	desktop work must consult the desktop-application template
+etl-elt-system	project	meltano|dlt pipeline|singer tap|airbyte|fivetran	tool-specific ELT work must consult the etl-elt-system template
+machine-learning	project	machine learning|ml model|training pipeline|sklearn|pytorch|tensorflow	ML work must consult the machine-learning template
+marketplace	project	marketplace|two-sided|buyers and sellers	marketplace work must consult the marketplace template
+microservice	project	microservice	microservice work must consult the microservice template
+multi-agent-system	project	multi-agent|agent crew|crewai|autogen|langgraph	multi-agent work must consult the multi-agent-system template
+rag-system	project	(^|[^a-z0-9])rag([^a-z0-9]|$)|retrieval[ -]augmented|vector (db|database|store|search)	RAG work must consult the rag-system template
+commands	exempt	NONE	slash-command assets consumed by installs, not a standalone project scaffold
+hooks	exempt	NONE	hook assets consumed by installs, not a standalone project scaffold
+settings	exempt	NONE	settings assets consumed by installs, not a standalone project scaffold
+connectors	exempt	NONE	connector guide assets consumed by installs, not a standalone project scaffold
+github-actions	exempt	NONE	reusable CI workflow assets included by other templates, not a standalone project scaffold

@@ -1,15 +1,63 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PLAN=""
 TARGET=""
+MANIFEST="$SCRIPT_DIR/connector-requirements.tsv"
+INVENTORY="$ROOT/external-systems/README.md"
+CHECK_COVERAGE=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --plan) PLAN="${2:-}"; shift 2 ;;
     --target) TARGET="${2:-}"; shift 2 ;;
+    --manifest) MANIFEST="${2:-}"; shift 2 ;;
+    --inventory) INVENTORY="${2:-}"; shift 2 ;;
+    --check-coverage) CHECK_COVERAGE=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
+
+[ -f "$MANIFEST" ] || { echo "missing connector requirements manifest: $MANIFEST" >&2; exit 2; }
+
+# validate_manifest — every row needs connector, mode (auto|manual), ERE for auto
+# rows, and a concrete reason. Malformed rows fail closed.
+validate_manifest() {
+  local conn mode ere reason extra bad=0
+  while IFS=$'\t' read -r conn mode ere reason extra; do
+    case "${conn:-}" in ''|'#'*) continue ;; esac
+    if [ -n "${extra:-}" ]; then echo "connector manifest malformed: $conn has too many columns" >&2; bad=1; continue; fi
+    [ -n "$mode" ] && [ -n "$ere" ] && [ -n "$reason" ] || { echo "connector manifest malformed: $conn is missing fields" >&2; bad=1; continue; }
+    case "$mode" in
+      auto) : ;;
+      manual) : ;;
+      *) echo "connector manifest malformed: $conn has invalid mode '$mode'" >&2; bad=1 ;;
+    esac
+    [ "$(printf '%s' "$reason" | wc -c | tr -d ' ')" -ge 20 ] || { echo "connector manifest malformed: $conn reason is too short" >&2; bad=1; }
+  done < "$MANIFEST"
+  return "$bad"
+}
+
+# check_coverage — every connectors/<name>/ entry in the external-systems
+# inventory must have a manifest row, so new connectors cannot be silently
+# unselectable.
+check_coverage() {
+  local bad=0 name
+  [ -f "$INVENTORY" ] || { echo "missing connector inventory: $INVENTORY" >&2; return 1; }
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    grep -qE "^${name}	" "$MANIFEST" || { echo "connector inventory coverage failed: '$name' has no row in $(basename "$MANIFEST")" >&2; bad=1; }
+  done < <(grep -oE 'connectors/[a-z0-9-]+/' "$INVENTORY" | sed -E 's#connectors/([a-z0-9-]+)/#\1#' | sort -u)
+  return "$bad"
+}
+
+validate_manifest || exit 2
+if [ "$CHECK_COVERAGE" -eq 1 ]; then
+  check_coverage || exit 1
+  echo "connector requirements coverage passed"
+  exit 0
+fi
 
 [ -n "$PLAN" ] && [ -f "$PLAN" ] || { echo "missing readable --plan" >&2; exit 2; }
 [ -n "$TARGET" ] || { echo "missing --target" >&2; exit 2; }
@@ -100,41 +148,11 @@ combined="$(printf '%s %s %s' "$task" "$tags" "$TARGET" | tr '[:upper:]' '[:lowe
 required=""
 reasons=""
 
-if printf '%s' "$combined" | grep -qE 'code|bug|debug|feature|refactor|engineering_os|governance|hook|enforcement|script|repo|github|\.github|pull|pr|branch|merge|commit'; then
-  add_required github "repo/code/PR state must be read from GitHub rather than guessed"
-fi
-
-if printf '%s' "$combined" | grep -qE 'code_change|bug|debug|incident|rollback|hotfix|regression|feature|refactor|new_project|saas|engineering_os|governance|implementation|architecture|multi-file|non-trivial'; then
-  add_required notion "non-trivial work must be planned and progress-validated in Notion"
-fi
-
-if printf '%s' "$combined" | grep -qE 'api|sdk|library|framework|package|dependency|npm|pip|stripe|supabase|firebase|clerk|vercel|react|next|expo|openai|anthropic'; then
-  add_required context7 "API/library/framework work needs current official documentation"
-fi
-
-if printf '%s' "$combined" | grep -qE 'debug|bug|incident|rollback|hotfix|regression|crash|sentry|production[ -_]*(failure|bug|incident)'; then
-  add_required sentry "debugging/incident work must inspect runtime error data when available"
-fi
-
-if printf '%s' "$combined" | grep -qE 'supabase|database|db|sql|migration|rls|storage|data|auth table|row level'; then
-  add_required supabase "database/auth/data state must be queried from the configured backend"
-fi
-
-if printf '%s' "$combined" | grep -qE 'vercel|deploy|deployment|hosting|production|env|environment variable|release'; then
-  add_required vercel "deployment/environment state must be validated from the hosting platform"
-fi
-
-if printf '%s' "$combined" | grep -qE 'figma|ui|ux|design|frontend|component|screen|wireframe|prototype'; then
-  add_required figma "UI/UX/design work must use the design source-of-truth when available"
-fi
-
-if printf '%s' "$combined" | grep -qE 'expo|mobile|android|ios|react native|app build|apk|ipa'; then
-  add_required expo "mobile build/deploy state must be validated through Expo when applicable"
-fi
-
-if printf '%s' "$combined" | grep -qE 'postman|endpoint|http|rest|api test|webhook|request|response'; then
-  add_required postman "API endpoints/integrations need request/response validation"
-fi
+while IFS=$'\t' read -r conn mode ere reason _extra; do
+  case "${conn:-}" in ''|'#'*) continue ;; esac
+  [ "$mode" = "auto" ] || continue
+  printf '%s' "$combined" | grep -qE "$ere" && add_required "$conn" "$reason"
+done < "$MANIFEST"
 
 [ -n "${required// /}" ] || { echo "required connector checks passed"; exit 0; }
 
