@@ -7,7 +7,7 @@
 | Domain tags | readiness, enforcement |
 | Task-router evidence | core/task-router.md checked; routed via routing_matrix section 7 |
 | Workflow evidence | core/workflow.md checked; plan-file fallback carries the spec |
-| Target paths | scripts/enforcement/check-required-connectors.sh, scripts/enforcement/connector-requirements.tsv, scripts/enforcement/check-required-templates.py, scripts/enforcement/template-requirements.tsv, scripts/enforcement/check-required-patterns.sh, scripts/enforcement/check-required-skills.sh, scripts/enforcement/check-capability-staged-changes.sh, scripts/enforcement/capability-staged-map.tsv, scripts/enforcement/check-learning-reuse.sh, scripts/enforcement/pre-tool-use-runtime-evidence.sh, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/simulation-coverage.d, scripts/enforcement/tests, .github/workflows/capability-evidence-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
+| Target paths | scripts/enforcement/check-required-connectors.sh, scripts/enforcement/connector-requirements.tsv, scripts/enforcement/check-required-templates.py, scripts/enforcement/template-requirements.tsv, scripts/enforcement/check-required-patterns.sh, scripts/enforcement/check-required-skills.sh, scripts/enforcement/check-capability-staged-changes.sh, scripts/enforcement/capability-staged-map.tsv, scripts/enforcement/check-learning-reuse.sh, scripts/enforcement/pre-tool-use-runtime-evidence.sh, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/simulation-coverage.tsv, scripts/enforcement/simulation-coverage.d, scripts/enforcement/tests, .github/workflows/capability-evidence-policy.yml, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
 | Templates | not required |
 | Patterns | not required |
 | Skills | none |
@@ -17,6 +17,8 @@
 ## Scope
 
 PR B closes the five open selection-coverage gaps: manifest-driven connector selection tied to the external-systems inventory, manifest-driven template selection covering every templates/ directory, a registry-driven required-pattern gate, expanded skill selection rules with inventory coverage, a staged-change capability guard, plus an irrelevant-lesson-citation rule for learning reuse.
+
+**Reconciliation update (post-approval, pre-merge):** while PR B was in review, main independently merged PR #180 (commit d528527), a second, narrower connector-selection-coverage implementation (`connector-selection-rules.tsv`, 19 rows, no slack/linear/jira/stripe/postgres/google-drive/sheets/discord). Per explicit user decision, PR B's fuller implementation (`connector-requirements.tsv`, inventory `--check-coverage`, malformed-row fail-closed, precision fixtures) is kept as the canonical one; main's parallel files, its plan record, and its simulation-coverage row are removed in the merge-reconciliation commit.
 
 ## Alternatives
 
