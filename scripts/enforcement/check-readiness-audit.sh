@@ -13,8 +13,8 @@
 #   - every "Manual by design" row must name an existing Checklist: doc;
 #   - matrix rows without a gap link must not contain deferred language
 #     (todo, tbd, pending, not yet, future loop);
-#   - every non-closed gap in known-gaps.tsv must be referenced by at least one
-#     matrix row, so open gaps cannot hide outside the audit;
+#   - every non-closed gap in known-gaps.tsv, including accepted-manual, must be
+#     referenced by at least one matrix row, so open gaps cannot hide outside the audit;
 #   - required coverage rows and ROI priority terms must remain present.
 #
 # Fixture knobs (tests only; CI uses defaults):
@@ -122,7 +122,7 @@ for raw in gaps_path.read_text(encoding='utf-8').splitlines():
     if len(parts) >= 4:
         known_gaps[parts[0].strip()] = parts[2].strip()
 
-non_closed_statuses = {'open', 'mitigated', 'blocked'}
+non_closed_statuses = {'open', 'mitigated', 'blocked', 'accepted-manual'}
 deferred_re = re.compile(r'\b(todo|tbd|not yet|future loop|pending)\b', re.I)
 referenced = set()
 
