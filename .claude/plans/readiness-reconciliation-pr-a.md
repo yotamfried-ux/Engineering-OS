@@ -107,15 +107,16 @@ No project template applies: this is internal governance/enforcement maintenance
 
 - start: plan committed on claude/engineering-os-readiness-audit-xt362m before any validator, audit, gaps, checklist, or test edits.
 - mid: validator extraction, audit reclassification, 13 re-registered gaps, checklists, and fixtures landed in commit 535140a; targeted gates re-ran green after implementation began.
+- pre-merge: final verification after the last code change re-ran check-readiness-audit, check-known-gaps, simulation coverage, documentation hygiene, coverage map, readiness and known-gaps fixture suites, and the range-level evidence policies — all green; the single local test-plan-scope failure reproduces identically on pristine main bed4f74 and is environment-borne, unrelated to this change.
 
 ## DoD
 
-- check-readiness-audit.sh extracted and strengthened; enforcement-tests.yml calls it.
-- Audit matrix reclassified: no plain Manual rows; partial rows gap-linked; Manual by design rows name existing checklists.
-- known-gaps.tsv carries 13 open gaps mirrored in the audit ledger; check-known-gaps.sh requires artifacts for closed gaps.
-- New fixtures pass: test-readiness-audit.sh (positive plus six negatives), test-known-gaps.sh closed-gap negatives.
-- Full local enforcement test suite passes with no existing test weakened or removed.
-- Draft PR opened with review evidence; merge deferred to explicit user approval.
+- [x] check-readiness-audit.sh extracted and strengthened; enforcement-tests.yml calls it.
+- [x] Audit matrix reclassified: no plain Manual rows; partial rows gap-linked; Manual by design rows name existing checklists.
+- [x] known-gaps.tsv carries 13 open gaps mirrored in the audit ledger; check-known-gaps.sh requires artifacts for closed gaps.
+- [x] New fixtures pass: test-readiness-audit.sh (14 cases), test-known-gaps.sh closed-gap negatives.
+- [x] Full local enforcement test suite passes except one test-plan-scope case that fails identically on pristine main in this environment; no existing test weakened or removed.
+- [x] Draft PR opened with review evidence; merge deferred to explicit user approval.
 
 ## Completed Work
 
