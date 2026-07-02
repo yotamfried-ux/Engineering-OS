@@ -1,74 +1,65 @@
-# Readiness PR B — selection coverage hardening
+# Readiness PR B1 - connector result identifiers
 
 | Field | Value |
 |---|---|
 | Task class | engineering_os_governance |
-| Task type | governance / enforcement hardening |
-| Domain tags | governance, connectors, templates, patterns, skills, capabilities |
-| Task-router evidence | core/task-router.md checked before writing; Engineering OS maintenance route selected |
-| Workflow evidence | core/workflow.md checked before writing; plan-file fallback used because Notion is unavailable |
-| Target paths | scripts/enforcement/check-required-connectors.sh, scripts/enforcement/check-connector-evidence.sh, scripts/enforcement/check-required-templates.py, scripts/enforcement/check-required-skills.sh, scripts/enforcement/validate-capability-evidence.sh, scripts/enforcement/tests/test-required-connectors.sh, scripts/enforcement/tests/test-connector-evidence.sh, scripts/enforcement/tests/test-required-templates.sh, scripts/enforcement/tests/test-skill-selection-gate.sh, scripts/enforcement/tests/test-capability-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement/simulation-coverage.tsv |
+| Task type | governance enforcement |
+| Domain tags | governance, connectors, evidence |
+| Task-router evidence | core/task-router.md checked |
+| Workflow evidence | core/workflow.md checked; plan-file fallback used because Notion is unavailable |
+| Target paths | scripts/enforcement/check-connector-evidence.sh, scripts/enforcement/tests/test-connector-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement/simulation-coverage.tsv |
 | Templates | not required |
-| Patterns | existing enforcement script + fixture-test pattern |
+| Patterns | existing enforcement script and fixture-test pattern |
 | Skills | none |
 | External systems/connectors | github |
 | Validation gates | enforcement-tests, workflow-evidence-policy, connector-evidence-policy, documentation-asset-policy, capability-evidence-policy, plan-policy, pr-policy, semantic-cleanup-policy, import-cleanup-policy |
 
 ## Scope
 
-Implement readiness PR B: selection coverage hardening for the gaps re-registered by PR A:
-
-1. `connector-selection-coverage`
-2. `connector-result-identifiers`
-3. `template-selection-coverage`
-4. `pattern-required-manifest`
-5. `skill-selection-coverage`
-6. `capability-staged-guard`
-
-The goal is to close only high-confidence structural gaps. Deep judgment such as whether the chosen connector/template/pattern/skill is semantically best remains review-based by design and must be stated honestly in the audit.
+Close the `connector-result-identifiers` gap only. Other PR B gaps remain open for later focused loops.
 
 ## Capability Evidence
 
-- `routing.task-router-read` — core/task-router.md was checked before writing this plan.
-- `workflow.workflow-read` — core/workflow.md was checked before writing this plan.
-- `plan.route-plan-before-write` — this route plan is committed before enforcement/test/doc changes.
-- `source.github-repo-read` — repository files and merged PR A state were inspected through GitHub.
-- `validation.policy-change-has-validator` — every new policy claim must ship with checker and fixture updates in this PR or remain an open gap.
-- `validation.coderabbit-policy` — work will ship through a PR and will not merge without owner approval.
+- `routing.task-router-read`
+- `workflow.workflow-read`
+- `plan.route-plan-before-write`
+- `source.github-repo-read`
+- `validation.policy-change-has-validator`
+- `validation.coderabbit-policy`
 
 ## Connector Evidence
 
-- github: inspected `CLAUDE.md`, `core/task-router.md`, `core/workflow.md`, `core/hooks-policy.md`, `core/capability-registry.yaml`, `docs/operations/known-gaps.tsv`, and current selection/capability checkers before writing this plan.
+- github: inspected repo policy files, current connector checker, connector tests, PR A result, and known gaps.
 
 ## Connector Selection Waiver
 
-Notion is required for governance work, but the Notion connector is unavailable in this session; the approved `.claude/plans/` fallback is used for planning and progress evidence.
+Notion is unavailable in this session; this route plan is the approved planning fallback.
 
 ## Connector Usage Evidence
 
-- source: github files `docs/operations/known-gaps.tsv`, `core/task-router.md`, `core/workflow.md`, `core/capability-registry.yaml`, `scripts/enforcement/check-required-connectors.sh`, `scripts/enforcement/check-connector-evidence.sh`, `scripts/enforcement/check-required-templates.py`, `scripts/enforcement/check-required-skills.sh`, and `scripts/enforcement/validate-capability-evidence.sh`.
-- action: checked PR B gap definitions and current enforcement coverage before selecting implementation targets.
-- result: PR A re-registered six selection/capability gaps for PR B, and current checkers use inline keyword rules rather than inventory/manifest-backed coverage for all required domains.
-- decision: implement manifest-backed or fixture-backed structural selection coverage where high-confidence rules exist; leave deep best-choice judgment explicitly review-based.
-- target: scripts/enforcement/check-required-connectors.sh, scripts/enforcement/check-connector-evidence.sh, scripts/enforcement/check-required-templates.py, scripts/enforcement/check-required-skills.sh, scripts/enforcement/validate-capability-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md
+- source: github files `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `scripts/enforcement/check-connector-evidence.sh`, `scripts/enforcement/tests/test-connector-evidence.sh`, and PR #178 state.
+- action: checked the registered connector result gap and current connector evidence checker behavior.
+- result: `docs/operations/known-gaps.tsv` listed `connector-result-identifiers` as open, and `scripts/enforcement/check-connector-evidence.sh` allowed result lines without concrete identifiers.
+- decision: added result identifier validation, path/PR positive fixtures, a vague-result negative fixture, audit updates, simulation coverage evidence, and known-gap closure artifacts.
+- target: scripts/enforcement/check-connector-evidence.sh, scripts/enforcement/tests/test-connector-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement/simulation-coverage.tsv
 
 ## Documentation Asset Evidence
 
-- internal: `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `core/capability-registry.yaml`, `core/task-router.md`, and current enforcement checkers were checked.
-- context7: not required because this is internal Engineering OS governance enforcement and does not integrate an external library, SDK, or API.
-- decision: use existing checker + fixture-test conventions and the PR A known-gaps contract as the source of truth.
+- internal: `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `core/capability-registry.yaml`, `core/task-router.md`, `scripts/enforcement/check-connector-evidence.sh`, and `scripts/enforcement/tests/test-connector-evidence.sh` were checked.
+- context7: not required for internal Engineering OS enforcement.
+- decision: use existing checker and fixture-test conventions.
 
 ## Graphify Usage Evidence
 
 - source: unavailable in this ChatGPT connector runtime.
 - action: not run.
 - result: not applicable in this environment.
-- decision: use direct GitHub file inspection as fallback and keep graphify as a runtime-specific manual note, not a false claim.
-- target: scripts/enforcement, docs/operations, core/capability-registry.yaml
+- decision: use direct GitHub file inspection as fallback.
+- target: scripts/enforcement/check-connector-evidence.sh, scripts/enforcement/tests/test-connector-evidence.sh, docs/operations
 
 ## Template Gap Waiver
 
-No project scaffold template applies because this is an internal Engineering OS enforcement-hardening PR.
+No project scaffold template applies to this internal governance change.
 
 ## Source of Truth Checks
 
@@ -80,34 +71,33 @@ No project scaffold template applies because this is an internal Engineering OS 
 | core/hooks-policy.md | checked |
 | core/capability-registry.yaml | checked |
 | docs/operations/known-gaps.tsv | checked |
-| scripts/enforcement/check-required-connectors.sh | checked |
-| scripts/enforcement/check-required-skills.sh | checked |
-| scripts/enforcement/check-required-templates.py | checked |
-| scripts/enforcement/validate-capability-evidence.sh | checked |
+| docs/operations/operational-readiness-audit.md | checked |
+| scripts/enforcement/check-connector-evidence.sh | checked |
+| scripts/enforcement/tests/test-connector-evidence.sh | checked |
+| scripts/enforcement/simulation-coverage.tsv | checked |
 
 ## Progress Lifecycle Evidence
 
-- start: plan committed before any PR B enforcement, test, audit, or known-gap edits.
+- start: plan committed before enforcement, test, audit, or known-gap edits.
+- mid: connector result identifier checker and fixture updates were committed after implementation began.
+- pre-merge: audit, simulation coverage, known-gap closure artifacts, and this plan were updated after the code/test changes.
 
 ## Claude Run Trace
 
-- goal: implement readiness PR B selection coverage hardening.
-- hypothesis: manifest/fixture-backed high-confidence selection checks can close PR B's structural gaps without pretending to prove deep semantic judgment.
-- connectors: GitHub used for source inspection and branch creation.
-- steps: verified PR A was merged, inspected known gaps and current selection/capability checkers, created branch and route plan.
-- evidence: `known-gaps.tsv` lists PR B gaps as open; current checkers contain inline rule coverage for connectors/templates/skills and plan-level capability evidence only.
-- rejected: broad semantic proof of best connector/template/pattern/skill is rejected as unprovable deterministically; PR B will enforce structural coverage and leave best-choice review by design.
-- result: implementation pending.
-- follow-up: update checkers, tests, audit, known-gaps closure artifacts, run CI, open PR.
+- goal: close `connector-result-identifiers`.
+- hypothesis: requiring concrete identifiers in connector result lines blocks vague connector result claims while keeping deeper source-quality judgment in review.
+- connectors: GitHub used for source inspection and file updates.
+- steps: inspected sources, updated checker, added fixtures, updated coverage manifest, closed the known-gap row, and updated the audit.
+- evidence: `test-connector-evidence.sh` includes `connector-result-without-identifier-fails` and `connector-result-pr-number-passes`; `check-connector-evidence.sh` validates result identifiers.
+- result: connector result identifier enforcement is implemented.
+- follow-up: run CI, open PR, address review, merge only after approval.
 
 ## DoD
 
-- [ ] Connector selection coverage is manifest-backed or otherwise inventory-tied with positive/negative/waiver fixtures.
-- [ ] Connector result evidence requires concrete identifiers with vague/unrelated negative fixtures.
-- [ ] Template selection coverage ties template inventory to rules or explicit exemptions.
-- [ ] Required pattern checker exists with missing, wrong-domain, valid, and waiver fixtures.
-- [ ] Skill selection coverage ties skill inventory to rules or explicit default/exemption notes.
-- [ ] Capability staged-change guard maps high-confidence paths to capability IDs with missing/present/irrelevant/waiver fixtures.
-- [ ] Relevant `known-gaps.tsv` rows move from open to closed only with concrete test and evidence artifacts.
-- [ ] `operational-readiness-audit.md` truthfully reflects what is enforced and what remains review-based by design.
-- [ ] All required CI checks are green before merge.
+- [x] Connector Usage Evidence result lines require a concrete identifier.
+- [x] Vague result evidence has a negative fixture.
+- [x] Path and PR-number result evidence have positive fixtures.
+- [x] `simulation-coverage.tsv` records the coverage token.
+- [x] `known-gaps.tsv` closes only `connector-result-identifiers` with concrete artifacts.
+- [x] `operational-readiness-audit.md` reflects the new enforcement and remaining review judgment.
+- [ ] Required CI checks are green before merge.
