@@ -230,14 +230,19 @@ separate lesson for the mawk/gawk `IGNORECASE` portability defect
   `scripts/enforcement/tests/test-*.sh` 70/70, `check-known-gaps.sh` (25 gaps) and
   `check-readiness-audit.sh` (34 rows) both pass. `check-connector-evidence.sh` and
   `check-documentation-asset-evidence.sh` re-run locally against this plan and pass.
-- **pre-merge:** final validation re-run fresh after commit `5911348` (mid checkpoint), on the
-  full range `8cb774d030ed6c6f5f8d17ac89f421980f31a615..HEAD`: `test-plan-scope.sh` 10/10,
+- **pre-merge:** superseded and re-recorded after commit `331dcda`, which addressed 2
+  CodeRabbit findings on PR #186 (non-POSIX `sed` label form in
+  `test-no-grep-c-echo.sh`; fragile `A && B || C` pattern in `test-plan-scope.sh`) plus a
+  Domain-tags fix so `enforce-learning-capture.sh`'s bug-task heuristic no longer
+  false-matches on the word "regression". Full validation re-run fresh, on the full range
+  `8cb774d030ed6c6f5f8d17ac89f421980f31a615..HEAD`: `test-plan-scope.sh` 10/10,
   `test-no-grep-c-echo.sh` 4/4, `.claude/settings.json` valid JSON, full enforcement suite
   `scripts/enforcement/tests/test-*.sh` 70/70, `check-known-gaps.sh` (25 gaps) and
   `check-readiness-audit.sh` (34 rows) pass, `check-connector-evidence.sh` and
   `check-documentation-asset-evidence.sh` both pass over the range, and
-  `validate-capability-evidence.sh` / `check-capability-staged-changes.sh` both pass. This is
-  the final code/config/test change; no further fix commits follow before opening the PR.
+  `validate-capability-evidence.sh` / `check-capability-staged-changes.sh` both pass.
+  `331dcda` is the final code/config/test change; no further fix commits follow before
+  requesting merge.
 
 ## Definition of Done / תנאי סיום
 
