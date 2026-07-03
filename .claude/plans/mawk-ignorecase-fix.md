@@ -6,12 +6,14 @@
 |---|---|
 | Task type | Bug fix — enforcement script portability |
 | Task class | engineering_os_governance |
+| Task-router evidence | core/task-router.md read; routed per §7 Engineering OS maintenance/governance |
+| Workflow evidence | core/workflow.md read; debug_loop gate followed (root cause before fix, regression test added) |
 | Domain tags | enforcement, testing, governance |
 | Target paths | scripts/enforcement/check-plan-scope.sh, scripts/enforcement/tests/test-plan-scope.sh, lessons-learned/bugs/mawk-ignorecase-unsupported.md |
 | Templates | Not applicable |
 | Patterns | Not applicable |
 | Skills | none |
-| External systems/connectors | GitHub — used to confirm `enforcement-tests` passed on `main` HEAD `8cb774d030ed6c6f5f8d17ac89f421980f31a615` (run 28628591263) via `mcp__github__actions_list`, ruling out a logic regression |
+| External systems/connectors | GitHub |
 | Validation gates | `scripts/enforcement/tests/test-plan-scope.sh` |
 
 ## Goal / מטרה
@@ -35,9 +37,21 @@ acceptance burn-in experiment (`.claude/plans/eos-acceptance-burnin.md`).
 
 | Source | Status |
 |---|---|
-| scripts/enforcement/check-plan-scope.sh | read, fixed |
-| scripts/enforcement/tests/test-plan-scope.sh | read, extended |
+| scripts/enforcement/check-plan-scope.sh | read |
+| scripts/enforcement/tests/test-plan-scope.sh | read |
 | GitHub Actions run 28628591263 (enforcement-tests, main, HEAD 8cb774d) | checked via mcp__github__actions_list — conclusion=success |
+
+## Connector Evidence
+
+- [x] GitHub: checked enforcement-tests run 28628591263 on main HEAD 8cb774d030ed6c6f5f8d17ac89f421980f31a615 to rule out a logic regression before diagnosing the mawk root cause.
+
+## Connector Usage Evidence
+
+- source: GitHub Actions run 28628591263 via mcp__github__actions_list on yotamfried-ux/Engineering-OS
+- action: checked the enforcement-tests workflow conclusion for the main branch HEAD commit
+- result: conclusion=success on ubuntu-latest for commit 8cb774d030ed6c6f5f8d17ac89f421980f31a615, confirming CI is green upstream and the failure is environment-specific (mawk vs gawk), not a logic regression
+- decision: selected the portable tolower() fix over changing enforcer exit-code semantics, since GitHub's own CI already proves the logic correct on a gawk-equipped runner
+- target: scripts/enforcement/check-plan-scope.sh
 
 ## Capability Evidence
 
