@@ -137,8 +137,9 @@ Required capabilities for task class `engineering_os_governance`:
   docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md,
   docs/operations/merge-readiness-checklist.md, docs/operations/post-merge-incident-checklist.md
   — all read per the task's required preflight before Part A began.
-- context7: not required — this is a governance/process audit of Engineering OS itself, not a
-  library/API integration task.
+- context7: not required — since this task does not integrate any external library, framework,
+  or API, it audits Engineering OS's own internal enforcement scripts, and no external docs
+  fetch was needed.
 - decision: the required-preflight document list above is the complete internal source set for
   this task; no template/pattern gap applies since this is not a scaffold task.
 

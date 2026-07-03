@@ -65,6 +65,17 @@ acceptance burn-in experiment (`.claude/plans/eos-acceptance-burnin.md`).
 - `validation.coderabbit-policy` — this fix ships on the burn-in experiment's dedicated branch
   (`claude/eos-acceptance-burnin-o1birt`); CodeRabbit/CI review applies before merge to main.
 
+## Documentation Asset Waiver
+
+- reason: this is an isolated single-file portability bug fix in an existing enforcement
+  script; no architecture, product, or integration docs are implicated, since the change is
+  contained entirely within scripts/enforcement/. The lesson itself is captured as a
+  documentation asset in lessons-learned/bugs/mawk-ignorecase-unsupported.md.
+- scope: scripts/enforcement/check-plan-scope.sh, scripts/enforcement/tests/test-plan-scope.sh
+- risk: none beyond the disclosed Progress Lifecycle gap noted above — the fix itself is
+  covered by a regression test (scenario_evidence_mixed_case) and the root cause is documented
+  for future reference.
+
 ## Claude Run Trace
 
 - **Goal:** unblock the burn-in experiment's Part A enforcement-suite run by root-causing and
