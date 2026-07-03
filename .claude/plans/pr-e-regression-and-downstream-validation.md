@@ -7,7 +7,7 @@
 | Domain tags | readiness, enforcement, governance, install, testing |
 | Task-router evidence | core/task-router.md checked; routed via routing_matrix section 7 |
 | Workflow evidence | core/workflow.md checked; plan-file fallback carries the spec |
-| Target paths | scripts/enforcement/tests/test-install-policy-gate-coverage.sh, docs/operations/connector-verification-matrix.md, docs/operations/skill-verification-matrix.md, docs/README.md |
+| Target paths | scripts/enforcement/tests/test-install-policy-gate-coverage.sh, scripts/skill-bootstrap.sh, scripts/enforcement/tests/test-security-review-workflow-generator.sh, docs/operations/connector-verification-matrix.md, docs/operations/skill-verification-matrix.md, docs/README.md |
 | Templates | not required |
 | Patterns | not required |
 | Skills | none |
@@ -197,6 +197,18 @@ project scaffolds and are out of scope.
   records (not durable), reusing the burn-in branch (belongs to an open PR).
 - result: recorded per checkpoint below as the work completes.
 - follow-up: merge decisions for this PR, #185/#186, and Expiriens #1 stay with the owner.
+
+## Scope addition — Codex finding from the downstream validation PR
+
+Codex review on Expiriens-saas-0.9 PR #2 found that the security-review skill's generated CI
+workflow (`security-review-nemotron.yml`, emitted by `scripts/skill-bootstrap.sh`) sliced the
+PR diff to `diff[:12000]` before sending it to Nemotron — silently omitting everything past
+12000 characters while the security gate stayed green. Root cause lives in this repo's
+generator, not in the downstream copy, so the fix lands here per the learning-loop promotion
+protocol: the generated workflow now reviews the whole diff in 12000-character chunks (hard
+cap 25 chunks) and exits 1 above the cap instead of truncating. Downstream copies refresh on
+the next bootstrap run. shellcheck finding count on skill-bootstrap.sh verified identical
+before/after the edit (25 pre-existing, none added).
 
 ## Progress Lifecycle Evidence
 

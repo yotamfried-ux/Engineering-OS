@@ -156,14 +156,25 @@ if not api_key:
     sys.exit(0)
 from openai import OpenAI
 diff = subprocess.check_output(['git', 'diff', 'HEAD~1', 'HEAD'], text=True)
+# Review the WHOLE diff in bounded chunks. Slicing to one chunk silently
+# dropped everything past 12000 chars, so a large PR could ship unreviewed
+# code through a green security gate. Beyond the hard cap we fail closed.
+CHUNK = 12000
+MAX_CHUNKS = 25
+chunks = [diff[i:i + CHUNK] for i in range(0, len(diff), CHUNK)] or [diff]
+if len(chunks) > MAX_CHUNKS:
+    print('diff is %d chars, above the %d-chunk review cap — refusing to silently truncate the security review. Split the PR, or run /security-review in a Claude Code session.' % (len(diff), MAX_CHUNKS))
+    sys.exit(1)
 client = OpenAI(base_url='https://integrate.api.nvidia.com/v1', api_key=api_key)
-resp = client.chat.completions.create(
-    model='nvidia/llama-3.1-nemotron-ultra-253b-v1',
-    messages=[{'role':'system','content':'You are a security code reviewer. Analyze the diff for OWASP Top 10, injection, auth gaps, secrets. Rate findings CRITICAL/HIGH/MEDIUM/LOW/INFO. End with go/no-go.'},
-              {'role':'user','content':f'Review this diff:\n{diff[:12000]}'}],
-    max_tokens=2048
-)
-print(resp.choices[0].message.content)
+for idx, chunk in enumerate(chunks, 1):
+    resp = client.chat.completions.create(
+        model='nvidia/llama-3.1-nemotron-ultra-253b-v1',
+        messages=[{'role':'system','content':'You are a security code reviewer. Analyze the diff for OWASP Top 10, injection, auth gaps, secrets. Rate findings CRITICAL/HIGH/MEDIUM/LOW/INFO. End with go/no-go.'},
+                  {'role':'user','content':'Review part %d/%d of this diff:\n%s' % (idx, len(chunks), chunk)}],
+        max_tokens=2048
+    )
+    print('--- security review part %d/%d ---' % (idx, len(chunks)))
+    print(resp.choices[0].message.content)
 "
 WORKFLOW
   cat > "$target/.claude/commands/security-review.md" << 'CMD'
