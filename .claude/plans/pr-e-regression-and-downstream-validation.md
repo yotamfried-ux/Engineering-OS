@@ -214,6 +214,19 @@ before/after the edit (25 pre-existing, none added).
 
 - start: plan committed on claude/engineering-os-pr-e-readiness-6a7v3v before any code,
   config, or test edits.
+- mid: the hermetic installer-behavior regression cases landed in 54982cb (9/9 ok; negative
+  case proven to fail on an emulated pre-#184 silent-skip installer via a temporary local
+  revert and pass on the real one); the downstream validation ran in the real
+  Expiriens-saas-0.9 repo — clean install verified item-by-item, reinstall idempotent, the
+  full installed runtime gate chain exercised positively and negatively, six negative bypass
+  paths blocked, six waiver scenarios correct, connector/skill routing correct with both
+  coverage validators green — and its PR #2 went through three real CI-gate rejections
+  (plan-with-config ordering, checkpoint outside the lifecycle section, non-canonical
+  checkpoint marker), each diagnosed, reproduced locally 1:1, and fixed without bypass; the
+  Codex review round produced the skill-bootstrap.sh truncation fix (6bcd724, with
+  test-security-review-workflow-generator.sh proven bidirectionally and lesson
+  security-gate-silent-diff-truncation.md) and the downstream healthcheck deleted-cwd fix;
+  the connector and skill verification matrices landed in 3b14cab.
 
 ## Lessons Reused
 
@@ -228,18 +241,28 @@ before/after the edit (25 pre-existing, none added).
 ## DoD
 
 - [x] Route Plan committed before the first code/config/test change of this task.
+- [x] Hermetic installer regression cases added to test-install-policy-gate-coverage.sh —
+  signal: 9/9 ok on current code; installer_fails_closed_when_manifest_missing fails (exit 1)
+  on an emulated pre-#184 silent-skip installer and passes after restore.
+- [x] Eight downstream experiments executed in the real Expiriens-saas-0.9 repo — signal:
+  experiment outputs recorded in the downstream plan's Progress Lifecycle Evidence and PR #2
+  body; gap inventory outcome folded into the matrices (no new open gap rows warranted).
+- [x] Connector and skill verification matrices recorded under docs/operations/ — signal:
+  check-required-connectors.sh --check-coverage, check-required-skills.sh --check-coverage,
+  and test-capability-registry.sh all green; 59/59 registry entries have owner READMEs.
+- [x] Codex finding fixed at the root — signal: test-security-review-workflow-generator.sh
+  7/7 ok on the fixed generator, exit 1 on the pre-fix generator; lesson file passes the
+  learning gate.
 
 ## Completed Work
 
-- Route Plan authored and committed (start checkpoint).
+- Route Plan committed alone (850a8b1); installer fail-closed regression test (54982cb);
+  skill-bootstrap.sh chunking fix + its regression test (6bcd724); lesson file (f8eb168);
+  verification matrices (3b14cab).
+- Real downstream validation completed in Expiriens-saas-0.9 (PR #2, ready-for-review).
 
 ## Remaining Validation Outside This Plan
 
-- Hermetic positive/negative installer regression cases added to
-  test-install-policy-gate-coverage.sh and proven against the pre-#184 behavior.
-- Eight downstream experiments executed in the real Expiriens-saas-0.9 repo on its
-  designated branch.
-- Connector and skill verification matrices recorded under docs/operations/ with coverage
-  validators re-run.
-- Full local suite + CI on the exact head SHA of both ready-for-review PRs.
+- Full local enforcement suite + CI green on the exact head SHA of both PRs.
+- CodeRabbit review on both PRs once its rate-limit window reopens.
 - Owner merge approval (explicitly out of agent scope).
