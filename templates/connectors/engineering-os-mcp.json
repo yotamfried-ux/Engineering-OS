@@ -21,6 +21,11 @@
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest"]
     },
+    "nemotron": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "${ENGINEERING_OS_HOME}/scripts/nemotron-mcp-server.py"]
+    },
     "figma": {
       "type": "http",
       "url": "${FIGMA_MCP_URL}"
