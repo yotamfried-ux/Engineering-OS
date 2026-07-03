@@ -86,6 +86,30 @@ EOF
 fresh_project scenario_evidence_with_findings && ok "allows when graphify_used and Graphify findings present" \
   || bad "should allow when graphify_used and findings both present"
 
+# Regression: section_text/section_field must be case-insensitive without relying on
+# gawk's IGNORECASE, which mawk (the default /usr/bin/awk on Debian/Ubuntu) does not
+# support. A heading/field casing that differs from the exact literal the script
+# checks for must still match.
+scenario_evidence_mixed_case() {
+  mkdir -p graphify-out .claude/.evidence
+  echo '{}' > graphify-out/graph.json
+  printf 'ts\tgraphify_used\tquery\n' > .claude/.evidence/ledger
+  cat > .claude/plans/p.md <<'EOF'
+# Route Plan
+| Target paths | none |
+
+## graphify FINDINGS
+Source: Graphify query
+Action: traced callers of scripts/x.sh
+Result: found 2 dependent modules
+Decision: scripts/x.sh selected as the write target based on the graph path
+Target: scripts/x.sh
+EOF
+  bash "$SCRIPT" .claude/plans/p.md scripts/x.sh >/dev/null 2>&1
+}
+fresh_project scenario_evidence_mixed_case && ok "allows mixed-case Graphify heading/fields (mawk-safe, no gawk IGNORECASE)" \
+  || bad "should allow mixed-case heading/fields without gawk IGNORECASE"
+
 # ---------- Hook mode: PreToolUse JSON on stdin (deny is emitted as JSON, exit 0) ----------
 scenario_hook_deny() {
   cat > .claude/plans/p.md <<'EOF'

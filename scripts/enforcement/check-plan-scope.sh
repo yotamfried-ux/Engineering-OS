@@ -23,11 +23,13 @@ path_matches_target(){
 }
 
 section_text(){
-  awk -v re="$2" 'BEGIN{IGNORECASE=1;on=0}$0~"^#{1,4}[[:space:]]+"re"([[:space:]]|$)"{on=1;next}on&&$0~/^#{1,4}[[:space:]]+/{exit}on{print}' "$1" 2>/dev/null || true
+  # Case-insensitive on purpose, but without gawk's IGNORECASE (unavailable in mawk,
+  # the default /usr/bin/awk on Debian/Ubuntu): lowercase both sides instead.
+  awk -v re="$2" 'BEGIN{lre=tolower(re);on=0}{line=tolower($0)}line~"^#{1,4}[[:space:]]+"lre"([[:space:]]|$)"{on=1;next}on&&line~/^#{1,4}[[:space:]]+/{exit}on{print}' "$1" 2>/dev/null || true
 }
 
 section_field(){
-  printf '%s\n' "$1"|awk -v f="$2" 'BEGIN{IGNORECASE=1}{line=$0;sub(/^[[:space:]]*[-*]?[[:space:]]*/,"",line);if(line~"^"f"[[:space:]]*:"){sub("^"f"[[:space:]]*:[[:space:]]*","",line);gsub(/^[[:space:]]+|[[:space:]]+$/,"",line);print line;exit}}'
+  printf '%s\n' "$1"|awk -v f="$2" 'BEGIN{lf=tolower(f)}{orig=$0;line=tolower($0);sub(/^[[:space:]]*[-*]?[[:space:]]*/,"",line);if(line~"^"lf"[[:space:]]*:"){sub(/^[[:space:]]*[-*]?[[:space:]]*/,"",orig);n=match(orig,/:[[:space:]]*/);line=substr(orig,n+RLENGTH);gsub(/^[[:space:]]+|[[:space:]]+$/,"",line);print line;exit}}'
 }
 
 bad_value(){
