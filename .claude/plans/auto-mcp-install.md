@@ -7,7 +7,7 @@
 | Domain tags | mcp, connectors, claude-code, installer, documentation |
 | Task-router evidence | core/task-router.md read in this session; task is Engineering OS connector/MCP configuration |
 | Workflow evidence | core/workflow.md and core/connector-policy.md read in this session |
-| Target paths | .mcp.json, templates/connectors/engineering-os-mcp-bundle.json, scripts/install-mcp-servers.sh, scripts/use-in-project.sh, scripts/enforcement/tests/test-mcp-auto-install.sh, core/mcp-servers.md, core/capability-registry.yaml, docs/operations/connector-verification-matrix.md |
+| Target paths | templates/connectors/engineering-os-mcp.json, scripts/install-mcp-servers.sh, scripts/use-in-project.sh, scripts/enforcement/tests/test-mcp-auto-install.sh, core/mcp-servers.md, core/capability-registry.yaml, docs/operations/connector-verification-matrix.md |
 | Templates | templates/connectors/github-readonly.json checked and reused as the GitHub profile base |
 | Patterns | not required |
 | External systems/connectors | github, context7 |
@@ -21,18 +21,18 @@ Make Engineering OS install project-scoped MCP server profiles automatically so 
 ## Plan
 
 1. Keep the first commit as this Route Plan.
-2. Add a canonical MCP bundle under `templates/connectors/engineering-os-mcp-bundle.json`.
-3. Add `scripts/install-mcp-servers.sh` to merge the bundle into a target project's `.mcp.json` without writing credentials.
+2. Add a canonical MCP profile file under `templates/connectors/engineering-os-mcp.json`.
+3. Add `scripts/install-mcp-servers.sh` to merge the profiles into a target project's `.mcp.json` without writing credentials.
 4. Wire `use-in-project.sh` to call the MCP installer during normal Engineering OS installation.
-5. Update the root `.mcp.json` so Engineering OS itself exposes the same profiles.
+5. Keep Engineering OS's root `.mcp.json` unchanged if the platform blocks safe updates; target-project installation is the actual contract.
 6. Update connector/MCP documentation to distinguish installed profile, auth-required, Composio-covered, and verified-live.
-7. Add deterministic tests for the bundle shape, merge behavior, idempotency, backup creation, and fail-closed behavior on invalid existing `.mcp.json`.
+7. Add deterministic tests for profile shape, merge behavior, idempotency, backup creation, and fail-closed behavior on invalid existing `.mcp.json`.
 8. Open a PR and verify CI; no merge without explicit owner approval.
 
 ## Alternatives
 
 - Install credentials automatically — rejected. Secrets must remain outside git and must be authenticated through Claude Code `/mcp`, OAuth, environment variables, or local secret stores.
-- Install only GitHub MCP — rejected. The user's requirement is broad MCP availability, so the default bundle includes the safe native profiles plus Composio as fallback coverage.
+- Install only GitHub MCP — rejected. The user's requirement is broad MCP availability, so the default profiles include native safe profiles plus Composio as fallback coverage.
 - Add write-capable GitHub profiles — rejected. The current safe default remains read-only; write profiles require a separate explicit PR and approval.
 
 ## Capability Evidence
@@ -58,7 +58,7 @@ Notion is normally required for non-trivial governance work, but the Notion MCP 
 - action: checked current project MCP configuration and confirmed `.mcp.json` only contained `nemotron`; checked the GitHub read-only template and active MCP runbook.
 - result: GitHub showed `.mcp.json` and `templates/connectors/github-readonly.json` as the concrete existing profiles; `core/capability-registry.yaml` still had `mcp_auto_install_allowed: false`.
 - decision: changed the installer and registry so project-scoped MCP profiles are installed automatically while secrets and approval remain manual.
-- target: `.mcp.json`, `templates/connectors/engineering-os-mcp-bundle.json`, `scripts/install-mcp-servers.sh`, `scripts/use-in-project.sh`, `scripts/enforcement/tests/test-mcp-auto-install.sh`, `core/mcp-servers.md`, `core/capability-registry.yaml`, `docs/operations/connector-verification-matrix.md`.
+- target: `templates/connectors/engineering-os-mcp.json`, `scripts/install-mcp-servers.sh`, `scripts/use-in-project.sh`, `scripts/enforcement/tests/test-mcp-auto-install.sh`, `core/mcp-servers.md`, `core/capability-registry.yaml`, `docs/operations/connector-verification-matrix.md`.
 
 ## Source of Truth Checks
 
@@ -76,7 +76,7 @@ Notion is normally required for non-trivial governance work, but the Notion MCP 
 
 ## Definition of Done
 
-- [x] MCP bundle file exists and validates as JSON.
+- [x] MCP profile file exists and validates as JSON.
 - [x] Installer creates/merges `.mcp.json` without secrets.
 - [x] `use-in-project.sh` invokes the MCP installer.
 - [x] Docs no longer imply MCP is documentation-only.
