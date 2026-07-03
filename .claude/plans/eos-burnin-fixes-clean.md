@@ -8,7 +8,7 @@
 | Task class | engineering_os_governance |
 | Task-router evidence | `core/task-router.md` read in full (`<routing_algorithm>`, `<routing_matrix>`); routed per §7 "Engineering OS maintenance / governance" — consult CLAUDE.md, workflow.md, skill-orchestration-policy.md, connector-policy.md, learning-loop.md, hooks-policy.md. Extra rule applied: this change strengthens the enforcement layer itself (portable awk matching, hardened grep-c-echo scanner), not just explanatory text. |
 | Workflow evidence | `core/workflow.md` read in full (`<agent_loop>`, `<workflow>` steps 1–12, `<spec_loop>`). This plan file is being authored and committed alone, before any code/config/test change, satisfying the step-4 write gate ("אל תדלג — כתוב קוד רק כשיש מקור ודוגמה") — the source and example here are PR #185's own diff (verified fixes, already reviewed once by CodeRabbit) plus the disclosed defect in that PR's own commit history. |
-| Domain tags | readiness, enforcement, portability, hooks, regression-tests |
+| Domain tags | readiness, enforcement, portability, hooks, testing |
 | Target paths | `scripts/enforcement/check-plan-scope.sh`, `scripts/enforcement/tests/test-plan-scope.sh`, `scripts/hooks/pre-commit.sh`, `.claude/settings.json`, `scripts/enforcement/tests/test-no-grep-c-echo.sh`, `lessons-learned/bugs/mawk-ignorecase-unsupported.md` |
 | Templates | Not applicable — isolated enforcement-script portability/regex fix across existing files; no project scaffold involved. |
 | Patterns | Not applicable — no `patterns/` domain asset (auth/api/billing/ui) touched; this is enforcement tooling, not application code. |

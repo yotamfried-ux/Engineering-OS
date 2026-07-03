@@ -36,7 +36,7 @@ HITS="$(
     # caught — that split is exactly what let this anti-pattern recur live in
     # scripts/hooks/pre-commit.sh past the original single-line-only scan.
     match="$(sed -E 's/^[[:space:]]*#.*$//' "$f" \
-      | sed -E ':a;N;$!ba;s/\\\n[[:space:]]*/ /g' \
+      | sed -E -e ':a' -e 'N' -e '$!ba' -e 's/\\\n[[:space:]]*/ /g' \
       | grep -oE "grep -c[E]?\b.*\|\| *echo" | head -1)"
     [ -n "$match" ] && printf '%s: %s\n' "$f" "$match"
   done < <(find "${TARGETS[@]}" \( -name '*.sh' -o -name 'settings.json' \) -type f -print0 2>/dev/null) \

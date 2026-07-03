@@ -107,8 +107,11 @@ Target: scripts/x.sh
 EOF
   bash "$SCRIPT" .claude/plans/p.md scripts/x.sh >/dev/null 2>&1
 }
-fresh_project scenario_evidence_mixed_case && ok "allows mixed-case Graphify heading/fields (mawk-safe, no gawk IGNORECASE)" \
-  || bad "should allow mixed-case heading/fields without gawk IGNORECASE"
+if fresh_project scenario_evidence_mixed_case; then
+  ok "allows mixed-case Graphify heading/fields (mawk-safe, no gawk IGNORECASE)"
+else
+  bad "should allow mixed-case heading/fields without gawk IGNORECASE"
+fi
 
 # ---------- Hook mode: PreToolUse JSON on stdin (deny is emitted as JSON, exit 0) ----------
 scenario_hook_deny() {
