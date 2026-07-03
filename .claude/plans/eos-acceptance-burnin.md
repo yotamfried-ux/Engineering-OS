@@ -134,8 +134,17 @@ Required capabilities for task class `engineering_os_governance`:
 
 - **start:** Route Plan authored; `known-gaps.tsv` confirmed 0 open; readiness audit confirmed
   fully classified; `main` and experiment branch both at SHA `8cb774d030ed6c6f5f8d17ac89f421980f31a615`.
-- **mid:** to be recorded after Part B/C/D complete (downstream install verified, connector matrix
-  classified, positive workflow PR opened).
+- **mid:** Part A found and root-caused a real defect: `check-plan-scope.sh` depended on gawk-only
+  `IGNORECASE`, silently degrading to case-sensitive matching under mawk (this container's
+  `/usr/bin/awk`), which falsely blocked a valid Graphify-evidence plan
+  (`test-plan-scope.sh` 1/9 failing). Confirmed CI passes on `ubuntu-latest` (gawk present) via
+  `mcp__github__actions_list` run 28628591263 at `main` HEAD `8cb774d030ed6c6f5f8d17ac89f421980f31a615`
+  — a genuine portability gap, not a regression in the merged A–E program. Fixed with a portable
+  `tolower()` fold; added `scenario_evidence_mixed_case` regression test (verified fails on old code,
+  passes on fix via `git stash`); documented in
+  `lessons-learned/bugs/mawk-ignorecase-unsupported.md`. Downstream install (Part B) completed via
+  `use-in-project.sh` against `/tmp/eos-burnin-target`. Remaining: full re-run of enforcement suite,
+  Part C connector matrix, Part D positive workflow, Part E negative bypass suite.
 - **pre-merge:** to be recorded before any merge decision — N/A for this plan file itself (it is
   not merged into product code), applies to the Part D downstream PR only, gated on explicit owner
   approval.
