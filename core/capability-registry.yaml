@@ -7,7 +7,7 @@
 # satisfy required capabilities, and implementation writes validate the active
 # plan before continuing.
 
-version: 2
+version: 3
 status: inventory_backed
 runtime_enabled: true
 runtime_scope: plan_level_write_gate
@@ -28,7 +28,9 @@ principles:
   - Runtime enforcement starts at the Route Plan and write-gate layer.
   - Add live tool-call blocking beyond plan evidence only with dedicated tests.
   - Skills are workflow packages; LLM accelerators are support runtimes.
-  - Connectors start narrow and opt-in unless a separate PR proves a broader path.
+  - MCP server profiles are installed project-wide by default so Claude Code and MCP-aware LLMs can discover them.
+  - MCP credentials, OAuth grants, and approval decisions remain outside git and must be completed by the operator.
+  - Broad or write-capable MCP toolsets are never the default.
   - Every task class must declare required evidence, not only a capability name.
   - Waivers must be explicit when an applicable capability is not used.
 
@@ -51,7 +53,11 @@ selection_rules:
   notion_progress_validation_required_when_selected: true
   mcp_default_write_profile_allowed: false
   broad_mcp_toolsets_allowed_by_default: false
-  mcp_auto_install_allowed: false
+  mcp_auto_install_allowed: true
+  mcp_auto_install_scope: project_scoped_mcp_json
+  mcp_auto_install_template: templates/connectors/engineering-os-mcp.json
+  mcp_auto_install_script: scripts/install-mcp-servers.sh
+  mcp_auto_install_secrets_allowed: false
   managed_settings_runtime_lockdown_allowed: false
 
 task_classes:
@@ -156,7 +162,7 @@ task_classes:
       - connector_profile_selected
       - read_only_or_write_waiver_recorded
       - no_broad_toolsets_checked
-      - opt_in_activation_recorded
+      - project_scoped_mcp_install_recorded
       - profile_validator_updated
 
   ui_or_frontend_work:
@@ -277,7 +283,7 @@ llm_accelerators:
     path: external-systems/nvidia-nemotron/
     type: [llm-accelerator, generation, review, summarization, context-cost-reduction]
     level: L1
-    default_profile: when_nemotron_api_key_available
+    default_profile: project_scoped_mcp_when_key_available
     registry_status: accelerator
 
 removed_external_skills:
@@ -353,22 +359,23 @@ service_connectors:
     - {id: twenty-crm, path: external-systems/twenty-crm/}
 
 mcp_connectors:
-  - {id: github, path: external-systems/connectors/github/, default_profile: templates/connectors/github-readonly.json, default_mode: read_only_opt_in}
-  - {id: notion, path: external-systems/connectors/notion/, default_mode: planning_and_progress_tracking_opt_in}
-  - {id: slack, path: external-systems/connectors/slack/, default_mode: opt_in}
-  - {id: linear, path: external-systems/connectors/linear/, default_mode: opt_in}
-  - {id: jira, path: external-systems/connectors/jira/, default_mode: opt_in}
-  - {id: stripe, path: external-systems/connectors/stripe/, default_mode: opt_in}
-  - {id: supabase, path: external-systems/connectors/supabase/, default_mode: opt_in}
-  - {id: postgres, path: external-systems/connectors/postgres/, default_mode: opt_in}
-  - {id: google-drive, path: external-systems/connectors/google-drive/, default_mode: opt_in}
-  - {id: google-sheets, path: external-systems/connectors/google-sheets/, default_mode: opt_in}
-  - {id: figma, path: external-systems/connectors/figma/, default_mode: opt_in}
-  - {id: discord, path: external-systems/connectors/discord/, default_mode: opt_in}
+  - {id: github, path: external-systems/connectors/github/, default_profile: templates/connectors/github-readonly.json, installed_server: github-readonly, default_mode: read_only_auto_installed}
+  - {id: notion, path: external-systems/connectors/notion/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: notion, default_mode: auto_installed_auth_required}
+  - {id: slack, path: external-systems/connectors/slack/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: composio, default_mode: auto_installed_via_composio}
+  - {id: linear, path: external-systems/connectors/linear/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: composio, default_mode: auto_installed_via_composio}
+  - {id: jira, path: external-systems/connectors/jira/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: composio, default_mode: auto_installed_via_composio}
+  - {id: stripe, path: external-systems/connectors/stripe/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: stripe, default_mode: auto_installed_auth_required}
+  - {id: supabase, path: external-systems/connectors/supabase/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: supabase, default_mode: auto_installed_auth_required}
+  - {id: postgres, path: external-systems/connectors/postgres/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: composio, default_mode: auto_installed_via_composio_or_project_specific}
+  - {id: google-drive, path: external-systems/connectors/google-drive/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: composio, default_mode: auto_installed_via_composio}
+  - {id: google-sheets, path: external-systems/connectors/google-sheets/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: composio, default_mode: auto_installed_via_composio}
+  - {id: figma, path: external-systems/connectors/figma/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: figma, default_mode: auto_installed_auth_required}
+  - {id: discord, path: external-systems/connectors/discord/, default_profile: templates/connectors/engineering-os-mcp.json, installed_server: composio, default_mode: auto_installed_via_composio}
 
 template_capabilities:
   - {id: claude-template, path: CLAUDE.template.md, kind: project_entrypoint}
   - {id: github-readonly-connector-template, path: templates/connectors/github-readonly.json, kind: connector_profile}
+  - {id: engineering-os-mcp-template, path: templates/connectors/engineering-os-mcp.json, kind: connector_profile_bundle}
   - {id: claude-managed-lockdown-template, path: templates/settings/claude-managed-lockdown.json, kind: managed_settings}
   - {id: security-review-nvidia-workflow, path: templates/github-actions/security-review-nvidia.yml, kind: workflow_template}
   - {id: security-review-nvidia-command, path: templates/commands/security-review-nvidia.md, kind: command_template}
@@ -378,7 +385,7 @@ rejected_for_now:
   openai_agents_runtime_migration: {reason: "Different runtime; not needed to strengthen Claude Code workflow."}
   openai_guardrails_primary_layer: {reason: "Does not directly control Claude Code built-in tools or MCP execution."}
   mcp_reference_servers_as_runtime: {reason: "Reference implementations, not the selected production runtime path."}
-  broad_runtime_connector_access: {reason: "Registry may inventory broad services, but runtime access stays narrow and opt-in."}
+  broad_runtime_connector_access: {reason: "Broad service inventory remains available, but installed defaults stay narrow and authenticated by the operator."}
 
 next_pr_contract:
   may_use:
@@ -393,6 +400,7 @@ next_pr_contract:
   must_not_do:
     - add managed settings lockdown
     - add elevated connector defaults
-    - auto-install MCP config into target projects
+    - auto-install write-capable MCP config
+    - write secrets into .mcp.json
     - use broad MCP toolsets such as all or default
     - use frontend-design as an active skill
