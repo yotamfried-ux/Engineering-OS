@@ -112,9 +112,11 @@ approved fallback from core/workflow.md stage 1 applies — this plan file under
   with `missing policy-gate dependency manifest:`; no test in scripts/enforcement/tests/
   exercises that path; PRs #185/#186 and Expiriens PR #1 are open on other branches pending
   owner approval.
-- decision: github findings fixed this PR's scope to (a) the missing regression test in
-  test-install-policy-gate-coverage.sh and (b) the real-downstream validation matrices,
-  explicitly excluding the installer itself and the open PRs' fixes.
+- decision: selected and limited this PR's scope based on the github findings — (a) added the
+  missing regression test in test-install-policy-gate-coverage.sh, (b) added the
+  real-downstream validation matrices, and (c) later added the skill-bootstrap.sh chunking fix
+  from the Codex finding on Expiriens PR #2 — while explicitly keeping the installer itself
+  and the open PRs' (#185/#186/Expiriens #1) fixes out of scope.
 - target: scripts/enforcement/tests/test-install-policy-gate-coverage.sh,
   docs/operations/connector-verification-matrix.md, docs/operations/skill-verification-matrix.md
 
@@ -214,19 +216,28 @@ before/after the edit (25 pre-existing, none added).
 
 - start: plan committed on claude/engineering-os-pr-e-readiness-6a7v3v before any code,
   config, or test edits.
-- mid: the hermetic installer-behavior regression cases landed in 54982cb (9/9 ok; negative
+- mid: the hermetic installer-behavior regression cases landed in bbb1bac (9/9 ok; negative
   case proven to fail on an emulated pre-#184 silent-skip installer via a temporary local
-  revert and pass on the real one); the downstream validation ran in the real
+  revert and pass on the real one); the branch was rebased onto main after PR #186 merged mid-run (picking up the mawk check-plan-scope fix; commit ids in this plan are post-rebase); the downstream validation ran in the real
   Expiriens-saas-0.9 repo — clean install verified item-by-item, reinstall idempotent, the
   full installed runtime gate chain exercised positively and negatively, six negative bypass
   paths blocked, six waiver scenarios correct, connector/skill routing correct with both
   coverage validators green — and its PR #2 went through three real CI-gate rejections
   (plan-with-config ordering, checkpoint outside the lifecycle section, non-canonical
   checkpoint marker), each diagnosed, reproduced locally 1:1, and fixed without bypass; the
-  Codex review round produced the skill-bootstrap.sh truncation fix (6bcd724, with
+  Codex review round produced the skill-bootstrap.sh truncation fix (175b2b2, with
   test-security-review-workflow-generator.sh proven bidirectionally and lesson
   security-gate-silent-diff-truncation.md) and the downstream healthcheck deleted-cwd fix;
-  the connector and skill verification matrices landed in 3b14cab.
+  the connector and skill verification matrices landed in 44e7434.
+- pre-merge: after the last code/config/test change and the rebase onto main (post-#186), the
+  FULL enforcement suite ran green — 71/71 test files pass with zero failures, including the
+  previously-failing test-plan-scope environment case now fixed by the merged #186; range-level
+  gates over origin/main..HEAD re-verified (workflow-evidence, connector-evidence after
+  tightening the decision line to impact verbs, documentation-asset, capability
+  staged-changes); check-known-gaps.sh 25/25 closed and check-readiness-audit.sh 34 rows pass;
+  maintenance-routine PR checklist ran (validate-orphans clean, setup --check ok, graphify
+  update ran); ready-for-review PR opened with Merge Readiness evidence; merge stays with the
+  owner.
 
 ## Lessons Reused
 
@@ -256,9 +267,9 @@ before/after the edit (25 pre-existing, none added).
 
 ## Completed Work
 
-- Route Plan committed alone (850a8b1); installer fail-closed regression test (54982cb);
-  skill-bootstrap.sh chunking fix + its regression test (6bcd724); lesson file (f8eb168);
-  verification matrices (3b14cab).
+- Route Plan committed alone (3b10fe2); installer fail-closed regression test (bbb1bac);
+  skill-bootstrap.sh chunking fix + its regression test (175b2b2); lesson file (a68a4b0);
+  verification matrices (44e7434).
 - Real downstream validation completed in Expiriens-saas-0.9 (PR #2, ready-for-review).
 
 ## Remaining Validation Outside This Plan
