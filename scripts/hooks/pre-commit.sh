@@ -102,7 +102,7 @@ EOS_LIB_G10="$EOS_HOME/scripts/enforcement/lib/evidence.sh"
 if ! bypass_active EOS_BYPASS_DOD 2>/dev/null; then
   G10_PLAN="$(ls -t "$REPO_ROOT_G10/.claude/plans/"*.md 2>/dev/null | head -1 || true)"
   G10_CODE="$(git diff --cached --name-only 2>/dev/null \
-    | grep -cE '\.(ts|tsx|js|jsx|py|go|rs|sh)$' 2>/dev/null || echo 0)"
+    | grep -cE '\.(ts|tsx|js|jsx|py|go|rs|sh)$' 2>/dev/null)" || G10_CODE=0
   if [ -n "$G10_PLAN" ] && [ "${G10_CODE:-0}" -gt 0 ]; then
     G10_UNCHECKED="$(awk '
       /^#{1,4}[[:space:]].*([Dd]o[Dd]|תנאי.סיום|Definition.of.Done)/ { found=1; next }
@@ -124,7 +124,7 @@ fi
 # Governing policy: core/workflow.md step 6. Bypass: EOS_BYPASS_VERIFY=1.
 if ! bypass_active EOS_BYPASS_VERIFY 2>/dev/null; then
   G11_CODE="$(git diff --cached --name-only 2>/dev/null \
-    | grep -cE '\.(ts|tsx|js|jsx|py|go|rs)$' 2>/dev/null || echo 0)"
+    | grep -cE '\.(ts|tsx|js|jsx|py|go|rs)$' 2>/dev/null)" || G11_CODE=0
   if [ "${G11_CODE:-0}" -gt 2 ]; then
     if ! evidence_has superpowers_verify_run 2>/dev/null && \
        ! evidence_has tests_run 2>/dev/null; then
