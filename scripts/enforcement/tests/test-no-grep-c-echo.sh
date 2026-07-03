@@ -20,17 +20,30 @@ bad() { FAIL=$((FAIL+1)); printf '  ❌ %s\n' "$1"; }
 
 echo "── static scan: no 'grep -c ... || echo' anti-pattern ──"
 # Scan the scripts that feed integer tests + the live hooks config.
-# `grep -c` followed (on the same logical command) by `|| echo` is the bug.
+# `grep -c` followed (on the same logical command) by `|| echo` is the bug — including
+# when the two halves are split across a backslash line-continuation (join continuation
+# lines before matching, or a multi-line instance of this exact anti-pattern slips past
+# a single-line-only scan; that gap let it recur live in scripts/hooks/pre-commit.sh).
 TARGETS=(
   "$ROOT/scripts"
   "$ROOT/.claude/settings.json"
 )
-HITS="$(grep -rEn "grep -c[E]?[^|]*\|\| *echo" "${TARGETS[@]}" \
-          --include='*.sh' --include='settings.json' 2>/dev/null \
-        | grep -v 'test-no-grep-c-echo.sh' \
-        | grep -vE ':[0-9]+:[[:space:]]*#' || true)"
+HITS="$(
+  while IFS= read -r -d '' f; do
+    # Blank full-line comments first (a trailing '\' in a comment is not a real
+    # shell continuation), then join backslash line-continuations so a
+    # `grep -c ... \` / `|| echo` pair split across two physical lines is still
+    # caught — that split is exactly what let this anti-pattern recur live in
+    # scripts/hooks/pre-commit.sh past the original single-line-only scan.
+    match="$(sed -E 's/^[[:space:]]*#.*$//' "$f" \
+      | sed -E -e ':a' -e 'N' -e '$!ba' -e 's/\\\n[[:space:]]*/ /g' \
+      | grep -oE "grep -c[E]?\b.*\|\| *echo" | head -1)"
+    [ -n "$match" ] && printf '%s: %s\n' "$f" "$match"
+  done < <(find "${TARGETS[@]}" \( -name '*.sh' -o -name 'settings.json' \) -type f -print0 2>/dev/null) \
+    | grep -v 'test-no-grep-c-echo.sh' || true
+)"
 if [ -z "$HITS" ]; then
-  ok "no 'grep -c ... || echo' found in scripts/ or settings.json"
+  ok "no 'grep -c ... || echo' found in scripts/ or settings.json (including line-continuation joins)"
 else
   bad "found 'grep -c ... || echo' anti-pattern:"
   printf '%s\n' "$HITS" | sed 's/^/      /'
