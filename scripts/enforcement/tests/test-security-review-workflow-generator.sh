@@ -39,11 +39,17 @@ if "diff[:12000]" in code:
     sys.exit(1)
 print("ok: no_single_slice_truncation")
 
-# The fix contract: chunked full-diff review with a fail-closed cap.
+# The fix contract: chunked full-diff review with a fail-closed cap, and
+# (CodeRabbit nitpick on this PR) a bounded client timeout/retry policy with
+# a per-chunk try/except so one stalled or failed call can't hang the CI step
+# indefinitely or silently abort the rest of the review.
 for needle, name in (
     ("MAX_CHUNKS", "fail_closed_chunk_cap_present"),
     ("for idx, chunk in enumerate(chunks", "chunk_loop_reviews_every_part"),
     ("sys.exit(1)", "over_cap_exits_nonzero"),
+    ("timeout=", "client_has_bounded_timeout"),
+    ("max_retries=", "client_has_bounded_retries"),
+    ("except Exception as exc", "per_chunk_call_is_exception_guarded"),
 ):
     if needle not in code:
         print(f"fail: {name}")

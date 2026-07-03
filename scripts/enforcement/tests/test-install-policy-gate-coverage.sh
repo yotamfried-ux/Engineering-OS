@@ -135,7 +135,13 @@ case "$install_err" in
     fail missing_manifest_error_is_explicit
     ;;
 esac
-if find "$TARGET_MISSING/scripts" -type f 2>/dev/null | grep -q .; then
+# Scan the whole target, not just scripts/ (CodeRabbit nitpick on this PR):
+# manifest dependencies can live outside scripts/ (e.g. core/capability-registry.yaml
+# per policy-gate-dependencies.tsv), so a future manifest row there must still be
+# caught. .github/workflows/ is excluded because those files are copied by the
+# documented workflow-copy loop that runs BEFORE the manifest existence check —
+# that's expected, unrelated output, not a dependency-copy leak.
+if find "$TARGET_MISSING" -mindepth 1 -type f 2>/dev/null | grep -v '/\.github/workflows/' | grep -q .; then
   fail no_dependency_copied_after_missing_manifest_failure
 else
   pass no_dependency_copied_after_missing_manifest_failure
