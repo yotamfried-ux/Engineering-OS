@@ -238,6 +238,13 @@ before/after the edit (25 pre-existing, none added).
   maintenance-routine PR checklist ran (validate-orphans clean, setup --check ok, graphify
   update ran); ready-for-review PR opened with Merge Readiness evidence; merge stays with the
   owner.
+- pre-merge: CodeRabbit reviewed PR #187 on caed603 and posted 3 Trivial nitpicks — 2 fixed
+  (af8de09): OpenAI client hardened with timeout=60.0/max_retries=2 and a per-chunk
+  try/except that fails closed instead of hanging unbounded or aborting silently, proven via
+  3 new regression assertions that fail on the pre-fix code; the installer no-copy test
+  broadened from scanning only scripts/ to the whole target tree (excluding the
+  legitimately-copied .github/workflows/); 1 explained as an accepted trade-off (regex-pinned
+  test brittleness) per CodeRabbit's own note. Full suite re-verified green after both fixes.
 
 ## Lessons Reused
 
