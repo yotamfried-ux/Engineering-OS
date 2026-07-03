@@ -20,6 +20,22 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "figma": {
+      "type": "http",
+      "url": "${FIGMA_MCP_URL}"
+    },
+    "sentry": {
+      "type": "http",
+      "url": "${SENTRY_MCP_URL}"
+    },
+    "postman": {
+      "type": "http",
+      "url": "${POSTMAN_MCP_URL}"
+    },
+    "composio": {
+      "type": "http",
+      "url": "${COMPOSIO_MCP_URL}"
     }
   }
 }
