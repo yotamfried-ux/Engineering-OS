@@ -173,7 +173,7 @@ Required capabilities for task class `engineering_os_governance`:
 - **start:** Route Plan authored; `known-gaps.tsv` confirmed 0 open; readiness audit confirmed
   fully classified; `main` and experiment branch both at SHA `8cb774d030ed6c6f5f8d17ac89f421980f31a615`.
 - **mid:** Part A root-caused check-plan-scope.sh's mawk/gawk IGNORECASE defect (see mawk-ignorecase-fix.md), fixed and merged into this branch as commit abb8c77; Part B completed downstream install at /tmp/eos-burnin-target via use-in-project.sh.
-- **pre-merge:** pending — needs to be recorded once this commit's CI results are known.
+- **pre-merge:** all Parts A-G complete; enforcement suite 70/70 locally at commit 304c31631d343b25013bffa05c69d360f8f02d24; PR #185 (this PR) and PR #1 (Expiriens-saas-0.9) both open with real CI gates exercised across multiple fix rounds; neither PR is merged, owner approval outstanding on both.
 
 ## Definition of Done / תנאי סיום
 
