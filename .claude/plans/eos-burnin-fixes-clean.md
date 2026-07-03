@@ -12,8 +12,8 @@
 | Target paths | `scripts/enforcement/check-plan-scope.sh`, `scripts/enforcement/tests/test-plan-scope.sh`, `scripts/hooks/pre-commit.sh`, `.claude/settings.json`, `scripts/enforcement/tests/test-no-grep-c-echo.sh`, `lessons-learned/bugs/mawk-ignorecase-unsupported.md` |
 | Templates | Not applicable — isolated enforcement-script portability/regex fix across existing files; no project scaffold involved. |
 | Patterns | Not applicable — no `patterns/` domain asset (auth/api/billing/ui) touched; this is enforcement tooling, not application code. |
-| Skills | none required beyond the base workflow loop (no UI/auth/payments surface; no security-review trigger — no secrets/auth/PII touched) |
-| External systems / connectors | GitHub |
+| Skills | none |
+| External systems/connectors | GitHub |
 | Validation gates | `scripts/enforcement/tests/test-plan-scope.sh`, `scripts/enforcement/tests/test-no-grep-c-echo.sh`, JSON validation of `.claude/settings.json`, `scripts/enforcement/check-known-gaps.sh`, `scripts/enforcement/check-readiness-audit.sh`, full `scripts/enforcement/tests/test-*.sh` suite (enforcement-tests), `scripts/enforcement/check-workflow-evidence.sh`, `scripts/enforcement/check-connector-evidence.sh`, `scripts/enforcement/check-documentation-asset-evidence.sh`, `scripts/enforcement/validate-capability-evidence.sh` + `scripts/enforcement/check-capability-staged-changes.sh`, `scripts/enforcement/check-pr-review-evidence.sh` (after PR creation) |
 
 ## Goal / מטרה
@@ -82,7 +82,7 @@ without bypassing or rewriting anything.
 | `scripts/hooks/pre-commit.sh` | checked |
 | `.claude/settings.json` | checked |
 | `scripts/enforcement/tests/test-no-grep-c-echo.sh` | checked |
-| PR #185 diff, commits, check-runs, review threads (`mcp__github__pull_request_read`) | checked |
+| `github.com/yotamfried-ux/Engineering-OS/pull/185` (diff, commits, check-runs, review threads) | checked |
 
 ## Capability Evidence
 
@@ -126,9 +126,7 @@ Required capabilities for task class `engineering_os_governance`:
   to confirm `workflow-evidence-policy` and `pr-policy` are red on the latest run; read its 8
   review threads to confirm 1 unresolved thread (chatgpt-codex-connector, stale-DoD risk) and
   7 resolved CodeRabbit threads
-- result: confirmed root causes and confirmed the exact same fix content is safe to re-apply
-  verbatim on a clean branch; PR #185 https://github.com/yotamfried-ux/Engineering-OS/pull/185
-  head `1e6dc7cbe43cd33c224cd33b415a90a60e2fc991`
+- result: confirmed safe to re-apply verbatim — PR #185 head 1e6dc7cbe43cd33c224cd33b415a90a60e2fc991 (github.com/yotamfried-ux/Engineering-OS/pull/185)
 - decision: selected a clean replacement branch/PR (this plan) over rewriting #185's published
   history, since #185's commits already carry a completed CodeRabbit review trail that a
   history rewrite would invalidate
@@ -225,9 +223,15 @@ separate lesson for the mawk/gawk `IGNORECASE` portability defect
   mixed-case matching not yet added; `pre-commit.sh`/`.claude/settings.json` still contain the
   `grep -c ... || echo 0` anti-pattern (reproducible via the documented
   `lessons-learned/bugs/grep-c-double-output.md` symptom).
-- **mid:** to be recorded once the fix commit lands and local verification is captured.
-- **pre-merge:** to be recorded after the final code/config/test change and after full
-  validation, in a dedicated commit after `mid`.
+- **mid:** fix commit `fd20790` landed (check-plan-scope.sh, pre-commit.sh, .claude/settings.json,
+  test-no-grep-c-echo.sh, test-plan-scope.sh, and the new lesson file). Locally verified:
+  `test-plan-scope.sh` 10/10, `test-no-grep-c-echo.sh` 4/4 (git-stash confirmed it fails 3/4 on
+  the pre-fix files), `python3 -m json.tool .claude/settings.json` valid, full enforcement suite
+  `scripts/enforcement/tests/test-*.sh` 70/70, `check-known-gaps.sh` (25 gaps) and
+  `check-readiness-audit.sh` (34 rows) both pass. `check-connector-evidence.sh` and
+  `check-documentation-asset-evidence.sh` re-run locally against this plan and pass.
+- **pre-merge:** to be recorded after this commit, once the final full validation pass
+  (including `check-workflow-evidence.sh` over the full commit range) is re-confirmed clean.
 
 ## Definition of Done / תנאי סיום
 
