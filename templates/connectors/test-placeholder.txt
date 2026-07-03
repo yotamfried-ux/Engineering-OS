@@ -1,1 +1,1 @@
-${ENGINEERING_OS_HOME}/scripts/nemotron-mcp-server.py
+remove-me
