@@ -230,8 +230,14 @@ separate lesson for the mawk/gawk `IGNORECASE` portability defect
   `scripts/enforcement/tests/test-*.sh` 70/70, `check-known-gaps.sh` (25 gaps) and
   `check-readiness-audit.sh` (34 rows) both pass. `check-connector-evidence.sh` and
   `check-documentation-asset-evidence.sh` re-run locally against this plan and pass.
-- **pre-merge:** to be recorded after this commit, once the final full validation pass
-  (including `check-workflow-evidence.sh` over the full commit range) is re-confirmed clean.
+- **pre-merge:** final validation re-run fresh after commit `5911348` (mid checkpoint), on the
+  full range `8cb774d030ed6c6f5f8d17ac89f421980f31a615..HEAD`: `test-plan-scope.sh` 10/10,
+  `test-no-grep-c-echo.sh` 4/4, `.claude/settings.json` valid JSON, full enforcement suite
+  `scripts/enforcement/tests/test-*.sh` 70/70, `check-known-gaps.sh` (25 gaps) and
+  `check-readiness-audit.sh` (34 rows) pass, `check-connector-evidence.sh` and
+  `check-documentation-asset-evidence.sh` both pass over the range, and
+  `validate-capability-evidence.sh` / `check-capability-staged-changes.sh` both pass. This is
+  the final code/config/test change; no further fix commits follow before opening the PR.
 
 ## Definition of Done / תנאי סיום
 
@@ -250,6 +256,9 @@ separate lesson for the mawk/gawk `IGNORECASE` portability defect
 - [x] Full enforcement suite green — signal: `scripts/enforcement/tests/test-*.sh`, 70/70 passing.
 - [x] `scripts/enforcement/check-known-gaps.sh` (25 gaps) and `check-readiness-audit.sh`
       (34 rows) both pass.
+- [x] Progress Lifecycle Evidence recorded in order (`start` in the plan-only commit,
+      `mid` after the fix commit, `pre-merge` after final validation) across separate commits
+      — signal: `bash scripts/enforcement/check-workflow-evidence.sh 8cb774d030ed6c6f5f8d17ac89f421980f31a615 HEAD` passes clean.
 
 ## Rollback plan
 
