@@ -41,10 +41,10 @@
 
 ## Connector Usage Evidence
 
-- source: GitHub connector.
-- action: fetched files.
-- result: missing cleanup checks found.
-- decision: add cleanup checks.
+- source: GitHub connector on yotamfried-ux/Engineering-OS.
+- action: GitHub fetched files and workflow results.
+- result: GitHub found scripts/enforcement/check-merge-readiness.sh on PR #193 and head 4e6b74b81ae3e60b8dc680aea468e53823cb87af.
+- decision: added cleanup workflows to the required set.
 - target: scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh.
 
 ## Documentation Asset Evidence
