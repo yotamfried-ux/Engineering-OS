@@ -14,7 +14,7 @@
 | Architecture guides | docs/operations/merge-readiness-checklist.md |
 | Patterns | existing enforcement test fixture style |
 | External systems/connectors | GitHub |
-| Skills | superpowers |
+| Skills | superpowers-verify |
 | Validation gates | enforcement-tests, pr-policy, connector-evidence-policy, workflow-evidence-policy, capability-evidence-policy, plan-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy |
 | Evidence to check | PR #196 diff, workflow runs, head SHA |
 | User decisions required | none |
@@ -64,7 +64,7 @@ Plan Scope: standard
 
 ## Skill Evidence
 
-- superpowers used for planning and validation discipline.
+- superpowers plugin is not installed in this environment; used the portable `/superpowers-verify` slash command (`.claude/commands/superpowers-verify.md`) before marking the fixture fix done — ran the full DoD/regression/edge-case/security/cleanup checklist and confirmed all items pass locally.
 
 ## Template/Pattern Rating Waiver
 
