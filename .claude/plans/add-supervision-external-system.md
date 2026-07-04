@@ -62,7 +62,7 @@
 
 - source: GitHub connector.
 - action: fetched roboflow/supervision repository metadata, README.md, and pyproject.toml; fetched Engineering OS external-skills, external-systems, and capability map files.
-- result: selected external-systems/supervision as the correct integration location.
+- result: selected external-systems/supervision as the correct integration location and created the reference files.
 - target: external-systems/supervision/README.md; external-systems/README.md.
 - decision: updated the project inventory with a non-default computer-vision library reference.
 
@@ -81,9 +81,10 @@ No concrete templates/ or patterns/ asset is selected; this is an external-syste
 - connectors: GitHub.
 - steps: inspect source repository, classify layer, add reference guide, update index, run CI.
 - evidence: roboflow/supervision README and pyproject; Engineering OS external systems and skills docs.
-- result: plan created before content changes.
-- follow-up: add documentation files and index row.
+- result: external-system reference file and index row added.
+- follow-up: add pre-merge checkpoint and run exact-head CI.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan created before external-system documentation changes.
+- mid: added external-systems/supervision/README.md and indexed Supervision under Computer Vision & Media AI.
