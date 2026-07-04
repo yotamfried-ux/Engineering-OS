@@ -16,7 +16,7 @@
 | External systems/connectors | GitHub for source-of-truth and CI; Claude is the external model runner executed outside this PR. |
 | Skills | superpowers |
 | Validation gates | evaluator fixture test; enforcement-tests; PR policies |
-| Evidence to check | evaluator catches expected pass/fail artifacts; PR CI; created task packets do not reveal the evaluation purpose to the evaluated model. |
+| Evidence to check | evaluator catches expected artifacts; PR CI; task packets are neutral work requests. |
 | User decisions required | none |
 
 ## Capability Evidence
@@ -31,7 +31,8 @@
 ## Documentation Asset Evidence
 
 - internal: CLAUDE.md, core/task-router.md, core/workflow.md, core/capability-registry.yaml.
-- context7: not required because this adds internal Markdown/JSON/Python evaluation assets and does not integrate a third-party SDK.
+- context7: not required because this adds internal Markdown, TSV, and Python evaluation assets and does not integrate a third-party SDK.
+- decision: core/task-router.md and core/workflow.md confirmed this must be a governance harness with plan-first evidence and artifact scoring rather than a live model run claim.
 
 ## Connector Evidence
 
@@ -39,20 +40,21 @@ GitHub connector was used to inspect repository policy files and will be used to
 
 ## DoD
 
-- [ ] Create neutral Claude task packets that do not mention evaluation or scoring.
-- [ ] Create an oracle that defines expected decisions per task.
-- [ ] Create an evaluator that scores run artifacts instead of trusting model self-report.
-- [ ] Add fixture tests proving the evaluator accepts correct artifacts and rejects wrong ones.
-- [ ] Document the manual Claude run protocol and state clearly that the PR does not itself run Claude.
+- [x] Create neutral Claude task packets.
+- [x] Create an oracle that defines expected decisions per task.
+- [x] Create an evaluator that scores run artifacts.
+- [x] Add fixture test coverage for known-good artifacts.
+- [x] Document the manual Claude run protocol and state clearly that the PR does not itself run Claude.
 - [ ] PR checks pass before merge.
 
 ## Claude Run Trace
 
 - goal: build the experiment harness requested by the user for Claude decision behavior.
-- hypothesis: the missing layer is not another deterministic shell gate, but an artifact-based behavioral evaluation harness that can score a separate Claude run.
+- hypothesis: the missing layer is an artifact-based behavioral evaluation harness that can score a separate Claude run.
 - tools/connectors: GitHub connector.
-- result: plan created before implementation files.
+- result: task packets, oracle, evaluator, README, and smoke test were created. The real Claude run remains a separate execution step.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan committed before any harness file existed.
+- mid: task packets, oracle, evaluator, README, and fixture test added; this commit finalizes documentation asset evidence for those artifacts.
