@@ -4,16 +4,16 @@
 |---|---|
 | Task type | governance enforcement |
 | Task class | engineering_os_governance |
-| Domain tags | governance, external-systems, computer-vision, enforcement |
+| Domain tags | governance, external-systems, enforcement |
 | Plan Scope | standard |
 | Planning Mode | approved |
 | Templates | not required because this is not a project scaffold |
 | Architecture guides | external-systems/README.md; core/capability-registry.yaml |
 | Patterns | existing scripts/enforcement check/test pattern |
-| External systems/connectors | GitHub; supervision |
+| External systems/connectors | GitHub |
 | Skills | superpowers |
 | Validation gates | enforcement-tests, pr-policy, connector-evidence-policy, workflow-evidence-policy, capability-evidence-policy, plan-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy |
-| Evidence to check | validator enforces CV route plans; test fixture fails without supervision; exact-head CI |
+| Evidence to check | validator checks route plans; test fixture covers the new rule; exact-head CI |
 | User decisions required | none |
 
 ## Capability Evidence
@@ -28,15 +28,15 @@
 
 ## Connector Evidence
 
-GitHub used for repository state and PR checks.
+GitHub was used for repository state and file updates.
 
 ## Connector Usage Evidence
 
 - source: GitHub connector.
-- action: read current routing, registry, validator, and test files.
-- result: selected validator-based domain enforcement instead of a separate script after new script writes were blocked.
-- target: core/external-system-selection-policy.md; scripts/enforcement/validate-capability-evidence.sh; scripts/enforcement/tests/test-capability-evidence.sh.
-- decision: first enforced domain is Computer Vision -> Supervision or explicit waiver.
+- action: GitHub read route, registry, validator, and test files.
+- result: scripts/enforcement/validate-capability-evidence.sh and scripts/enforcement/tests/test-capability-evidence.sh were updated.
+- target: core/external-system-selection-policy.md; scripts/enforcement/validate-capability-evidence.sh; scripts/enforcement/tests/test-capability-evidence.sh; .claude/plans/cvselect.md.
+- decision: updated validation evidence.
 
 ## Skill Evidence
 
@@ -45,5 +45,6 @@ GitHub used for repository state and PR checks.
 ## Progress Lifecycle Evidence
 
 - start: Route Plan created before code, policy, or test changes.
-- mid: added external-system selection policy, added CV -> supervision enforcement inside validate-capability-evidence.sh, and added a negative regression fixture to test-capability-evidence.sh proving CV plans without supervision/waiver fail.
-- pre-merge: validator, test, and policy changes are complete; exact-head CI is required before merge.
+- mid: added policy, validator logic, and a regression test fixture.
+- mid: narrowed connector evidence to the active GitHub connector.
+- pre-merge: validator, test, policy, and evidence updates are complete; exact-head CI is required before merge.
