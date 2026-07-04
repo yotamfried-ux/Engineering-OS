@@ -171,4 +171,9 @@ scripts/enforcement/tests/test-capability-registry.sh` (עבר), `git status
   ran the full scripts/enforcement/tests/test-*.sh sweep and found + fixed 2 broken
   fixtures (test-learning-reuse.sh, test-operational-learning-skills.sh) that built
   ad hoc plan fixtures without a Plan Scope field.
-- pre-merge: to be updated after the final validation pass, right before merge readiness is recorded.
+- pre-merge: final validation before requesting merge — full local
+  scripts/enforcement/tests/test-*.sh sweep is 0 failures, test-workflow.sh is
+  64/64, bash scripts/enforcement/check-workflow-evidence.sh passes, and
+  CodeRabbit/Codex review findings on PR #191 (unanchored detect_plan_scope,
+  enforce-bash-entry.sh scope bypass, overstated User Approval wording, missing
+  Hebrew Plan Scope label test) are all addressed in this branch.
