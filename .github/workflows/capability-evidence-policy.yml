@@ -28,6 +28,7 @@ jobs:
             echo "No changed Engineering OS plan files."
           else
             bash scripts/enforcement/validate-capability-evidence.sh $changed_plans
+            bash scripts/enforcement/check-cv-external-system-selection.sh $changed_plans
           fi
 
           bash scripts/enforcement/check-capability-staged-changes.sh "$base" "$head"

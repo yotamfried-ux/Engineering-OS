@@ -1,6 +1,6 @@
 # policy-gate-dependencies.tsv — install-time copy manifest for policy-gate workflows.
 #
-# Each row: <workflow_yml_basename>\t<path relative to Engineering OS root>.
+# Each row: <workflow_yml_basename>	<path relative to Engineering OS root>.
 # install-policy-gates.sh copies every dependency row for a workflow it installs,
 # so an installed target project's CI checkout has the script/data files that
 # workflow's `bash scripts/enforcement/...` (or similar) steps actually call.
@@ -15,6 +15,7 @@ connector-evidence-policy.yml	scripts/enforcement/check-connector-evidence.sh
 workflow-evidence-policy.yml	scripts/enforcement/check-workflow-evidence.sh
 capability-evidence-policy.yml	scripts/enforcement/check-capability-staged-changes.sh
 capability-evidence-policy.yml	scripts/enforcement/validate-capability-evidence.sh
+capability-evidence-policy.yml	scripts/enforcement/check-cv-external-system-selection.sh
 capability-evidence-policy.yml	scripts/enforcement/capability-staged-map.tsv
 capability-evidence-policy.yml	core/capability-registry.yaml
 documentation-asset-policy.yml	scripts/enforcement/check-documentation-asset-evidence.sh
