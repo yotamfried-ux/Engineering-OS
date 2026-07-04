@@ -20,7 +20,9 @@ cat > "$TMP/runs-good.json" <<'JSON'
     {"name":"workflow-evidence-policy","status":"completed","conclusion":"success"},
     {"name":"capability-evidence-policy","status":"completed","conclusion":"success"},
     {"name":"plan-policy","status":"completed","conclusion":"success"},
-    {"name":"documentation-asset-policy","status":"completed","conclusion":"success"}
+    {"name":"documentation-asset-policy","status":"completed","conclusion":"success"},
+    {"name":"semantic-cleanup-policy","status":"completed","conclusion":"success"},
+    {"name":"import-cleanup-policy","status":"completed","conclusion":"success"}
   ]
 }
 JSON
@@ -34,7 +36,9 @@ cat > "$TMP/runs-pr107-bad.json" <<'JSON'
     {"name":"workflow-evidence-policy","status":"completed","conclusion":"failure"},
     {"name":"connector-evidence-policy","status":"completed","conclusion":"failure"},
     {"name":"plan-policy","status":"completed","conclusion":"success"},
-    {"name":"documentation-asset-policy","status":"completed","conclusion":"success"}
+    {"name":"documentation-asset-policy","status":"completed","conclusion":"success"},
+    {"name":"semantic-cleanup-policy","status":"completed","conclusion":"success"},
+    {"name":"import-cleanup-policy","status":"completed","conclusion":"success"}
   ]
 }
 JSON
@@ -48,9 +52,24 @@ cat > "$TMP/runs-missing.json" <<'JSON'
 }
 JSON
 
+cat > "$TMP/runs-missing-cleanup.json" <<'JSON'
+{
+  "workflow_runs": [
+    {"name":"enforcement-tests","status":"completed","conclusion":"success"},
+    {"name":"pr-policy","status":"completed","conclusion":"success"},
+    {"name":"connector-evidence-policy","status":"completed","conclusion":"success"},
+    {"name":"workflow-evidence-policy","status":"completed","conclusion":"success"},
+    {"name":"capability-evidence-policy","status":"completed","conclusion":"success"},
+    {"name":"plan-policy","status":"completed","conclusion":"success"},
+    {"name":"documentation-asset-policy","status":"completed","conclusion":"success"}
+  ]
+}
+JSON
+
 expect_pass "merge readiness accepts all-success required workflows" "$MERGE_CHECK" --runs-json "$TMP/runs-good.json"
 expect_fail "merge readiness blocks PR107-style failed evidence workflows" "$MERGE_CHECK" --runs-json "$TMP/runs-pr107-bad.json"
 expect_fail "merge readiness blocks missing required workflows" "$MERGE_CHECK" --runs-json "$TMP/runs-missing.json"
+expect_fail "merge readiness blocks missing cleanup policy workflows" "$MERGE_CHECK" --runs-json "$TMP/runs-missing-cleanup.json"
 
 run_guard_raw() { printf '%s' "$1" | "$JSON_GUARD"; }
 expect_fail "JSON guard blocks malformed PreToolUse JSON" run_guard_raw '{"tool_name":"Write","tool_input":'
