@@ -4,14 +4,14 @@
 |---|---|
 | Task type | docs / governance |
 | Task class | engineering_os_governance |
-| Target paths | scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh |
+| Target paths | scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh, scripts/enforcement/tests/test-ops-branch-protection.sh |
 | Task-router evidence | core/task-router.md checked |
 | Workflow evidence | core/workflow.md checked |
 | Templates | Template Gap Waiver recorded below |
 | Patterns | not required |
 | External systems/connectors | GitHub |
 | Skills | superpowers |
-| Validation gates | check-merge-readiness, test-operational-readiness-gates, test-required-workflows-contract |
+| Validation gates | check-merge-readiness, test-operational-readiness-gates, test-required-workflows-contract, test-ops-branch-protection |
 
 ## Capability Evidence
 
@@ -26,26 +26,28 @@
 
 - [x] checker test fixture updated.
 - [x] docs list updated.
+- [x] branch protection context test updated.
 
 ## Source of Truth Checks
 
 | Source | Status | Decision |
 |---|---|---|
-| core/task-router.md | checked | route |
-| core/workflow.md | checked | workflow |
-| scripts/enforcement/check-merge-readiness.sh | checked | target |
+| core/task-router.md | checked | route selected |
+| core/workflow.md | checked | lifecycle selected |
+| scripts/enforcement/check-merge-readiness.sh | checked | target updated |
+| scripts/enforcement/tests/test-ops-branch-protection.sh | checked | context test updated |
 
 ## Connector Evidence
 
-- GitHub connector used.
+- GitHub connector used for repository files and workflow evidence.
 
 ## Connector Usage Evidence
 
 - source: GitHub connector on yotamfried-ux/Engineering-OS.
 - action: GitHub fetched files and workflow results.
-- result: GitHub found scripts/enforcement/check-merge-readiness.sh on PR #193 and head 4e6b74b81ae3e60b8dc680aea468e53823cb87af.
-- decision: added cleanup workflows to the required set.
-- target: scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh.
+- result: GitHub found scripts/enforcement/check-merge-readiness.sh on PR #193 and head d8fffc8d04779be96274f0a111af9745affd3356.
+- decision: added cleanup workflows and updated branch protection test coverage.
+- target: scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh, scripts/enforcement/tests/test-ops-branch-protection.sh.
 
 ## Documentation Asset Evidence
 
@@ -67,7 +69,7 @@
 
 - goal: align checks.
 - hypothesis: missing cleanup checks fail readiness.
-- steps: plan, checker, docs, tests.
+- steps: plan, checker, docs, tests, context test repair.
 - tools/connectors: GitHub connector.
 - evidence: changed target files.
 - result: ordered lifecycle recorded.
@@ -76,4 +78,4 @@
 
 - start: Route Plan committed before code/config/test edits for target paths.
 - mid: merge readiness checker updated after work began and before docs/test fixture edits.
-- pre-merge: self-review complete after docs/test fixture edits and checker alignment.
+- pre-merge: self-review complete after branch protection context test repair and checker alignment.
