@@ -9,21 +9,15 @@
 | Planning Mode | approved |
 | Task-router evidence | core/task-router.md read |
 | Workflow evidence | core/workflow.md read |
-| Target paths | .claude/plans/harden-operational-readiness-one-pr.md; scripts/enforcement/capability-staged-map.tsv; scripts/enforcement/tests/test-capability-evidence.sh; scripts/enforcement/tests/test-capability-staged-expanded.sh; scripts/enforcement/tests/test-clean-install-and-usage.sh; scripts/enforcement/tests/test-operational-learning-skills.sh; scripts/enforcement/tests/test-runtime-evidence.sh; scripts/enforcement/tests/test-skill-e2e.sh; scripts/enforcement/tests/test-target-install-smoke.sh; scripts/enforcement/tests/test-template-plan-repair.sh; scripts/enforcement/validate-capability-evidence.sh |
+| Target paths | scripts/enforcement/validate-capability-evidence.sh; scripts/enforcement/tests/test-clean-install-and-usage.sh; .claude/plans/harden-operational-readiness-one-pr.md |
 | Templates | existing governance validator maintenance |
-| Architecture guides | docs/operations/claude-run-trace.md; docs/operations/merge-readiness-checklist.md |
+| Architecture guides | docs/operations/claude-run-trace.md |
 | Patterns | existing enforcement test fixture style |
 | External systems/connectors | GitHub |
 | Skills | superpowers |
 | Validation gates | enforcement-tests, pr-policy, connector-evidence-policy, workflow-evidence-policy, capability-evidence-policy, plan-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy |
-| Evidence to check | PR #195 diff, workflow runs, head SHA, review threads |
+| Evidence to check | PR #195 diff and workflow runs |
 | User decisions required | none |
-
-## Plan
-
-- [x] Create this Route Plan before code/config/test changes.
-- [x] Apply validator and fixture updates after the plan.
-- [x] Record mid and pre-merge lifecycle checkpoints after implementation begins.
 
 ## Definition of Done
 
@@ -42,7 +36,7 @@
 
 ## Documentation Asset Evidence
 
-- internal: core/task-router.md; core/workflow.md; scripts/enforcement/check-workflow-evidence.sh; scripts/enforcement/check-documentation-asset-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/check-merge-readiness.sh; docs/operations/merge-readiness-checklist.md.
+- internal: core/task-router.md; core/workflow.md; scripts/enforcement/check-workflow-evidence.sh; scripts/enforcement/check-documentation-asset-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/check-merge-readiness.sh.
 - context7: not required because this PR changes only internal Engineering OS governance validators, shell fixtures, Route Plan evidence, and PR evidence; it does not implement or integrate an external library, SDK, API, package, or service.
 - decision: use the existing internal policy checkers and fixtures.
 
@@ -62,10 +56,10 @@
 ## Connector Usage Evidence
 
 - source: GitHub connector.
-- action: get_pr_info, fetch_file, update_ref, create_file, update_file, update_pull_request, workflow status checks.
-- result: PR #195 branch is rebuilt with a plan-first lifecycle.
-- target: .claude/plans/harden-operational-readiness-one-pr.md; scripts/enforcement/capability-staged-map.tsv; scripts/enforcement/tests/test-capability-evidence.sh; scripts/enforcement/tests/test-capability-staged-expanded.sh; scripts/enforcement/tests/test-clean-install-and-usage.sh; scripts/enforcement/tests/test-operational-learning-skills.sh; scripts/enforcement/tests/test-runtime-evidence.sh; scripts/enforcement/tests/test-skill-e2e.sh; scripts/enforcement/tests/test-target-install-smoke.sh; scripts/enforcement/tests/test-template-plan-repair.sh; scripts/enforcement/validate-capability-evidence.sh.
-- decision: repair commit order and fixture wording.
+- action: GitHub connector checked PR #195 and repository files.
+- result: PR #195 head d9dcdf0330bbba3c48e1cd2477f732feeb2cafd3 was rebuilt with plan-first history.
+- target: scripts/enforcement/validate-capability-evidence.sh.
+- decision: updated fixture wording and kept GitHub as the source for PR state.
 
 ## Skill Evidence
 
@@ -89,13 +83,4 @@ No concrete templates/ or patterns/ asset is selected; this is an internal gover
 
 - start: Route Plan introduced before implementation commits.
 - mid: validator and fixture updates were applied after the start checkpoint; runtime fixture values now use deterministic tokens accepted by the hook.
-- pre-merge: after the final validator/test update, this checkpoint records that PR #195 is ready for exact-head CI verification and review-thread validation before merge.
-
-## Review Fallback Evidence
-
-- reviewer: ChatGPT manual self-review.
-- scope: validator, fixture, Route Plan evidence, and merge-readiness evidence.
-- checks: enforcement-tests, pr-policy, connector-evidence-policy, workflow-evidence-policy, capability-evidence-policy, plan-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy.
-- risks: stricter validation can expose incomplete fixture plans.
-- decision: manual fallback review is used for this repair.
-- evidence: scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/check-merge-readiness.sh; PR #195.
+- pre-merge: after the final validator/test update, this checkpoint records exact-head CI verification and review-thread validation before merge.
