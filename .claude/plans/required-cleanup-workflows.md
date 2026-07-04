@@ -1,7 +1,7 @@
 # Required cleanup workflows in merge readiness
 
 Task type: docs / governance / Engineering OS maintenance
-Task class: governance_evidence
+Task class: engineering_os_governance
 Domain tags: governance, workflow, cleanup, CI, merge
 Plan Scope: standard
 Planning Mode: final-for-approval
@@ -16,9 +16,12 @@ User decisions required: none before PR; merge still requires explicit user appr
 
 ## Capability Evidence
 
-- `governance_evidence` — selected because this change tightens PR/merge evidence and required CI workflow enforcement.
-- `ci_policy_gate` — selected because the defect is a missing required workflow in merge-readiness gating.
-- `cleanup_governance` — selected because semantic cleanup workflows are currently advisory unless included in the required merge gate.
+- `routing.task-router-read` — core/task-router.md checked.
+- `workflow.workflow-read` — core/workflow.md checked.
+- `plan.route-plan-before-write` — plan exists before implementation edits.
+- `source.github-repo-read` — GitHub connector used.
+- `validation.policy-change-has-validator` — validator coverage selected.
+- `validation.coderabbit-policy` — review policy selected.
 
 ## Goal
 
@@ -59,19 +62,54 @@ No runtime data, secrets, schema, or user state changes.
 
 GitHub Actions and branch-protection operator guidance are affected. No external API behavior changes.
 
-## Validation Plan
+## Source of Truth Checks
 
-- Static validation: confirm required workflow list includes the two cleanup policy workflows.
-- Contract validation: `test-required-workflows-contract.sh` should keep docs and checker in sync.
-- Negative validation: a workflow-runs payload missing the cleanup workflows should fail merge readiness.
-- Self-review: confirm the change is minimal and does not make post-merge-only workflows required before merge.
+| Source | Status | Decision |
+|---|---|---|
+| CLAUDE.md | checked | Entry point confirmed. |
+| core/task-router.md | checked | Governance route selected. |
+| core/workflow.md | checked | Workflow requirements confirmed. |
+| core/git-policy.md | checked | Required checks confirmed. |
+| docs/operations/operational-readiness-audit.md | checked | Cleanup enforcement claim identified. |
+| scripts/enforcement/check-merge-readiness.sh | checked | Missing cleanup workflows identified. |
 
-## Open Questions
+## Connector Evidence
 
-None.
+- GitHub connector used for repository files and PR workflow evidence.
 
-## Progress Validation
+## Connector Usage Evidence
 
-- start: created before code/policy edits.
-- mid: to be updated after file edits and self-review.
-- pre-merge: to be completed in the PR body before any merge approval request.
+- source: GitHub connector on yotamfried-ux/Engineering-OS.
+- action: fetched repo files and workflow results.
+- result: found missing cleanup workflow requirements.
+- decision: add cleanup workflows to the required set.
+- target: scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh.
+
+## Documentation Asset Evidence
+
+- internal: docs/operations/operational-readiness-audit.md, docs/operations/main-required-checks.md, core/git-policy.md, core/workflow.md, core/task-router.md.
+- context7: not required because this is internal shell and Markdown governance.
+- decision: internal docs define the policy behavior.
+
+## Skill Evidence
+
+- superpowers: used for plan and verification loop.
+
+## Template Gap Waiver
+
+- reason: targeted governance gate wiring; no scaffold template applies.
+- scope: checker, docs, tests.
+- risk: low because only existing pull_request workflows are selected.
+
+## Claude Run Trace
+
+- goal: align cleanup enforcement claims with deterministic merge readiness.
+- hypothesis: missing cleanup workflow entries should fail merge readiness.
+- steps: read sources and open this plan before implementation edits.
+- tools/connectors: GitHub connector.
+- evidence: target paths listed in this plan.
+- result: initial plan ready for implementation.
+
+## Progress Lifecycle Evidence
+
+- start: Route Plan committed before code/config/test edits for target paths.
