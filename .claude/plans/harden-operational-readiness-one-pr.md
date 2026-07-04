@@ -82,13 +82,14 @@ No concrete templates/ or patterns/ asset is selected; this is an internal gover
 - connectors: GitHub.
 - steps: verify failures, reset branch to base, commit plan first, apply code/test changes, add lifecycle checkpoints, re-check CI.
 - evidence: PR #195 and required policy workflows.
-- result: implementation changes applied after the start checkpoint.
-- follow-up: record pre-merge checkpoint and check CI.
+- result: implementation and lifecycle evidence are ready for exact-head CI.
+- follow-up: check CI and repair any new deterministic failure.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan introduced before implementation commits.
 - mid: validator and fixture updates were applied after the start checkpoint; runtime fixture values now use deterministic tokens accepted by the hook.
+- pre-merge: after the final validator/test update, this checkpoint records that PR #195 is ready for exact-head CI verification and review-thread validation before merge.
 
 ## Review Fallback Evidence
 
