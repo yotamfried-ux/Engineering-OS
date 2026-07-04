@@ -313,6 +313,8 @@ service_connectors:
     - {id: autogen, path: external-systems/autogen/}
     - {id: pydantic-ai, path: external-systems/pydantic-ai/}
     - {id: mcp-sdk, path: external-systems/mcp-sdk/}
+  computer_vision_media:
+    - {id: supervision, path: external-systems/supervision/}
   vector_databases_search:
     - {id: pinecone, path: external-systems/pinecone/}
     - {id: weaviate, path: external-systems/weaviate/}
