@@ -82,9 +82,10 @@ No concrete templates/ or patterns/ asset is selected; this is an external-syste
 - steps: inspect source repository, classify layer, add reference guide, update index, run CI.
 - evidence: roboflow/supervision README and pyproject; Engineering OS external systems and skills docs.
 - result: external-system reference file and index row added.
-- follow-up: add pre-merge checkpoint and run exact-head CI.
+- follow-up: check exact-head CI.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan created before external-system documentation changes.
 - mid: added external-systems/supervision/README.md and indexed Supervision under Computer Vision & Media AI.
+- pre-merge: exact-head CI is required after this checkpoint before merge.
