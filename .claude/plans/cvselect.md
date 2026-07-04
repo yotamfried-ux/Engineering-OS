@@ -34,9 +34,9 @@ GitHub was used for repository state and file updates.
 
 - source: GitHub connector.
 - action: GitHub read route, registry, validator, and test files.
-- result: scripts/enforcement/validate-capability-evidence.sh and scripts/enforcement/tests/test-capability-evidence.sh were updated.
+- result: GitHub repository files were updated for scripts/enforcement and tests.
 - target: core/external-system-selection-policy.md; scripts/enforcement/validate-capability-evidence.sh; scripts/enforcement/tests/test-capability-evidence.sh; .claude/plans/cvselect.md.
-- decision: updated validation evidence.
+- decision: GitHub validation evidence was updated.
 
 ## Skill Evidence
 
