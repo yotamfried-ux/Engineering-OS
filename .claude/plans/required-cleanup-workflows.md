@@ -33,11 +33,11 @@ Prevent Engineering OS from reporting merge readiness when semantic cleanup CI w
 
 ## DoD
 
-- [ ] `check-merge-readiness.sh` requires both cleanup workflows by default.
-- [ ] `main-required-checks.md` mirrors the same required workflow list and branch-protection contexts.
-- [ ] `test-operational-readiness-gates.sh` positive fixture includes the cleanup workflows.
-- [ ] Existing `test-required-workflows-contract.sh` should pass because docs and checker remain synchronized.
-- [ ] No merge to `main` occurs without explicit user approval.
+- [x] `check-merge-readiness.sh` requires both cleanup workflows by default.
+- [x] `main-required-checks.md` mirrors the same required workflow list and branch-protection contexts.
+- [x] `test-operational-readiness-gates.sh` positive fixture includes the cleanup workflows.
+- [x] Existing `test-required-workflows-contract.sh` should pass because docs and checker remain synchronized by the shared workflow-name block.
+- [x] No merge to `main` occurs without explicit user approval.
 
 ## Alternatives
 
@@ -73,5 +73,12 @@ None.
 ## Progress Validation
 
 - start: created before code/policy edits.
-- mid: to be updated after file edits and self-review.
-- pre-merge: to be completed in the PR body before any merge approval request.
+- mid: completed after updating the merge-readiness gate, operator docs, and operational-readiness fixture.
+- pre-merge: self-review complete; PR will remain unmerged until live CI/review state is verified and the user explicitly approves merge.
+
+## Verification Evidence
+
+- `scripts/enforcement/check-merge-readiness.sh` now includes `semantic-cleanup-policy` and `import-cleanup-policy` in `REQUIRED_WORKFLOWS_DEFAULT`.
+- `docs/operations/main-required-checks.md` mirrors the same required workflow list and branch-protection contexts.
+- `scripts/enforcement/tests/test-operational-readiness-gates.sh` includes a positive all-green fixture and a negative `runs-missing-cleanup.json` fixture.
+- Local sandbox reproduction of the merge-readiness logic passed the all-green case and failed the missing-cleanup case as expected.
