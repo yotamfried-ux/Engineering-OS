@@ -19,7 +19,11 @@ def require(condition, message):
 require("status: inventory_backed" in registry, "registry status must be inventory_backed")
 require("runtime_enabled: true" in registry, "registry runtime gate must be enabled")
 require("runtime_scope: plan_level_write_gate" in registry, "registry runtime scope must be plan_level_write_gate")
-require("mcp_auto_install_allowed: false" in registry, "MCP auto-install must stay disabled")
+require("mcp_auto_install_allowed: true" in registry, "MCP auto-install must be enabled for project-scoped MCP config")
+require("mcp_auto_install_scope: project_scoped_mcp_json" in registry, "MCP auto-install must stay project-scoped")
+require("mcp_auto_install_template: templates/connectors/engineering-os-mcp.json" in registry, "MCP auto-install must use the approved profile bundle")
+require("mcp_auto_install_script: scripts/install-mcp-servers.sh" in registry, "MCP auto-install must use the approved installer")
+require("mcp_auto_install_secrets_allowed: false" in registry, "MCP auto-install must not allow credentials in git")
 require("managed_settings_runtime_lockdown_allowed: false" in registry, "managed settings runtime lockdown must stay disabled")
 require("new_project_or_saas:" in registry, "new project / SaaS task class must exist")
 require("service_connectors:" in registry, "service connector inventory section must exist")
@@ -51,6 +55,7 @@ for required in [
     "path: external-skills/ui-ux-pro-max/",
     "path: external-skills/frontend-design/",
     "github-readonly.json",
+    "engineering-os-mcp.json",
     "claude-managed-lockdown.json",
 ]:
     require(required in registry, f"required registry anchor missing: {required}")
@@ -66,6 +71,7 @@ for forbidden in [
     "toolsets: default",
     "default_mode: all",
     "default_mode: default",
+    "mcp_auto_install_secrets_allowed: true",
 ]:
     require(forbidden not in registry.lower(), f"forbidden registry token present: {forbidden}")
 
