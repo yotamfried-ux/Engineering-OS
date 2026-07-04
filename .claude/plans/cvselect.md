@@ -46,3 +46,4 @@ GitHub used for repository state and PR checks.
 
 - start: Route Plan created before code, policy, or test changes.
 - mid: added external-system selection policy, added CV -> supervision enforcement inside validate-capability-evidence.sh, and added a negative regression fixture to test-capability-evidence.sh proving CV plans without supervision/waiver fail.
+- pre-merge: validator, test, and policy changes are complete; exact-head CI is required before merge.
