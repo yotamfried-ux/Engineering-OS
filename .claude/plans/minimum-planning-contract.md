@@ -166,5 +166,9 @@ scripts/enforcement/tests/test-capability-registry.sh` (עבר), `git status
 - start: plan זה (עם Minimum Planning Contract, Capability Evidence, ו-
   Documentation Asset Evidence) נכתב ונבדק לפני שנוגע קוד כלשהו מ-`core/workflow.md`
   או `enforce-workflow.sh`.
-- mid: to be updated after the code/test commit lands, before requesting merge.
+- mid: after implementing detect_plan_scope/plan_missing_sections scope-awareness
+  in enforce-workflow.sh (Write/Edit path) and enforce-bash-entry.sh (Bash path),
+  ran the full scripts/enforcement/tests/test-*.sh sweep and found + fixed 2 broken
+  fixtures (test-learning-reuse.sh, test-operational-learning-skills.sh) that built
+  ad hoc plan fixtures without a Plan Scope field.
 - pre-merge: to be updated after the final validation pass, right before merge readiness is recorded.
