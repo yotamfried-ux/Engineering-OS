@@ -25,6 +25,7 @@ Install project-scoped MCP server profiles into governed target projects so MCP-
 - `validation.no-broad-mcp-default` — GitHub default remains read-only.
 - `validation.mcp-opt-in-only` — runtime approval stays separate.
 - `validation.profile-shape-checked` — tests validate profile shape and installer behavior.
+- `validation.policy-change-has-validator` — `scripts/enforcement/tests/test-mcp-auto-install.sh` and `scripts/enforcement/tests/test-active-mcp-verification.sh` validate this policy/config change.
 
 ## Connector Evidence
 
@@ -37,10 +38,10 @@ Notion progress tracking is unavailable in this remote session, so this plan fil
 
 ## Connector Usage Evidence
 
-- source: `.mcp.json`, `core/mcp-servers.md`, `core/capability-registry.yaml`, `scripts/use-in-project.sh`, `templates/connectors/github-readonly.json`, `docs/operations/active-mcp-verification.md`.
-- action: checked existing MCP state and connector policy before changing installer behavior.
-- result: old state lacked a target-project auto-install contract.
-- decision: selected project-scoped MCP profile installation while keeping runtime approval separate.
+- source: github repository `yotamfried-ux/Engineering-OS` files and context7 Claude Code MCP documentation.
+- action: github file reads checked `.mcp.json`, `core/mcp-servers.md`, `core/capability-registry.yaml`, `scripts/use-in-project.sh`, `templates/connectors/github-readonly.json`, and `docs/operations/active-mcp-verification.md`; context7 checked project-scoped MCP behavior.
+- result: github showed paths `templates/connectors/github-readonly.json`, `scripts/use-in-project.sh`, `core/capability-registry.yaml`, and `docs/operations/active-mcp-verification.md`; context7 confirmed `.mcp.json` as the project-scoped MCP configuration file.
+- decision: selected and implemented project-scoped MCP profile installation through `scripts/install-mcp-servers.sh`, updated registry/docs, and kept runtime approval separate.
 - target: `templates/connectors/engineering-os-mcp.json`, `scripts/install-mcp-servers.sh`, `scripts/use-in-project.sh`, `scripts/enforcement/tests/test-mcp-auto-install.sh`, `scripts/enforcement/tests/test-active-mcp-verification.sh`, `core/mcp-servers.md`, `core/capability-registry.yaml`, `docs/operations/connector-verification-matrix.md`, `docs/operations/active-mcp-verification.md`.
 
 ## Skill Evidence
@@ -49,11 +50,9 @@ Notion progress tracking is unavailable in this remote session, so this plan fil
 
 ## Documentation Asset Evidence
 
-- source: `core/mcp-servers.md`, `docs/operations/connector-verification-matrix.md`, `docs/operations/active-mcp-verification.md`, `core/capability-registry.yaml`.
-- action: checked existing MCP docs and registry before changing connector behavior.
-- result: docs described manual behavior while the new requirement needs auto-install.
-- decision: updated docs and registry to match the installer contract.
-- target: `core/mcp-servers.md`, `docs/operations/connector-verification-matrix.md`, `docs/operations/active-mcp-verification.md`, `core/capability-registry.yaml`.
+- internal: `core/mcp-servers.md`, `docs/operations/connector-verification-matrix.md`, `docs/operations/active-mcp-verification.md`, `core/capability-registry.yaml`, `scripts/use-in-project.sh`, `templates/connectors/github-readonly.json`.
+- context7: Claude Code MCP documentation for project-scoped `.mcp.json`, server list/status commands, and local approval behavior.
+- decision: internal docs and Context7 confirmed that the correct contract is project-scoped MCP configuration plus per-project runtime approval, so the docs and registry were updated to match the new installer behavior.
 
 ## Source of Truth Checks
 
