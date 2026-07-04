@@ -84,3 +84,4 @@ No concrete templates/ or patterns/ asset is selected; this is an internal gover
 - start: Route Plan introduced before implementation commits.
 - mid: validator and fixture updates were applied after the start checkpoint; runtime fixture values now use deterministic tokens accepted by the hook.
 - pre-merge: after the final validator/test update, this checkpoint records exact-head CI verification and review-thread validation before merge.
+- pre-merge: simulation coverage checker update recorded.
