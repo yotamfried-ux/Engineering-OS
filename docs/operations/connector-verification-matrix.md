@@ -5,86 +5,80 @@
 > [`core/capability-registry.yaml`](../../core/capability-registry.yaml); selection policy stays
 > [`core/connector-policy.md`](../../core/connector-policy.md). This matrix records **verification
 > status** per inventory entry — what was actually proven, where, and how — so "documented" is
-> never silently presented as "ready". Refresh it whenever a downstream-validation run re-executes
-> the connector experiments.
->
-> Last verification run: 2026-07-03, session validating Engineering OS reference commit `54982cb`
-> against a real downstream install in `yotamfried-ux/Expiriens-saas-0.9`
-> ([PR #2](https://github.com/yotamfried-ux/Expiriens-saas-0.9/pull/2)). Evidence commands and
-> outputs are recorded in `.claude/plans/pr-e-regression-and-downstream-validation.md` and the
-> downstream PR body.
+> never silently presented as "ready".
+
+## Current status after MCP auto-install change
+
+Engineering OS now installs **project-scoped MCP server profiles** into target projects through:
+
+```text
+templates/connectors/github-readonly.json
+templates/connectors/engineering-os-mcp.json
+scripts/install-mcp-servers.sh
+scripts/use-in-project.sh
+```
+
+This proves configuration availability: Claude Code / MCP-aware clients opened in the target
+project can discover the server profiles from `.mcp.json`. It does **not** prove that every
+service has been authenticated or that every connector returned live production data.
+Authentication and live smoke checks remain per-project evidence.
 
 ## Status vocabulary
 
-- **verified** — exercised in this run with a concrete call/output.
-- **available-unexercised** — tool/server registered and reachable in the verification session but
-  no call was made; not claimed as verified.
-- **approval-gated** — reachable but each call requires interactive user approval in this
-  environment; usable, not autonomously verifiable.
-- **documented (manual-by-design)** — inventory guide + integration doc exist; authentication and
-  activation are deliberately per-project manual steps (`mcp_auto_install_allowed: false`,
-  `broad_mcp_toolsets_allowed_by_default: false` in the capability registry), so no install is
-  expected to exist until a project opts in.
-- **knowledge-layer** — service guide consulted during routing (docs, recommendations, patterns);
-  it has no runtime endpoint of its own to verify.
+- **configured-auto** — installed into target `.mcp.json` automatically.
+- **configured-auto-auth-required** — installed automatically, but OAuth/token/approval is still required before live use.
+- **configured-auto-fallback** — installed through the shared Composio fallback profile.
+- **verified-live** — exercised with a concrete call/output in the current session/run.
+- **knowledge-layer** — service guide consulted during routing; no runtime endpoint in Engineering OS itself.
 
-## Deterministic layer (verified this run — applies to every connector)
+## Deterministic layer
 
 | Check | Result | Evidence |
 |---|---|---|
-| Registry presence: 47 service + 12 MCP entries, categories intact | ✅ pass | `core/capability-registry.yaml` coverage contract (min 26 total / 12 MCP) + `test-capability-registry.sh` |
-| Owner dir + README for every entry (59/59) | ✅ pass | scripted scan of every registry `path:` for `README.md` |
-| Routing rule for every MCP connector (12/12 `auto` rows + 5 policy-level rows: context7, sentry, vercel, expo, postman) | ✅ pass | `check-required-connectors.sh --check-coverage` |
-| Evidence requirement enforced (declared connector without usage evidence blocks) | ✅ pass | downstream Exp 4: installed `check-connector-evidence.sh` blocked a supabase-declaring plan with no usage evidence |
-| Routing selection fires on realistic tasks | ✅ pass | downstream Exp 6: DB task without supabase/postgres blocked; UI task without figma blocked; correct declarations pass |
-| Downstream preservation: connector guides reachable read-only from installed target; no MCP config auto-copied (by design) | ✅ pass | Exp 1 + `next_pr_contract.must_not_do` in the registry |
+| Project MCP installer exists | ✅ pass | `scripts/install-mcp-servers.sh` |
+| Target install is wired from `use-in-project.sh` | ✅ pass | `use-in-project.sh` runs the MCP installer |
+| GitHub read-only profile remains separate and constrained | ✅ pass | `templates/connectors/github-readonly.json` + `test-github-connector-profile.sh` |
+| MCP bundle validates and merges into existing `.mcp.json` | ✅ pass | `scripts/enforcement/tests/test-mcp-auto-install.sh` |
+| Installer preserves existing custom MCP servers | ✅ pass | merge fixture in `test-mcp-auto-install.sh` |
+| Installer backs up existing `.mcp.json` | ✅ pass | repeatability fixture in `test-mcp-auto-install.sh` |
+| Invalid existing `.mcp.json` fails closed | ✅ pass | invalid JSON fixture in `test-mcp-auto-install.sh` |
+| Secrets are not written by the installer | ✅ pass | templates use placeholders / operator auth |
 
 ## MCP connectors (12)
 
-| Connector | Owner dir | Routing | Session availability (this run) | Downstream (Expiriens) | Classification |
-|---|---|---|---|---|---|
-| github | ✅ | auto | **verified** — PR/branch/file reads, PR create/update, review replies all succeeded | used for push/PR through git remote + MCP | verified |
-| notion | ✅ | auto | available-unexercised (server connected; progress-validation waiver path exercised instead) | not installed | documented (manual-by-design) |
-| slack | ✅ | auto | not connected in this session | not installed | documented (manual-by-design) |
-| linear | ✅ | auto | not connected in this session | not installed | documented (manual-by-design) |
-| jira | ✅ | auto | not connected in this session | not installed | documented (manual-by-design) |
-| stripe | ✅ | auto | not connected in this session | not installed | documented (manual-by-design) |
-| supabase | ✅ | auto | available-unexercised (server connected) | not installed | documented (manual-by-design) |
-| postgres | ✅ | auto | not connected in this session | not installed | documented (manual-by-design) |
-| google-drive | ✅ | auto | available-unexercised (server connected) | not installed | documented (manual-by-design) |
-| google-sheets | ✅ | auto | not connected in this session | not installed | documented (manual-by-design) |
-| figma | ✅ | auto | available-unexercised (server connected) | not installed | documented (manual-by-design) |
-| discord | ✅ | auto | not connected in this session | not installed | documented (manual-by-design) |
-
-## Policy-level connectors (core-fixed / project-dependent in `core/connector-policy.md`)
-
-| Connector | Policy role | Session availability (this run) | Classification |
+| Connector | Auto-installed server profile | Classification | Live-use requirement |
 |---|---|---|---|
-| GitHub | core-fixed | **verified** (see above) | verified |
-| Context7 | core-fixed | **approval-gated** — `resolve-library-id` call returned "requires approval"; server reachable | approval-gated (environment limitation, not a system gap) |
-| Sentry | core-fixed | available-unexercised (tools loaded; no error data existed to query in either repo) | available-unexercised |
-| Vercel / Expo / Postman / Composio | project-dependent | Vercel + Postman + Composio servers connected, unexercised; Expo not connected | documented (manual-by-design) |
+| github | `github-readonly` | configured-auto-auth-required | PAT/OAuth approval; read-only smoke via repo/PR/Actions metadata |
+| notion | `notion` | configured-auto-auth-required | `/mcp` approval and page/database access |
+| slack | `composio` | configured-auto-fallback | Composio auth + Slack tool selection |
+| linear | `composio` | configured-auto-fallback | Composio auth + Linear tool selection |
+| jira | `composio` | configured-auto-fallback | Composio auth + Jira site/account selection |
+| stripe | `stripe` | configured-auto-auth-required | Stripe auth; default to test mode until user approves live work |
+| supabase | `supabase` | configured-auto-auth-required | Supabase project auth/approval |
+| postgres | `composio` or project-specific profile | configured-auto-fallback | project-specific connection string / read-only DB credentials |
+| google-drive | `composio` | configured-auto-fallback | Composio/Google OAuth and Drive scope approval |
+| google-sheets | `composio` | configured-auto-fallback | Composio/Google OAuth and Sheets scope approval |
+| figma | `figma` | configured-auto-auth-required | Figma auth and file permission |
+| discord | `composio` | configured-auto-fallback | Composio auth + Discord bot/server permission |
+
+## Policy-level connectors
+
+| Connector | Policy role | Current configuration status |
+|---|---|---|
+| GitHub | core-fixed | configured-auto as read-only MCP profile |
+| Context7 | core-fixed | configured-auto; also available as built-in connector in Claude app surfaces |
+| Sentry | core-fixed for debugging | configured-auto with environment-specific MCP endpoint placeholder |
+| Figma / Postman / Composio | project-dependent | configured-auto; auth/approval still required |
 
 ## Service connectors (47 — knowledge layer)
 
-All 47 entries across 11 categories (llm_providers_ai_apis ×7, ai_agent_frameworks ×5,
-vector_databases_search ×7, databases_data_pipelines ×3, authentication_identity ×3,
-payments_commerce ×3, observability_analytics ×7, feature_flags_experimentation ×3,
-communication_media ×5, scheduling_events ×3, crm ×1) verified for: registry entry, owner
-directory with README integration guide, and reachability from an installed downstream target via
-the read-only reference path. These are **knowledge-layer** entries by design: they are consulted
-during routing (step 4 of the routing algorithm) and carry setup instructions, but have no runtime
-endpoint Engineering OS could probe. None is classified "installed" anywhere until a project's
-own Route Plan selects and authenticates it — exactly the `authenticate only the connectors
-selected for this project` contract in `ENGINEERING_OS_SETUP.md`.
+All 47 service entries remain knowledge-layer entries unless a task selects one and authenticates
+its runtime connector. The MCP auto-install change improves discovery and default availability for
+Claude Code, but service truth still comes from the selected MCP server, SDK, official docs, or
+project-specific credentials.
 
-## Explicit non-gaps and their reasons
+## Explicit non-gaps and remaining live-proof requirement
 
-- **MCP connectors not installed downstream** — by design: `mcp_auto_install_allowed: false`;
-  install is a per-project opt-in with the fallback ladder in `core/connector-policy.md`.
-- **Context7 approval gating** — a property of this verification environment's MCP permission
-  mode, not of the connector definition; the installer's connectivity check and the documented
-  `claude mcp add` path were verified present.
-- **No connector is "broken" or "missing from the registry"** in this run; the one regression
-  found and fixed this run (nemotron security workflow diff truncation) is a **skill** artifact,
-  tracked in the skill matrix.
+- **Not a gap:** `.mcp.json` is now installed automatically into governed target projects.
+- **Not a gap:** credentials are not auto-written; this is required for safety.
+- **Still required before claiming live connector success:** run `/mcp` or `claude mcp list`, approve/authenticate the server, and record a concrete smoke-check result in the Route Plan.

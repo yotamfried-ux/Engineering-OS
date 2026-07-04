@@ -45,6 +45,12 @@ while IFS=$'\t' read -r workflow dep; do
   echo "installed $dep (for $workflow)"
 done < "$manifest"
 
+mcp_installer="$home_dir/scripts/install-mcp-servers.sh"
+if [ -x "$mcp_installer" ]; then
+  ENGINEERING_OS_HOME="$home_dir" bash "$mcp_installer" "$target"
+  echo "installed project-scoped MCP profiles"
+fi
+
 if [ "${EOS_SKIP_SETTINGS_PATCH:-0}" = "1" ]; then
   echo "settings patch skipped (preserving existing .claude/settings.json)"
   exit 0
