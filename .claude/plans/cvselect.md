@@ -94,3 +94,4 @@ GitHub was used for PR #198 state, changed files, workflow failures, review thre
 - mid: removed unregistered core policy file.
 - mid: added template-aware checker, fixtures, workflow wiring, and install dependency row.
 - pre-merge: added focused supervision waiver for this governance-only plan after the checker flagged its route text; exact-head CI remains the final gate.
+- pre-merge: refreshed checkpoint after the latest checker update; exact-head CI remains the final gate.
