@@ -31,6 +31,8 @@ workflow-evidence-policy
 capability-evidence-policy
 plan-policy
 documentation-asset-policy
+semantic-cleanup-policy
+import-cleanup-policy
 <!-- required-checks:end -->
 
 > CodeRabbit is intentionally **not** in this list yet (no active subscription/credits).
@@ -45,9 +47,8 @@ documentation-asset-policy
 > string. Selecting the workflow name in branch protection would leave the rule matching *nothing*, so
 > the merge button would not actually be gated ("we think it's protected but it isn't").
 
-The mapping below is **verified against the real check runs of PR #115 and #116**
-(`get_check_runs`). When configuring branch protection, add the **right-hand column** values as the
-required status checks:
+The mapping below is derived from workflow files by the ops script. When configuring branch
+protection, add the **right-hand column** values as the required status checks:
 
 | Workflow file | Workflow name (client-side gate, `check-merge-readiness.sh`) | **Check-run context to require in branch protection** |
 |---|---|---|
@@ -58,13 +59,16 @@ required status checks:
 | `workflow-evidence-policy.yml` | `workflow-evidence-policy` | `Require Engineering OS workflow evidence` |
 | `capability-evidence-policy.yml` | `capability-evidence-policy` | `Require capability evidence in changed plans` |
 | `documentation-asset-policy.yml` | `documentation-asset-policy` | `Require documentation/reference asset evidence` |
+| `semantic-cleanup-policy.yml` | `semantic-cleanup-policy` | `semantic-cleanup-policy` |
+| `import-cleanup-policy.yml` | `import-cleanup-policy` | `import-cleanup-policy` |
 
-> Only `enforcement-tests` is identical in both columns — its job has no `name:`, so GitHub falls back to
-> the job id, which happens to equal the workflow name. The six `policy` workflows differ.
+> Only `enforcement-tests`, `semantic-cleanup-policy`, and `import-cleanup-policy` are identical in both columns —
+> those jobs have no explicit `name:`, so GitHub falls back to the job id, which matches the workflow name.
+> The six other `policy` workflows differ.
 >
 > If a job's `name:` ever changes, the check-run context changes with it and branch protection must be
-> updated. Re-derive this table from a recent green PR's `get_check_runs` rather than from workflow
-> names.
+> updated. Re-derive this table from a recent green PR's `get_check_runs` or run
+> `scripts/ops/apply-main-branch-protection.sh` in dry-run mode rather than relying on workflow names.
 
 ## Recommended branch-protection / ruleset settings for `main`
 
@@ -105,6 +109,8 @@ falling back to the job id):
 | `capability-evidence-policy` | `Require capability evidence in changed plans` |
 | `plan-policy` | `Require completed plan checklists` |
 | `documentation-asset-policy` | `Require documentation/reference asset evidence` |
+| `semantic-cleanup-policy` | `semantic-cleanup-policy` |
+| `import-cleanup-policy` | `import-cleanup-policy` |
 
 `scripts/ops/apply-main-branch-protection.sh` derives this mapping automatically from the workflow
 files, so it stays correct if a job is renamed.
@@ -116,16 +122,16 @@ OS agent environment cannot reach the admin API):
 
 ```bash
 # 1. Branch protection (dry-run prints the exact request; --apply performs it)
-bash scripts/ops/apply-main-branch-protection.sh            # preview
-bash scripts/ops/apply-main-branch-protection.sh --apply    # apply (needs gh or $GITHUB_TOKEN)
+bash scripts/ops/apply-main-branch-protection.sh
+bash scripts/ops/apply-main-branch-protection.sh --apply
 
 # 2. Prune merged + superseded branches (dry-run lists them; --apply deletes)
-bash scripts/ops/prune-merged-branches.sh                   # preview
-bash scripts/ops/prune-merged-branches.sh --apply           # delete
+bash scripts/ops/prune-merged-branches.sh
+bash scripts/ops/prune-merged-branches.sh --apply
 ```
 
 Both scripts are **dry-run by default**, idempotent, and self-verifying: the protection script
-derives the 7 contexts from the workflow files, and the prune script only deletes branches that are
+derives the 9 contexts from the workflow files, and the prune script only deletes branches that are
 ancestor-merged into `origin/main` or in its explicit superseded allowlist (it never deletes `main`
 or the current branch).
 
