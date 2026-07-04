@@ -10,7 +10,7 @@ Validation gates: enforcement tests, policy gates, clean install tests, merge re
 
 ## Goal
 
-Reconcile remaining Engineering OS operational-readiness gaps in one PR, using PR #193 as the current main baseline.
+Reconcile remaining Engineering OS operational-readiness gaps in one pass, using PR #193 as the current main baseline.
 
 ## Plan
 
@@ -20,17 +20,29 @@ Reconcile remaining Engineering OS operational-readiness gaps in one PR, using P
 4. Add positive and negative validation for every changed rule.
 5. Validate, self-review, open one PR, and check CI/reviews before merge.
 
+## Current Gap Map
+
+| Gap area | Current evidence | Status | Action |
+|---|---|---|---|
+| PR #193 cleanup workflow readiness | PR #193 is merged and its head passed required policy workflows. | closed | Use as baseline; do not duplicate. |
+| Known readiness gaps | `docs/operations/known-gaps.tsv` lists all readiness gaps as closed with tests and evidence. | closed | No code change. |
+| Operational readiness audit | `docs/operations/operational-readiness-audit.md` classifies all matrix rows as Enforced, Manual by design, Waiver-gated, or linked to closed gaps. | closed | No code change. |
+| Cleanup workflow requirement | `check-merge-readiness.sh` requires `semantic-cleanup-policy` and `import-cleanup-policy`. | closed by #193 | No code change. |
+| Stale superseded PR | PR #192 remained open as a draft/non-mergeable superseded cleanup attempt. | fixed | Added superseded comment and closed PR #192. |
+| New code/config/test gap | No still-open deterministic code/config/test gap found after current source checks. | none found | Do not add code. |
+
 ## DoD
 
-- [ ] PR #193 baseline confirmed.
-- [ ] Current gap map completed.
-- [ ] Only still-open gaps changed.
-- [ ] Validation evidence recorded.
-- [ ] PR checks and review threads verified.
+- [x] PR #193 baseline confirmed.
+- [x] Current gap map completed.
+- [x] Only still-open gap changed: stale superseded PR #192 was closed outside code.
+- [x] No new enforcement rule was added, so no new fixture is required.
+- [x] Clean install / downstream behavior is left untouched because #193 and known-gaps evidence already cover it.
+- [ ] PR checks and review threads verified after PR creation.
 
 ## Affected Surfaces
 
-Engineering OS governance files, enforcement scripts, workflows, docs, and tests.
+This branch only records the reconciliation plan. The actual operational hygiene action was closing superseded PR #192. No runtime, hook, workflow, or enforcement script is changed.
 
 ## Data/State Impact
 
@@ -38,7 +50,7 @@ No runtime data changes.
 
 ## Integration Impact
 
-GitHub is the active connector. External docs are not needed because this is internal Bash and Markdown governance.
+GitHub is the active connector. External docs are not needed because this is internal repository governance.
 
 ## Open Questions
 
@@ -48,23 +60,38 @@ None.
 
 - CLAUDE.md: checked.
 - core/workflow.md: checked.
+- core/task-router.md: checked.
 - core/capability-registry.yaml: checked.
-- core/task-router.md: pending.
+- core/connector-policy.md: checked.
+- core/skill-orchestration-policy.md: checked.
+- core/quality-gates.md: checked.
+- core/git-policy.md: checked.
+- docs/operations/known-gaps.tsv: checked.
+- docs/operations/operational-readiness-audit.md: checked.
+- scripts/enforcement/check-merge-readiness.sh: checked.
 
 ## Connector Evidence
 
-GitHub connector used for repository evidence and branch creation.
+GitHub connector used for repository evidence, branch creation, PR #193/#192 state checks, and closing stale PR #192.
 
 ## Documentation Asset Evidence
 
-Internal repository docs and tests are the documentation assets.
+Internal repository docs and tests are the documentation assets: CLAUDE.md, core workflow/routing/policy files, known-gaps TSV, operational-readiness audit, and merge-readiness checker.
 
 ## Claude Run Trace
 
-Goal: close only real remaining gaps. Steps: branch, plan, source reads, gap map, minimal patch, validation, PR checks.
+Goal: close only real remaining gaps after PR #193. Steps completed: branch, plan, source reads, gap map, stale PR closure. Result: no code/config/test gap remains from the checked readiness inventory; only PR hygiene required action was closing #192.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan committed before target edits.
-- mid: pending.
-- pre-merge: pending.
+- mid: current-state gap map completed after source checks.
+- pre-merge: pending PR CI/review-thread check.
+
+## Review Fallback Evidence
+
+- reviewer: ChatGPT self-review.
+- scope: plan-only branch plus external GitHub PR hygiene action.
+- checks: source-of-truth reads, PR #193 state, PR #192 closure, known-gaps and readiness audit consistency.
+- risk: low; no code/config/test behavior changed.
+- decision: do not invent fixes when current audited gaps are already closed.
