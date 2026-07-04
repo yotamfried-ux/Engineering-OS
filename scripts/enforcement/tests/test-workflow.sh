@@ -36,6 +36,7 @@ run_enforcer Write "src/app.ts"; expect "code write blocked without plan" 1 $?
 mkdir -p .claude/plans
 cat > .claude/plans/p.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal here
 ## תכנון
@@ -49,6 +50,7 @@ run_enforcer Write "src/app.ts"; expect "code write allowed with full+fresh plan
 
 cat > .claude/plans/p.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal
 ## תכנון
@@ -112,6 +114,7 @@ run_enforcer Write ".github/workflows/ci.yml"; expect "G1: .github/ write blocke
 mkdir -p .claude/plans
 cat > .claude/plans/g.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal here
 ## תכנון
@@ -133,6 +136,7 @@ echo "── workflow enforcer: G6a — pattern-lifecycle evidence gate ──"
 mkdir -p .claude/plans
 cat > .claude/plans/g6.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal here
 ## תכנון
@@ -162,6 +166,7 @@ rm -rf .claude/.evidence
 mkdir -p .claude/plans
 cat > .claude/plans/p2.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal
 ## תכנון
@@ -210,6 +215,7 @@ cd "$WORK" || exit 1
 mkdir -p .claude/plans graphify-out
 cat > .claude/plans/g7.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal here
 ## תכנון
@@ -236,6 +242,7 @@ echo "── workflow enforcer: G8 — domain patterns gate ──"
 mkdir -p .claude/plans
 cat > .claude/plans/g8.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal here
 ## תכנון
@@ -272,6 +279,7 @@ echo "── workflow enforcer: G9a — DoD integrity gate ──"
 mkdir -p .claude/plans .claude/.evidence
 cat > .claude/plans/task.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal here
 ## תכנון
@@ -313,6 +321,7 @@ mkdir -p .claude/plans .claude/.evidence
 printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
 cat > .claude/plans/finish.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal here
 ## תכנון
@@ -332,6 +341,7 @@ expect "G9b: tasks.json complete blocked when plan has unchecked DoD item" 1 $?
 # All DoD items checked — allowed
 cat > .claude/plans/finish.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal here
 ## תכנון
@@ -350,6 +360,7 @@ expect "G9b: tasks.json complete allowed when all DoD items checked" 0 $?
 # Bypass
 cat > .claude/plans/finish.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal
 ## תכנון
@@ -371,6 +382,7 @@ mkdir -p .claude/plans .claude/.evidence patterns/auth
 printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
 cat > .claude/plans/g12.md <<'EOF'
 # Task
+Plan Scope: simple
 ## מטרה
 goal
 ## תכנון
@@ -413,6 +425,204 @@ OUT5=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/helpers.ts"}}
 printf '%s' "$OUT5" | grep -q "WARNING_FOR_AGENT" && bad "G12: EOS_BYPASS_PATTERNS should suppress warning" \
   || ok "G12: EOS_BYPASS_PATTERNS suppresses advisory"
 rm -rf .claude/.evidence .claude/plans patterns src
+
+echo "── workflow enforcer: planning contract (Plan Scope) ──"
+mkdir -p .claude/plans
+
+cat > .claude/plans/pc-a.md <<'EOF'
+# Task
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+run_enforcer Write "src/app.ts"; expect "planning contract: code write blocked when plan missing Plan Scope" 1 $?
+rm -f .claude/plans/pc-a.md
+
+cat > .claude/plans/pc-b.md <<'EOF'
+# Task
+Plan Scope: simple
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+run_enforcer Write "src/app.ts"; expect "planning contract: simple plan allowed with basic sections" 0 $?
+rm -f .claude/plans/pc-b.md
+
+cat > .claude/plans/pc-c.md <<'EOF'
+# Task
+Plan Scope: standard
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+run_enforcer Write "src/app.ts"; expect "planning contract: standard plan blocked when required impact sections missing" 1 $?
+rm -f .claude/plans/pc-c.md
+
+cat > .claude/plans/pc-d.md <<'EOF'
+# Task
+Plan Scope: standard
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+## Affected Surfaces
+src/app.ts, src/api/routes.ts
+## Data/State Impact
+no schema changes
+## Integration Impact
+none
+## Validation Plan
+run test suite
+## Open Questions
+none
+EOF
+run_enforcer Write "src/app.ts"; expect "planning contract: standard plan allowed with impact sections" 0 $?
+rm -f .claude/plans/pc-d.md
+
+cat > .claude/plans/pc-e.md <<'EOF'
+# Task
+Plan Scope: project
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+run_enforcer Write "src/app.ts"; expect "planning contract: project plan blocked when minimum contract missing" 1 $?
+rm -f .claude/plans/pc-e.md
+
+cat > .claude/plans/pc-f.md <<'EOF'
+# Task
+Plan Scope: project
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+## Project Type
+web application
+## User Goal
+let users track expenses
+## Target Users/Surfaces
+consumers, web + mobile
+## Known Requirements
+auth, expense CRUD, reports
+## MVP Features
+login, add expense, monthly report
+## Non-goals
+no multi-currency in v1
+## Architecture
+Next.js frontend + Supabase backend
+## Stack
+TypeScript, Next.js, Supabase, Tailwind
+## Data Model
+users, expenses, categories tables
+## Auth/Roles
+Supabase auth, single role: user
+## Integrations/Connectors
+Stripe for premium tier
+## Environment/Deployment
+Vercel + Supabase cloud
+## Evidence Checked
+read templates/saas-platform/README.md, Context7 Next.js docs
+## Open Questions
+none
+## Validation Plan
+e2e tests with Playwright
+## User Approval
+Approved by user on 2026-07-04
+EOF
+run_enforcer Write "src/app.ts"; expect "planning contract: project plan allowed with full minimum contract" 0 $?
+rm -f .claude/plans/pc-f.md
+
+cat > .claude/plans/pc-g.md <<'EOF'
+# משימה
+Plan Scope: project
+## מטרה
+המטרה כאן
+## תכנון
+השלבים כאן
+## DoD
+תנאי סיום
+## חלופות
+חלופות שנשקלו
+## סוג הפרויקט
+אפליקציית ווב
+## מטרת המשתמש
+לאפשר למשתמשים לעקוב אחר הוצאות
+## קהל יעד
+צרכנים, ווב ומובייל
+## דרישות ידועות
+אימות, ניהול הוצאות, דוחות
+## פיצ'רי MVP
+התחברות, הוספת הוצאה, דוח חודשי
+## מחוץ להיקף
+אין תמיכה במטבעות מרובים בגרסה הראשונה
+## ארכיטקטורה
+Next.js frontend + Supabase backend
+## טכנולוגיות
+TypeScript, Next.js, Supabase, Tailwind
+## מודל נתונים
+טבלאות users, expenses, categories
+## הרשאות
+Supabase auth, תפקיד יחיד: user
+## אינטגרציות
+Stripe למנוי פרימיום
+## פריסה
+Vercel + Supabase cloud
+## ראיות שנבדקו
+נקרא templates/saas-platform/README.md, תיעוד Context7 ל-Next.js
+## שאלות פתוחות
+אין
+## תוכנית בדיקות
+בדיקות e2e עם Playwright
+## אישור משתמש
+אושר ע"י המשתמש בתאריך 2026-07-04
+EOF
+run_enforcer Write "src/app.ts"; expect "planning contract: Hebrew project plan headings accepted" 0 $?
+rm -f .claude/plans/pc-g.md
+
+cat > .claude/plans/pc-h.md <<'EOF'
+# Task
+סוג התוכנית: פרויקט
+## מטרה
+goal here
+## תכנון
+steps here
+## DoD
+done criteria
+## חלופות
+alternatives considered
+EOF
+run_enforcer Write "src/app.ts"; expect "planning contract: Hebrew Plan Scope label detected as project" 1 $?
+rm -f .claude/plans/pc-h.md
+
+rm -rf .claude/plans
 
 echo
 echo "════════ $PASS passed, $FAIL failed ════════"

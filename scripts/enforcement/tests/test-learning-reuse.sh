@@ -17,6 +17,8 @@ make_plan() {
   cat > "$file" <<EOF
 # Route Plan
 
+Plan Scope: simple
+
 ## Goal
 
 Fixture goal.
