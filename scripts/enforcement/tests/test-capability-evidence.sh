@@ -59,4 +59,9 @@ sed -i 's/engineering_os_governance/code_change/' .claude/plans/missing-cap.md
 if bash "$VALIDATOR" .claude/plans/missing-cap.md >/tmp/missing-cap.out 2>&1; then exit 1; fi
 grep -q 'missing required capability evidence' /tmp/missing-cap.out
 
+cp .claude/plans/pass.md .claude/plans/cv-missing.md
+sed -i 's/| Domain tags | governance |/| Domain tags | computer-vision |/' .claude/plans/cv-missing.md
+if bash "$VALIDATOR" .claude/plans/cv-missing.md >/tmp/cv-missing.out 2>&1; then exit 1; fi
+grep -q 'does not select or waive `supervision`' /tmp/cv-missing.out
+
 echo "✅ capability evidence validator tests passed"
