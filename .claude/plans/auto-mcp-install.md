@@ -7,12 +7,12 @@
 | Domain tags | mcp, connectors, claude-code, installer, documentation |
 | Task-router evidence | core/task-router.md read before writes |
 | Workflow evidence | core/workflow.md and core/connector-policy.md read before writes |
-| Target paths | templates/connectors/engineering-os-mcp.json, scripts/install-mcp-servers.sh, scripts/install-policy-gates.sh, scripts/enforcement/tests/test-mcp-auto-install.sh, scripts/enforcement/tests/test-active-mcp-verification.sh, core/mcp-servers.md, core/capability-registry.yaml, docs/operations/connector-verification-matrix.md, docs/operations/active-mcp-verification.md |
+| Target paths | templates/connectors/engineering-os-mcp.json, scripts/install-mcp-servers.sh, scripts/install-policy-gates.sh, scripts/enforcement/tests/test-mcp-auto-install.sh, scripts/enforcement/tests/test-active-mcp-verification.sh, scripts/enforcement/tests/test-capability-registry.sh, core/mcp-servers.md, core/capability-registry.yaml, docs/operations/connector-verification-matrix.md, docs/operations/active-mcp-verification.md |
 | Templates | not required |
 | Patterns | not required |
 | External systems/connectors | github, context7 |
 | Skills | superpowers |
-| Validation gates | bash -n, JSON validation, test-mcp-auto-install.sh, test-active-mcp-verification.sh, enforcement-tests CI, pr-policy |
+| Validation gates | bash -n, JSON validation, test-mcp-auto-install.sh, test-active-mcp-verification.sh, test-capability-registry.sh, enforcement-tests CI, pr-policy |
 
 ## Goal
 
@@ -25,7 +25,7 @@ Install project-scoped MCP server profiles into governed target projects so MCP-
 - `validation.no-broad-mcp-default` — GitHub default remains read-only.
 - `validation.mcp-opt-in-only` — runtime approval stays separate.
 - `validation.profile-shape-checked` — tests validate profile shape and installer behavior.
-- `validation.policy-change-has-validator` — `scripts/enforcement/tests/test-mcp-auto-install.sh` and `scripts/enforcement/tests/test-active-mcp-verification.sh` validate this policy/config change.
+- `validation.policy-change-has-validator` — `scripts/enforcement/tests/test-mcp-auto-install.sh`, `scripts/enforcement/tests/test-active-mcp-verification.sh`, and `scripts/enforcement/tests/test-capability-registry.sh` validate this policy/config change.
 
 ## Connector Evidence
 
@@ -40,9 +40,9 @@ Notion progress tracking is unavailable in this remote session, so this plan fil
 
 - source: github repository `yotamfried-ux/Engineering-OS` files and context7 Claude Code MCP documentation.
 - action: github file reads checked `.mcp.json`, `core/mcp-servers.md`, `core/capability-registry.yaml`, `scripts/use-in-project.sh`, `scripts/install-policy-gates.sh`, `templates/connectors/github-readonly.json`, and `docs/operations/active-mcp-verification.md`; context7 checked project-scoped MCP behavior.
-- result: github showed concrete paths `templates/connectors/github-readonly.json`, `scripts/use-in-project.sh`, `scripts/install-policy-gates.sh`, `core/capability-registry.yaml`, and `docs/operations/active-mcp-verification.md`; context7 confirmed `.mcp.json` as the project-scoped MCP configuration file.
-- decision: selected project-scoped MCP profile installation through `scripts/install-mcp-servers.sh`, wired it through `scripts/install-policy-gates.sh` to preserve the main `use-in-project.sh` contract, updated registry/docs, and kept runtime approval separate.
-- target: `templates/connectors/engineering-os-mcp.json`, `scripts/install-mcp-servers.sh`, `scripts/install-policy-gates.sh`, `scripts/enforcement/tests/test-mcp-auto-install.sh`, `scripts/enforcement/tests/test-active-mcp-verification.sh`, `core/mcp-servers.md`, `core/capability-registry.yaml`, `docs/operations/connector-verification-matrix.md`, `docs/operations/active-mcp-verification.md`.
+- result: github showed concrete paths `templates/connectors/github-readonly.json`, `scripts/use-in-project.sh`, `scripts/install-policy-gates.sh`, `scripts/enforcement/tests/test-capability-registry.sh`, `core/capability-registry.yaml`, and `docs/operations/active-mcp-verification.md`; context7 confirmed `.mcp.json` as the project-scoped MCP configuration file.
+- decision: selected project-scoped MCP profile installation through `scripts/install-mcp-servers.sh`, wired it through `scripts/install-policy-gates.sh` to preserve the main `use-in-project.sh` contract, updated registry/docs/tests, and kept runtime approval separate.
+- target: `templates/connectors/engineering-os-mcp.json`, `scripts/install-mcp-servers.sh`, `scripts/install-policy-gates.sh`, `scripts/enforcement/tests/test-mcp-auto-install.sh`, `scripts/enforcement/tests/test-active-mcp-verification.sh`, `scripts/enforcement/tests/test-capability-registry.sh`, `core/mcp-servers.md`, `core/capability-registry.yaml`, `docs/operations/connector-verification-matrix.md`, `docs/operations/active-mcp-verification.md`.
 
 ## Skill Evidence
 
@@ -50,9 +50,9 @@ Notion progress tracking is unavailable in this remote session, so this plan fil
 
 ## Documentation Asset Evidence
 
-- internal: `core/mcp-servers.md`, `docs/operations/connector-verification-matrix.md`, `docs/operations/active-mcp-verification.md`, `core/capability-registry.yaml`, `scripts/use-in-project.sh`, `scripts/install-policy-gates.sh`, `templates/connectors/github-readonly.json`.
+- internal: `core/mcp-servers.md`, `docs/operations/connector-verification-matrix.md`, `docs/operations/active-mcp-verification.md`, `core/capability-registry.yaml`, `scripts/use-in-project.sh`, `scripts/install-policy-gates.sh`, `scripts/enforcement/tests/test-capability-registry.sh`, `templates/connectors/github-readonly.json`.
 - context7: Claude Code MCP documentation for project-scoped `.mcp.json`, server list/status commands, and local approval behavior.
-- decision: internal docs and Context7 confirmed that the correct contract is project-scoped MCP configuration plus per-project runtime approval, so the docs, registry, installer, and target setup wiring were updated to match the new behavior.
+- decision: internal docs and Context7 confirmed that the correct contract is project-scoped MCP configuration plus per-project runtime approval, so the docs, registry, installer, target setup wiring, and registry validator were updated to match the new behavior.
 
 ## Source of Truth Checks
 
@@ -67,6 +67,7 @@ Notion progress tracking is unavailable in this remote session, so this plan fil
 | docs/operations/active-mcp-verification.md | checked |
 | scripts/use-in-project.sh | checked |
 | scripts/install-policy-gates.sh | checked |
+| scripts/enforcement/tests/test-capability-registry.sh | checked |
 
 ## Claude Run Trace
 
@@ -83,7 +84,7 @@ Notion progress tracking is unavailable in this remote session, so this plan fil
 
 - start: Route Plan committed before the first code/config/test change on the clean branch.
 - mid: implementation commits added the MCP profile bundle, installer, target wiring, tests, registry update, and connector documentation update after the Route Plan commit.
-- pre-merge: restored-contract branch preserves the main `use-in-project.sh` contract; MCP auto-install is wired through `scripts/install-policy-gates.sh`, which is invoked by `use-in-project.sh`, and this checkpoint was added after the last code/config/test change.
+- pre-merge: restored-contract branch preserves the main `use-in-project.sh` contract; MCP auto-install is wired through `scripts/install-policy-gates.sh`, and the capability registry validator was aligned with the new explicit MCP auto-install policy after the last code/config/test change.
 
 ## Definition of Done
 
@@ -92,4 +93,4 @@ Notion progress tracking is unavailable in this remote session, so this plan fil
 - [x] Installer creates and merges `.mcp.json` by test coverage.
 - [x] Target setup path invokes the MCP installer through `install-policy-gates.sh`, which is called by `use-in-project.sh`.
 - [x] Docs no longer describe MCP as documentation-only.
-- [x] Test covers template shape, merge behavior, repeatability, and invalid-config failure.
+- [x] Test covers template shape, merge behavior, repeatability, invalid-config failure, and registry policy alignment.
