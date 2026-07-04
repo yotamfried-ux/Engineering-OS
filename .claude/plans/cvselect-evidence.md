@@ -39,9 +39,9 @@ GitHub used.
 
 - source: GitHub connector.
 - action: GitHub read and updated repository files.
-- result: repository evidence files were added.
+- result: GitHub repository evidence files were added.
 - target: .claude/plans/cvselect-evidence.md.
-- decision: added evidence checkpoint.
+- decision: GitHub evidence checkpoint added.
 
 ## Skill Evidence
 
