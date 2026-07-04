@@ -1,18 +1,20 @@
 # Required cleanup workflows in merge readiness
 
-Task type: docs / governance / Engineering OS maintenance
-Task class: engineering_os_governance
-Domain tags: governance, workflow, cleanup, CI, merge
-Plan Scope: standard
-Planning Mode: final-for-approval
-Templates: none — policy hardening inside existing Engineering OS governance files
-Architecture guides: docs/operations/operational-readiness-audit.md, docs/operations/main-required-checks.md
-Patterns: none — no application code pattern change
-External systems / connectors: GitHub — repo files, PR/workflow evidence; CodeRabbit unavailable, so self-review is required
-Skills: superpowers, security-review/self-review fallback
-Validation gates: required-workflows contract, operational readiness gate tests, merge readiness missing-workflow negative case
-Evidence to check: CLAUDE.md navigation, core/workflow.md, core/task-router.md, core/git-policy.md, docs/operations/operational-readiness-audit.md, docs/operations/main-required-checks.md, scripts/enforcement/check-merge-readiness.sh, scripts/enforcement/tests/test-operational-readiness-gates.sh
-User decisions required: none before PR; merge still requires explicit user approval
+| Field | Value |
+|---|---|
+| Task type | docs / governance / Engineering OS maintenance |
+| Task class | engineering_os_governance |
+| Domain tags | governance, workflow, cleanup, CI, merge |
+| Plan Scope | standard |
+| Planning Mode | final-for-approval |
+| Target paths | scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh |
+| Task-router evidence | core/task-router.md checked |
+| Workflow evidence | core/workflow.md checked |
+| Templates | Template Gap Waiver recorded below |
+| Patterns | not required for targeted policy wiring |
+| External systems/connectors | GitHub |
+| Skills | superpowers |
+| Validation gates | check-merge-readiness, test-operational-readiness-gates, test-required-workflows-contract |
 
 ## Capability Evidence
 
@@ -46,7 +48,7 @@ Prevent Engineering OS from reporting merge readiness when semantic cleanup CI w
 
 - Leave cleanup workflows advisory only — rejected because the audit classifies semantic cleanup as enforced.
 - Rely only on manual branch protection — rejected because the Engineering OS merge-readiness gate is the agent-side deterministic check.
-- Add every workflow including post-merge validation — rejected for this change because post-merge validation is push-to-main/repair behavior, not a PR-head merge gate.
+- Add every workflow including post-merge validation — rejected because post-merge validation is push-to-main/repair behavior, not a PR-head merge gate.
 
 ## Affected Surfaces
 
@@ -105,11 +107,12 @@ GitHub Actions and branch-protection operator guidance are affected. No external
 
 - goal: align cleanup enforcement claims with deterministic merge readiness.
 - hypothesis: missing cleanup workflow entries should fail merge readiness.
-- steps: read sources and open this plan before implementation edits.
+- steps: read sources, open plan, update merge readiness checker, and record mid-loop evidence.
 - tools/connectors: GitHub connector.
-- evidence: target paths listed in this plan.
-- result: initial plan ready for implementation.
+- evidence: scripts/enforcement/check-merge-readiness.sh now includes semantic and import cleanup policies.
+- result: checker update complete; docs and test fixture updates remain in this loop.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan committed before code/config/test edits for target paths.
+- mid: merge readiness checker updated after work began and before docs/test fixture edits.
