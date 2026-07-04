@@ -69,4 +69,25 @@ sed -i 's/| Domain tags | governance |/| Domain tags | computer-vision |/' .clau
 sed -i 's/| External systems\/connectors | GitHub |/| External systems\/connectors | GitHub, supervision |/' .claude/plans/cv-selected.md
 bash "$VALIDATOR" .claude/plans/cv-selected.md >/tmp/cv-selected.out
 
+cp .claude/plans/pass.md .claude/plans/cv-waived.md
+sed -i 's/| Domain tags | governance |/| Domain tags | computer-vision |/' .claude/plans/cv-waived.md
+cat >> .claude/plans/cv-waived.md <<'PLAN'
+
+## External System Selection Waiver
+
+- `supervision` — reason: this fixture validates a documented waiver path instead of selecting the system.
+PLAN
+bash "$VALIDATOR" .claude/plans/cv-waived.md >/tmp/cv-waived.out
+
+cp .claude/plans/pass.md .claude/plans/cv-weak-waiver.md
+sed -i 's/| Domain tags | governance |/| Domain tags | computer-vision |/' .claude/plans/cv-weak-waiver.md
+cat >> .claude/plans/cv-weak-waiver.md <<'PLAN'
+
+## External System Selection Waiver
+
+supervision
+PLAN
+if bash "$VALIDATOR" .claude/plans/cv-weak-waiver.md >/tmp/cv-weak-waiver.out 2>&1; then exit 1; fi
+grep -q 'does not select or waive `supervision`' /tmp/cv-weak-waiver.out
+
 echo "capability evidence validator tests passed"
