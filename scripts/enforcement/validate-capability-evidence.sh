@@ -46,9 +46,11 @@ ROUTE_FIELDS = [
     "Skills",
     "Validation gates",
     "Evidence to check",
+    "User decisions required",
 ]
 
 PLACEHOLDER = re.compile(r"^\s*(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\W*$", re.I)
+NO_USER_DECISION = re.compile(r"^\s*(none|no|not required|not needed|n/?a|אין|לא נדרש)\W*$", re.I)
 
 
 def registry_task_classes(text: str) -> dict[str, list[str]]:
@@ -96,6 +98,12 @@ def extract_field(text: str, field_name: str) -> str | None:
     return None
 
 
+def is_placeholder(field_name: str, value: str) -> bool:
+    if field_name == "User decisions required" and NO_USER_DECISION.match(value):
+        return False
+    return bool(PLACEHOLDER.match(value))
+
+
 def extract_task_class(text: str) -> str | None:
     value = extract_field(text, "Task class")
     return value.strip("`") if value else None
@@ -123,7 +131,7 @@ def validate_route_contract(plan: Path, text: str) -> None:
         value = extract_field(text, field_name)
         if value is None or not value.strip():
             missing.append(field_name)
-        elif PLACEHOLDER.match(value):
+        elif is_placeholder(field_name, value):
             placeholders.append(field_name)
     if missing:
         failures.append(

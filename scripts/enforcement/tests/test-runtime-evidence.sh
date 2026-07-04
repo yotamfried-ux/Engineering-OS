@@ -44,6 +44,7 @@ write_valid_plan() {
 | Skills | not required |
 | Validation gates | pre-tool-use-runtime-evidence.sh and check-runtime-evidence.sh |
 | Evidence to check | hook exit codes and evidence ledger entries |
+| User decisions required | none |
 
 ## Skill Selection Waiver
 

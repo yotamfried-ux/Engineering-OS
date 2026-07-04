@@ -25,6 +25,7 @@ cat > .claude/plans/pass.md <<'PLAN'
 | Skills | superpowers |
 | Validation gates | validate-capability-evidence.sh |
 | Evidence to check | validator output |
+| User decisions required | none |
 
 ## Capability Evidence
 
@@ -41,6 +42,11 @@ cp .claude/plans/pass.md .claude/plans/missing-field.md
 sed -i '/| Skills |/d' .claude/plans/missing-field.md
 if bash "$VALIDATOR" .claude/plans/missing-field.md >/tmp/missing.out 2>&1; then exit 1; fi
 grep -q 'missing required Route Plan field' /tmp/missing.out
+
+cp .claude/plans/pass.md .claude/plans/missing-user-decisions.md
+sed -i '/| User decisions required |/d' .claude/plans/missing-user-decisions.md
+if bash "$VALIDATOR" .claude/plans/missing-user-decisions.md >/tmp/missing-user-decisions.out 2>&1; then exit 1; fi
+grep -q 'User decisions required' /tmp/missing-user-decisions.out
 
 cp .claude/plans/pass.md .claude/plans/placeholder.md
 sed -i 's/not required because this is validator maintenance, not a scaffold/none/' .claude/plans/placeholder.md

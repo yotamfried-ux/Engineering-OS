@@ -35,6 +35,7 @@ write_runtime_plan() {
 | Skills | $skill_value |
 | Validation gates | pre-tool-use-runtime-evidence.sh |
 | Evidence to check | runtime hook exit code and evidence ledger |
+| User decisions required | none |
 
 ## Capability Waiver
 
