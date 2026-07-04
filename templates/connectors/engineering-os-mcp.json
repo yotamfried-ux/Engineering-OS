@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "context7": {"type": "http", "url": "https://mcp.context7.com/mcp"},
+    "notion": {"type": "http", "url": "https://mcp.notion.com/mcp"},
+    "stripe": {"type": "http", "url": "https://mcp.stripe.com"},
+    "supabase": {"type": "http", "url": "https://mcp.supabase.com/mcp"},
+    "playwright": {"type": "stdio", "command": "npx", "args": ["-y", "@playwright/mcp"]},
+    "nemotron": {"type": "stdio", "command": "uv", "args": ["run", "${ENGINEERING_OS_HOME}/scripts/nemotron-mcp-server.py"]},
+    "slack": {"type": "http", "url": "${SLACK_MCP_URL}"},
+    "linear": {"type": "http", "url": "${LINEAR_MCP_URL}"},
+    "jira": {"type": "http", "url": "${JIRA_MCP_URL}"},
+    "postgres": {"type": "http", "url": "${POSTGRES_MCP_URL}"},
+    "google-drive": {"type": "http", "url": "${GOOGLE_DRIVE_MCP_URL}"},
+    "google-sheets": {"type": "http", "url": "${GOOGLE_SHEETS_MCP_URL}"},
+    "figma": {"type": "http", "url": "${FIGMA_MCP_URL}"},
+    "community-chat": {"type": "http", "url": "${COMMUNITY_CHAT_MCP_URL}"}
+  }
+}
