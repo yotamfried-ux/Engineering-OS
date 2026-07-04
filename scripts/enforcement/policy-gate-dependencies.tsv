@@ -15,7 +15,6 @@ connector-evidence-policy.yml	scripts/enforcement/check-connector-evidence.sh
 workflow-evidence-policy.yml	scripts/enforcement/check-workflow-evidence.sh
 capability-evidence-policy.yml	scripts/enforcement/check-capability-staged-changes.sh
 capability-evidence-policy.yml	scripts/enforcement/validate-capability-evidence.sh
-capability-evidence-policy.yml	scripts/enforcement/check-cv-external-system-selection.sh
 capability-evidence-policy.yml	scripts/enforcement/capability-staged-map.tsv
 capability-evidence-policy.yml	core/capability-registry.yaml
 documentation-asset-policy.yml	scripts/enforcement/check-documentation-asset-evidence.sh
