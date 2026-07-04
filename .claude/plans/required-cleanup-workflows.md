@@ -49,7 +49,7 @@
 
 - source: GitHub connector on yotamfried-ux/Engineering-OS.
 - action: GitHub fetched files and workflow results.
-- result: GitHub found scripts/install-policy-gates.sh and scripts/enforcement/tests/test-clean-install-and-usage.sh on PR #193 head ebdc12d3bf07a5e4ca07003a699898642b1f10e1.
+- result: GitHub found scripts/enforcement/tests/test-clean-install-and-usage.sh on PR #193 head 90a1b4697c23e34d90d307d2f793d3f9d519884e.
 - decision: added cleanup workflow installation and clean-install coverage.
 - target: scripts/enforcement/check-merge-readiness.sh, docs/operations/main-required-checks.md, scripts/enforcement/tests/test-operational-readiness-gates.sh, scripts/enforcement/tests/test-ops-branch-protection.sh, scripts/install-policy-gates.sh, scripts/enforcement/tests/test-clean-install-and-usage.sh.
 
@@ -82,4 +82,4 @@
 
 - start: Route Plan committed before code/config/test edits for target paths.
 - mid: merge readiness checker updated after work began and before docs/test fixture edits.
-- pre-merge: self-review complete after downstream clean-install workflow repair and installer alignment.
+- pre-merge: self-review complete after clean install test repair and installer alignment.
