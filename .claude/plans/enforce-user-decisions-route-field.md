@@ -81,3 +81,4 @@ No concrete templates/ or patterns/ asset is selected; this is an internal valid
 
 - start: Route Plan created before code or test changes.
 - mid: validator and regression test updated after the start checkpoint.
+- pre-merge: exact-head CI is required after this checkpoint before merge.
