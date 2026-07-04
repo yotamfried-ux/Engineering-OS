@@ -51,4 +51,5 @@ GitHub used.
 
 - start: plan evidence added after implementation gaps were found by CI.
 - mid: documentation and connector evidence were added for the changed enforcement files.
+- mid: GitHub evidence wording was checked again after connector policy feedback.
 - pre-merge: exact-head CI is required before merge.
