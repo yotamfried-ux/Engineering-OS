@@ -31,7 +31,7 @@
 |---|---|---|
 | core/task-router.md | checked | route plan contract requires user decision handling |
 | scripts/enforcement/validate-capability-evidence.sh | checked | field list needs the missing contract field |
-| scripts/enforcement/tests/test-capability-evidence.sh | checked | regression fixture is the right test surface |
+| scripts/enforcement/tests/test-capability-evidence.sh | checked | regression fixture covers the missing field |
 
 ## Documentation Asset Evidence
 
@@ -56,9 +56,9 @@
 
 - source: GitHub connector.
 - action: GitHub connector checked PR #196 and repository files.
-- result: PR #196 branch enforce-user-decisions-route-field starts from 353b2de0b4f3dd1e27a1f5174b5fb8890877c6cf.
+- result: PR #196 branch enforce-user-decisions-route-field updated scripts/enforcement/validate-capability-evidence.sh and scripts/enforcement/tests/test-capability-evidence.sh after base 353b2de0b4f3dd1e27a1f5174b5fb8890877c6cf.
 - target: scripts/enforcement/validate-capability-evidence.sh; scripts/enforcement/tests/test-capability-evidence.sh.
-- decision: selected a minimal validator and fixture update.
+- decision: updated a minimal validator and fixture change.
 
 ## Skill Evidence
 
@@ -75,7 +75,9 @@ No concrete templates/ or patterns/ asset is selected; this is an internal valid
 - connectors: GitHub.
 - steps: create plan first, update validator, update test, record lifecycle checkpoints, run CI.
 - evidence: exact-head workflow results before merge.
+- result: validator and regression fixture updated.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan created before code or test changes.
+- mid: validator and regression test updated after the start checkpoint.
