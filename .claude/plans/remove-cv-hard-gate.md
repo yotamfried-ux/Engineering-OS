@@ -36,6 +36,7 @@
 - `plan.route-plan-before-write`
 - `source.github-repo-read`
 - `validation.policy-change-has-validator`
+- `validation.actions-checked`
 - `validation.coderabbit-policy`
 
 ## Documentation Asset Evidence
@@ -81,3 +82,4 @@ GitHub was used to inspect main branch files and update repository files.
 - start: Route Plan created before modifying workflow, dependency manifest, or enforcement scripts.
 - mid: removed the workflow call and dependency manifest entry after verifying supervision remains in external-systems/README.md.
 - pre-merge: deleted the CV hard-gate script and test; CI remains the final gate.
+- pre-merge: added validation.actions-checked evidence after workflow-change gate reported the missing capability.
