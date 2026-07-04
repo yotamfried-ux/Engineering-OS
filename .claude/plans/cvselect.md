@@ -75,7 +75,7 @@ GitHub was used for PR #198 state, changed files, workflow failures, and file up
 - hypothesis: CI failed because required Route Plan evidence was incomplete and a duplicate plan was added late.
 - steps: inspected PR files, workflow status, validators, removed the extra policy file, extended the fixture, removed the duplicate plan, and completed this plan.
 - tools/connectors: GitHub connector.
-- evidence: PR #198, commits 96f7dce and 5e8b258, and target paths listed above.
+- evidence: PR #198, commits 96f7dce, 5e8b258, d02275b, and target paths listed above.
 - result: structure is ready for exact-head CI validation.
 - follow-up enforcement: update PR body Merge Readiness with the final head SHA.
 
@@ -84,4 +84,4 @@ GitHub was used for PR #198 state, changed files, workflow failures, and file up
 - start: Route Plan created before code, policy, or test changes.
 - mid: added validator logic and a regression test fixture for the missing external-system case.
 - mid: removed the unregistered core policy file after reviewing the final changed-file set.
-- pre-merge: completed final Route Plan evidence after the last code/config/test change and before exact-head CI.
+- pre-merge: refreshed final Route Plan evidence after the last test fixture update and before exact-head CI.
