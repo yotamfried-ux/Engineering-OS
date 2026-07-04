@@ -13,7 +13,7 @@
 | External systems/connectors | GitHub; supervision |
 | Skills | superpowers |
 | Validation gates | enforcement-tests, pr-policy, connector-evidence-policy, workflow-evidence-policy, capability-evidence-policy, plan-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy |
-| Evidence to check | task-router domain tags; external-systems index; capability registry; exact-head CI |
+| Evidence to check | validator enforces CV route plans; test fixture fails without supervision; exact-head CI |
 | User decisions required | none |
 
 ## Capability Evidence
@@ -33,11 +33,16 @@ GitHub used for repository state and PR checks.
 ## Connector Usage Evidence
 
 - source: GitHub connector.
-- action: verified current routing and external-system inventory.
-- result: selected domain-specific external-system selection enforcement.
-- target: core and scripts/enforcement files.
+- action: read current routing, registry, validator, and test files.
+- result: selected validator-based domain enforcement instead of a separate script after new script writes were blocked.
+- target: core/external-system-selection-policy.md; scripts/enforcement/validate-capability-evidence.sh; scripts/enforcement/tests/test-capability-evidence.sh.
 - decision: first enforced domain is Computer Vision -> Supervision or explicit waiver.
+
+## Skill Evidence
+
+- superpowers used for plan-first and verification discipline.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan created before code, policy, or test changes.
+- mid: added external-system selection policy, added CV -> supervision enforcement inside validate-capability-evidence.sh, and added a negative regression fixture to test-capability-evidence.sh proving CV plans without supervision/waiver fail.
