@@ -18,11 +18,15 @@ git init "$TARGET" >/dev/null
 git -C "$TARGET" config user.email test@example.com
 git -C "$TARGET" config user.name test
 
-expect_file() { [ -f "$1" ] || { echo "  ❌ missing file: $1"; exit 1; }; echo "  ✅ file exists: ${1#$TARGET/}"; }
-expect_executable() { [ -x "$1" ] || { echo "  ❌ not executable: $1"; exit 1; }; echo "  ✅ executable: ${1#$TARGET/}"; }
-expect_contains() { grep -q "$2" "$1" || { echo "  ❌ expected $1 to contain $2"; exit 1; }; echo "  ✅ contains: ${1#$TARGET/} -> $2"; }
-expect_pass() { local name="$1"; shift; if "$@" >/dev/null 2>&1; then echo "  ✅ $name"; else echo "  ❌ expected pass: $name"; exit 1; fi; }
-expect_fail() { local name="$1"; shift; if "$@" >/dev/null 2>&1; then echo "  ❌ expected fail: $name"; exit 1; else echo "  ✅ $name"; fi; }
+expect_file() { [ -f "$1" ] || { echo "FAIL missing file: $1"; exit 1; }; echo "OK file exists: ${1#$TARGET/}"; }
+expect_executable() { [ -x "$1" ] || { echo "FAIL not executable: $1"; exit 1; }; echo "OK executable: ${1#$TARGET/}"; }
+expect_contains() { grep -q "$2" "$1" || { echo "FAIL expected $1 to contain $2"; exit 1; }; echo "OK contains: ${1#$TARGET/} -> $2"; }
+expect_pass() { local name="$1"; shift; if "$@" >/dev/null 2>&1; then echo "OK $name"; else echo "FAIL expected pass: $name"; exit 1; fi; }
+expect_fail() { local name="$1"; shift; if "$@" >/dev/null 2>&1; then echo "FAIL expected fail: $name"; exit 1; else echo "OK $name"; fi; }
+
+required_workflows() {
+  awk -F'"' '/^REQUIRED_WORKFLOWS_DEFAULT=/ { print $2; exit }' "$MERGE_CHECK" | tr ' ' '\n' | sed '/^$/d'
+}
 
 run_install() {
   (cd "$TARGET" && EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$ROOT" bash "$USE_IN_PROJECT" >/dev/null)
@@ -67,20 +71,24 @@ PLAN
 
 make_runs_json() {
   local file="$1" enforcement_status="$2" enforcement_conclusion="$3"
-  cat > "$file" <<JSON
-{"workflow_runs":[
- {"name":"enforcement-tests","status":"$enforcement_status","conclusion":"$enforcement_conclusion"},
- {"name":"pr-policy","status":"completed","conclusion":"success"},
- {"name":"connector-evidence-policy","status":"completed","conclusion":"success"},
- {"name":"workflow-evidence-policy","status":"completed","conclusion":"success"},
- {"name":"capability-evidence-policy","status":"completed","conclusion":"success"},
- {"name":"plan-policy","status":"completed","conclusion":"success"},
- {"name":"documentation-asset-policy","status":"completed","conclusion":"success"}
-]}
-JSON
+  {
+    printf '{"workflow_runs":[\n'
+    local first=1
+    while IFS= read -r wf; do
+      [ -n "$wf" ] || continue
+      [ "$first" -eq 1 ] || printf ',\n'
+      first=0
+      if [ "$wf" = "enforcement-tests" ]; then
+        printf ' {"name":"%s","status":"%s","conclusion":"%s"}' "$wf" "$enforcement_status" "$enforcement_conclusion"
+      else
+        printf ' {"name":"%s","status":"completed","conclusion":"success"}' "$wf"
+      fi
+    done < <(required_workflows)
+    printf '\n]}\n'
+  } > "$file"
 }
 
-echo "── Experiment 1: clean install into target repo ──"
+echo "Experiment 1: clean install into target repo"
 run_install
 expect_file "$TARGET/CLAUDE.md"
 expect_file "$TARGET/.engineering-os/REFERENCE.md"
@@ -94,12 +102,12 @@ expect_file "$TARGET/.claude/commands/superpowers-plan.md"
 expect_executable "$TARGET/.git/hooks/pre-commit"
 expect_executable "$TARGET/.git/hooks/commit-msg"
 expect_executable "$TARGET/.git/hooks/post-commit"
-expect_file "$TARGET/.github/workflows/pr-policy.yml"
-expect_file "$TARGET/.github/workflows/plan-policy.yml"
-expect_file "$TARGET/.github/workflows/connector-evidence-policy.yml"
-expect_file "$TARGET/.github/workflows/workflow-evidence-policy.yml"
-expect_file "$TARGET/.github/workflows/capability-evidence-policy.yml"
-expect_file "$TARGET/.github/workflows/documentation-asset-policy.yml"
+
+while IFS= read -r wf; do
+  case "$wf" in enforcement-tests) continue ;; esac
+  expect_file "$TARGET/.github/workflows/$wf.yml"
+done < <(required_workflows)
+
 expect_contains "$TARGET/.claude/settings.json" "pre-tool-use-json-guard.sh"
 expect_contains "$TARGET/.claude/settings.json" "pre-tool-use-runtime-evidence.sh"
 expect_contains "$TARGET/.claude/settings.json" "check-plan-scope.sh"
@@ -110,10 +118,6 @@ expect_contains "$ROOT/scripts/session-setup.sh" "rtk init -g"
 expect_contains "$ROOT/scripts/session-setup.sh" "rtk --version"
 expect_contains "$TARGET/.claude/settings.json" "$ROOT/scripts/enforcement"
 
-# Manifest-driven policy-gate dependencies: every workflow that calls a
-# scripts/enforcement/* script must have that script (and any data files it
-# needs) actually present in the installed target, or the workflow step exits
-# 127 before validating anything (the class of bug found in PR D's review).
 MANIFEST="$ROOT/scripts/enforcement/policy-gate-dependencies.tsv"
 while IFS=$'\t' read -r workflow dep; do
   case "${workflow:-}" in ''|'#'*) continue ;; esac
@@ -145,11 +149,11 @@ expect_pass "installed check-pr-review-evidence.sh runs from the target project"
   bash "$TARGET/scripts/enforcement/check-pr-review-evidence.sh" --body "$TMP/installed-body.md"
 
 bash -c "cd '$TARGET' && rm -rf noplans-repo && git init -q noplans-repo && cd noplans-repo && git config user.email t@t && git config user.name t && git commit --allow-empty -q -m base"
-expect_pass "installed check-connector-evidence.sh runs from the target project (no changed plans)" \
+expect_pass "installed check-connector-evidence.sh runs from the target project" \
   bash -c "cd '$TARGET/noplans-repo' && bash '$TARGET/scripts/enforcement/check-connector-evidence.sh' HEAD HEAD"
-expect_pass "installed check-workflow-evidence.sh runs from the target project (no changed plans)" \
+expect_pass "installed check-workflow-evidence.sh runs from the target project" \
   bash -c "cd '$TARGET/noplans-repo' && bash '$TARGET/scripts/enforcement/check-workflow-evidence.sh' HEAD HEAD"
-expect_pass "installed check-documentation-asset-evidence.sh runs from the target project (no changed plans)" \
+expect_pass "installed check-documentation-asset-evidence.sh runs from the target project" \
   bash -c "cd '$TARGET/noplans-repo' && bash '$TARGET/scripts/enforcement/check-documentation-asset-evidence.sh' HEAD HEAD"
 : > "$TMP/empty-files.txt"
 expect_pass "installed check-capability-staged-changes.sh runs from the target project" \
@@ -157,20 +161,18 @@ expect_pass "installed check-capability-staged-changes.sh runs from the target p
 
 run_install
 managed_count="$(grep -c '<!-- BEGIN engineering-os (managed) -->' "$TARGET/CLAUDE.md")"
-[ "$managed_count" = "1" ] || { echo "  ❌ managed CLAUDE block duplicated: $managed_count"; exit 1; }
-echo "  ✅ install is idempotent: managed block count = 1"
-
+[ "$managed_count" = "1" ] || { echo "FAIL managed CLAUDE block duplicated: $managed_count"; exit 1; }
+echo "OK install is idempotent: managed block count = 1"
 settings_count="$(find "$TARGET/.claude" -name settings.json | wc -l | xargs)"
-[ "$settings_count" = "1" ] || { echo "  ❌ settings duplicated: $settings_count"; exit 1; }
-echo "  ✅ install is idempotent: one settings file"
+[ "$settings_count" = "1" ] || { echo "FAIL settings duplicated: $settings_count"; exit 1; }
+echo "OK install is idempotent: one settings file"
 
-echo "── Experiment 2: actual usage gate simulation ──"
+echo "Experiment 2: actual usage gate simulation"
 cd "$TARGET"
 mkdir -p .claude/.evidence
 export EOS_EVIDENCE_DIR=".claude/.evidence"
 export EOS_PRETOOL_LEGACY_EXIT=1
 : > .claude/.evidence/ledger
-
 expect_fail "JSON guard blocks malformed event" bash -c "printf '%s' '{bad json' | '$JSON_GUARD'"
 expect_fail "write blocked before any Route Plan exists" run_precheck src/app.ts
 write_usage_plan
@@ -185,7 +187,7 @@ expect_fail "merge readiness blocks pending workflow" "$MERGE_CHECK" --runs-json
 make_runs_json "$TMP/green.json" completed success
 expect_pass "merge readiness allows all green workflows" "$MERGE_CHECK" --runs-json "$TMP/green.json"
 
-echo "── Experiment 3: RTK/graphify PATH-absence fallback ──"
+echo "Experiment 3: RTK/graphify PATH-absence fallback"
 extract_hook_cmds() {
   python3 - "$TARGET/.claude/settings.json" "$1" <<'PY'
 import json, sys
@@ -204,42 +206,33 @@ def walk(o):
 list(walk(data.get('hooks', {})))
 PY
 }
-# A minimal PATH that keeps bash/coreutils but excludes wherever this
-# container's real rtk/graphify binaries live, so `command -v rtk` genuinely
-# fails without breaking the ability to run bash/python3 themselves.
 NO_RTK_GRAPHIFY_PATH="/usr/bin:/bin"
 rtk_cmd="$(extract_hook_cmds 'rtk hook claude' | head -1)"
-[ -n "$rtk_cmd" ] || { echo "  ❌ no rtk hook command found in installed settings.json"; exit 1; }
-expect_pass "rtk-absent PreToolUse hook does not crash (warns/no-ops per contract)" \
+[ -n "$rtk_cmd" ] || { echo "FAIL no rtk hook command found in installed settings.json"; exit 1; }
+expect_pass "rtk-absent PreToolUse hook does not crash" \
   env -i PATH="$NO_RTK_GRAPHIFY_PATH" HOME="$HOME" bash -c "cd '$TARGET' && $rtk_cmd" </dev/null
 graphify_cmd="$(extract_hook_cmds 'graphify-out/graph.json' | head -1)"
-[ -n "$graphify_cmd" ] || { echo "  ❌ no graphify hook command found in installed settings.json"; exit 1; }
-expect_pass "graphify-absent PreToolUse hook does not crash (file-existence check, no binary call)" \
+[ -n "$graphify_cmd" ] || { echo "FAIL no graphify hook command found in installed settings.json"; exit 1; }
+expect_pass "graphify-absent PreToolUse hook does not crash" \
   env -i PATH="$NO_RTK_GRAPHIFY_PATH" HOME="$HOME" bash -c "cd '$TARGET' && $graphify_cmd" </dev/null
 
-echo "── Experiment 4: installed slash commands exist and parse ──"
+echo "Experiment 4: installed slash commands exist and parse"
 for cmd_file in use-engineering-os.md superpowers-brainstorm.md superpowers-verify.md superpowers-plan.md; do
   f="$TARGET/.claude/commands/$cmd_file"
   expect_file "$f"
-  [ -s "$f" ] || { echo "  ❌ $cmd_file is empty"; exit 1; }
-  head -1 "$f" | grep -qE '^(#|---)' || { echo "  ❌ $cmd_file does not start with a markdown heading or frontmatter"; exit 1; }
-  echo "  ✅ $cmd_file is non-empty and starts with a heading or frontmatter"
+  [ -s "$f" ] || { echo "FAIL $cmd_file is empty"; exit 1; }
+  head -1 "$f" | grep -qE '^(#|---)' || { echo "FAIL $cmd_file does not start with a markdown heading or frontmatter"; exit 1; }
+  echo "OK $cmd_file is non-empty and starts with a heading or frontmatter"
 done
 
-echo "── Experiment 5: templates/patterns reachable from installed target ──"
+echo "Experiment 5: templates/patterns reachable from installed target"
 expect_contains "$TARGET/CLAUDE.md" "$ROOT/templates/"
 expect_contains "$TARGET/CLAUDE.md" "$ROOT/patterns/"
-[ -d "$ROOT/templates" ] || { echo "  ❌ referenced templates/ directory does not exist at the reference path"; exit 1; }
-[ -d "$ROOT/patterns" ] || { echo "  ❌ referenced patterns/ directory does not exist at the reference path"; exit 1; }
-echo "  ✅ templates/ and patterns/ exist at the reference path CLAUDE.md points to"
+[ -d "$ROOT/templates" ] || { echo "FAIL referenced templates directory does not exist"; exit 1; }
+[ -d "$ROOT/patterns" ] || { echo "FAIL referenced patterns directory does not exist"; exit 1; }
+echo "OK templates and patterns exist at the reference path"
 
-echo "── Experiment 6: enforce-tests.sh missing-tool contract inside the installed target ──"
-# Build a hermetic PATH: only the specific tools enforce-tests.sh needs to run
-# at all (bash, git, coreutils), deliberately excluding ruff/pytest. A plain
-# "/usr/bin:/bin" guess is not reliable — a CI runner's base image can (and did)
-# have ruff/pytest preinstalled there, making the "missing" premise false and
-# the fixture fail for an unrelated reason (see
-# lessons-learned/bugs/ci-environment-dependent-fixture-premise.md).
+echo "Experiment 6: enforce-tests.sh missing-tool contract inside the installed target"
 ISOLATED_BIN="$TMP/isolated-bin"
 mkdir -p "$ISOLATED_BIN"
 for tool in bash sh git grep sed awk cat cut tr wc head tail mkdir rm cp mv printf xargs find sort uniq dirname basename pwd env true false expr; do
@@ -256,20 +249,12 @@ printf 'print(1)\n' > "$STACK_REPO/app.py"
 git -C "$STACK_REPO" add requirements.txt app.py
 expect_fail "declared python stack with missing ruff hard-fails under CI=true" \
   env -i PATH="$ISOLATED_BIN" HOME="$HOME" CI=true bash -c "cd '$STACK_REPO' && bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
-# Isolate the waiver variable itself: hold CI unset in both of the next two
-# invocations and vary only EOS_ALLOW_MISSING_TOOLS, so the pass below is
-# proven to come from the waiver and not from CI being absent.
 expect_fail "declared python stack with missing ruff fails locally without a waiver" \
   env -i PATH="$ISOLATED_BIN" HOME="$HOME" bash -c "cd '$STACK_REPO' && bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
 expect_pass "declared python stack with missing ruff waives locally via EOS_ALLOW_MISSING_TOOLS" \
   env -i PATH="$ISOLATED_BIN" HOME="$HOME" EOS_ALLOW_MISSING_TOOLS=ruff,pytest bash -c "cd '$STACK_REPO' && bash '$ROOT/scripts/enforcement/enforce-tests.sh'"
 
-echo "── Experiment 7: learning-loop fix-needs-test gate fires inside the installed target ──"
-# Exercise the ACTUAL installed hook file at $TARGET/.git/hooks/commit-msg (the
-# one use-in-project.sh copied), not the source scripts/hooks/commit-msg.sh —
-# otherwise this fixture would stay green even if the installer stopped
-# copying/updating the hook or the installed path drifted (Codex review finding
-# on PR #184).
+echo "Experiment 7: learning-loop fix-needs-test gate fires inside the installed target"
 expect_file "$TARGET/.git/hooks/commit-msg"
 expect_executable "$TARGET/.git/hooks/commit-msg"
 printf 'def broken():\n    return 1\n' > "$TARGET/fix.py"
@@ -278,12 +263,12 @@ FIX_MSG_NO_TEST="$TMP/fix-msg-no-test.txt"
 cat > "$FIX_MSG_NO_TEST" <<'EOF'
 fix: correct a broken calculation
 
-✅ עובד: the calculation now returns the right value.
-❌ לא עובד: none known.
-🔄 השתנה: fix.py.
-🧪 בדיקות: manually verified.
+works: calculation now returns the right value.
+not working: none known.
+changed: fix.py.
+tests: manually verified.
 EOF
-expect_fail "installed commit-msg hook blocks a fix: commit with no regression test (learning-loop gate fires downstream)" \
+expect_fail "installed commit-msg hook blocks a fix commit with no regression test" \
   bash -c "cd '$TARGET' && '$TARGET/.git/hooks/commit-msg' '$FIX_MSG_NO_TEST'"
 git -C "$TARGET" reset -q fix.py
 rm -f "$TARGET/fix.py"
