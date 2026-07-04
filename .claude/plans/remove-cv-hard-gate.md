@@ -24,7 +24,7 @@
 | Source | Status | Why |
 |---|---|---|
 | external-systems/README.md | checked | Confirms supervision should remain an available CV/media AI tool. |
-| .github/workflows/capability-evidence-policy.yml | checked | Confirms where the hard gate is wired. |
+| .github/workflows/capability-evidence-policy.yml | checked | Confirms where the hard gate was wired. |
 | scripts/enforcement/policy-gate-dependencies.tsv | checked | Confirms install-time workflow dependencies. |
 | core/task-router.md | read | Confirms governance routing. |
 | core/workflow.md | read | Confirms plan-first workflow. |
@@ -46,13 +46,13 @@
 
 ## Connector Evidence
 
-GitHub was used to inspect main branch files and will be used to update repository files and PR status.
+GitHub was used to inspect main branch files and update repository files.
 
 ## Connector Usage Evidence
 
 - source: GitHub connector for yotamfried-ux/Engineering-OS.
-- action: fetched external-systems/README.md, capability-evidence-policy.yml, check-cv-external-system-selection.sh, and policy-gate-dependencies.tsv.
-- result: GitHub returned concrete paths showing supervision inventory and hard-gate workflow wiring.
+- action: fetched external-systems/README.md, capability-evidence-policy.yml, check-cv-external-system-selection.sh, test-cv-external-system-selection.sh, and policy-gate-dependencies.tsv.
+- result: GitHub branch p200 now keeps external-systems/README.md unchanged, removes the workflow call, removes the dependency manifest row, and deletes the hard-gate script and test.
 - target: .github/workflows/capability-evidence-policy.yml; scripts/enforcement/check-cv-external-system-selection.sh; scripts/enforcement/tests/test-cv-external-system-selection.sh; scripts/enforcement/policy-gate-dependencies.tsv.
 - decision: remove workflow enforcement and related gate files while preserving external-systems/README.md.
 
@@ -62,11 +62,11 @@ GitHub was used to inspect main branch files and will be used to update reposito
 
 ## DoD
 
-- [ ] supervision remains in external-systems/README.md.
-- [ ] capability-evidence-policy no longer calls check-cv-external-system-selection.sh.
-- [ ] check-cv-external-system-selection.sh is removed.
-- [ ] test-cv-external-system-selection.sh is removed.
-- [ ] policy-gate-dependencies.tsv no longer copies the CV hard-gate script.
+- [x] supervision remains in external-systems/README.md.
+- [x] capability-evidence-policy no longer calls check-cv-external-system-selection.sh.
+- [x] check-cv-external-system-selection.sh is removed.
+- [x] test-cv-external-system-selection.sh is removed.
+- [x] policy-gate-dependencies.tsv no longer copies the CV hard-gate script.
 - [ ] CI gates pass before merge.
 
 ## Claude Run Trace
@@ -74,8 +74,10 @@ GitHub was used to inspect main branch files and will be used to update reposito
 - goal: align supervision with user intent as an optional repo/tool, not an automatic requirement.
 - hypothesis: the current hard gate over-enforces supervision on CV-like Route Plans.
 - tools/connectors: GitHub connector.
-- result: start checkpoint created before code/config/test changes.
+- result: hard-gate workflow call, install dependency, script, and test were removed while external-systems inventory stayed unchanged.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan created before modifying workflow, dependency manifest, or enforcement scripts.
+- mid: removed the workflow call and dependency manifest entry after verifying supervision remains in external-systems/README.md.
+- pre-merge: deleted the CV hard-gate script and test; CI remains the final gate.
