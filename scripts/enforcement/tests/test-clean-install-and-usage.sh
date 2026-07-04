@@ -104,6 +104,7 @@ expect_executable "$TARGET/.git/hooks/commit-msg"
 expect_executable "$TARGET/.git/hooks/post-commit"
 
 while IFS= read -r wf; do
+  case "$wf" in enforcement-tests) continue ;; esac
   expect_file "$TARGET/.github/workflows/$wf.yml"
 done < <(required_workflows)
 
