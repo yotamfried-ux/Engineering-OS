@@ -51,6 +51,7 @@ ROUTE_FIELDS = [
 
 PLACEHOLDER = re.compile(r"^\s*(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\W*$", re.I)
 NO_USER_DECISION = re.compile(r"^\s*(none|no|not required|not needed|n/?a|אין|לא נדרש)\W*$", re.I)
+CV_TERMS = re.compile(r"(?i)computer[- ]vision|object detection|tracking|annotation|segmentation|review overlay|frame overlay|video analytics|roboflow|yolo|sports video|drone footage")
 
 
 def registry_task_classes(text: str) -> dict[str, list[str]]:
@@ -145,6 +146,26 @@ def validate_route_contract(plan: Path, text: str) -> None:
         )
 
 
+def validate_external_system_selection(plan: Path, text: str) -> None:
+    label = str(plan)
+    domain_tags = extract_field(text, "Domain tags") or ""
+    evidence_to_check = extract_field(text, "Evidence to check") or ""
+    task_type = extract_field(text, "Task type") or ""
+    scan_text = "\n".join([domain_tags, evidence_to_check, task_type])
+    if not CV_TERMS.search(scan_text):
+        return
+    external = extract_field(text, "External systems/connectors") or extract_field(text, "External systems / connectors") or ""
+    waiver = section(text, "External System Selection Waiver")
+    if "supervision" in external.lower():
+        return
+    if "supervision" in waiver.lower() and has_reason(waiver):
+        return
+    failures.append(
+        f"ERROR_FOR_AGENT: {label} appears to be a Computer Vision task but does not select or waive `supervision`.\n"
+        "ACTION: add `supervision` to External systems/connectors or add External System Selection Waiver with a focused reason."
+    )
+
+
 classes = registry_task_classes(registry)
 
 for plan in plan_paths:
@@ -154,6 +175,7 @@ for plan in plan_paths:
     label = str(plan)
 
     validate_route_contract(plan, text)
+    validate_external_system_selection(plan, text)
 
     task_class = extract_task_class(text)
     evidence = section(text, "Capability Evidence")
