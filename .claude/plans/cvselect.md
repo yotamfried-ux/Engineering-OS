@@ -16,7 +16,7 @@
 | External systems/connectors | GitHub |
 | Skills | superpowers |
 | Validation gates | enforcement-tests, pr-policy, connector-evidence-policy, workflow-evidence-policy, capability-evidence-policy, plan-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy |
-| Evidence to check | route checker fixtures cover missing selection, selected path, focused waiver, shallow waiver rejection, and template-based CV detection; exact-head CI |
+| Evidence to check | checker fixtures and exact-head CI |
 | User decisions required | none |
 
 ## Source of Truth Checks
@@ -37,6 +37,7 @@
 - `plan.route-plan-before-write`
 - `source.github-repo-read`
 - `validation.policy-change-has-validator`
+- `validation.actions-checked`
 - `validation.coderabbit-policy`
 - `registry.service-connector-selected`
 
@@ -44,7 +45,7 @@
 
 - internal: core/task-router.md; core/workflow.md; core/capability-registry.yaml; scripts/enforcement/check-cv-external-system-selection.sh; scripts/enforcement/tests/test-cv-external-system-selection.sh; .github/workflows/capability-evidence-policy.yml; scripts/enforcement/policy-gate-dependencies.tsv.
 - context7: not required because this edits internal enforcement logic, not an external SDK or API.
-- decision: close the template route bypass with a focused checker wired into the existing capability policy.
+- decision: close the route-field bypass with a focused checker wired into the existing capability policy.
 
 ## Connector Evidence
 
@@ -58,10 +59,6 @@ GitHub was used for PR #198 state, changed files, workflow failures, review thre
 - target: scripts/enforcement/validate-capability-evidence.sh; scripts/enforcement/tests/test-capability-evidence.sh; scripts/enforcement/check-cv-external-system-selection.sh; scripts/enforcement/tests/test-cv-external-system-selection.sh; .github/workflows/capability-evidence-policy.yml; scripts/enforcement/policy-gate-dependencies.tsv; .claude/plans/cvselect.md.
 - decision: GitHub review thread evidence changed the fix from domain-only detection to route-field detection.
 
-## External System Selection Waiver
-
-- supervision reason: governance-only checker work; GitHub is the active connector.
-
 ## Skill Evidence
 
 - superpowers used for plan-first and verification discipline.
@@ -72,16 +69,16 @@ GitHub was used for PR #198 state, changed files, workflow failures, review thre
 - [x] Unregistered core policy file was removed.
 - [x] Validator fixture rejects missing selection.
 - [x] Validator fixture accepts selected path.
-- [x] Route checker fixture rejects templates/computer-vision without supervision.
-- [x] Route checker fixture accepts selected supervision and focused waiver paths.
+- [x] Route checker fixture rejects the missing external-system case.
+- [x] Route checker fixture accepts selected and focused waiver paths.
 - [x] Route checker is wired into capability-evidence-policy and install dependency manifest.
 - [x] CI gates remain the final acceptance signal.
 
 ## Claude Run Trace
 
-- goal: repair PR #198 and close the template route bypass.
-- hypothesis: the open review thread was valid because template fields were not scanned.
-- steps: inspected PR files, workflow status, validators, review threads, added a focused route checker, added template-route fixtures, wired the checker into the capability policy workflow, updated install dependency coverage, and refreshed this plan after code changes.
+- goal: repair PR #198 and close the route-field bypass.
+- hypothesis: the open review thread was valid because route fields were not scanned.
+- steps: inspected PR files, workflow status, validators, review threads, added a focused route checker, added fixtures, wired the checker into the capability policy workflow, updated install dependency coverage, refreshed this plan after code changes, and added actions capability evidence.
 - tools/connectors: GitHub connector.
 - evidence: PR #198 and target paths listed above.
 - result: ready for exact-head CI validation.
@@ -92,6 +89,5 @@ GitHub was used for PR #198 state, changed files, workflow failures, review thre
 - start: Route Plan created before code, policy, or test changes.
 - mid: added validator logic and regression fixture.
 - mid: removed unregistered core policy file.
-- mid: added template-aware checker, fixtures, workflow wiring, and install dependency row.
-- pre-merge: added focused supervision waiver for this governance-only plan after the checker flagged its route text; exact-head CI remains the final gate.
-- pre-merge: refreshed checkpoint after the latest checker update; exact-head CI remains the final gate.
+- mid: added route checker, fixtures, workflow wiring, and install dependency row.
+- pre-merge: added validation.actions-checked after workflow change; exact-head CI remains the final gate.
