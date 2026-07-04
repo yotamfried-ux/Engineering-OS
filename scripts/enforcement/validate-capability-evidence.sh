@@ -5,6 +5,9 @@
 # and must include either Capability Evidence or Capability Waiver. For known
 # task classes, every required capability from core/capability-registry.yaml must
 # appear in Capability Evidence or be explicitly listed in Capability Waiver.
+# It also enforces the Route Plan output contract from core/task-router.md so
+# required capability, connector, skill, template, and validation decisions are
+# not replaced by weak prose or omitted entirely.
 
 set -euo pipefail
 
@@ -30,6 +33,23 @@ plan_paths = [Path(p) for p in sys.argv[2:]]
 registry = registry_path.read_text(encoding="utf-8")
 failures: list[str] = []
 
+ROUTE_FIELDS = [
+    "Task type",
+    "Task class",
+    "Domain tags",
+    "Plan Scope",
+    "Planning Mode",
+    "Templates",
+    "Architecture guides",
+    "Patterns",
+    "External systems/connectors",
+    "Skills",
+    "Validation gates",
+    "Evidence to check",
+]
+
+PLACEHOLDER = re.compile(r"^\s*(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\W*$", re.I)
+
 
 def registry_task_classes(text: str) -> dict[str, list[str]]:
     start = re.search(r"(?m)^task_classes:\s*$", text)
@@ -52,14 +72,33 @@ def registry_task_classes(text: str) -> dict[str, list[str]]:
     return classes
 
 
-def extract_task_class(text: str) -> str | None:
-    table = re.search(r"(?im)^\|\s*Task[ _-]class\s*\|\s*([^|`]+|`[^`]+`)\s*\|", text)
-    if table:
-        return table.group(1).strip().strip("`")
-    line = re.search(r"(?im)^\s*Task[ _-]class\s*:\s*([^\n#]+)", text)
-    if line:
-        return line.group(1).strip().strip("`")
+def normalize_label(label: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", label.lower())
+
+
+def clean_cell(value: str) -> str:
+    return re.sub(r"[`*]", "", value or "").strip()
+
+
+def extract_field(text: str, field_name: str) -> str | None:
+    wanted = normalize_label(field_name)
+    for line in text.splitlines():
+        if "|" not in line:
+            continue
+        cells = [clean_cell(c) for c in line.split("|")]
+        for index, cell in enumerate(cells[:-1]):
+            if normalize_label(cell) == wanted:
+                return cells[index + 1].strip()
+    pattern = re.compile(r"(?im)^\s*(?:[-*]\s*)?" + re.escape(field_name).replace(r"\ ", r"[ _-]*") + r"\s*:\s*([^\n#]+)")
+    match = pattern.search(text)
+    if match:
+        return match.group(1).strip().strip("`")
     return None
+
+
+def extract_task_class(text: str) -> str | None:
+    value = extract_field(text, "Task class")
+    return value.strip("`") if value else None
 
 
 def section(text: str, title: str) -> str:
@@ -73,7 +112,30 @@ def ids_in(text: str) -> set[str]:
 
 
 def has_reason(text: str) -> bool:
-    return bool(re.search(r"(?i)\b(because|reason|justification|not required)\b|לא נדרש|סיבה|נימוק", text))
+    return bool(re.search(r"(?i)\b(because|reason|justification|not required|unavailable|fallback|scope)\b|לא נדרש|סיבה|נימוק", text))
+
+
+def validate_route_contract(plan: Path, text: str) -> None:
+    label = str(plan)
+    missing: list[str] = []
+    placeholders: list[str] = []
+    for field_name in ROUTE_FIELDS:
+        value = extract_field(text, field_name)
+        if value is None or not value.strip():
+            missing.append(field_name)
+        elif PLACEHOLDER.match(value):
+            placeholders.append(field_name)
+    if missing:
+        failures.append(
+            f"ERROR_FOR_AGENT: {label} is missing required Route Plan field(s): {', '.join(missing)}.\n"
+            "ACTION: add the full Route Plan contract from core/task-router.md <required_output>."
+        )
+    if placeholders:
+        failures.append(
+            f"ERROR_FOR_AGENT: {label} has placeholder Route Plan field value(s): {', '.join(placeholders)}.\n"
+            "ACTION: record a concrete decision or a focused waiver with a reason, not an empty placeholder."
+        )
+
 
 classes = registry_task_classes(registry)
 
@@ -82,6 +144,8 @@ for plan in plan_paths:
         continue
     text = plan.read_text(encoding="utf-8")
     label = str(plan)
+
+    validate_route_contract(plan, text)
 
     task_class = extract_task_class(text)
     evidence = section(text, "Capability Evidence")

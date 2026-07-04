@@ -26,13 +26,20 @@ cat > .claude/plans/smoke.md <<'PLAN'
 
 | Field | Value |
 |---|---|
+| Task type | target install runtime smoke |
 | Task class | code_change |
+| Domain tags | install, runtime, smoke |
+| Plan Scope | standard |
+| Planning Mode | approved |
 | Task-router evidence | checked |
 | Workflow evidence | checked |
-| Templates | none |
-| Patterns | none |
-| External systems/connectors | none |
-| Skills | none |
+| Templates | not required |
+| Architecture guides | installed target runtime contract checked locally |
+| Patterns | not required |
+| External systems/connectors | not required |
+| Skills | not required |
+| Validation gates | pre-tool-use-runtime-evidence.sh |
+| Evidence to check | installed hook exit code and evidence ledger |
 
 ## Capability Evidence
 

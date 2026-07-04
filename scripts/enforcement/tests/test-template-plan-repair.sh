@@ -22,7 +22,7 @@ setup_repo() {
 |---|---|
 | Task class | feature |
 | Domain tags | ui, ux, frontend |
-| Templates | none |
+| Templates | not required |
 EOF
 }
 
@@ -50,7 +50,7 @@ run_with_content() { (cd "$TMP/repo" && payload_with_fixed_content | ENGINEERING
 
 pass wrapper_present test -f "$WRAPPER"
 setup_repo
-failcase stale_plan_without_repair_is_blocked run_without_content
+failcase stale_plan_without_repair_fails run_without_content
 pass proposed_plan_content_is_validated run_with_content
 
 echo "template plan repair simulation passed"

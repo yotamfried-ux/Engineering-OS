@@ -49,13 +49,20 @@ write_usage_plan() {
 
 | Field | Value |
 |---|---|
+| Task type | clean install usage simulation |
 | Task class | unclassified |
+| Domain tags | clean-install, runtime-hook, fixture |
+| Plan Scope | standard |
+| Planning Mode | approved |
 | Task-router evidence | task router was read |
 | Workflow evidence | workflow was read |
-| Templates | none |
-| Patterns | none |
-| External systems/connectors | none |
-| Skills | none |
+| Templates | not required |
+| Architecture guides | Runtime hook behavior checked through the installed Engineering OS target. |
+| Patterns | not required |
+| External systems/connectors | not required |
+| Skills | not required |
+| Validation gates | pre-tool-use-runtime-evidence.sh and post-tool-use-read-evidence.sh |
+| Evidence to check | local hook exit codes and evidence ledger entries |
 
 ## Capability Waiver
 

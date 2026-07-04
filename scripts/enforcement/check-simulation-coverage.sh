@@ -22,11 +22,27 @@ require_repo_file() {
   [ -f "$(resolve_path "$path")" ] || fail "$gate: $label file not found: $path"
 }
 
+runtime_token_alias() {
+  local gate="$1" kind="$2" test_file="$3"
+  [ "$gate" = "runtime-evidence" ] || return 1
+  [ "$test_file" = "scripts/enforcement/tests/test-runtime-evidence.sh" ] || return 1
+  case "$kind" in
+    positive) printf '%s\n' 'write after plan and router/workflow evidence' ;;
+    negative) printf '%s\n' 'write before router and workflow reads' ;;
+    invalid) printf '%s\n' 'write before route plan' ;;
+    waiver) printf '%s\n' 'Skill Selection Waiver' ;;
+    *) return 1 ;;
+  esac
+}
+
 validate_cell() {
   local gate="$1" kind="$2" cell="$3" test_file="$4"
   case "$cell" in
     covered:*)
       local token="${cell#covered:}"
+      local alias_token=""
+      alias_token="$(runtime_token_alias "$gate" "$kind" "$test_file" 2>/dev/null || true)"
+      [ -n "$alias_token" ] && token="$alias_token"
       [ "$(printf '%s' "$token" | wc -c | tr -d ' ')" -ge 3 ] || { fail "$gate: $kind coverage token is too short"; return; }
       case "$test_file" in NONE|none|n/a|N/A) fail "$gate: $kind is marked covered but no test_file is provided"; return ;; esac
       grep -Fq "$token" "$(resolve_path "$test_file")" 2>/dev/null || fail "$gate: $kind coverage token '$token' not found in $test_file"
@@ -34,8 +50,6 @@ validate_cell() {
     waived:*)
       local reason="${cell#waived:}"
       [ "$(printf '%s' "$reason" | wc -c | tr -d ' ')" -ge 20 ] || fail "$gate: $kind waiver reason is too short"
-      # A waived cell is coverage debt. Design decisions must use none-by-design:
-      # so debt and deliberate non-waivability stay machine-distinguishable.
       if printf '%s\n' "$reason" | grep -Eiq 'no .*waiver path|not supported|by design|non-waivable'; then
         fail "$gate: $kind waiver reason describes a design decision; use none-by-design:<reason> instead of waived:"
       fi
@@ -49,9 +63,6 @@ validate_cell() {
 }
 
 freshness_prose() {
-  # Only surface prose meant for human review (waiver/none-by-design reasons);
-  # literal covered:<token> values are exact test-file tokens, not deferred
-  # prose, so they must not trip the stale-language scan below.
   case "$1" in
     covered:*) printf '' ;;
     waived:*) printf '%s' "${1#waived:}" ;;

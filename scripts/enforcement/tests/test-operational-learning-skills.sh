@@ -38,15 +38,21 @@ Change the payment webhook safely.
 
 | Field | Decision |
 |---|---|
+| Task type | operational learning skill fixture |
 | Task class | code_change |
+| Domain tags | payments, webhooks, stripe |
+| Plan Scope | standard |
+| Planning Mode | approved |
 | Task-router evidence | read |
 | Workflow evidence | read |
-| Domain tags | payments, webhooks, stripe |
 | Target paths | src/payments |
-| Templates | none |
-| Patterns | none |
+| Templates | not required |
+| Architecture guides | runtime learning and skill evidence checked locally |
+| Patterns | not required |
 | External systems/connectors | github |
 | Skills | $skills |
+| Validation gates | enforce-workflow.sh, check-required-skills.sh, check-learning-reuse.sh, pre-tool-use-runtime-evidence.sh |
+| Evidence to check | runtime hook exit codes and evidence ledger |
 
 ## Capability Evidence
 
@@ -177,7 +183,6 @@ import json
 import os
 import subprocess
 import sys
-
 file_path = sys.argv[1]
 payload = json.dumps({"tool_name": "Write", "tool_input": {"file_path": file_path}})
 settings = json.load(open(".claude/settings.json", encoding="utf-8"))
@@ -188,15 +193,7 @@ for block in settings.get("hooks", {}).get("PreToolUse", []):
         cmd = hook.get("command", "")
         if not cmd:
             continue
-        proc = subprocess.run(
-            cmd,
-            input=payload,
-            text=True,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            env=os.environ.copy(),
-        )
+        proc = subprocess.run(cmd, input=payload, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=os.environ.copy())
         if proc.returncode != 0:
             print(proc.stdout)
             sys.exit(proc.returncode)
