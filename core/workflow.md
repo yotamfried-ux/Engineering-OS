@@ -70,6 +70,9 @@
    > **Fallback מאושר:** `.claude/plans/<name>.md` הוא חלופה לגיטימית ל-Notion כשהוא אינו מחובר.
    > Write/Edit hook בודק שקובץ plan קיים לפני כתיבת קוד (exit 1 אם לא). צור plan file לפני שמתחילים.
 
+   > **Plan Scope:** לפני שממשיכים לשלב 2, קבע את ה-Plan Scope של המשימה (`simple`/`standard`/`project`)
+   > וודא שה-plan מכיל את הסעיפים הנדרשים לרמה הזו — ראה `<evidence_backed_planning>` למטה.
+
 2. **חיפוש דוגמאות ואיסוף מידע** — משוך פתרון קיים ומקור אמין לפי `<information_sources>`
    (ראה [`connector-policy.md`](./connector-policy.md)): קודם `patterns/`/`templates/`,
    ואז **Context7** לתיעוד רשמי עדכני של הספריות/הגרסאות בהן תשתמש.
@@ -127,6 +130,83 @@
 > האפיון ובצע ישירות. **אל תדלג** על האימות (שלב 6) ועל הקומיט המתועד (שלב 9) — לעולם.
 
 </workflow>
+
+---
+
+## <evidence_backed_planning>
+
+> **מתי לגשת לסעיף הזה:** בסוף שלב 1 (אפיון ותכנון), לפני שממשיכים לשלב 2 — כדי לקבוע
+> את **Plan Scope** של המשימה ואת רשימת הסעיפים שה-plan חייב להכיל בהתאם. גם
+> `task-router.md` מפנה לכאן בעת בניית ה-Route Plan.
+
+כל plan file (Notion או `.claude/plans/<name>.md`) חייב להצהיר **Plan Scope** מפורש —
+שדה `Plan Scope: simple|standard|project` (או המקבילה בעברית: `סוג התוכנית: פשוט|רגיל|פרויקט`).
+בלי הצהרה כזו, שער הכתיבה (`enforce-workflow.sh`) חוסם כתיבת קוד — ראה
+[`hooks-policy.md`](./hooks-policy.md).
+
+### שלושת ה-Plan Scopes
+
+**1. `simple`** — משימה טריוויאלית: תיקון typo, שינוי שם משתנה, הוספת שורת לוג, עדכון
+תיעוד מקומי — כל שינוי שניתן לתאר את ה-diff שלו במשפט אחד. **סעיפים נדרשים:**
+Goal/מטרה, Plan/תכנון, DoD/תנאי-סיום, Alternatives/חלופות (ארבעת הסעיפים הבסיסיים,
+ללא תוספת).
+
+**2. `standard`** — רוב המשימות: feature, bug fix לא-טריוויאלי, שינוי ב-API/DB/UI קיים,
+אינטגרציה עם שירות קיים. **סעיפים נדרשים (בנוסף לארבעת הבסיסיים):**
+- **Affected Surfaces / משטחים מושפעים** — אילו קבצים/מודולים/endpoints משתנים.
+- **Data/State Impact / השפעה על דאטה ומצב** — האם סכמה, מיגרציה, cache, state
+  client-side משתנים.
+- **Integration Impact / השפעה על אינטגרציות** — האם קונקטור/שירות חיצוני/webhook מושפע.
+- **Validation Plan / תוכנית בדיקות** — איך תאמת שהפתרון עובד (בדיקות, לוגים, UI, API).
+- **Open Questions / שאלות פתוחות** — מה עדיין לא ברור (כתוב "אין" אם באמת אין).
+
+**3. `project`** — greenfield, פרויקט חדש, פיצ'ר-על שמשנה ארכיטקטורה, מוסיף surface
+עצמאי חדש, או מכניס טכנולוגיה/פלטפורמה חדשה. **סעיפים נדרשים — "Minimum Planning
+Contract" מלא (בנוסף לארבעת הבסיסיים):**
+Project Type, User Goal, Target Users/Surfaces, Known Requirements, MVP Features,
+Non-goals, Architecture, Stack, Data Model/State, Auth/Roles, Integrations/Connectors,
+Environment/Deployment, Evidence Checked, Open Questions, Validation Plan,
+**User Approval**.
+
+> **הבהרה מכוונת:** רשימת ה-`project` היא רשימה עצמאית ומלאה בפני עצמה — היא **אינה**
+> דורשת גם את חמשת השדות של `standard` תחת השם המדויק שלהם. ה-Architecture/Stack/Data
+> Model/Integrations של `project` מכסים את אותו תוכן ברמת עומק גבוהה יותר. אכיפת שני
+> הסטים במקביל הייתה רק כופה כפילות כותרות בלי ערך אכיפה נוסף.
+
+### Evidence Pass — לפני Final Plan ברמת standard/project
+
+לפני כתיבת Final Plan ברמת `standard` או `project`, עברו **Evidence Pass**: קראו/שלפו
+בפועל את המקורות הרלוונטיים (`patterns/`/`templates/` קיימים, Context7, קוד קיים דרך
+graphify, Sentry לבאגים) **לפני** שמנסחים את הסעיפים הארכיטקטוניים. אל תמלאו
+Architecture/Stack/Data Model מניחוש או מזיכרון — זה בדיוק מה שעקרון "לאמת, לא לנחש"
+אוסר. תעדו מה נבדק תחת **Evidence Checked** (project) או בציטוט המקור ליד הסעיף
+הרלוונטי (standard).
+
+### מתי לשאול את המשתמש לעומת מתי לחקור לבד
+
+- **חקרו לבד** כשהתשובה נגישה ב-repo/תיעוד/Context7/graphify — אל תשאלו שאלה שיש לה
+  תשובה דטרמיניסטית בקוד או בתיעוד.
+- **שאלו שאלה ממוקדת אחת** כש: (א) יש **בחירה בין חלופות שוות-ערך** מבחינת המידע
+  שברשותכם (ענן/DB/auth/hosting — ראה [`connector-policy.md`](./connector-policy.md));
+  (ב) יש **אי-בהירות בדרישה עצמה** (לא רק בפרטי מימוש); או (ג) חסר **template/architecture
+  guide** למשימת `project` (ראה [`task-router.md`](./task-router.md) › Greenfield).
+- אל תשאלו כדי להימנע מחיפוש — קודם חפשו בפועל; רק אם אחרי חיפוש אמיתי עדיין יש פער,
+  שאלו.
+
+### User Approval ל-`project`
+
+> **⚠️ כלל בל-יעבור (judgment, לא רק מכני):** ל-plan ברמת `project` **אסור** להתחיל
+> יישום (שלב 5 ואילך ב-`<workflow>`) לפני שסעיף **User Approval** מסומן במפורש ע"י
+> המשתמש (למשל "מאושר" / "Approved" בתגובת צ'אט, מצוטט בסעיף עם תאריך). זה **בנוסף**
+> לאישור-מיזוג (שלב 11) — כאן האישור הוא **על התוכנית עצמה**, לפני שנכתבת שורת קוד
+> אחת. אם אין אישור — מותר לערוך את קובץ ה-plan בלבד, לא לכתוב קוד.
+>
+> **הבהרת אכיפה:** `enforce-workflow.sh` בודק רק **שהכותרת `User Approval`/`אישור
+> משתמש` קיימת** בסעיף (בהתאם לעקרון 6-ז — נוכחות שדה, לא איכות תוכן). מילוי placeholder
+> תחת הכותרת ("pending"/"TBD") **יעבור מכנית** את הגייט הדטרמיניסטי. האכיפה בפועל של
+> "אין אישור אמיתי = אין קוד" היא **כלל שיפוט על קלוד** — לא רק מנגנון אוטומטי.
+
+</evidence_backed_planning>
 
 ---
 

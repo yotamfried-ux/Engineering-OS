@@ -51,13 +51,64 @@ TOOL="$(read_field tool)"
 # ─────────────────────────────────────────────────────────────────────────────
 newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1; }
 
-# plan_missing_sections <plan_file> — echoes missing required section names (empty = all present).
+# ─────────────────────────────────────────────────────────────────────────────
+# detect_plan_scope <plan_file> — echoes simple|standard|project|missing|invalid.
+#   missing = no "Plan Scope"/"סוג התוכנית" label found at all.
+#   invalid = label found but value doesn't match a known scope keyword.
+# ─────────────────────────────────────────────────────────────────────────────
+detect_plan_scope() {
+  local pf="$1"
+  local line value
+  line="$(grep -iE '^[[:space:]]*[-*]?[[:space:]]*(plan[[:space:]]*scope|סוג[[:space:]]*ה?תוכנית)[[:space:]]*:' "$pf" 2>/dev/null | head -1)"
+  [ -z "$line" ] && { printf 'missing'; return; }
+  value="${line#*:}"
+  case "$value" in
+    *[Pp]roject*|*פרויקט*) printf 'project'; return ;;
+    *[Ss]tandard*|*רגיל*|*סטנדרטי*) printf 'standard'; return ;;
+    *[Ss]imple*|*פשוט*) printf 'simple'; return ;;
+  esac
+  printf 'invalid'
+}
+
+# plan_missing_sections <plan_file> <scope> — echoes missing required section names
+# (empty = all present for the given scope). The 4 basics always apply; 'standard'
+# adds 5 impact fields; 'project' adds the full 16-field Minimum Planning Contract
+# (a separate, self-contained list — see workflow.md <evidence_backed_planning>).
 plan_missing_sections() {
-  local pf="$1" missing=""
-  grep -qiE 'מטרה|goal|requirements|דרישות' "$pf" || missing="${missing}Goal/מטרה "
-  grep -qiE 'תכנון|\bplan\b|steps|שלבים' "$pf"     || missing="${missing}Plan/תכנון "
-  grep -qiE 'DoD|Definition of Done|תנאי סיום'  "$pf" || missing="${missing}DoD/תנאי-סיום "
-  grep -qiE 'brainstorm|חלופות|alternatives'    "$pf" || missing="${missing}Alternatives/חלופות "
+  local pf="$1" scope="$2" missing=""
+
+  grep -qiE 'מטרה|goal|requirements|דרישות'        "$pf" || missing="${missing}Goal/מטרה "
+  grep -qiE 'תכנון|\bplan\b|steps|שלבים'            "$pf" || missing="${missing}Plan/תכנון "
+  grep -qiE 'DoD|Definition of Done|תנאי סיום'      "$pf" || missing="${missing}DoD/תנאי-סיום "
+  grep -qiE 'brainstorm|חלופות|alternatives'        "$pf" || missing="${missing}Alternatives/חלופות "
+
+  case "$scope" in
+    standard)
+      grep -qiE 'Affected Surfaces|משטחים מושפעים|רכיבים מושפעים'         "$pf" || missing="${missing}Affected-Surfaces "
+      grep -qiE 'Data/State Impact|Data State Impact|השפעה על דאטה|השפעה על מצב' "$pf" || missing="${missing}Data/State-Impact "
+      grep -qiE 'Integration Impact|השפעה על אינטגרציות|השפעה על קונקטורים' "$pf" || missing="${missing}Integration-Impact "
+      grep -qiE 'Validation Plan|בדיקות|אימות'                            "$pf" || missing="${missing}Validation-Plan "
+      grep -qiE 'Open Questions|שאלות פתוחות'                             "$pf" || missing="${missing}Open-Questions "
+      ;;
+    project)
+      grep -qiE 'Project Type|סוג הפרויקט'                    "$pf" || missing="${missing}Project-Type "
+      grep -qiE 'User Goal|מטרת המשתמש|מטרת הפרויקט'          "$pf" || missing="${missing}User-Goal "
+      grep -qiE 'Target Users|Target Surfaces|קהל יעד|משטחי יעד' "$pf" || missing="${missing}Target-Users/Surfaces "
+      grep -qiE 'Known Requirements|דרישות ידועות'             "$pf" || missing="${missing}Known-Requirements "
+      grep -qiE 'MVP Features|פיצ.ר.*MVP|פיצרים'               "$pf" || missing="${missing}MVP-Features "
+      grep -qiE 'Non-goals|Non goals|לא בהיקף|מחוץ להיקף'      "$pf" || missing="${missing}Non-goals "
+      grep -qiE 'Architecture|ארכיטקטורה'                      "$pf" || missing="${missing}Architecture "
+      grep -qiE 'Stack|טכנולוגיות|שפות'                         "$pf" || missing="${missing}Stack "
+      grep -qiE 'Data Model|\bState\b|דאטה|מודל נתונים'         "$pf" || missing="${missing}Data-Model/State "
+      grep -qiE 'Auth|Roles|הרשאות|הזדהות'                      "$pf" || missing="${missing}Auth/Roles "
+      grep -qiE 'Integrations|Connectors|אינטגרציות|קונקטורים' "$pf" || missing="${missing}Integrations/Connectors "
+      grep -qiE 'Environment|Deployment|סביבה|פריסה'           "$pf" || missing="${missing}Environment/Deployment "
+      grep -qiE 'Evidence Checked|ראיות שנבדקו|מקורות שנבדקו'  "$pf" || missing="${missing}Evidence-Checked "
+      grep -qiE 'Open Questions|שאלות פתוחות'                  "$pf" || missing="${missing}Open-Questions "
+      grep -qiE 'Validation Plan|בדיקות|אימות'                 "$pf" || missing="${missing}Validation-Plan "
+      grep -qiE 'User Approval|אישור משתמש'                    "$pf" || missing="${missing}User-Approval "
+      ;;
+  esac
   printf '%s' "$missing"
 }
 
@@ -172,10 +223,22 @@ gate_write() {
     exit 1
   fi
 
-  local missing; missing="$(plan_missing_sections "$pf")"
+  local scope_raw; scope_raw="$(detect_plan_scope "$pf")"
+  case "$scope_raw" in
+    simple|standard|project) ;;
+    *)
+      echo "ERROR_FOR_AGENT: workflow.md gate — newest plan ($(basename "$pf")) has no valid 'Plan Scope' field (found: ${scope_raw})."
+      echo "ACTION: add 'Plan Scope: simple|standard|project' (or 'סוג התוכנית: פשוט|רגיל|פרויקט') per workflow.md <evidence_backed_planning>. Use 'simple' for trivial/local changes."
+      echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
+      exit 1
+      ;;
+  esac
+  local scope="$scope_raw"
+
+  local missing; missing="$(plan_missing_sections "$pf" "$scope")"
   if [ -n "$missing" ]; then
-    echo "ERROR_FOR_AGENT: workflow.md gate — newest plan ($(basename "$pf")) is missing sections: ${missing}"
-    echo "ACTION: add the missing section(s) documenting workflow.md steps 1-4. Then retry."
+    echo "ERROR_FOR_AGENT: workflow.md gate — newest plan ($(basename "$pf"), Plan Scope: ${scope}) is missing required section(s): ${missing}"
+    echo "ACTION: add the missing section(s) per the Minimum Planning Contract for '${scope}' scope (workflow.md <evidence_backed_planning>). Then retry."
     echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
     exit 1
   fi

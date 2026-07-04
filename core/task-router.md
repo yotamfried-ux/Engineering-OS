@@ -88,6 +88,16 @@
 - אין template מתאים → עצור. אל תסקפלד מהזיכרון.
 - אין architecture guide מתאים → עצור. אל תקבל החלטת מבנה מה-training data.
 
+**Plan Scope:**
+- Greenfield הוא **תמיד** `Plan Scope: project`. Route Plan קצר (השדות למעלה) **אינו
+  מספיק** בשלב זה — חובה **Final Plan** מלא לפי ה-Minimum Planning Contract
+  (ראה [`workflow.md`](./workflow.md) › `<evidence_backed_planning>`), כולל **User
+  Approval** מפורש, לפני תחילת יישום.
+- אם חסר template מתאים או architecture guide לדומיין — אל תנחשו מבנה. תעדו את הפער
+  במפורש תחת `User decisions required` ב-Route Plan **וגם** תחת Open Questions ב-Final
+  Plan, והסלימו למשתמש לקבלת החלטה מפורשת (בחירת template קרוב + עדכון, או ארכיטקטורה
+  חדשה) לפני שממשיכים.
+
 ### 2) Bug / debugging
 
 **Always consult:**
@@ -189,17 +199,28 @@
 Task type: <...>
 Task class: <task class from core/capability-registry.yaml, or unclassified + waiver>
 Domain tags: <...>
+Plan Scope: <simple|standard|project>          # ראה workflow.md <evidence_backed_planning>
+Planning Mode: <discovery|evidence-pass|final-for-approval|approved>
 Templates: <...>
 Architecture guides: <...>
 Patterns: <...>
 External systems / connectors: <...>
 Skills: <...>
 Validation gates: <...>
+Evidence to check: <...>                        # מקורות ל-Evidence Pass: patterns/templates/Context7/graphify/Sentry
+User decisions required: <...>                  # שאלות שדורשות תשובת משתמש, או "none"
 
 ## Capability Evidence
 
 - `<capability-id>` — selected/checked evidence, or why it applies.
 ```
+
+**Planning Mode — משמעות הערכים:**
+- `discovery` — עדיין אוספים מידע; אין plan סופי.
+- `evidence-pass` — המקורות נקראו בפועל (patterns/templates/Context7/graphify), עדיין לא final.
+- `final-for-approval` — plan מלא לפי ה-Minimum Planning Contract לרמת ה-Scope; ממתין
+  לאישור מפורש של המשתמש (**חובה** ל-`Plan Scope: project`).
+- `approved` — המשתמש אישר במפורש; מותר להתחיל יישום (שלב 5 ב-`<workflow>`).
 
 אם capability או task class אינו רלוונטי, השתמש ב-`## Capability Waiver` עם סיבה מפורשת.
 המטרה אינה verbosity — אלא **להוכיח שהניתוב בוצע** לפני כתיבה.

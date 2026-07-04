@@ -19,6 +19,8 @@ write_plan() {
   cat > "$file" <<EOF
 # Route Plan
 
+Plan Scope: simple
+
 ## Goal
 
 Change the payment webhook safely.
