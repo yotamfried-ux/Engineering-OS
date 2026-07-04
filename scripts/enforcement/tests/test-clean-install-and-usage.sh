@@ -63,6 +63,7 @@ write_usage_plan() {
 | Skills | not required |
 | Validation gates | pre-tool-use-runtime-evidence.sh and post-tool-use-read-evidence.sh |
 | Evidence to check | local hook exit codes and evidence ledger entries |
+| User decisions required | none |
 
 ## Capability Waiver
 

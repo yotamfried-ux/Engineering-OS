@@ -53,6 +53,7 @@ Change the payment webhook safely.
 | Skills | $skills |
 | Validation gates | enforce-workflow.sh, check-required-skills.sh, check-learning-reuse.sh, pre-tool-use-runtime-evidence.sh |
 | Evidence to check | runtime hook exit codes and evidence ledger |
+| User decisions required | none |
 
 ## Capability Evidence
 

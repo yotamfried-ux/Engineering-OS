@@ -40,6 +40,7 @@ cat > .claude/plans/smoke.md <<'PLAN'
 | Skills | not required |
 | Validation gates | pre-tool-use-runtime-evidence.sh |
 | Evidence to check | installed hook exit code and evidence ledger |
+| User decisions required | none |
 
 ## Capability Evidence
 
