@@ -82,12 +82,13 @@ No concrete templates/ or patterns/ asset is selected; this is an internal gover
 - connectors: GitHub.
 - steps: verify failures, reset branch to base, commit plan first, apply code/test changes, add lifecycle checkpoints, re-check CI.
 - evidence: PR #195 and required policy workflows.
-- result: start checkpoint recorded before implementation commits.
-- follow-up: apply implementation and record later lifecycle checkpoints.
+- result: implementation changes applied after the start checkpoint.
+- follow-up: record pre-merge checkpoint and check CI.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan introduced before implementation commits.
+- mid: validator and fixture updates were applied after the start checkpoint; runtime fixture values now use deterministic tokens accepted by the hook.
 
 ## Review Fallback Evidence
 
