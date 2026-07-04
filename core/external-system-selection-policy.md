@@ -2,26 +2,10 @@
 
 Engineering OS uses this policy to make external-system selection repeatable.
 
-## Rule
+The first enforced domain is Computer Vision.
 
-If a task matches a domain in `core/domain-external-system-map.yaml`, the Route Plan must either select the listed external system or record a focused waiver.
+Current enforcement lives in `scripts/enforcement/validate-capability-evidence.sh`.
 
-For Computer Vision tasks, consult `supervision` when the task involves detection, tracking, annotation, segmentation, video analytics, frame review overlays, YOLO, Roboflow, sports video, or drone footage.
+A matching Route Plan must select `supervision` in External systems/connectors, or include an External System Selection Waiver that names `supervision` and gives a reason.
 
-## Route Plan evidence
-
-Accepted:
-
-```md
-| External systems/connectors | supervision |
-```
-
-Also accepted:
-
-```md
-## External System Selection Waiver
-
-- `supervision` — not required because <reason>.
-```
-
-The purpose is to prevent future work from forgetting useful external systems after they are added to the inventory.
+This prevents future work from forgetting useful external systems after they are added to the inventory.
