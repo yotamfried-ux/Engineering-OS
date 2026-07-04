@@ -13,6 +13,8 @@
     "google-drive": {"type": "http", "url": "${GOOGLE_DRIVE_MCP_URL}"},
     "google-sheets": {"type": "http", "url": "${GOOGLE_SHEETS_MCP_URL}"},
     "figma": {"type": "http", "url": "${FIGMA_MCP_URL}"},
-    "community-chat": {"type": "http", "url": "${COMMUNITY_CHAT_MCP_URL}"}
+    "sentry": {"type": "http", "url": "${SENTRY_MCP_URL}"},
+    "postman": {"type": "http", "url": "${POSTMAN_MCP_URL}"},
+    "composio": {"type": "http", "url": "${COMPOSIO_MCP_URL}"}
   }
 }
