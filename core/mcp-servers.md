@@ -1,115 +1,110 @@
 # mcp-servers.md — שרתי MCP של הקונקטורים
 
-> חלק מ-Engineering OS. **מסמך ייחוס — נטען לפי הצורך, לא אוטומטית.**
+> חלק מ-Engineering OS. נטען כשצריך להבין, להפעיל או לאמת שרתי MCP.
 >
 > **מתי לגשת לקובץ הזה:**
-> - כשקונקטור אינו עובד דרך קלוד ורוצים **להוריד/לחבר את שרת ה-MCP שלו נקודתית
->   לפרויקט** (שלב 3 בנוהל ה-fallback של [`connector-policy.md`](./connector-policy.md)).
+> - כשמחברים פרויקט ל-Engineering OS ורוצים להבין מה נכנס ל-`.mcp.json`.
+> - כשקונקטור אינו עובד דרך Claude Code וצריך לאבחן auth / approval / server URL.
+> - כשמוסיפים, משנים או מאמתים פרופיל MCP.
 
 ---
 
-## רקע
+## עיקרון חדש: התקנת MCP אוטומטית, אימות והרשאות ידניים
 
-- שרת MCP מתחבר לפרויקט עם הפקודה `claude mcp add`. ההגדרה נשמרת ב-`~/.claude.json`.
-- **שלוש תצורות transport:** `stdio` (תהליך מקומי על המכונה), `http` (שרת מרוחק —
-  מומלץ לשירותי ענן), `sse` (ישן, נדחק לטובת http).
-- כל קונקטור מסופק או כ-**שרת מרוחק** (URL) או כ-**חבילה מקומית** (npx / docker / uvx).
-- **מקור אמת לטוקנים: `.env` בלבד** (ראה [`connector-policy.md`](./connector-policy.md) ›
-  `<environment>`). אל תטמיע טוקן בפקודה שנכנסת ל-git — העבר אותו דרך משתנה סביבה.
-- **Composio הוא ה-fallback האוניברסלי:** `https://connect.composio.dev/mcp` נותן גישה
-  לאלפי כלים דרך URL אחד. אם אין שרת ייעודי מאומת — בדוק שם תחילה.
+`use-in-project.sh` מריץ את `scripts/install-mcp-servers.sh` ומתקין בפרויקט היעד קובץ
+`.mcp.json` project-scoped. המשמעות: כל Claude Code / LLM שתומך ב-MCP ונטען מתוך אותו
+פרויקט רואה את פרופילי השרתים כברירת מחדל.
 
-## איך מוסיפים (כללי)
+ההתקנה **לא כותבת secrets** ולא מעניקה הרשאות בשם המשתמש. היא כותבת הגדרות שרת בלבד.
+השלב הידני שנשאר הוא approval/auth בתוך Claude Code:
 
 ```bash
-# שרת מרוחק (http)
-claude mcp add --transport http <name> <url> --header "Authorization: Bearer $TOKEN"
-
-# חבילה מקומית (stdio)
-claude mcp add <name> -- npx -y <package>
-
-# scope: --scope project (משותף לצוות דרך git) | --scope user (אישי, כל הפרויקטים)
-# אימות שהחיבור עלה: הרץ /mcp בתוך הסשן
+claude mcp list
+claude mcp get <server>
+# או בתוך הסשן:
+/mcp
 ```
 
----
+אם שרת דורש OAuth או token, מאשרים ומתחברים דרך Claude Code, משתני סביבה מקומיים, או secret
+store מקומי. אסור להכניס tokens ל-git.
 
-## טבלת הקונקטורים
+## מקור ההתקנה
 
-מקרא: ✅ שרת רשמי מאומת · 🔌 לאמת מול תיעוד הספק / להשיג דרך Composio (אל תנחש כתובת)
+| קובץ | תפקיד |
+|---|---|
+| `templates/connectors/github-readonly.json` | פרופיל GitHub read-only קשיח ובטוח |
+| `templates/connectors/engineering-os-mcp.json` | bundle של פרופילי MCP לכל פרויקט יעד |
+| `scripts/install-mcp-servers.sh` | ממזג את הפרופילים לתוך `.mcp.json` בפרויקט היעד |
+| `scripts/enforcement/tests/test-mcp-auto-install.sh` | בדיקות צורה, merge, idempotency ו-fail-closed |
 
-### ליבה קבועה
+## מה מותקן אוטומטית
 
-| קונקטור | סטטוס | שרת MCP / איך מוסיפים |
+| שרת | מצב התקנה | הערות |
 |---|---|---|
-| **GitHub** | ✅ | מרוחק: `https://api.githubcopilot.com/mcp/` (דורש PAT). מקומי: Docker `ghcr.io/github/github-mcp-server`. הערה: חבילת ה-npm הישנה `@modelcontextprotocol/server-github` הוצאה משימוש (04/2025). |
-| **Context7** | ✅ | `https://mcp.context7.com/mcp` |
-| **Sentry** | ✅ | `https://mcp.sentry.dev/mcp` |
+| `github-readonly` | מותקן אוטומטית | Docker image הרשמי של GitHub MCP; read-only; toolsets מצומצמים: context, repos, pull_requests, issues, actions |
+| `context7` | מותקן אוטומטית | תיעוד רשמי עדכני; דורש approval לפי סביבת Claude |
+| `notion` | מותקן אוטומטית | דורש OAuth/approval וגישה לעמודים/DB הרלוונטיים |
+| `supabase` | מותקן אוטומטית | דורש auth לפרויקט Supabase הנבחר |
+| `stripe` | מותקן אוטומטית | דורש auth; לעבוד ב-test mode כברירת מחדל עד החלטת משתמש |
+| `playwright` | מותקן אוטומטית | stdio דרך `npx -y @playwright/mcp@latest` |
+| `nemotron` | מותקן אוטומטית | stdio דרך `uv`; דורש `Nemotron_api_key` או `NEMOTRON_API_KEY` מקומי |
+| `figma` | מותקן אוטומטית עם URL משתנה | משתמש ב-`${FIGMA_MCP_URL}` כדי לאפשר tenant/endpoint נכון בלי לקודד הרשאה |
+| `sentry` | מותקן אוטומטית עם URL משתנה | משתמש ב-`${SENTRY_MCP_URL}`; auth נשאר בסביבת Claude/המשתמש |
+| `postman` | מותקן אוטומטית עם URL משתנה | משתמש ב-`${POSTMAN_MCP_URL}` |
+| `composio` | מותקן אוטומטית עם URL משתנה | fallback אוניברסלי לקונקטורים שאין להם פרופיל ישיר בפרויקט |
 
-### Backend / Data / אחסון
+## כיסוי 12 קונקטורי ה-MCP מה-registry
 
-| קונקטור | סטטוס | שרת MCP / איך מוסיפים |
-|---|---|---|
-| **Supabase** | ✅ | `https://mcp.supabase.com/mcp` |
-| **Firebase** | 🔌 | תיעוד Firebase MCP / Composio |
-| **Pinecone** | 🔌 | תיעוד Pinecone MCP / Composio |
-| **Upstash** | 🔌 | תיעוד Upstash MCP / Composio |
-| **Clerk** | 🔌 | תיעוד Clerk MCP / Composio |
-| **Prisma** | 🔌 | תיעוד Prisma MCP / Composio |
+| קונקטור registry | שרת שמספק גישה אחרי ההתקנה |
+|---|---|
+| github | `github-readonly` |
+| notion | `notion` |
+| slack | `composio` fallback או פרופיל ייעודי עתידי |
+| linear | `composio` fallback או פרופיל ייעודי עתידי |
+| jira | `composio` fallback או פרופיל ייעודי עתידי |
+| stripe | `stripe` |
+| supabase | `supabase` |
+| postgres | `composio` fallback או פרופיל project-specific עם connection string מקומי |
+| google-drive | `composio` fallback או פרופיל ייעודי עתידי |
+| google-sheets | `composio` fallback או פרופיל ייעודי עתידי |
+| figma | `figma` |
+| discord | `composio` fallback או פרופיל ייעודי עתידי |
 
-### פריסה / אירוח
+## כללי אבטחה
 
-| קונקטור | סטטוס | שרת MCP / איך מוסיפים |
-|---|---|---|
-| **Vercel** | ✅ | `https://mcp.vercel.com` |
-| **Cloudflare** | ✅ | `https://bindings.mcp.cloudflare.com/mcp` (יש ל-Cloudflare כמה שרתים — docs, observability, ועוד) |
-| **Expo** | 🔌 | תיעוד Expo MCP / Composio |
-| **Azure** | 🔌 | תיעוד Azure MCP / Composio |
-| **Google Cloud** | 🔌 | תיעוד Google Cloud MCP / Composio |
+1. **אסור לכתוב secrets ל-`.mcp.json`** — רק placeholders או URL לא-סודי.
+2. **GitHub נשאר read-only כברירת מחדל** — פרופיל write-capable דורש PR נפרד ואישור מפורש.
+3. **אין broad toolsets** — אסור `all`, `default`, `git`, `copilot`, `notifications`, `gists`, `dependabot`, `code_security`, או `discussions` בברירת המחדל.
+4. **פרופילים project-scoped** — הקובץ נמצא בשורש הפרויקט כדי שכל LLM/Claude Code שרץ שם יקבל את אותה תצורה.
+5. **אימות live עדיין חובה** — לפני שמסתמכים על קונקטור במשימה, ודא שהוא visible/approved ב-`/mcp` או תעד fallback/waiver ב-Route Plan.
 
-### בדיקות UI / API
+## נוהל אימות אחרי התקנה
 
-| קונקטור | סטטוס | שרת MCP / איך מוסיפים |
-|---|---|---|
-| **Playwright** | ✅ | מקומי (Microsoft הרשמי): `claude mcp add playwright npx @playwright/mcp@latest` |
-| **Maestro** | 🔌 | תיעוד Maestro MCP / Composio |
-| **Storybook** | 🔌 | תיעוד Storybook MCP / Composio |
-| **Chromatic** | 🔌 | תיעוד Chromatic MCP / Composio |
-| **Postman** | ✅ | `https://mcp.postman.com/minimal` |
-| **Figma** | ✅ | `https://mcp.figma.com/mcp` |
+```bash
+bash ~/.engineering-os/scripts/use-in-project.sh
+claude mcp list
+claude mcp get github-readonly
+```
 
-### אנליטיקה / ניטור AI
+בתוך Claude Code:
 
-| קונקטור | סטטוס | שרת MCP / איך מוסיפים |
-|---|---|---|
-| **PostHog** | 🔌 | תיעוד PostHog MCP / Composio |
-| **Arize** | 🔌 | תיעוד Arize MCP / Composio |
-| **Braintrust** | 🔌 | תיעוד Braintrust MCP / Composio |
+```text
+/mcp
+```
 
-### ניהול פרויקטים ותשתית
+רשומת אימות מינימלית ב-Route Plan:
 
-| קונקטור | סטטוס | שרת MCP / איך מוסיפים |
-|---|---|---|
-| **Notion** | ✅ | `https://mcp.notion.com/mcp` |
-| **Composio** | ✅ | `https://connect.composio.dev/mcp` (גם ה-fallback האוניברסלי לכל השאר) |
-
-### שרתי MCP של סקילים (ראה [`../external-skills/`](../external-skills/))
-
-חלק מהסקילים החיצוניים מספקים שרת MCP. הם מנוהלים דרך ה-SIP
-([`skill-orchestration-policy.md`](./skill-orchestration-policy.md)); כאן רק ערך ה-MCP:
-
-| סקיל | סטטוס | שרת MCP / איך מוסיפים |
-|---|---|---|
-| **graphify** | ✅ | מקומי (stdio): `claude mcp add --transport stdio graphify -- python -m graphify.serve graphify-out/graph.json`. דורש `uv tool install "graphifyy[mcp]"`. כלים: `query_graph`, `get_node`, `get_pr_impact`… ראה [`../external-skills/graphify/activation.md`](../external-skills/graphify/activation.md). **HTTP transport דורש `GRAPHIFY_API_KEY` ב-`.env` בלבד; טוקן בשיתוף URL = secret אישי, לא לקומיט.** |
-| **claude-mem** | ✅ | מותקן עם הפלאגין (`npx claude-mem install`) — רושם את שרת ה-MCP `mcp-search` אוטומטית (כלים: `search`, `timeline`, `get_observations`). worker רץ על פורט 37777. ראה [`../external-skills/claude-mem/activation.md`](../external-skills/claude-mem/activation.md). |
-| **nemotron** _(engine, not a skill — see [`../external-systems/nvidia-nemotron/`](../external-systems/nvidia-nemotron/))_ | ✅ | מקומי (stdio via uv): `claude mcp add --scope project nemotron -- uv run scripts/nemotron-mcp-server.py`. דורש `Nemotron_api_key` כ-Claude Code secret. כלים: `nemotron_generate_code`, `nemotron_review_code`, `nemotron_summarize`, `nemotron_explain`, `nemotron_brainstorm`. ראה [`../external-systems/nvidia-nemotron/activation.md`](../external-systems/nvidia-nemotron/activation.md). **API key = Claude Code secret בלבד — לא ב-`.env`, לא ב-git.** |
-
----
+```md
+## Connector Usage Evidence
+- source: /mcp server list in the target project.
+- action: verified the required server was visible and approved.
+- result: <server-name> was available for <task>.
+- decision: used <server-name> as source of truth for <target>.
+- target: <file/path or service checked>.
+```
 
 ## כלל עבודה
 
-- מצא **שרת רשמי** (✅) תחילה — הוא מתוחזק ומתעדכן אוטומטית.
-- ל-🔌: רוב הספקים כיום מספקים שרת MCP — חפש ב**תיעוד ה-MCP של הספק** או ב-**Anthropic
-  connector directory**; אם אין, השג דרך **Composio**. **אל תמציא כתובת שרת** — אמת אותה.
-- העדף `--scope project` כדי שהחיבור יהיה משותף לצוות דרך git (בלי הטוקן — הטוקן ב-`.env`).
-- אחרי ההוספה, אמת ב-`/mcp` שהשרת עלה, לפני שמסתמכים עליו.
+- ההתקנה האוטומטית נותנת ל-Claude גישה לשרתים מבחינת configuration/discovery.
+- authentication, approval, permissions ו-live data access עדיין חייבים אימות פר-פרויקט ופר-משימה.
+- אם שרת לא עובד, קודם בדוק `/mcp`, אחר כך auth/env, אחר כך fallback דרך `composio`, ורק אז פנה למשתמש.

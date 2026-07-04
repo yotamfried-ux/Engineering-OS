@@ -2,143 +2,115 @@
 
 ## Purpose
 
-This runbook proves that the approved GitHub MCP profile can be activated and verified safely on a real workstation or target test project.
+This runbook proves that the installed project-scoped MCP configuration can be activated and verified safely on a real workstation or target test project.
 
-The source profile remains:
+Engineering OS now installs MCP server profiles automatically through:
 
 ```text
 templates/connectors/github-readonly.json
+templates/connectors/engineering-os-mcp.json
+scripts/install-mcp-servers.sh
+scripts/use-in-project.sh
 ```
 
-This is an activation and verification proof. It does not broaden the connector profile and does not enable MCP automatically for target projects.
+This is a configuration, activation, and verification proof. It does not broaden GitHub permissions, does not install secrets, and does not prove live access until the operator authenticates and records smoke-check evidence.
 
-## Current source profile
+## Current source profiles
 
-The only approved server for this proof is:
+The approved default profiles are:
 
 ```text
 github-readonly
+context7
+notion
+supabase
+stripe
+playwright
+nemotron
+figma
+sentry
+postman
+composio
 ```
 
-The source template must keep:
-
-```text
-GITHUB_READ_ONLY=1
-GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}
-GITHUB_TOOLSETS=context,repos,pull_requests,issues,actions
-```
+GitHub remains the only default GitHub profile and must stay read-only with the narrow toolset `context,repos,pull_requests,issues,actions`.
 
 ## What this proof does
 
 This proof verifies the following operational path:
 
 ```text
-repository MCP template -> local target .mcp.json -> Claude Code MCP status evidence -> read-only smoke checks -> rollback or restore
+Engineering OS templates -> target .mcp.json -> Claude Code MCP status evidence -> read-only smoke checks -> auth/fallback record
 ```
 
-It proves that the profile can be loaded and used as a source-of-truth connector for repository state, PR state, issue/spec context, and Actions/CI state.
+It proves that project-scoped MCP profiles can be loaded and used as source-of-truth connectors for repository state, project tracking, docs, API testing, design context, database/backend state, and fallback connector access.
 
 ## What this proof does not do
 
 Do not use this runbook to:
 
-- Commit a real GitHub token.
+- Commit a real token or OAuth credential.
 - Add a write-capable GitHub MCP profile.
-- Add broad toolsets such as `all` or `default`.
-- Add `git`, `copilot`, `notifications`, `gists`, `dependabot`, `code_security`, or `discussions` to this profile.
-- Enable MCP from `use-in-project.sh`.
-- Auto-install `.mcp.json` into target projects.
+- Add broad GitHub toolsets such as `all` or `default`.
+- Add `git`, `copilot`, `notifications`, `gists`, `dependabot`, `code_security`, or `discussions` to the GitHub read-only profile.
 - Perform a real write operation as a negative test.
-- Merge, close, edit, label, delete, or mutate GitHub resources through this profile.
+- Merge, close, edit, label, delete, or mutate GitHub resources through `github-readonly`.
 
 A future write-capable profile must be added as a separate explicit PR with its own name, scope, approval rules, runbook, and validator.
 
 ## Required static validation
 
-Before any workstation action, validate the source profile:
+Before any workstation action, validate the source profiles:
 
 ```bash
 bash scripts/enforcement/tests/test-github-connector-profile.sh
+bash scripts/enforcement/tests/test-mcp-auto-install.sh
 bash scripts/enforcement/tests/test-active-mcp-verification.sh
 ```
 
 Expected result:
 
 ```text
-✅ GitHub connector profile is valid
-✅ active MCP verification proof is valid
+GitHub connector profile is valid
+MCP auto-install tests passed
+active MCP verification proof is valid
 ```
 
 ## Preflight
 
-Run these checks before copying any MCP file.
+Run these checks before relying on live MCP data.
 
-### 1. Verify Docker is available
+### 1. Verify required local runners are available
 
 ```bash
-command -v docker >/dev/null
+command -v docker >/dev/null   # needed for github-readonly
+command -v npx >/dev/null      # needed for playwright
+command -v uv >/dev/null       # needed for nemotron
 ```
 
-### 2. Verify token presence without printing it
+### 2. Verify secrets without printing them
+
+Check only presence, never values. Examples:
 
 ```bash
 test -n "${GITHUB_PERSONAL_ACCESS_TOKEN:-}"
+test -n "${Nemotron_api_key:-}${NEMOTRON_API_KEY:-}"
 ```
 
-Do not echo, log, paste, commit, or screenshot the token.
+Do not echo, log, paste, commit, or screenshot tokens.
 
-Use a least-privilege read-only token for the target repository whenever possible.
+### 3. Install or refresh target project MCP profiles
 
-### 3. Verify the source template still has the approved profile shape
+From the target project root:
 
 ```bash
-python3 - <<'PY'
-import json
-from pathlib import Path
-
-profile = json.loads(Path("templates/connectors/github-readonly.json").read_text())
-server = profile["mcpServers"]["github-readonly"]
-env = server["env"]
-items = {item.strip() for item in env["GITHUB_TOOLSETS"].split(",") if item.strip()}
-expected = {"context", "repos", "pull_requests", "issues", "actions"}
-forbidden = {"all", "default", "git", "copilot", "notifications", "gists", "dependabot", "code_security", "discussions"}
-if env.get("GITHUB_READ_ONLY") != "1":
-    raise SystemExit("STOP: github-readonly must keep GITHUB_READ_ONLY=1")
-if env.get("GITHUB_PERSONAL_ACCESS_TOKEN") != "${GITHUB_PERSONAL_ACCESS_TOKEN}":
-    raise SystemExit("STOP: token must use environment expansion only")
-if items != expected:
-    raise SystemExit(f"STOP: unexpected GitHub MCP toolsets: {sorted(items)}")
-if items & forbidden:
-    raise SystemExit(f"STOP: forbidden GitHub MCP toolsets: {sorted(items & forbidden)}")
-print("✅ GitHub MCP profile preflight passed")
-PY
+ENGINEERING_OS_HOME=/path/to/Engineering-OS bash /path/to/Engineering-OS/scripts/use-in-project.sh
 ```
 
-## Safe activation
-
-Use a temporary target repository or a target project that explicitly opts in.
-
-Do not commit `.mcp.json` as part of this proof unless the target project intentionally wants project-scoped MCP configuration reviewed in its own PR.
-
-### Backup any existing `.mcp.json`
+or directly:
 
 ```bash
-MCP_PATH=.mcp.json
-BACKUP_PATH=""
-if [ -f "$MCP_PATH" ]; then
-  BACKUP_PATH="${MCP_PATH}.backup.$(date +%Y%m%d%H%M%S)"
-  cp -p "$MCP_PATH" "$BACKUP_PATH"
-  echo "Backed up existing MCP config to: $BACKUP_PATH"
-fi
-cp templates/connectors/github-readonly.json "$MCP_PATH"
-```
-
-### Optional local ignore for proof-only activation
-
-If this is a temporary proof file, keep it out of git:
-
-```bash
-printf '\n.mcp.json\n.mcp.json.backup.*\n' >> .git/info/exclude
+ENGINEERING_OS_HOME=/path/to/Engineering-OS bash /path/to/Engineering-OS/scripts/install-mcp-servers.sh .
 ```
 
 ## Claude Code verification
@@ -147,27 +119,40 @@ Start a fresh Claude Code session from the target directory after `.mcp.json` ex
 
 Record evidence that:
 
-1. The active MCP server list includes `github-readonly`.
+1. The active MCP server list includes the expected Engineering OS profiles.
 2. The loaded configuration uses the local `.mcp.json` file.
 3. The GitHub MCP server starts without token disclosure.
 4. The exposed GitHub MCP tools are scoped to read-only repository, PR, issue, context, and Actions/CI inspection.
-5. No write profile is active.
+5. No write-capable GitHub profile is active.
+6. Required task-specific servers are approved/authenticated or have an explicit fallback/waiver.
 
-Use the MCP status/list command available in the installed Claude Code version, and record the exact command used in the evidence record.
+Use the MCP status/list command available in the installed Claude Code version, and record the exact command used:
+
+```bash
+claude mcp list
+claude mcp get github-readonly
+```
+
+Inside Claude Code:
+
+```text
+/mcp
+```
 
 ## Read-only smoke checks
 
-Use the active `github-readonly` MCP server only for non-mutating checks.
+Use active MCP servers only for safe non-mutating checks unless the user explicitly approved a write-capable workflow.
 
-Required smoke checks:
+Required smoke checks for baseline readiness:
 
 ```text
-Read repository metadata for the target repository.
-Read pull request or issue metadata from the target repository.
-Read recent workflow run or CI status metadata from the target repository.
+Read repository metadata for the target repository through github-readonly.
+Read pull request or issue metadata from the target repository through github-readonly.
+Read recent workflow run or CI status metadata through github-readonly.
+Confirm at least one non-GitHub MCP server is visible in /mcp or document its auth/fallback state.
 ```
 
-Expected result: each check returns repository state without mutating GitHub resources.
+Expected result: each check returns state without mutating external resources.
 
 ## Negative checks
 
@@ -176,10 +161,10 @@ Do not perform a real write operation as a negative test.
 Instead, verify by inspection that:
 
 ```text
-GITHUB_READ_ONLY=1 is active.
+GitHub read-only mode is active.
 No write-capable GitHub MCP profile is active.
-The toolsets are exactly context,repos,pull_requests,issues,actions.
-The profile does not include all, default, git, copilot, notifications, gists, dependabot, code_security, or discussions.
+The GitHub toolsets are exactly context,repos,pull_requests,issues,actions.
+The GitHub profile does not include all, default, git, copilot, notifications, gists, dependabot, code_security, or discussions.
 No runbook step asks the operator to merge, close, edit, label, delete, or mutate GitHub resources through github-readonly.
 ```
 
@@ -195,62 +180,40 @@ OS:
 Claude Code version:
 Target repository:
 Target directory:
-Source profile checksum:
-Activated .mcp.json checksum:
+Installed .mcp.json checksum:
 Existing .mcp.json present: yes/no
 Backup path, if created:
 MCP status/list command used:
 github-readonly server visible: yes/no
+Required non-GitHub MCP profiles visible: yes/no
 Read repository metadata check: pass/fail
 Read PR or issue metadata check: pass/fail
 Read workflow/CI metadata check: pass/fail
-Write profile active: yes/no
-Forbidden toolsets visible: yes/no
-Rollback or restore tested: yes/no
+Write-capable GitHub profile active: yes/no
+Forbidden GitHub toolsets visible: yes/no
 Notes:
 ```
-
-## Rollback or restore
-
-If a backup was created, restore it. If no previous `.mcp.json` existed, remove only the proof activation artifact.
-
-Restore previous MCP config:
-
-```bash
-BACKUP_PATH="<paste the recorded backup path here>"
-cp -p "$BACKUP_PATH" .mcp.json
-```
-
-Remove proof artifact when there was no previous MCP config:
-
-```bash
-rm -f .mcp.json
-```
-
-Remove proof-only ignore entries manually if they were added to `.git/info/exclude` and are no longer desired.
-
-After rollback or restore, start a fresh Claude Code session and confirm that `github-readonly` is no longer active unless it was part of the restored configuration.
 
 ## Failure modes
 
 | Failure | Likely cause | Action |
 |---|---|---|
 | Docker is missing | Workstation cannot run the official GitHub MCP image | Install Docker or run the proof on a machine with Docker |
-| Token preflight fails | `GITHUB_PERSONAL_ACCESS_TOKEN` is not set in the shell that starts Claude Code | Export the token in the local shell without writing it to git |
+| Token preflight fails | Required token is not set in the shell that starts Claude Code | Export the token locally or use Claude Code OAuth without writing it to git |
 | MCP server does not appear | `.mcp.json` is in the wrong directory or Claude Code was not restarted | Confirm target directory and restart Claude Code |
 | Token appears in logs or files | Operator printed or committed a secret | Stop, rotate the token, and remove leaked material |
-| Forbidden toolset appears | Profile was broadened beyond the approved read-only scope | Revert the profile and rerun CI validators |
-| Write-capable profile is active | A different MCP config is loaded or a future profile was enabled accidentally | Disable the write profile and rerun the proof |
+| Forbidden GitHub toolset appears | Profile was broadened beyond the approved read-only scope | Revert the profile and rerun CI validators |
+| Write-capable GitHub profile is active | A different MCP config is loaded or a future profile was enabled accidentally | Disable the write profile and rerun the proof |
 
 ## Completion criteria
 
-This PR step is complete when:
+This proof path is complete when:
 
-1. This runbook exists.
-2. CI validates this runbook and the GitHub read-only profile boundaries.
-3. The active proof path requires `.mcp.json` backup or rollback.
-4. The active proof path requires MCP status evidence.
-5. The active proof path requires read-only smoke checks.
-6. The runbook forbids real write operations as negative tests.
+1. CI validates the GitHub read-only profile boundaries.
+2. CI validates MCP auto-install behavior.
+3. The active proof path requires MCP status evidence.
+4. The active proof path requires read-only smoke checks.
+5. The runbook forbids real write operations as negative tests.
+6. The evidence record is filled after one real workstation or target test project run.
 
 Full active MCP proof is complete only after this runbook is executed on one real workstation or target test project and the evidence record is filled without secrets.
