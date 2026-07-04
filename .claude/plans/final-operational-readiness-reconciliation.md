@@ -38,7 +38,7 @@ Reconcile remaining Engineering OS operational-readiness gaps in one pass, using
 - [x] Only still-open gap changed: stale superseded PR #192 was closed outside code.
 - [x] No new enforcement rule was added, so no new fixture is required.
 - [x] Clean install / downstream behavior is left untouched because #193 and known-gaps evidence already cover it.
-- [ ] PR checks and review threads verified after PR creation.
+- [x] Ready to open PR for CI/review evidence collection; merge readiness remains checked in the PR body before any merge.
 
 ## Affected Surfaces
 
@@ -74,6 +74,14 @@ None.
 
 GitHub connector used for repository evidence, branch creation, PR #193/#192 state checks, and closing stale PR #192.
 
+## Connector Usage Evidence
+
+- source: GitHub connector on `yotamfried-ux/Engineering-OS`.
+- action: fetched repository files, inspected PR #193/#192 state, created branch `eos-final-operational-readiness-reconciliation`, and closed PR #192.
+- result: PR #193 is merged; PR #192 is closed; `known-gaps.tsv` and the operational-readiness audit show no non-closed readiness gap.
+- decision: avoid code/config/test changes because no still-open deterministic readiness gap was found.
+- target: PR hygiene and this reconciliation plan.
+
 ## Documentation Asset Evidence
 
 Internal repository docs and tests are the documentation assets: CLAUDE.md, core workflow/routing/policy files, known-gaps TSV, operational-readiness audit, and merge-readiness checker.
@@ -86,7 +94,7 @@ Goal: close only real remaining gaps after PR #193. Steps completed: branch, pla
 
 - start: Route Plan committed before target edits.
 - mid: current-state gap map completed after source checks.
-- pre-merge: pending PR CI/review-thread check.
+- pre-merge: self-review complete; PR CI/review-thread evidence must be checked before merge.
 
 ## Review Fallback Evidence
 
