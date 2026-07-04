@@ -82,7 +82,7 @@ Notion progress tracking is unavailable in this remote session, so this plan fil
 
 - start: Route Plan committed before the first code/config/test change on the clean branch.
 - mid: implementation commits added the MCP profile bundle, installer, target wiring, tests, registry update, and connector documentation update after the Route Plan commit.
-- pre-merge: branch history checked after implementation commits and scoped to MCP installer, registry, documentation, and verification test files.
+- pre-merge: branch history checked after the profile/test alignment fix and scoped to MCP installer, registry, documentation, and verification test files.
 
 ## Definition of Done
 
