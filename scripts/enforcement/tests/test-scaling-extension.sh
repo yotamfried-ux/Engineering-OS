@@ -8,51 +8,17 @@ trap 'rm -rf "$TMPDIR"' EXIT
 
 python3 "$CHECKER" --root "$ROOT"
 
-run_case() {
+copy_repo() {
   local name="$1"
-  local mutation="$2"
   local repo="$TMPDIR/$name"
   mkdir -p "$repo"
   tar --exclude='.git' -C "$ROOT" -cf - . | tar -C "$repo" -xf -
-  python3 - "$repo" "$mutation" <<'PY'
-from pathlib import Path
-import sys
-root = Path(sys.argv[1])
-mutation = sys.argv[2]
+  printf '%s\n' "$repo"
+}
 
-def rewrite(rel, keep):
-    path = root / rel
-    lines = path.read_text().splitlines()
-    path.write_text("\n".join(line for line in lines if keep(line)) + "\n")
-
-if mutation == "template":
-    (root / "templates" / "unregistered-app").mkdir(parents=True)
-elif mutation == "roadmap":
-    rewrite("scripts/enforcement/project-type-roadmaps.tsv", lambda line: not line.startswith("web-application\t"))
-elif mutation == "docs":
-    path = root / "scripts/enforcement/documentation-sources.tsv"
-    out = []
-    for line in path.read_text().splitlines():
-        cells = line.split("\t")
-        if cells and cells[0].startswith("web-"):
-            cells[6] = "NONE"
-        out.append("\t".join(cells))
-    path.write_text("\n".join(out) + "\n")
-elif mutation == "patterns":
-    for rel in ["scripts/enforcement/pattern-requirements.tsv", "scripts/enforcement/skill-requirements.tsv"]:
-        rewrite(rel, lambda line: "\tweb-application\t" not in line)
-elif mutation == "game":
-    path = root / "scripts/enforcement/project-type-roadmaps.tsv"
-    out = []
-    for line in path.read_text().splitlines():
-        cells = line.split("\t")
-        if cells and cells[0] == "game-development":
-            cells[6] = "telemetry export"
-        out.append("\t".join(cells))
-    path.write_text("\n".join(out) + "\n")
-else:
-    raise SystemExit(f"unknown mutation: {mutation}")
-PY
+expect_reject() {
+  local name="$1"
+  local repo="$2"
   if python3 "$repo/scripts/enforcement/check-scaling-extension.py" --root "$repo" >/tmp/scaling-$name.out 2>&1; then
     echo "ERROR_FOR_AGENT: scaling checker accepted incomplete fixture $name" >&2
     cat /tmp/scaling-$name.out >&2
@@ -61,10 +27,30 @@ PY
   echo "rejected incomplete fixture: $name"
 }
 
-run_case missing-template template
-run_case missing-roadmap roadmap
-run_case missing-docs-metadata docs
-run_case missing-pattern-skill patterns
-run_case missing-game-evidence game
+repo="$(copy_repo missing-template)"
+mkdir -p "$repo/templates/unregistered-app"
+expect_reject missing-template "$repo"
+
+repo="$(copy_repo missing-roadmap)"
+awk 'BEGIN{FS=OFS="\t"} !/^web-application\t/' "$repo/scripts/enforcement/project-type-roadmaps.tsv" > "$repo/roadmaps.tmp"
+mv "$repo/roadmaps.tmp" "$repo/scripts/enforcement/project-type-roadmaps.tsv"
+expect_reject missing-roadmap "$repo"
+
+repo="$(copy_repo missing-docs-metadata)"
+awk 'BEGIN{FS=OFS="\t"} /^web-/{$6="NONE"} {print}' "$repo/scripts/enforcement/documentation-sources.tsv" > "$repo/docs.tmp"
+mv "$repo/docs.tmp" "$repo/scripts/enforcement/documentation-sources.tsv"
+expect_reject missing-docs-metadata "$repo"
+
+repo="$(copy_repo missing-pattern-skill)"
+for file in pattern-requirements.tsv skill-requirements.tsv; do
+  awk 'BEGIN{FS=OFS="\t"} $3!="web-application"' "$repo/scripts/enforcement/$file" > "$repo/$file.tmp"
+  mv "$repo/$file.tmp" "$repo/scripts/enforcement/$file"
+done
+expect_reject missing-pattern-skill "$repo"
+
+repo="$(copy_repo missing-game-evidence)"
+awk 'BEGIN{FS=OFS="\t"} $1=="game-development"{$7="telemetry export"} {print}' "$repo/scripts/enforcement/project-type-roadmaps.tsv" > "$repo/game.tmp"
+mv "$repo/game.tmp" "$repo/scripts/enforcement/project-type-roadmaps.tsv"
+expect_reject missing-game-evidence "$repo"
 
 echo "scaling extension checker tests passed"
