@@ -72,23 +72,27 @@ None.
 
 ## DoD / Definition of Done
 
-- [ ] Route Plan contract fields are documented in `core/task-router.md`.
-- [ ] Workflow entry gate text requires result evidence selection, not only CI.
-- [ ] Reusable checker rejects route plans missing roadmap/contract fields for code/config/test changes.
-- [ ] Positive and negative fixtures cover the new checker.
-- [ ] Audit addendum is updated without claiming full result-loop enforcement.
-- [ ] PR body documents dependencies and merge readiness honestly.
+- [x] Route Plan contract fields are documented in `core/task-router.md`.
+- [x] Workflow entry gate text requires result evidence selection, not only CI.
+- [x] Reusable checker rejects route plans missing roadmap/contract fields for code/config/test changes.
+- [x] Positive and negative fixtures cover the new checker.
+- [x] Audit addendum is updated without claiming full result-loop enforcement.
+- [x] PR body documents dependencies and merge readiness honestly.
 
 ## Claude Run Trace
 
 - Read required source files on main before writing.
 - Created this plan before any code/config/test changes on the branch.
 - Updated `core/task-router.md` with Route Plan result-loop fields.
+- Updated `core/workflow.md` with write-entry and verification result path language.
+- Added `scripts/enforcement/check-route-plan-contract.py` and route-plan fixture tests.
+- Added workflow result-loop integration audit addendum.
 
 ## Progress Lifecycle Evidence
 
 - start: PR #212 merged; required planning docs exist on main; result-loop and scaling gates plus manifests are absent on main; branch scope is Route Plan field selection only.
 - mid: `core/task-router.md` contains project type, roadmap, result-loop contract, simulation, local review, telemetry, and redaction fields.
+- pre-merge: `core/workflow.md`, `scripts/enforcement/check-route-plan-contract.py`, `scripts/enforcement/tests/test-route-plan-contract.sh`, and `docs/operations/workflow-result-loop-integration-audit.md` complete the workflow integration layer; full gates and manifests are separate dependencies.
 
 ## Capability Evidence
 
@@ -96,7 +100,7 @@ None.
 - `workflow.workflow-read` — selected because `core/workflow.md` was read before this plan.
 - `plan.route-plan-before-write` — selected because this plan is the first branch commit before code/config/test changes.
 - `source.github-repo-read` — selected because required repo files and PR #212 state were checked through GitHub before writing.
-- `validation.policy-change-has-validator` — selected because a route-plan checker and fixture test are part of the plan.
+- `validation.policy-change-has-validator` — selected because a route-plan checker and fixture test are part of this branch.
 - `validation.coderabbit-policy` — selected because review state is checked before final merge readiness.
 
 ## Template Gap Waiver
