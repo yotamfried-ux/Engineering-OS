@@ -31,18 +31,24 @@ def load_events(path: Path) -> list[dict[str, Any]]:
     return events
 
 
-def count_by(events: list[dict[str, Any]], key: str) -> collections.Counter[str]:
+def attr(event: dict[str, Any], key: str, default: str = "unknown") -> str:
+    attrs = event.get("attributes") if isinstance(event.get("attributes"), dict) else {}
+    value = attrs.get(key) if isinstance(attrs, dict) else None
+    return str(value or default)
+
+
+def count_by(events: list[dict[str, Any]], getter) -> collections.Counter[str]:
     c: collections.Counter[str] = collections.Counter()
     for event in events:
-        value = event.get(key) or "unknown"
-        c[str(value)] += 1
+        c[str(getter(event) or "unknown")] += 1
     return c
 
 
-def nested_count(events: list[dict[str, Any]], parent: str, child: str) -> collections.Counter[str]:
+def nested_attr_count(events: list[dict[str, Any]], key: str, child: str) -> collections.Counter[str]:
     c: collections.Counter[str] = collections.Counter()
     for event in events:
-        obj = event.get(parent) if isinstance(event.get(parent), dict) else {}
+        attrs = event.get("attributes") if isinstance(event.get("attributes"), dict) else {}
+        obj = attrs.get(key) if isinstance(attrs, dict) and isinstance(attrs.get(key), dict) else {}
         value = obj.get(child) if isinstance(obj, dict) else None
         c[str(value or "unknown")] += 1
     return c
@@ -58,35 +64,41 @@ def summarize(events: list[dict[str, Any]], source: Path) -> str:
     if not events:
         return f"# Engineering OS telemetry summary\n\nNo events found in `{source}`.\n"
 
-    timestamps = [int(e.get("timestamp_unix", 0) or 0) for e in events if e.get("timestamp_unix")]
-    duration = max(timestamps) - min(timestamps) if len(timestamps) >= 2 else 0
-    command_categories = count_by(events, "command_category")
-    tools = count_by(events, "tool_name")
-    hooks = count_by(events, "event_name")
-    branches = count_by(events, "git_branch")
-    extensions = nested_count(events, "target_path", "extension")
-    top_dirs = nested_count(events, "target_path", "top_dir")
-    active_plans = count_by(events, "active_plan")
+    starts = [int(e.get("start_time_unix_nano", 0) or 0) for e in events if e.get("start_time_unix_nano")]
+    ends = [int(e.get("end_time_unix_nano", 0) or 0) for e in events if e.get("end_time_unix_nano")]
+    duration_seconds = 0
+    if starts and ends:
+        duration_seconds = max(0, int((max(ends) - min(starts)) / 1_000_000_000))
+
+    traces = count_by(events, lambda e: e.get("trace_id") or "unknown")
+    spans = count_by(events, lambda e: e.get("name") or "unknown")
+    tools = count_by(events, lambda e: attr(e, "eos.tool.name"))
+    command_categories = count_by(events, lambda e: attr(e, "eos.tool.command.category"))
+    branches = count_by(events, lambda e: attr(e, "eos.git.branch"))
+    active_plans = count_by(events, lambda e: attr(e, "eos.plan.active.basename"))
+    extensions = nested_attr_count(events, "eos.tool.target_path", "extension")
+    top_dirs = nested_attr_count(events, "eos.tool.target_path", "top_dir")
 
     risk_signals = []
-    if command_categories.get("dependency-install", 0):
-        risk_signals.append("dependency-install commands were observed; verify Context7/source-of-truth evidence exists.")
-    if command_categories.get("cloud-deploy", 0):
+    if command_categories.get("dependency.install", 0):
+        risk_signals.append("dependency install commands were observed; verify Context7/source-of-truth evidence exists.")
+    if command_categories.get("cloud.deploy", 0):
         risk_signals.append("cloud/deploy commands were observed; verify deployment evidence and rollback notes exist.")
     if command_categories.get("database", 0):
         risk_signals.append("database commands were observed; verify migration, RLS, and tenant-isolation evidence exists.")
-    if not active_plans or (len(active_plans) == 1 and active_plans.get("unknown")):
+    if not active_plans or active_plans.get("unknown") == sum(active_plans.values()):
         risk_signals.append("no active plan was detected in telemetry; verify Route Plan evidence separately.")
 
     out = [
         "# Engineering OS telemetry summary",
         "",
         f"Source: `{source}`",
-        f"Total events: **{len(events)}**",
-        f"Observed duration: **{duration} seconds**",
+        f"Total span events: **{len(events)}**",
+        f"Trace count: **{len(traces)}**",
+        f"Observed duration: **{duration_seconds} seconds**",
         "",
-        "## Hook events",
-        fmt_counter(hooks),
+        "## Span names",
+        fmt_counter(spans),
         "## Tools",
         fmt_counter(tools),
         "## Command categories",
@@ -107,7 +119,7 @@ def summarize(events: list[dict[str, Any]], source: Path) -> str:
         out.append("- none detected")
     out.append("")
     out.append("## Privacy note")
-    out.append("Telemetry records metadata only: hook event name, tool name, command category, hashed command/payload, hashed target path, repo name, branch, short head, and active plan basename. It does not store prompts, file contents, raw commands, raw paths, connector payloads, environment values, or secrets.")
+    out.append("Telemetry records OpenTelemetry-style metadata only: trace/span IDs, span name, timestamps, resource attributes, tool name, command category, hashed command/payload, hashed target path, repo name, branch, short head, and active plan basename. It does not store prompts, file contents, raw commands, raw paths, connector payloads, environment values, or secrets.")
     out.append("")
     return "\n".join(out)
 
