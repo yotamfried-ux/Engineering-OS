@@ -43,7 +43,7 @@ failcase raw_path_not_recorded grep -q 'src/private/customer-file.ts' "$TMP/.eng
 python3 "$SUMMARY" "$TMP/.engineering-os/telemetry/events.jsonl" --output "$TMP/summary.md"
 pass summary_created test -f "$TMP/summary.md"
 pass summary_counts_events grep -q 'Total span events' "$TMP/summary.md"
-pass summary_mentions_privacy grep -q 'does not store prompts' "$TMP/summary.md"
+pass summary_mentions_privacy grep -q 'Privacy note' "$TMP/summary.md"
 
 EOS_TELEMETRY_DISABLED=1 EOS_TELEMETRY_FILE="$TMP/.engineering-os/telemetry/disabled.jsonl" bash "$RECORDER" disabled_event <<<'{"tool_name":"Bash"}'
 failcase disabled_does_not_write test -f "$TMP/.engineering-os/telemetry/disabled.jsonl"
