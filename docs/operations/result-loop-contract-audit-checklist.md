@@ -22,6 +22,9 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [x] MDN Learn Web Development researched for web project roadmap and local learning path.
 - [x] Android app architecture researched for mobile app architecture roadmap.
 - [x] Electron and Tauri start docs researched for desktop app roadmaps.
+- [x] Unity Manual and Profiler researched for game-development roadmap and performance profiling.
+- [x] Godot project organization docs researched for game-development project structure.
+- [x] Unreal Engine documentation identified as a game-development source.
 - [x] FastAPI tutorial researched for API/backend roadmap.
 - [x] Click and Python packaging/venv docs researched for CLI roadmap.
 - [x] Airflow best-practices docs researched for data-pipeline roadmap.
@@ -49,9 +52,19 @@ Purpose: track the work needed to make long AI development sessions result-drive
 ## Roadmap documentation
 
 - [x] Create `docs/operations/project-type-roadmaps.md`.
-- [x] Add roadmap entries for web, mobile, desktop, API/backend, full-stack, CLI, data pipeline, ML, AI/RAG, computer-vision/video, and browser-extension work.
+- [x] Add roadmap entries for web, mobile, desktop, game-development, API/backend, full-stack, CLI, data pipeline, ML, AI/RAG, computer-vision/video, and browser-extension work.
 - [x] Link each roadmap family to official documentation references.
 - [x] Define required roadmap fields: official sources, creation path, local creator run path, user simulation, quality gates, result evidence, monitoring, change-impact measurement, and telemetry export.
+
+## Scaling procedure
+
+- [x] Create `docs/operations/scaling-extension-procedure.md`.
+- [x] Define a fixed extension path for new project types, documentation sources, reference repositories, templates, patterns, skills, code examples, and connectors.
+- [x] Define the complete checklist for adding a new project type without one-off work.
+- [x] Add game-development as the concrete scaling example.
+- [x] Define manifest-driven target architecture for scalable extension.
+- [ ] Add source-of-truth scaling audit row.
+- [ ] Add non-closed known gap for missing scaling enforcement.
 
 ## Audit tracking
 
@@ -76,12 +89,20 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [ ] Fail CI when a roadmap entry lacks official source references.
 - [ ] Fail CI when a roadmap entry lacks local creator run instructions.
 - [ ] Fail CI when mobile or desktop roadmaps lack user simulation against the actual app surface.
-- [ ] Fail CI when performance or monitoring metrics are missing for app, service, AI, ML, data, mobile, or desktop work.
+- [ ] Fail CI when game-development roadmaps lack local playable surface, gameplay simulation, visual evidence, performance metrics, or change-impact comparison.
+- [ ] Fail CI when performance or monitoring metrics are missing for app, service, AI, ML, data, mobile, desktop, or game work.
 - [ ] Fail CI when before/after change-impact measurement is missing for user-visible or output-affecting changes.
 - [ ] Fail CI when telemetry export is missing from the selected roadmap.
+- [ ] Add scaling-extension requirement to the result-loop gate.
+- [ ] Fail CI when a new template directory is added without a template requirement row.
+- [ ] Fail CI when a new project type is named in docs or route plans but lacks a roadmap entry or explicit exemption.
+- [ ] Fail CI when a new reference repository lacks source, license/usage note, relevance, and freshness status.
+- [ ] Fail CI when a code example lacks a run or validation path.
+- [ ] Fail CI when audit marks scaling complete before enforcement artifacts exist.
 - [ ] Add fixture that fails when a mobile contract lacks local creator review or user simulation.
 - [ ] Add fixture that fails when a desktop contract lacks local app-window review or UI automation.
 - [ ] Add fixture that fails when mobile or desktop contracts omit before/after change-impact metrics.
+- [ ] Add fixture that fails when game-development lacks a playable local surface and performance metrics.
 
 ## Real-run evidence
 
@@ -97,10 +118,13 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 - [ ] Every applicable template/project type has a result-loop contract.
 - [ ] Every applicable template/project type has a roadmap entry or explicit exemption.
+- [ ] Every extension type has a fixed add/update path and enforcement rule or explicit exemption.
 - [ ] CI fails when a required roadmap is missing.
+- [ ] CI fails when scaling additions bypass registries/manifests.
 - [ ] CI fails when a selected contract omits run, view, local creator review, test, user simulation, feedback, monitoring, telemetry or repair fields.
 - [ ] Mobile and desktop contracts prove the creator can run the app locally and inspect progress.
 - [ ] Mobile and desktop contracts prove code changes are measured against the actual app surface, not only against unit tests.
+- [ ] Game-development contracts prove a playable local surface, automated gameplay simulation, visual evidence, and performance metrics.
 - [ ] Project 8 has real result-loop evidence in the archive.
 - [ ] At least one later comparison run exists.
 - [ ] Monitoring sufficiency is backed by real runs, not planning claims.
