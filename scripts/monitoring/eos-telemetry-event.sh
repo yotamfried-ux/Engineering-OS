@@ -2,8 +2,9 @@
 set -euo pipefail
 
 # Privacy-safe local telemetry recorder for Engineering OS hook events.
-# Metadata-only by default: no prompts, file contents, raw commands, connector payloads,
-# environment values, or sensitive values are written to the event log.
+# Metadata-only by default: no prompts, file contents, raw commands, raw paths,
+# connector payloads, model responses, environment values, or sensitive values are
+# written to the event log. Correlation identifiers are stored as short hashes only.
 
 EVENT_NAME="${1:-unknown}"
 
@@ -55,6 +56,8 @@ if not isinstance(data, dict):
 
 tool_name = str(data.get("tool_name") or data.get("tool") or "unknown")
 tool_input = data.get("tool_input") if isinstance(data.get("tool_input"), dict) else {}
+tool_response = data.get("tool_response")
+tool_error = data.get("tool_error")
 
 
 def git_value(args: list[str]) -> str:
@@ -68,6 +71,21 @@ def sha_text(value: str, size: int = 16) -> str:
     if not value:
         return ""
     return hashlib.sha256(value.encode("utf-8", errors="ignore")).hexdigest()[:size]
+
+
+def safe_token(value: str, limit: int = 64) -> str:
+    value = re.sub(r"[^a-zA-Z0-9_.:/@-]", "_", str(value or ""))
+    return value[:limit]
+
+
+def length_bucket(value: str) -> str:
+    if not value:
+        return "none"
+    n = len(value)
+    for upper in (32, 128, 512, 2048, 8192):
+        if n <= upper:
+            return f"1-{upper}"
+    return "8193+"
 
 
 def ensure_trace_id() -> str:
@@ -123,17 +141,60 @@ def active_plan_name() -> str:
     return Path(active_plan).name if active_plan else ""
 
 
+def common_hook_attributes() -> dict[str, Any]:
+    session_id = str(data.get("session_id") or "")
+    prompt_id = str(data.get("prompt_id") or "")
+    transcript_path = str(data.get("transcript_path") or "")
+    cwd = str(data.get("cwd") or "")
+    prompt = str(data.get("prompt") or "") if "prompt" in data else ""
+    return {
+        "eos.claude.hook_event_name": safe_token(data.get("hook_event_name") or EVENT_NAME),
+        "eos.claude.session.hash": sha_text(session_id, 32),
+        "eos.claude.session.present": bool(session_id),
+        "eos.claude.prompt.hash": sha_text(prompt_id, 32),
+        "eos.claude.prompt.present": bool(prompt_id),
+        "eos.claude.transcript.hash": sha_text(transcript_path, 32),
+        "eos.claude.transcript.present": bool(transcript_path),
+        "eos.claude.cwd.hash": sha_text(cwd, 32),
+        "eos.claude.cwd.present": bool(cwd),
+        "eos.claude.permission_mode": safe_token(data.get("permission_mode") or ""),
+        "eos.claude.agent_type": safe_token(data.get("agent_type") or ""),
+        "eos.claude.source": safe_token(data.get("source") or data.get("trigger") or ""),
+        "eos.claude.model": safe_token(data.get("model") or ""),
+        "eos.prompt.present": "prompt" in data,
+        "eos.prompt.length_bucket": length_bucket(prompt),
+        "eos.privacy.raw_prompt_stored": False,
+    }
+
+
 def safe_tool_attributes() -> dict[str, Any]:
     command = str(tool_input.get("command") or "") if isinstance(tool_input, dict) else ""
     file_path = ""
     if isinstance(tool_input, dict):
         file_path = str(tool_input.get("file_path") or tool_input.get("path") or tool_input.get("pattern") or "")
+    response_text = ""
+    if tool_response is not None:
+        try:
+            response_text = json.dumps(tool_response, ensure_ascii=False, sort_keys=True)
+        except Exception:
+            response_text = str(tool_response)
+    error_text = ""
+    if tool_error is not None:
+        try:
+            error_text = json.dumps(tool_error, ensure_ascii=False, sort_keys=True)
+        except Exception:
+            error_text = str(tool_error)
     return {
         "eos.tool.name": tool_name,
         "eos.tool.command.category": command_category(command),
         "eos.tool.command.hash": sha_text(command) if command else "",
         "eos.tool.target_path": path_meta(file_path),
         "eos.tool.payload.hash": sha_text(raw) if raw else "",
+        "eos.tool.response.present": tool_response is not None,
+        "eos.tool.response.type": type(tool_response).__name__ if tool_response is not None else "",
+        "eos.tool.response.hash": sha_text(response_text) if response_text else "",
+        "eos.tool.error.present": tool_error is not None,
+        "eos.tool.error.hash": sha_text(error_text) if error_text else "",
     }
 
 
@@ -171,6 +232,7 @@ record = {
         "eos.git.head.short": head,
         "eos.plan.active.basename": active_plan_name(),
         "eos.engineering_os_home.set": bool(os.environ.get("ENGINEERING_OS_HOME")),
+        **common_hook_attributes(),
         **safe_tool_attributes(),
     },
     "events": [{
@@ -180,6 +242,7 @@ record = {
             "eos.privacy.raw_payload_stored": False,
             "eos.privacy.raw_command_stored": False,
             "eos.privacy.raw_path_stored": False,
+            "eos.privacy.raw_response_stored": False,
             "eos.privacy.sensitive_values_stored": False,
         },
     }],
@@ -189,3 +252,11 @@ OUT.parent.mkdir(parents=True, exist_ok=True)
 with OUT.open("a", encoding="utf-8") as fh:
     fh.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
 PY
+
+if [ "$EVENT_NAME" = "stop" ]; then
+  SUMMARY="${EOS_TELEMETRY_SUMMARY_FILE:-$ROOT/.engineering-os/telemetry/latest-summary.md}"
+  TOOL_HOME="${ENGINEERING_OS_HOME:-$ROOT}"
+  if [ -f "$TOOL_HOME/scripts/monitoring/eos-telemetry-summary.py" ] && [ -f "$OUT" ]; then
+    python3 "$TOOL_HOME/scripts/monitoring/eos-telemetry-summary.py" "$OUT" --output "$SUMMARY" >/dev/null 2>&1 || true
+  fi
+fi
