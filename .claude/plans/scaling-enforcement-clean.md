@@ -12,22 +12,12 @@
 | Target paths | scripts/enforcement/check-scaling-extension.py, scripts/enforcement/waiver-requirements.tsv, scripts/enforcement/tests/test-scaling-extension.sh |
 | Templates | internal governance work; no app template required |
 | Architecture guides | docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md |
-| Patterns | internal manifest enforcement; existing enforcement test pattern reused |
+| Patterns | internal manifest enforcement pattern reused |
 | External systems/connectors | GitHub connector |
 | Skills | superpowers |
 | Validation gates | enforcement-tests, pr-policy, workflow-evidence-policy, connector-evidence-policy, capability-evidence-policy, documentation-asset-policy |
-| Evidence to check | scaling procedure, project roadmaps, result-loop audit checklist, template requirements, scaling manifests |
+| Evidence to check | scaling manifests and audit checklist |
 | User decisions required | no user decision required. |
-
-## Scope
-
-Implement deterministic scaling extension enforcement on top of the merged manifest foundation. Do not claim real-run readiness.
-
-## Alternatives
-
-- Wait for manifests to merge first — completed before this branch was created.
-- Invent a new manifest format — rejected; the checker reads the manifest foundation format.
-- Mark full scaling readiness — rejected because this PR adds enforcement artifacts and tests, not first real target-project run evidence.
 
 ## Source of Truth Checks
 
@@ -46,22 +36,22 @@ Implement deterministic scaling extension enforcement on top of the merged manif
 
 - `routing.task-router-read` — core/task-router.md read.
 - `workflow.workflow-read` — core/workflow.md read.
-- `source.github-repo-read` — required repo files and manifest foundation state read.
-- `validation.policy-change-has-validator` — checker and shell validation planned.
+- `source.github-repo-read` — merged manifests read.
+- `validation.policy-change-has-validator` — checker and shell validation added.
 
 ## Skill Evidence
 
-- superpowers: used planning discipline and verification-first workflow for this governance change.
+- superpowers: used planning discipline and verification-first workflow.
 
 ## Connector Evidence
 
-- GitHub connector: used for repository file inspection and branch creation.
+- GitHub connector: used for repository inspection and branch edits.
 
 ## Connector Usage Evidence
 
 - source: GitHub connector repository yotamfried-ux/Engineering-OS.
 - action: GitHub connector inspected main and created branch eos-clean-20260706.
-- result: scripts/enforcement/project-type-roadmaps.tsv and docs/operations/result-loop-contract-audit-checklist.md identified the enforcement target.
+- result: scripts/enforcement/project-type-roadmaps.tsv and docs/operations/result-loop-contract-audit-checklist.md identified the target.
 - decision: selected a clean branch from main and kept the scope to scaling enforcement files.
 - target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; scripts/enforcement/waiver-requirements.tsv
 
@@ -72,23 +62,23 @@ Implement deterministic scaling extension enforcement on top of the merged manif
 
 ## Claude Run Trace
 
-- goal: add deterministic validation for scaling manifests and extension metadata.
-- hypothesis: a Python checker plus negative shell fixtures can prove incomplete scaling additions fail.
+- goal: validate scaling manifests and extension metadata deterministically.
+- hypothesis: a Python checker plus shell fixtures can reject incomplete scaling additions.
 - connectors: GitHub connector.
-- steps: read current source files, add route plan before code, add checker, add tests, validate via CI.
+- steps: read current sources, add route plan first, add checker, add tests, validate via CI.
 - evidence: scripts/enforcement/check-scaling-extension.py and scripts/enforcement/tests/test-scaling-extension.sh.
 - rejected: broad readiness claim and first real target-project evidence.
-- result: route plan created before code changes.
-- follow-up: run CI and fix any policy comments before merge.
+- result: checker, waiver manifest, and shell fixture test were added after the route plan.
 
 ## Progress Lifecycle Evidence
 
-- start: reviewed core/task-router.md, core/workflow.md, scaling procedure, roadmap catalog, audit checklist, and merged manifests before creating code files.
+- start: reviewed routing, workflow, scaling procedure, roadmap catalog, audit checklist, and merged manifests before code files.
+- mid: added the checker, waiver manifest, and shell fixture test after the route plan.
 
 ## DoD
 
-- [x] Scaling checker path is defined.
+- [x] Scaling checker exists.
 - [x] Manifest validation targets are defined.
-- [x] Negative fixture strategy is defined.
+- [x] Negative fixture strategy is implemented.
 - [x] CI validation gates are identified.
 - [x] No first real target-project readiness claim is made.
