@@ -183,7 +183,7 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [ ] CI fails when a required roadmap is missing.
 - [ ] CI fails when scaling additions bypass registries/manifests.
 - [ ] CI fails when docs, reference repos, examples, patterns, skills, or connectors are added without required metadata and enforcement coverage.
-- [ ] CI fails when a selected contract omits run, view, local creator review, test, user simulation, feedback, monitoring, telemetry or repair fields.
+- [ ] CI fails when a selected contract omits any required field from the plan: `setup_command`, `run_command`, `visible_result`, `creator_local_review`, `required_tests`, `user_simulation`, `feedback_surfaces`, `performance_monitoring`, `acceptance_metrics`, `change_impact_measurement`, `telemetry_export`, `failure_repair_loop`, or `evidence_artifacts`.
 - [ ] Mobile and desktop contracts prove the creator can run the app locally and inspect progress.
 - [ ] Mobile and desktop contracts prove code changes are measured against the actual app surface, not only against unit tests.
 - [ ] Game-development contracts prove a playable local surface, automated gameplay simulation, visual evidence, and performance metrics.
