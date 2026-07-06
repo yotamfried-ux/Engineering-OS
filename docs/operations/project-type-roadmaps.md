@@ -2,6 +2,8 @@
 
 Purpose: provide official roadmap sources for building each common project type, then connect those sources to the Result Loop Contract. This file is not a claim that the roadmap gate is already enforced; enforcement is tracked in `docs/operations/result-loop-contract-audit-checklist.md`.
 
+Scaling procedure: `docs/operations/scaling-extension-procedure.md` defines how to add new project types, documentation, reference repositories, templates, patterns, skills, and code examples without reinventing the OS.
+
 ## Roadmap contract
 
 Every applicable project template must map to a roadmap entry or an explicit exemption. A roadmap entry must define:
@@ -23,6 +25,7 @@ Every applicable project template must map to a roadmap entry or an explicit exe
 | web-application | MDN Learn Web Development; Playwright trace/visual/video docs; Lighthouse CI configuration. | Local URL; browser e2e; screenshots/traces/videos; accessibility and performance checks; telemetry export. |
 | mobile-application | Android app architecture; Expo development builds; Appium docs; Apple SwiftUI tutorials when targeting Apple platforms. | Device/simulator/emulator/development build; creator-visible run path; user-flow automation; screenshots/videos; crash/log capture; launch/latency/memory metrics; telemetry export. |
 | desktop-application | Electron docs; Tauri start docs; Playwright Electron API; Tauri WebDriver docs; Appium where relevant. | Dev-run or packaged local app window; desktop UI automation; screenshots/videos/logs/crash reports; performance and before/after change-impact metrics; telemetry export. |
+| game-development | Unity Manual and Profiler; Unreal Engine docs; Godot project organization/performance docs; engine-specific test and automation docs. | Editor play mode or local build; creator-visible game surface; gameplay/user simulation through engine tests, input playback, bots, or automation; screenshots/videos/replays/logs/profiler traces; FPS/frame-time/memory/load-time/crash metrics; before/after gameplay and performance comparison; telemetry export. |
 | api-service / backend | FastAPI tutorial/user guide or stack-equivalent official docs; OpenAPI docs where applicable; k6 thresholds; OpenTelemetry/Prometheus/Grafana. | Local service run command; health endpoint; contract/integration tests; load/performance thresholds when relevant; logs/metrics/traces; telemetry export. |
 | full-stack application | Web roadmap plus API/backend roadmap plus database/migration docs for the selected stack. | Local full-stack run; seed/demo data; browser user flows crossing frontend/backend/database; traces/logs/screenshots/performance reports; telemetry export. |
 | cli-tool | Python packaging/user environment docs; Click/Typer or selected CLI framework docs. | Install/run command; help output; golden-output tests; error-path tests; shell completion or argument validation where relevant; telemetry export. |
@@ -41,7 +44,8 @@ The future gate must be called from the plan/write policy and CI. It must fail w
 - the selected roadmap has no official source references;
 - the selected roadmap lacks local creator run instructions;
 - mobile or desktop roadmaps lack user simulation against the actual app surface;
-- performance or monitoring metrics are missing for app, service, AI, ML, data, mobile, or desktop work;
+- game-development roadmaps lack local playable surface, gameplay simulation, visual evidence, performance metrics, and change-impact comparison;
+- performance or monitoring metrics are missing for app, service, AI, ML, data, mobile, desktop, or game work;
 - before/after change-impact measurement is missing for user-visible or output-affecting changes;
 - telemetry export is missing.
 
@@ -56,6 +60,10 @@ The future gate must be called from the plan/write policy and CI. It must fail w
 - Playwright Electron API: https://playwright.dev/docs/api/class-electron
 - Tauri start guide: https://tauri.app/start/
 - Tauri WebDriver testing: https://tauri.app/develop/tests/webdriver/
+- Unity Manual: https://docs.unity3d.com/Manual/index.html
+- Unity Profiler: https://docs.unity3d.com/Manual/Profiler.html
+- Unreal Engine documentation: https://dev.epicgames.com/documentation/en-us/unreal-engine
+- Godot project organization: https://docs.godotengine.org/en/stable/tutorials/best_practices/project_organization.html
 - FastAPI tutorial/user guide: https://fastapi.tiangolo.com/tutorial/
 - Click documentation: https://click.palletsprojects.com/en/stable/
 - Python virtual environments and packages: https://docs.python.org/3/tutorial/venv.html
