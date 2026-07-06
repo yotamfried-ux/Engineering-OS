@@ -47,18 +47,18 @@ Implement the local export/import/analyze archive layer described in docs/operat
 
 ## Connector Evidence
 
-- source: GitHub repository yotamfried-ux/Engineering-OS.
-- action: read current main source files and telemetry docs before implementation.
-- result: confirmed PR 205 provides local metadata telemetry and PR 206 defines archive/export/import/analyze as the next step.
-- decision: implement local file-bundle archive first; do not build a later service yet.
+- source: GitHub connector for repository yotamfried-ux/Engineering-OS.
+- action: GitHub connector read current main source files and telemetry docs before implementation.
+- result: GitHub connector confirmed PR 205 provides local metadata telemetry and PR 206 defines archive/export/import/analyze as the next step.
+- decision: GitHub connector evidence selected a local file-bundle archive first; do not build a later service yet.
 - target: scripts/monitoring, telemetry-archive, scripts/enforcement/tests, docs/operations/runtime-telemetry-archive-audit-checklist.md.
 
 ## Connector Usage Evidence
 
 - source: GitHub connector for yotamfried-ux/Engineering-OS.
-- action: GitHub fetch_file and compare_commits were used before code decisions; GitHub pull request #209 was opened from claude/telemetry-archive-clean.
-- result: branch claude/telemetry-archive-clean at b9bcb021693108cf2cd0cb64272cb94221d915ec changes scripts/monitoring/import-telemetry-run.py, scripts/monitoring/export-telemetry-run.py, scripts/enforcement/tests/test-telemetry-archive.sh, and telemetry-archive/README.md.
-- decision: GitHub evidence changed the work into a clean ordered route-plan lifecycle and kept Project 8 readiness unchecked.
+- action: GitHub connector fetch_file and compare_commits were used before code decisions; GitHub pull request #209 was opened from claude/telemetry-archive-clean.
+- result: GitHub connector branch claude/telemetry-archive-clean at b9bcb021693108cf2cd0cb64272cb94221d915ec changes scripts/monitoring/import-telemetry-run.py, scripts/monitoring/export-telemetry-run.py, scripts/enforcement/tests/test-telemetry-archive.sh, and telemetry-archive/README.md.
+- decision: GitHub connector evidence changed the work into a clean ordered route-plan lifecycle and kept Project 8 readiness unchecked.
 - target: scripts/monitoring/import-telemetry-run.py, scripts/monitoring/export-telemetry-run.py, scripts/enforcement/tests/test-telemetry-archive.sh, telemetry-archive/README.md.
 
 ## Documentation Asset Evidence
