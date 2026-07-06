@@ -84,19 +84,20 @@ No application project template applies because this is internal Engineering OS 
 - steps: read source files, commit plan first, add manifests, add README, add parser test, update completed manifest checklist rows, open one PR.
 - evidence: scripts/enforcement/*.tsv, scripts/enforcement/README.md, scripts/enforcement/tests/test-scaling-manifests.sh, docs/operations/result-loop-contract-audit-checklist.md.
 - rejected: complex schema, full gate implementation, Project 8 work, and full-readiness claims.
-- result: manifests, schema README, and parsing test have been added; audit update and PR validation still remain.
+- result: manifests, schema README, parser test, and audit manifest-task updates are complete; PR validation remains live-review work.
 - follow-up: scaling gate and result-loop gate remain separate follow-up work.
 
 ## Progress Lifecycle Evidence
 
 - start: GitHub connector read the required source files on main, branch scaling-manifest-foundation was created, and this plan is committed before manifest/test/audit changes.
 - mid: after manifest work began, the branch contains project-type, result-loop, documentation-source, reference-repository, code-example, pattern, skill, and connector workflow manifests plus scripts/enforcement/README.md and scripts/enforcement/tests/test-scaling-manifests.sh.
+- pre-merge: after the last manifest/test change, docs/operations/result-loop-contract-audit-checklist.md was updated only for completed manifest/schema rows; scaling gate, fixtures, completion criteria, and Project 8 rows remain unchecked.
 
 ## DoD
 
 - [x] Scaling manifests exist under scripts/enforcement.
 - [x] Schema documentation explains columns, states, and row-add procedure.
 - [x] Parsing test validates column counts, non-empty rows, paths for active rows, and legal exemption states.
-- [ ] Audit checklist marks only completed manifest tasks.
+- [x] Audit checklist marks only completed manifest tasks.
 - [ ] PR body states remaining scaling gate and result-loop gate follow-up.
-- [ ] PR remains unmerged and does not claim full enforcement/readiness.
+- [x] PR remains unmerged and does not claim full enforcement/readiness.
