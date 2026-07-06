@@ -36,10 +36,10 @@
 
 - `routing.task-router-read` — core/task-router.md read.
 - `workflow.workflow-read` — core/workflow.md read.
-- `plan.route-plan-before-write` — this route plan was committed before checker and test files; later cleanup commits only added missing evidence after policy feedback.
-- `source.github-repo-read` — merged manifests read.
+- `plan.route-plan-before-write` — route plan was committed before checker and test files.
+- `source.github-repo-read` — merged manifests read from GitHub.
 - `validation.policy-change-has-validator` — checker and shell validation added.
-- `validation.coderabbit-policy` — review status checked before merge; fallback self-review is recorded in the PR body if CodeRabbit is unavailable.
+- `validation.coderabbit-policy` — fallback self-review is recorded in the PR body because no CodeRabbit approval is recorded.
 
 ## Skill Evidence
 
@@ -52,15 +52,15 @@
 ## Connector Usage Evidence
 
 - source: GitHub connector repository yotamfried-ux/Engineering-OS.
-- action: GitHub connector inspected main and created branch eos-clean-20260706.
-- result: scripts/enforcement/project-type-roadmaps.tsv and docs/operations/result-loop-contract-audit-checklist.md identified the target.
-- decision: selected a clean branch from main and kept the scope to scaling enforcement files.
+- action: inspected main, branch eos-clean-20260706, PR #219 files, and CI status.
+- result: scaling manifests and tests identified the gate target.
+- decision: kept scope to scaling enforcement files.
 - target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; scripts/enforcement/waiver-requirements.tsv
 
 ## Documentation Asset Evidence
 
 - internal: docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md, docs/operations/result-loop-contract-audit-checklist.md, scripts/enforcement/README.md.
-- context7: not required because this PR changes internal manifest enforcement logic and does not introduce an external library, framework, SDK, API, or service.
+- context7: not required because this PR changes internal manifest enforcement logic and adds no external library, framework, SDK, API, or service.
 - decision: internal docs and manifests define the scaling enforcement contract.
 
 ## Claude Run Trace
@@ -80,6 +80,7 @@
 - pre-merge: reviewed the final changed files and prepared CI validation with no real-run readiness claim.
 - cleanup: recorded missing capability and documentation asset evidence after CI identified policy gaps; no readiness claim was added.
 - pre-merge: checked final files after the test path repair and kept scope to the scaling gate artifact.
+- pre-merge: aligned documentation source schema with the active manifest and checked fixture coverage for scaling gate evidence.
 
 ## DoD
 
