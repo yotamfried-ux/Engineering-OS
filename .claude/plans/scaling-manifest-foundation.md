@@ -44,10 +44,10 @@ Add TSV manifests, schema documentation, project-type rows, and parser tests. Fi
 
 ## Connector Usage Evidence
 
-- source: yotamfried-ux/Engineering-OS.
-- action: fetch_file, create_branch, create_file, update_file, create_pull_request, update_pull_request.
-- result: open manifest tasks and existing inventory files were inspected.
-- decision: add scaling manifests and leave existing connector inventory in place.
+- source: github repository yotamfried-ux/Engineering-OS.
+- action: github fetch_file, create_branch, create_file, update_file, create_pull_request, update_pull_request.
+- result: github inspection found docs/operations/result-loop-contract-audit-checklist.md manifest tasks and scripts/enforcement/template-requirements.tsv inventory shape.
+- decision: github changes added scaling manifests and kept connector-requirements.tsv in place.
 - target: scripts/enforcement/project-type-roadmaps.tsv, scripts/enforcement/result-loop-requirements.tsv, scripts/enforcement/documentation-sources.tsv, scripts/enforcement/reference-repositories.tsv, scripts/enforcement/code-example-requirements.tsv, scripts/enforcement/pattern-requirements.tsv, scripts/enforcement/skill-requirements.tsv, scripts/enforcement/connector-workflow-requirements.tsv, scripts/enforcement/README.md, scripts/enforcement/tests/test-scaling-manifests.sh, docs/operations/result-loop-contract-audit-checklist.md
 
 ## Documentation Asset Evidence
