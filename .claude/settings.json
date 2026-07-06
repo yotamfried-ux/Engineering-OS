@@ -6,11 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_bash"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_bash"
           },
           {
             "type": "command",
@@ -64,11 +64,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_write_edit"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_write_edit"
           },
           {
             "type": "command",
@@ -89,11 +89,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_agent"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_agent"
           },
           {
             "type": "command",
@@ -121,7 +121,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_context7"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_docs_connector"
           },
           {
             "type": "command",
@@ -192,7 +192,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-stop-hook.sh\" 2>/dev/null || true"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-stop-hook.sh\" 2>&1"
           }
         ]
       }
