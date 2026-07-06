@@ -15,7 +15,10 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [x] Lighthouse CI researched for web performance assertions.
 - [x] k6 thresholds researched for load and performance criteria.
 - [x] GitHub Actions artifacts researched for CI evidence transport.
-- [x] Expo development builds researched for mobile runtime feedback.
+- [x] Expo development builds researched for mobile runtime feedback and local creator review on device, simulator, or emulator.
+- [x] Appium docs researched for mobile, desktop, web, and hybrid user-flow automation.
+- [x] Playwright Electron docs researched for desktop app launch, screenshots, console logs, and UI interaction.
+- [x] Tauri WebDriver docs researched for desktop app end-to-end testing.
 - [x] MLflow model evaluation researched for ML evaluation loops.
 - [x] OpenAI Evals researched for AI-agent evaluation loops.
 
@@ -23,14 +26,19 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 - [x] Define local run requirement.
 - [x] Define visible result requirement.
+- [x] Define creator local review requirement.
 - [x] Define required tests requirement.
+- [x] Define user simulation requirement.
 - [x] Define visual feedback requirement.
 - [x] Define operational and logical feedback requirement.
 - [x] Define monitoring and performance measurement requirement.
 - [x] Define acceptance metrics requirement.
+- [x] Define code-change impact measurement requirement.
 - [x] Define telemetry export requirement.
 - [x] Define failure repair-loop requirement.
 - [x] Define evidence artifact requirement.
+- [x] Explicitly require mobile app result loops to include emulator, simulator, device, or development-build review.
+- [x] Explicitly require desktop app result loops to include local app-window review and UI automation.
 
 ## Audit tracking
 
@@ -49,6 +57,9 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [ ] Wire the gate into enforcement-tests.
 - [ ] Wire the gate into plan/write policy for long tasks and project work.
 - [ ] Update `CLAUDE.md` / `core/workflow.md` to require result-loop contract selection when applicable.
+- [ ] Add fixture that fails when a mobile contract lacks local creator review or user simulation.
+- [ ] Add fixture that fails when a desktop contract lacks local app-window review or UI automation.
+- [ ] Add fixture that fails when mobile or desktop contracts omit before/after change-impact metrics.
 
 ## Real-run evidence
 
@@ -64,7 +75,9 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 - [ ] Every applicable template/project type has a result-loop contract.
 - [ ] CI fails when a required contract is missing.
-- [ ] CI fails when a selected contract omits run, view, test, feedback, monitoring, telemetry or repair fields.
+- [ ] CI fails when a selected contract omits run, view, local creator review, test, user simulation, feedback, monitoring, telemetry or repair fields.
+- [ ] Mobile and desktop contracts prove the creator can run the app locally and inspect progress.
+- [ ] Mobile and desktop contracts prove code changes are measured against the actual app surface, not only against unit tests.
 - [ ] Project 8 has real result-loop evidence in the archive.
 - [ ] At least one later comparison run exists.
 - [ ] Monitoring sufficiency is backed by real runs, not planning claims.
