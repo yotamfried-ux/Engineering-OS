@@ -61,6 +61,7 @@ Add privacy-safe runtime telemetry collection so Engineering OS can gather real 
 - `plan.route-plan-before-write`: route plan ordering is represented as a required workflow gate and identified as the remaining history-rebuild blocker for PR #201.
 - `source.github-repo-read`: GitHub PR #201 metadata, changed files, CI runs, review thread, and failing job logs were read before fixes.
 - `validation.policy-change-has-validator`: telemetry fixture and enforcement CI install-contract checks cover recorder shape, privacy, disabled mode, summary generation, and installed hook wiring.
+- `validation.actions-checked`: GitHub Actions runs were inspected for PR #201 and the workflow contract change is validated through enforcement-tests and CI status checks.
 - `validation.coderabbit-policy`: PR body carries review fallback and merge readiness evidence; no merge occurs without owner approval and resolved review threads.
 
 ## Connector Evidence
