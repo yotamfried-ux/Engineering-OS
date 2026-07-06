@@ -50,7 +50,7 @@ No runtime product data changes. Enforcement reads Markdown plan files and targe
 
 ## Integration Impact
 
-No external connector behavior changes. This integrates existing workflow guidance and test-backed Route Plan validation with the Result Loop path. Direct PR-policy workflow and pre-write hook wiring remain documented limitations rather than claimed enforcement.
+No external connector behavior changes. This integrates existing workflow guidance and test-backed Route Plan validation with the Result Loop path. Direct always-on PR-policy wiring and runtime hook wiring remain documented limitations rather than claimed enforcement.
 
 ## Validation Plan
 
@@ -64,12 +64,12 @@ None. Full result-loop manifest/gate work remains dependent on separate Scaling 
 
 ## DoD / Definition of Done
 
-- [ ] Route Plan contract fields are documented in `core/task-router.md`.
-- [ ] Workflow entry gate text requires result evidence selection, not only CI.
-- [ ] Reusable checker rejects route plans missing roadmap/contract fields for code/config/test changes.
-- [ ] Positive and negative fixtures cover the new checker.
-- [ ] Audit addendum is updated without claiming full result-loop enforcement.
-- [ ] PR body documents dependencies and merge readiness honestly.
+- [x] Route Plan contract fields are documented in `core/task-router.md`.
+- [x] Workflow entry gate text requires result evidence selection, not only CI.
+- [x] Reusable checker rejects route plans missing roadmap/contract fields for code/config/test changes.
+- [x] Positive and negative fixtures cover the new checker.
+- [x] Audit addendum is updated without claiming full result-loop enforcement.
+- [x] PR body documents dependencies and merge readiness honestly.
 
 ## Claude Run Trace
 
@@ -82,6 +82,7 @@ None. Full result-loop manifest/gate work remains dependent on separate Scaling 
 
 - start: PR #212 merged; required planning docs exist on main, but result-loop/scaling gates and manifests are not present. This branch will enforce Route Plan field selection only and document full gate dependency.
 - mid: Route Plan fields are now documented in `core/task-router.md` and `core/workflow.md`; `check-route-plan-contract.py` plus `test-route-plan-contract.sh` provide positive/negative fixtures. Direct always-on PR-policy wiring is still not present.
+- pre-merge: Final plan keeps full Result Loop Gate and Scaling Gate as dependencies. This branch is ready for PR review as a workflow/route-plan integration layer, not as full contract enforcement.
 
 ## Capability Evidence
 
