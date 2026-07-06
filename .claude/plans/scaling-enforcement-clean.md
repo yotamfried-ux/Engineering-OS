@@ -9,7 +9,7 @@
 | Planning Mode | approved |
 | Task-router evidence | core/task-router.md checked. |
 | Workflow evidence | core/workflow.md checked. |
-| Target paths | scripts/enforcement/check-scaling-extension.py, scripts/enforcement/waiver-requirements.tsv, scripts/enforcement/tests/test-scaling-extension.sh, scripts/enforcement/tests/test-scaling-manifests.sh, scripts/enforcement/reference-repositories.tsv, scripts/enforcement/code-example-requirements.tsv |
+| Target paths | scripts/enforcement/check-scaling-extension.py, scripts/enforcement/tests/test-scaling-extension.sh, scripts/enforcement/tests/test-scaling-manifests.sh, scripts/enforcement/reference-repositories.tsv, scripts/enforcement/waiver-requirements.tsv |
 | Templates | internal governance work; no app template required |
 | Architecture guides | docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md |
 | Patterns | internal manifest enforcement pattern reused |
@@ -29,19 +29,16 @@
 | docs/operations/project-type-roadmaps.md | checked |
 | docs/operations/result-loop-contract-audit-checklist.md | checked |
 | scripts/enforcement/project-type-roadmaps.tsv | checked |
-| scripts/enforcement/result-loop-requirements.tsv | checked |
 | scripts/enforcement/template-requirements.tsv | checked |
-| scripts/enforcement/reference-repositories.tsv | checked |
-| scripts/enforcement/code-example-requirements.tsv | checked |
 
 ## Capability Evidence
 
 - `routing.task-router-read` — core/task-router.md read.
 - `workflow.workflow-read` — core/workflow.md read.
 - `plan.route-plan-before-write` — route plan was committed before checker and test files.
-- `source.github-repo-read` — merged manifests read from GitHub.
-- `validation.policy-change-has-validator` — checker and shell validation added.
-- `validation.coderabbit-policy` — fallback self-review is recorded in the PR body because no CodeRabbit approval is recorded.
+- `source.github-repo-read` — manifests and PR files were read from GitHub.
+- `validation.policy-change-has-validator` — checker and negative fixtures were added.
+- `validation.coderabbit-policy` — fallback self-review is recorded in the PR body.
 
 ## Skill Evidence
 
@@ -54,10 +51,10 @@
 ## Connector Usage Evidence
 
 - source: GitHub connector repository yotamfried-ux/Engineering-OS.
-- action: inspected main, branch eos-clean-20260706, PR #219 files, and CI status.
-- result: scripts/enforcement/check-scaling-extension.py and scripts/enforcement/tests/test-scaling-extension.sh identified the gate target.
-- decision: kept scope to scaling enforcement files and aligned manifest schema coverage.
-- target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; scripts/enforcement/tests/test-scaling-manifests.sh; scripts/enforcement/reference-repositories.tsv; scripts/enforcement/code-example-requirements.tsv; scripts/enforcement/waiver-requirements.tsv
+- action: inspected branch eos-clean-20260706, PR #219 files, and CI status.
+- result: scripts/enforcement/check-scaling-extension.py and scripts/enforcement/tests/test-scaling-extension.sh identified the target.
+- decision: kept scope to scaling enforcement files and updated the fixture selector.
+- target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; scripts/enforcement/tests/test-scaling-manifests.sh; scripts/enforcement/reference-repositories.tsv; scripts/enforcement/waiver-requirements.tsv
 
 ## Documentation Asset Evidence
 
@@ -65,25 +62,13 @@
 - context7: not required because this PR changes internal manifest enforcement logic and adds no external library, framework, SDK, API, or service.
 - decision: internal docs and manifests define the scaling enforcement contract.
 
-## Claude Run Trace
-
-- goal: validate scaling manifests and extension metadata deterministically.
-- hypothesis: a Python checker plus shell fixtures can reject incomplete scaling additions.
-- connectors: GitHub connector.
-- steps: read current sources, add route plan first, add checker, add tests, validate via CI.
-- evidence: scripts/enforcement/check-scaling-extension.py and scripts/enforcement/tests/test-scaling-extension.sh.
-- rejected: broad readiness claim and first real target-project evidence.
-- result: checker, waiver manifest, and shell fixture test were added after the route plan.
-
 ## Progress Lifecycle Evidence
 
 - start: reviewed routing, workflow, scaling procedure, roadmap catalog, audit checklist, and merged manifests before code files.
 - mid: added the checker, waiver manifest, and shell fixture test after the route plan.
-- pre-merge: reviewed the final changed files and prepared CI validation with no real-run readiness claim.
-- cleanup: recorded missing capability and documentation asset evidence after CI identified policy gaps; no readiness claim was added.
-- pre-merge: checked final files after the test path repair and kept scope to the scaling gate artifact.
-- pre-merge: aligned documentation source schema with the active manifest and checked fixture coverage for scaling gate evidence.
-- pre-merge: reviewed checker-focused coverage, manifest schema test updates, and reference metadata alignment after the final code/config changes.
+- pre-merge: reviewed changed files and prepared CI validation with no real-run readiness claim.
+- cleanup: recorded missing capability and documentation evidence after CI policy feedback.
+- pre-merge: fixed root calculation, checker coverage, manifest schema validation, and docs metadata fixture selector.
 
 ## DoD
 
