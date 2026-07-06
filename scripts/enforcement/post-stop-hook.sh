@@ -4,6 +4,22 @@ set -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
 
+TELEMETRY_STATUS="telemetry not recorded"
+if [ "${EOS_TELEMETRY_DISABLED:-0}" != "1" ]; then
+  ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  TELEMETRY_FILE="${EOS_TELEMETRY_FILE:-$ROOT/.engineering-os/telemetry/events.jsonl}"
+  TELEMETRY_SUMMARY="${EOS_TELEMETRY_SUMMARY_FILE:-$ROOT/.engineering-os/telemetry/summary.md}"
+  TELEMETRY_SUMMARY_SCRIPT="$SCRIPT_DIR/../monitoring/eos-telemetry-summary.py"
+  if [ -f "$TELEMETRY_FILE" ] && [ -f "$TELEMETRY_SUMMARY_SCRIPT" ]; then
+    mkdir -p "$(dirname "$TELEMETRY_SUMMARY")"
+    if python3 "$TELEMETRY_SUMMARY_SCRIPT" "$TELEMETRY_FILE" --output "$TELEMETRY_SUMMARY" 2>/dev/null; then
+      TELEMETRY_STATUS="telemetry summary: ${TELEMETRY_SUMMARY#$ROOT/}"
+    else
+      TELEMETRY_STATUS="telemetry summary failed"
+    fi
+  fi
+fi
+
 RUNTIME_STATUS="runtime evidence checker missing"
 if [ ! -f "$SCRIPT_DIR/check-runtime-evidence.sh" ]; then
   printf '{"decision":"block","reason":"runtime evidence checker missing"}'
@@ -26,7 +42,7 @@ NT_STATUS="$(evidence_has notion_spec_created 2>/dev/null && printf 'Notion spec
 VF_STATUS="$(evidence_has superpowers_verify_run 2>/dev/null && printf 'verified' || printf 'superpowers-verify not run')"
 CN_STATUS="$(evidence_has connector_used 2>/dev/null && printf 'connector evidence' || printf 'no connector evidence')"
 
-SESSION_MSG="Session: ${GQ_STATUS} | ${TR_STATUS} | ${NT_STATUS} | ${VF_STATUS} | ${CN_STATUS} | ${RUNTIME_STATUS}. "
+SESSION_MSG="Session: ${GQ_STATUS} | ${TR_STATUS} | ${NT_STATUS} | ${VF_STATUS} | ${CN_STATUS} | ${RUNTIME_STATUS} | ${TELEMETRY_STATUS}. "
 
 NMSG=""
 if evidence_has notion_spec_created 2>/dev/null; then
