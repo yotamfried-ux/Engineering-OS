@@ -69,10 +69,11 @@
 
 - start: Branch created from main and this Route Plan committed before implementation changes.
 - mid: Recorder, summary, and fixture alignment updates were committed after the plan-first commit.
+- pre-merge: After the follow-up fixture assertion commit, the changed targets are limited to recorder, summary, fixture, and this plan; PR CI remains the merge gate.
 
 ## Claude Run Trace
 
 - goal: improve telemetry investigation data.
 - connectors: github.
-- evidence: current main telemetry implementation, settings hook wiring, updated recorder, updated summary reporter, and fixture alignment.
+- evidence: current main telemetry implementation, settings hook wiring, updated recorder, updated summary reporter, fixture alignment, and PR #205 CI.
 - limitation: full monitoring sufficiency still needs real project data before closure.
