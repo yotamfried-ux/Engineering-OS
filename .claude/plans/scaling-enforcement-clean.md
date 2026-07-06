@@ -74,6 +74,7 @@
 
 - start: reviewed routing, workflow, scaling procedure, roadmap catalog, audit checklist, and merged manifests before code files.
 - mid: added the checker, waiver manifest, and shell fixture test after the route plan.
+- pre-merge: reviewed the final changed files and prepared CI validation with no real-run readiness claim.
 
 ## DoD
 
