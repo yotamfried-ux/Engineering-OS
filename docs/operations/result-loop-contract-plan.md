@@ -128,3 +128,4 @@ When a feedback surface fails, the AI must:
 - Do not claim every project type is already result-loop ready.
 - Do not claim monitoring sufficiency before real Project 8 and at least one future comparison run exist.
 - Do not store raw user/model text, shell commands, credentials, connector payloads, or private transcript data in telemetry artifacts.
+- Redact or exclude evidence artifacts before export or archive when they may contain raw user/model text, shell commands, credentials, connector payloads, private transcript data, personal data, or other secrets.
