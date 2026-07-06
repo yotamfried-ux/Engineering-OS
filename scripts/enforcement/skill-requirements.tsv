@@ -1,0 +1,2 @@
+# skill_requirement_id	status	project_type_id	source_path	target_path	trigger_rule	evidence_rule	exemption_state	audit_link	gap_link
+web-skills	active	web-application	external-skills/README.md	scripts/enforcement/skill-requirements.tsv	task-router	selected_or_waived	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
