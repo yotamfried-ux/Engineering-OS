@@ -37,7 +37,7 @@ mv "$repo/roadmaps.tmp" "$repo/scripts/enforcement/project-type-roadmaps.tsv"
 expect_reject missing-roadmap "$repo"
 
 repo="$(copy_repo missing-docs-metadata)"
-awk 'BEGIN{FS=OFS="\t"} /^web-/{$6="NONE"} {print}' "$repo/scripts/enforcement/documentation-sources.tsv" > "$repo/docs.tmp"
+awk 'BEGIN{FS=OFS="\t"} $3=="web-application"{$6="NONE"} {print}' "$repo/scripts/enforcement/documentation-sources.tsv" > "$repo/docs.tmp"
 mv "$repo/docs.tmp" "$repo/scripts/enforcement/documentation-sources.tsv"
 expect_reject missing-docs-metadata "$repo"
 
