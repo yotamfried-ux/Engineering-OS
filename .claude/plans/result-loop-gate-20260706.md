@@ -37,9 +37,9 @@
 
 - `routing.task-router-read` — core/task-router.md read.
 - `workflow.workflow-read` — core/workflow.md read.
-- `plan.route-plan-before-write` — this route plan is created before result-loop checker and manifest edits.
+- `plan.route-plan-before-write` — this route plan was created before result-loop checker and manifest edits.
 - `source.github-repo-read` — repository files, manifests, audit checklist, and open PR context were read through GitHub.
-- `validation.policy-change-has-validator` — this PR will add checker and positive/negative fixtures.
+- `validation.policy-change-has-validator` — checker and positive/negative fixtures were added.
 - `validation.coderabbit-policy` — PR body will record external review status or fallback self-review before merge readiness.
 
 ## Skill Evidence
@@ -54,8 +54,8 @@
 
 - source: GitHub connector repository yotamfried-ux/Engineering-OS.
 - action: inspected main, open PR #216, result-loop docs, audit files, manifests, and enforcement workflow.
-- result: docs/operations/result-loop-contract-plan.md and scripts/enforcement/result-loop-requirements.tsv show the planned gate and placeholder manifest state.
-- decision: selected a new focused Result Loop Contract Gate PR before touching workflow integration PR #216.
+- result: scripts/enforcement/check-result-loop-contract.py and scripts/enforcement/tests/test-result-loop-contract.sh now implement deterministic contract coverage and negative fixtures.
+- decision: added a focused Result Loop Contract Gate PR before touching workflow integration PR #216.
 - target: scripts/enforcement/check-result-loop-contract.py; scripts/enforcement/tests/test-result-loop-contract.sh; scripts/enforcement/result-loop-requirements.tsv; .claude/plans/result-loop-gate-20260706.md
 
 ## Documentation Asset Evidence
@@ -68,18 +68,19 @@
 
 - result: continued after Scaling Gate PR #219 was merged.
 - result: found PR #216 for Workflow Integration, but kept this PR focused on Result Loop Contract Gate because #216 is not the full gate.
+- result: added a checker, concrete manifest rows, and negative fixture coverage for missing row, placeholder field, missing mobile local review, missing API performance, missing telemetry export, and missing game playable surface.
 
 ## Progress Lifecycle Evidence
 
 - start: read routing/workflow/capability context, result-loop plan, audit checklist, known gaps, current manifest, and enforcement workflow before code changes.
-- mid: pending checker, manifest, and regression fixtures.
-- pre-merge: pending final CI and review-thread validation.
+- mid: added result-loop checker, concrete result-loop manifest contracts, and regression fixture script.
+- pre-merge: updated route-plan checkpoint after code and manifest changes; pending PR CI and review-thread validation.
 
 ## DoD
 
-- [ ] Result-loop checker exists.
-- [ ] Result-loop manifest rows contain concrete contract values instead of placeholders.
-- [ ] Positive and negative fixtures prove incomplete contracts fail.
-- [ ] Gate is included in enforcement-tests through the test glob.
+- [x] Result-loop checker exists.
+- [x] Result-loop manifest rows contain concrete contract values instead of placeholders.
+- [x] Positive and negative fixtures prove incomplete contracts fail.
+- [x] Gate is included in enforcement-tests through the test glob.
 - [ ] PR body records review fallback and merge-readiness evidence.
-- [ ] No full operational readiness or Project 8 real-run claim is made.
+- [x] No full operational readiness or Project 8 real-run claim is made.
