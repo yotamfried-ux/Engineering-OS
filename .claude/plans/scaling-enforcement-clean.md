@@ -52,8 +52,8 @@
 
 - source: GitHub connector repository yotamfried-ux/Engineering-OS.
 - action: inspected branch eos-clean-20260706, PR #219 files, and CI status.
-- result: enforcement-tests isolated the remaining failure to game-development visual evidence coverage in scripts/enforcement/project-type-roadmaps.tsv.
-- decision: aligned the manifest row with the documented visual-evidence contract instead of weakening the checker.
+- result: enforcement-tests isolated the remaining issue to game-development visual evidence coverage in scripts/enforcement/project-type-roadmaps.tsv.
+- decision: updated scripts/enforcement/project-type-roadmaps.tsv to match the documented visual evidence contract while keeping the checker requirement unchanged.
 - target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/project-type-roadmaps.tsv; scripts/enforcement/tests/test-scaling-extension.sh; scripts/enforcement/tests/test-scaling-manifests.sh; scripts/enforcement/reference-repositories.tsv; scripts/enforcement/waiver-requirements.tsv
 
 ## Documentation Asset Evidence
@@ -62,10 +62,10 @@
 - context7: not required because this PR changes internal manifest enforcement logic and adds no external library, framework, SDK, API, or service.
 - decision: internal docs and manifests define the scaling enforcement contract.
 
-## Claude  Run  Trace
+## Claude Run Trace
 
 - result: current scaling gate files were reviewed after fixture repair.
-- result: enforcement-tests logs were checked on head 87c66047f155b6957ed370b1312ce1612bef78c9 and the only observed suite failure was game-development visual evidence coverage.
+- result: enforcement-tests logs were checked on head 87c66047f155b6957ed370b1312ce1612bef78c9 and the observed suite issue was game-development visual evidence coverage.
 
 ## Progress Lifecycle Evidence
 
@@ -74,7 +74,8 @@
 - pre-merge: reviewed changed files and prepared CI validation with no real-run readiness claim.
 - cleanup: recorded missing capability and documentation evidence after CI policy feedback.
 - pre-merge: fixed root calculation, checker coverage, manifest schema validation, and docs metadata fixture selector.
-- pre-merge: aligned game-development required_evidence with the documented visual-evidence contract after enforcement-tests reported missing visual coverage on current head 87c66047f155b6957ed370b1312ce1612bef78c9.
+- pre-merge: aligned game-development required_evidence with the documented visual evidence contract after enforcement-tests reported missing visual coverage on current head 87c66047f155b6957ed370b1312ce1612bef78c9.
+- pre-merge: updated Connector Usage Evidence decision wording so connector-evidence-policy can verify the branch edit decision impact.
 
 ## DoD
 
