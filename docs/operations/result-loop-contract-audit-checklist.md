@@ -91,37 +91,38 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [x] Add `scripts/enforcement/pattern-requirements.tsv` or equivalent inventory for required patterns.
 - [x] Add `scripts/enforcement/skill-requirements.tsv` or equivalent inventory for required skills.
 - [x] Add or extend connector inventory requirements for connector-dependent workflows.
+- [x] Add `scripts/enforcement/waiver-requirements.tsv` for scoped waiver metadata.
 - [x] Document the schema for each manifest, including required columns and allowed exemption states.
 
 ## Scaling gate implementation
 
-- [ ] Implement deterministic scaling gate, such as `scripts/enforcement/check-scaling-extension.py`.
-- [ ] Reuse or extend existing template coverage checks so new template directories cannot bypass `template-requirements.tsv`.
-- [ ] Fail CI when a new project type appears in templates, docs, route plans, or roadmap files without all required registry mappings.
-- [ ] Fail CI when roadmap rows lack official source references.
-- [ ] Fail CI when documentation sources lack reason, freshness/version note, consult rule, or fallback/waiver behavior.
-- [ ] Fail CI when reference repositories lack license/usage note, relevance, freshness status, or validation evidence.
-- [ ] Fail CI when code examples lack a run path or validation path.
-- [ ] Fail CI when patterns or skills are referenced by workflows without inventory/rule coverage.
-- [ ] Fail CI when connector-dependent workflows lack connector evidence requirements or fallback behavior.
+- [x] Implement deterministic scaling gate, such as `scripts/enforcement/check-scaling-extension.py`.
+- [x] Reuse or extend existing template coverage checks so new template directories cannot bypass `template-requirements.tsv`.
+- [x] Fail CI when a new project type appears in templates, docs, route plans, or roadmap files without all required registry mappings.
+- [x] Fail CI when roadmap rows lack official source references.
+- [x] Fail CI when documentation sources lack reason, freshness/version note, consult rule, or fallback/waiver behavior.
+- [x] Fail CI when reference repositories lack license/usage note, relevance, freshness status, or validation evidence.
+- [x] Fail CI when code examples lack a run path or validation path.
+- [x] Fail CI when patterns or skills are referenced by workflows without inventory/rule coverage.
+- [x] Fail CI when connector-dependent workflows lack connector evidence requirements or fallback behavior.
 - [ ] Fail CI when telemetry export is missing from a new project type, template, or result-loop contract.
-- [ ] Fail CI when a waiver/exemption is malformed, unscoped, or not linked to audit/known gaps.
-- [ ] Fail CI when audit marks a scaling item complete before the corresponding enforcement artifact exists.
+- [x] Fail CI when a waiver/exemption is malformed, unscoped, or not linked to audit/known gaps.
+- [x] Fail CI when audit marks a scaling item complete before the corresponding enforcement artifact exists.
 
 ## Scaling fixtures and regression tests
 
-- [ ] Add positive fixture: a fully registered project type passes scaling enforcement.
-- [ ] Add negative fixture: a new template directory without `template-requirements.tsv` row fails.
-- [ ] Add negative fixture: a new project type without roadmap row fails.
-- [ ] Add negative fixture: a roadmap row without official sources fails.
-- [ ] Add negative fixture: documentation source without freshness/version note or consult rule fails.
-- [ ] Add negative fixture: reference repository without license/usage/freshness status fails.
-- [ ] Add negative fixture: code example without run/validation path fails.
-- [ ] Add negative fixture: pattern/skill referenced by workflow without inventory coverage fails.
-- [ ] Add negative fixture: connector-dependent workflow without connector evidence rule fails.
-- [ ] Add negative fixture: waiver without scope/reason/audit link fails.
-- [ ] Add game-development fixture proving playable local surface, gameplay simulation, visual evidence, performance metrics, and telemetry are required.
-- [ ] Wire scaling fixtures into `enforcement-tests`.
+- [x] Add positive fixture: a fully registered project type passes scaling enforcement.
+- [x] Add negative fixture: a new template directory without `template-requirements.tsv` row fails.
+- [x] Add negative fixture: a new project type without roadmap row fails.
+- [x] Add negative fixture: a roadmap row without official sources fails.
+- [x] Add negative fixture: documentation source without freshness/version note or consult rule fails.
+- [x] Add negative fixture: reference repository without license/usage/freshness status fails.
+- [x] Add negative fixture: code example without run/validation path fails.
+- [x] Add negative fixture: pattern/skill referenced by workflow without inventory coverage fails.
+- [x] Add negative fixture: connector-dependent workflow without connector evidence rule fails.
+- [x] Add negative fixture: waiver without scope/reason/audit link fails.
+- [x] Add game-development fixture proving playable local surface, gameplay simulation, visual evidence, performance metrics, and telemetry are required.
+- [x] Wire scaling fixtures into `enforcement-tests`.
 
 ## Audit tracking
 
