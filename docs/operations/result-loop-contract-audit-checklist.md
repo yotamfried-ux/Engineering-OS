@@ -65,8 +65,8 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [x] Define the complete checklist for adding a new project type without one-off work.
 - [x] Add game-development as the concrete scaling example.
 - [x] Define manifest-driven target architecture for scalable extension.
-- [ ] Add source-of-truth scaling audit row in `docs/operations/operational-readiness-audit.md`.
-- [ ] Add non-closed known gap for missing scaling enforcement in `docs/operations/known-gaps.tsv`.
+- [x] Add source-of-truth scaling audit row in `docs/operations/operational-readiness-audit.md`.
+- [x] Add non-closed known gap for missing scaling enforcement in `docs/operations/known-gaps.tsv`.
 
 ## Scaling category coverage
 
@@ -78,7 +78,7 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [ ] Skills: every required skill has an inventory row, trigger rule, evidence rule, or explicit exemption.
 - [ ] Code examples: every starter/example has a run path, validation path, owner/source, supported template, and stale/unverified status when not validated.
 - [ ] Connectors: every connector-dependent workflow has a connector inventory entry, usage evidence requirement, fallback rule, and audit linkage.
-- [ ] Telemetry: every new extension type defines how metadata-only telemetry is exported and imported into the archive.
+- [ ] Telemetry: every new extension type defines how metadata-only telemetry is exported and imported into the telemetry store.
 - [ ] Waivers: every exemption has a reason, owner/context, scope, expiry or revisit trigger, and audit linkage.
 
 ## Scaling manifests to add
@@ -127,8 +127,8 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 - [x] Create result-loop contract plan.
 - [x] Create result-loop audit checklist.
-- [ ] Add source-of-truth operational readiness audit row.
-- [ ] Add non-closed known gap for missing result-loop enforcement.
+- [x] Add source-of-truth operational readiness audit row.
+- [x] Add non-closed known gap for missing result-loop enforcement.
 - [ ] Add regression test for result-loop planning references.
 
 ## Enforcement implementation
@@ -163,9 +163,9 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 ## Real-run evidence
 
-- [ ] Run Project 8 using the new result-loop contract.
+- [ ] Run the first real target-project using the new result-loop contract.
 - [ ] Export telemetry bundle after the run.
-- [ ] Import Project 8 telemetry into `telemetry-archive`.
+- [ ] Import first real-run telemetry into `telemetry-store`.
 - [ ] Review visual, operational, logical and performance evidence artifacts.
 - [ ] Identify missing coverage from the real run.
 - [ ] Convert severe or repeated missing coverage into follow-up work.
@@ -188,6 +188,6 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [ ] Mobile and desktop contracts prove code changes are measured against the actual app surface, not only against unit tests.
 - [ ] Game-development contracts prove a playable local surface, automated gameplay simulation, visual evidence, and performance metrics.
 - [ ] Scaling simulations prove both complete additions and rejected incomplete additions.
-- [ ] Project 8 has real result-loop evidence in the archive.
+- [ ] First real target-project run has real result-loop evidence in the telemetry store.
 - [ ] At least one later comparison run exists.
 - [ ] Monitoring sufficiency is backed by real runs, not planning claims.
