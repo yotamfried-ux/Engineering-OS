@@ -1,0 +1,12 @@
+# case_id	expected	coverage
+positive-complete-project-type	pass	fully registered project type passes
+template-without-manifest-row	fail	new template directory must have template-requirements.tsv row
+project-type-without-roadmap	fail	manifest-referenced project type must have roadmap row
+roadmap-without-official-sources	fail	active roadmap row must have active official documentation source URL
+docs-source-without-freshness-consult-rule	fail	documentation source requires reason freshness consult rule fallback
+reference-repo-without-license-freshness	fail	active reference repository requires license freshness validation state
+code-example-without-run-validation	fail	active code example requires run and validation paths
+pattern-skill-without-inventory	fail	active project type needs pattern and skill coverage
+connector-workflow-without-evidence-rule	fail	connector workflow requires evidence and fallback
+waiver-without-scope-reason-audit-link	fail	waiver requires reason scope owner revisit audit gap links
+game-development-without-playable-performance	fail	game-development requires playable surface and performance metrics
