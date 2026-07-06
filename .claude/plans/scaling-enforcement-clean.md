@@ -39,7 +39,7 @@
 - `plan.route-plan-before-write` — this route plan was committed before checker and test files; later cleanup commits only added missing evidence after policy feedback.
 - `source.github-repo-read` — merged manifests read.
 - `validation.policy-change-has-validator` — checker and shell validation added.
-- `validation.coderabbit-policy` — review status will be checked before merge; fallback self-review is recorded in the PR body if CodeRabbit is unavailable.
+- `validation.coderabbit-policy` — review status checked before merge; fallback self-review is recorded in the PR body if CodeRabbit is unavailable.
 
 ## Skill Evidence
 
@@ -79,6 +79,7 @@
 - mid: added the checker, waiver manifest, and shell fixture test after the route plan.
 - pre-merge: reviewed the final changed files and prepared CI validation with no real-run readiness claim.
 - cleanup: recorded missing capability and documentation asset evidence after CI identified policy gaps; no readiness claim was added.
+- pre-merge: checked final files after the test path repair and kept scope to the scaling gate artifact.
 
 ## DoD
 
