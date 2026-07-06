@@ -39,6 +39,12 @@ Planning Mode: evidence-pass
 | docs/operations/scaling-extension-procedure.md | checked | New project types must pass through scaling extension procedure and registry-backed path. |
 | scripts/enforcement/check-workflow-evidence.sh | checked | Existing PR workflow evidence checker is the correct future home for diff-wide route-plan enforcement. |
 
+## Documentation Asset Evidence
+
+- internal: core/task-router.md; core/workflow.md; docs/operations/result-loop-contract-plan.md; docs/operations/scaling-extension-procedure.md; docs/operations/result-loop-contract-audit-checklist.md
+- context7: not required because this governance change is internal-only and does not implement or integrate any external library, framework, sdk, api, or service.
+- decision: internal docs confirmed that this PR should wire route-plan selection into workflow/router and keep full gate enforcement as a separate dependency.
+
 ## Affected Surfaces
 
 - `core/task-router.md` — add deterministic Route Plan field requirements.
@@ -81,14 +87,14 @@ None. Full result-loop manifest/gate work remains dependent on separate Scaling 
 - Added router/workflow docs, route-plan checker, fixture tests, and audit addendum.
 - Direct always-on PR-policy wiring and runtime hook wiring are not present in this branch.
 - Restored `core/workflow.md` to a focused diff after detecting that an earlier replacement removed too much existing content.
-- Updated this plan after CI showed missing route-plan, capability, and connector evidence fields.
+- Updated this plan after CI showed missing route-plan, capability, connector, and documentation evidence fields.
 
 ## Progress Lifecycle Evidence
 
-- start: PR #212 merged; required planning docs exist on main, but result-loop/scaling gates and manifests are not present. This branch will enforce Route Plan field selection only and document full gate dependency.
-- mid: Route Plan fields are now documented in `core/task-router.md` and `core/workflow.md`; `check-route-plan-contract.py` plus `test-route-plan-contract.sh` provide positive/negative fixtures. Direct always-on PR-policy wiring is still not present.
-- pre-merge: Final cleanup restored workflow structure to a focused diff, keeps full Result Loop Gate and Scaling Gate as dependencies, and leaves this branch ready for PR review as workflow/route-plan integration rather than full contract enforcement.
-- pre-merge-ci-fix: Plan-only update adds missing Architecture guides, External systems/connectors, and registry-backed Capability Evidence fields after CI identified missing plan evidence.
+- start: PR #212 merged; required planning docs exist on main; result-loop and scaling gates plus manifests are absent on main; branch scope is Route Plan field selection only.
+- mid: Route Plan fields are documented in `core/task-router.md` and `core/workflow.md`; `check-route-plan-contract.py` plus `test-route-plan-contract.sh` provide positive and negative fixtures.
+- pre-merge: Workflow structure is restored to a focused diff; full Result Loop Gate and Scaling Gate remain dependencies; this branch is workflow and route-plan integration rather than full contract enforcement.
+- pre-merge-ci-fix: Plan-only update adds missing Architecture guides, External systems/connectors, registry-backed Capability Evidence, and Documentation Asset Evidence fields after CI identified missing plan evidence.
 
 ## Capability Evidence
 
