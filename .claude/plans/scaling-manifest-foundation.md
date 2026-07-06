@@ -2,67 +2,67 @@
 
 | Field | Value |
 |---|---|
-| Task type | Engineering OS maintenance / governance |
+| Task type | Engineering OS maintenance |
 | Task class | engineering_os_governance |
-| Domain tags | governance, enforcement, scaling, manifests, result-loop |
+| Domain tags | governance, enforcement, scaling, manifests |
 | Plan Scope | standard |
 | Planning Mode | approved |
 | Task-router evidence | core/task-router.md checked. |
-| Workflow evidence | core/workflow.md checked; .claude/plans fallback used. |
-| Target paths | scripts/enforcement/project-type-roadmaps.tsv, scripts/enforcement/result-loop-requirements.tsv, scripts/enforcement/documentation-sources.tsv, scripts/enforcement/reference-repositories.tsv, scripts/enforcement/code-example-requirements.tsv, scripts/enforcement/pattern-requirements.tsv, scripts/enforcement/skill-requirements.tsv, scripts/enforcement/connector-workflow-requirements.tsv, scripts/enforcement/README.md, scripts/enforcement/tests/test-scaling-manifests.sh, docs/operations/result-loop-contract-audit-checklist.md |
-| Templates | not required for internal governance work |
+| Workflow evidence | core/workflow.md checked. |
+| Target paths | scripts/enforcement/*.tsv, scripts/enforcement/README.md, scripts/enforcement/tests/test-scaling-manifests.sh, docs/operations/result-loop-contract-audit-checklist.md |
+| Templates | internal governance work; no app template required |
 | Architecture guides | docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md, docs/operations/result-loop-contract-plan.md |
-| Patterns | not required for manifest-only registry work |
+| Patterns | internal manifest work; no implementation pattern required |
 | External systems/connectors | github |
 | Skills | superpowers |
 | Validation gates | enforcement-tests, workflow-evidence-policy, connector-evidence-policy, documentation-asset-policy, capability-evidence-policy, pr-policy |
-| Evidence to check | docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md, docs/operations/result-loop-contract-plan.md, docs/operations/result-loop-contract-audit-checklist.md, scripts/enforcement/template-requirements.tsv, templates/README.md |
-| User decisions required | no user decision required; scope excludes Project 8 and merge-to-main. |
+| Evidence to check | docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md, docs/operations/result-loop-contract-plan.md, scripts/enforcement/template-requirements.tsv, templates/README.md |
+| User decisions required | no user decision required. |
 
 ## Scope
 
-Add simple TSV manifests, schema documentation, minimal roadmap project-type rows, and parsing tests. Do not implement or claim the final scaling/result-loop gates.
+Add TSV manifests, schema documentation, project-type rows, and parser tests. Final gates remain follow-up work.
 
 ## Alternatives
 
-- Full scaling gate now — rejected as out of scope.
-- Complex schema — rejected because the requested schema is intentionally simple.
-- Free-form docs only — rejected because scaling must be registry-backed.
+- Implement gates now — rejected as out of scope.
+- Use complex schema — rejected because TSV is enough for this foundation.
+- Use free-form docs only — rejected because scaling needs registries.
 
 ## Capability Evidence
 
-- `routing.task-router-read` — core/task-router.md read before writing.
-- `workflow.workflow-read` — core/workflow.md read before writing.
-- `plan.route-plan-before-write` — this plan was committed before manifest/test/audit changes.
-- `source.github-repo-read` — GitHub connector read the required repository files from main.
-- `validation.policy-change-has-validator` — added scripts/enforcement/tests/test-scaling-manifests.sh.
-- `validation.coderabbit-policy` — PR review status is checked before merge readiness is claimed.
+- `routing.task-router-read` — core/task-router.md read.
+- `workflow.workflow-read` — core/workflow.md read.
+- `plan.route-plan-before-write` — this plan was committed before edits.
+- `source.github-repo-read` — required repo files were read.
+- `validation.policy-change-has-validator` — scripts/enforcement/tests/test-scaling-manifests.sh added.
+- `validation.coderabbit-policy` — PR comments and threads checked.
 
 ## Connector Evidence
 
-- github: active source-of-truth connector for repository files, branch, PR, and review status.
+- github: repository source, branch, PR, and review status.
 
 ## Connector Usage Evidence
 
-- source: github repository yotamfried-ux/Engineering-OS read docs/operations/scaling-extension-procedure.md and scripts/enforcement/template-requirements.tsv.
-- action: github fetch_file, create_branch, create_file, update_file, create_pull_request, update_pull_request.
-- result: repository paths docs/operations/result-loop-contract-audit-checklist.md and scripts/enforcement/template-requirements.tsv showed manifest tasks and existing inventory shape.
-- decision: added TSV manifests under scripts/enforcement and kept connector-requirements.tsv unchanged.
+- source: yotamfried-ux/Engineering-OS.
+- action: fetch_file, create_branch, create_file, update_file, create_pull_request, update_pull_request.
+- result: open manifest tasks and existing inventory files were inspected.
+- decision: add scaling manifests and leave existing connector inventory in place.
 - target: scripts/enforcement/project-type-roadmaps.tsv, scripts/enforcement/result-loop-requirements.tsv, scripts/enforcement/documentation-sources.tsv, scripts/enforcement/reference-repositories.tsv, scripts/enforcement/code-example-requirements.tsv, scripts/enforcement/pattern-requirements.tsv, scripts/enforcement/skill-requirements.tsv, scripts/enforcement/connector-workflow-requirements.tsv, scripts/enforcement/README.md, scripts/enforcement/tests/test-scaling-manifests.sh, docs/operations/result-loop-contract-audit-checklist.md
 
 ## Documentation Asset Evidence
 
 - internal: docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md, docs/operations/result-loop-contract-plan.md, docs/operations/result-loop-contract-audit-checklist.md, scripts/enforcement/template-requirements.tsv, templates/README.md.
-- context7: not required because this is internal Engineering OS manifest/schema/test work and does not implement an external library or API.
-- decision: internal docs fixed the manifest list, project type ids, allowed evidence fields, and non-goals.
+- context7: internal manifest/schema/test work only.
+- decision: internal docs define the manifest foundation.
 
 ## Skill Evidence
 
-- superpowers: used as planning discipline through this Route Plan before repository writes.
+- superpowers: planning discipline captured through this Route Plan.
 
 ## Template Gap Waiver
 
-No application project template applies because this is internal Engineering OS governance/enforcement maintenance under scripts/enforcement and docs/operations.
+Internal governance work does not require an app template.
 
 ## Source of Truth Checks
 
@@ -81,26 +81,26 @@ No application project template applies because this is internal Engineering OS 
 
 ## Claude Run Trace
 
-- goal: add registry-backed scaling manifests and schema validation without claiming full enforcement.
-- hypothesis: simple TSV manifests plus a parser test create a stable source-of-truth foundation.
-- connectors: GitHub connector read repository source files and created branch scaling-manifest-foundation.
-- steps: read source files, commit plan first, add manifests, add README, add parser test, update completed manifest checklist rows, open PR.
+- goal: add registry-backed scaling manifests and schema validation.
+- hypothesis: TSV manifests plus parser tests create a source-of-truth layer.
+- connectors: github.
+- steps: read sources, add plan, add manifests, add docs, add parser test, update audit, open PR, refine schema validation.
 - evidence: scripts/enforcement/*.tsv, scripts/enforcement/README.md, scripts/enforcement/tests/test-scaling-manifests.sh, docs/operations/result-loop-contract-audit-checklist.md.
-- rejected: complex schema, full gate implementation, Project 8 work, and full-readiness claims.
-- result: manifest foundation is implemented; CI/review determines merge readiness.
-- follow-up: scaling gate and result-loop gate remain separate follow-up work.
+- rejected: complex schema and gate implementation.
+- result: manifest foundation implemented.
+- follow-up: deterministic scaling gate and result-loop gate.
 
 ## Progress Lifecycle Evidence
 
-- start: GitHub connector read required source files on main, branch scaling-manifest-foundation was created, and this plan was committed before manifest/test/audit changes.
-- mid: after manifest work began, the branch contained project-type, result-loop, documentation-source, reference-repository, code-example, pattern, skill, and connector workflow manifests plus README and parser test.
-- pre-merge: after the last manifest/test change, the audit was updated only for completed manifest/schema rows; scaling gate, fixtures, completion criteria, and Project 8 rows remain unchecked.
+- start: required source files were read and this plan was committed before edits.
+- mid: manifests, README, parser test, and audit row updates were added.
+- pre-merge: parser test now validates manifest-specific expected headers.
 
 ## DoD
 
 - [x] Scaling manifests exist under scripts/enforcement.
 - [x] Schema documentation explains columns, states, and row-add procedure.
-- [x] Parsing test validates column counts, non-empty rows, paths for active rows, and legal exemption states.
+- [x] Parsing test validates row shape, paths, states, and manifest-specific schemas.
 - [x] Audit checklist marks only completed manifest tasks.
-- [x] PR body states remaining scaling gate and result-loop gate follow-up.
-- [x] PR remains unmerged and does not claim full enforcement/readiness.
+- [x] PR body states remaining gate follow-up.
+- [x] PR remains unmerged.
