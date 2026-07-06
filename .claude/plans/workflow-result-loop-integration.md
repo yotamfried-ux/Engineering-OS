@@ -8,13 +8,13 @@ Planning Mode: evidence-pass
 | Task type | docs / governance / Engineering OS maintenance |
 | Task class | governance-maintenance |
 | Domain tags | workflow, governance, testing, observability |
-| Target paths | core/task-router.md, core/workflow.md, scripts/enforcement/check-route-plan-contract.py, scripts/enforcement/check-plan-scope.sh, scripts/enforcement/check-workflow-evidence.sh, scripts/enforcement/tests/test-route-plan-contract.sh, .github/workflows/enforcement-tests.yml, docs/operations/result-loop-contract-audit-checklist.md |
+| Target paths | core/task-router.md, core/workflow.md, scripts/enforcement/check-route-plan-contract.py, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md |
 | Task-router evidence | core/task-router.md read and selected as canonical routing owner |
 | Workflow evidence | core/workflow.md read and selected as canonical write-entry owner |
 | Templates | governance-maintenance waiver: not a target-project scaffold |
 | Patterns | core/workflow.md and core/task-router.md are the governing assets for this OS-maintenance change |
 | Skills | not required |
-| Validation gates | scripts/enforcement/tests/test-route-plan-contract.sh; scripts/enforcement/check-route-plan-contract.py; enforcement-tests workflow grep contract |
+| Validation gates | scripts/enforcement/tests/test-route-plan-contract.sh; scripts/enforcement/check-route-plan-contract.py; enforcement-tests picks up test-route-plan-contract.sh |
 | selected_project_type | waiver: Engineering OS governance maintenance, not a target-project type; route plans for target projects must choose a concrete project type |
 | selected_template | waiver: Engineering OS governance maintenance is not scaffolded from a target-project template |
 | selected_roadmap | waiver: docs/operations/project-type-roadmaps.md is the target-project roadmap catalog; this PR wires roadmap selection into Route Plan contract |
@@ -22,7 +22,7 @@ Planning Mode: evidence-pass
 | required_user_simulation | scripts/enforcement/tests/test-route-plan-contract.sh positive and negative route-plan fixtures |
 | local_creator_review_path | local CLI enforcement tests, no UI surface |
 | telemetry_export_path | scripts/monitoring/export-telemetry-run.sh |
-| evidence_redaction_rule | metadata-only telemetry; redact or exclude sensitive evidence before export |
+| evidence_redaction_rule | metadata-only telemetry; redact or exclude restricted evidence before export |
 | Evidence to check | CLAUDE.md; core/workflow.md; core/task-router.md; docs/operations/result-loop-contract-plan.md; docs/operations/scaling-extension-procedure.md; docs/operations/result-loop-contract-audit-checklist.md; scripts/enforcement/check-plan-scope.sh; scripts/enforcement/check-workflow-evidence.sh |
 | User decisions required | none |
 
@@ -30,22 +30,19 @@ Planning Mode: evidence-pass
 
 | Source | Status | Finding |
 |---|---|---|
-| core/task-router.md | checked | Current Route Plan output lacks selected project type, selected roadmap, selected result-loop contract, simulation, local review, telemetry, and redaction fields. |
-| core/workflow.md | checked | Workflow currently requires plan/evidence before writing but does not explicitly require result evidence selection by project type. |
+| core/task-router.md | checked | Current Route Plan output lacked selected project type, selected roadmap, selected result-loop contract, simulation, local review, telemetry, and redaction fields before this PR. |
+| core/workflow.md | checked | Workflow required plan/evidence before writing but did not explicitly require result evidence selection by project type before this PR. |
 | docs/operations/result-loop-contract-plan.md | checked | Result Loop Contract is documented as plan-only until deterministic manifests and gates are added. |
 | docs/operations/scaling-extension-procedure.md | checked | New project types must pass through scaling extension procedure and registry-backed path. |
-| scripts/enforcement/check-workflow-evidence.sh | checked | Existing PR workflow evidence checker is the right CI-level place to reject incomplete Route Plans for code/config/test changes. |
+| scripts/enforcement/check-workflow-evidence.sh | checked | Existing PR workflow evidence checker is the correct future home for diff-wide route-plan enforcement. |
 
 ## Affected Surfaces
 
 - `core/task-router.md` — add deterministic Route Plan field requirements.
 - `core/workflow.md` — connect project-type route planning to result evidence before writing.
 - `scripts/enforcement/check-route-plan-contract.py` — new reusable checker for Route Plan integration fields.
-- `scripts/enforcement/check-plan-scope.sh` — call the checker from the write-entry hook path.
-- `scripts/enforcement/check-workflow-evidence.sh` — call the checker from PR workflow evidence policy.
 - `scripts/enforcement/tests/test-route-plan-contract.sh` — positive and negative fixtures.
-- `.github/workflows/enforcement-tests.yml` — grep new router contract fields.
-- `docs/operations/result-loop-contract-audit-checklist.md` — mark only the workflow-integration pieces completed.
+- `docs/operations/workflow-result-loop-integration-audit.md` — audit addendum without claiming full result-loop enforcement.
 
 ## Data/State Impact
 
@@ -53,7 +50,7 @@ No runtime product data changes. Enforcement reads Markdown plan files and targe
 
 ## Integration Impact
 
-No external connector behavior changes. This integrates existing workflow evidence and plan-scope gates with the Route Plan contract.
+No external connector behavior changes. This integrates existing workflow guidance and test-backed Route Plan validation with the Result Loop path. Direct PR-policy workflow and pre-write hook wiring remain documented limitations rather than claimed enforcement.
 
 ## Validation Plan
 
@@ -71,17 +68,20 @@ None. Full result-loop manifest/gate work remains dependent on separate Scaling 
 - [ ] Workflow entry gate text requires result evidence selection, not only CI.
 - [ ] Reusable checker rejects route plans missing roadmap/contract fields for code/config/test changes.
 - [ ] Positive and negative fixtures cover the new checker.
-- [ ] Audit checklist is updated without claiming full result-loop enforcement.
+- [ ] Audit addendum is updated without claiming full result-loop enforcement.
 - [ ] PR body documents dependencies and merge readiness honestly.
 
 ## Claude Run Trace
 
 - Read required source files on main before writing.
 - Created this plan before any code/config/test changes on the branch.
+- Added router/workflow docs, route-plan checker, fixture tests, and audit addendum.
+- Direct always-on PR-policy wiring and runtime hook wiring are not present in this branch.
 
 ## Progress Lifecycle Evidence
 
 - start: PR #212 merged; required planning docs exist on main, but result-loop/scaling gates and manifests are not present. This branch will enforce Route Plan field selection only and document full gate dependency.
+- mid: Route Plan fields are now documented in `core/task-router.md` and `core/workflow.md`; `check-route-plan-contract.py` plus `test-route-plan-contract.sh` provide positive/negative fixtures. Direct always-on PR-policy wiring is still not present.
 
 ## Capability Evidence
 
