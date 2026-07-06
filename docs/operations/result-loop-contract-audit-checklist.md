@@ -19,6 +19,12 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [x] Appium docs researched for mobile, desktop, web, and hybrid user-flow automation.
 - [x] Playwright Electron docs researched for desktop app launch, screenshots, console logs, and UI interaction.
 - [x] Tauri WebDriver docs researched for desktop app end-to-end testing.
+- [x] MDN Learn Web Development researched for web project roadmap and local learning path.
+- [x] Android app architecture researched for mobile app architecture roadmap.
+- [x] Electron and Tauri start docs researched for desktop app roadmaps.
+- [x] FastAPI tutorial researched for API/backend roadmap.
+- [x] Click and Python packaging/venv docs researched for CLI roadmap.
+- [x] Airflow best-practices docs researched for data-pipeline roadmap.
 - [x] MLflow model evaluation researched for ML evaluation loops.
 - [x] OpenAI Evals researched for AI-agent evaluation loops.
 
@@ -40,6 +46,13 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [x] Explicitly require mobile app result loops to include emulator, simulator, device, or development-build review.
 - [x] Explicitly require desktop app result loops to include local app-window review and UI automation.
 
+## Roadmap documentation
+
+- [x] Create `docs/operations/project-type-roadmaps.md`.
+- [x] Add roadmap entries for web, mobile, desktop, API/backend, full-stack, CLI, data pipeline, ML, AI/RAG, computer-vision/video, and browser-extension work.
+- [x] Link each roadmap family to official documentation references.
+- [x] Define required roadmap fields: official sources, creation path, local creator run path, user simulation, quality gates, result evidence, monitoring, change-impact measurement, and telemetry export.
+
 ## Audit tracking
 
 - [x] Create result-loop contract plan.
@@ -57,6 +70,15 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [ ] Wire the gate into enforcement-tests.
 - [ ] Wire the gate into plan/write policy for long tasks and project work.
 - [ ] Update `CLAUDE.md` / `core/workflow.md` to require result-loop contract selection when applicable.
+- [ ] Add project-roadmap requirement to the result-loop gate.
+- [ ] Fail CI when a template/project type lacks a roadmap entry or explicit exemption.
+- [ ] Fail CI when a Route Plan selects a project type but does not name its roadmap entry.
+- [ ] Fail CI when a roadmap entry lacks official source references.
+- [ ] Fail CI when a roadmap entry lacks local creator run instructions.
+- [ ] Fail CI when mobile or desktop roadmaps lack user simulation against the actual app surface.
+- [ ] Fail CI when performance or monitoring metrics are missing for app, service, AI, ML, data, mobile, or desktop work.
+- [ ] Fail CI when before/after change-impact measurement is missing for user-visible or output-affecting changes.
+- [ ] Fail CI when telemetry export is missing from the selected roadmap.
 - [ ] Add fixture that fails when a mobile contract lacks local creator review or user simulation.
 - [ ] Add fixture that fails when a desktop contract lacks local app-window review or UI automation.
 - [ ] Add fixture that fails when mobile or desktop contracts omit before/after change-impact metrics.
@@ -74,7 +96,8 @@ Purpose: track the work needed to make long AI development sessions result-drive
 ## Completion criteria
 
 - [ ] Every applicable template/project type has a result-loop contract.
-- [ ] CI fails when a required contract is missing.
+- [ ] Every applicable template/project type has a roadmap entry or explicit exemption.
+- [ ] CI fails when a required roadmap is missing.
 - [ ] CI fails when a selected contract omits run, view, local creator review, test, user simulation, feedback, monitoring, telemetry or repair fields.
 - [ ] Mobile and desktop contracts prove the creator can run the app locally and inspect progress.
 - [ ] Mobile and desktop contracts prove code changes are measured against the actual app surface, not only against unit tests.
