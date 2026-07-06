@@ -22,6 +22,8 @@ Add privacy-safe runtime telemetry collection so Engineering OS can gather real 
 |---|---|
 | Task type | Engineering OS observability governance implementation |
 | Task class | engineering_os_governance |
+| Task-router evidence | core/task-router.md route contract used for task class, evidence, connector, skill, template, validation, and user-decision fields. |
+| Workflow evidence | core/workflow.md and check-workflow-evidence.sh lifecycle rules used for route-plan-before-code and ordered progress evidence. |
 | Domain tags | observability, telemetry, monitoring, hooks, project-8, governance |
 | Plan Scope | Add local runtime telemetry baseline and install wiring while keeping monitoring gaps open until live target-project data exists. |
 | Planning Mode | Route Plan with ordered lifecycle evidence and CI-gated implementation. |
@@ -56,7 +58,7 @@ Add privacy-safe runtime telemetry collection so Engineering OS can gather real 
 
 - `routing.task-router-read`: confirmed Route Plan contract and required fields before changing hook/config/test files.
 - `workflow.workflow-read`: confirmed ordered lifecycle evidence and CI gates for Engineering OS changes.
-- `plan.route-plan-before-write`: the corrected branch history must introduce this Route Plan before code/config/test changes.
+- `plan.route-plan-before-write`: route plan ordering is represented as a required workflow gate and identified as the remaining history-rebuild blocker for PR #201.
 - `source.github-repo-read`: GitHub PR #201 metadata, changed files, CI runs, review thread, and failing job logs were read before fixes.
 - `validation.policy-change-has-validator`: telemetry fixture and enforcement CI install-contract checks cover recorder shape, privacy, disabled mode, summary generation, and installed hook wiring.
 - `validation.coderabbit-policy`: PR body carries review fallback and merge readiness evidence; no merge occurs without owner approval and resolved review threads.
@@ -88,8 +90,11 @@ Add privacy-safe runtime telemetry collection so Engineering OS can gather real 
 - [x] Fixture test verifies raw operational text is not stored.
 - [x] Enforcement CI contract checks telemetry hook wiring in installed target settings.
 - [x] Known gaps remain open and note that project-8 data is still required.
-- [ ] GitHub Actions pass for enforcement-tests, documentation-asset-policy, workflow-evidence-policy, connector-evidence-policy, and capability-evidence-policy on the final head SHA.
-- [ ] Review threads are resolved before merge approval.
+
+## Remaining merge blockers
+
+- GitHub Actions are not green yet for enforcement-tests, workflow-evidence-policy, capability-evidence-policy, plan-policy, and pr-policy on the latest head.
+- Review thread resolution and owner approval are still required before merge.
 
 ## Progress Lifecycle Evidence
 
