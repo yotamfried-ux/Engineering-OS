@@ -20,7 +20,7 @@ Planning Mode: evidence-pass
 | selected_project_type | waiver: Engineering OS governance maintenance, not a target-project type |
 | selected_template | waiver: Engineering OS governance maintenance is not scaffolded from a target-project template |
 | selected_roadmap | waiver: docs/operations/project-type-roadmaps.md is the target-project roadmap catalog |
-| selected_result_loop_contract | requirement via docs/operations/result-loop-contract-plan.md; full contract manifest/gate dependency is absent on main |
+| selected_result_loop_contract | requirement via docs/operations/result-loop-contract-plan.md; manifest gate is absent on main |
 | required_user_simulation | scripts/enforcement/tests/test-route-plan-contract.sh fixture coverage |
 | local_creator_review_path | local CLI enforcement tests, no UI surface |
 | telemetry_export_path | scripts/monitoring/export-telemetry-run.sh |
@@ -83,10 +83,12 @@ None.
 
 - Read required source files on main before writing.
 - Created this plan before any code/config/test changes on the branch.
+- Updated `core/task-router.md` with Route Plan result-loop fields.
 
 ## Progress Lifecycle Evidence
 
 - start: PR #212 merged; required planning docs exist on main; result-loop and scaling gates plus manifests are absent on main; branch scope is Route Plan field selection only.
+- mid: `core/task-router.md` contains project type, roadmap, result-loop contract, simulation, local review, telemetry, and redaction fields.
 
 ## Capability Evidence
 
