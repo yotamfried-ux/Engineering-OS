@@ -77,12 +77,13 @@ None. Full result-loop manifest/gate work remains dependent on separate Scaling 
 - Created this plan before any code/config/test changes on the branch.
 - Added router/workflow docs, route-plan checker, fixture tests, and audit addendum.
 - Direct always-on PR-policy wiring and runtime hook wiring are not present in this branch.
+- Restored `core/workflow.md` to a focused diff after detecting that an earlier replacement removed too much existing content.
 
 ## Progress Lifecycle Evidence
 
 - start: PR #212 merged; required planning docs exist on main, but result-loop/scaling gates and manifests are not present. This branch will enforce Route Plan field selection only and document full gate dependency.
 - mid: Route Plan fields are now documented in `core/task-router.md` and `core/workflow.md`; `check-route-plan-contract.py` plus `test-route-plan-contract.sh` provide positive/negative fixtures. Direct always-on PR-policy wiring is still not present.
-- pre-merge: Final plan keeps full Result Loop Gate and Scaling Gate as dependencies. This branch is ready for PR review as a workflow/route-plan integration layer, not as full contract enforcement.
+- pre-merge: Final cleanup restored workflow structure to a focused diff, keeps full Result Loop Gate and Scaling Gate as dependencies, and leaves this branch ready for PR review as workflow/route-plan integration rather than full contract enforcement.
 
 ## Capability Evidence
 
