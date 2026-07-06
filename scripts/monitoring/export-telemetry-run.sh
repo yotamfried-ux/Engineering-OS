@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-echo "placeholder"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "$SCRIPT_DIR/export-telemetry-run.py" "$@"
