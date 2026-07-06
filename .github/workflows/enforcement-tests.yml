@@ -124,6 +124,7 @@ jobs:
             grep -q 'enforce-bash-entry.sh' .claude/settings.json
             grep -q 'enforce-workflow.sh' .claude/settings.json
             grep -q 'pre-tool-use-runtime-evidence.sh' .claude/settings.json
+            grep -q 'eos-telemetry-event.sh' .claude/settings.json
             grep -q 'post-tool-use-mcp.sh' .claude/settings.json
             grep -q 'post-tool-use-read-evidence.sh' .claude/settings.json
             python3 - <<'PY'
@@ -140,11 +141,17 @@ jobs:
           assert f'{workspace}/scripts/enforcement/enforce-workflow.sh' in serialized
           assert f'{workspace}/scripts/session-setup.sh' in serialized
           assert f'{workspace}/scripts/enforcement/post-stop-hook.sh' in serialized
+          assert f'{workspace}/scripts/monitoring/eos-telemetry-event.sh' in serialized
           pre = s['hooks']['PreToolUse']
           post = s['hooks']['PostToolUse']
           assert any(
               x.get('matcher') == 'Write|Edit|MultiEdit|NotebookEdit'
               and any('pre-tool-use-runtime-evidence.sh' in h.get('command', '') for h in x.get('hooks', []))
+              for x in pre
+          )
+          assert any(
+              x.get('matcher') == 'Write|Edit|MultiEdit|NotebookEdit'
+              and any('eos-telemetry-event.sh' in h.get('command', '') for h in x.get('hooks', []))
               for x in pre
           )
           assert any(x.get('matcher') == 'mcp__.*' for x in post)
@@ -153,9 +160,11 @@ jobs:
               and any('post-tool-use-read-evidence.sh' in h.get('command', '') for h in x.get('hooks', []))
               for x in post
           )
-          stop_cmd = s['hooks']['Stop'][0]['hooks'][0]['command']
-          assert 'post-stop-hook.sh' in stop_cmd
-          assert not re.search(r'\|\|\s*true\b', stop_cmd)
+          stop_commands = [h.get('command', '') for h in s['hooks']['Stop'][0]['hooks']]
+          post_stop = [cmd for cmd in stop_commands if 'post-stop-hook.sh' in cmd]
+          assert post_stop
+          assert not any(re.search(r'\|\|\s*true\b', cmd) for cmd in post_stop)
+          assert any('eos-telemetry-event.sh' in cmd for cmd in stop_commands)
           PY
             grep -q 'Capability Verification Report' ENGINEERING_OS_CAPABILITIES.md
             grep -q '## Skills and engines' ENGINEERING_OS_CAPABILITIES.md
@@ -190,4 +199,4 @@ jobs:
             test -f .claude/commands/superpowers-brainstorm.md
             test -f ENGINEERING_OS_CAPABILITIES.md
           )
-          echo "✅ use-in-project.sh installs expected governance contract"
+          echo "✅ use-in-project.sh installs expected governance and telemetry contract"
