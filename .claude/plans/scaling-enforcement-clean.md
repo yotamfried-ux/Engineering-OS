@@ -36,8 +36,10 @@
 
 - `routing.task-router-read` — core/task-router.md read.
 - `workflow.workflow-read` — core/workflow.md read.
+- `plan.route-plan-before-write` — this route plan was committed before checker and test files; later cleanup commits only added missing evidence after policy feedback.
 - `source.github-repo-read` — merged manifests read.
 - `validation.policy-change-has-validator` — checker and shell validation added.
+- `validation.coderabbit-policy` — review status will be checked before merge; fallback self-review is recorded in the PR body if CodeRabbit is unavailable.
 
 ## Skill Evidence
 
@@ -58,6 +60,7 @@
 ## Documentation Asset Evidence
 
 - internal: docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md, docs/operations/result-loop-contract-audit-checklist.md, scripts/enforcement/README.md.
+- context7: not required because this PR changes internal manifest enforcement logic and does not introduce an external library, framework, SDK, API, or service.
 - decision: internal docs and manifests define the scaling enforcement contract.
 
 ## Claude Run Trace
@@ -75,6 +78,7 @@
 - start: reviewed routing, workflow, scaling procedure, roadmap catalog, audit checklist, and merged manifests before code files.
 - mid: added the checker, waiver manifest, and shell fixture test after the route plan.
 - pre-merge: reviewed the final changed files and prepared CI validation with no real-run readiness claim.
+- cleanup: recorded missing capability and documentation asset evidence after CI identified policy gaps; no readiness claim was added.
 
 ## DoD
 
