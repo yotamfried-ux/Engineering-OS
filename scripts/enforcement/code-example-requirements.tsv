@@ -1,13 +1,2 @@
-# example_id	status	project_type_id	example_path	run_path	validation_path	owner	source_reference	required_evidence	exemption_state	audit_link	gap_link
-web-example	planned	web-application	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-mobile-example	planned	mobile-application	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-desktop-example	planned	desktop-application	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-game-example	planned	game-development	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-api-example	planned	api-service	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-full-stack-example	planned	full-stack	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-cli-example	planned	cli-tool	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-data-example	planned	data-pipeline	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-ml-example	planned	machine-learning	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-agent-example	planned	ai-agent	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-cv-example	planned	computer-vision	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
-extension-example	planned	browser-extension	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
+# example_id	status	project_type_id	supported_template	example_path	run_path	validation_path	owner	source_reference	required_evidence	exemption_state	audit_link	gap_link
+sample-example	planned	web-application	web-application	NONE	NONE	NONE	planned	planned	run path and validation path required before active	not_exempt	docs/operations/result-loop-contract-audit-checklist.md#scaling-manifests-to-add	none
