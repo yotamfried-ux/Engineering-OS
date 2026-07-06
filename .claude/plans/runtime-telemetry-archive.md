@@ -53,6 +53,14 @@ Implement the local export/import/analyze archive layer described in docs/operat
 - decision: implement local file-bundle archive first; do not build a later service yet.
 - target: scripts/monitoring, telemetry-archive, scripts/enforcement/tests, docs/operations/runtime-telemetry-archive-audit-checklist.md.
 
+## Connector Usage Evidence
+
+- source: GitHub connector for yotamfried-ux/Engineering-OS.
+- action: GitHub fetch_file and compare_commits were used before code decisions; GitHub pull request #209 was opened from claude/telemetry-archive-clean.
+- result: branch claude/telemetry-archive-clean at b9bcb021693108cf2cd0cb64272cb94221d915ec changes scripts/monitoring/import-telemetry-run.py, scripts/monitoring/export-telemetry-run.py, scripts/enforcement/tests/test-telemetry-archive.sh, and telemetry-archive/README.md.
+- decision: GitHub evidence changed the work into a clean ordered route-plan lifecycle and kept Project 8 readiness unchecked.
+- target: scripts/monitoring/import-telemetry-run.py, scripts/monitoring/export-telemetry-run.py, scripts/enforcement/tests/test-telemetry-archive.sh, telemetry-archive/README.md.
+
 ## Documentation Asset Evidence
 
 - internal: docs/operations/runtime-telemetry-archive-plan.md, docs/operations/runtime-telemetry-archive-audit-checklist.md, patterns/observability/README.md, patterns/testing/README.md.
