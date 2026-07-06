@@ -83,15 +83,15 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 ## Scaling manifests to add
 
-- [ ] Add `scripts/enforcement/project-type-roadmaps.tsv` for roadmap coverage by project type.
-- [ ] Add `scripts/enforcement/result-loop-requirements.tsv` for required result-loop fields by project type.
-- [ ] Add `scripts/enforcement/documentation-sources.tsv` for required official/trusted documentation sources.
-- [ ] Add `scripts/enforcement/reference-repositories.tsv` for approved reference repositories and freshness/validation state.
-- [ ] Add `scripts/enforcement/code-example-requirements.tsv` for example ownership, run path, validation path, and supported template.
-- [ ] Add `scripts/enforcement/pattern-requirements.tsv` or equivalent inventory for required patterns.
-- [ ] Add `scripts/enforcement/skill-requirements.tsv` or equivalent inventory for required skills.
-- [ ] Add or extend connector inventory requirements for connector-dependent workflows.
-- [ ] Document the schema for each manifest, including required columns and allowed exemption states.
+- [x] Add `scripts/enforcement/project-type-roadmaps.tsv` for roadmap coverage by project type.
+- [x] Add `scripts/enforcement/result-loop-requirements.tsv` for required result-loop fields by project type.
+- [x] Add `scripts/enforcement/documentation-sources.tsv` for required official/trusted documentation sources.
+- [x] Add `scripts/enforcement/reference-repositories.tsv` for approved reference repositories and freshness/validation state.
+- [x] Add `scripts/enforcement/code-example-requirements.tsv` for example ownership, run path, validation path, and supported template.
+- [x] Add `scripts/enforcement/pattern-requirements.tsv` or equivalent inventory for required patterns.
+- [x] Add `scripts/enforcement/skill-requirements.tsv` or equivalent inventory for required skills.
+- [x] Add or extend connector inventory requirements for connector-dependent workflows.
+- [x] Document the schema for each manifest, including required columns and allowed exemption states.
 
 ## Scaling gate implementation
 
