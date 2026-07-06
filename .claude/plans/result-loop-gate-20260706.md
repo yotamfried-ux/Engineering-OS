@@ -7,8 +7,8 @@
 | Domain tags | governance, enforcement, result-loop, manifests |
 | Plan Scope | standard |
 | Planning Mode | approved |
-| Task-router evidence | core/task-router.md checked in this session. |
-| Workflow evidence | core/workflow.md checked in this session. |
+| Task-router evidence | core/task-router.md checked. |
+| Workflow evidence | core/workflow.md checked. |
 | Target paths | scripts/enforcement/check-result-loop-contract.py, scripts/enforcement/tests/test-result-loop-contract.sh, scripts/enforcement/result-loop-requirements.tsv, .claude/plans/result-loop-gate-20260706.md |
 | Templates | internal governance work; no app template required |
 | Architecture guides | docs/operations/result-loop-contract-plan.md, docs/operations/result-loop-contract-audit-checklist.md, docs/operations/project-type-roadmaps.md |
@@ -37,46 +37,47 @@
 
 - `routing.task-router-read` — core/task-router.md read.
 - `workflow.workflow-read` — core/workflow.md read.
-- `plan.route-plan-before-write` — this route plan was created before result-loop checker and manifest edits.
-- `source.github-repo-read` — repository files, manifests, audit checklist, and open PR context were read through GitHub.
-- `validation.policy-change-has-validator` — checker and positive/negative fixtures were added.
-- `validation.coderabbit-policy` — PR body will record external review status or fallback self-review before merge readiness.
+- `plan.route-plan-before-write` — this plan existed before checker and manifest edits.
+- `source.github-repo-read` — repo files, manifests, audit checklist, and PR context were read through GitHub.
+- `validation.policy-change-has-validator` — checker and regression fixtures were added.
+- `validation.coderabbit-policy` — PR body records review fallback evidence.
 
 ## Skill Evidence
 
-- superpowers: used planning discipline, source-of-truth reading, and verification-first workflow.
+- superpowers: used planning discipline and verification-first workflow.
 
 ## Connector Evidence
 
-- GitHub connector: used for repository inspection, branch creation, PR work, CI checks, and final review-thread checks.
+- GitHub connector: used for repo inspection, branch work, PR work, CI checks, and review-thread checks.
 
 ## Connector Usage Evidence
 
 - source: GitHub connector repository yotamfried-ux/Engineering-OS.
-- action: inspected main, open PR #216, result-loop docs, audit files, manifests, and enforcement workflow.
-- result: scripts/enforcement/check-result-loop-contract.py and scripts/enforcement/tests/test-result-loop-contract.sh implement deterministic contract coverage and negative fixtures; scripts/enforcement/result-loop-requirements.tsv now uses checker-readable concrete evidence tokens.
-- decision: updated the result-loop manifest to match the checker contract while keeping the checker requirement strict.
+- action: inspected main, PR #216, result-loop docs, audit files, manifests, PR #220 body, and CI runs.
+- result: scripts/enforcement/check-result-loop-contract.py, scripts/enforcement/tests/test-result-loop-contract.sh, and scripts/enforcement/result-loop-requirements.tsv now define the result-loop gate artifacts.
+- decision: updated the manifest wording and completed the route-plan checklist after PR #220 recorded review fallback and merge-readiness evidence.
 - target: scripts/enforcement/check-result-loop-contract.py; scripts/enforcement/tests/test-result-loop-contract.sh; scripts/enforcement/result-loop-requirements.tsv; .claude/plans/result-loop-gate-20260706.md
 
 ## Documentation Asset Evidence
 
 - internal: docs/operations/result-loop-contract-plan.md, docs/operations/result-loop-contract-audit-checklist.md, docs/operations/project-type-roadmaps.md, scripts/enforcement/README.md.
-- context7: not required because this PR changes internal governance manifests and enforcement scripts only, with no external package or SDK update.
+- context7: not required because this PR changes internal governance manifests and enforcement scripts only.
 - decision: internal docs and manifests define the result-loop contract fields and enforcement scope.
 
 ## Claude Run Trace
 
 - result: continued after Scaling Gate PR #219 was merged.
-- result: found PR #216 for Workflow Integration, but kept this PR focused on Result Loop Contract Gate because #216 is not the full gate.
-- result: added a checker, concrete manifest rows, and negative fixture coverage for missing row, placeholder field, missing mobile local review, missing API performance, missing telemetry export, and missing game playable surface.
-- result: normalized manifest token wording after the first CI run showed the checker required exact evidence tokens.
+- result: found PR #216 for Workflow Integration, but kept this PR focused on Result Loop Contract Gate.
+- result: added checker, concrete manifest rows, and negative fixture coverage for missing row, placeholder field, mobile local review, API performance, telemetry export, and game playable surface.
+- result: normalized manifest token wording after CI feedback and completed PR body evidence tracking.
 
 ## Progress Lifecycle Evidence
 
 - start: read routing/workflow/capability context, result-loop plan, audit checklist, known gaps, current manifest, and enforcement workflow before code changes.
 - mid: added result-loop checker, concrete result-loop manifest contracts, and regression fixture script.
 - pre-merge: updated route-plan checkpoint after code and manifest changes; first CI run found result-loop token normalization and route-plan policy cleanup needs.
-- pre-merge: normalized result-loop manifest evidence wording after checker feedback; pending current-head CI and review-thread validation.
+- pre-merge: normalized result-loop manifest evidence wording after checker feedback.
+- pre-merge: completed route-plan DoD after PR #220 recorded review fallback and merge-readiness evidence; pending current-head CI and review-thread validation.
 
 ## DoD
 
@@ -84,5 +85,5 @@
 - [x] Result-loop manifest rows contain concrete contract values instead of placeholders.
 - [x] Positive and negative fixtures prove incomplete contracts fail.
 - [x] Gate is included in enforcement-tests through the test glob.
-- [ ] PR body records review fallback and merge-readiness evidence.
+- [x] PR body records review fallback and merge-readiness evidence.
 - [x] No full operational readiness or Project 8 real-run claim is made.
