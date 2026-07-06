@@ -34,16 +34,17 @@
 ## Documentation Asset Evidence
 
 - internal: core/hooks-policy.md, docs/operations/operational-readiness-audit.md, scripts/monitoring/eos-telemetry-event.sh, scripts/monitoring/eos-telemetry-summary.py, scripts/enforcement/tests/test-eos-telemetry.sh.
-- external: docs.anthropic.com/claude-code/hooks, opentelemetry.io/docs/concepts/signals/traces, opentelemetry.io/docs/concepts/resources.
-- decision: use metadata-only local telemetry and generate the latest summary from the already wired stop telemetry event.
+- context7: docs.anthropic.com/claude-code/hooks, opentelemetry.io/docs/concepts/signals/traces, opentelemetry.io/docs/concepts/resources.
+- decision: core/hooks-policy.md and the telemetry scripts confirmed that the fix should stay local and use metadata-only telemetry with a latest summary produced by the already wired stop event.
 
 ## Capability Evidence
 
-- routing.task-router-read: governance route selected before edits.
-- workflow.workflow-read: plan-first lifecycle followed.
-- source.github-repo-read: merged telemetry files inspected before edits.
-- validation.policy-change-has-validator: telemetry fixture is part of CI validation.
-- validation.actions-checked: PR CI will be checked before merge.
+- `routing.task-router-read`: governance route selected before edits.
+- `workflow.workflow-read`: plan-first lifecycle followed.
+- `plan.route-plan-before-write`: this plan was committed before implementation changes.
+- `source.github-repo-read`: merged telemetry files inspected before edits.
+- `validation.policy-change-has-validator`: telemetry fixture is part of CI validation.
+- `validation.coderabbit-policy`: PR body records manual review fallback and owner approval requirement.
 
 ## Connector Evidence
 
@@ -54,7 +55,7 @@
 - source: github main files `scripts/monitoring/eos-telemetry-event.sh`, `scripts/monitoring/eos-telemetry-summary.py`, `scripts/enforcement/tests/test-eos-telemetry.sh`, and `.claude/settings.json`.
 - action: read merged telemetry and hook state before implementation.
 - result: github confirmed target files `scripts/monitoring/eos-telemetry-event.sh`, `scripts/monitoring/eos-telemetry-summary.py`, and `scripts/enforcement/tests/test-eos-telemetry.sh`; `.claude/settings.json` already wires the stop telemetry event.
-- decision: generate summary inside the recorder instead of changing hook settings.
+- decision: updated the recorder to generate summaries inside the already wired stop event instead of changing hook settings.
 - target: scripts/monitoring/eos-telemetry-event.sh, scripts/monitoring/eos-telemetry-summary.py, scripts/enforcement/tests/test-eos-telemetry.sh
 
 ## Definition of Done
