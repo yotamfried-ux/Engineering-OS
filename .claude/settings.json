@@ -6,6 +6,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_bash"
+          },
+          {
+            "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
           },
           {
@@ -47,6 +51,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_read_glob"
+          },
+          {
+            "type": "command",
             "command": "HIT=$(python3 -c \"import json,sys;d=json.load(sys.stdin);t=d.get('tool_input',d);s=(str(t.get('file_path') or '')+' '+str(t.get('pattern') or '')+' '+str(t.get('path') or '')).lower().replace(chr(92),'/');exts=('.py','.js','.ts','.tsx','.jsx','.go','.rs','.java','.rb','.c','.h','.cpp','.hpp','.cc','.cs','.kt','.swift','.php','.scala','.lua','.sh','.md','.rst','.txt','.mdx');sys.stdout.write('1' if 'graphify-out/' not in s and any(e in s for e in exts) else '')\" 2>/dev/null || true); if [ \"$HIT\" = 1 ] && [ -f graphify-out/graph.json ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"MANDATORY: graphify-out/graph.json exists. You MUST run graphify before reading source files. Use: `graphify query \\\"<question>\\\"` (scoped subgraph), `graphify explain \\\"<concept>\\\"`, or `graphify path \\\"<A>\\\" \\\"<B>\\\"`. Only read raw files after graphify has oriented you, or to modify/debug specific lines. This rule applies to subagents too — include it in every subagent prompt involving code exploration.\"}}'; fi || true"
           }
         ]
@@ -54,6 +62,10 @@
       {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit",
         "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_write_edit"
+          },
           {
             "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
@@ -77,6 +89,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_agent"
+          },
+          {
+            "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
           },
           {
@@ -92,6 +108,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_mcp"
+          },
+          {
+            "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-mcp.sh\" 2>/dev/null || true"
           }
         ]
@@ -99,6 +119,10 @@
       {
         "matcher": "mcp__Context7__.*",
         "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_context7"
+          },
           {
             "type": "command",
             "command": "INPUT=$(cat 2>/dev/null || true); if printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; sys.exit(0 if name.startswith('mcp__Context7__') else 1)\" >/dev/null 2>&1; then bash -c '. \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\" 2>/dev/null && evidence_record context7' 2>/dev/null; fi || true"
@@ -110,6 +134,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_bash"
+          },
+          {
+            "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-bash.sh\" 2>/dev/null || true"
           }
         ]
@@ -119,6 +147,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_read"
+          },
+          {
+            "type": "command",
             "command": "F=$(python3 -c \"import json,sys; d=json.load(sys.stdin); t=d.get('tool_input',d); print(t.get('file_path','') or '')\" 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; case \"$F\" in core/pattern-lifecycle.md|*/core/pattern-lifecycle.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_pattern_lifecycle ;; core/maintenance-routine.md|*/core/maintenance-routine.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_maintenance_routine ;; core/hooks-policy.md|*/core/hooks-policy.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_hooks_policy ;; patterns/*|*/patterns/*) DOM=$(printf '%s' \"$F\" | sed 's|.*/patterns/||; s|/.*||'); . \"$EOS_LIB\" 2>/dev/null && { [ -n \"$DOM\" ] && evidence_record \"patterns_read_${DOM}\" || true; } ;; .claude/plans/*.md|*/.claude/plans/*.md) FNAME=$(basename \"$F\" .md); TOTAL=$(grep -cE '^\\- \\[(x| )\\]' \"$F\" 2>/dev/null) || TOTAL=0; . \"$EOS_LIB\" 2>/dev/null && { EXISTING=$(evidence_get \"dod_initial_${FNAME}\" 2>/dev/null || true); [ -n \"$EXISTING\" ] || evidence_record \"dod_initial_${FNAME}\" \"$TOTAL\"; } ;; .claude/commands/superpowers-verify.md|*/.claude/commands/superpowers-verify.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record superpowers_verify_run ;; esac 2>/dev/null || true"
           }
         ]
@@ -126,6 +158,10 @@
       {
         "matcher": "mcp__Notion__.*",
         "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_notion"
+          },
           {
             "type": "command",
             "command": "INPUT=$(cat 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; if PAGE_ID=$(printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; r=d.get('tool_response','') or {}; assert name.startswith('mcp__Notion__'); print((r.get('id','') or r.get('page_id','') or '') if isinstance(r,dict) else '')\" 2>/dev/null); then . \"$EOS_LIB\" 2>/dev/null && evidence_record notion_spec_created && { [ -n \"$PAGE_ID\" ] && evidence_record notion_page_id \"$PAGE_ID\" || true; }; fi 2>/dev/null || true"
@@ -138,6 +174,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" session_start"
+          },
+          {
+            "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/session-setup.sh\" 2>&1 | head -50 || true"
           }
         ]
@@ -146,6 +186,10 @@
     "Stop": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" stop"
+          },
           {
             "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-stop-hook.sh\" 2>/dev/null || true"
