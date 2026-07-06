@@ -43,8 +43,8 @@ EXPECTED_HEADERS = {
     ],
     "scripts/enforcement/reference-repositories.tsv": [
         "reference_id", "status", "project_type_id", "repository_url", "owner_type", "usage_scope",
-        "license_usage_note", "validation_status", "validation_evidence", "target_path",
-        "exemption_state", "audit_link", "gap_link",
+        "license_usage_note", "freshness_status", "validation_status", "validation_evidence",
+        "target_path", "exemption_state", "audit_link", "gap_link",
     ],
     "scripts/enforcement/code-example-requirements.tsv": [
         "example_id", "status", "project_type_id", "example_path", "run_path", "validation_path",
