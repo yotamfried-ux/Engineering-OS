@@ -53,7 +53,7 @@
 
 - source: GitHub connector repository yotamfried-ux/Engineering-OS.
 - action: inspected main, branch eos-clean-20260706, PR #219 files, and CI status.
-- result: scaling manifests and tests identified the gate target.
+- result: scripts/enforcement/check-scaling-extension.py and scripts/enforcement/tests/test-scaling-extension.sh identified the gate target.
 - decision: kept scope to scaling enforcement files.
 - target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; scripts/enforcement/waiver-requirements.tsv
 
