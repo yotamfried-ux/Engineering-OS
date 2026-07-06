@@ -9,7 +9,7 @@
 | Planning Mode | approved |
 | Task-router evidence | core/task-router.md checked. |
 | Workflow evidence | core/workflow.md checked. |
-| Target paths | scripts/enforcement/check-scaling-extension.py, scripts/enforcement/waiver-requirements.tsv, scripts/enforcement/tests/test-scaling-extension.sh |
+| Target paths | scripts/enforcement/check-scaling-extension.py, scripts/enforcement/waiver-requirements.tsv, scripts/enforcement/tests/test-scaling-extension.sh, scripts/enforcement/tests/test-scaling-manifests.sh, scripts/enforcement/reference-repositories.tsv, scripts/enforcement/code-example-requirements.tsv |
 | Templates | internal governance work; no app template required |
 | Architecture guides | docs/operations/scaling-extension-procedure.md, docs/operations/project-type-roadmaps.md |
 | Patterns | internal manifest enforcement pattern reused |
@@ -31,6 +31,8 @@
 | scripts/enforcement/project-type-roadmaps.tsv | checked |
 | scripts/enforcement/result-loop-requirements.tsv | checked |
 | scripts/enforcement/template-requirements.tsv | checked |
+| scripts/enforcement/reference-repositories.tsv | checked |
+| scripts/enforcement/code-example-requirements.tsv | checked |
 
 ## Capability Evidence
 
@@ -54,8 +56,8 @@
 - source: GitHub connector repository yotamfried-ux/Engineering-OS.
 - action: inspected main, branch eos-clean-20260706, PR #219 files, and CI status.
 - result: scripts/enforcement/check-scaling-extension.py and scripts/enforcement/tests/test-scaling-extension.sh identified the gate target.
-- decision: kept scope to scaling enforcement files.
-- target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; scripts/enforcement/waiver-requirements.tsv
+- decision: kept scope to scaling enforcement files and aligned manifest schema coverage.
+- target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; scripts/enforcement/tests/test-scaling-manifests.sh; scripts/enforcement/reference-repositories.tsv; scripts/enforcement/code-example-requirements.tsv; scripts/enforcement/waiver-requirements.tsv
 
 ## Documentation Asset Evidence
 
@@ -81,6 +83,7 @@
 - cleanup: recorded missing capability and documentation asset evidence after CI identified policy gaps; no readiness claim was added.
 - pre-merge: checked final files after the test path repair and kept scope to the scaling gate artifact.
 - pre-merge: aligned documentation source schema with the active manifest and checked fixture coverage for scaling gate evidence.
+- pre-merge: reviewed checker-focused coverage, manifest schema test updates, and reference metadata alignment after the final code/config changes.
 
 ## DoD
 
