@@ -54,7 +54,7 @@
 - source: github PR 201, workflow run 28761726034, job 85278330479, and head SHA 8819c4841a3b3233979b439c4a62baa4a962114e.
 - action: read PR metadata, changed files, workflow jobs/logs, settings, and enforcement checker contracts.
 - result: github confirmed changed targets `.claude/settings.json`, `scripts/monitoring/eos-telemetry-event.sh`, and head SHA 8819c4841a3b3233979b439c4a62baa4a962114e.
-- decision: rebuilt on a clean branch with plan-first history and hook ordering preserved.
+- decision: updated the clean branch with plan-first history and kept hook ordering preserved.
 - target: .claude/settings.json, scripts/monitoring/eos-telemetry-event.sh, scripts/enforcement/tests/test-eos-telemetry.sh
 
 ## Definition of Done
