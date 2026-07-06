@@ -2,7 +2,7 @@
 
 Tracking plan: `docs/operations/runtime-telemetry-archive-plan.md`
 
-Purpose: track execution of the runtime telemetry archive update. This checklist is not a readiness claim. It is a work tracker for the archive update.
+Purpose: track execution of the runtime telemetry archive update. This checklist is not a readiness claim.
 
 ## Planning
 
@@ -19,15 +19,15 @@ Purpose: track execution of the runtime telemetry archive update. This checklist
 
 ## Implementation
 
-- [ ] Add export command.
-- [ ] Add import command.
-- [ ] Add archive analyzer.
-- [ ] Add archive README.
-- [ ] Add tests for export.
-- [ ] Add tests for import.
-- [ ] Add tests for archive analysis.
-- [ ] Add duplicate-run handling.
-- [ ] Add archive index files.
+- [x] Add export command.
+- [x] Add import command.
+- [x] Add archive analyzer.
+- [x] Add archive README.
+- [x] Add tests for export.
+- [x] Add tests for import.
+- [x] Add tests for archive analysis.
+- [x] Add duplicate-run handling.
+- [x] Add archive index files.
 
 ## Project 8 evidence
 
@@ -44,7 +44,7 @@ Purpose: track execution of the runtime telemetry archive update. This checklist
 - [ ] Compare Project 8 with a later run.
 - [ ] Record recurring patterns.
 - [ ] Decide whether the local archive is sufficient.
-- [ ] Decide whether a Collector/backend is needed.
+- [ ] Decide whether a later backend is needed.
 - [ ] Update readiness only from real run evidence.
 
 ## Completion evidence
@@ -53,4 +53,4 @@ Purpose: track execution of the runtime telemetry archive update. This checklist
 - [ ] Project 8 archive run imported.
 - [ ] Project 8 findings reviewed.
 - [ ] At least one comparison run exists.
-- [ ] Monitoring sufficiency decision is evidence-backed.
+- [ ] Monitoring sufficiency decision is backed by real runs.
