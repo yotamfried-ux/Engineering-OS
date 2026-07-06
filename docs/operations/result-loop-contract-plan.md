@@ -11,13 +11,29 @@ Every project type contract must define these fields:
 1. `setup_command` — how to prepare the local environment.
 2. `run_command` — how to run the project locally.
 3. `visible_result` — how to view the actual result.
-4. `required_tests` — tests/lint/typecheck/e2e commands that must run.
-5. `feedback_surfaces` — visual, operational, logical, console, network, and log feedback.
-6. `performance_monitoring` — metrics and monitoring tools used to measure performance.
-7. `acceptance_metrics` — measurable pass/fail criteria for the requested outcome.
-8. `telemetry_export` — how to export metadata-only telemetry to the archive.
-9. `failure_repair_loop` — what the AI must do when tests, views, metrics, or monitoring fail.
-10. `evidence_artifacts` — exact files, URLs, or artifacts to preserve for review.
+4. `creator_local_review` — how the human creator can run and inspect the app locally when they want to see progress.
+5. `required_tests` — tests/lint/typecheck/e2e commands that must run.
+6. `user_simulation` — how realistic user behavior is simulated for the app type.
+7. `feedback_surfaces` — visual, operational, logical, console, network, and log feedback.
+8. `performance_monitoring` — metrics and monitoring tools used to measure performance.
+9. `acceptance_metrics` — measurable pass/fail criteria for the requested outcome.
+10. `change_impact_measurement` — how the effect of a code change is measured against the previous result.
+11. `telemetry_export` — how to export metadata-only telemetry to the archive.
+12. `failure_repair_loop` — what the AI must do when tests, views, metrics, or monitoring fail.
+13. `evidence_artifacts` — exact files, URLs, or artifacts to preserve for review.
+
+## Local creator visibility requirement
+
+Every application contract must include a local path that the human creator can run without depending only on CI. For web apps this is usually a local URL. For mobile apps it must be a device, simulator, emulator, or development build path. For desktop apps it must be a local packaged or dev-run app window. If the app cannot run locally, the contract must include an explicit reason and a preview alternative with artifacts.
+
+The local path must define:
+
+- exact setup command;
+- exact run command;
+- expected visible surface, such as URL, emulator, simulator, device, or desktop window;
+- seed/demo data needed to see a representative flow;
+- expected screenshots/videos/traces/logs generated after a run;
+- how the creator can compare progress before and after a code change.
 
 ## Official documentation references
 
@@ -34,7 +50,10 @@ Every project type contract must define these fields:
 | Performance assertions | Lighthouse CI configuration: https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md | Require performance budgets/assertions for web apps. |
 | Load thresholds | k6 thresholds: https://grafana.com/docs/k6/latest/using-k6/thresholds/ | Require threshold-based pass/fail criteria for load/performance-sensitive APIs and services. |
 | CI evidence transport | GitHub Actions artifacts: https://docs.github.com/en/actions/tutorials/store-and-share-data | Upload traces, screenshots, reports, logs, telemetry bundles, and performance reports as artifacts. |
-| Mobile runtime feedback | Expo development builds: https://docs.expo.dev/develop/development-builds/introduction/ | Require device/emulator/development-build path for mobile apps. |
+| Mobile local development | Expo development builds: https://docs.expo.dev/develop/development-builds/introduction/ | Require a production-like local development build, simulator, emulator, or device path for mobile apps. |
+| Mobile and desktop user simulation | Appium introduction: https://appium.io/docs/en/latest/intro/ | Use driver/client-based automation to simulate user flows on mobile, desktop, web, or hybrid apps when applicable. |
+| Electron desktop automation | Playwright Electron API: https://playwright.dev/docs/api/class-electron | Launch Electron apps, inspect windows, capture screenshots, forward console logs, and click through desktop UI flows. |
+| Tauri desktop automation | Tauri WebDriver testing: https://tauri.app/develop/tests/webdriver/ | Require WebDriver-based e2e testing for Tauri desktop apps where applicable. |
 | ML evaluation | MLflow model evaluation: https://mlflow.org/docs/latest/ml/evaluation/ | Require dataset/metric evaluation for ML tasks. |
 | Agent/model evaluation | OpenAI Evals: https://platform.openai.com/docs/guides/evals | Require eval sets/graders for AI-agent behavior changes when applicable. |
 
@@ -42,8 +61,8 @@ Every project type contract must define these fields:
 
 | Project type | Required result-loop feedback |
 |---|---|
-| web-application | local run command, browser URL, Playwright e2e, visual comparison or waiver, Lighthouse CI, telemetry export, artifact upload. |
-| mobile-application | install/run command, emulator/device/development build, screenshot/video evidence, crash/log capture, performance metrics, telemetry export. |
+| web-application | local run command, browser URL for creator review, Playwright e2e, visual comparison or waiver, Lighthouse CI, telemetry export, artifact upload. |
+| mobile-application | install/run command, emulator/device/development build for creator review, Appium or stack-native user-flow automation, screenshot/video evidence, crash/log capture, performance metrics, change-impact comparison, telemetry export. |
 | api-service / microservice | local service command, health endpoint, contract tests, integration tests, k6 or equivalent thresholds when performance-sensitive, OTel/Prometheus metrics, telemetry export. |
 | cli-tool | install command, golden output tests, error-path tests, shell logs, telemetry export. |
 | data-pipeline / ETL | fixture dataset, dry run, output validation, data quality checks, runtime metrics, telemetry export. |
@@ -51,7 +70,20 @@ Every project type contract must define these fields:
 | ai-agent / RAG | eval set, trace/eval artifacts, retrieval quality checks, latency/cost/error metrics, failure repair loop, telemetry export. |
 | computer-vision / video | fixture media, output artifact, visual review evidence, quality metrics, performance metrics, telemetry export. |
 | browser-extension | local extension run/load path, Playwright/browser automation where applicable, screenshots/videos, console/network feedback, telemetry export. |
-| desktop-application | local run command, screenshot/video or UI automation evidence, logs/crash capture, performance metrics, telemetry export. |
+| desktop-application | local dev-run or packaged app window for creator review, framework-specific automation such as Playwright Electron, Tauri WebDriver, Appium, or native UI automation, screenshots/videos, console/log/crash capture, performance metrics, change-impact comparison, telemetry export. |
+
+## Mobile and desktop minimum contract
+
+Mobile and desktop app contracts must not be treated as weaker than web app contracts. They must include:
+
+- local run instructions that open the actual app surface, not only unit tests;
+- a creator-visible path for seeing progress on a simulator, emulator, device, or desktop window;
+- automated user simulation for at least the main happy path and one failure path;
+- screenshots or video after key flows;
+- logs, console output, crash reports, or equivalent runtime diagnostics;
+- performance metrics such as launch time, interaction latency, memory/CPU where practical, and error/crash rate;
+- before/after comparison for code changes that affect user-visible behavior;
+- telemetry export into the archive after meaningful runs.
 
 ## Enforcement design
 
@@ -63,8 +95,8 @@ The gate must:
 - Fail if any template/project type lacks a contract or explicit exemption.
 - Fail if a Route Plan targets code/config/test changes without naming the selected result-loop contract.
 - Fail if the selected contract omits any required field.
-- Fail if UI/web/mobile contracts lack visual feedback or an explicit waiver.
-- Fail if service/API/ML/AI contracts lack performance monitoring or metric thresholds where applicable.
+- Fail if UI/web/mobile/desktop contracts lack visual feedback, user simulation, creator-local review, or an explicit waiver.
+- Fail if service/API/ML/AI/mobile/desktop contracts lack performance monitoring or metric thresholds where applicable.
 - Fail if telemetry export is missing or not linked to `scripts/monitoring/export-telemetry-run.sh` / archive import flow.
 - Require positive and negative fixtures in `scripts/enforcement/tests/test-result-loop-contract.sh`.
 
