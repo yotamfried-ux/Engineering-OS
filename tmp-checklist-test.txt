@@ -1,0 +1,1 @@
+- [ ] Add deterministic result-loop contract gate.
