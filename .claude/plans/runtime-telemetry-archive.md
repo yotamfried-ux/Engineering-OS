@@ -76,6 +76,7 @@ This PR reads observability and testing patterns for design guidance but does no
 
 - start: route plan committed before the first code/config/test change; target paths and validation gates were recorded before implementation.
 - mid: archive exporter, importer, analyzer, README, indexes, and telemetry archive regression suite were added after the start checkpoint.
+- pre-merge: after implementation files were added and mid evidence was recorded, the checklist remained limited to completed implementation work and local targeted validation passed.
 
 ## DoD
 
