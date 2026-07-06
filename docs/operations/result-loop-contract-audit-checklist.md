@@ -1,8 +1,10 @@
 # Result Loop Contract Audit Checklist
 
 Tracking plan: `docs/operations/result-loop-contract-plan.md`
+Scaling procedure: `docs/operations/scaling-extension-procedure.md`
+Roadmap catalog: `docs/operations/project-type-roadmaps.md`
 
-Purpose: track the work needed to make long AI development sessions result-driven across project types. This checklist is not a readiness claim.
+Purpose: track the work needed to make long AI development sessions result-driven and scalable across project types. This checklist is not a readiness claim.
 
 ## Research references
 
@@ -63,8 +65,63 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [x] Define the complete checklist for adding a new project type without one-off work.
 - [x] Add game-development as the concrete scaling example.
 - [x] Define manifest-driven target architecture for scalable extension.
-- [ ] Add source-of-truth scaling audit row.
-- [ ] Add non-closed known gap for missing scaling enforcement.
+- [ ] Add source-of-truth scaling audit row in `docs/operations/operational-readiness-audit.md`.
+- [ ] Add non-closed known gap for missing scaling enforcement in `docs/operations/known-gaps.tsv`.
+
+## Scaling category coverage
+
+- [ ] Project types: every supported project type has a template row, roadmap row, result-loop contract row, and routing rule or explicit exemption.
+- [ ] Templates: every `templates/<id>/` directory has a `template-requirements.tsv` row and a roadmap/result-loop mapping.
+- [ ] Documentation: every required documentation source has source URL, reason, freshness/version note, target path, consult rule, fallback/waiver behavior, and audit linkage.
+- [ ] Reference repositories: every approved reference repo has URL, owner/source type, relevance, supported template, license/usage note, freshness status, and validation evidence.
+- [ ] Patterns: every required pattern family has an inventory row, usage rule, enforcement rule, or explicit exemption.
+- [ ] Skills: every required skill has an inventory row, trigger rule, evidence rule, or explicit exemption.
+- [ ] Code examples: every starter/example has a run path, validation path, owner/source, supported template, and stale/unverified status when not validated.
+- [ ] Connectors: every connector-dependent workflow has a connector inventory entry, usage evidence requirement, fallback rule, and audit linkage.
+- [ ] Telemetry: every new extension type defines how metadata-only telemetry is exported and imported into the archive.
+- [ ] Waivers: every exemption has a reason, owner/context, scope, expiry or revisit trigger, and audit linkage.
+
+## Scaling manifests to add
+
+- [ ] Add `scripts/enforcement/project-type-roadmaps.tsv` for roadmap coverage by project type.
+- [ ] Add `scripts/enforcement/result-loop-requirements.tsv` for required result-loop fields by project type.
+- [ ] Add `scripts/enforcement/documentation-sources.tsv` for required official/trusted documentation sources.
+- [ ] Add `scripts/enforcement/reference-repositories.tsv` for approved reference repositories and freshness/validation state.
+- [ ] Add `scripts/enforcement/code-example-requirements.tsv` for example ownership, run path, validation path, and supported template.
+- [ ] Add `scripts/enforcement/pattern-requirements.tsv` or equivalent inventory for required patterns.
+- [ ] Add `scripts/enforcement/skill-requirements.tsv` or equivalent inventory for required skills.
+- [ ] Add or extend connector inventory requirements for connector-dependent workflows.
+- [ ] Document the schema for each manifest, including required columns and allowed exemption states.
+
+## Scaling gate implementation
+
+- [ ] Implement deterministic scaling gate, such as `scripts/enforcement/check-scaling-extension.py`.
+- [ ] Reuse or extend existing template coverage checks so new template directories cannot bypass `template-requirements.tsv`.
+- [ ] Fail CI when a new project type appears in templates, docs, route plans, or roadmap files without all required registry mappings.
+- [ ] Fail CI when roadmap rows lack official source references.
+- [ ] Fail CI when documentation sources lack reason, freshness/version note, consult rule, or fallback/waiver behavior.
+- [ ] Fail CI when reference repositories lack license/usage note, relevance, freshness status, or validation evidence.
+- [ ] Fail CI when code examples lack a run path or validation path.
+- [ ] Fail CI when patterns or skills are referenced by workflows without inventory/rule coverage.
+- [ ] Fail CI when connector-dependent workflows lack connector evidence requirements or fallback behavior.
+- [ ] Fail CI when telemetry export is missing from a new project type, template, or result-loop contract.
+- [ ] Fail CI when a waiver/exemption is malformed, unscoped, or not linked to audit/known gaps.
+- [ ] Fail CI when audit marks a scaling item complete before the corresponding enforcement artifact exists.
+
+## Scaling fixtures and regression tests
+
+- [ ] Add positive fixture: a fully registered project type passes scaling enforcement.
+- [ ] Add negative fixture: a new template directory without `template-requirements.tsv` row fails.
+- [ ] Add negative fixture: a new project type without roadmap row fails.
+- [ ] Add negative fixture: a roadmap row without official sources fails.
+- [ ] Add negative fixture: documentation source without freshness/version note or consult rule fails.
+- [ ] Add negative fixture: reference repository without license/usage/freshness status fails.
+- [ ] Add negative fixture: code example without run/validation path fails.
+- [ ] Add negative fixture: pattern/skill referenced by workflow without inventory coverage fails.
+- [ ] Add negative fixture: connector-dependent workflow without connector evidence rule fails.
+- [ ] Add negative fixture: waiver without scope/reason/audit link fails.
+- [ ] Add game-development fixture proving playable local surface, gameplay simulation, visual evidence, performance metrics, and telemetry are required.
+- [ ] Wire scaling fixtures into `enforcement-tests`.
 
 ## Audit tracking
 
@@ -113,18 +170,24 @@ Purpose: track the work needed to make long AI development sessions result-drive
 - [ ] Identify missing coverage from the real run.
 - [ ] Convert severe or repeated missing coverage into follow-up work.
 - [ ] Compare with at least one later target-project run before claiming broad readiness.
+- [ ] Run a scaling simulation that adds a new dummy project type and proves enforcement accepts a complete registration.
+- [ ] Run a scaling simulation that adds an incomplete project type and proves enforcement rejects it.
+- [ ] Run a scaling simulation for adding a documentation source, reference repository, and code example.
 
 ## Completion criteria
 
 - [ ] Every applicable template/project type has a result-loop contract.
 - [ ] Every applicable template/project type has a roadmap entry or explicit exemption.
 - [ ] Every extension type has a fixed add/update path and enforcement rule or explicit exemption.
+- [ ] Every scaling manifest exists and has schema validation.
 - [ ] CI fails when a required roadmap is missing.
 - [ ] CI fails when scaling additions bypass registries/manifests.
+- [ ] CI fails when docs, reference repos, examples, patterns, skills, or connectors are added without required metadata and enforcement coverage.
 - [ ] CI fails when a selected contract omits run, view, local creator review, test, user simulation, feedback, monitoring, telemetry or repair fields.
 - [ ] Mobile and desktop contracts prove the creator can run the app locally and inspect progress.
 - [ ] Mobile and desktop contracts prove code changes are measured against the actual app surface, not only against unit tests.
 - [ ] Game-development contracts prove a playable local surface, automated gameplay simulation, visual evidence, and performance metrics.
+- [ ] Scaling simulations prove both complete additions and rejected incomplete additions.
 - [ ] Project 8 has real result-loop evidence in the archive.
 - [ ] At least one later comparison run exists.
 - [ ] Monitoring sufficiency is backed by real runs, not planning claims.
