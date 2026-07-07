@@ -14,8 +14,8 @@
 | Patterns | core/task-router.md routing pattern |
 | External systems/connectors | GitHub |
 | Skills | not required |
-| Validation gates | scripts/enforcement/tests/test-route-plan-contract.sh; .github/workflows/enforcement-tests.yml |
-| Evidence to check | core/task-router.md; core/workflow.md; scripts/enforcement/check-route-plan-contract.sh; .github/workflows/enforcement-tests.yml |
+| Validation gates | scripts/enforcement/tests/test-route-plan-contract.sh |
+| Evidence to check | core/task-router.md; core/workflow.md; scripts/enforcement/check-route-plan-contract.sh |
 | User decisions required | none |
 | selected_project_type | engineering_os_governance |
 | selected_template | governance-maintenance waiver |
@@ -25,7 +25,7 @@
 | local_creator_review_path | local CLI tests |
 | telemetry_export_path | scripts/monitoring/export-telemetry-run.sh |
 | evidence_policy_rule | metadata-only evidence export |
-| Target paths | .github/workflows/enforcement-tests.yml, scripts/enforcement/check-route-plan-contract.sh, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md |
+| Target paths | scripts/enforcement/check-route-plan-contract.sh, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md |
 
 ## Source of Truth Checks
 
@@ -34,7 +34,6 @@
 | core/task-router.md | checked | Routing source. |
 | core/workflow.md | checked | Workflow source. |
 | scripts/enforcement/check-route-plan-contract.sh | checked | Validator target. |
-| .github/workflows/enforcement-tests.yml | checked | Test runner target. |
 
 ## Documentation Asset Evidence
 
@@ -52,7 +51,7 @@
 - action: GitHub inspected main policy files.
 - result: GitHub checked scripts/enforcement/check-route-plan-contract.sh and core/workflow.md.
 - decision: GitHub selected clean branch and checker target.
-- target: .github/workflows/enforcement-tests.yml; scripts/enforcement/check-route-plan-contract.sh; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md
+- target: scripts/enforcement/check-route-plan-contract.sh; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md
 
 ## Capability Evidence
 
@@ -62,7 +61,6 @@
 - `source.github-repo-read` — repository files read.
 - `validation.policy-change-has-validator` — validator in scope.
 - `validation.coderabbit-policy` — manual review fallback.
-- `validation.actions-checked` — workflow runner change checked by GitHub Actions.
 
 ## Claude Run Trace
 
@@ -72,13 +70,13 @@
 - added route loop fields used by checker.
 - switched route checker to shell implementation.
 - fixed route field matching with fixed-string checks.
-- split route-plan contract, install coverage, and clean install tests into workflow steps.
+- removed temporary workflow diagnostics before final validation.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: route-plan checker was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded after clean install step split.
+- pre-merge: final readiness evidence recorded after diagnostic cleanup.
 
 ## DoD
 
