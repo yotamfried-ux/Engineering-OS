@@ -27,7 +27,7 @@ Plan Scope: standard
 | local_creator_review_path | local CLI tests |
 | telemetry_export_path | scripts/monitoring/export-telemetry-run.sh |
 | evidence_policy_rule | metadata-only evidence export |
-| Target paths | scripts/enforcement/project-type-roadmaps.tsv, scripts/enforcement/check-scaling-extension.py, scripts/enforcement/tests/test-scaling-extension.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement/check-semantic-cleanup.sh |
+| Target paths | scripts/enforcement/project-type-roadmaps.tsv, scripts/enforcement/check-scaling-extension.py, scripts/enforcement/tests/test-scaling-extension.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement/check-semantic-cleanup.sh, .gitignore |
 
 ## Source of Truth Checks
 
@@ -82,10 +82,10 @@ Plan Scope: standard
 ## Graphify Usage Evidence
 
 - source: graphify explain query against graphify-out/graph.json.
-- action: ran `graphify explain "check-scaling-extension.py"`, `graphify explain "test-scaling-extension.sh"`, `graphify explain "operational-readiness-audit.md"`, and `graphify explain "check-semantic-cleanup.sh"` before editing each file.
-- result: no graph node/edges exist for any of the four files — all are isolated enforcement scripts or governance docs with no tracked callers or dependents in the graph (consistent with other enforcement scripts in this repo, e.g. `test-telemetry-archive.sh` in the prior merged PR).
-- decision: the new coverage rule, the corrected gap text, and the semantic-cleanup false-positive fix are each safely isolated to their own files, with no cross-module impact.
-- target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; docs/operations/operational-readiness-audit.md; scripts/enforcement/check-semantic-cleanup.sh
+- action: ran `graphify explain "check-scaling-extension.py"`, `graphify explain "test-scaling-extension.sh"`, `graphify explain "operational-readiness-audit.md"`, `graphify explain "check-semantic-cleanup.sh"`, and `graphify explain ".gitignore"` before editing each file.
+- result: no graph node/edges exist for any of the five files — all are isolated enforcement scripts, governance docs, or repo config with no tracked callers or dependents in the graph (consistent with other enforcement scripts in this repo, e.g. `test-telemetry-archive.sh` in the prior merged PR).
+- decision: the new coverage rule, the corrected gap text, the semantic-cleanup false-positive fix, and the gitignore additions (Python bytecode cache, local telemetry baseline) are each safely isolated to their own files, with no cross-module impact.
+- target: scripts/enforcement/check-scaling-extension.py; scripts/enforcement/tests/test-scaling-extension.sh; docs/operations/operational-readiness-audit.md; scripts/enforcement/check-semantic-cleanup.sh; .gitignore
 
 ## Alternatives
 
