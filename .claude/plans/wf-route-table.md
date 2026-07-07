@@ -14,8 +14,8 @@
 | Patterns | core/task-router.md routing pattern |
 | External systems/connectors | GitHub |
 | Skills | not required |
-| Validation gates | scripts/enforcement/tests/test-route-plan-contract.sh |
-| Evidence to check | core/task-router.md; core/workflow.md; scripts/enforcement/check-route-plan-contract.sh |
+| Validation gates | scripts/enforcement/tests/test-route-plan-contract.sh; .github/workflows/enforcement-tests.yml |
+| Evidence to check | core/task-router.md; core/workflow.md; scripts/enforcement/check-route-plan-contract.sh; .github/workflows/enforcement-tests.yml |
 | User decisions required | none |
 | selected_project_type | engineering_os_governance |
 | selected_template | governance-maintenance waiver |
