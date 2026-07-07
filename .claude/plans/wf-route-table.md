@@ -64,6 +64,7 @@
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: scripts/enforcement/check-route-plan-contract.py was added after the route plan established scope.
+- pre-merge: final readiness evidence recorded.
 
 ## DoD
 
