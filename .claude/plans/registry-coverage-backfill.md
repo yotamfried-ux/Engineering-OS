@@ -17,7 +17,7 @@ Plan Scope: standard
 | External systems/connectors | GitHub |
 | Skills | not required |
 | Validation gates | scripts/enforcement/check-scaling-extension.py, scripts/enforcement/tests/test-scaling-extension.sh, scripts/enforcement/check-required-connectors.sh, scripts/enforcement/check-required-templates.py, scripts/enforcement/check-required-skills.sh |
-| Evidence to check | scripts/enforcement/project-type-roadmaps.tsv; scripts/enforcement/template-requirements.tsv; scripts/enforcement/connector-requirements.tsv; scripts/enforcement/check-scaling-extension.py; templates/; external-systems/ |
+| Evidence to check | scripts/enforcement/project-type-roadmaps.tsv; scripts/enforcement/template-requirements.tsv; scripts/enforcement/connector-requirements.tsv; scripts/enforcement/check-scaling-extension.py; templates/; external-systems/connectors/* |
 | User decisions required | none |
 | selected_project_type | engineering_os_governance |
 | selected_template | governance-maintenance waiver |

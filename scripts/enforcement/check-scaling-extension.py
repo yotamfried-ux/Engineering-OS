@@ -74,7 +74,10 @@ def template_ids(root: Path, errors: list[str]) -> dict[str, str]:
             if len(parts) != 4:
                 errors.append("bad template-requirements.tsv row")
             else:
-                found[parts[0].strip()] = parts[1].strip()
+                template_id, kind = parts[0].strip(), parts[1].strip()
+                if kind not in {"project", "exempt"}:
+                    errors.append(f"invalid kind in template-requirements.tsv: {template_id}")
+                found[template_id] = kind
     return found
 
 
