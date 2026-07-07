@@ -31,14 +31,12 @@ Target paths: core/task-router.md, scripts/enforcement/check-route-plan-contract
 |---|---|---|
 | core/task-router.md | checked | Routing source. |
 | core/workflow.md | checked | Workflow source. |
-| scripts/enforcement/result-loop-requirements.tsv | checked | Contract source. |
-| docs/operations/scaling-extension-procedure.md | checked | Scaling source. |
 
 ## Documentation Asset Evidence
 
-- internal: core/task-router.md; core/workflow.md; docs/operations/result-loop-contract-plan.md; docs/operations/scaling-extension-procedure.md.
+- internal: core/task-router.md; core/workflow.md; docs/operations/result-loop-contract-plan.md.
 - context7: not required because this is internal governance enforcement.
-- decision: docs confirmed task-router update plus checker while keeping core/workflow.md unchanged.
+- decision: docs confirmed task-router update plus checker.
 
 ## Connector Evidence
 
@@ -47,9 +45,9 @@ Target paths: core/task-router.md, scripts/enforcement/check-route-plan-contract
 ## Connector Usage Evidence
 
 - source: GitHub repository yotamfried-ux/Engineering-OS.
-- action: inspected PR #216, current main files, and policy scripts.
+- action: inspected PR #216 and main policy files.
 - result: paths core/task-router.md, core/workflow.md, scripts/enforcement/check-workflow-evidence.sh were checked.
-- decision: selected clean branch and targeted route-plan contract directly.
+- decision: selected clean branch and route-plan contract target.
 - target: core/task-router.md; scripts/enforcement/check-route-plan-contract.py; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md; .claude/plans/wf-routing-clean.md
 
 ## Capability Evidence
@@ -64,12 +62,12 @@ Target paths: core/task-router.md, scripts/enforcement/check-route-plan-contract
 ## Claude Run Trace
 
 - read routing and workflow sources.
-- read result-loop and scaling sources.
-- read policy scripts for plan, workflow, connector, documentation, and capability gates.
+- added scripts/enforcement/check-route-plan-contract.py.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
+- mid: scripts/enforcement/check-route-plan-contract.py was added after the route plan established scope.
 
 ## DoD
 
