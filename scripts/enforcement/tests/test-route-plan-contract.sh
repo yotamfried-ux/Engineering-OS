@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-CHECK="$ROOT/scripts/enforcement/check-route-plan-contract.py"
+CHECK="$ROOT/scripts/enforcement/check-route-plan-contract.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -17,7 +17,7 @@ telemetry_export_path: scripts/monitoring/export-telemetry-run.sh
 evidence_policy_rule: metadata-only evidence export
 MD
 
-python3 "$CHECK" --plan "$TMP/good.md" --target src/app.py
+bash "$CHECK" --plan "$TMP/good.md" --target src/app.py
 
 cat > "$TMP/bad.md" <<'MD'
 selected_project_type: web-application
@@ -25,11 +25,11 @@ selected_template: templates/web-application
 selected_roadmap: docs/operations/project-type-roadmaps.md#web-application
 MD
 
-if python3 "$CHECK" --plan "$TMP/bad.md" --target src/app.py; then
+if bash "$CHECK" --plan "$TMP/bad.md" --target src/app.py; then
   echo "expected missing fields to fail" >&2
   exit 1
 fi
 
-python3 "$CHECK" --plan "$TMP/bad.md" --target docs/only.md
+bash "$CHECK" --plan "$TMP/bad.md" --target docs/only.md
 
 echo "route plan checker tests passed"
