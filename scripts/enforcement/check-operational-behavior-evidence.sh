@@ -13,6 +13,7 @@ done
 
 python3 - "$BODY_FILE" <<'PY'
 import glob
+import os
 import re
 import sys
 
@@ -36,7 +37,7 @@ def field_value(text: str, field: str) -> str | None:
 
 def operational_section() -> str:
     direct = section(body, "Operational Behavior Evidence")
-    if direct.strip():
+    if direct.strip() or os.environ.get("EOS_DISABLE_PLAN_FALLBACK") == "1":
         return direct
     for path in sorted(glob.glob(".claude/plans/*.md"), reverse=True):
         try:
