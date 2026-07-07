@@ -14,7 +14,7 @@
 | Patterns | core/task-router.md routing pattern |
 | External systems/connectors | GitHub |
 | Skills | not required |
-| Validation gates | scripts/enforcement/tests/test-route-plan-contract.sh |
+| Validation gates | scripts/enforcement/tests/test-required-gates-map.sh |
 | Evidence to check | core/task-router.md; core/workflow.md; scripts/enforcement/check-route-plan-contract.sh |
 | User decisions required | none |
 | selected_project_type | engineering_os_governance |
@@ -25,7 +25,7 @@
 | local_creator_review_path | local CLI tests |
 | telemetry_export_path | scripts/monitoring/export-telemetry-run.sh |
 | evidence_policy_rule | metadata-only evidence export |
-| Target paths | scripts/enforcement/check-route-plan-contract.sh, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md |
+| Target paths | scripts/enforcement/check-route-plan-contract.sh, scripts/enforcement/tests/test-required-gates-map.sh, docs/operations/workflow-result-loop-integration-audit.md |
 
 ## Source of Truth Checks
 
@@ -34,6 +34,7 @@
 | core/task-router.md | checked | Routing source. |
 | core/workflow.md | checked | Workflow source. |
 | scripts/enforcement/check-route-plan-contract.sh | checked | Validator target. |
+| scripts/enforcement/tests/test-required-gates-map.sh | checked | Fixture target. |
 
 ## Documentation Asset Evidence
 
@@ -51,7 +52,7 @@
 - action: GitHub inspected main policy files.
 - result: GitHub checked scripts/enforcement/check-route-plan-contract.sh and core/workflow.md.
 - decision: GitHub selected clean branch and checker target.
-- target: scripts/enforcement/check-route-plan-contract.sh; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md
+- target: scripts/enforcement/check-route-plan-contract.sh; scripts/enforcement/tests/test-required-gates-map.sh; docs/operations/workflow-result-loop-integration-audit.md
 
 ## Capability Evidence
 
@@ -65,7 +66,8 @@
 ## Claude Run Trace
 
 - read routing and workflow sources.
-- added route-plan checker and fixture test.
+- added route-plan checker.
+- moved route-plan fixture coverage into an existing enforcement test suite.
 - added workflow integration audit note.
 - added route loop fields used by checker.
 - switched route checker to shell implementation.
@@ -76,7 +78,7 @@
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: route-plan checker was added after the route plan established scope.
-- pre-merge: final readiness evidence refreshed after diagnostic cleanup.
+- pre-merge: final readiness evidence refreshed after fixture consolidation.
 
 ## DoD
 
