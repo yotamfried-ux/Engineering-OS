@@ -69,12 +69,13 @@
 - added workflow integration audit note.
 - added route loop fields used by checker.
 - switched route checker to shell implementation.
+- fixed route field matcher for colon and table forms.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: route-plan checker was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded after shell checker conversion.
+- pre-merge: final readiness evidence recorded after matcher fix.
 
 ## DoD
 
