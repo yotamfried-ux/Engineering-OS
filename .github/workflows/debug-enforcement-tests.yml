@@ -1,0 +1,31 @@
+name: debug-enforcement-tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  group-one:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          persist-credentials: false
+      - name: Run group one
+        run: |
+          set -euo pipefail
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+          bash scripts/enforcement/tests/test-active-plan-selection.sh
+          bash scripts/enforcement/tests/test-clean-install-and-usage.sh
+          bash scripts/enforcement/tests/test-connector.sh
+          bash scripts/enforcement/tests/test-debugging.sh
+          bash scripts/enforcement/tests/test-documentation.sh
+          bash scripts/enforcement/tests/test-git.sh
+          bash scripts/enforcement/tests/test-install-policy-gate-coverage.sh
+          bash scripts/enforcement/tests/test-learning-capture.sh
+          bash scripts/enforcement/tests/test-learning-e2e.sh
+          bash scripts/enforcement/tests/test-learning-quality-157.sh
+          bash scripts/enforcement/tests/test-learning-reuse.sh
+          bash scripts/enforcement/tests/test-learning.sh
