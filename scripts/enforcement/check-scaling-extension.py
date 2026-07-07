@@ -62,19 +62,22 @@ def read_tsv(root: Path, rel: str, errors: list[str]) -> list[dict[str, str]]:
     return rows
 
 
-def template_ids(root: Path, errors: list[str]) -> set[str]:
+def template_ids(root: Path, errors: list[str]) -> dict[str, str]:
     path = root / "scripts/enforcement/template-requirements.tsv"
     if not path.is_file():
         errors.append("missing template-requirements.tsv")
-        return set()
-    found = set()
+        return {}
+    found = {}
     for raw in path.read_text(encoding="utf-8").splitlines():
         if raw and not raw.startswith("#"):
             parts = raw.split("\t")
             if len(parts) != 4:
                 errors.append("bad template-requirements.tsv row")
             else:
-                found.add(parts[0].strip())
+                template_id, kind = parts[0].strip(), parts[1].strip()
+                if kind not in {"project", "exempt"}:
+                    errors.append(f"invalid kind in template-requirements.tsv: {template_id}")
+                found[template_id] = kind
     return found
 
 
@@ -89,6 +92,15 @@ def check(root: Path) -> list[str]:
                 errors.append(f"unregistered template directory: templates/{child.name}")
 
     roadmaps = {row["project_type_id"]: row for row in rows["scripts/enforcement/project-type-roadmaps.tsv"]}
+    roadmap_covered_templates = set()
+    for row in roadmaps.values():
+        for template_path in split_cell(row.get("template_path", "")):
+            if not noneish(template_path):
+                roadmap_covered_templates.add(Path(template_path).name)
+    for template_id, kind in templates.items():
+        if kind == "project" and template_id not in roadmap_covered_templates:
+            errors.append(f"kind=project template lacks project-type-roadmap row: {template_id}")
+
     result = {row["project_type_id"] for row in rows["scripts/enforcement/result-loop-requirements.tsv"]}
     docs = {row["project_type_id"] for row in rows["scripts/enforcement/documentation-sources.tsv"]}
     patterns = {row["project_type_id"] for row in rows["scripts/enforcement/pattern-requirements.tsv"] if row["status"] in ACTIVE}
