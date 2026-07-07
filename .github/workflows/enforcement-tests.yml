@@ -17,6 +17,14 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Verify route plan contract checker
+        run: |
+          set -euo pipefail
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+          bash scripts/enforcement/tests/test-route-plan-contract.sh
+
       - name: Run all enforcement test suites
         run: |
           set -u
@@ -28,6 +36,9 @@ jobs:
           fail=0
           log_dir="$(mktemp -d)"
           for t in scripts/enforcement/tests/test-*.sh; do
+            case "$t" in
+              scripts/enforcement/tests/test-route-plan-contract.sh) continue ;;
+            esac
             echo "──────── $t ────────"
             log="$log_dir/$(basename "$t").log"
             if bash "$t" >"$log" 2>&1; then
