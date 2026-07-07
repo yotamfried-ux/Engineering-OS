@@ -12,9 +12,18 @@ Architecture guides: governance-maintenance waiver
 Patterns: core/task-router.md routing pattern
 External systems/connectors: GitHub
 Skills: not required
-Validation gates: scripts/enforcement/tests/test-route-plan-contract.sh
-Evidence to check: core/task-router.md; core/workflow.md
+Validation gates: scripts/enforcement/tests/test-route-plan-contract.sh; enforcement-tests; pr-policy; plan-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy
+Evidence to check: core/task-router.md; core/workflow.md; scripts/enforcement/result-loop-requirements.tsv; docs/operations/scaling-extension-procedure.md
 User decisions required: none
+selected_project_type: waiver: Engineering OS governance maintenance
+selected_template: governance-maintenance waiver
+selected_roadmap: docs/operations/project-type-roadmaps.md checked
+selected_result_loop_contract: scripts/enforcement/result-loop-requirements.tsv checked
+required_user_simulation: scripts/enforcement/tests/test-route-plan-contract.sh fixture coverage
+local_creator_review_path: local CLI enforcement tests
+telemetry_export_path: scripts/monitoring/export-telemetry-run.sh
+evidence_redaction_rule: metadata-only evidence export
+Target paths: core/task-router.md, scripts/enforcement/check-route-plan-contract.py, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md, .claude/plans/wf-routing-clean.md
 
 ## Source of Truth Checks
 
@@ -22,6 +31,26 @@ User decisions required: none
 |---|---|---|
 | core/task-router.md | checked | Routing source. |
 | core/workflow.md | checked | Workflow source. |
+| scripts/enforcement/result-loop-requirements.tsv | checked | Contract source. |
+| docs/operations/scaling-extension-procedure.md | checked | Scaling source. |
+
+## Documentation Asset Evidence
+
+- internal: core/task-router.md; core/workflow.md; docs/operations/result-loop-contract-plan.md; docs/operations/scaling-extension-procedure.md.
+- context7: not required because this is internal governance enforcement.
+- decision: docs confirmed task-router update plus checker while keeping core/workflow.md unchanged.
+
+## Connector Evidence
+
+- GitHub: used for repository reads and writes.
+
+## Connector Usage Evidence
+
+- source: GitHub repository yotamfried-ux/Engineering-OS.
+- action: inspected PR #216, current main files, and policy scripts.
+- result: paths core/task-router.md, core/workflow.md, scripts/enforcement/check-workflow-evidence.sh were checked.
+- decision: selected clean branch and targeted route-plan contract directly.
+- target: core/task-router.md; scripts/enforcement/check-route-plan-contract.py; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md; .claude/plans/wf-routing-clean.md
 
 ## Capability Evidence
 
@@ -35,6 +64,8 @@ User decisions required: none
 ## Claude Run Trace
 
 - read routing and workflow sources.
+- read result-loop and scaling sources.
+- read policy scripts for plan, workflow, connector, documentation, and capability gates.
 
 ## Progress Lifecycle Evidence
 
