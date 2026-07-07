@@ -13,7 +13,7 @@ Patterns: core/task-router.md routing pattern
 External systems/connectors: GitHub
 Skills: not required
 Validation gates: scripts/enforcement/tests/test-route-plan-contract.sh; enforcement-tests; pr-policy; plan-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy
-Evidence to check: core/task-router.md; core/workflow.md; scripts/enforcement/result-loop-requirements.tsv; docs/operations/scaling-extension-procedure.md
+Evidence to check: core/task-router.md; core/workflow.md; scripts/enforcement/result-loop-requirements.tsv; scripts/enforcement/check-route-plan-contract.py
 User decisions required: none
 selected_project_type: waiver: Engineering OS governance maintenance
 selected_template: governance-maintenance waiver
@@ -31,6 +31,8 @@ Target paths: scripts/enforcement/check-route-plan-contract.py, scripts/enforcem
 |---|---|---|
 | core/task-router.md | checked | Routing source. |
 | core/workflow.md | checked | Workflow source. |
+| scripts/enforcement/check-route-plan-contract.py | checked | Changed validator target. |
+| scripts/enforcement/tests/test-route-plan-contract.sh | checked | Changed fixture target. |
 
 ## Documentation Asset Evidence
 
@@ -45,9 +47,9 @@ Target paths: scripts/enforcement/check-route-plan-contract.py, scripts/enforcem
 ## Connector Usage Evidence
 
 - source: GitHub repository yotamfried-ux/Engineering-OS.
-- action: inspected PR #216 and main policy files.
-- result: paths core/task-router.md, core/workflow.md, scripts/enforcement/check-workflow-evidence.sh were checked.
-- decision: selected clean branch and route-plan contract target.
+- action: GitHub inspected PR #216 and main policy files.
+- result: GitHub checked paths core/task-router.md, core/workflow.md, scripts/enforcement/check-route-plan-contract.py.
+- decision: GitHub data selected clean branch and route-plan contract target.
 - target: scripts/enforcement/check-route-plan-contract.py; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md; .claude/plans/wf-routing-clean.md
 
 ## Capability Evidence
@@ -65,12 +67,13 @@ Target paths: scripts/enforcement/check-route-plan-contract.py, scripts/enforcem
 - added scripts/enforcement/check-route-plan-contract.py.
 - added scripts/enforcement/tests/test-route-plan-contract.sh.
 - added docs/operations/workflow-result-loop-integration-audit.md.
+- tightened Source of Truth and Connector Usage evidence after CI policy feedback.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: scripts/enforcement/check-route-plan-contract.py was added after the route plan established scope.
-- pre-merge: route-plan checker, fixture test, and audit note were committed on the clean branch.
+- pre-merge: route-plan checker, fixture test, audit note, and evidence tightening were committed on the clean branch.
 
 ## DoD
 
