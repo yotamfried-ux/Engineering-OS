@@ -12,11 +12,11 @@ This audit is the source-of-truth status map for whether Engineering OS can hone
 - **Missing enforcement** — policy exists, but the system can silently skip it. A matrix row may hold this status only with an explicit `gap:<gap_id>` link.
 - **Not applicable** — no enforcement expected for this category.
 
-Classification is enforced deterministically by `scripts/enforcement/check-readiness-audit.sh`: unlinked partial rows, plain `Manual` matrix rows, checklist-less Manual-by-design rows, deferred language without a gap link, and non-closed gaps hidden from the matrix all fail CI.
+Classification is enforced by `scripts/enforcement/check-readiness-audit.sh`.
 
 ## Coverage contract
 
-This file is the coverage inventory for operational readiness. CI must fail if this audit stops covering one of the required areas below, because without a complete inventory the project cannot honestly claim full operational readiness.
+Every coverage row must name `Gate:`, `Owner:`, and `Evidence:`. Manual-by-design rows must name a checklist. Missing or partial rows must link a non-closed gap.
 
 Required coverage groups:
 
@@ -27,11 +27,7 @@ Required coverage groups:
 - Learning: root cause, lesson, failed-solution, prevention update or waiver.
 - Governance: branch/PR/review/external review, merge approval, documentation cleanup, known gaps.
 
-Coverage matrix contract: every row must name `Gate:`, `Owner:`, and `Evidence:` in the enforcement cell. If the gate is manual or missing, the evidence must name the manual review or gap evidence instead of being blank.
-
 ## Known gaps freshness ledger
-
-This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` only for freshness enforcement. `scripts/enforcement/check-known-gaps.sh` fails CI if any `gap_id`, `status`, or `priority` here drifts from the TSV source of truth.
 
 | gap_id | status | priority | audit row / readiness context |
 |---|---|---|---|
@@ -62,6 +58,7 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | install-downstream-behavior | closed | P2 | Project install contract. |
 | result-loop-contract-enforcement | open | P1 | Result Loop Contract enforcement. |
 | scaling-extension-enforcement | open | P1 | Scaling extension enforcement. |
+| claude-operational-behavior-evidence | open | P1 | Claude operational behavior and Engineering OS influence evidence. |
 | registry-coverage-backfill | open | P2 | Registry/manifest coverage. |
 | monitoring-metrics-sufficiency | open | P2 | Monitoring metrics sufficiency. |
 | project-8-real-run-evidence | blocked | P1 | Project 8 real-run evidence. |
@@ -70,45 +67,46 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 
 | Area | Status | What is enforced or checked | Remaining gap |
 |---|---|---|---|
-| CLAUDE entrypoint and core navigation | Enforced | Gate: enforcement-tests entrypoint wiring. Owner: core-governance. Evidence: `CLAUDE.md`, `core/task-router.md`, and route fixtures are checked in CI. | Route semantic correctness remains review-based by design. |
-| Canonical ownership / no policy sprawl | Enforced | Gate: `check-documentation-hygiene.sh`. Owner: docs-governance. Evidence: ownership manifest and documentation hygiene fixtures. | Deep semantic contradictions remain reviewer judgment. |
-| Enforcement coverage inventory | Enforced | Gate: `check-readiness-audit.sh`. Owner: ops-readiness. Evidence: headings, statuses, gap links, checklist docs, and coverage rows are fixture-tested. | Inventory structure is checked; closure judgment remains review-based. |
-| Audit freshness / status accuracy | Enforced | Gate: `check-known-gaps.sh`. Owner: ops-readiness. Evidence: `known-gaps.tsv` is cross-checked against this ledger. | Human decision to close a gap remains review-based. |
-| Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate plus `eos_select_plan`. Owner: workflow-governance. Evidence: workflow evidence and active-plan selection fixtures. | Plan-intent judgment remains review-based. |
-| Route Plan quality | Enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: plan quality fixtures require concrete source and target evidence. | Intent quality beyond reliable matching remains review-based. |
-| DoD completion | Enforced | Gate: plan-policy plus `check-workflow-evidence.sh`. Owner: delivery-governance. Evidence: DoD schema and verification-signal fixtures. | Deep DoD quality remains review-based. |
-| Progress validation | Enforced | Gate: `check-workflow-evidence.sh`. Owner: progress-governance. Evidence: ordered start, mid, and pre-merge lifecycle fixtures. | Deep qualitative meaning remains review-based. |
-| Connector selection | Enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: manifest coverage and precision fixtures. | Right-connector judgment remains review-based. |
-| Connector correctness / source-of-truth use | Enforced | Gate: `check-connector-evidence.sh`. Owner: connector-governance. Evidence: source/action/result/decision, result identifiers, and target linkage fixtures. | Deep semantic use remains review-based. |
-| Template selection | Enforced | Gate: `check-required-templates.py`. Owner: template-governance. Evidence: template requirement manifest, coverage, waiver, and precision fixtures. | Right-template judgment remains review-based. |
-| Pattern usage | Enforced | Gate: `check-required-patterns.sh`. Owner: pattern-governance. Evidence: registry-driven required-pattern rules and fixtures. | Pattern-fit judgment remains review-based. |
-| Template/pattern rating lifecycle | Enforced | Gate: `check-template-pattern-ratings.sh` and `check-workflow-evidence.sh`. Owner: reuse-governance. Evidence: exact reusable asset feedback coverage fixtures. | Score truthfulness remains review-based. |
-| Documentation/reference asset selection lifecycle | Enforced | Gate: documentation-asset-policy / `check-documentation-asset-evidence.sh`. Owner: asset-governance. Evidence: valid evidence, waiver, missing-field, placeholder, and broad-claim fixtures. | Best-source judgment remains review-based. |
-| Skill selection | Enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: required-skill inventory coverage and precision fixtures. | Right-skill judgment remains review-based. |
+| CLAUDE entrypoint and core navigation | Enforced | Gate: enforcement-tests. Owner: core-governance. Evidence: `CLAUDE.md`, `core/task-router.md`, and route fixtures. | Review-based semantic correctness. |
+| Canonical ownership / no policy sprawl | Enforced | Gate: `check-documentation-hygiene.sh`. Owner: docs-governance. Evidence: hygiene fixtures. | Review-based semantic contradictions. |
+| Enforcement coverage inventory | Enforced | Gate: `check-readiness-audit.sh`. Owner: ops-readiness. Evidence: this audit and fixtures. | Closure judgment remains review-based. |
+| Audit freshness / status accuracy | Enforced | Gate: `check-known-gaps.sh`. Owner: ops-readiness. Evidence: `known-gaps.tsv` ledger matching. | Human closure judgment remains review-based. |
+| Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate plus `eos_select_plan`. Owner: workflow-governance. Evidence: active-plan fixtures. | Plan intent remains review-based. |
+| Route Plan quality | Enforced | Gate: `check-workflow-evidence.sh`. Owner: workflow-governance. Evidence: concrete source/target fixtures. | Deep intent quality remains review-based. |
+| DoD completion | Enforced | Gate: plan-policy plus `check-workflow-evidence.sh`. Owner: delivery-governance. Evidence: DoD fixtures. | Deep DoD meaning remains review-based. |
+| Progress validation | Enforced | Gate: `check-workflow-evidence.sh`. Owner: progress-governance. Evidence: ordered lifecycle fixtures. | Deep qualitative meaning remains review-based. |
+| Connector selection | Enforced | Gate: `check-required-connectors.sh`. Owner: connector-governance. Evidence: manifest coverage fixtures. | Right-connector judgment remains review-based. |
+| Connector correctness / source-of-truth use | Enforced | Gate: `check-connector-evidence.sh`. Owner: connector-governance. Evidence: source/action/result/decision fixtures. | Deep semantic use remains review-based. |
+| Template selection | Enforced | Gate: `check-required-templates.py`. Owner: template-governance. Evidence: template manifest fixtures. | Right-template judgment remains review-based. |
+| Pattern usage | Enforced | Gate: `check-required-patterns.sh`. Owner: pattern-governance. Evidence: registry-driven fixtures. | Pattern-fit judgment remains review-based. |
+| Template/pattern rating lifecycle | Enforced | Gate: `check-template-pattern-ratings.sh` and `check-workflow-evidence.sh`. Owner: reuse-governance. Evidence: reusable asset feedback fixtures. | Score truthfulness remains review-based. |
+| Documentation/reference asset selection lifecycle | Enforced | Gate: documentation-asset-policy / `check-documentation-asset-evidence.sh`. Owner: asset-governance. Evidence: asset evidence fixtures. | Best-source judgment remains review-based. |
+| Skill selection | Enforced | Gate: `check-required-skills.sh`. Owner: skill-governance. Evidence: skill inventory fixtures. | Right-skill judgment remains review-based. |
 | Skill runtime evidence | Enforced | Gate: `pre-tool-use-runtime-evidence.sh`. Owner: skill-governance. Evidence: runtime evidence tests. | Deep semantic use remains review-based. |
-| RTK context optimization | Enforced | Gate: `check-required-skills.sh`, `session-setup.sh`, and `check-workflow-evidence.sh`. Owner: context-governance. Evidence: RTK selection and usage evidence fixtures. | Only auditable external impact evidence is enforced. |
-| Graphify context graph | Enforced | Gate: `check-plan-scope.sh`. Owner: context-governance. Evidence: target-linked graph usage fixtures. | Qualitative graph accuracy remains review-based. |
-| Claude memory / context carryover | Manual by design | Gate: manual session checklist with required review evidence. Owner: context-governance. Evidence: Checklist: docs/operations/memory-context-checklist.md and capability evidence. | No reliable runtime signal exists, so this remains manual by design. |
-| Capability registry | Enforced | Gate: capability evidence policy plus `check-capability-staged-changes.sh`. Owner: capability-governance. Evidence: registry map and staged-change fixtures. | Stale declared capabilities are accepted by design to avoid false blocks. |
+| RTK context optimization | Enforced | Gate: `check-required-skills.sh`, `session-setup.sh`, and `check-workflow-evidence.sh`. Owner: context-governance. Evidence: RTK usage impact fixtures. | Only auditable external impact evidence is enforced. |
+| Graphify context graph | Enforced | Gate: `check-plan-scope.sh`. Owner: context-governance. Evidence: graph usage evidence fixtures. | Qualitative graph accuracy remains review-based. |
+| Claude memory / context carryover | Manual by design | Gate: manual session checklist. Owner: context-governance. Evidence: Checklist: docs/operations/memory-context-checklist.md and capability evidence. | No reliable runtime signal exists. |
+| Capability registry | Enforced | Gate: capability evidence policy and `check-capability-staged-changes.sh`. Owner: capability-governance. Evidence: staged-change fixtures. | Stale declared capabilities accepted by design. |
 | Learning schema | Enforced | Gate: `enforce-learning.sh`. Owner: learning-governance. Evidence: learning schema tests. | Content quality is covered by learning closure. |
-| Learning reuse | Enforced | Gate: Route Plan lesson reuse gate. Owner: learning-governance. Evidence: required and irrelevant citation fixtures. | Deep semantic relevance remains review-based. |
-| Learning closure after bug/debug work | Enforced | Gate: `enforce-learning-capture.sh`. Owner: learning-governance. Evidence: concrete cause, evidence, regression, prevention, and waiver fixtures. | Truthfulness of closure claims remains review-based. |
-| Claude run trace / experiment log | Enforced | Gate: `enforce-run-trace.sh`. Owner: trace-governance. Evidence: significant-run trigger and waiver-body fixtures. | Trace content depth remains review-based. |
-| Positive/negative simulations | Enforced | Gate: `check-simulation-coverage.sh`. Owner: validation-governance. Evidence: simulation coverage map and coverage-required-gates fixtures. | Future coverage judgment remains review-based. |
-| Tests/lint before commit | Enforced | Gate: `enforce-tests.sh`. Owner: validation-governance. Evidence: test contract and missing-tool environment fixtures. | Tool-choice judgment remains review-based. |
-| Cleanup debug leftovers | Enforced | Gate: `enforce-quality.sh`. Owner: cleanup-governance. Evidence: quality enforcement tests. | None for these narrow cases. |
-| Cleanup semantic hygiene | Enforced | Gate: semantic cleanup and import cleanup policies. Owner: cleanup-governance. Evidence: duplicate-definition and stale-reference policy gates. | Deeper semantic hygiene remains review-based. |
-| Project install contract | Enforced | Gate: use-in-project output contract and install policy gate coverage. Owner: install-governance. Evidence: clean install and generated target behavior fixtures. | Deep runtime fidelity beyond fixtures remains review-based. |
-| Result Loop Contract enforcement | Missing enforcement | Gate: `check-result-loop-contract.py` plus `result-loop-requirements.tsv` exist from merged PR #220 (`014c58f`) and `scripts/enforcement/tests/test-result-loop-contract.sh` passes against synthetic fixtures, but no CI workflow invokes the checker against a real PR's route plan — confirmed by a repo-wide grep showing zero references to the checker outside its own test file. Owner: ops-readiness. Evidence: `scripts/enforcement/check-result-loop-contract.py`; `scripts/enforcement/tests/test-result-loop-contract.sh`. | gap:result-loop-contract-enforcement — a real PR-gating workflow invocation, plus telemetry linkage and real-run evidence, remain open. |
-| Scaling extension enforcement | Missing enforcement | Gate: `check-scaling-extension.py` plus `project-type-roadmaps.tsv`/`waiver-requirements.tsv` exist from merged PR #219 (`f19ce56`) and `scripts/enforcement/tests/test-scaling-extension.sh` passes against synthetic fixtures, but no CI workflow invokes the checker against a real PR — confirmed by a repo-wide grep showing zero references to the checker outside its own test file. Owner: ops-readiness. Evidence: `scripts/enforcement/check-scaling-extension.py`; `scripts/enforcement/tests/test-scaling-extension.sh`. | gap:scaling-extension-enforcement — a real PR-gating workflow invocation remains open. |
-| Registry/manifest coverage | Missing enforcement | Gate: `check-scaling-extension.py` now requires every `kind=project` row in `template-requirements.tsv` to have a `project-type-roadmaps.tsv` entry, verified by `scripts/enforcement/tests/test-scaling-extension.sh`. Owner: registry-governance. Evidence: connector, template, and skill coverage checkers (`check-required-connectors.sh`, `check-required-templates.py`, `check-required-skills.sh`, all with `--check-coverage`) independently verified already-complete; the one real gap found (10 uncovered project-type templates) was backfilled with honest `status=deferred` rows. | gap:registry-coverage-backfill — the 10 deferred project types still need real roadmap research (required_evidence, result-loop/documentation/pattern/skill rows) before they can move to `status=active`. |
-| Monitoring metrics sufficiency | Missing enforcement | Gate: telemetry exporter/importer/analyzer and their tests exist, but no gate requires real-run evidence before claiming sufficiency. Owner: ops-readiness. Evidence: `scripts/monitoring/export-telemetry-run.py`, `import-telemetry-run.py`, `analyze-telemetry-archive.py`, and their tests exist and pass; `docs/operations/runtime-telemetry-archive-audit-checklist.md`'s Project 8 and longitudinal-learning sections are unchecked. | gap:monitoring-metrics-sufficiency — cannot close until a real target-project run is imported and analyzed. |
-| Project 8 real-run evidence | Missing enforcement | Gate: none — no real run has been performed. Owner: ops-readiness. Evidence: `docs/operations/runtime-telemetry-archive-audit-checklist.md` Project 8 checklist section entirely unchecked. | gap:project-8-real-run-evidence — blocked until the real-run experiment is actually performed; explicitly out of scope for this audit-reconciliation task. |
-| Git/branch policy | Enforced | Gate: pr-policy plus hooks. Owner: merge-governance. Evidence: PR policy, merge readiness artifact, workflow-run validation, and merge checklist. | Live GitHub state checks remain human-reviewed. |
-| PR review / external review | Enforced | Gate: `pr-policy` via `check-pr-review-evidence.sh`. Owner: review-governance. Evidence: structured external review or fallback self-review evidence fixtures. | Deep review quality remains review-based. |
-| Merge safety | Manual by design | Gate: manual GitHub merge checklist plus workflow-run evidence. Owner: merge-governance. Evidence: Checklist: docs/operations/merge-readiness-checklist.md covering CI, threads, superseded PRs, and human approval. | The merge decision remains human by design. |
-| Post-merge validation | Enforced | Gate: `post-merge-validation` workflow plus `check-post-merge-validation-contract.sh`. Owner: merge-governance. Evidence: fake-gh repair issue simulation and post-merge incident checklist. | Live failures are triaged manually by design. |
-| Known gaps register | Enforced | Gate: `check-known-gaps.sh` plus `check-readiness-audit.sh` gap links. Owner: ops-readiness. Evidence: TSV, freshness ledger, known-gaps fixtures, and lifecycle coverage. | Lifecycle shape and matrix linkage are enforced; closure judgment remains review-based. |
+| Learning reuse | Enforced | Gate: Route Plan lesson reuse gate. Owner: learning-governance. Evidence: citation fixtures. | Deep semantic relevance remains review-based. |
+| Learning closure after bug/debug work | Enforced | Gate: `enforce-learning-capture.sh`. Owner: learning-governance. Evidence: cause/evidence/regression/prevention fixtures. | Truthfulness remains review-based. |
+| Claude run trace / experiment log | Enforced | Gate: `enforce-run-trace.sh`. Owner: trace-governance. Evidence: significant-run trigger and waiver fixtures. | Trace content depth remains review-based. |
+| Claude operational behavior evidence | Missing enforcement | Gate: `check-operational-behavior-evidence.sh` and its fixture test exist, but the checker is not yet wired into a real PR gate. Owner: ops-readiness. Evidence: `scripts/enforcement/tests/test-operational-behavior-evidence.sh`. | gap:claude-operational-behavior-evidence — wire into a real PR gate so significant Claude work records behavior, Engineering OS influence, efficiency, friction, quality, usage surrogate, and next improvements before merge. |
+| Positive/negative simulations | Enforced | Gate: `check-simulation-coverage.sh`. Owner: validation-governance. Evidence: coverage fixtures. | Future coverage judgment remains review-based. |
+| Tests/lint before commit | Enforced | Gate: `enforce-tests.sh`. Owner: validation-governance. Evidence: tool-environment fixtures. | Tool-choice judgment remains review-based. |
+| Cleanup debug leftovers | Enforced | Gate: `enforce-quality.sh`. Owner: cleanup-governance. Evidence: quality tests. | None for narrow cases. |
+| Cleanup semantic hygiene | Enforced | Gate: semantic cleanup and import cleanup policies. Owner: cleanup-governance. Evidence: policy gates. | Deeper semantic hygiene remains review-based. |
+| Project install contract | Enforced | Gate: use-in-project output contract and install policy gate coverage. Owner: install-governance. Evidence: generated-target fixtures. | Deep runtime fidelity remains review-based. |
+| Result Loop Contract enforcement | Missing enforcement | Gate: `check-result-loop-contract.py` exists and self-tests, but no CI workflow invokes it against real PR content. Owner: ops-readiness. Evidence: `scripts/enforcement/check-result-loop-contract.py`. | gap:result-loop-contract-enforcement — wire checker into real PR gating. |
+| Scaling extension enforcement | Missing enforcement | Gate: `check-scaling-extension.py` exists and self-tests, but no CI workflow invokes it against real PR content. Owner: ops-readiness. Evidence: `scripts/enforcement/check-scaling-extension.py`. | gap:scaling-extension-enforcement — wire checker into real PR gating. |
+| Registry/manifest coverage | Missing enforcement | Gate: `check-scaling-extension.py` now requires project templates to have roadmap entries. Owner: registry-governance. Evidence: scaling extension fixtures. | gap:registry-coverage-backfill — 10 deferred project types need real roadmap research before active status. |
+| Monitoring metrics sufficiency | Missing enforcement | Gate: telemetry exporter/importer/analyzer and tests exist, but no real target-project run has been imported. Owner: ops-readiness. Evidence: telemetry archive tests. | gap:monitoring-metrics-sufficiency — cannot close until a real target-project run is imported and analyzed. |
+| Project 8 real-run evidence | Missing enforcement | Gate: none. Owner: ops-readiness. Evidence: Project 8 checklist not completed. | gap:project-8-real-run-evidence — blocked until the real-run experiment is performed. |
+| Git/branch policy | Enforced | Gate: pr-policy plus hooks. Owner: merge-governance. Evidence: merge readiness artifact. | Live state checks remain human-reviewed. |
+| PR review / external review | Enforced | Gate: `pr-policy` via `check-pr-review-evidence.sh`. Owner: review-governance. Evidence: review fixtures. | Deep review quality remains review-based. |
+| Merge safety | Manual by design | Gate: manual GitHub merge checklist. Owner: merge-governance. Evidence: Checklist: docs/operations/merge-readiness-checklist.md covering CI, threads, and approval. | The merge decision remains human by design. |
+| Post-merge validation | Enforced | Gate: `post-merge-validation` workflow and `check-post-merge-validation-contract.sh`. Owner: merge-governance. Evidence: fake-gh repair issue simulation. | Live failures use the incident checklist. |
+| Known gaps register | Enforced | Gate: `check-known-gaps.sh` plus `check-readiness-audit.sh`. Owner: ops-readiness. Evidence: TSV and ledger fixtures. | Closure judgment remains review-based. |
 
 ## Definition of full operational readiness
 
@@ -119,18 +117,18 @@ Engineering OS can only be called fully operationally ready when every policy ro
 3. **Waiver-gated** so the agent cannot silently skip it; or
 4. **Explicitly listed as a gap** with priority, risk, and next action.
 
-Anything merely documented but silently skippable is not operationally ready. This definition is now itself enforced: `check-readiness-audit.sh` fails CI on any matrix row that satisfies none of the four states.
+Anything merely documented but silently skippable is not operationally ready.
 
 ## Highest-priority gaps by ROI
 
-1. **Result Loop Contract gate wiring** — open gap; the checker, manifest, and fixtures exist and self-test correctly (PR #220), but no CI workflow invokes `check-result-loop-contract.py` against a real PR's route plan, so real PRs are not actually gated yet.
-2. **Scaling gate wiring** — open gap; the checker, manifests, and fixtures exist and self-test correctly (PR #219), but no CI workflow invokes `check-scaling-extension.py` against a real PR, so real PRs are not actually gated yet.
-3. **Registry/manifest coverage backfill** — open gap; connector/template/skill coverage checks already pass in full, but 10 `kind=project` templates lacked a project-type-roadmap entry until this backfill added honest `status=deferred` rows and a new fixture-tested coverage rule; those 10 still need real roadmap research before going `active`.
-4. **Monitoring metrics sufficiency** — open gap; the telemetry exporter/importer/analyzer pipeline is implemented and tested, but no real target-project run has been imported yet, so sufficiency cannot be claimed.
-5. **Project 8 real-run evidence** — blocked gap; the real-run experiment has not been performed and is explicitly out of scope for audit-reconciliation work; readiness claims must not get ahead of this.
-6. **Selection coverage hardening** — closed by inventory-tied selection manifests, the registry-driven pattern gate, and the staged-change capability guard; maintain the manifests as inventories grow.
+1. **Claude operational behavior evidence** — open gap; usage-only tracking is insufficient. Significant Claude runs must record behavior, Engineering OS influence, efficiency, friction/false positives, quality signals, usage surrogate, and next system improvement before merge.
+2. **Result Loop Contract gate wiring** — open gap; wire `check-result-loop-contract.py` into real PR gating.
+3. **Scaling gate wiring** — open gap; wire `check-scaling-extension.py` into real PR gating.
+4. **Registry/manifest coverage backfill** — open gap; 10 deferred project types still need real roadmap research before active status.
+5. **Monitoring metrics sufficiency** — open gap; the telemetry exporter/importer/analyzer pipeline is implemented and tested, but no real target-project run has been imported yet.
+6. **Project 8 real-run evidence** — blocked gap; the real-run experiment has not been performed.
 7. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
-8. **RTK runtime hardening** — covered structurally by RTK usage impact evidence and session setup checks; maintain it when RTK signals change.
+8. **RTK runtime hardening** — covered structurally by RTK usage impact evidence and session setup checks.
 9. **Route Plan quality gate** — closed structurally by concrete source and target relevance checks.
 10. **Template/pattern rating lifecycle** — closed structurally by exact declared asset coverage and feedback evidence.
 11. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures when the lesson schema changes.
@@ -147,4 +145,4 @@ Anything merely documented but silently skippable is not operationally ready. Th
 
 ## Current audit scope
 
-This audit enforces its own classification contract: every matrix row is Enforced, Manual by design with an existing checklist doc, Waiver-gated, or linked to a non-closed known gap, validated by `scripts/enforcement/check-readiness-audit.sh` and fixtures in `scripts/enforcement/tests/test-readiness-audit.sh`. This update registers open Result Loop Contract and scaling enforcement gaps in the source of truth. It does not implement either gate and does not claim full readiness.
+This audit enforces its own classification contract through `scripts/enforcement/check-readiness-audit.sh`. This update registers Claude operational behavior evidence as a distinct open gap and adds a fixture-tested checker, but it does not claim full PR-gate wiring, Project 8 evidence, monitoring sufficiency, or full readiness.
