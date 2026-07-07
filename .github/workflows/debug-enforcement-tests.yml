@@ -1,0 +1,45 @@
+name: debug-enforcement-tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - test-active-plan-selection.sh
+          - test-connector.sh
+          - test-debugging.sh
+          - test-documentation.sh
+          - test-git.sh
+          - test-learning-capture.sh
+          - test-learning-e2e.sh
+          - test-learning-quality-157.sh
+          - test-learning-reuse.sh
+          - test-learning.sh
+          - test-no-grep-c-echo.sh
+          - test-operational-learning-skills.sh
+          - test-ops-branch-protection.sh
+          - test-plan-scope.sh
+          - test-quality.sh
+          - test-required-gates-map.sh
+          - test-resource.sh
+          - test-simulation-coverage.sh
+          - test-skill.sh
+          - test-tests.sh
+          - test-workflow.sh
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          persist-credentials: false
+      - name: Run suite
+        run: |
+          set -euo pipefail
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+          bash "scripts/enforcement/tests/${{ matrix.suite }}"
