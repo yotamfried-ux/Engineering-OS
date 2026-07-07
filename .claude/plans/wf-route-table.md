@@ -68,12 +68,13 @@
 - added route-plan checker and fixture test.
 - added workflow integration audit note.
 - added route loop fields used by checker.
+- removed unused shell checker to narrow enforcement surface.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: scripts/enforcement/check-route-plan-contract.py was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded.
+- pre-merge: final readiness evidence recorded after cleanup.
 
 ## DoD
 
