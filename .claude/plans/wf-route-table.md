@@ -69,12 +69,13 @@
 - added workflow integration audit note.
 - added route loop fields used by checker.
 - removed unused shell checker to narrow enforcement surface.
+- hardened checker to reject placeholder route fields.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: scripts/enforcement/check-route-plan-contract.py was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded after cleanup.
+- pre-merge: final readiness evidence recorded after checker hardening.
 
 ## DoD
 
