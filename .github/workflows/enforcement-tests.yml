@@ -17,31 +17,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Verify route plan contract checker
-        run: |
-          set -euo pipefail
-          git config --global user.email "ci@engineering-os.local"
-          git config --global user.name "engineering-os-ci"
-          git config --global init.defaultBranch main
-          bash scripts/enforcement/tests/test-route-plan-contract.sh
-
-      - name: Verify install policy coverage
-        run: |
-          set -euo pipefail
-          git config --global user.email "ci@engineering-os.local"
-          git config --global user.name "engineering-os-ci"
-          git config --global init.defaultBranch main
-          bash scripts/enforcement/tests/test-install-policy-gate-coverage.sh
-
-      - name: Verify clean install usage
-        run: |
-          set -euo pipefail
-          git config --global user.email "ci@engineering-os.local"
-          git config --global user.name "engineering-os-ci"
-          git config --global init.defaultBranch main
-          bash scripts/enforcement/tests/test-clean-install-and-usage.sh
-
-      - name: Run remaining enforcement test suites
+      - name: Run all enforcement test suites
         run: |
           set -u
           # Each test bootstraps its own temp git repo, so give git an identity.
@@ -50,20 +26,9 @@ jobs:
           git config --global init.defaultBranch main
 
           fail=0
-          log_dir="$(mktemp -d)"
           for t in scripts/enforcement/tests/test-*.sh; do
-            case "$t" in
-              scripts/enforcement/tests/test-route-plan-contract.sh|scripts/enforcement/tests/test-install-policy-gate-coverage.sh|scripts/enforcement/tests/test-clean-install-and-usage.sh) continue ;;
-            esac
             echo "──────── $t ────────"
-            log="$log_dir/$(basename "$t").log"
-            if bash "$t" >"$log" 2>&1; then
-              echo "✅ $t"
-            else
-              echo "❌ $t"
-              cat "$log"
-              fail=1
-            fi
+            if bash "$t"; then :; else fail=1; fi
           done
 
           echo
