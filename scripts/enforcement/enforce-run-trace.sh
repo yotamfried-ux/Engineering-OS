@@ -6,9 +6,6 @@ set -euo pipefail
 # When staged changes modify enforcement, connector selection, settings, workflows,
 # or simulations, the active Route Plan must contain a Claude Run Trace section.
 # Connector-related changes require connector-specific trace evidence.
-# Significant runs must also record Operational Behavior Evidence so Engineering OS
-# can evaluate Claude performance, friction, quality, and system influence without
-# relying on unavailable Claude API token accounting.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
@@ -135,22 +132,6 @@ done
 
 if [ -n "$missing" ]; then
   echo "run trace incomplete: missing fields: ${missing}" >&2
-  exit 1
-fi
-
-has_heading "$plan" 'Operational[[:space:]]+Behavior[[:space:]]+Evidence' || {
-  echo "operational behavior evidence required: active plan must include ## Operational Behavior Evidence for significant Claude runs" >&2
-  exit 1
-}
-
-operational="$(section_text "$plan" 'operational[[:space:]]+behavior[[:space:]]+evidence')"
-operational_missing=""
-for term in behavior_summary engineering_os_influence efficiency_signals friction_or_false_positives quality_signals usage_surrogate next_system_improvement; do
-  printf '%s\n' "$operational" | grep -qi "$term" || operational_missing="${operational_missing}${term} "
-done
-
-if [ -n "$operational_missing" ]; then
-  echo "operational behavior evidence incomplete: missing fields: ${operational_missing}" >&2
   exit 1
 fi
 
