@@ -58,4 +58,9 @@ awk 'BEGIN{FS=OFS="\t"} !/^admin-dashboard\t/' "$repo/scripts/enforcement/projec
 mv "$repo/roadmaps2.tmp" "$repo/scripts/enforcement/project-type-roadmaps.tsv"
 expect_reject missing-project-type-roadmap "$repo"
 
+repo="$(copy_repo stale-roadmap-template-path)"
+awk 'BEGIN{FS=OFS="\t"} $1=="admin-dashboard"{$5="NONE"} {print}' "$repo/scripts/enforcement/project-type-roadmaps.tsv" > "$repo/roadmaps3.tmp"
+mv "$repo/roadmaps3.tmp" "$repo/scripts/enforcement/project-type-roadmaps.tsv"
+expect_reject stale-roadmap-template-path "$repo"
+
 echo "scaling extension checker tests passed"

@@ -89,7 +89,7 @@ def check(root: Path) -> list[str]:
                 errors.append(f"unregistered template directory: templates/{child.name}")
 
     roadmaps = {row["project_type_id"]: row for row in rows["scripts/enforcement/project-type-roadmaps.tsv"]}
-    roadmap_covered_templates = set(roadmaps)
+    roadmap_covered_templates = set()
     for row in roadmaps.values():
         for template_path in split_cell(row.get("template_path", "")):
             if not noneish(template_path):
