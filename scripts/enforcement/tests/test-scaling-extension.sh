@@ -53,4 +53,9 @@ awk 'BEGIN{FS=OFS="\t"} $1=="game-development"{$7="telemetry export"} {print}' "
 mv "$repo/game.tmp" "$repo/scripts/enforcement/project-type-roadmaps.tsv"
 expect_reject missing-game-evidence "$repo"
 
+repo="$(copy_repo missing-project-type-roadmap)"
+awk 'BEGIN{FS=OFS="\t"} !/^admin-dashboard\t/' "$repo/scripts/enforcement/project-type-roadmaps.tsv" > "$repo/roadmaps2.tmp"
+mv "$repo/roadmaps2.tmp" "$repo/scripts/enforcement/project-type-roadmaps.tsv"
+expect_reject missing-project-type-roadmap "$repo"
+
 echo "scaling extension checker tests passed"
