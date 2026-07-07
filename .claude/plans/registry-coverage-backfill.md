@@ -123,7 +123,7 @@ Plan Scope: standard
 
 - start: coverage checkers run and manifest cross-references read before any edit.
 - mid: after the code/config/doc commit landed, re-confirmed the 10 deferred project-type-roadmap rows, the new `check-scaling-extension.py` coverage rule, and the corrected `known-gaps.tsv`/`operational-readiness-audit.md` text all match the committed content, by diffing the committed files against this plan's Source of Truth Checks table.
-- pre-merge: after the Stop hook flagged untracked `scripts/monitoring/__pycache__/` and `.engineering-os/telemetry/` (raw session events), gitignored both (build artifact and local telemetry baseline respectively — neither belongs committed as raw state), then re-ran the full 79-suite `test-*.sh` loop, `check-known-gaps.sh`, and `check-readiness-audit.sh` one final time against the complete commit history immediately before pushing — all pass.
+- pre-merge: after CodeRabbit's full review posted two low-severity nitpicks (broad `external-systems/` evidence path instead of the specific `connectors/*` subpath; unvalidated `kind` vocabulary in `template_ids()`), applied both fixes and re-ran `python3 scripts/enforcement/check-scaling-extension.py`, `bash scripts/enforcement/tests/test-scaling-extension.sh` (7/7 fixtures), and the full 79-suite `test-*.sh` loop against the complete commit history immediately before pushing — all pass.
 
 ## Run Evidence (Telemetry Surrogate)
 
