@@ -62,6 +62,7 @@
 - `source.github-repo-read` — repository files read.
 - `validation.policy-change-has-validator` — validator in scope.
 - `validation.coderabbit-policy` — manual review fallback.
+- `validation.actions-checked` — workflow runner change checked by GitHub Actions.
 
 ## Claude Run Trace
 
@@ -77,7 +78,7 @@
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: route-plan checker was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded after workflow runner update.
+- pre-merge: final readiness evidence recorded after workflow capability evidence update.
 
 ## DoD
 
