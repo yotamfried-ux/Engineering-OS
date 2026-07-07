@@ -60,8 +60,8 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | pr-review-quality-schema | closed | P2 | PR review / external review. |
 | merge-readiness-artifact | closed | P1 | Git/branch policy and merge safety. |
 | install-downstream-behavior | closed | P2 | Project install contract. |
-| result-loop-contract-enforcement | closed | P1 | Result Loop Contract enforcement. |
-| scaling-extension-enforcement | closed | P1 | Scaling extension enforcement. |
+| result-loop-contract-enforcement | open | P1 | Result Loop Contract enforcement. |
+| scaling-extension-enforcement | open | P1 | Scaling extension enforcement. |
 | registry-coverage-backfill | open | P2 | Registry/manifest coverage. |
 | monitoring-metrics-sufficiency | open | P2 | Monitoring metrics sufficiency. |
 | project-8-real-run-evidence | blocked | P1 | Project 8 real-run evidence. |
@@ -99,8 +99,8 @@ This ledger is intentionally duplicated from `docs/operations/known-gaps.tsv` on
 | Cleanup debug leftovers | Enforced | Gate: `enforce-quality.sh`. Owner: cleanup-governance. Evidence: quality enforcement tests. | None for these narrow cases. |
 | Cleanup semantic hygiene | Enforced | Gate: semantic cleanup and import cleanup policies. Owner: cleanup-governance. Evidence: duplicate-definition and stale-reference policy gates. | Deeper semantic hygiene remains review-based. |
 | Project install contract | Enforced | Gate: use-in-project output contract and install policy gate coverage. Owner: install-governance. Evidence: clean install and generated target behavior fixtures. | Deep runtime fidelity beyond fixtures remains review-based. |
-| Result Loop Contract enforcement | Enforced | Gate: `check-result-loop-contract.py` plus `result-loop-requirements.tsv`. Owner: ops-readiness. Evidence: merged PR #220 (`014c58f`); `scripts/enforcement/tests/test-result-loop-contract.sh` passes with positive and negative fixtures; wired into CI via the `scripts/enforcement/tests/test-*.sh` glob in `enforcement-tests.yml`. | Telemetry linkage and real-run evidence remain covered by separate gaps (`monitoring-metrics-sufficiency`, `project-8-real-run-evidence`). |
-| Scaling extension enforcement | Enforced | Gate: `check-scaling-extension.py` plus `project-type-roadmaps.tsv` and `waiver-requirements.tsv`. Owner: ops-readiness. Evidence: merged PR #219 (`f19ce56`); `scripts/enforcement/tests/test-scaling-extension.sh` passes, rejecting incomplete-extension fixtures; wired into CI via the `scripts/enforcement/tests/test-*.sh` glob in `enforcement-tests.yml`. | Registry coverage backing new extensions remains tracked separately (`registry-coverage-backfill`). |
+| Result Loop Contract enforcement | Missing enforcement | Gate: `check-result-loop-contract.py` plus `result-loop-requirements.tsv` exist from merged PR #220 (`014c58f`) and `scripts/enforcement/tests/test-result-loop-contract.sh` passes against synthetic fixtures, but no CI workflow invokes the checker against a real PR's route plan — confirmed by a repo-wide grep showing zero references to the checker outside its own test file. Owner: ops-readiness. Evidence: `scripts/enforcement/check-result-loop-contract.py`; `scripts/enforcement/tests/test-result-loop-contract.sh`. | gap:result-loop-contract-enforcement — a real PR-gating workflow invocation, plus telemetry linkage and real-run evidence, remain open. |
+| Scaling extension enforcement | Missing enforcement | Gate: `check-scaling-extension.py` plus `project-type-roadmaps.tsv`/`waiver-requirements.tsv` exist from merged PR #219 (`f19ce56`) and `scripts/enforcement/tests/test-scaling-extension.sh` passes against synthetic fixtures, but no CI workflow invokes the checker against a real PR — confirmed by a repo-wide grep showing zero references to the checker outside its own test file. Owner: ops-readiness. Evidence: `scripts/enforcement/check-scaling-extension.py`; `scripts/enforcement/tests/test-scaling-extension.sh`. | gap:scaling-extension-enforcement — a real PR-gating workflow invocation remains open. |
 | Registry/manifest coverage | Missing enforcement | Gate: no coverage checker yet ties every asset directory (connectors, templates, patterns, skills) to a registry row or exemption. Owner: registry-governance. Evidence: `external-systems/` holds 49 connector directories versus about 17 rows in `scripts/enforcement/connector-requirements.tsv`. | gap:registry-coverage-backfill — follow-up PR must add fixture-tested coverage or exemptions for every currently uncovered asset directory. |
 | Monitoring metrics sufficiency | Missing enforcement | Gate: telemetry exporter/importer/analyzer and their tests exist, but no gate requires real-run evidence before claiming sufficiency. Owner: ops-readiness. Evidence: `scripts/monitoring/export-telemetry-run.py`, `import-telemetry-run.py`, `analyze-telemetry-archive.py`, and their tests exist and pass; `docs/operations/runtime-telemetry-archive-audit-checklist.md`'s Project 8 and longitudinal-learning sections are unchecked. | gap:monitoring-metrics-sufficiency — cannot close until a real target-project run is imported and analyzed. |
 | Project 8 real-run evidence | Missing enforcement | Gate: none — no real run has been performed. Owner: ops-readiness. Evidence: `docs/operations/runtime-telemetry-archive-audit-checklist.md` Project 8 checklist section entirely unchecked. | gap:project-8-real-run-evidence — blocked until the real-run experiment is actually performed; explicitly out of scope for this audit-reconciliation task. |
@@ -123,25 +123,27 @@ Anything merely documented but silently skippable is not operationally ready. Th
 
 ## Highest-priority gaps by ROI
 
-1. **Registry/manifest coverage backfill** — open gap; connectors alone show ~17 manifest rows against 49 `external-systems/` directories, so newer or unlisted assets can silently skip required-source selection until a follow-up PR closes the gap.
-2. **Monitoring metrics sufficiency** — open gap; the telemetry exporter/importer/analyzer pipeline is implemented and tested, but no real target-project run has been imported yet, so sufficiency cannot be claimed.
-3. **Project 8 real-run evidence** — blocked gap; the real-run experiment has not been performed and is explicitly out of scope for audit-reconciliation work; readiness claims must not get ahead of this.
-4. **Selection coverage hardening** — closed by inventory-tied selection manifests, the registry-driven pattern gate, and the staged-change capability guard; maintain the manifests as inventories grow.
-5. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
-6. **RTK runtime hardening** — covered structurally by RTK usage impact evidence and session setup checks; maintain it when RTK signals change.
-7. **Route Plan quality gate** — closed structurally by concrete source and target relevance checks.
-8. **Template/pattern rating lifecycle** — closed structurally by exact declared asset coverage and feedback evidence.
-9. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures when the lesson schema changes.
-10. **Progress lifecycle** — covered by ordered progress lifecycle evidence.
-11. **Graphify context graph** — covered by target-linked graph usage evidence.
-12. **Connector correctness** — source/action/result/decision evidence, concrete result identifiers, and target linkage are enforced by `check-connector-evidence.sh`.
-13. **Simulation completeness** — maintained by `simulation-coverage.tsv`.
-14. **Post-merge validation** — covered by safe fake-gh repair issue simulation; live failures use the incident checklist.
-15. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`.
-16. **Semantic cleanup** — covered by CI policy gates.
-17. **Trace and test contracts** — covered by significant-run and missing-tool environment contracts.
-18. **Governance evidence** — review and merge evidence are covered by `check-pr-review-evidence.sh`.
-19. **Install downstream behavior** — covered by manifest-driven policy-gate dependency copy and generated-target fixtures.
+1. **Result Loop Contract gate wiring** — open gap; the checker, manifest, and fixtures exist and self-test correctly (PR #220), but no CI workflow invokes `check-result-loop-contract.py` against a real PR's route plan, so real PRs are not actually gated yet.
+2. **Scaling gate wiring** — open gap; the checker, manifests, and fixtures exist and self-test correctly (PR #219), but no CI workflow invokes `check-scaling-extension.py` against a real PR, so real PRs are not actually gated yet.
+3. **Registry/manifest coverage backfill** — open gap; connectors alone show ~17 manifest rows against 49 `external-systems/` directories, so newer or unlisted assets can silently skip required-source selection until a follow-up PR closes the gap.
+4. **Monitoring metrics sufficiency** — open gap; the telemetry exporter/importer/analyzer pipeline is implemented and tested, but no real target-project run has been imported yet, so sufficiency cannot be claimed.
+5. **Project 8 real-run evidence** — blocked gap; the real-run experiment has not been performed and is explicitly out of scope for audit-reconciliation work; readiness claims must not get ahead of this.
+6. **Selection coverage hardening** — closed by inventory-tied selection manifests, the registry-driven pattern gate, and the staged-change capability guard; maintain the manifests as inventories grow.
+7. **Coverage map hardening** — covered by `coverage-required-gates.tsv`; maintain it whenever new gates are added.
+8. **RTK runtime hardening** — covered structurally by RTK usage impact evidence and session setup checks; maintain it when RTK signals change.
+9. **Route Plan quality gate** — closed structurally by concrete source and target relevance checks.
+10. **Template/pattern rating lifecycle** — closed structurally by exact declared asset coverage and feedback evidence.
+11. **Learning closure gate** — covered by `enforce-learning-capture.sh`; maintain content-quality fixtures when the lesson schema changes.
+12. **Progress lifecycle** — covered by ordered progress lifecycle evidence.
+13. **Graphify context graph** — covered by target-linked graph usage evidence.
+14. **Connector correctness** — source/action/result/decision evidence, concrete result identifiers, and target linkage are enforced by `check-connector-evidence.sh`.
+15. **Simulation completeness** — maintained by `simulation-coverage.tsv`.
+16. **Post-merge validation** — covered by safe fake-gh repair issue simulation; live failures use the incident checklist.
+17. **Documentation hygiene** — covered by `check-documentation-hygiene.sh`.
+18. **Semantic cleanup** — covered by CI policy gates.
+19. **Trace and test contracts** — covered by significant-run and missing-tool environment contracts.
+20. **Governance evidence** — review and merge evidence are covered by `check-pr-review-evidence.sh`.
+21. **Install downstream behavior** — covered by manifest-driven policy-gate dependency copy and generated-target fixtures.
 
 ## Current audit scope
 

@@ -42,6 +42,7 @@ Plan Scope: standard
 | `docs/operations/workflow-result-loop-integration-audit.md` | checked | Already accurate; lists route-plan checker as done and registry backfill/monitoring/real-run evidence as separate remaining work. No change needed. |
 | `external-systems/` vs `connector-requirements.tsv` | checked | 49 connector directories vs ~17 manifest rows — real, uncaptured coverage gap (tracked as new gap `registry-coverage-backfill`, addressed in a follow-up PR, not this one). |
 | `docs/operations/runtime-telemetry-archive-audit-checklist.md` | checked | "Project 8 evidence" and "Longitudinal learning" sections are entirely unchecked; no real-run telemetry data exists anywhere in the repo (grepped for "Project 8" — only planning/checklist mentions, never result data). |
+| .github/workflows/*.yml (repo-wide grep) | checked | Reviewer `chatgpt-codex-connector[bot]` flagged on PR #224 that neither `check-result-loop-contract.py` nor `check-scaling-extension.py` is invoked by any real CI workflow; confirmed by grepping every `.yml` file plus `scripts/enforcement/` for the checker names — zero references outside their own test files. Corrected the audit accordingly (see Claude Run Trace). |
 
 ## Documentation Asset Evidence
 
@@ -51,14 +52,14 @@ Plan Scope: standard
 
 ## Connector Evidence
 
-- GitHub: used for repository reads (PR bodies, merge SHAs, diffs) and writes (this PR, plus closing #216/#221/#222).
+- GitHub: used for repository reads (PR bodies, merge SHAs, diffs, review comments) and writes (this PR, plus closing #216/#221/#222).
 
 ## Connector Usage Evidence
 
 - source: GitHub repository yotamfried-ux/Engineering-OS.
-- action: GitHub PR reads on #216, #219, #220, #221, #222, #223 (state, merge SHA, diff stat).
-- result: GitHub confirmed #219/#220/#223 merged with real checker/manifest/fixture artifacts on `main`; #216/#221/#222 open and superseded, closed via issue comment + state update.
-- decision: based on that GitHub evidence, updated `known-gaps.tsv`/`operational-readiness-audit.md` to `closed` for the two verified gates and closed the three superseded PRs (#216, #221, #222).
+- action: GitHub PR reads on #216, #219, #220, #221, #222, #223 (state, merge SHA, diff stat); GitHub review comment read on PR #224.
+- result: GitHub confirmed #219/#220/#223 merged with real checker/manifest/fixture artifacts on `main`; #216/#221/#222 open and superseded, closed via issue comment + state update; GitHub review comment identified that neither checker is wired to real CI.
+- decision: based on that GitHub evidence, updated `known-gaps.tsv`/`operational-readiness-audit.md` — initially to `closed` for the two verified gates, then reverted to `open` with corrected language after the review finding, and closed the three superseded PRs (#216, #221, #222).
 - target: docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md
 
 ## Capability Evidence
@@ -76,8 +77,8 @@ Plan Scope: standard
 - hypothesis: the two `ops-readiness` gaps (`result-loop-contract-enforcement`, `scaling-extension-enforcement`) are stale because they were registered before the enforcement PRs merged, and nobody re-ran the audit after merge.
 - steps: read both PR bodies and diffs; confirmed each named checker/manifest/fixture file exists on `main` via `ls`; ran each new test suite locally to confirm pass/fail; grepped CI workflow for wiring; grepped repo for the 3 new gap ids to confirm they don't exist yet; grepped for "Project 8" to confirm no real-run evidence exists.
 - evidence: `bash scripts/enforcement/tests/test-result-loop-contract.sh` and `test-scaling-extension.sh` and `test-required-gates-map.sh` all exit 0 locally; `grep -c` on `.github/workflows/*.yml` shows the glob-based test runner; `grep` for the 3 new gap ids returns zero hits before this change.
-- result: two gaps can be honestly closed with concrete evidence; three new gaps are registered open, none closed without real work; superseded PRs closed with explanatory comments, not merged.
-- follow-up: registry-coverage-backfill and monitoring-metrics-sufficiency get their own follow-up PRs (separate branches); project-8-real-run-evidence stays open/blocked until the actual experiment runs (explicitly out of scope here).
+- result (revised): the checkers, manifests, and fixtures for both gates are real and self-test correctly, but a `chatgpt-codex-connector[bot]` review on this PR found that no CI workflow actually invokes `check-result-loop-contract.py` or `check-scaling-extension.py` against a real PR's route plan — only their own test files reference them (confirmed by repo-wide `grep` returning zero hits outside `scripts/enforcement/tests/`). This means real PRs are not yet gated by either check, so closing these two gaps was premature. Reverted both to `open` in `known-gaps.tsv` and the matrix, with corrected language describing the real state (built + self-tested, not yet wired to real PRs) instead of either the old "not implemented" or the incorrect "Enforced" claim. Three new gaps (`registry-coverage-backfill`, `monitoring-metrics-sufficiency`, `project-8-real-run-evidence`) remain registered open/blocked, none closed without real work; superseded PRs closed with explanatory comments, not merged.
+- follow-up: a future PR must wire `check-result-loop-contract.py` and `check-scaling-extension.py` into a real PR-gating workflow (run against the PR's actual changed route plan/target, not synthetic fixtures) before either gap can be honestly closed. registry-coverage-backfill and monitoring-metrics-sufficiency get their own follow-up PRs (separate branches); project-8-real-run-evidence stays open/blocked until the actual experiment runs (explicitly out of scope here).
 
 ## Graphify Usage Evidence
 
@@ -91,6 +92,7 @@ Plan Scope: standard
 
 - Considered folding the registry-coverage-backfill and monitoring-metrics-sufficiency work into this same PR; rejected because the user explicitly asked for small, focused PRs, and because closing those gaps requires real fixture-tested work that shouldn't block the (already-overdue) audit correction for the two already-merged gates.
 - Considered marking `project-8-real-run-evidence` as `mitigated` instead of `open`; rejected because no mitigation exists yet — the real run has not happened and is explicitly out of scope for this task, so `open` (or `blocked`, since it is blocked on a real run this task must not perform) is the honest status.
+- Considered wiring `check-result-loop-contract.py`/`check-scaling-extension.py` into a real CI workflow in this same PR once the gap was found; rejected as scope creep for an "audit reconciliation" PR — that is real enforcement engineering work deserving its own focused PR and review, not a documentation correction.
 
 ## Affected Surfaces
 
@@ -118,8 +120,8 @@ Plan Scope: standard
 ## Progress Lifecycle Evidence
 
 - start: PR bodies/diffs for #216, #219, #220, #221, #222, #223 read and file-level evidence collected before any edit.
-- mid: `known-gaps.tsv` and `operational-readiness-audit.md` updated to close the two verified gates and register the three new real gaps.
-- pre-merge: local validator + full test-suite run refreshed after the edits, immediately before opening the PR.
+- mid: `known-gaps.tsv` and `operational-readiness-audit.md` updated to close the two verified gates and register the three new real gaps; then reverted the two closures to `open` after a PR review found neither checker is wired to real CI.
+- pre-merge: local validator + full test-suite run refreshed after the edits, immediately before merge.
 
 ## DoD
 
@@ -131,3 +133,5 @@ Plan Scope: standard
 - [x] `check-known-gaps.sh` and `check-readiness-audit.sh` pass locally.
 - [x] Full enforcement test suite passes locally (79/79 suites pass).
 - [x] No full-operational-readiness claim added anywhere; Project 8 real-run experiment not performed.
+- [x] Correction: a PR review (`chatgpt-codex-connector[bot]`) found neither checker is invoked by any real CI workflow against actual PR content (only self-tested via their own fixture files) — reverted `result-loop-contract-enforcement` and `scaling-extension-enforcement` back to `open` in both `known-gaps.tsv` and `operational-readiness-audit.md`, with corrected language describing the real state, superseding items 1-2 above.
+- [x] Re-ran `check-known-gaps.sh`, `check-readiness-audit.sh`, and confirmed ROI list renumbered correctly after the correction.
