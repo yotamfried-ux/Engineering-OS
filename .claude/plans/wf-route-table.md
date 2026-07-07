@@ -15,7 +15,7 @@
 | External systems/connectors | GitHub |
 | Skills | not required |
 | Validation gates | scripts/enforcement/tests/test-route-plan-contract.sh |
-| Evidence to check | core/task-router.md; core/workflow.md; scripts/enforcement/check-route-plan-contract.py |
+| Evidence to check | core/task-router.md; core/workflow.md; scripts/enforcement/check-route-plan-contract.sh |
 | User decisions required | none |
 | selected_project_type | engineering_os_governance |
 | selected_template | governance-maintenance waiver |
@@ -25,7 +25,7 @@
 | local_creator_review_path | local CLI tests |
 | telemetry_export_path | scripts/monitoring/export-telemetry-run.sh |
 | evidence_policy_rule | metadata-only evidence export |
-| Target paths | scripts/enforcement/check-route-plan-contract.py, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md |
+| Target paths | scripts/enforcement/check-route-plan-contract.sh, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md |
 
 ## Source of Truth Checks
 
@@ -33,7 +33,7 @@
 |---|---|---|
 | core/task-router.md | checked | Routing source. |
 | core/workflow.md | checked | Workflow source. |
-| scripts/enforcement/check-route-plan-contract.py | checked | Validator target. |
+| scripts/enforcement/check-route-plan-contract.sh | checked | Validator target. |
 
 ## Documentation Asset Evidence
 
@@ -49,9 +49,9 @@
 
 - source: GitHub repository yotamfried-ux/Engineering-OS.
 - action: GitHub inspected main policy files.
-- result: GitHub checked scripts/enforcement/check-route-plan-contract.py and core/workflow.md.
+- result: GitHub checked scripts/enforcement/check-route-plan-contract.sh and core/workflow.md.
 - decision: GitHub selected clean branch and checker target.
-- target: scripts/enforcement/check-route-plan-contract.py; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md
+- target: scripts/enforcement/check-route-plan-contract.sh; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md
 
 ## Capability Evidence
 
@@ -68,14 +68,13 @@
 - added route-plan checker and fixture test.
 - added workflow integration audit note.
 - added route loop fields used by checker.
-- removed unused shell checker to narrow enforcement surface.
-- hardened checker to reject placeholder route fields.
+- switched route checker to shell implementation.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
-- mid: scripts/enforcement/check-route-plan-contract.py was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded after checker hardening.
+- mid: route-plan checker was added after the route plan established scope.
+- pre-merge: final readiness evidence recorded after shell checker conversion.
 
 ## DoD
 
