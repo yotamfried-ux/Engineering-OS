@@ -1,0 +1,20 @@
+name: debug-enforcement-tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  required-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          persist-credentials: false
+      - name: Run required gates test
+        run: |
+          set -euo pipefail
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+          bash scripts/enforcement/tests/test-required-gates-map.sh
