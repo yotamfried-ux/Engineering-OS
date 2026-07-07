@@ -72,13 +72,13 @@
 - added route loop fields used by checker.
 - switched route checker to shell implementation.
 - fixed route field matching with fixed-string checks.
-- updated enforcement test runner output.
+- split route-plan contract test into a dedicated workflow step.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: route-plan checker was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded after workflow capability evidence update.
+- pre-merge: final readiness evidence recorded after route step split.
 
 ## DoD
 
