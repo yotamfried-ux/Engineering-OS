@@ -33,9 +33,9 @@ Plan Scope: standard
 
 | Source | Status | Finding |
 |---|---|---|
-| PR #219 (merged, `f19ce56`) | checked | Scaling Gate: `check-scaling-extension.py`, `project-type-roadmaps.tsv`, `waiver-requirements.tsv`, `tests/test-scaling-extension.sh` all exist on `main`; test suite passes locally (5 negative fixtures rejected correctly). |
-| PR #220 (merged, `014c58f`) | checked | Result Loop Contract Gate: `check-result-loop-contract.py`, `result-loop-requirements.tsv`, `tests/test-result-loop-contract.sh` all exist on `main`; test suite passes locally (6 fixtures pass). |
-| PR #223 (merged, `9812e74`) | checked | Route checker: `check-route-plan-contract.sh`, `tests/test-required-gates-map.sh` exist on `main`; test passes (7 cases). |
+| scripts/enforcement/check-scaling-extension.py | checked | Scaling Gate from merged PR #219 (`f19ce56`): file exists on `main` along with `project-type-roadmaps.tsv`, `waiver-requirements.tsv`, `tests/test-scaling-extension.sh`; test suite passes locally (5 negative fixtures rejected correctly). |
+| scripts/enforcement/check-result-loop-contract.py | checked | Result Loop Contract Gate from merged PR #220 (`014c58f`): file exists on `main` along with `result-loop-requirements.tsv`, `tests/test-result-loop-contract.sh`; test suite passes locally (6 fixtures pass). |
+| scripts/enforcement/check-route-plan-contract.sh | checked | Route checker from merged PR #223 (`9812e74`): file exists on `main` along with `tests/test-required-gates-map.sh`; test passes (7 cases). |
 | `.github/workflows/enforcement-tests.yml` | checked | Runs `for t in scripts/enforcement/tests/test-*.sh` — a wildcard glob, so all three new test files run in CI without per-file wiring. |
 | `docs/operations/known-gaps.tsv` rows 27-28 | checked | Still say `open` / "registration only" for both gates — stale pre-merge text, contradicted by the artifacts above. |
 | `docs/operations/operational-readiness-audit.md` | checked | Ledger + matrix + ROI list still say "Missing enforcement" / "planned ... not implemented" for both gates — same staleness. |
@@ -58,7 +58,7 @@ Plan Scope: standard
 - source: GitHub repository yotamfried-ux/Engineering-OS.
 - action: GitHub PR reads on #216, #219, #220, #221, #222, #223 (state, merge SHA, diff stat).
 - result: GitHub confirmed #219/#220/#223 merged with real checker/manifest/fixture artifacts on `main`; #216/#221/#222 open and superseded, closed via issue comment + state update.
-- decision: GitHub evidence is the basis for closing the two `ops-readiness` gaps and for closing the three superseded PRs.
+- decision: based on that GitHub evidence, updated `known-gaps.tsv`/`operational-readiness-audit.md` to `closed` for the two verified gates and closed the three superseded PRs (#216, #221, #222).
 - target: docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md
 
 ## Capability Evidence
