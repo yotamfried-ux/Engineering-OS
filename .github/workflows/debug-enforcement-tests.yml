@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           persist-credentials: false
-      - name: Run group one
+      - name: Run group one plus guard
         run: |
           set -euo pipefail
           git config --global user.email "ci@engineering-os.local"
@@ -29,3 +29,4 @@ jobs:
           bash scripts/enforcement/tests/test-learning-quality-157.sh
           bash scripts/enforcement/tests/test-learning-reuse.sh
           bash scripts/enforcement/tests/test-learning.sh
+          bash scripts/enforcement/tests/test-no-*echo.sh
