@@ -123,7 +123,7 @@ Plan Scope: standard
 
 - start: coverage checkers run and manifest cross-references read before any edit.
 - mid: after the code/config/doc commit landed, re-confirmed the 10 deferred project-type-roadmap rows, the new `check-scaling-extension.py` coverage rule, and the corrected `known-gaps.tsv`/`operational-readiness-audit.md` text all match the committed content, by diffing the committed files against this plan's Source of Truth Checks table.
-- pre-merge: local validator + full test-suite run refreshed after the edits, immediately before opening the PR.
+- pre-merge: re-ran `python3 scripts/enforcement/check-scaling-extension.py`, `bash scripts/enforcement/tests/test-scaling-extension.sh` (6/6 fixtures), `check-known-gaps.sh`, `check-readiness-audit.sh`, `check-workflow-evidence.sh`, `check-connector-evidence.sh`, and the full 79-suite `test-*.sh` loop against the final commit history immediately before pushing — all pass.
 
 ## Run Evidence (Telemetry Surrogate)
 
