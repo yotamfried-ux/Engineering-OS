@@ -122,7 +122,7 @@ Plan Scope: standard
 ## Progress Lifecycle Evidence
 
 - start: coverage checkers run and manifest cross-references read before any edit.
-- mid: 10 deferred project-type-roadmap rows added; new coverage rule added to `check-scaling-extension.py`; known-gaps.tsv/operational-readiness-audit.md `registry-coverage-backfill` text corrected.
+- mid: after the code/config/doc commit landed, re-confirmed the 10 deferred project-type-roadmap rows, the new `check-scaling-extension.py` coverage rule, and the corrected `known-gaps.tsv`/`operational-readiness-audit.md` text all match the committed content, by diffing the committed files against this plan's Source of Truth Checks table.
 - pre-merge: local validator + full test-suite run refreshed after the edits, immediately before opening the PR.
 
 ## Run Evidence (Telemetry Surrogate)
