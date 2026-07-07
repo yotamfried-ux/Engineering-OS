@@ -76,7 +76,7 @@
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: route-plan checker was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded after diagnostic cleanup.
+- pre-merge: final readiness evidence refreshed after diagnostic cleanup.
 
 ## DoD
 
