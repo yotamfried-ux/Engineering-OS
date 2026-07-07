@@ -26,9 +26,17 @@ jobs:
           git config --global init.defaultBranch main
 
           fail=0
+          log_dir="$(mktemp -d)"
           for t in scripts/enforcement/tests/test-*.sh; do
             echo "──────── $t ────────"
-            if bash "$t"; then :; else fail=1; fi
+            log="$log_dir/$(basename "$t").log"
+            if bash "$t" >"$log" 2>&1; then
+              echo "✅ $t"
+            else
+              echo "❌ $t"
+              cat "$log"
+              fail=1
+            fi
           done
 
           echo
