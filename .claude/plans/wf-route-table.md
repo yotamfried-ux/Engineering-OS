@@ -25,7 +25,7 @@
 | local_creator_review_path | local CLI tests |
 | telemetry_export_path | scripts/monitoring/export-telemetry-run.sh |
 | evidence_policy_rule | metadata-only evidence export |
-| Target paths | scripts/enforcement/check-route-plan-contract.sh, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md |
+| Target paths | .github/workflows/enforcement-tests.yml, scripts/enforcement/check-route-plan-contract.sh, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md |
 
 ## Source of Truth Checks
 
@@ -34,6 +34,7 @@
 | core/task-router.md | checked | Routing source. |
 | core/workflow.md | checked | Workflow source. |
 | scripts/enforcement/check-route-plan-contract.sh | checked | Validator target. |
+| .github/workflows/enforcement-tests.yml | checked | Test runner target. |
 
 ## Documentation Asset Evidence
 
@@ -51,7 +52,7 @@
 - action: GitHub inspected main policy files.
 - result: GitHub checked scripts/enforcement/check-route-plan-contract.sh and core/workflow.md.
 - decision: GitHub selected clean branch and checker target.
-- target: scripts/enforcement/check-route-plan-contract.sh; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md
+- target: .github/workflows/enforcement-tests.yml; scripts/enforcement/check-route-plan-contract.sh; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md
 
 ## Capability Evidence
 
@@ -70,12 +71,13 @@
 - added route loop fields used by checker.
 - switched route checker to shell implementation.
 - fixed route field matching with fixed-string checks.
+- updated enforcement test runner output.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: route-plan checker was added after the route plan established scope.
-- pre-merge: final readiness evidence recorded after fixed-string matcher update.
+- pre-merge: final readiness evidence recorded after workflow runner update.
 
 ## DoD
 
