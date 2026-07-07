@@ -56,11 +56,11 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 
 | Area | Status | What is enforced or checked | Remaining gap |
 |---|---|---|---|
-| CLAUDE entrypoint and core navigation | Enforced | Gate: enforcement-tests. Owner: core-governance. Evidence: entrypoint fixtures. | Review-based semantics. |
+| CLAUDE entrypoint and core navigation | Enforced | Gate: enforcement-tests. Owner: core-governance. Evidence: entrypoint fixtures. | Review-based semantic correctness. |
 | Canonical ownership / no policy sprawl | Enforced | Gate: check-documentation-hygiene.sh. Owner: docs-governance. Evidence: hygiene fixtures. | Review-based semantics. |
 | Enforcement coverage inventory | Enforced | Gate: check-readiness-audit.sh. Owner: ops-readiness. Evidence: audit fixtures. | Closure judgment is reviewed. |
 | Audit freshness / status accuracy | Enforced | Gate: check-known-gaps.sh. Owner: ops-readiness. Evidence: ledger sync. | Closure judgment is reviewed. |
-| Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate and eos_select_plan. Owner: workflow-governance. Evidence: active-plan fixtures. | Intent judgment is reviewed. |
+| Route Plan before writing | Enforced | Gate: pre-tool-use workflow gate and eos_select_plan. Owner: workflow-governance. Evidence: active-plan fixtures. | Plan intent is reviewed. |
 | Route Plan quality | Enforced | Gate: check-workflow-evidence.sh. Owner: workflow-governance. Evidence: route plan quality gate fixtures. | Deep quality is reviewed. |
 | DoD completion | Enforced | Gate: plan-policy and check-workflow-evidence.sh. Owner: delivery-governance. Evidence: DoD fixtures. | Deep meaning is reviewed. |
 | Progress validation | Enforced | Gate: check-workflow-evidence.sh. Owner: progress-governance. Evidence: progress lifecycle fixtures. | Deep meaning is reviewed. |
@@ -80,7 +80,7 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | Learning reuse | Enforced | Gate: route plan lesson reuse. Owner: learning-governance. Evidence: citation fixtures. | Relevance is reviewed. |
 | Learning closure after bug/debug work | Enforced | Gate: enforce-learning-capture.sh. Owner: learning-governance. Evidence: learning closure gate fixtures. | Truthfulness is reviewed. |
 | Claude run trace / experiment log | Enforced | Gate: enforce-run-trace.sh. Owner: trace-governance. Evidence: trace and test contracts fixtures. | Depth is reviewed. |
-| Operational behavior evidence | Enforced | Gate: check-operational-behavior-evidence.sh is invoked by check-pr-review-evidence.sh, which pr-policy runs on PRs. Owner: ops-readiness. Evidence: test-operational-behavior-evidence.sh. | Truthfulness is reviewed; missing evidence is blocked. |
+| Operational behavior evidence | Enforced | Gate: check-operational-behavior-evidence.sh is invoked by check-pr-review-evidence.sh; pr-policy runs that script on PRs. Owner: ops-readiness. Evidence: test-operational-behavior-evidence.sh and test-pr-review-evidence.sh. | Truthfulness is reviewed; missing body evidence is blocked. |
 | Positive/negative simulations | Enforced | Gate: check-simulation-coverage.sh. Owner: validation-governance. Evidence: simulation completeness fixtures. | Future judgment is reviewed. |
 | Tests/lint before commit | Enforced | Gate: enforce-tests.sh. Owner: validation-governance. Evidence: tool contract fixtures. | Tool choice is reviewed. |
 | Cleanup debug leftovers | Enforced | Gate: enforce-quality.sh. Owner: cleanup-governance. Evidence: cleanup fixtures. | Narrow cases only. |
