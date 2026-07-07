@@ -122,7 +122,7 @@ Plan Scope: standard
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: route-plan checker was added after the route plan established scope.
-- pre-merge: final readiness evidence refreshed after fixture consolidation.
+- pre-merge: final readiness evidence refreshed after the debug workflow removal and the test-telemetry-archive.sh hardcoded-date fix — this is the last plan update after all code/config/test changes on this branch.
 
 ## DoD
 
