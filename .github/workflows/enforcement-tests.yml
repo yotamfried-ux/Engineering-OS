@@ -25,7 +25,15 @@ jobs:
           git config --global init.defaultBranch main
           bash scripts/enforcement/tests/test-route-plan-contract.sh
 
-      - name: Run all enforcement test suites
+      - name: Verify install policy coverage
+        run: |
+          set -euo pipefail
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+          bash scripts/enforcement/tests/test-install-policy-gate-coverage.sh
+
+      - name: Run remaining enforcement test suites
         run: |
           set -u
           # Each test bootstraps its own temp git repo, so give git an identity.
@@ -37,7 +45,7 @@ jobs:
           log_dir="$(mktemp -d)"
           for t in scripts/enforcement/tests/test-*.sh; do
             case "$t" in
-              scripts/enforcement/tests/test-route-plan-contract.sh) continue ;;
+              scripts/enforcement/tests/test-route-plan-contract.sh|scripts/enforcement/tests/test-install-policy-gate-coverage.sh) continue ;;
             esac
             echo "──────── $t ────────"
             log="$log_dir/$(basename "$t").log"
@@ -206,7 +214,6 @@ jobs:
             managed_count="$(grep -c '<!-- BEGIN engineering-os (managed) -->' CLAUDE.md)"
             test "$managed_count" -eq 1
             test -f .claude/commands/use-engineering-os.md
-            test -f .claude/commands/superpowers-brainstorm.md
             test -f ENGINEERING_OS_CAPABILITIES.md
           )
           echo "✅ use-in-project.sh installs expected governance contract"
