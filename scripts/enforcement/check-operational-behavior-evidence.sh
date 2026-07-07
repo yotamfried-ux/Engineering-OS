@@ -12,8 +12,6 @@ done
 [ -n "$BODY_FILE" ] && [ -f "$BODY_FILE" ] || { echo "ERROR_FOR_AGENT: missing readable --body file." >&2; exit 2; }
 
 python3 - "$BODY_FILE" <<'PY'
-import glob
-import os
 import re
 import sys
 
@@ -34,21 +32,6 @@ def field_value(text: str, field: str) -> str | None:
     match = re.search(r"(^|\n)\s*[-*]?\s*" + re.escape(field) + r"\s*:\s*(.+)", text, re.I)
     return match.group(2).strip() if match else None
 
-
-def operational_section() -> str:
-    direct = section(body, "Operational Behavior Evidence")
-    if direct.strip() or os.environ.get("EOS_DISABLE_PLAN_FALLBACK") == "1":
-        return direct
-    for path in sorted(glob.glob(".claude/plans/*.md"), reverse=True):
-        try:
-            text = open(path, encoding="utf-8").read()
-        except OSError:
-            continue
-        found = section(text, "Operational Behavior Evidence")
-        if found.strip():
-            return found
-    return ""
-
 required = [
     "behavior_summary",
     "engineering_os_influence",
@@ -59,10 +42,9 @@ required = [
     "next_system_improvement",
 ]
 
-op = operational_section()
+op = section(body, "Operational Behavior Evidence")
 if not op.strip():
-    print("ERROR_FOR_AGENT: PR body or active Route Plan must include ## Operational Behavior Evidence.")
-    print("ACTION: record model behavior, Engineering OS influence, efficiency, friction, quality, usage surrogate, and next improvement evidence.")
+    print("ERROR_FOR_AGENT: PR body must include ## Operational Behavior Evidence.")
     sys.exit(1)
 
 ok = True
@@ -79,7 +61,7 @@ if not ("exact_token_usage_available" in usage or "exact_metering_available" in 
 
 influence = field_value(op, "engineering_os_influence") or ""
 if not re.search(r"\b(gate|route|plan|workflow|audit|review|checker|ci|evidence|known-gaps)\b", influence, re.I):
-    print("ERROR_FOR_AGENT: engineering_os_influence must mention how Engineering OS affected the run, such as a gate, plan, workflow, audit, review, checker, CI, evidence, or known-gaps requirement.")
+    print("ERROR_FOR_AGENT: engineering_os_influence must mention how Engineering OS affected the run.")
     ok = False
 
 if not ok:
