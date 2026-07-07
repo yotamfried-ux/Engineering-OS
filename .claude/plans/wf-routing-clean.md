@@ -23,7 +23,7 @@ required_user_simulation: scripts/enforcement/tests/test-route-plan-contract.sh 
 local_creator_review_path: local CLI enforcement tests
 telemetry_export_path: scripts/monitoring/export-telemetry-run.sh
 evidence_redaction_rule: metadata-only evidence export
-Target paths: core/task-router.md, scripts/enforcement/check-route-plan-contract.py, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md, .claude/plans/wf-routing-clean.md
+Target paths: scripts/enforcement/check-route-plan-contract.py, scripts/enforcement/tests/test-route-plan-contract.sh, docs/operations/workflow-result-loop-integration-audit.md, .claude/plans/wf-routing-clean.md
 
 ## Source of Truth Checks
 
@@ -36,7 +36,7 @@ Target paths: core/task-router.md, scripts/enforcement/check-route-plan-contract
 
 - internal: core/task-router.md; core/workflow.md; docs/operations/result-loop-contract-plan.md.
 - context7: not required because this is internal governance enforcement.
-- decision: docs confirmed task-router update plus checker.
+- decision: docs confirmed route-plan checker scope.
 
 ## Connector Evidence
 
@@ -48,7 +48,7 @@ Target paths: core/task-router.md, scripts/enforcement/check-route-plan-contract
 - action: inspected PR #216 and main policy files.
 - result: paths core/task-router.md, core/workflow.md, scripts/enforcement/check-workflow-evidence.sh were checked.
 - decision: selected clean branch and route-plan contract target.
-- target: core/task-router.md; scripts/enforcement/check-route-plan-contract.py; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md; .claude/plans/wf-routing-clean.md
+- target: scripts/enforcement/check-route-plan-contract.py; scripts/enforcement/tests/test-route-plan-contract.sh; docs/operations/workflow-result-loop-integration-audit.md; .claude/plans/wf-routing-clean.md
 
 ## Capability Evidence
 
@@ -63,15 +63,18 @@ Target paths: core/task-router.md, scripts/enforcement/check-route-plan-contract
 
 - read routing and workflow sources.
 - added scripts/enforcement/check-route-plan-contract.py.
+- added scripts/enforcement/tests/test-route-plan-contract.sh.
+- added docs/operations/workflow-result-loop-integration-audit.md.
 
 ## Progress Lifecycle Evidence
 
 - start: core/task-router.md and core/workflow.md were checked before the first code/config/test change.
 - mid: scripts/enforcement/check-route-plan-contract.py was added after the route plan established scope.
+- pre-merge: route-plan checker, fixture test, and audit note were committed on the clean branch.
 
 ## DoD
 
 - Add route-plan checker.
 - Add fixture tests.
-- Update task router.
 - Add audit note.
+- Validate current-head CI and review threads before merge.
