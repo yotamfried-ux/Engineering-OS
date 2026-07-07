@@ -5,41 +5,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  suite:
+  early-group:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        suite:
-          - test-active-plan-selection.sh
-          - test-connector.sh
-          - test-debugging.sh
-          - test-documentation.sh
-          - test-git.sh
-          - test-learning-capture.sh
-          - test-learning-e2e.sh
-          - test-learning-quality-157.sh
-          - test-learning-reuse.sh
-          - test-learning.sh
-          - test-no-grep-c-echo.sh
-          - test-operational-learning-skills.sh
-          - test-ops-branch-protection.sh
-          - test-plan-scope.sh
-          - test-quality.sh
-          - test-required-gates-map.sh
-          - test-resource.sh
-          - test-simulation-coverage.sh
-          - test-skill.sh
-          - test-tests.sh
-          - test-workflow.sh
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           persist-credentials: false
-      - name: Run suite
+      - name: Run early suites
         run: |
           set -euo pipefail
           git config --global user.email "ci@engineering-os.local"
           git config --global user.name "engineering-os-ci"
           git config --global init.defaultBranch main
-          bash "scripts/enforcement/tests/${{ matrix.suite }}"
+          bash scripts/enforcement/tests/test-active-plan-selection.sh
+          bash scripts/enforcement/tests/test-connector.sh
+          bash scripts/enforcement/tests/test-debugging.sh
+          bash scripts/enforcement/tests/test-documentation.sh
+          bash scripts/enforcement/tests/test-git.sh
+          bash scripts/enforcement/tests/test-learning-capture.sh
+          bash scripts/enforcement/tests/test-learning-e2e.sh
+          bash scripts/enforcement/tests/test-learning-quality-157.sh
+          bash scripts/enforcement/tests/test-learning-reuse.sh
+          bash scripts/enforcement/tests/test-learning.sh
