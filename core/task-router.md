@@ -9,6 +9,9 @@
 >
 > המטרה של הקובץ הזה היא להפוך את Engineering OS מ"אוסף ידע" ל-**decision engine**:
 > המשימה מנותבת באופן דטרמיניסטי לשכבות הרלוונטיות, במקום לקוות שה-LLM יזכור לבד.
+> למשימות software/project work, הניתוב כולל גם בחירת project type, roadmap,
+> Result Loop Contract, סימולציית משתמש, local creator review, telemetry export,
+> וכלל evidence policy לפני כתיבת קוד.
 
 ---
 
@@ -28,26 +31,42 @@
    - infra / CI / deployment / observability
    - docs / governance / Engineering OS maintenance
 
-2. **בחר Task class מתוך `core/capability-registry.yaml`**
+2. **בחר `selected_project_type` לכל software/project work**
+   - השתמש ב-project type קיים מתוך `docs/operations/project-type-roadmaps.md` או template קיים.
+   - אם סוג הפרויקט חדש — אל תמציא מסלול חד-פעמי. הפעל את `docs/operations/scaling-extension-procedure.md` ורשום זאת ב-Route Plan.
+   - שינוי governance של Engineering OS עצמו יכול להשתמש ב-waiver מפורש, אבל target-project work חייב לבחור סוג פרויקט ממשי.
+
+3. **בחר Task class מתוך `core/capability-registry.yaml`**
    - אם יש task class מתאים — השתמש בשם שלו במפורש ב-Route Plan.
    - אם אין task class מתאים — רשום `Task class: unclassified` והוסף `Capability Waiver` עם נימוק.
    - אל תבחר capability לפי זיכרון; ה-registry הוא מקור האמת.
 
-3. **חלץ domain tags** — בחר תגיות שמתארות את המשימה בפועל:
+4. **חלץ domain tags** — בחר תגיות שמתארות את המשימה בפועל:
    - `ui`, `api`, `auth`, `database`, `payments`, `notifications`, `files`, `ai-agent`, `mcp`, `mobile`, `testing`, `security`, `observability`, `background-jobs`, `billing`, `workflow`, `governance`
 
-4. **אסוף שכבות ידע לפי הסדר המחייב**
-   1. `templates/` — האם יש template מתאים?
-   2. `docs/architecture-guides/` — האם יש guide לדומיין?
-   3. `patterns/` — אילו patterns נדרשים?
-   4. `external-systems/` — אילו services / platforms / libraries ה-OS ממליץ עבור הדומיין?
-   5. `external-skills/` — אילו skills חייבים לרוץ על סוג המשימה הזה?
-   6. `core/*` — אילו policies מיוחדות רלוונטיות (debugging, git, quality gates, learning loop)?
+5. **אסוף שכבות ידע לפי הסדר המחייב**
+   1. `templates/` — האם יש template מתאים? רשום `selected_template`.
+   2. `docs/operations/project-type-roadmaps.md` — האם יש roadmap entry מתאים? רשום `selected_roadmap`.
+   3. `scripts/enforcement/result-loop-requirements.tsv` — האם יש Result Loop Contract מתאים? רשום `selected_result_loop_contract`.
+   4. `docs/operations/scaling-extension-procedure.md` — חובה אם סוג הפרויקט חדש או לא רשום.
+   5. `docs/architecture-guides/` — האם יש guide לדומיין?
+   6. `patterns/` — אילו patterns נדרשים?
+   7. `external-systems/` — אילו services / platforms / libraries ה-OS ממליץ עבור הדומיין?
+   8. `external-skills/` — אילו skills חייבים לרוץ על סוג המשימה הזה?
+   9. `core/*` — אילו policies מיוחדות רלוונטיות (debugging, git, quality gates, learning loop)?
 
-5. **הפק Route Plan קצר לפני כתיבה**
+6. **הפק Route Plan קצר לפני כתיבה**
    - `Task type:`
    - `Task class:` — מתוך `core/capability-registry.yaml` או `unclassified` + waiver
    - `Domain tags:`
+   - `selected_project_type:`
+   - `selected_template:`
+   - `selected_roadmap:`
+   - `selected_result_loop_contract:`
+   - `required_user_simulation:`
+   - `local_creator_review_path:`
+   - `telemetry_export_path:`
+   - `evidence_redaction_rule:`
    - `Template(s) to consult:`
    - `Architecture guide(s):`
    - `Pattern(s):`
@@ -56,10 +75,12 @@
    - `Validation gates:`
    - `Capability Evidence:` — capability IDs שנבחרו + evidence/waiver
 
-6. **אם חסר רכיב חובה — אל תמשיך בשקט**
-   - חסר template / architecture guide לפרויקט חדש או החלטה ארכיטקטונית → עצור לפי `CLAUDE.template.md` / `workflow.md`
-   - חסר pattern → השתמש באנלוגי הקרוב ביותר ותעד את הפער
-   - חסר skill LEVEL 2 → דווח על gap והצע bootstrap / התקנה
+7. **אם חסר רכיב חובה — אל תמשיך בשקט**
+   - חסר template / architecture guide לפרויקט חדש או החלטה ארכיטקטונית → עצור לפי `CLAUDE.template.md` / `workflow.md`.
+   - חסר roadmap / Result Loop Contract / template לסוג פרויקט קיים → אל תתקדם לקוד בלי `known gap` או `waiver` מפורש ב-Route Plan.
+   - סוג פרויקט חדש → חייב לעבור דרך `docs/operations/scaling-extension-procedure.md` לפני קוד.
+   - חסר pattern → השתמש באנלוגי הקרוב ביותר ותעד את הפער.
+   - חסר skill LEVEL 2 → דווח על gap והצע bootstrap / התקנה.
    - capability לא רלוונטי למרות שהוא מופיע ב-registry → רשום `Capability Waiver` עם נימוק.
 
 </routing_algorithm>
@@ -72,6 +93,9 @@
 
 **Always consult:**
 - `templates/` — template לפרויקט
+- `docs/operations/project-type-roadmaps.md` — roadmap entry לסוג הפרויקט
+- `scripts/enforcement/result-loop-requirements.tsv` — Result Loop Contract לסוג הפרויקט
+- `docs/operations/scaling-extension-procedure.md` — חובה אם סוג הפרויקט חדש
 - `docs/architecture-guides/` — guide לדומיין
 - `patterns/testing/README.md`
 - `patterns/security/README.md`
@@ -86,6 +110,7 @@
 
 **If missing:**
 - אין template מתאים → עצור. אל תסקפלד מהזיכרון.
+- אין roadmap או Result Loop Contract מתאים → עצור ורשום waiver/known gap לפני קוד.
 - אין architecture guide מתאים → עצור. אל תקבל החלטת מבנה מה-training data.
 
 **Plan Scope:**
@@ -105,6 +130,7 @@
 - `docs/troubleshooting/`
 - `lessons-learned/`
 - patterns / guides של הדומיין שבו הבאג נמצא
+- roadmap/result-loop fields אם התיקון משנה התנהגות משתמש, runtime, performance, או output artifact
 
 **Connectors / systems:**
 - Sentry קודם, אם יש אינטגרציה
@@ -112,7 +138,7 @@
 
 **Skills:**
 - `superpowers` (systematic debugging)
-- `security-review` אם הבאג נוגע ל-auth / secrets / permissions / data exposure
+- `security-review` אם הבאג נוגע ל-auth / permissions / data exposure
 
 ### 3) UI / frontend / UX work
 
@@ -121,6 +147,7 @@
 - `patterns/ui/README.md`
 - `patterns/auth/README.md` אם יש login / session / protected UI
 - `patterns/testing/README.md`
+- roadmap/result-loop fields שמגדירים user simulation, visual evidence, local creator review, telemetry, and evidence policy
 
 **Skills:**
 - `ui-ux-pro-max` — LEVEL 2 למשימות UI
@@ -136,6 +163,7 @@
 - `patterns/billing/README.md` אם יש payments
 - `patterns/security/README.md`
 - guide ארכיטקטורה מתאים ב-`docs/architecture-guides/`
+- roadmap/result-loop fields שמגדירים health/integration tests, monitoring, performance thresholds, and telemetry export
 
 **External systems:**
 - חפש קודם `external-systems/` לשירותים כמו auth, DB, payments, email
@@ -152,6 +180,7 @@
 - `docs/architecture-guides/ai/`
 - `docs/architecture-guides/mcp/README.md`
 - `core/mcp-servers.md`
+- roadmap/result-loop fields שמגדירים eval set, trace/eval artifacts, latency/cost/error metrics, repair loop, and telemetry export
 
 **External systems:**
 - `external-systems/openai/`, `external-systems/langgraph/`, `external-systems/mcp-sdk/` וכו' לפי המשימה
@@ -159,7 +188,7 @@
 **Skills:**
 - `superpowers`
 - `graphify`
-- `security-review` אם יש tool access / secrets / external side effects
+- `security-review` אם יש tool access / external side effects
 
 ### 6) Infra / CI / deployment / observability
 
@@ -169,6 +198,7 @@
 - `patterns/security/README.md`
 - `patterns/testing/README.md`
 - רלוונטי: `core/hooks-policy.md`, `core/git-policy.md`, `core/quality-gates.md`
+- roadmap/result-loop fields אם השינוי משפיע על monitoring, telemetry export, CI artifacts, or runtime evidence
 
 **Skills:**
 - `security-review`
@@ -179,10 +209,12 @@
 **Always consult:**
 - `CLAUDE.md`
 - `core/workflow.md`
+- `core/task-router.md`
 - `core/skill-orchestration-policy.md`
 - `core/connector-policy.md`
 - `core/learning-loop.md`
 - `core/hooks-policy.md`
+- `docs/operations/result-loop-contract-plan.md` ו-`docs/operations/scaling-extension-procedure.md` כאשר שינוי governance נוגע ל-result loops או scaling
 
 **Extra rule:**
 - שינוי ב-OS חייב לחזק את שכבת ההכרעה/האכיפה, לא רק להוסיף עוד טקסט הסברי.
@@ -201,6 +233,14 @@ Task class: <task class from core/capability-registry.yaml, or unclassified + wa
 Domain tags: <...>
 Plan Scope: <simple|standard|project>          # ראה workflow.md <evidence_backed_planning>
 Planning Mode: <discovery|evidence-pass|final-for-approval|approved>
+selected_project_type: <project type id, or explicit waiver for Engineering OS governance work>
+selected_template: <templates/<id>, or waiver/known gap>
+selected_roadmap: <docs/operations/project-type-roadmaps.md entry, or waiver/known gap>
+selected_result_loop_contract: <scripts/enforcement/result-loop-requirements.tsv row, or waiver/known gap>
+required_user_simulation: <required simulation path for this project type>
+local_creator_review_path: <local URL/device/simulator/app/output path, or explicit non-UI reason>
+telemetry_export_path: <metadata-only telemetry export path>
+evidence_redaction_rule: <how restricted evidence is excluded or recorded as metadata only>
 Templates: <...>
 Architecture guides: <...>
 Patterns: <...>
