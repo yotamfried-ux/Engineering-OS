@@ -57,8 +57,9 @@ pass export_does_not_copy_run_id test ! -f "$BUNDLE/run_id"
 
 ARCHIVE="$TMP/archive"
 python3 "$IMPORTER" "$BUNDLE" --archive "$ARCHIVE"
-pass import_manifest_copied test -f "$ARCHIVE/runs/2026-07-06/project-8/run-archive-001/manifest.json"
-pass import_findings_created test -f "$ARCHIVE/runs/2026-07-06/project-8/run-archive-001/findings.md"
+RUN_DATE="$(python3 -c "import json; print(json.load(open('$BUNDLE/manifest.json'))['exported_at'][:10])")"
+pass import_manifest_copied test -f "$ARCHIVE/runs/$RUN_DATE/project-8/run-archive-001/manifest.json"
+pass import_findings_created test -f "$ARCHIVE/runs/$RUN_DATE/project-8/run-archive-001/findings.md"
 pass import_index_updated grep -q run-archive-001 "$ARCHIVE/indexes/runs.jsonl"
 reject duplicate_import_rejected python3 "$IMPORTER" "$BUNDLE" --archive "$ARCHIVE"
 pass duplicate_replace_allowed python3 "$IMPORTER" "$BUNDLE" --archive "$ARCHIVE" --replace
