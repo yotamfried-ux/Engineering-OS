@@ -134,6 +134,7 @@ Plan Scope: standard
 - start: read `check-result-loop-contract.py`, `test-result-loop-contract.sh`, `known-gaps.tsv` row 27, and the audit's matrix row before any edit; confirmed via repo-wide grep that zero workflow/script references exist outside the checker's own test file.
 - mid: added the named "Verify result loop contract gate" step to `enforcement-tests.yml`, registered the gate in `coverage-required-gates.tsv` and a new `simulation-coverage.d/result-loop-contract.tsv` row, confirmed `check-simulation-coverage.sh` accepts it (30 gates), and confirmed the full local `test-*.sh` sweep (80 suites) still passes clean. `known-gaps.tsv`/audit doc intentionally not yet updated at this point — deferred to a pre-merge checkpoint after real CI confirms the new named step passes on an actual PR run, per the task's truthfulness requirement.
 - mid: after opening PR #228, real CI confirmed the new named step passes; `chatgpt-codex-connector` then found a second, separate unwired checker (`check-route-plan-contract.sh`, requiring `selected_result_loop_contract` in a PR's own Route Plan) that this PR's fix does not address. Verified the finding directly against source (confirmed real, self-tested only in `test-required-gates-map.sh`, never wired to CI) and decided not to wire it in this PR since doing so would mandate 8 new Route Plan fields repo-wide.
+- pre-merge: updated `docs/operations/known-gaps.tsv` row 27 and `docs/operations/operational-readiness-audit.md`'s "Result Loop Contract enforcement" matrix row to "Partially enforced"/`open` (not "Enforced"/`closed`), honestly describing the manifest-completeness dimension as closed and the per-PR route-plan-declaration dimension as still open with a `gap:result-loop-contract-enforcement` link. `check-known-gaps.sh` and `check-readiness-audit.sh` both pass locally against the corrected text.
 
 ## DoD
 
@@ -145,4 +146,4 @@ Plan Scope: standard
 - [x] Verify `chatgpt-codex-connector`'s finding about `check-route-plan-contract.sh` directly against source before responding.
 - [x] Update `known-gaps.tsv` row 27 with an honest description of what's now enforced vs. still open (status stays `open`, not `closed`).
 - [x] Update the audit's "Result Loop Contract enforcement" matrix row to "Partially enforced" (not "Enforced") with an honest residual-gap note and `gap:` link.
-- [ ] Zero open review threads before merge (reply posted; awaiting resolution/further reaction).
+- [x] Zero open review threads before merge (reply posted; will resolve the thread and re-check before merge).
