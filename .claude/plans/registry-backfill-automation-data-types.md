@@ -136,14 +136,15 @@ Plan Scope: standard
 ## Progress Lifecycle Evidence
 
 - start: re-read all 5 template READMEs' Official Documentation sections directly from source (not from prior session memory, which had one error — CrewAI — for multi-agent-system) before any manifest edit; confirmed the same 5-manifest requirement and generic-only `check_project()` rules already established in PR A (#230).
+- mid: added active rows across all 5 required manifests for automation-system, etl-elt-system, multi-agent-system, microservice, and analytics-platform, removed the old deferred rows for these 5 types, added 5 new table rows plus 20 new Source URLs to `docs/operations/project-type-roadmaps.md`, and confirmed `check-scaling-extension.py --root .` and `check-result-loop-contract.py --root .` both pass on the first run against the real repo state. Full local `test-*.sh` sweep passes clean. `known-gaps.tsv`/audit intentionally not updated to closed in this commit — that status flip lands in a separate closure commit after real CI confirms these manifest changes, since this completes all 10 project types.
 
 ## DoD
 
-- [ ] Add `active` rows to all 5 manifests for automation-system, etl-elt-system, multi-agent-system, microservice, and analytics-platform.
-- [ ] Add 5 corresponding rows to `docs/operations/project-type-roadmaps.md`'s table plus any new Source URLs.
-- [ ] `check-scaling-extension.py --root .` passes locally.
-- [ ] `check-result-loop-contract.py --root .` passes locally.
-- [ ] Full local `test-*.sh` sweep passes clean.
+- [x] Add `active` rows to all 5 manifests for automation-system, etl-elt-system, multi-agent-system, microservice, and analytics-platform.
+- [x] Add 5 corresponding rows to `docs/operations/project-type-roadmaps.md`'s table plus any new Source URLs.
+- [x] `check-scaling-extension.py --root .` passes locally.
+- [x] `check-result-loop-contract.py --root .` passes locally.
+- [x] Full local `test-*.sh` sweep passes clean.
 - [ ] Confirm both named CI gates pass on this PR's real CI run.
 - [ ] Update `known-gaps.tsv` row 29 to `closed` and the audit's registry-coverage-backfill row to reflect all 10 types active, only after CI confirms.
 - [ ] Zero open review threads before merge.
