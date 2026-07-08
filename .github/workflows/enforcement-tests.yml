@@ -39,6 +39,42 @@ jobs:
       - name: Verify readiness audit suite
         run: bash scripts/enforcement/tests/test-readiness-audit.sh
 
+      - name: Verify enforcement suites group A-F
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[a-f]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group G-L
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[g-l]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group M-R
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[m-r]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group S-Z
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[s-z]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
       - name: Run all enforcement test suites
         run: |
           set -u
