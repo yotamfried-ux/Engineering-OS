@@ -17,6 +17,7 @@ import sys
 
 body = open(sys.argv[1], encoding="utf-8").read()
 placeholder = re.compile(r"^\s*(todo|tbd|placeholder|unknown|n/?a|none|later|unclear)\W*$", re.I)
+usage_availability = re.compile(r"\b(?:exact_token_usage_available|exact_metering_available)\s*=\s*(yes|no)\b", re.I)
 
 
 def section(text: str, title: str) -> str:
@@ -55,8 +56,8 @@ for field in required:
         ok = False
 
 usage = field_value(op, "usage_surrogate") or ""
-if not ("exact_token_usage_available" in usage or "exact_metering_available" in usage):
-    print("ERROR_FOR_AGENT: usage_surrogate must state exact_token_usage_available=no or exact_metering_available=no.")
+if not usage_availability.search(usage):
+    print("ERROR_FOR_AGENT: usage_surrogate must state exact_token_usage_available=yes/no or exact_metering_available=yes/no.")
     ok = False
 
 influence = field_value(op, "engineering_os_influence") or ""
