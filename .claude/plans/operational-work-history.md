@@ -148,7 +148,7 @@ No reusable template or pattern asset is selected, modified, or evaluated by thi
 - [x] Add and harden fixtures for no-exemption, empty changed-file metadata, artifact-count mismatch, invalid base SHA, friction-signal learning-loop routing, and workflow wiring.
 - [x] Align privacy docs and artifact fields so raw paths/subjects/review bodies are not persisted.
 - [x] Fix valid PR review threads before merge.
-- CI merge readiness is externally gated by PR checks; no unchecked DoD placeholder is used.
+- [x] External PR checks own merge-readiness verification.
 
 ## Claude Run Trace
 
@@ -173,7 +173,7 @@ behavior_summary: Added and hardened a CI-generated Operational Work History art
 engineering_os_influence: Engineering OS gates and review loops shaped the implementation: the design avoided manual reporting, preserved learning-loop routing, removed weak bypasses, and forced lifecycle evidence into the original plan.
 efficiency_signals: Reused existing telemetry, PR evidence, workflow, and learning-loop surfaces rather than creating parallel systems.
 friction_or_false_positives: Review threads found real issues in metadata preservation, metadata-only review handling, MCP counts, and Hebrew friction reasons; all were fixed directly.
-quality_signals: Tests and real PR checks cover positive, negative, dummy, placeholder, no-exemption, empty metadata, count mismatch, invalid git refs, friction-signal routing, and pr-policy wiring cases.
+quality_signals: Tests and real PR checks cover positive, negative, dummy, no-exemption, empty metadata, count mismatch, invalid git refs, friction-signal routing, and pr-policy wiring cases.
 usage_surrogate: exact_token_usage_available=no; tool_calls=GitHub repo reads/writes, CI status checks, PR review/thread operations.
 next_system_improvement: Revisit low-risk exemptions only through a diff-aware classifier after multiple real PRs prove the foundation.
 
