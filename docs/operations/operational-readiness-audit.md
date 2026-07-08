@@ -74,7 +74,7 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | Skill runtime evidence | Enforced | Gate: pre-tool-use-runtime-evidence.sh. Owner: skill-governance. Evidence: runtime evidence tests. | Deep use is reviewed. |
 | RTK context optimization | Enforced | Gate: check-required-skills.sh and session-setup.sh. Owner: context-governance. Evidence: RTK runtime hardening fixtures. | External impact only. |
 | Graphify context graph | Enforced | Gate: check-plan-scope.sh. Owner: context-governance. Evidence: graphify context graph fixtures. | Accuracy is reviewed. |
-| Claude memory / context carryover | Manual by design | Gate: manual checklist. Owner: context-governance. Evidence: Checklist: docs/operations/memory-context-checklist.md. | No reliable runtime signal. |
+| Claude memory / context carryover | Manual by design | Gate: manual checklist. Owner: context-governance. Evidence: Checklist: `docs/operations/memory-context-checklist.md`. | No reliable runtime signal. |
 | Capability registry | Enforced | Gate: capability evidence policy. Owner: capability-governance. Evidence: staged-change fixtures. | Stale entries tolerated. |
 | Learning schema | Enforced | Gate: enforce-learning.sh. Owner: learning-governance. Evidence: schema tests. | Content covered elsewhere. |
 | Learning reuse | Enforced | Gate: route plan lesson reuse. Owner: learning-governance. Evidence: citation fixtures. | Relevance is reviewed. |
@@ -93,7 +93,7 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | Project 8 real-run evidence | Missing enforcement | Gate: none. Owner: ops-readiness. Evidence: checklist is not complete. | gap:project-8-real-run-evidence — blocked until the run is performed. |
 | Git/branch policy | Enforced | Gate: pr-policy. Owner: merge-governance. Evidence: merge readiness artifact. | Live state is reviewed. |
 | PR review / external review | Enforced | Gate: pr-policy via check-pr-review-evidence.sh. Owner: review-governance. Evidence: review fixtures. | Review quality is reviewed. |
-| Merge safety | Manual by design | Gate: manual GitHub merge checklist. Owner: merge-governance. Evidence: Checklist: docs/operations/merge-readiness-checklist.md. | Human decision. |
+| Merge safety | Manual by design | Gate: manual GitHub merge checklist. Owner: merge-governance. Evidence: Checklist: `docs/operations/merge-readiness-checklist.md`. | Human decision. |
 | Post-merge validation | Enforced | Gate: post-merge-validation workflow. Owner: merge-governance. Evidence: post-merge validation fixtures. | Live failures use checklist. |
 | Known gaps register | Enforced | Gate: check-known-gaps.sh. Owner: ops-readiness. Evidence: TSV fixtures. | Closure judgment is reviewed. |
 
