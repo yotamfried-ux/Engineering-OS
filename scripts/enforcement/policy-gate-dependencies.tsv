@@ -11,6 +11,7 @@
 #
 # workflow	dependency
 pr-policy.yml	scripts/enforcement/check-pr-review-evidence.sh
+pr-policy.yml	scripts/enforcement/check-operational-behavior-evidence.sh
 connector-evidence-policy.yml	scripts/enforcement/check-connector-evidence.sh
 workflow-evidence-policy.yml	scripts/enforcement/check-workflow-evidence.sh
 capability-evidence-policy.yml	scripts/enforcement/check-capability-staged-changes.sh

@@ -17,14 +17,67 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run all enforcement test suites
+      - name: Prepare enforcement test environment
         run: |
-          set -u
-          # Each test bootstraps its own temp git repo, so give git an identity.
+          set -euo pipefail
           git config --global user.email "ci@engineering-os.local"
           git config --global user.name "engineering-os-ci"
           git config --global init.defaultBranch main
 
+      - name: Verify operational behavior evidence suite
+        run: bash scripts/enforcement/tests/test-operational-behavior-evidence.sh
+
+      - name: Verify PR review evidence suite
+        run: bash scripts/enforcement/tests/test-pr-review-evidence.sh
+
+      - name: Verify known gaps suite
+        run: bash scripts/enforcement/tests/test-known-gaps.sh
+
+      - name: Verify simulation coverage suite
+        run: bash scripts/enforcement/tests/test-simulation-coverage.sh
+
+      - name: Verify readiness audit suite
+        run: bash scripts/enforcement/tests/test-readiness-audit.sh
+
+      - name: Verify enforcement suites group A-F
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[a-f]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group G-L
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[g-l]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group M-R
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[m-r]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group S-Z
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[s-z]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Run all enforcement test suites
+        run: |
+          set -u
           fail=0
           for t in scripts/enforcement/tests/test-*.sh; do
             echo "──────── $t ────────"
