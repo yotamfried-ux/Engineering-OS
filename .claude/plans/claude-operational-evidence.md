@@ -14,8 +14,8 @@
 | Patterns | governance evidence pattern |
 | External systems/connectors | GitHub |
 | Skills | not required |
-| Validation gates | scripts/enforcement/check-operational-behavior-evidence.sh, scripts/enforcement/tests/test-operational-behavior-evidence.sh, scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, scripts/enforcement/check-known-gaps.sh, scripts/enforcement/check-readiness-audit.sh |
-| Evidence to check | scripts/enforcement/check-operational-behavior-evidence.sh; scripts/enforcement/tests/test-operational-behavior-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/tests/test-pr-review-evidence.sh; docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md |
+| Validation gates | scripts/enforcement/check-operational-behavior-evidence.sh, scripts/enforcement/tests/test-operational-behavior-evidence.sh, scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, scripts/enforcement/check-known-gaps.sh, scripts/enforcement/check-readiness-audit.sh, scripts/enforcement/check-simulation-coverage.sh |
+| Evidence to check | scripts/enforcement/check-operational-behavior-evidence.sh; scripts/enforcement/tests/test-operational-behavior-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/tests/test-pr-review-evidence.sh; scripts/enforcement/coverage-required-gates.tsv; scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv; docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md |
 | User decisions required | none |
 | selected_project_type | engineering_os_governance |
 | selected_template | governance-maintenance waiver |
@@ -25,7 +25,7 @@
 | local_creator_review_path | local checks |
 | telemetry_export_path | evidence section |
 | evidence_policy_rule | operational evidence schema connected to PR body policy |
-| Target paths | scripts/enforcement/check-operational-behavior-evidence.sh, scripts/enforcement/tests/test-operational-behavior-evidence.sh, scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
+| Target paths | scripts/enforcement/check-operational-behavior-evidence.sh, scripts/enforcement/tests/test-operational-behavior-evidence.sh, scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md |
 
 ## Source of Truth Checks
 
@@ -35,14 +35,16 @@
 | scripts/enforcement/tests/test-operational-behavior-evidence.sh | checked | Fixture path covers complete, missing, partial, and invalid usage availability body evidence. |
 | scripts/enforcement/check-pr-review-evidence.sh | checked | Existing PR evidence script invokes the operational evidence checker. |
 | scripts/enforcement/tests/test-pr-review-evidence.sh | checked | PR policy regression fixture covers missing operational evidence. |
+| scripts/enforcement/coverage-required-gates.tsv | checked | Operational behavior evidence is now an active required simulation coverage gate. |
+| scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv | checked | Meta-coverage row points at the operational behavior evidence checker and fixtures. |
 | docs/operations/known-gaps.tsv | checked | Gap row records closure through PR policy wiring. |
-| docs/operations/operational-readiness-audit.md | checked | Audit row records the PR policy connection. |
+| docs/operations/operational-readiness-audit.md | checked | Audit row records the PR policy connection and checklist paths use parse-safe formatting. |
 
 ## Documentation Asset Evidence
 
-- internal: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `scripts/enforcement/check-operational-behavior-evidence.sh`; `scripts/enforcement/tests/test-operational-behavior-evidence.sh`; `scripts/enforcement/check-pr-review-evidence.sh`; `scripts/enforcement/tests/test-pr-review-evidence.sh`.
-- context7: not required because this is internal-only shell/Python enforcement and audit documentation work; it does not implement, touch, use, or integrate any external library, framework, SDK, API, or service.
-- decision: require operational behavior evidence in the PR body and run that check from the existing PR evidence policy script.
+- internal: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `scripts/enforcement/check-operational-behavior-evidence.sh`; `scripts/enforcement/tests/test-operational-behavior-evidence.sh`; `scripts/enforcement/check-pr-review-evidence.sh`; `scripts/enforcement/tests/test-pr-review-evidence.sh`; `scripts/enforcement/coverage-required-gates.tsv`; `scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv`.
+- context7: not required because this is internal-only shell/Python enforcement, manifest, and audit documentation work; it does not implement, touch, use, or integrate any external library, framework, SDK, API, or service.
+- decision: require operational behavior evidence in the PR body, run that check from the existing PR evidence policy script, and register the new gate in simulation coverage.
 
 ## Connector Evidence
 
@@ -51,10 +53,10 @@
 ## Connector Usage Evidence
 
 - source: GitHub repository `yotamfried-ux/Engineering-OS` and target paths.
-- action: GitHub connector reads and writes connected operational behavior evidence validation to the existing PR review evidence checker.
-- result: `scripts/enforcement/check-pr-review-evidence.sh` invokes `scripts/enforcement/check-operational-behavior-evidence.sh`, PR #227 body records Operational Behavior Evidence directly, and commit `d9de836` tightens usage availability validation.
-- decision: selected the existing pr-policy path, updated checker/test scope, and avoided adding a separate workflow.
-- target: scripts/enforcement/check-operational-behavior-evidence.sh; scripts/enforcement/tests/test-operational-behavior-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/tests/test-pr-review-evidence.sh; docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md
+- action: GitHub connector reads and writes connected operational behavior evidence validation to the existing PR review evidence checker and the simulation coverage manifest.
+- result: `scripts/enforcement/check-pr-review-evidence.sh` invokes `scripts/enforcement/check-operational-behavior-evidence.sh`, PR #227 body records Operational Behavior Evidence directly, commit `d9de836` tightens usage availability validation, and commit `94b41de` makes `operational-behavior-evidence` an active required coverage gate.
+- decision: selected the existing pr-policy path, updated checker/test/coverage scope, and avoided adding a separate workflow.
+- target: scripts/enforcement/check-operational-behavior-evidence.sh; scripts/enforcement/tests/test-operational-behavior-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/tests/test-pr-review-evidence.sh; scripts/enforcement/coverage-required-gates.tsv; scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv; docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md
 
 ## Capability Evidence
 
@@ -62,7 +64,7 @@
 - `workflow.workflow-read` — core/workflow.md read.
 - `plan.route-plan-before-write` — plan came before edits.
 - `source.github-repo-read` — repository files read.
-- `validation.policy-change-has-validator` — checker and test added together.
+- `validation.policy-change-has-validator` — checker, test, and coverage row added together.
 - `validation.coderabbit-policy` — review or fallback required.
 
 ## Claude Run Trace
@@ -70,10 +72,10 @@
 - goal: add structured operational evidence and connect it to PR policy.
 - hypothesis: structured fields improve later evaluation, and PR body evidence is the clearest merge-time location.
 - connectors: GitHub.
-- steps: add checker, tests, PR evidence script call, gap row, audit row, and PR body evidence.
-- evidence: target paths, fixtures, PR policy body validation, and CI runs.
+- steps: add checker, tests, PR evidence script call, gap row, audit row, coverage manifest row, and PR body evidence.
+- evidence: target paths, fixtures, PR policy body validation, simulation coverage registration, and CI runs.
 - rejected: unrelated target-run evidence and a separate workflow.
-- result: checker path connected to PR policy; usage availability validation now requires yes/no.
+- result: checker path connected to PR policy; usage availability validation now requires yes/no; simulation coverage now requires the operational behavior gate.
 - follow-up: inspect future PR evidence quality.
 
 ## Operational Behavior Evidence
@@ -97,6 +99,8 @@
 - `scripts/enforcement/tests/test-operational-behavior-evidence.sh`.
 - `scripts/enforcement/check-pr-review-evidence.sh`.
 - `scripts/enforcement/tests/test-pr-review-evidence.sh`.
+- `scripts/enforcement/coverage-required-gates.tsv`.
+- `scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv`.
 - `docs/operations/known-gaps.tsv`.
 - `docs/operations/operational-readiness-audit.md`.
 
@@ -107,6 +111,7 @@
 ## Integration Impact
 
 - PR policy script invokes operational behavior evidence checker against PR body evidence.
+- Simulation coverage requires the operational behavior evidence gate to stay fixture-covered.
 
 ## Validation Plan
 
@@ -114,6 +119,7 @@
 - Run PR review evidence fixture test.
 - Run known-gaps check.
 - Run readiness audit check.
+- Run simulation coverage check.
 - Confirm CI.
 
 ## Open Questions
@@ -127,6 +133,7 @@
 - mid: CI feedback showed route-plan fallback made negative fixtures ambiguous, so the checker was narrowed to direct PR body evidence and the PR body now records the schema.
 - pre-merge: final plan matches changed files.
 - pre-merge: after commit `d9de836`, usage availability validation requires yes/no and this plan records the final documentation, connector, and lifecycle evidence.
+- pre-merge: after commit `94b41de`, the new operational behavior evidence gate is registered in simulation coverage and the required-gates manifest.
 
 ## DoD
 
@@ -136,3 +143,4 @@
 - [x] Connect checker to PR review evidence script.
 - [x] Require operational evidence in the PR body.
 - [x] Require usage availability to be recorded as yes/no.
+- [x] Register operational behavior evidence in simulation coverage.
