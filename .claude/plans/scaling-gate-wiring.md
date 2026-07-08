@@ -60,6 +60,17 @@ Plan Scope: standard
 - `validation.actions-checked` — `.github/workflows/enforcement-tests.yml` change reviewed against the existing named-step pattern and the full local `test-*.sh` sweep.
 - `validation.coderabbit-policy` — review or fallback required before merge.
 
+## Claude Run Trace
+
+- goal: give `scaling-extension-enforcement` a real, visible, named PR-gating CI check, applying the exact lesson learned in gap 1 (PR #228): explicitly check for a scaling-specific analog of the `check-route-plan-contract.sh` blind spot before claiming full closure.
+- hypothesis: `check-scaling-extension.py --root .` already validates real manifest completeness correctly; the missing piece is purely CI visibility/wiring. Unlike gap 1, no separate scaling-specific per-PR declaration checker exists (only the same shared, already-addressed `check-route-plan-contract.sh`), so this closure should not need a "Partially enforced" downgrade.
+- connectors: GitHub.
+- steps: verify checker/test state on merged main, verify zero external references via grep, explicitly grep for any scaling-specific analog of `check-route-plan-contract.sh` (found none), add the named step copying the `check-result-loop-contract.py` pattern from PR #228, register in `coverage-required-gates.tsv` and `simulation-coverage.d/scaling-extension.tsv`, update known-gaps/audit only after the step is confirmed green in real CI.
+- evidence: `.github/workflows/enforcement-tests.yml` diff; local `python3 scripts/enforcement/check-scaling-extension.py --root .` run; local `test-scaling-extension.sh` run; repo-wide grep results; PR CI run showing the new named step passing.
+- rejected: assuming closure is safe without re-checking for gap-1-style blind spots — rejected in favor of an explicit verification step, learning directly from the codex finding on PR #228.
+- result: pending CI confirmation.
+- follow-up: none planned beyond this PR.
+
 ## Lessons Reused
 
 - `lessons-learned/bugs/ci-environment-dependent-fixture-premise.md` — CI fixtures/gates must not assume host-tool absence or PATH shape that may differ between local sandbox and the GitHub Actions runner. Applied by running `check-scaling-extension.py --root .` locally on this exact runner-equivalent repo state and cross-checking against the real CI job log rather than assuming local pass implies CI pass.
@@ -111,13 +122,14 @@ Plan Scope: standard
 ## Progress Lifecycle Evidence
 
 - start: read `check-scaling-extension.py`, `test-scaling-extension.sh`, `known-gaps.tsv` row 28, and the audit's matrix row before any edit; confirmed via repo-wide grep that zero workflow/script references exist outside the checker's own test file; explicitly searched for a scaling-specific analog of gap 1's `check-route-plan-contract.sh` blind spot and found none.
+- mid: added the named "Verify scaling extension gate" step to `enforcement-tests.yml`, registered the gate in `coverage-required-gates.tsv` and a new `simulation-coverage.d/scaling-extension.tsv` row, confirmed `check-simulation-coverage.sh` accepts it, and confirmed the full local `test-*.sh` sweep still passes clean. `known-gaps.tsv`/audit doc intentionally not yet updated at this point — deferred to a pre-merge checkpoint after real CI confirms the new named step passes on an actual PR run.
 
 ## DoD
 
-- [ ] Add a dedicated named "Verify scaling extension gate" step to `enforcement-tests.yml` running the checker directly against the real repo.
-- [ ] Confirm existing positive/negative fixtures in `test-scaling-extension.sh` still pass locally.
-- [ ] Register the gate in `coverage-required-gates.tsv` and `simulation-coverage.d/scaling-extension.tsv`.
-- [ ] Full local `test-*.sh` sweep passes clean.
+- [x] Add a dedicated named "Verify scaling extension gate" step to `enforcement-tests.yml` running the checker directly against the real repo.
+- [x] Confirm existing positive/negative fixtures in `test-scaling-extension.sh` still pass locally.
+- [x] Register the gate in `coverage-required-gates.tsv` and `simulation-coverage.d/scaling-extension.tsv`.
+- [x] Full local `test-*.sh` sweep passes clean.
 - [ ] Confirm the new named CI step is actually green on this PR's own real CI run (not just local).
 - [ ] Update `known-gaps.tsv` row 28 to `closed` only after CI confirms and no residual scaling-specific blind spot is found.
 - [ ] Update the audit's "Scaling extension enforcement" matrix row to "Enforced".
