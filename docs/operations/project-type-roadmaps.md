@@ -43,7 +43,7 @@ Every applicable project template must map to a roadmap entry or an explicit exe
 | etl-elt-system | dbt documentation; Airbyte documentation; Apache Airflow documentation; Great Expectations docs; Dagster documentation. | Local Airflow/Dagster DAG run; fixture-dataset backfill simulation; DAG run graph and dbt data-docs screenshots; data-quality and runtime metrics; before/after pipeline-runtime comparison; telemetry export. |
 | multi-agent-system | LangGraph documentation; AutoGen docs; Anthropic Tool Use guide; e2b.dev sandbox docs; LangSmith docs. | Local agent graph run against a fixture eval set; LangSmith trace evidence; eval-set pass-rate and latency metrics; before/after eval-set comparison; telemetry export. |
 | microservice | OpenTelemetry docs; gRPC documentation; Kubernetes docs; Pact contract testing docs. | Local service health endpoint; gRPC/HTTP contract and integration tests; OpenTelemetry trace evidence; latency/error-rate metrics; before/after request-latency comparison; telemetry export. |
-| analytics-platform | dbt documentation; BigQuery documentation; Cube.dev documentation; Dagster documentation. | Local BI dashboard URL; dashboard interaction simulation; dbt test and dashboard screenshots; query-latency and load-time metrics; before/after query-latency comparison; telemetry export. |
+| analytics-platform | dbt documentation; BigQuery documentation; Cube.dev documentation; Dagster documentation; Apache Superset docs; Grafana docs. | Local BI dashboard URL; dashboard interaction simulation; dbt test and dashboard screenshots; query-latency and load-time metrics; before/after query-latency comparison; telemetry export. |
 
 ## Enforcement requirement
 
@@ -126,3 +126,5 @@ The future gate must be called from the plan/write policy and CI. It must fail w
 - Pact contract testing: https://docs.pact.io/
 - BigQuery documentation: https://cloud.google.com/bigquery/docs
 - Cube.dev documentation: https://cube.dev/docs
+- Apache Superset documentation: https://superset.apache.org/docs/intro
+- Grafana documentation (dashboards): https://grafana.com/docs/
