@@ -57,6 +57,33 @@ jobs:
             bash "$t"
           done
 
+      - name: Verify capability enforcement suites
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-capability*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify clean install enforcement suites
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-clean*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify connector enforcement suites
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-connector*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
       - name: Verify enforcement suites letter C
         run: |
           set -euo pipefail
