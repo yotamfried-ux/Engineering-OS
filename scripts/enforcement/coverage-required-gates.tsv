@@ -27,3 +27,4 @@ tests-tool-contract	validation-governance	active	Missing-tool environment contra
 active-plan-selection	workflow-governance	active	Target-aware plan selection must remain covered.
 operational-behavior-evidence	ops-readiness	active	Operational behavior evidence PR-body enforcement must remain covered.
 result-loop-contract	ops-readiness	active	Result loop contract manifest completeness enforcement must remain covered.
+scaling-extension	ops-readiness	active	Scaling extension manifest completeness enforcement must remain covered.
