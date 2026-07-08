@@ -123,6 +123,7 @@ Plan Scope: standard
 
 - start: read `check-scaling-extension.py`, `test-scaling-extension.sh`, `known-gaps.tsv` row 28, and the audit's matrix row before any edit; confirmed via repo-wide grep that zero workflow/script references exist outside the checker's own test file; explicitly searched for a scaling-specific analog of gap 1's `check-route-plan-contract.sh` blind spot and found none.
 - mid: added the named "Verify scaling extension gate" step to `enforcement-tests.yml`, registered the gate in `coverage-required-gates.tsv` and a new `simulation-coverage.d/scaling-extension.tsv` row, confirmed `check-simulation-coverage.sh` accepts it, and confirmed the full local `test-*.sh` sweep still passes clean. `known-gaps.tsv`/audit doc intentionally not yet updated at this point — deferred to a pre-merge checkpoint after real CI confirms the new named step passes on an actual PR run.
+- pre-merge: PR #229's own CI confirmed the "Verify scaling extension gate" step passes against real PR content (job 85774809899, step 20, conclusion success). Updated `docs/operations/known-gaps.tsv` row 28 to `closed` and `docs/operations/operational-readiness-audit.md`'s "Scaling extension enforcement" matrix row to "Enforced" (no `gap:` link needed since the gap is genuinely closed, not partial). `check-known-gaps.sh` and `check-readiness-audit.sh` both pass locally against the corrected text.
 
 ## DoD
 
@@ -130,7 +131,7 @@ Plan Scope: standard
 - [x] Confirm existing positive/negative fixtures in `test-scaling-extension.sh` still pass locally.
 - [x] Register the gate in `coverage-required-gates.tsv` and `simulation-coverage.d/scaling-extension.tsv`.
 - [x] Full local `test-*.sh` sweep passes clean.
-- [ ] Confirm the new named CI step is actually green on this PR's own real CI run (not just local).
-- [ ] Update `known-gaps.tsv` row 28 to `closed` only after CI confirms and no residual scaling-specific blind spot is found.
-- [ ] Update the audit's "Scaling extension enforcement" matrix row to "Enforced".
-- [ ] Zero open review threads before merge.
+- [x] Confirm the new named CI step is actually green on this PR's own real CI run (not just local).
+- [x] Update `known-gaps.tsv` row 28 to `closed` only after CI confirms and no residual scaling-specific blind spot is found.
+- [x] Update the audit's "Scaling extension enforcement" matrix row to "Enforced".
+- [x] Zero open review threads before merge.
