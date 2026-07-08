@@ -78,7 +78,7 @@ Plan Scope: standard
 - steps: read all 5 template READMEs' Official Documentation sections; read `check-scaling-extension.py` and `check-result-loop-contract.py` in full to determine every manifest row required for `active` status; construct rows for all 5 manifests; validate locally before pushing.
 - evidence: local `python3 scripts/enforcement/check-scaling-extension.py --root .` and `python3 scripts/enforcement/check-result-loop-contract.py --root .` runs; full local `test-*.sh` sweep.
 - rejected: fabricating placeholder documentation sources to save research time — rejected per explicit task instruction never to mark a registry asset validated without real evidence; the templates' existing real research was used instead.
-- result: pending local validation.
+- result: both `check-scaling-extension.py --root .` and `check-result-loop-contract.py --root .` passed on the first local run; the full local `test-*.sh` sweep passed clean; the 3 real CI-flagged plan-evidence gaps found on commit `0e84753` (documentation-asset-policy, connector-evidence-policy, workflow-evidence-policy) were fixed in `ce6ab98` and re-confirmed both locally and on real CI (head `ce6ab98`) before this pre-merge checkpoint.
 - follow-up: PR B covers the remaining 5 project types (automation-system, etl-elt-system, multi-agent-system, microservice, analytics-platform).
 
 ## Lessons Reused
@@ -134,6 +134,7 @@ Plan Scope: standard
 
 - start: read all 5 template READMEs and both checkers' full source before any manifest edit; confirmed the real 5-manifest requirement for `active` status directly from `check-scaling-extension.py`'s `check()` function rather than assuming a 2-manifest scope.
 - mid: added active rows across all 5 required manifests for admin-dashboard, crm-system, saas-platform, marketplace, and booking-system, removed the old deferred rows for these 5 types, added 5 new table rows plus 20 new Source URLs to `docs/operations/project-type-roadmaps.md`, and confirmed `check-scaling-extension.py --root .` and `check-result-loop-contract.py --root .` both pass on the first run against the real repo state. Full local `test-*.sh` sweep passes clean. `known-gaps.tsv`/audit doc intentionally not yet updated — `registry-coverage-backfill` covers all 10 project types and stays open until PR B also lands.
+- pre-merge: fixed the 3 real CI failures found on commit `0e84753` (documentation-asset-policy, connector-evidence-policy, workflow-evidence-policy's Template/Pattern Rating Evidence requirement) in commit `ce6ab98`, re-verified each fix locally against the exact checker scripts CI runs, then confirmed on real CI: `enforcement-tests`, `Require connector route plan evidence`, `Require documentation/reference asset evidence`, `Require capability evidence in changed plans`, `import-cleanup-policy`, `semantic-cleanup-policy`, and `Require ready-for-review PR` all passed on head `ce6ab98` (job run 28914517468 and follow-ups). Confirmed zero open review threads via `get_review_comments`. `known-gaps.tsv`/audit intentionally still not updated — `registry-coverage-backfill` stays open until the companion PR for the remaining 5 project types also lands.
 
 ## DoD
 
@@ -142,6 +143,6 @@ Plan Scope: standard
 - [x] `check-scaling-extension.py --root .` passes locally.
 - [x] `check-result-loop-contract.py --root .` passes locally.
 - [x] Full local `test-*.sh` sweep passes clean.
-- [ ] Confirm both named CI gates pass on this PR's real CI run.
-- [ ] Update `known-gaps.tsv`/audit only after CI confirms (registry-coverage-backfill stays open until all 10 are done across both PRs).
-- [ ] Zero open review threads before merge.
+- [x] Confirm both named CI gates (`Verify result loop contract gate`, `Verify scaling extension gate`, part of `enforcement-tests`) pass on this PR's real CI run — confirmed on head `ce6ab98`.
+- [x] `known-gaps.tsv`/audit intentionally left unchanged — registry-coverage-backfill stays open until all 10 types are done across both PRs.
+- [x] Zero open review threads before merge — confirmed via `get_review_comments` (0 threads).
