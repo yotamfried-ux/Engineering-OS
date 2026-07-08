@@ -39,6 +39,11 @@ Every applicable project template must map to a roadmap entry or an explicit exe
 | saas-platform | Stripe Billing/Subscriptions docs; Supabase Auth and RLS docs; Clerk Organizations docs; Next.js docs. | Local tenant admin URL; tenant-isolation and billing Playwright e2e; billing portal screenshots and Stripe webhook traces; tenant-query-latency and webhook-processing metrics; before/after tenant-query comparison; telemetry export. |
 | marketplace | Stripe Connect docs; Medusa commerce docs; Stripe Identity docs; Algolia InstantSearch docs. | Local marketplace URL; checkout and payout Playwright e2e; checkout and dispute-flow screenshots and traces; checkout-error and payout-failure-rate metrics; before/after checkout-latency comparison; telemetry export. |
 | booking-system | Google Calendar API guides; Cal.com developer docs; Microsoft Graph Calendar API docs; RFC 5545 (iCalendar); Stripe Payment Intents docs. | Local booking URL; concurrent-booking and calendar-sync Playwright e2e; availability-calendar screenshots and iCal traces; booking-failure and reminder-error-rate metrics; before/after conflict-guard-latency comparison; telemetry export. |
+| automation-system | Temporal docs; n8n docs; BullMQ docs; Svix docs. | Local Temporal/n8n workflow UI; end-to-end workflow trigger simulation; execution trace and DLQ screenshots; retry/failure metrics; before/after workflow-latency comparison; telemetry export. |
+| etl-elt-system | dbt documentation; Airbyte documentation; Apache Airflow documentation; Great Expectations docs; Dagster documentation. | Local Airflow/Dagster DAG run; fixture-dataset backfill simulation; DAG run graph and dbt data-docs screenshots; data-quality and runtime metrics; before/after pipeline-runtime comparison; telemetry export. |
+| multi-agent-system | LangGraph documentation; AutoGen docs; Anthropic Tool Use guide; e2b.dev sandbox docs; LangSmith docs. | Local agent graph run against a fixture eval set; LangSmith trace evidence; eval-set pass-rate and latency metrics; before/after eval-set comparison; telemetry export. |
+| microservice | OpenTelemetry docs; gRPC documentation; Kubernetes docs; Pact contract testing docs. | Local service health endpoint; gRPC/HTTP contract and integration tests; OpenTelemetry trace evidence; latency/error-rate metrics; before/after request-latency comparison; telemetry export. |
+| analytics-platform | dbt documentation; BigQuery documentation; Cube.dev documentation; Dagster documentation; Apache Superset docs; Grafana docs. | Local BI dashboard URL; dashboard interaction simulation; dbt test and dashboard screenshots; query-latency and load-time metrics; before/after query-latency comparison; telemetry export. |
 
 ## Enforcement requirement
 
@@ -101,3 +106,25 @@ The future gate must be called from the plan/write policy and CI. It must fail w
 - Microsoft Graph Calendar API: https://learn.microsoft.com/en-us/graph/api/resources/calendar
 - RFC 5545 — iCalendar: https://datatracker.ietf.org/doc/html/rfc5545
 - Stripe Payment Intents: https://stripe.com/docs/payments/payment-intents
+- Temporal documentation: https://docs.temporal.io
+- n8n documentation: https://docs.n8n.io
+- BullMQ documentation: https://docs.bullmq.io
+- Svix documentation: https://docs.svix.com
+- dbt documentation: https://docs.getdbt.com/
+- Airbyte documentation: https://docs.airbyte.com/
+- Apache Airflow documentation: https://airflow.apache.org/docs/
+- Great Expectations documentation: https://docs.greatexpectations.io/
+- Dagster documentation: https://docs.dagster.io/
+- LangGraph documentation: https://langchain-ai.github.io/langgraph/
+- AutoGen documentation: https://microsoft.github.io/autogen/
+- Anthropic Tool Use guide: https://docs.anthropic.com/en/docs/build-with-claude/tool-use
+- e2b.dev sandbox documentation: https://e2b.dev/docs
+- LangSmith documentation: https://docs.smith.langchain.com/
+- OpenTelemetry documentation: https://opentelemetry.io/docs/
+- gRPC documentation: https://grpc.io/docs/
+- Kubernetes documentation: https://kubernetes.io/docs/home/
+- Pact contract testing: https://docs.pact.io/
+- BigQuery documentation: https://cloud.google.com/bigquery/docs
+- Cube.dev documentation: https://cube.dev/docs
+- Apache Superset documentation: https://superset.apache.org/docs/intro
+- Grafana documentation (dashboards): https://grafana.com/docs/

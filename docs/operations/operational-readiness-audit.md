@@ -48,7 +48,7 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | result-loop-contract-enforcement | open | P1 | Result Loop Contract enforcement. |
 | scaling-extension-enforcement | closed | P1 | Scaling extension enforcement. |
 | claude-operational-behavior-evidence | closed | P1 | Operational behavior evidence. |
-| registry-coverage-backfill | open | P2 | Registry/manifest coverage. |
+| registry-coverage-backfill | closed | P2 | Registry/manifest coverage. |
 | monitoring-metrics-sufficiency | open | P2 | Monitoring metrics sufficiency. |
 | project-8-real-run-evidence | blocked | P1 | Project 8 real-run evidence. |
 
@@ -88,7 +88,7 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | Project install contract | Enforced | Gate: install policy gates. Owner: install-governance. Evidence: install downstream behavior fixtures. | Runtime fidelity is reviewed. |
 | Result Loop Contract enforcement | Partially enforced | Gate: check-result-loop-contract.py runs as a dedicated named CI step on every real pull_request (not just self-tests), blocking manifest-completeness regressions. Owner: ops-readiness. Evidence: named step in enforcement-tests.yml; test-result-loop-contract.sh fixtures. | gap:result-loop-contract-enforcement — check-route-plan-contract.sh (which requires selected_result_loop_contract in a PR's own Route Plan) exists but is still only self-tested, never wired to real CI; wiring it would mandate 8 new fields on every future Route Plan repo-wide, a large change intentionally deferred pending explicit decision. |
 | Scaling extension enforcement | Enforced | Gate: check-scaling-extension.py runs as a dedicated named CI step on every real pull_request, confirmed green against real PR content in PR #229 (not just self-tests). Owner: ops-readiness. Evidence: named step in enforcement-tests.yml; test-scaling-extension.sh fixtures. | Deep manifest-content quality (e.g. whether a roadmap's official sources are truly authoritative) remains review-based. |
-| Registry/manifest coverage | Missing enforcement | Gate: scaling extension fixtures cover the coverage map hardening piece. Owner: registry-governance. Evidence: scaling fixtures. | gap:registry-coverage-backfill — 10 deferred types need research. |
+| Registry/manifest coverage | Enforced | Gate: scaling extension fixtures cover the coverage map hardening piece; all 10 kind=project templates now carry status=active rows with real roadmap research across all 5 required manifests. Owner: registry-governance. Evidence: PR #230 (merged) and the Registry Coverage Backfill (Automation/Data) PR — scripts/enforcement/project-type-roadmaps.tsv, result-loop-requirements.tsv, documentation-sources.tsv, pattern-requirements.tsv, skill-requirements.tsv. | none — registry-coverage-backfill closed. |
 | Monitoring metrics sufficiency | Missing enforcement | Gate: exporter/importer/analyzer tests exist but no real target run. Owner: ops-readiness. Evidence: telemetry tests. | gap:monitoring-metrics-sufficiency — needs real target run import. |
 | Project 8 real-run evidence | Missing enforcement | Gate: none. Owner: ops-readiness. Evidence: checklist is not complete. | gap:project-8-real-run-evidence — blocked until the run is performed. |
 | Git/branch policy | Enforced | Gate: pr-policy. Owner: merge-governance. Evidence: merge readiness artifact. | Live state is reviewed. |
@@ -105,7 +105,7 @@ A row is ready only when it is Enforced, Manual by design with a checklist, Waiv
 
 1. Result Loop Contract gate wiring — manifest-completeness dimension now enforced by a named CI step; per-PR route-plan-declaration dimension (check-route-plan-contract.sh) remains unwired by design decision, not oversight.
 2. Scaling gate wiring — closed by a named CI step (PR #229), confirmed green against real PR content; no scaling-specific per-PR blind spot found.
-3. Registry/manifest coverage backfill.
+3. Registry/manifest coverage backfill — closed by PR #230 (merged) plus the Registry Coverage Backfill (Automation/Data) PR; all 10 project types now carry real, active coverage across all 5 required manifests.
 4. Monitoring metrics sufficiency.
 5. Project 8 real-run evidence.
 6. Coverage map hardening.
