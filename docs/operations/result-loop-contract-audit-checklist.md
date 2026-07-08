@@ -6,6 +6,8 @@ Roadmap catalog: `docs/operations/project-type-roadmaps.md`
 
 Purpose: track the work needed to make long AI development sessions result-driven and scalable across project types. This checklist is not a readiness claim.
 
+**Per-PR declaration cross-reference:** see `docs/operations/operational-work-history.md` and `gap:operational-work-history-foundation` for the resolved decision on the per-PR result-loop declaration dimension — it is satisfied by a CI-generated artifact/gate, not by wiring `check-route-plan-contract.sh`'s 8-field Route Plan requirement into CI.
+
 ## Research references
 
 - [x] Playwright trace viewer researched for traces, screenshots, DOM snapshots, console and network evidence.

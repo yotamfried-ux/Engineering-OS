@@ -4,6 +4,8 @@ Purpose: make long AI development sessions result-driven instead of instruction-
 
 This document is a plan, not a readiness claim. Full readiness requires deterministic enforcement for every applicable template/project type.
 
+**Per-PR declaration decision:** the per-PR "does this PR declare its result-loop contract" dimension of `gap:result-loop-contract-enforcement` is satisfied by the CI-generated Operational Work History artifact and gate (`docs/operations/operational-work-history.md`, `gap:operational-work-history-foundation`), not by wiring `check-route-plan-contract.sh`'s 8-field Route Plan requirement into CI. That checker stays unwired by explicit design.
+
 ## Result Loop Contract fields
 
 Every project type contract must define these fields:

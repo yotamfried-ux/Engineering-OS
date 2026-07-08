@@ -7,6 +7,8 @@ BODY_FILE=""
 HEAD_SHA=""
 WORKFLOWS_DIR="$ROOT/.github/workflows"
 CHECKS_DIR="$SCRIPT_DIR"
+CHANGED_FILES=""
+WORK_HISTORY_ARTIFACT="$ROOT/.engineering-os/work-history/latest.json"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -14,6 +16,8 @@ while [ "$#" -gt 0 ]; do
     --head-sha) HEAD_SHA="${2:-}"; shift 2 ;;
     --workflows-dir) WORKFLOWS_DIR="${2:-}"; shift 2 ;;
     --checks-dir) CHECKS_DIR="${2:-}"; shift 2 ;;
+    --changed-files) CHANGED_FILES="${2:-}"; shift 2 ;;
+    --work-history-artifact) WORK_HISTORY_ARTIFACT="${2:-}"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -109,3 +113,9 @@ print('PR review and merge-readiness evidence passed')
 PY
 
 bash "$SCRIPT_DIR/check-operational-behavior-evidence.sh" --body "$BODY_FILE"
+
+work_history_args=(--body "$BODY_FILE" --head-sha "$HEAD_SHA" --artifact "$WORK_HISTORY_ARTIFACT" --root "$ROOT")
+if [ -n "$CHANGED_FILES" ]; then
+  work_history_args+=(--changed-files "$CHANGED_FILES")
+fi
+bash "$SCRIPT_DIR/check-operational-work-history-evidence.sh" "${work_history_args[@]}"
