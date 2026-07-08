@@ -38,7 +38,7 @@ Plan Scope: standard
 ## Documentation Asset Evidence
 
 - internal: `templates/admin-dashboard/README.md`; `templates/crm-system/README.md`; `templates/saas-platform/README.md`; `templates/marketplace/README.md`; `templates/booking-system/README.md`; `docs/operations/project-type-roadmaps.md`; `docs/operations/scaling-extension-procedure.md`.
-- context7: not required for this PR — all official documentation sources were already researched and cited in the existing template READMEs (Refine, Stripe, Supabase, Clerk, Medusa, Cal.com, Gmail API, Microsoft Graph, Algolia, RFC 5545); this PR transcribes that already-verified real research into the manifest schema, it does not perform new library/API research.
+- context7: not required — this is internal-only governance manifest data entry; it does not implement, touch, use, or integrate any external library, framework, SDK, or API. All official documentation sources (Refine, Stripe, Supabase, Clerk, Medusa, Cal.com, Gmail API, Microsoft Graph, Algolia, RFC 5545) were already researched and cited in the existing template READMEs before this PR; this PR only transcribes that already-verified real research into the manifest schema.
 - decision: reuse the templates' existing "Official Documentation" sections as the source of truth for `documentation-sources.tsv` rows and `project-type-roadmaps.md` entries, rather than researching from scratch or inventing placeholder sources.
 
 ## Connector Evidence
@@ -50,8 +50,16 @@ Plan Scope: standard
 - source: GitHub repository `yotamfried-ux/Engineering-OS`, `templates/{admin-dashboard,crm-system,saas-platform,marketplace,booking-system}/README.md`, `scripts/enforcement/project-type-roadmaps.tsv` deferred rows (added by merged PR #225).
 - action: read all 5 template READMEs' real "Official Documentation" sections and cross-referenced them against `check-scaling-extension.py`'s and `check-result-loop-contract.py`'s actual validation logic (not assumed) to determine the exact manifest rows needed.
 - result: added `active` rows to `project-type-roadmaps.tsv`, `result-loop-requirements.tsv`, `documentation-sources.tsv`, `pattern-requirements.tsv`, and `skill-requirements.tsv` for admin-dashboard, crm-system, saas-platform, marketplace, and booking-system, plus 5 new table rows in `docs/operations/project-type-roadmaps.md`.
-- decision: promoted these 5 project types from `status=deferred` to `status=active` since real official-doc sources and complete result-loop contract fields now exist for each, verified locally against both checkers before pushing.
+- decision: changed `status` from `deferred` to `active` and added complete rows across all 5 manifests for admin-dashboard, crm-system, saas-platform, marketplace, and booking-system, since real official-doc sources and complete result-loop contract fields now exist for each, verified locally against both checkers before pushing.
 - target: scripts/enforcement/project-type-roadmaps.tsv; scripts/enforcement/result-loop-requirements.tsv; scripts/enforcement/documentation-sources.tsv; scripts/enforcement/pattern-requirements.tsv; scripts/enforcement/skill-requirements.tsv; docs/operations/project-type-roadmaps.md
+
+## Template/Pattern Rating Evidence
+
+- asset: patterns/registry.yaml
+- rating: reused as-is, not modified — matches the existing shape of the `web-patterns`/`mobile-patterns` rows already active in `pattern-requirements.tsv`.
+- outcome: confirmed the registry already covers the pattern reference shape needed by the 5 new `pattern-requirements.tsv` rows for admin-dashboard, crm-system, saas-platform, marketplace, and booking-system; no new patterns were added or removed.
+- decision: kept `patterns/registry.yaml` unchanged and pointed all 5 new `pattern-requirements.tsv` rows at it, matching the existing active rows' pattern rather than inventing a new pattern source.
+- confidence: high — verified directly by reading `patterns/registry.yaml` and the existing active `pattern-requirements.tsv` rows before reusing the same reference shape.
 
 ## Capability Evidence
 
