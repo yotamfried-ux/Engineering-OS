@@ -154,6 +154,11 @@ jobs:
           set -euo pipefail
           bash scripts/enforcement/check-readiness-audit.sh
 
+      - name: Verify result loop contract gate
+        run: |
+          set -euo pipefail
+          python3 scripts/enforcement/check-result-loop-contract.py --root .
+
       - name: Verify use-in-project output contract
         run: |
           set -euo pipefail
