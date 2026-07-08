@@ -64,11 +64,11 @@ Plan Scope: standard
 - goal: give `result-loop-contract-enforcement` a real, visible, named PR-gating CI check instead of only being reachable through the aggregate test-file sweep.
 - hypothesis: the checker (`check-result-loop-contract.py --root .`) already validates real manifest completeness correctly against the real repo state; the missing piece was purely CI visibility/wiring, not new validator logic.
 - connectors: GitHub.
-- steps: verify checker/test state on merged main, verify zero external references via grep, add the named step copying the `check-readiness-audit.sh` pattern, register in `coverage-required-gates.tsv`, update known-gaps/audit only after the step is confirmed green in real CI.
-- evidence: `.github/workflows/enforcement-tests.yml` diff; local `python3 scripts/enforcement/check-result-loop-contract.py --root .` run; local `test-result-loop-contract.sh` run; PR CI run showing the new named step passing.
-- rejected: building new Route-Plan-to-manifest linkage logic (the deeper integration abandoned in PRs #214/#216) — out of scope; reusing the existing checker's manifest-completeness validation as a real named gate honestly closes what the audit describes as missing.
-- result: pending CI confirmation.
-- follow-up: none planned beyond this PR.
+- steps: verify checker/test state on merged main, verify zero external references via grep, add the named step copying the `check-readiness-audit.sh` pattern, register in `coverage-required-gates.tsv`, open PR #228, receive `chatgpt-codex-connector` review finding that a *second*, separate checker (`check-route-plan-contract.sh`, requiring `selected_result_loop_contract` in a PR's own Route Plan) exists and is also unwired, verify that finding directly against source, decide not to wire that second checker in this PR (it would mandate 8 new Route Plan fields repo-wide — matching PRs #214/#216's abandoned scope), and correct the audit/known-gaps claim from "Enforced"/"closed" to "Partially enforced"/"open" accordingly.
+- evidence: `.github/workflows/enforcement-tests.yml` diff; local `python3 scripts/enforcement/check-result-loop-contract.py --root .` run; local `test-result-loop-contract.sh` run; PR #228 CI run showing the new named step passing; `chatgpt-codex-connector` review comment on PR #228; `scripts/enforcement/check-route-plan-contract.sh` and `scripts/enforcement/tests/test-required-gates-map.sh` read directly to confirm the finding.
+- rejected: building new Route-Plan-to-manifest linkage logic (the deeper integration abandoned in PRs #214/#216, and the specific thing `check-route-plan-contract.sh` already implements but nothing wires) — rejected for this PR because it is a large, repo-wide behavior change (8 new mandatory Route Plan fields) that needs an explicit user decision, not something to flip on unilaterally inside a small focused gap-closure PR.
+- result: manifest-completeness dimension is a real, verified, named CI gate. Per-PR route-plan-declaration dimension stays an explicitly open, linked gap — not silently dropped, not overclaimed.
+- follow-up: wiring `check-route-plan-contract.sh` into real PR-diff CI gating is a separate, larger decision for the user to make explicitly; not part of this PR.
 
 ## Operational Behavior Evidence
 
@@ -99,6 +99,8 @@ Plan Scope: standard
 - Building deeper Route-Plan-to-manifest per-PR linkage (what PRs #214/#216 attempted and abandoned) — rejected as out of scope for this focused gap-closure PR.
 - Leaving the checker only inside the aggregate `test-*.sh` sweep — rejected because that is exactly the "not wired to a real CI workflow" state the audit flags as insufficient.
 - Adding a brand-new standalone workflow file just for this one checker — rejected in favor of the existing `enforcement-tests.yml` named-step pattern, avoiding workflow sprawl.
+- Wiring `check-route-plan-contract.sh` (found via `chatgpt-codex-connector` review) into real PR-diff CI gating in this same PR — rejected because it would mandate 8 new Route Plan fields (`selected_project_type`, `selected_template`, `selected_roadmap`, `selected_result_loop_contract`, `required_user_simulation`, `local_creator_review_path`, `telemetry_export_path`, `evidence_policy_rule`) on every future Route Plan touching non-docs targets repo-wide — a large, sweeping behavior change requiring explicit user sign-off, not a small focused fix.
+- Claiming "Enforced"/"closed" for the full gap despite the above — rejected as overclaiming; downgraded to "Partially enforced"/"open" with an honest residual-gap note instead.
 
 ## Affected Surfaces
 
@@ -130,7 +132,8 @@ Plan Scope: standard
 ## Progress Lifecycle Evidence
 
 - start: read `check-result-loop-contract.py`, `test-result-loop-contract.sh`, `known-gaps.tsv` row 27, and the audit's matrix row before any edit; confirmed via repo-wide grep that zero workflow/script references exist outside the checker's own test file.
-- mid: added the named "Verify result loop contract gate" step to `enforcement-tests.yml`, registered the gate in `coverage-required-gates.tsv` and a new `simulation-coverage.d/result-loop-contract.tsv` row, confirmed `check-simulation-coverage.sh` accepts it (30 gates), and confirmed the full local `test-*.sh` sweep (80 suites) still passes clean. `known-gaps.tsv`/audit doc intentionally not yet updated — deferred to a pre-merge checkpoint after real CI confirms the new named step passes on an actual PR run, per the task's truthfulness requirement.
+- mid: added the named "Verify result loop contract gate" step to `enforcement-tests.yml`, registered the gate in `coverage-required-gates.tsv` and a new `simulation-coverage.d/result-loop-contract.tsv` row, confirmed `check-simulation-coverage.sh` accepts it (30 gates), and confirmed the full local `test-*.sh` sweep (80 suites) still passes clean. `known-gaps.tsv`/audit doc intentionally not yet updated at this point — deferred to a pre-merge checkpoint after real CI confirms the new named step passes on an actual PR run, per the task's truthfulness requirement.
+- mid: after opening PR #228, real CI confirmed the new named step passes; `chatgpt-codex-connector` then found a second, separate unwired checker (`check-route-plan-contract.sh`, requiring `selected_result_loop_contract` in a PR's own Route Plan) that this PR's fix does not address. Verified the finding directly against source (confirmed real, self-tested only in `test-required-gates-map.sh`, never wired to CI) and decided not to wire it in this PR since doing so would mandate 8 new Route Plan fields repo-wide.
 
 ## DoD
 
@@ -138,6 +141,8 @@ Plan Scope: standard
 - [x] Confirm existing positive/negative fixtures in `test-result-loop-contract.sh` still pass locally.
 - [x] Register the gate in `coverage-required-gates.tsv` and `simulation-coverage.d/result-loop-contract.tsv`.
 - [x] Full local `test-*.sh` sweep passes clean.
-- [ ] Update `known-gaps.tsv` row 27 to `closed` only after the new named CI step is confirmed green in a real PR run.
-- [ ] Update the audit's "Result Loop Contract enforcement" matrix row to "Enforced" with an honest residual note.
-- [ ] Zero open review threads before merge.
+- [x] Confirm the new named CI step is actually green on this PR's own real CI run (not just local).
+- [x] Verify `chatgpt-codex-connector`'s finding about `check-route-plan-contract.sh` directly against source before responding.
+- [x] Update `known-gaps.tsv` row 27 with an honest description of what's now enforced vs. still open (status stays `open`, not `closed`).
+- [x] Update the audit's "Result Loop Contract enforcement" matrix row to "Partially enforced" (not "Enforced") with an honest residual-gap note and `gap:` link.
+- [ ] Zero open review threads before merge (reply posted; awaiting resolution/further reaction).
