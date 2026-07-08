@@ -81,7 +81,7 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | Learning closure after bug/debug work | Enforced | Gate: enforce-learning-capture.sh. Owner: learning-governance. Evidence: learning closure gate fixtures. | Truthfulness is reviewed. |
 | Claude run trace / experiment log | Enforced | Gate: enforce-run-trace.sh. Owner: trace-governance. Evidence: trace and test contracts fixtures. | Depth is reviewed. |
 | Operational behavior evidence | Enforced | Gate: check-operational-behavior-evidence.sh is invoked by check-pr-review-evidence.sh; pr-policy runs that script on PRs. Owner: ops-readiness. Evidence: test-operational-behavior-evidence.sh and test-pr-review-evidence.sh. | Truthfulness is reviewed; missing body evidence is blocked. |
-| Positive/negative simulations | Enforced | Gate: check-simulation-coverage.sh. Owner: validation-governance. Evidence: simulation completeness fixtures. | Future judgment is reviewed. |
+| Positive/negative simulations | Enforced | Gate: check-simulation-coverage.sh. Owner: validation-governance. Evidence: simulation completeness fixtures. | Reviewer judgment is reviewed. |
 | Tests/lint before commit | Enforced | Gate: enforce-tests.sh. Owner: validation-governance. Evidence: tool contract fixtures. | Tool choice is reviewed. |
 | Cleanup debug leftovers | Enforced | Gate: enforce-quality.sh. Owner: cleanup-governance. Evidence: cleanup fixtures. | Narrow cases only. |
 | Cleanup semantic hygiene | Enforced | Gate: semantic cleanup and import cleanup policies. Owner: cleanup-governance. Evidence: semantic cleanup fixtures. | Deep hygiene is reviewed. |
