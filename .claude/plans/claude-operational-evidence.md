@@ -38,7 +38,7 @@
 | scripts/enforcement/coverage-required-gates.tsv | checked | Operational behavior evidence is now an active required simulation coverage gate. |
 | scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv | checked | Meta-coverage row points at the operational behavior evidence checker and fixtures. |
 | docs/operations/known-gaps.tsv | checked | Gap row records closure through PR policy wiring. |
-| docs/operations/operational-readiness-audit.md | checked | Audit row records the PR policy connection and checklist paths use parse-safe formatting. |
+| docs/operations/operational-readiness-audit.md | checked | Audit row records the PR policy connection, checklist paths use parse-safe formatting, and enforced rows avoid deferred wording. |
 
 ## Documentation Asset Evidence
 
@@ -54,8 +54,8 @@
 
 - source: GitHub repository `yotamfried-ux/Engineering-OS` and target paths.
 - action: GitHub connector reads and writes connected operational behavior evidence validation to the existing PR review evidence checker and the simulation coverage manifest.
-- result: `scripts/enforcement/check-pr-review-evidence.sh` invokes `scripts/enforcement/check-operational-behavior-evidence.sh`, PR #227 body records Operational Behavior Evidence directly, commit `d9de836` tightens usage availability validation, and commit `94b41de` makes `operational-behavior-evidence` an active required coverage gate.
-- decision: selected the existing pr-policy path, updated checker/test/coverage scope, and avoided adding a separate workflow.
+- result: `scripts/enforcement/check-pr-review-evidence.sh` invokes `scripts/enforcement/check-operational-behavior-evidence.sh`, PR #227 body records Operational Behavior Evidence directly, commit `d9de836` tightens usage availability validation, commit `94b41de` makes `operational-behavior-evidence` an active required coverage gate, and commit `052da25` removes deferred wording from an enforced audit row.
+- decision: selected the existing pr-policy path, updated checker/test/coverage/audit scope, and avoided adding a separate workflow.
 - target: scripts/enforcement/check-operational-behavior-evidence.sh; scripts/enforcement/tests/test-operational-behavior-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/tests/test-pr-review-evidence.sh; scripts/enforcement/coverage-required-gates.tsv; scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv; docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md
 
 ## Capability Evidence
@@ -73,9 +73,9 @@
 - hypothesis: structured fields improve later evaluation, and PR body evidence is the clearest merge-time location.
 - connectors: GitHub.
 - steps: add checker, tests, PR evidence script call, gap row, audit row, coverage manifest row, and PR body evidence.
-- evidence: target paths, fixtures, PR policy body validation, simulation coverage registration, and CI runs.
+- evidence: target paths, fixtures, PR policy body validation, simulation coverage registration, audit wording validation, and CI runs.
 - rejected: unrelated target-run evidence and a separate workflow.
-- result: checker path connected to PR policy; usage availability validation now requires yes/no; simulation coverage now requires the operational behavior gate.
+- result: checker path connected to PR policy; usage availability validation now requires yes/no; simulation coverage now requires the operational behavior gate; audit enforced rows avoid deferred wording.
 - follow-up: inspect future PR evidence quality.
 
 ## Operational Behavior Evidence
@@ -134,6 +134,7 @@
 - pre-merge: final plan matches changed files.
 - pre-merge: after commit `d9de836`, usage availability validation requires yes/no and this plan records the final documentation, connector, and lifecycle evidence.
 - pre-merge: after commit `94b41de`, the new operational behavior evidence gate is registered in simulation coverage and the required-gates manifest.
+- pre-merge: after commit `052da25`, the readiness audit removes deferred wording from the enforced simulations row.
 
 ## DoD
 
@@ -144,3 +145,4 @@
 - [x] Require operational evidence in the PR body.
 - [x] Require usage availability to be recorded as yes/no.
 - [x] Register operational behavior evidence in simulation coverage.
+- [x] Remove deferred wording from enforced audit rows touched by this PR.
