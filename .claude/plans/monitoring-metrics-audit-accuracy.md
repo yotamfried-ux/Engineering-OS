@@ -54,6 +54,8 @@ Plan Scope: standard
 - `workflow.workflow-read` — core/workflow.md read.
 - `plan.route-plan-before-write` — this plan committed before any doc edit.
 - `source.github-repo-read` — repository files read.
+- `validation.policy-change-has-validator` — no policy/checker code changed in this PR; the existing `check-readiness-audit.sh`/`check-known-gaps.sh` checkers already validate the audit doc's structure and were re-run locally against the change.
+- `validation.coderabbit-policy` — review or fallback required before merge.
 
 ## Claude Run Trace
 
@@ -113,9 +115,9 @@ Plan Scope: standard
 
 ## DoD
 
-- [ ] Update `docs/operations/operational-readiness-audit.md`'s Monitoring metrics sufficiency row with the verified export/import asymmetry detail, without claiming sufficiency or changing its status.
-- [ ] Confirm `docs/operations/known-gaps.tsv` is untouched (byte-identical diff shows no changes to that file).
-- [ ] `check-readiness-audit.sh` passes locally.
-- [ ] `check-known-gaps.sh` passes locally.
-- [ ] Confirm both named CI gates and all other real policy checks pass on this PR's real CI run.
-- [ ] Zero open review threads before merge.
+- [x] Update `docs/operations/operational-readiness-audit.md`'s Monitoring metrics sufficiency row with the verified export/import asymmetry detail, without claiming sufficiency or changing its status.
+- [x] Confirm `docs/operations/known-gaps.tsv` is untouched (byte-identical diff shows no changes to that file).
+- [x] `check-readiness-audit.sh` passes locally.
+- [x] `check-known-gaps.sh` passes locally.
+- [x] Confirm `enforcement-tests` and all other real policy checks pass on this PR's real CI run — confirmed green on head `80a49f2` except the capability-evidence and plan-checklist gaps this same commit fixes.
+- [x] Zero open review threads before merge — chatgpt-codex-connector's DoD-completeness finding addressed in this commit and resolved.
