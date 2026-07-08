@@ -86,7 +86,7 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | Cleanup debug leftovers | Enforced | Gate: enforce-quality.sh. Owner: cleanup-governance. Evidence: cleanup fixtures. | Narrow cases only. |
 | Cleanup semantic hygiene | Enforced | Gate: semantic cleanup and import cleanup policies. Owner: cleanup-governance. Evidence: semantic cleanup fixtures. | Deep hygiene is reviewed. |
 | Project install contract | Enforced | Gate: install policy gates. Owner: install-governance. Evidence: install downstream behavior fixtures. | Runtime fidelity is reviewed. |
-| Result Loop Contract enforcement | Missing enforcement | Gate: check-result-loop-contract.py self-tests only. Owner: ops-readiness. Evidence: script exists. | gap:result-loop-contract-enforcement — wire checker into PR gating. |
+| Result Loop Contract enforcement | Partially enforced | Gate: check-result-loop-contract.py runs as a dedicated named CI step on every real pull_request (not just self-tests), blocking manifest-completeness regressions. Owner: ops-readiness. Evidence: named step in enforcement-tests.yml; test-result-loop-contract.sh fixtures. | gap:result-loop-contract-enforcement — check-route-plan-contract.sh (which requires selected_result_loop_contract in a PR's own Route Plan) exists but is still only self-tested, never wired to real CI; wiring it would mandate 8 new fields on every future Route Plan repo-wide, a large change intentionally deferred pending explicit decision. |
 | Scaling extension enforcement | Missing enforcement | Gate: check-scaling-extension.py self-tests only. Owner: ops-readiness. Evidence: script exists. | gap:scaling-extension-enforcement — wire checker into PR gating. |
 | Registry/manifest coverage | Missing enforcement | Gate: scaling extension fixtures cover the coverage map hardening piece. Owner: registry-governance. Evidence: scaling fixtures. | gap:registry-coverage-backfill — 10 deferred types need research. |
 | Monitoring metrics sufficiency | Missing enforcement | Gate: exporter/importer/analyzer tests exist but no real target run. Owner: ops-readiness. Evidence: telemetry tests. | gap:monitoring-metrics-sufficiency — needs real target run import. |
@@ -103,7 +103,7 @@ A row is ready only when it is Enforced, Manual by design with a checklist, Waiv
 
 ## Highest-priority gaps by ROI
 
-1. Result Loop Contract gate wiring.
+1. Result Loop Contract gate wiring — manifest-completeness dimension now enforced by a named CI step; per-PR route-plan-declaration dimension (check-route-plan-contract.sh) remains unwired by design decision, not oversight.
 2. Scaling gate wiring.
 3. Registry/manifest coverage backfill.
 4. Monitoring metrics sufficiency.
