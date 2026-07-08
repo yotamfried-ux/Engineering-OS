@@ -39,14 +39,14 @@
 | scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv | checked | Meta-coverage row points at the operational behavior evidence checker and fixtures. |
 | docs/operations/known-gaps.tsv | checked | Gap row records closure through PR policy wiring. |
 | docs/operations/operational-readiness-audit.md | checked | Audit row records the PR policy connection, checklist paths use parse-safe formatting, and enforced rows avoid deferred wording. |
-| .github/workflows/enforcement-tests.yml | checked | Focused and grouped suite steps surface failures for changed evidence/audit/coverage gates and aggregate groups before the final sweep. |
+| .github/workflows/enforcement-tests.yml | checked | Focused, grouped, and per-letter suite steps surface failures for changed evidence/audit/coverage gates and aggregate groups before the final sweep. |
 | scripts/enforcement/capability-staged-map.tsv | checked | `.github/workflows/` changes imply `validation.actions-checked`, which is now declared in Capability Evidence. |
 
 ## Documentation Asset Evidence
 
 - internal: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `scripts/enforcement/check-operational-behavior-evidence.sh`; `scripts/enforcement/tests/test-operational-behavior-evidence.sh`; `scripts/enforcement/check-pr-review-evidence.sh`; `scripts/enforcement/tests/test-pr-review-evidence.sh`; `scripts/enforcement/coverage-required-gates.tsv`; `scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv`; `.github/workflows/enforcement-tests.yml`; `scripts/enforcement/capability-staged-map.tsv`.
 - context7: not required because this is internal-only shell/Python enforcement, manifest, audit documentation, and GitHub Actions orchestration work; it does not implement, touch, use, or integrate any external library, framework, SDK, API, or service.
-- decision: require operational behavior evidence in the PR body, run that check from the existing PR evidence policy script, register the new gate in simulation coverage, and surface focused/grouped enforcement suite failures in CI.
+- decision: require operational behavior evidence in the PR body, run that check from the existing PR evidence policy script, register the new gate in simulation coverage, and surface focused/grouped/per-letter enforcement suite failures in CI.
 
 ## Connector Evidence
 
@@ -56,8 +56,8 @@
 
 - source: GitHub repository `yotamfried-ux/Engineering-OS` and target paths.
 - action: GitHub connector reads and writes connected operational behavior evidence validation to the existing PR review evidence checker, simulation coverage manifest, audit rows, and enforcement-tests workflow.
-- result: `scripts/enforcement/check-pr-review-evidence.sh` invokes `scripts/enforcement/check-operational-behavior-evidence.sh`, PR #227 body records Operational Behavior Evidence directly, commit `d9de836` tightens usage availability validation, commit `94b41de` makes `operational-behavior-evidence` an active required coverage gate, commit `052da25` removes deferred wording from an enforced audit row, commit `bdb9bb2` surfaces focused enforcement suite failures, commit `71e7201` records the workflow change in target evidence, commit `a341ca7` keeps capability evidence limited to registered ids, and commit `c01bdf4` adds grouped suite diagnostics for the aggregate sweep.
-- decision: selected the existing pr-policy path, updated checker/test/coverage/audit scope, and added focused/grouped CI diagnostics without weakening the aggregate enforcement sweep.
+- result: `scripts/enforcement/check-pr-review-evidence.sh` invokes `scripts/enforcement/check-operational-behavior-evidence.sh`, PR #227 body records Operational Behavior Evidence directly, commit `d9de836` tightens usage availability validation, commit `94b41de` makes `operational-behavior-evidence` an active required coverage gate, commit `052da25` removes deferred wording from an enforced audit row, commit `bdb9bb2` surfaces focused enforcement suite failures, commit `71e7201` records the workflow change in target evidence, commit `a341ca7` keeps capability evidence limited to registered ids, commit `c01bdf4` adds grouped suite diagnostics for the aggregate sweep, and commit `6831db6` adds per-letter diagnostics for the A-F failure group.
+- decision: selected the existing pr-policy path, updated checker/test/coverage/audit scope, and added focused/grouped/per-letter CI diagnostics without weakening the aggregate enforcement sweep.
 - target: scripts/enforcement/check-operational-behavior-evidence.sh; scripts/enforcement/tests/test-operational-behavior-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/tests/test-pr-review-evidence.sh; scripts/enforcement/coverage-required-gates.tsv; scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv; docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md; .github/workflows/enforcement-tests.yml
 
 ## Capability Evidence
@@ -68,17 +68,17 @@
 - `source.github-repo-read` — repository files read.
 - `validation.policy-change-has-validator` — checker, test, and coverage row added together.
 - `validation.coderabbit-policy` — review or fallback required.
-- `validation.actions-checked` — workflow changes were reviewed against the focused/grouped enforcement suite steps and aggregate sweep.
+- `validation.actions-checked` — workflow changes were reviewed against the focused/grouped/per-letter enforcement suite steps and aggregate sweep.
 
 ## Claude Run Trace
 
 - goal: add structured operational evidence and connect it to PR policy.
 - hypothesis: structured fields improve later evaluation, and PR body evidence is the clearest merge-time location.
 - connectors: GitHub.
-- steps: add checker, tests, PR evidence script call, gap row, audit row, coverage manifest row, focused/grouped CI diagnostics, and PR body evidence.
-- evidence: target paths, fixtures, PR policy body validation, simulation coverage registration, audit wording validation, focused/grouped enforcement suite steps, and CI runs.
+- steps: add checker, tests, PR evidence script call, gap row, audit row, coverage manifest row, focused/grouped/per-letter CI diagnostics, and PR body evidence.
+- evidence: target paths, fixtures, PR policy body validation, simulation coverage registration, audit wording validation, focused/grouped/per-letter enforcement suite steps, and CI runs.
 - rejected: unrelated target-run evidence, weakening the aggregate enforcement sweep, and unregistered capability ids.
-- result: checker path connected to PR policy; usage availability validation now requires yes/no; simulation coverage now requires the operational behavior gate; audit enforced rows avoid deferred wording; changed-gate and grouped suite failures are visible as separate CI steps.
+- result: checker path connected to PR policy; usage availability validation now requires yes/no; simulation coverage now requires the operational behavior gate; audit enforced rows avoid deferred wording; changed-gate, grouped, and per-letter suite failures are visible as separate CI steps.
 - follow-up: inspect future PR evidence quality.
 
 ## Operational Behavior Evidence
@@ -118,7 +118,7 @@
 
 - PR policy script invokes operational behavior evidence checker against PR body evidence.
 - Simulation coverage requires the operational behavior evidence gate to stay fixture-covered.
-- Enforcement-tests keeps the aggregate sweep and adds focused and grouped suite steps before it.
+- Enforcement-tests keeps the aggregate sweep and adds focused, grouped, and per-letter suite steps before it.
 
 ## Validation Plan
 
@@ -127,7 +127,7 @@
 - Run known-gaps check.
 - Run readiness audit check.
 - Run simulation coverage check.
-- Run grouped enforcement suites.
+- Run grouped and per-letter enforcement suites.
 - Confirm CI.
 
 ## Open Questions
@@ -147,6 +147,7 @@
 - pre-merge: after commit `71e7201`, the workflow target is recorded without inventing an unregistered capability id.
 - pre-merge: after commit `a341ca7`, workflow changes declare the registered `validation.actions-checked` capability implied by `.github/workflows/`.
 - pre-merge: after commit `c01bdf4`, enforcement-tests exposes grouped aggregate suite failures before the final sweep.
+- pre-merge: after commit `6831db6`, enforcement-tests exposes per-letter diagnostics for the A-F failure group.
 
 ## DoD
 
@@ -162,3 +163,4 @@
 - [x] Keep capability evidence limited to registered capability ids.
 - [x] Declare `validation.actions-checked` for changed workflow files.
 - [x] Surface grouped aggregate suite failures before the final enforcement sweep.
+- [x] Surface per-letter diagnostics for the A-F aggregate failure group.
