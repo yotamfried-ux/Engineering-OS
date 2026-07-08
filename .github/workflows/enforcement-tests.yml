@@ -39,6 +39,60 @@ jobs:
       - name: Verify readiness audit suite
         run: bash scripts/enforcement/tests/test-readiness-audit.sh
 
+      - name: Verify enforcement suites letter A
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-a*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites letter B
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-b*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites letter C
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-c*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites letter D
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-d*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites letter E
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-e*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites letter F
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-f*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
       - name: Verify enforcement suites group A-F
         run: |
           set -euo pipefail
