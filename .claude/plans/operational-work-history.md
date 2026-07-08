@@ -165,6 +165,7 @@ No reusable template or pattern asset is selected, modified, or evaluated by thi
 
 - start: read known-gaps.tsv row 27, result-loop contract docs, runtime telemetry docs, workflow gates, PR policy, and prior plans before the first implementation edit; this plan existed before implementation.
 - mid: implementation commit added docs/schema, artifact generator, checker, CI wiring, and test suites after the Route Plan commit.
+- pre-merge: clean-history pre-merge checkpoint follows the implementation and mid checkpoint commits, preserving plan-before-code ordering for workflow-evidence-policy before CI re-verification.
 
 ## Operational Behavior Evidence
 
