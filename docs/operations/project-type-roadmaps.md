@@ -34,6 +34,11 @@ Every applicable project template must map to a roadmap entry or an explicit exe
 | ai-agent / RAG | OpenAI Evals docs; selected retrieval/vector-store/framework docs; OpenTelemetry where runtime behavior matters. | Eval set; trace/eval artifacts; retrieval-quality checks; latency/cost/error metrics; failure repair loop; telemetry export. |
 | computer-vision / video | OpenCV tutorials; selected model/video framework docs; Result Loop visual review requirements. | Fixture media; output artifact; visual review evidence; quality metrics; runtime/performance metrics; telemetry export. |
 | browser-extension | MDN WebExtensions docs plus Playwright/browser automation where applicable. | Local extension load path; browser automation; screenshots/videos/console/network feedback; telemetry export. |
+| admin-dashboard | Refine documentation; TanStack Table docs; Tremor component docs; Cloudflare Access docs. | Local Refine admin URL; role-matrix and bulk-export Playwright e2e; table/export screenshots and traces; slow-query and export-latency metrics; before/after query-latency comparison; telemetry export. |
+| crm-system | Gmail API guides; Twenty CRM developer docs; Supabase Row Level Security docs; Microsoft Graph Mail API docs. | Local CRM URL; pipeline and email-sync Playwright e2e; pipeline board and timeline screenshots and traces; email-sync-lag and query-time metrics; before/after pipeline-query comparison; telemetry export. |
+| saas-platform | Stripe Billing/Subscriptions docs; Supabase Auth and RLS docs; Clerk Organizations docs; Next.js docs. | Local tenant admin URL; tenant-isolation and billing Playwright e2e; billing portal screenshots and Stripe webhook traces; tenant-query-latency and webhook-processing metrics; before/after tenant-query comparison; telemetry export. |
+| marketplace | Stripe Connect docs; Medusa commerce docs; Stripe Identity docs; Algolia InstantSearch docs. | Local marketplace URL; checkout and payout Playwright e2e; checkout and dispute-flow screenshots and traces; checkout-error and payout-failure-rate metrics; before/after checkout-latency comparison; telemetry export. |
+| booking-system | Google Calendar API guides; Cal.com developer docs; Microsoft Graph Calendar API docs; RFC 5545 (iCalendar); Stripe Payment Intents docs. | Local booking URL; concurrent-booking and calendar-sync Playwright e2e; availability-calendar screenshots and iCal traces; booking-failure and reminder-error-rate metrics; before/after conflict-guard-latency comparison; telemetry export. |
 
 ## Enforcement requirement
 
@@ -75,3 +80,24 @@ The future gate must be called from the plan/write policy and CI. It must fail w
 - Grafana dashboards: https://grafana.com/docs/grafana/latest/visualizations/dashboards/
 - k6 thresholds: https://grafana.com/docs/k6/latest/using-k6/thresholds/
 - Lighthouse CI configuration: https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md
+- Refine documentation: https://refine.dev/docs/
+- TanStack Table: https://tanstack.com/table/latest/docs/introduction
+- Tremor components: https://www.tremor.so/docs/getting-started/installation
+- Cloudflare Access: https://developers.cloudflare.com/cloudflare-one/policies/access/
+- Gmail API guides: https://developers.google.com/gmail/api/guides
+- Twenty CRM developer docs: https://twenty.com/developers
+- Supabase Row Level Security: https://supabase.com/docs/guides/database/row-level-security
+- Microsoft Graph Mail API: https://learn.microsoft.com/en-us/graph/api/resources/mail-api-overview
+- Stripe Billing/Subscriptions: https://stripe.com/docs/billing/subscriptions/overview
+- Supabase Auth: https://supabase.com/docs/guides/auth
+- Clerk Organizations: https://clerk.com/docs/organizations/overview
+- Next.js documentation: https://nextjs.org/docs
+- Stripe Connect: https://stripe.com/docs/connect
+- Medusa documentation: https://docs.medusajs.com
+- Stripe Identity: https://stripe.com/docs/identity
+- Algolia InstantSearch: https://www.algolia.com/doc/guides/building-search-ui/what-is-instantsearch/js/
+- Google Calendar API: https://developers.google.com/calendar/api/guides/overview
+- Cal.com developer docs: https://cal.com/docs
+- Microsoft Graph Calendar API: https://learn.microsoft.com/en-us/graph/api/resources/calendar
+- RFC 5545 — iCalendar: https://datatracker.ietf.org/doc/html/rfc5545
+- Stripe Payment Intents: https://stripe.com/docs/payments/payment-intents
