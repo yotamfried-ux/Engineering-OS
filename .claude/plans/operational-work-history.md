@@ -164,6 +164,7 @@ No reusable template or pattern asset is selected, modified, or evaluated by thi
 ## Progress Lifecycle Evidence
 
 - start: read known-gaps.tsv row 27, result-loop contract docs, runtime telemetry docs, workflow gates, PR policy, and prior plans before the first implementation edit; this plan existed before implementation.
+- mid: implementation commit added docs/schema, artifact generator, checker, CI wiring, and test suites after the Route Plan commit.
 
 ## Operational Behavior Evidence
 
