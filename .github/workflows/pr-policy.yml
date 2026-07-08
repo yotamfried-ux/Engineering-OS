@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
+  checks: read
+  actions: read
 
 jobs:
   no-draft-pr:
@@ -23,15 +26,89 @@ jobs:
           echo "✅ pull request is ready for review"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
           persist-credentials: false
+
+      - name: Collect real GitHub CI/review metadata snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          # Point-in-time snapshot only (design correction 7): pending/in_progress
+          # checks — including this very pr-policy run — are recorded as-is, never
+          # treated as failure. gh pr checks may exit non-zero for pending or
+          # failing checks while still writing useful JSON; preserve that file
+          # whenever stdout produced content, and only mark metadata unavailable
+          # when the JSON file is empty or missing.
+          if gh pr checks "$PR_NUMBER" -R "$REPO" --json name,state,workflow > /tmp/ci.json 2>/tmp/ci-checks.err; then
+            :
+          else
+            echo "gh pr checks returned non-zero:"; cat /tmp/ci-checks.err || true
+            if [ -s /tmp/ci.json ]; then
+              echo "preserving non-empty /tmp/ci.json from gh pr checks"
+            else
+              echo "gh pr checks unavailable: no JSON snapshot produced"
+              rm -f /tmp/ci.json
+            fi
+          fi
+          if gh pr view "$PR_NUMBER" -R "$REPO" --json reviewDecision,reviews > /tmp/reviews.json 2>/tmp/reviews.err; then
+            :
+          else
+            echo "gh pr view (reviews) unavailable:"; cat /tmp/reviews.err || true
+            rm -f /tmp/reviews.json
+          fi
+          exit 0
+
+      - name: Generate Operational Work History artifact
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$PR_BODY" > /tmp/pr-body.md
+          args=(--root . --pr-head-sha "$HEAD_SHA" --base-sha "$BASE_SHA" --pr-number "$PR_NUMBER"
+                --pr-body-file /tmp/pr-body.md --out .engineering-os/work-history)
+          [ -f /tmp/ci.json ] && args+=(--ci-json /tmp/ci.json)
+          [ -f /tmp/reviews.json ] && args+=(--reviews-json /tmp/reviews.json)
+          python3 scripts/monitoring/collect-pr-work-history.py "${args[@]}"
+
+      - name: Publish Operational Work History summary (auditability only, not the gate's source of truth)
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -f .engineering-os/work-history/latest-summary.md ]; then
+            cat .engineering-os/work-history/latest-summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload Operational Work History artifact (auditability only, not the gate's source of truth)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: operational-work-history-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          path: .engineering-os/work-history
+          retention-days: 30
+          if-no-files-found: ignore
 
       - name: Validate PR review and merge-readiness evidence
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           printf '%s' "$PR_BODY" > /tmp/pr-body.md
-          bash scripts/enforcement/check-pr-review-evidence.sh --body /tmp/pr-body.md --head-sha "$PR_HEAD_SHA"
+          git diff --name-only "$BASE_SHA...$PR_HEAD_SHA" > /tmp/changed-files.txt
+          if [ ! -s /tmp/changed-files.txt ]; then
+            echo "ERROR_FOR_AGENT: changed-files metadata is empty; refusing to skip Operational Work History evidence."
+            exit 1
+          fi
+          bash scripts/enforcement/check-pr-review-evidence.sh --body /tmp/pr-body.md --head-sha "$PR_HEAD_SHA" \
+            --changed-files /tmp/changed-files.txt \
+            --work-history-artifact .engineering-os/work-history/latest.json

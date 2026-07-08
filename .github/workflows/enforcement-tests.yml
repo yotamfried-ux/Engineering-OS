@@ -27,6 +27,15 @@ jobs:
       - name: Verify operational behavior evidence suite
         run: bash scripts/enforcement/tests/test-operational-behavior-evidence.sh
 
+      - name: Verify operational work history evidence suite
+        run: bash scripts/enforcement/tests/test-operational-work-history-evidence.sh
+
+      - name: Verify operational work history collector suite
+        run: bash scripts/enforcement/tests/test-collect-pr-work-history.sh
+
+      - name: Verify pr-policy workflow wiring
+        run: bash scripts/enforcement/tests/test-pr-policy-workflow-wiring.sh
+
       - name: Verify PR review evidence suite
         run: bash scripts/enforcement/tests/test-pr-review-evidence.sh
 
