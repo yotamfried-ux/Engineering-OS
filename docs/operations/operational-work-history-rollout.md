@@ -98,3 +98,18 @@ demonstrate, across multiple runs:
 
 Until all five hold across several real PRs, this gap stays `open`/"Partially enforced" in
 `docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md`.
+
+## Real-PR evidence log
+
+Tracks the real, merged PRs (and any real blocked-case PR) that exercised the
+Operational Work History gate end to end — the CI-generated artifact validated
+against real PR facts, not fixture coverage. This is the evidence the closure bar
+above requires. Every row is filled in **after** the real GitHub Actions run for
+that PR completes, from the actual run's facts (job logs / step summary), never
+hand-typed estimates or facts asserted before CI ran.
+
+| Pass | PR | Surface | pr_head_sha (short) | Changed files | CI checks observed | Blocked-case? | Notes |
+|---|---|---|---|---|---|---|---|
+| 1 | pending | doc-only: this section (`operational-work-history-rollout.md`) | pending | pending | pending | no | Filled in from this PR's own real `pr-policy` run once CI completes. |
+| 2 | pending | doc-accuracy: `runtime-telemetry-archive-plan.md` checklist sync | pending | pending | pending | no | Filled in once that PR's real CI run completes. |
+| 3 | pending | negative validation: PR intentionally missing `## Operational Work History Evidence` | pending | pending | pending | yes | Not merged; closed after capturing the real failing check/reason. |
