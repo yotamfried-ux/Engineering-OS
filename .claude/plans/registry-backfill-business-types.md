@@ -125,14 +125,15 @@ Plan Scope: standard
 ## Progress Lifecycle Evidence
 
 - start: read all 5 template READMEs and both checkers' full source before any manifest edit; confirmed the real 5-manifest requirement for `active` status directly from `check-scaling-extension.py`'s `check()` function rather than assuming a 2-manifest scope.
+- mid: added active rows across all 5 required manifests for admin-dashboard, crm-system, saas-platform, marketplace, and booking-system, removed the old deferred rows for these 5 types, added 5 new table rows plus 20 new Source URLs to `docs/operations/project-type-roadmaps.md`, and confirmed `check-scaling-extension.py --root .` and `check-result-loop-contract.py --root .` both pass on the first run against the real repo state. Full local `test-*.sh` sweep passes clean. `known-gaps.tsv`/audit doc intentionally not yet updated — `registry-coverage-backfill` covers all 10 project types and stays open until PR B also lands.
 
 ## DoD
 
-- [ ] Add `active` rows to all 5 manifests for admin-dashboard, crm-system, saas-platform, marketplace, and booking-system.
-- [ ] Add 5 corresponding rows to `docs/operations/project-type-roadmaps.md`'s table plus any new Source URLs.
-- [ ] `check-scaling-extension.py --root .` passes locally.
-- [ ] `check-result-loop-contract.py --root .` passes locally.
-- [ ] Full local `test-*.sh` sweep passes clean.
+- [x] Add `active` rows to all 5 manifests for admin-dashboard, crm-system, saas-platform, marketplace, and booking-system.
+- [x] Add 5 corresponding rows to `docs/operations/project-type-roadmaps.md`'s table plus any new Source URLs.
+- [x] `check-scaling-extension.py --root .` passes locally.
+- [x] `check-result-loop-contract.py --root .` passes locally.
+- [x] Full local `test-*.sh` sweep passes clean.
 - [ ] Confirm both named CI gates pass on this PR's real CI run.
 - [ ] Update `known-gaps.tsv`/audit only after CI confirms (registry-coverage-backfill stays open until all 10 are done across both PRs).
 - [ ] Zero open review threads before merge.
