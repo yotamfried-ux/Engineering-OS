@@ -1,5 +1,7 @@
 # Operational Evidence Route Plan
 
+Plan Scope: standard
+
 | Field | Value |
 |---|---|
 | Task type | Engineering OS maintenance |
@@ -25,7 +27,7 @@
 | local_creator_review_path | local checks |
 | telemetry_export_path | evidence section |
 | evidence_policy_rule | operational evidence schema connected to PR body policy |
-| Target paths | scripts/enforcement/check-operational-behavior-evidence.sh, scripts/enforcement/tests/test-operational-behavior-evidence.sh, scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, .github/workflows/enforcement-tests.yml |
+| Target paths | scripts/enforcement/check-operational-behavior-evidence.sh, scripts/enforcement/tests/test-operational-behavior-evidence.sh, scripts/enforcement/check-pr-review-evidence.sh, scripts/enforcement/tests/test-pr-review-evidence.sh, scripts/enforcement/tests/test-clean-install-and-usage.sh, scripts/enforcement/policy-gate-dependencies.tsv, scripts/enforcement/coverage-required-gates.tsv, scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv, docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, .github/workflows/enforcement-tests.yml |
 
 ## Source of Truth Checks
 
@@ -44,7 +46,7 @@
 
 ## Documentation Asset Evidence
 
-- internal: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `scripts/enforcement/check-operational-behavior-evidence.sh`; `scripts/enforcement/tests/test-operational-behavior-evidence.sh`; `scripts/enforcement/check-pr-review-evidence.sh`; `scripts/enforcement/tests/test-pr-review-evidence.sh`; `scripts/enforcement/coverage-required-gates.tsv`; `scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv`; `.github/workflows/enforcement-tests.yml`; `scripts/enforcement/capability-staged-map.tsv`.
+- internal: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `scripts/enforcement/check-operational-behavior-evidence.sh`; `scripts/enforcement/tests/test-operational-behavior-evidence.sh`; `scripts/enforcement/check-pr-review-evidence.sh`; `scripts/enforcement/tests/test-pr-review-evidence.sh`; `scripts/enforcement/tests/test-clean-install-and-usage.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `scripts/enforcement/coverage-required-gates.tsv`; `scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv`; `.github/workflows/enforcement-tests.yml`; `scripts/enforcement/capability-staged-map.tsv`.
 - context7: not required because this is internal-only shell/Python enforcement, manifest, audit documentation, and GitHub Actions orchestration work; it does not implement, touch, use, or integrate any external library, framework, SDK, API, or service.
 - decision: require operational behavior evidence in the PR body, run that check from the existing PR evidence policy script, register the new gate in simulation coverage, and surface focused/grouped/per-letter/C-prefix enforcement suite failures in CI.
 
@@ -58,7 +60,7 @@
 - action: GitHub connector reads and writes connected operational behavior evidence validation to the existing PR review evidence checker, simulation coverage manifest, audit rows, and enforcement-tests workflow.
 - result: `scripts/enforcement/check-pr-review-evidence.sh` invokes `scripts/enforcement/check-operational-behavior-evidence.sh`, PR #227 body records Operational Behavior Evidence directly, commit `d9de836` tightens usage availability validation, commit `94b41de` makes `operational-behavior-evidence` an active required coverage gate, commit `052da25` removes deferred wording from an enforced audit row, commit `bdb9bb2` surfaces focused enforcement suite failures, commit `71e7201` records the workflow change in target evidence, commit `a341ca7` keeps capability evidence limited to registered ids, commit `c01bdf4` adds grouped suite diagnostics for the aggregate sweep, commit `6831db6` adds per-letter diagnostics for the A-F failure group, and commit `a63e163` adds C-prefix diagnostics.
 - decision: selected the existing pr-policy path, updated checker/test/coverage/audit scope, and added focused/grouped/per-letter/C-prefix CI diagnostics without weakening the aggregate enforcement sweep.
-- target: scripts/enforcement/check-operational-behavior-evidence.sh; scripts/enforcement/tests/test-operational-behavior-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/tests/test-pr-review-evidence.sh; scripts/enforcement/coverage-required-gates.tsv; scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv; docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md; .github/workflows/enforcement-tests.yml
+- target: scripts/enforcement/check-operational-behavior-evidence.sh; scripts/enforcement/tests/test-operational-behavior-evidence.sh; scripts/enforcement/check-pr-review-evidence.sh; scripts/enforcement/tests/test-pr-review-evidence.sh; scripts/enforcement/tests/test-clean-install-and-usage.sh; scripts/enforcement/policy-gate-dependencies.tsv; scripts/enforcement/coverage-required-gates.tsv; scripts/enforcement/simulation-coverage.d/operational-behavior-evidence.tsv; docs/operations/known-gaps.tsv; docs/operations/operational-readiness-audit.md; .github/workflows/enforcement-tests.yml
 
 ## Capability Evidence
 
@@ -90,6 +92,14 @@
 - quality_signals: fixtures cover missing, partial, complete, invalid usage availability, and PR-policy-path evidence.
 - usage_surrogate: exact_metering_available=no; tool_calls=GitHub operations.
 - next_system_improvement: review future PR bodies and improve the evidence schema.
+
+## Graphify Usage Evidence
+
+- source: graphify explain query against graphify-out/graph.json.
+- action: ran `graphify explain "test-clean-install-and-usage.sh"` before editing the fixture body; also ran `graphify explain "policy-gate-dependencies.tsv"` before editing the install manifest.
+- result: `test-clean-install-and-usage.sh` has 16 outgoing `[defines]`/`[contains]` edges to its own helper functions and fixture-body variables, confirming this is an isolated fixture-file edit with no wider blast radius; `policy-gate-dependencies.tsv` has no graph node (untracked config), so the change was verified directly by reading `test-install-policy-gate-coverage.sh`'s scan logic instead — it only scans direct `bash scripts/enforcement/...` call sites inside `.github/workflows/*.yml`, so it could not have caught the missing `check-operational-behavior-evidence.sh` install dependency, which is only called indirectly from inside `check-pr-review-evidence.sh`. This second, real install-manifest bug (not just the fixture) is why the installed smoke check in `test-clean-install-and-usage.sh` still failed after the fixture body alone was fixed — `check-pr-review-evidence.sh` was installed into the target project but its dependency `check-operational-behavior-evidence.sh` was not, so the installed checker call failed before ever reaching the body-schema logic.
+- decision: fixed both the fixture body (missing section) and the install manifest (missing dependency row) instead of only the fixture, since the fixture alone did not make the installed smoke check pass. Also trimmed `.github/workflows/enforcement-tests.yml`'s 9 ad-hoc per-letter/topic debug steps (A, B, capability, clean, connector, C, D, E, F) added live during this PR's own debugging, since they are fully redundant with the existing A-F/G-L/M-R/S-Z range-group steps and the final aggregate sweep — same target-scope decision as the fixture/manifest fix, reducing CI step count without reducing coverage.
+- target: scripts/enforcement/tests/test-clean-install-and-usage.sh; scripts/enforcement/policy-gate-dependencies.tsv; .github/workflows/enforcement-tests.yml
 
 ## Alternatives
 
@@ -149,6 +159,7 @@
 - pre-merge: after commit `c01bdf4`, enforcement-tests exposes grouped aggregate suite failures before the final sweep.
 - pre-merge: after commit `6831db6`, enforcement-tests exposes per-letter diagnostics for the A-F failure group.
 - pre-merge: after commit `a63e163`, enforcement-tests exposes C-prefix diagnostics for the C failure group.
+- pre-merge: after the next commit, `enforcement-tests` job logs showed the exact failing assertion was `installed check-pr-review-evidence.sh runs from the target project` inside `test-clean-install-and-usage.sh`; root-caused to the `installed-body.md` fixture missing `## Operational Behavior Evidence`, fixed the fixture, re-ran locally, found a second real bug (the installed checker's `check-operational-behavior-evidence.sh` dependency was never copied into installed targets because `policy-gate-dependencies.tsv` had no row for it), fixed the manifest, trimmed the 9 ad-hoc per-letter/topic enforcement-tests.yml debug steps down to the 4 range groups, and reran the full local `test-*.sh` sweep (79+ suites) clean.
 
 ## DoD
 
@@ -166,3 +177,7 @@
 - [x] Surface grouped aggregate suite failures before the final enforcement sweep.
 - [x] Surface per-letter diagnostics for the A-F aggregate failure group.
 - [x] Surface C-prefix diagnostics for the C aggregate failure group.
+- [x] Fix installed-body.md fixture in test-clean-install-and-usage.sh to include Operational Behavior Evidence.
+- [x] Fix policy-gate-dependencies.tsv so check-operational-behavior-evidence.sh is installed alongside check-pr-review-evidence.sh.
+- [x] Trim enforcement-tests.yml redundant per-letter/topic debug steps down to the 4 range groups.
+- [x] Full local test-*.sh sweep passes clean.
