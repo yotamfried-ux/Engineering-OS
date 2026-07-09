@@ -97,7 +97,9 @@ demonstrate, across multiple runs:
 5. There is no relapse into a disguised manual Route Plan.
 
 Until all five hold across several real PRs, this gap stays `open`/"Partially enforced" in
-`docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md`.
+`docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md`. **Update:**
+all five now hold, evidenced by the Real-PR evidence log below (PRs #234, #235, #236) — see the
+closure bar evaluation after the log.
 
 ## Real-PR evidence log
 
@@ -115,5 +117,17 @@ recorded facts match the real PR they claim to describe.
 | Pass | PR | Surface | pr_head_sha (short) | Changed files | CI checks observed | Blocked-case? | Notes |
 |---|---|---|---|---|---|---|---|
 | 1 | [#234](https://github.com/yotamfried-ux/Engineering-OS/pull/234) (merged) | doc-only: this section (`operational-work-history-rollout.md`) | `52186af` | 1 | pr-policy (`Require ready-for-review PR`): success; `enforcement-tests`: success | no | Real job log confirmed `pr_head_sha` matched, `operational work history evidence passed`. Bonus real evidence beyond the plan: a review-driven fix commit produced one real transient CI failure (stale `expected-head-sha`), and once fixed the artifact's real `ci_failure_count` correctly triggered the friction-signal path, requiring (and getting) a concrete `learning_loop_result` reason — proving the friction-routing logic against real CI history, not a fixture. |
-| 2 | pending | doc-accuracy: `runtime-telemetry-archive-plan.md` checklist sync | pending | pending | pending | no | To be filled in by a later PR once that PR has merged. |
-| 3 | pending | negative validation: PR intentionally missing `## Operational Work History Evidence` | pending | pending | pending | yes | Not merged; closed after capturing the real failing check/reason, then recorded by a later PR. |
+| 2 | [#235](https://github.com/yotamfried-ux/Engineering-OS/pull/235) (merged) | doc-accuracy: `runtime-telemetry-archive-plan.md` checklist sync | `0e80d3e` | 2 | pr-policy (`Require ready-for-review PR`): success; `enforcement-tests`: success | no | Real job log confirmed `pr_head_sha` matched, `operational work history evidence passed` — first-attempt clean pass, proving the gate generalizes beyond pass #1's surface. |
+| 3 | [#236](https://github.com/yotamfried-ux/Engineering-OS/pull/236) (closed, not merged) | negative validation: PR intentionally missing `## Operational Work History Evidence` | `c3fb003` | 1 | pr-policy (`Require ready-for-review PR`): **failure** (intended) | yes | Real job log: `PR review and merge-readiness evidence passed` → `operational behavior evidence passed` → `ERROR_FOR_AGENT: PR body must include ## Operational Work History Evidence for any PR with changed files; no filename-only exemption is allowed.` The gate blocked a real missing-evidence case, isolated to this one failing reason (verified — a real chatgpt-codex-connector review flagged an earlier, now-fixed compounding failure, confirmed stale against the final run in the PR thread). PR closed without merging, per design. |
+
+### Closure bar evaluation
+
+All five closure-bar items above are satisfied by the three real PRs in this log:
+
+1. **CI-generated, never committed** — confirmed structurally: no `.engineering-os/work-history/*` exists anywhere in the repo, and the gate itself rejects any diff touching that path (exercised, though not triggered, across all three real PRs).
+2. **Artifact facts match the real PR** — confirmed via real job logs for #234 (matched after a review-driven fix) and #235 (matched on the first real run).
+3. **Gate blocked a real bad case** — confirmed via #236's real, isolated CI failure.
+4. **Judgment stayed routed through the learning loop** — both #234 and #235 used `learning_loop_result: none-with-reason`; no new free-text judgment field was introduced anywhere in this evidence-gathering sequence.
+5. **No relapse into a disguised manual Route Plan** — no PR in this sequence added Route Plan fields; `check-route-plan-contract.sh` remains unwired.
+
+Per this evaluation, `operational-work-history-foundation` closes — see `docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md` for the corresponding status update.
