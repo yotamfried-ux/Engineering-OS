@@ -14,6 +14,7 @@ pr-policy.yml	scripts/enforcement/check-pr-review-evidence.sh
 pr-policy.yml	scripts/enforcement/check-operational-behavior-evidence.sh
 pr-policy.yml	scripts/enforcement/check-operational-work-history-evidence.sh
 pr-policy.yml	scripts/monitoring/collect-pr-work-history.py
+pr-policy.yml	scripts/enforcement/result-loop-requirements.tsv
 connector-evidence-policy.yml	scripts/enforcement/check-connector-evidence.sh
 workflow-evidence-policy.yml	scripts/enforcement/check-workflow-evidence.sh
 capability-evidence-policy.yml	scripts/enforcement/check-capability-staged-changes.sh

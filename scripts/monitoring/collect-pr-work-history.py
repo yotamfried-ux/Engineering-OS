@@ -29,6 +29,11 @@ SCHEMA_VERSION = "eos.work_history.v1"
 FIX_RETRY_REVERT_RE = re.compile(r"\b(fix|fixes|fixed|retry|retries|revert|reverts|reverted)\b", re.I)
 FAILING_CONCLUSIONS = {"failure", "timed_out", "cancelled", "action_required"}
 
+GOVERNANCE_CONTRACT_ID = "engineering-os-governance"
+CONTRACT_PLACEHOLDER_RE = re.compile(
+    r"^\s*(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\W*$", re.I
+)
+
 
 def stable_hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()[:16]
@@ -101,6 +106,262 @@ def path_metadata(paths: list[str]) -> dict[str, Any]:
         "changed_file_extension_counts": dict(sorted(extensions.items())),
         "changed_file_top_level_counts": dict(sorted(top_level.items())),
         "governance_changed_files_count": governance_count,
+    }
+
+
+def load_result_loop_contract_ids() -> tuple[set[str], bool]:
+    """Returns (valid_ids, manifest_unavailable).
+
+    Resolved relative to this script's own file location (mirroring how
+    check-operational-work-history-evidence.sh resolves ROOT from
+    SCRIPT_DIR), not from --root, so this works the same whether the script
+    runs inside the Engineering OS repo or an installed downstream target
+    project that copied both files alongside each other via
+    policy-gate-dependencies.tsv.
+    """
+    manifest_path = Path(__file__).resolve().parent.parent / "enforcement" / "result-loop-requirements.tsv"
+    if not manifest_path.is_file():
+        return set(), True
+    lines = manifest_path.read_text(encoding="utf-8").splitlines()
+    header_line = next((line for line in lines if line.startswith("# ") and "\t" in line), "")
+    header = header_line[2:].split("\t") if header_line else []
+    if "project_type_id" not in header:
+        return set(), True
+    idx = header.index("project_type_id")
+    ids: set[str] = set()
+    for raw in lines:
+        if not raw or raw.startswith("#"):
+            continue
+        cells = raw.split("\t")
+        if len(cells) > idx and cells[idx].strip():
+            ids.add(cells[idx].strip())
+    return ids, False
+
+
+def build_template_alias_map() -> dict[str, str]:
+    """Maps a templates/<alias>/ directory basename to its real project_type_id,
+    using project-type-roadmaps.tsv's template_path column. A project type can
+    list multiple semicolon-separated template aliases (e.g. ai-agent's
+    template_path is "templates/ai-agent;templates/rag-system"), so a change
+    under templates/rag-system/... must still resolve to ai-agent, not be
+    treated as an unrelated/unregistered directory.
+    """
+    manifest_path = Path(__file__).resolve().parent.parent / "enforcement" / "project-type-roadmaps.tsv"
+    alias_map: dict[str, str] = {}
+    if not manifest_path.is_file():
+        return alias_map
+    lines = manifest_path.read_text(encoding="utf-8").splitlines()
+    header_line = next((line for line in lines if line.startswith("# ") and "\t" in line), "")
+    header = header_line[2:].split("\t") if header_line else []
+    if "project_type_id" not in header or "template_path" not in header:
+        return alias_map
+    pid_idx = header.index("project_type_id")
+    tp_idx = header.index("template_path")
+    rows: list[tuple[str, list[str]]] = []
+    for raw in lines:
+        if not raw or raw.startswith("#"):
+            continue
+        cells = raw.split("\t")
+        if len(cells) <= max(pid_idx, tp_idx):
+            continue
+        project_type_id = cells[pid_idx].strip()
+        template_path = cells[tp_idx].strip()
+        if not project_type_id or not template_path or template_path.upper() == "NONE":
+            continue
+        parts = [Path(p.strip()).name for p in template_path.split(";") if p.strip()]
+        if parts:
+            rows.append((project_type_id, parts))
+    # A template directory can be shared (e.g. full-stack reuses
+    # templates/web-application alongside templates/api-service). Prefer the
+    # project type that claims a template alias exclusively (a single-alias
+    # row) over one that only references it as part of a composed set, so
+    # templates/web-application resolves to web-application, not full-stack.
+    for project_type_id, parts in rows:
+        if len(parts) == 1:
+            alias_map.setdefault(parts[0], project_type_id)
+    for project_type_id, parts in rows:
+        for alias in parts:
+            alias_map.setdefault(alias, project_type_id)
+    return alias_map
+
+
+# Real Engineering OS governance/tooling path prefixes — deliberately NOT
+# "everything that isn't templates/<id>/", because this same collector script
+# is also installed into downstream target projects (policy-gate-dependencies.tsv),
+# where ordinary application source (e.g. src/App.tsx) must NOT silently resolve
+# to engineering-os-governance; it should instead be left unclassified so the
+# gate requires an explicit declaration rather than guessing wrong.
+GOVERNANCE_PATH_PREFIXES = (
+    "scripts/", "core/", "docs/", ".github/", ".claude/", "external-skills/",
+    "external-systems/", "patterns/", "lessons-learned/", "failed-solutions/",
+    "architecture-decisions/", "evals/", "templates/",
+)
+GOVERNANCE_PATH_EXACT = {"README.md", "CHANGELOG.md", "LICENSE", "CLAUDE.md", "CLAUDE.template.md"}
+
+
+def is_governance_path(normalized: str) -> bool:
+    return normalized in GOVERNANCE_PATH_EXACT or normalized.startswith(GOVERNANCE_PATH_PREFIXES)
+
+
+def concrete_contract_value(value: str) -> bool:
+    clean = value.strip()
+    return bool(clean) and len(clean) >= 2 and not CONTRACT_PLACEHOLDER_RE.fullmatch(clean)
+
+
+def declared_result_loop_contract(pr_body: str) -> str | None:
+    match = re.search(r"^##\s+Operational Work History Evidence\s*$", pr_body, re.I | re.M)
+    if not match:
+        return None
+    rest = pr_body[match.end():]
+    nxt = re.search(r"^##\s+", rest, re.M)
+    section = rest[:nxt.start()] if nxt else rest
+    field = re.search(r"(^|\n)\s*[-*]?\s*selected_result_loop_contract\s*:\s*(.+)", section, re.I)
+    return field.group(2).strip() if field else None
+
+
+def classify_result_loop_candidates(
+    paths: list[str], valid_ids: set[str], template_alias_map: dict[str, str]
+) -> tuple[set[str], bool]:
+    """Returns (candidates, has_unclassified).
+
+    templates/<alias>/... maps to the real project_type_id via
+    project-type-roadmaps.tsv's template_path aliases (so templates/rag-system/...
+    correctly resolves to ai-agent, not an unrelated bucket). Known Engineering
+    OS governance/tooling paths map to the engineering-os-governance sentinel.
+    Anything else — most importantly, ordinary application source in a
+    downstream target project that installed these policy gates — is left
+    unclassified rather than silently folded into the governance sentinel, so
+    the gate requires an explicit declaration instead of guessing wrong.
+    """
+    candidates: set[str] = set()
+    has_unclassified = False
+    for raw in paths:
+        normalized = raw.replace("\\", "/")
+        parts = normalized.split("/", 2)
+        if len(parts) >= 2 and parts[0] == "templates":
+            mapped = template_alias_map.get(parts[1])
+            if mapped and mapped in valid_ids:
+                candidates.add(mapped)
+                continue
+        if is_governance_path(normalized):
+            candidates.add(GOVERNANCE_CONTRACT_ID)
+        else:
+            has_unclassified = True
+    return candidates, has_unclassified
+
+
+def derive_result_loop_contract(paths: list[str], pr_body: str, empty_run: bool) -> dict[str, Any]:
+    """Computes the selected_result_loop_contract dimension of the artifact.
+    Prefers deterministic derivation from changed paths; only consults a
+    declared `selected_result_loop_contract:` PR-body field when derivation
+    is genuinely ambiguous (multiple candidates, or at least one unclassified
+    path), and — whenever the candidate set is fully known — only accepts a
+    declared value that is both a real manifest id and a member of that
+    candidate set (rejects a valid-but-unrelated id). When an unclassified
+    path exists, the candidate set is incomplete by construction, so any real,
+    non-placeholder manifest id is accepted (the same trust boundary the old,
+    never-wired 8-field Route Plan checker used)."""
+    if empty_run or not paths:
+        return {
+            "required": False,
+            "selection_source": "not_required",
+            "selected_result_loop_contract": "",
+            "validation_status": "not_applicable",
+            "matched_manifest_row": "",
+            "reason": "no changed files (empty run); no code/config/test/system-affecting path exists to select a result-loop contract for.",
+        }
+
+    valid_ids, manifest_unavailable = load_result_loop_contract_ids()
+    if manifest_unavailable:
+        return {
+            "required": True,
+            "selection_source": "manifest_unavailable",
+            "selected_result_loop_contract": "",
+            "validation_status": "unavailable",
+            "matched_manifest_row": "",
+            "reason": "scripts/enforcement/result-loop-requirements.tsv was not found next to this script; cannot derive or validate a result-loop contract.",
+        }
+
+    template_alias_map = build_template_alias_map()
+    candidates, has_unclassified = classify_result_loop_candidates(paths, valid_ids, template_alias_map)
+
+    if len(candidates) == 1 and not has_unclassified:
+        selected = next(iter(candidates))
+        return {
+            "required": True,
+            "selection_source": "derived",
+            "selected_result_loop_contract": selected,
+            "validation_status": "valid",
+            "matched_manifest_row": f"scripts/enforcement/result-loop-requirements.tsv#{selected}",
+            "reason": f"deterministically derived: all {len(paths)} changed path(s) map to exactly one result-loop contract ({selected}).",
+        }
+
+    sorted_candidates = sorted(candidates)
+    candidate_desc = ", ".join(sorted_candidates) if sorted_candidates else "(none recognized)"
+    if has_unclassified:
+        candidate_desc += " plus at least one changed path outside any recognized template/governance surface"
+    declared = declared_result_loop_contract(pr_body)
+    if declared is None:
+        return {
+            "required": True,
+            "selection_source": "ambiguous",
+            "selected_result_loop_contract": "",
+            "validation_status": "missing",
+            "matched_manifest_row": "",
+            "reason": (
+                f"changed paths imply multiple or unresolved candidate result-loop contracts ({candidate_desc}) "
+                "and no selected_result_loop_contract: field was declared under ## Operational Work History Evidence."
+            ),
+        }
+
+    declared = declared.strip()
+    if not concrete_contract_value(declared):
+        return {
+            "required": True,
+            "selection_source": "declared",
+            "selected_result_loop_contract": declared,
+            "validation_status": "placeholder",
+            "matched_manifest_row": "",
+            "reason": (
+                f"declared selected_result_loop_contract '{declared}' looks like a placeholder; "
+                f"declare a real contract id from ({candidate_desc})."
+            ),
+        }
+    if declared not in valid_ids:
+        return {
+            "required": True,
+            "selection_source": "declared",
+            "selected_result_loop_contract": declared,
+            "validation_status": "unknown_id",
+            "matched_manifest_row": "",
+            "reason": (
+                f"declared selected_result_loop_contract '{declared}' is not a known "
+                "project_type_id in scripts/enforcement/result-loop-requirements.tsv."
+            ),
+        }
+    if not has_unclassified and declared not in candidates:
+        return {
+            "required": True,
+            "selection_source": "declared",
+            "selected_result_loop_contract": declared,
+            "validation_status": "invalid",
+            "matched_manifest_row": "",
+            "reason": (
+                f"declared selected_result_loop_contract '{declared}' does not match any contract "
+                f"implied by the changed paths (candidates: {candidate_desc})."
+            ),
+        }
+
+    return {
+        "required": True,
+        "selection_source": "declared",
+        "selected_result_loop_contract": declared,
+        "validation_status": "valid",
+        "matched_manifest_row": f"scripts/enforcement/result-loop-requirements.tsv#{declared}",
+        "reason": (
+            f"explicitly declared in PR body; a real, non-placeholder result-loop contract id "
+            f"(candidates implied by changed paths: {candidate_desc})."
+        ),
     }
 
 
@@ -258,6 +519,13 @@ def build_summary(record: dict[str, Any]) -> str:
         f"- waiver_mentioned: {friction['waiver_mentioned']}",
         f"- any: {friction['any']}",
         "",
+        "## Result-loop contract",
+        "",
+        f"- required: {record['result_loop_contract']['required']}",
+        f"- selection_source: {record['result_loop_contract']['selection_source']}",
+        f"- selected_result_loop_contract: {record['result_loop_contract']['selected_result_loop_contract'] or 'none'}",
+        f"- validation_status: {record['result_loop_contract']['validation_status']}",
+        "",
         "Privacy note: metadata-only. No raw model/user text, file contents, raw shell commands,",
         "raw repository paths, connector payloads, environment values, or credentials/secrets are stored.",
     ]
@@ -320,6 +588,8 @@ def main() -> int:
         friction["waiver_mentioned"],
     ])
 
+    result_loop_contract = derive_result_loop_contract(raw_files, pr_body, bool(args.empty_run))
+
     record: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -339,6 +609,7 @@ def main() -> int:
         **reviews,
         **telemetry,
         "friction_signals": friction,
+        "result_loop_contract": result_loop_contract,
         "privacy_contract": "metadata-only",
     }
 

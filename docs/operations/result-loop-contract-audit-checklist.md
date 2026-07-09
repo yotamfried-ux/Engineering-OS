@@ -8,6 +8,16 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 **Per-PR declaration cross-reference:** see `docs/operations/operational-work-history.md` and `gap:operational-work-history-foundation` for the resolved decision on the per-PR result-loop declaration dimension — it is satisfied by a CI-generated artifact/gate, not by wiring `check-route-plan-contract.sh`'s 8-field Route Plan requirement into CI.
 
+## Per-PR declaration dimension (result-loop-contract-enforcement)
+
+- [x] Implementation exists: `derive_result_loop_contract` in `scripts/monitoring/collect-pr-work-history.py`, validated by `scripts/enforcement/check-operational-work-history-evidence.sh`.
+- [x] Fixture tests pass: `scripts/enforcement/tests/test-collect-pr-work-history.sh` and `scripts/enforcement/tests/test-operational-work-history-evidence.sh` cover derived, declared-valid, missing/ambiguous, unknown-id, placeholder, declared-unrelated-to-diff, not-required, stale-artifact, and PR-body-cannot-override cases.
+- [x] Real positive PR evidence exists: [PR #239](https://github.com/yotamfried-ux/Engineering-OS/pull/239) — governance-only diff, CI green, artifact derived `selected_result_loop_contract=engineering-os-governance`.
+- [x] Real negative PR evidence exists: [PR #240](https://github.com/yotamfried-ux/Engineering-OS/pull/240) — genuinely ambiguous diff, no declaration, real `pr-policy` failure with the expected `ERROR_FOR_AGENT` reproduced across two CI runs, closed without merging.
+- [x] Review threads resolved and CI green on both: PR #239's chatgpt-codex-connector classification-bug thread and CodeRabbit markdown-lint thread are both resolved; CI green on PR #239 (enforcement-tests, pr-policy, workflow-evidence-policy, connector-evidence-policy, capability-evidence-policy, documentation-asset-policy); PR #240's only real failure was the intended result-loop-contract one, all other real gates green.
+
+`gap:result-loop-contract-enforcement` in `docs/operations/known-gaps.tsv` is closed — all rows above are checked.
+
 ## Research references
 
 - [x] Playwright trace viewer researched for traces, screenshots, DOM snapshots, console and network evidence.
@@ -135,11 +145,11 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 ## Enforcement implementation
 
-- [ ] Add result-loop contract schema or manifest.
-- [ ] Map every template/project type to a result-loop contract or explicit exemption.
-- [ ] Add deterministic result-loop contract gate.
-- [ ] Add positive and negative fixtures for the gate.
-- [ ] Wire the gate into enforcement-tests.
+- [x] Add result-loop contract schema or manifest.
+- [x] Map every template/project type to a result-loop contract or explicit exemption.
+- [x] Add deterministic result-loop contract gate.
+- [x] Add positive and negative fixtures for the gate.
+- [x] Wire the gate into enforcement-tests.
 - [ ] Wire the gate into plan/write policy for long tasks and project work.
 - [ ] Update `CLAUDE.md` / `core/workflow.md` to require result-loop contract selection when applicable.
 - [ ] Add project-roadmap requirement to the result-loop gate.
