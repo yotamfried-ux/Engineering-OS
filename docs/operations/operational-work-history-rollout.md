@@ -104,12 +104,16 @@ Until all five hold across several real PRs, this gap stays `open`/"Partially en
 Tracks the real, merged PRs (and any real blocked-case PR) that exercised the
 Operational Work History gate end to end — the CI-generated artifact validated
 against real PR facts, not fixture coverage. This is the evidence the closure bar
-above requires. Every row is filled in **after** the real GitHub Actions run for
-that PR completes, from the actual run's facts (job logs / step summary), never
-hand-typed estimates or facts asserted before CI ran.
+above requires. Every row is filled in from a **later PR**, after the row's own PR
+has completed CI and merged (or, for a blocked case, closed) — never by a
+follow-up commit on the same PR the row describes. A same-PR follow-up commit
+would change that PR's head SHA and trigger a new CI run, so any facts written
+into that same commit would describe an already-superseded head rather than the
+final merged PR, which would undermine the closure bar's requirement that
+recorded facts match the real PR they claim to describe.
 
 | Pass | PR | Surface | pr_head_sha (short) | Changed files | CI checks observed | Blocked-case? | Notes |
 |---|---|---|---|---|---|---|---|
-| 1 | pending | doc-only: this section (`operational-work-history-rollout.md`) | pending | pending | pending | no | Filled in from this PR's own real `pr-policy` run once CI completes. |
-| 2 | pending | doc-accuracy: `runtime-telemetry-archive-plan.md` checklist sync | pending | pending | pending | no | Filled in once that PR's real CI run completes. |
-| 3 | pending | negative validation: PR intentionally missing `## Operational Work History Evidence` | pending | pending | pending | yes | Not merged; closed after capturing the real failing check/reason. |
+| 1 | pending | doc-only: this section (`operational-work-history-rollout.md`) | pending | pending | pending | no | To be filled in by a later PR once this PR has merged. |
+| 2 | pending | doc-accuracy: `runtime-telemetry-archive-plan.md` checklist sync | pending | pending | pending | no | To be filled in by a later PR once that PR has merged. |
+| 3 | pending | negative validation: PR intentionally missing `## Operational Work History Evidence` | pending | pending | pending | yes | Not merged; closed after capturing the real failing check/reason, then recorded by a later PR. |
