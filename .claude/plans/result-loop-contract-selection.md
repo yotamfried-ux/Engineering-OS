@@ -80,6 +80,14 @@ generation, not a real change to either file's behavior.
 - `validation.actions-checked` — no `.github/workflows/*.yml` changes in this task (pr-policy.yml already wires the two extended scripts); if that assumption changes during implementation this evidence will be updated.
 - `validation.coderabbit-policy` — review or fallback required before merge.
 
+## Capability Waiver
+
+- `template.project-template-checked` — the Task 5 negative-evidence branch adds a single throwaway
+  comment line to `templates/web-application/README.md` purely to create a real ambiguous two-candidate
+  diff for the result-loop-contract negative fixture; it is not a real template selection, extension, or
+  usage decision, so the full template-checked evidence (architecture review, stack selection, etc.)
+  does not apply. The branch is closed unmerged once the negative CI evidence is captured.
+
 ## Claude Run Trace
 
 - goal: close the per-PR declaration blind spot in `gap:result-loop-contract-enforcement` without reintroducing the 8-field Route Plan requirement or a broad docs exemption.
