@@ -341,11 +341,35 @@ because no real target-project run has ever been imported.
    the manifest, archive path, and `indexes/projects.json` entries stay
    consistent across the run and any later comparison runs.
 
-**Run-day sequence:**
+**Run-day sequence (use absolute paths throughout — the target project's workspace and
+the Engineering OS repo are two different directories/machines in the normal installed
+setup, per `telemetry-archive/README.md`'s own `/path/to/Engineering-OS/scripts/...`
+export example; a relative `telemetry-export/<project-slug>` path written from one
+workspace will not resolve from the other):**
 
-1. Export: `bash scripts/monitoring/export-telemetry-run.sh --out telemetry-export/<project-slug> --project <project-slug>` from the target project's own workspace, after real work has happened (so `events.jsonl` is non-empty). Use `--empty-run` only for an explicit, deliberate empty-run record, never to paper over a missing telemetry directory.
-2. Import: `python3 scripts/monitoring/import-telemetry-run.py telemetry-export/<project-slug> --archive telemetry-archive` from the Engineering OS repo. This is the step that actually validates the metadata-only contract (`validate_metadata_only()`) — the export step only labels the bundle, it does not scan content (documented asymmetry, already recorded in `docs/operations/operational-readiness-audit.md`'s Monitoring metrics sufficiency row; not a bug, a known design point re-verified against source this session).
-3. Analyze: `python3 scripts/monitoring/analyze-telemetry-archive.py telemetry-archive --project <project-slug> --output telemetry-archive/runs/<date>/<project-slug>/<run_id>/findings.md` (or review the printed report directly) to get the run/project comparison tables the importer's placeholder `findings.md` does not fill in by itself.
+1. Export, run from the target project's own workspace (so it can see
+   `.engineering-os/telemetry/events.jsonl`), after real work has happened (so the
+   events file is non-empty), using the Engineering OS reference's absolute path
+   (`$ENGINEERING_OS_HOME`, or the concrete path from
+   `.engineering-os/REFERENCE.md` in an installed target project) and an absolute
+   output path outside the target project's own tree:
+   `bash $ENGINEERING_OS_HOME/scripts/monitoring/export-telemetry-run.sh --out /absolute/path/telemetry-export/<project-slug> --project <project-slug>`.
+   Use `--empty-run` only for an explicit, deliberate empty-run record, never to
+   paper over a missing telemetry directory.
+2. Import, run from the Engineering OS repo, pointing at the **same absolute bundle
+   path** written in step 1 (copy the bundle across machines first if export and
+   import cannot share a filesystem):
+   `python3 scripts/monitoring/import-telemetry-run.py /absolute/path/telemetry-export/<project-slug> --archive telemetry-archive`.
+   This is the step that actually validates the metadata-only contract
+   (`validate_metadata_only()`) — the export step only labels the bundle, it does
+   not scan content (documented asymmetry, already recorded in
+   `docs/operations/operational-readiness-audit.md`'s Monitoring metrics
+   sufficiency row; not a bug, a known design point re-verified against source
+   this session).
+3. Analyze, run from the Engineering OS repo:
+   `python3 scripts/monitoring/analyze-telemetry-archive.py telemetry-archive --project <project-slug> --output telemetry-archive/runs/<date>/<project-slug>/<run_id>/findings.md`
+   (or review the printed report directly) to get the run/project comparison
+   tables the importer's placeholder `findings.md` does not fill in by itself.
 
 **Fields to review after import (source: the importer's own required schema, not a new manual field):**
 
