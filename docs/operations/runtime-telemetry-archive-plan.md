@@ -311,6 +311,56 @@ Not allowed:
 - [ ] credentials or secrets.
 - [ ] private transcript path.
 
+## Project 8 run checklist (readiness reference, not an authorization to run)
+
+This section ties the export/import/analyze commands above into one concrete
+run-day sequence for whenever Project 8 (or any target project) is actually
+authorized to run. It is a readiness reference only: it does not run Project 8,
+does not import telemetry, and does not claim `monitoring-metrics-sufficiency` or
+`project-8-real-run-evidence` (`docs/operations/known-gaps.tsv`) are closed. As of
+this writing, `telemetry-archive/indexes/runs.jsonl` and `indexes/gaps.jsonl` are
+empty and `indexes/projects.json` is empty — confirmed directly, not assumed —
+because no real target-project run has ever been imported.
+
+**Before the run:**
+
+1. Confirm the target project's Engineering OS reference includes this archive
+   layer (PR #205 or later) and the Operational Work History layer (PR #233 or
+   later, for correlating the run with any PRs it produces).
+2. Confirm which environment will actually run Claude for the target project. This
+   matters because of the same-workspace caveat already documented in
+   `docs/operations/operational-work-history-rollout.md` (Stage 1.5): telemetry
+   only exports usefully from the exact environment/workspace where
+   `.engineering-os/telemetry/events.jsonl` was actually written during the
+   session. If the target project's Claude session and the export step run in
+   different environments (the common case — including most CI runners and
+   remote sessions), export the bundle from within the same session/workspace
+   that did the work, not from a separate CI job that never saw that telemetry
+   directory.
+3. Decide the `--project` / `--project-slug` values up front (e.g. `project-8`) so
+   the manifest, archive path, and `indexes/projects.json` entries stay
+   consistent across the run and any later comparison runs.
+
+**Run-day sequence:**
+
+1. Export: `bash scripts/monitoring/export-telemetry-run.sh --out telemetry-export/<project-slug> --project <project-slug>` from the target project's own workspace, after real work has happened (so `events.jsonl` is non-empty). Use `--empty-run` only for an explicit, deliberate empty-run record, never to paper over a missing telemetry directory.
+2. Import: `python3 scripts/monitoring/import-telemetry-run.py telemetry-export/<project-slug> --archive telemetry-archive` from the Engineering OS repo. This is the step that actually validates the metadata-only contract (`validate_metadata_only()`) — the export step only labels the bundle, it does not scan content (documented asymmetry, already recorded in `docs/operations/operational-readiness-audit.md`'s Monitoring metrics sufficiency row; not a bug, a known design point re-verified against source this session).
+3. Analyze: `python3 scripts/monitoring/analyze-telemetry-archive.py telemetry-archive --project <project-slug> --output telemetry-archive/runs/<date>/<project-slug>/<run_id>/findings.md` (or review the printed report directly) to get the run/project comparison tables the importer's placeholder `findings.md` does not fill in by itself.
+
+**Fields to review after import (source: the importer's own required schema, not a new manual field):**
+
+- From `manifest.json` / the `indexes/runs.jsonl` row: `event_count`, `privacy_contract` (must read `metadata-only`), `head_sha`, `engineering_os_head_sha`, `branch`, `exported_at`.
+- From the index row's `coverage` object: `missing_session`, `missing_turn`, `missing_transcript`, `missing_cwd` counts — these are the concrete signals for "did the hook layer actually capture what we expect," not a subjective read.
+- From the analyzer report: command-category distribution, and the `## Recurring missing coverage` section, which only fires once a pattern has appeared in ≥2 imported runs — so it stays silent (correctly) until Project 8 plus at least one later comparison run both exist.
+- Confirm the importer did not reject the bundle (`TelemetryImportError`) for a banned key/pattern — a rejection here is itself a finding worth investigating, not just a retry-until-it-passes obstacle.
+
+**How findings should flow into existing artifacts (no new tracking surface):**
+
+- Update `docs/operations/runtime-telemetry-archive-audit-checklist.md`'s "Project 8 evidence" and "Longitudinal learning" checkboxes only from the actual import/analysis results, one at a time, the same way `check-known-gaps.sh` already requires known-gaps status to match reality.
+- If the analyzer's recurring-coverage section fires (≥2 runs affected), open a known-gap row in `docs/operations/known-gaps.tsv` describing the specific missing-coverage pattern, rather than silently accepting it or fixing it ad hoc.
+- Update `docs/operations/operational-readiness-audit.md`'s Monitoring metrics sufficiency row from the real findings, not from expectation — only close `monitoring-metrics-sufficiency` once real Project 8 evidence plus at least one later comparison run both exist, per that gap's own closure text.
+- If a recurring pattern reveals an actual bug or a repeatedly-wrong assumption (not just missing coverage), route it through `core/learning-loop.md` as a lesson (`lessons-learned/bugs/` or `failed-solutions/`) — do not invent a new free-text findings field; `findings.md` plus the existing learning-loop schema are the two surfaces this already routes through.
+
 ## Validation checklist
 
 - [ ] Unit test: export fails clearly when events are missing.
