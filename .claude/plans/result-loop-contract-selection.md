@@ -166,13 +166,15 @@ Plan Scope: standard
 
 ## Remaining before `result-loop-contract-enforcement` can close (tracked, not part of this commit's DoD)
 
-These genuinely cannot be true until after this implementation is pushed and real CI runs against it, so
-they are intentionally not checkboxes in this commit's DoD (per `quality-gates.md`'s DoD-completion
-gate, which reads this plan file's own state):
+All four items below are now satisfied, closed out in commit `cf4e2f3`:
 
-1. Open a real positive-evidence PR (this implementation, ready for review), confirm real CI green.
-2. Open a real negative-evidence PR/branch, ready for review, confirm real CI fails with the expected
-   `ERROR_FOR_AGENT`, close without merging.
-3. Update `known-gaps.tsv` row 27 and `operational-readiness-audit.md` to `closed`/`Enforced` only once
-   1 and 2 both hold, in a later commit/checkpoint.
-4. Zero open review threads before merge.
+1. [x] Real positive-evidence PR: [#239](https://github.com/yotamfried-ux/Engineering-OS/pull/239),
+   real CI green (enforcement-tests, pr-policy, workflow-evidence-policy, connector-evidence-policy,
+   capability-evidence-policy, documentation-asset-policy) at head `cf4e2f3`.
+2. [x] Real negative-evidence PR/branch: [#240](https://github.com/yotamfried-ux/Engineering-OS/pull/240),
+   real CI failed with the expected `ERROR_FOR_AGENT`, reproduced across two independent CI runs, closed
+   without merging.
+3. [x] `known-gaps.tsv` row 27 and `operational-readiness-audit.md` flipped to `closed`/`Enforced` in
+   commit `cf4e2f3`, after both 1 and 2 held.
+4. [x] Zero open review threads: PR #239's chatgpt-codex-connector and CodeRabbit threads both resolved
+   on GitHub. PR #239 itself remains unmerged, awaiting explicit user approval.
