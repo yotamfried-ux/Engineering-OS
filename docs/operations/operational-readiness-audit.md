@@ -45,13 +45,13 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | pr-review-quality-schema | closed | P2 | PR review / external review. |
 | merge-readiness-artifact | closed | P1 | Git/branch policy and merge safety. |
 | install-downstream-behavior | closed | P2 | Project install contract. |
-| result-loop-contract-enforcement | open | P1 | Result Loop Contract enforcement. |
+| result-loop-contract-enforcement | closed | P1 | Result Loop Contract enforcement. |
 | scaling-extension-enforcement | closed | P1 | Scaling extension enforcement. |
 | claude-operational-behavior-evidence | closed | P1 | Operational behavior evidence. |
 | registry-coverage-backfill | closed | P2 | Registry/manifest coverage. |
 | monitoring-metrics-sufficiency | open | P2 | Monitoring metrics sufficiency. |
 | project-8-real-run-evidence | blocked | P1 | Project 8 real-run evidence. |
-| operational-work-history-foundation | open | P1 | Operational work history evidence. |
+| operational-work-history-foundation | closed | P1 | Operational work history evidence. |
 
 ## Current status matrix
 
@@ -87,8 +87,8 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | Cleanup debug leftovers | Enforced | Gate: enforce-quality.sh. Owner: cleanup-governance. Evidence: cleanup fixtures. | Narrow cases only. |
 | Cleanup semantic hygiene | Enforced | Gate: semantic cleanup and import cleanup policies. Owner: cleanup-governance. Evidence: semantic cleanup fixtures. | Deep hygiene is reviewed. |
 | Project install contract | Enforced | Gate: install policy gates. Owner: install-governance. Evidence: install downstream behavior fixtures. | Runtime fidelity is reviewed. |
-| Result Loop Contract enforcement | Partially enforced | Gate: check-result-loop-contract.py runs as a dedicated named CI step on every real pull_request (not just self-tests), blocking manifest-completeness regressions. Owner: ops-readiness. Evidence: named step in enforcement-tests.yml; test-result-loop-contract.sh fixtures. | gap:result-loop-contract-enforcement — check-route-plan-contract.sh (which requires selected_result_loop_contract in a PR's own Route Plan) exists but stays unwired by explicit design decision, not oversight: the per-PR declaration dimension is superseded by the CI-generated Operational Work History artifact and gate (gap:operational-work-history-foundation) instead of mandating 8 new Route Plan fields repo-wide. |
-| Operational work history evidence | Partially enforced | Gate: check-operational-work-history-evidence.sh validates a CI-generated `.engineering-os/work-history/latest.json` artifact (real PR head SHA, changed files, CI/review snapshot, friction signals) plus a minimal PR-body pointer and learning-loop routing, wired into check-pr-review-evidence.sh and run by pr-policy.yml on every real PR; a dedicated static-inspection test proves the real workflow wires it end-to-end. Owner: ops-readiness. Evidence: test-operational-work-history-evidence.sh, test-collect-pr-work-history.sh, test-pr-policy-workflow-wiring.sh fixtures. | gap:operational-work-history-foundation — foundation only; needs real-PR evidence across multiple runs before closing. |
+| Result Loop Contract enforcement | Enforced | Gate: check-result-loop-contract.py runs as a dedicated named CI step on every real pull_request (not just self-tests), blocking manifest-completeness regressions; the per-PR declaration dimension is enforced by the CI-generated Operational Work History artifact/gate instead. Owner: ops-readiness. Evidence: named step in enforcement-tests.yml; test-result-loop-contract.sh fixtures; real-PR evidence in docs/operations/operational-work-history-rollout.md (PRs #234, #235, #236). | none — result-loop-contract-enforcement closed 2026-07-09; check-route-plan-contract.sh remains unwired by explicit design, not oversight. |
+| Operational work history evidence | Enforced | Gate: check-operational-work-history-evidence.sh validates a CI-generated `.engineering-os/work-history/latest.json` artifact (real PR head SHA, changed files, CI/review snapshot, friction signals) plus a minimal PR-body pointer and learning-loop routing, wired into check-pr-review-evidence.sh and run by pr-policy.yml on every real PR; a dedicated static-inspection test proves the real workflow wires it end-to-end, and real-PR evidence (PRs #234, #235 merged; #236 real blocked case) proves the gate against real, non-fixture data. Owner: ops-readiness. Evidence: test-operational-work-history-evidence.sh, test-collect-pr-work-history.sh, test-pr-policy-workflow-wiring.sh fixtures; docs/operations/operational-work-history-rollout.md's Real-PR evidence log. | none — operational-work-history-foundation closed 2026-07-09. |
 | Scaling extension enforcement | Enforced | Gate: check-scaling-extension.py runs as a dedicated named CI step on every real pull_request, confirmed green against real PR content in PR #229 (not just self-tests). Owner: ops-readiness. Evidence: named step in enforcement-tests.yml; test-scaling-extension.sh fixtures. | Deep manifest-content quality (e.g. whether a roadmap's official sources are truly authoritative) remains review-based. |
 | Registry/manifest coverage | Enforced | Gate: scaling extension fixtures cover the coverage map hardening piece; all 10 kind=project templates now carry status=active rows with real roadmap research across all 5 required manifests. Owner: registry-governance. Evidence: PR #230 (merged) and the Registry Coverage Backfill (Automation/Data) PR — scripts/enforcement/project-type-roadmaps.tsv, result-loop-requirements.tsv, documentation-sources.tsv, pattern-requirements.tsv, skill-requirements.tsv. | none — registry-coverage-backfill closed. |
 | Monitoring metrics sufficiency | Missing enforcement | Gate: exporter/importer/analyzer tests exist but no real target run. The metadata-only privacy contract is enforced asymmetrically: `export-telemetry-run.py` only labels the bundle `privacy_contract: metadata-only` and copies `events.jsonl`/`latest-summary.md` verbatim without scanning their content; `import-telemetry-run.py`'s `validate_metadata_only()` is what actually scans the manifest and every event for banned keys/sensitive-value patterns, and it only runs at import time. Owner: ops-readiness. Evidence: telemetry tests; export-telemetry-run.py lines 94/96/114; import-telemetry-run.py lines 54-60/78/99. | gap:monitoring-metrics-sufficiency — needs real target run import; sufficiency is not claimed. |
@@ -105,27 +105,28 @@ A row is ready only when it is Enforced, Manual by design with a checklist, Waiv
 
 ## Highest-priority gaps by ROI
 
-1. Result Loop Contract gate wiring — manifest-completeness dimension now enforced by a named CI step; per-PR route-plan-declaration dimension (check-route-plan-contract.sh) remains unwired by design decision, not oversight.
+1. Result Loop Contract gate wiring — closed 2026-07-09; manifest-completeness dimension enforced by a named CI step, and the per-PR declaration dimension is now enforced by the CI-generated Operational Work History artifact/gate, proven by real-PR evidence (PRs #234, #235, #236). check-route-plan-contract.sh remains unwired by design decision, not oversight.
 2. Scaling gate wiring — closed by a named CI step (PR #229), confirmed green against real PR content; no scaling-specific per-PR blind spot found.
 3. Registry/manifest coverage backfill — closed by PR #230 (merged) plus the Registry Coverage Backfill (Automation/Data) PR; all 10 project types now carry real, active coverage across all 5 required manifests.
-4. Monitoring metrics sufficiency.
-5. Project 8 real-run evidence.
-6. Coverage map hardening.
-7. RTK runtime hardening.
-8. Route Plan quality gate.
-9. Template/pattern rating lifecycle.
-10. Learning closure gate.
-11. Progress lifecycle.
-12. Graphify context graph.
-13. Connector correctness.
-14. Simulation completeness.
-15. Post-merge validation.
-16. Documentation hygiene.
-17. Semantic cleanup.
-18. Trace and test contracts.
-19. Governance evidence.
-20. Install downstream behavior.
+4. Operational Work History foundation — closed 2026-07-09 after three real-PR evidence passes (PRs #234, #235 merged; #236 real blocked case, closed unmerged) satisfied all five closure-bar items in docs/operations/operational-work-history-rollout.md.
+5. Monitoring metrics sufficiency — remains open; no real target-project telemetry run has been imported (see docs/operations/runtime-telemetry-archive-plan.md).
+6. Project 8 real-run evidence — remains blocked; explicitly not performed.
+7. Coverage map hardening.
+8. RTK runtime hardening.
+9. Route Plan quality gate.
+10. Template/pattern rating lifecycle.
+11. Learning closure gate.
+12. Progress lifecycle.
+13. Graphify context graph.
+14. Connector correctness.
+15. Simulation completeness.
+16. Post-merge validation.
+17. Documentation hygiene.
+18. Semantic cleanup.
+19. Trace and test contracts.
+20. Governance evidence.
+21. Install downstream behavior.
 
 ## Current audit scope
 
-This update records the operational behavior evidence connection through the existing PR policy path. It does not run Project 8, does not claim monitoring sufficiency, and does not claim full readiness.
+This update records real-PR evidence (PRs #234, #235, #236) closing `operational-work-history-foundation` and, contingent on that, `result-loop-contract-enforcement`. It does not run Project 8, does not claim monitoring sufficiency, and does not claim full readiness.
