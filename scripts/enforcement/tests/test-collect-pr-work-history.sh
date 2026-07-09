@@ -61,6 +61,13 @@ assert r['ci_metadata_unavailable'] is True
 assert r['review_metadata_unavailable'] is True
 assert r['friction_signals']['repeated_cycle_commits'] == 1, r['friction_signals']
 assert r['privacy_contract'] == 'metadata-only'
+rlc = r['result_loop_contract']
+assert rlc['required'] is True, rlc
+assert rlc['selection_source'] == 'derived', rlc
+assert rlc['selected_result_loop_contract'] == 'engineering-os-governance', rlc
+assert rlc['validation_status'] == 'valid', rlc
+assert rlc['matched_manifest_row'] == 'scripts/enforcement/result-loop-requirements.tsv#engineering-os-governance', rlc
+assert rlc['reason'], rlc
 print('basic artifact fields ok')
 "
 pass basic_artifact_fields true
@@ -138,6 +145,11 @@ r = json.load(open('$OUT5/latest.json'))
 assert r['empty_run'] is True
 assert r['changed_files_count'] == 0
 assert r['commits_count'] == 0
+rlc = r['result_loop_contract']
+assert rlc['required'] is False, rlc
+assert rlc['selection_source'] == 'not_required', rlc
+assert rlc['selected_result_loop_contract'] == '', rlc
+assert rlc['reason'], rlc
 print('empty-run marker ok')
 "
 pass empty_run_marker true
@@ -175,5 +187,137 @@ pass gap_id_from_branch true
 
 # 7. Invalid base/head git refs fail closed instead of producing an empty artifact.
 reject invalid_base_sha_fails_closed python3 "$COLLECTOR" --root "$REPO" --pr-head-sha "$HEAD_SHA" --base-sha "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef" --out "$TMP/out-invalid"
+
+# 8. Result-loop contract selection: ambiguous derivation (a templates/<id>/ path plus a
+# plain governance-surface path) resolves via the declared PR-body field when present and
+# valid, falls back to ambiguous/missing when absent, and rejects unknown/placeholder/
+# unrelated declared values. --root points at a throwaway repo with no scripts/ tree at
+# all, proving the manifest is resolved relative to the collector's own file location,
+# not --root.
+AMBIG_REPO="$TMP/ambig-repo"
+mkdir -p "$AMBIG_REPO"
+(
+  cd "$AMBIG_REPO"
+  git init -q
+  git config user.email work-history@example.invalid
+  git config user.name work-history-test
+  echo "base" > base.txt
+  git add base.txt
+  git commit -qm "base commit"
+)
+AMBIG_BASE="$(cd "$AMBIG_REPO" && git rev-parse HEAD)"
+(
+  cd "$AMBIG_REPO"
+  mkdir -p templates/web-application
+  echo "<html></html>" > templates/web-application/index.html
+  echo "note" > notes.txt
+  git add templates/web-application/index.html notes.txt
+  git commit -qm "touch template and governance surface"
+)
+AMBIG_HEAD="$(cd "$AMBIG_REPO" && git rev-parse HEAD)"
+
+# 8a. No selected_result_loop_contract declared -> ambiguous/missing.
+BODY_NONE="$TMP/body-none.md"
+cat > "$BODY_NONE" <<'EOF'
+## Operational Work History Evidence
+
+automatic_sources: .engineering-os/work-history/latest.json
+EOF
+OUT8A="$TMP/out8a"
+python3 "$COLLECTOR" --root "$AMBIG_REPO" --pr-head-sha "$AMBIG_HEAD" --base-sha "$AMBIG_BASE" \
+  --pr-body-file "$BODY_NONE" --out "$OUT8A" >/dev/null
+python3 -c "
+import json
+rlc = json.load(open('$OUT8A/latest.json'))['result_loop_contract']
+assert rlc['required'] is True, rlc
+assert rlc['selection_source'] == 'ambiguous', rlc
+assert rlc['validation_status'] == 'missing', rlc
+assert rlc['selected_result_loop_contract'] == '', rlc
+assert 'web-application' in rlc['reason'] and 'engineering-os-governance' in rlc['reason'], rlc
+print('ambiguous missing declaration ok')
+"
+pass ambiguous_missing_declaration true
+
+# 8b. Valid declared value matching one of the real candidates passes.
+BODY_VALID="$TMP/body-valid.md"
+cat > "$BODY_VALID" <<'EOF'
+## Operational Work History Evidence
+
+automatic_sources: .engineering-os/work-history/latest.json
+selected_result_loop_contract: web-application
+EOF
+OUT8B="$TMP/out8b"
+python3 "$COLLECTOR" --root "$AMBIG_REPO" --pr-head-sha "$AMBIG_HEAD" --base-sha "$AMBIG_BASE" \
+  --pr-body-file "$BODY_VALID" --out "$OUT8B" >/dev/null
+python3 -c "
+import json
+rlc = json.load(open('$OUT8B/latest.json'))['result_loop_contract']
+assert rlc['selection_source'] == 'declared', rlc
+assert rlc['validation_status'] == 'valid', rlc
+assert rlc['selected_result_loop_contract'] == 'web-application', rlc
+assert rlc['matched_manifest_row'] == 'scripts/enforcement/result-loop-requirements.tsv#web-application', rlc
+print('declared valid ok')
+"
+pass declared_valid_matching_candidate true
+
+# 8c. Declared value that is a real manifest id but unrelated to the actual diff fails
+# (anti-gaming: a valid-but-irrelevant id must not satisfy the gate).
+BODY_UNRELATED="$TMP/body-unrelated.md"
+cat > "$BODY_UNRELATED" <<'EOF'
+## Operational Work History Evidence
+
+automatic_sources: .engineering-os/work-history/latest.json
+selected_result_loop_contract: cli-tool
+EOF
+OUT8C="$TMP/out8c"
+python3 "$COLLECTOR" --root "$AMBIG_REPO" --pr-head-sha "$AMBIG_HEAD" --base-sha "$AMBIG_BASE" \
+  --pr-body-file "$BODY_UNRELATED" --out "$OUT8C" >/dev/null
+python3 -c "
+import json
+rlc = json.load(open('$OUT8C/latest.json'))['result_loop_contract']
+assert rlc['selection_source'] == 'declared', rlc
+assert rlc['validation_status'] == 'invalid', rlc
+assert rlc['selected_result_loop_contract'] == 'cli-tool', rlc
+print('declared unrelated ok')
+"
+pass declared_unrelated_to_diff_fails_validation true
+
+# 8d. Declared value not present in the manifest at all fails as unknown_id.
+BODY_UNKNOWN="$TMP/body-unknown.md"
+cat > "$BODY_UNKNOWN" <<'EOF'
+## Operational Work History Evidence
+
+automatic_sources: .engineering-os/work-history/latest.json
+selected_result_loop_contract: not-a-real-project-type
+EOF
+OUT8D="$TMP/out8d"
+python3 "$COLLECTOR" --root "$AMBIG_REPO" --pr-head-sha "$AMBIG_HEAD" --base-sha "$AMBIG_BASE" \
+  --pr-body-file "$BODY_UNKNOWN" --out "$OUT8D" >/dev/null
+python3 -c "
+import json
+rlc = json.load(open('$OUT8D/latest.json'))['result_loop_contract']
+assert rlc['validation_status'] == 'unknown_id', rlc
+print('declared unknown id ok')
+"
+pass declared_unknown_id_fails_validation true
+
+# 8e. Declared placeholder value fails as placeholder.
+BODY_PLACEHOLDER="$TMP/body-placeholder.md"
+cat > "$BODY_PLACEHOLDER" <<'EOF'
+## Operational Work History Evidence
+
+automatic_sources: .engineering-os/work-history/latest.json
+selected_result_loop_contract: tbd
+EOF
+OUT8E="$TMP/out8e"
+python3 "$COLLECTOR" --root "$AMBIG_REPO" --pr-head-sha "$AMBIG_HEAD" --base-sha "$AMBIG_BASE" \
+  --pr-body-file "$BODY_PLACEHOLDER" --out "$OUT8E" >/dev/null
+python3 -c "
+import json
+rlc = json.load(open('$OUT8E/latest.json'))['result_loop_contract']
+assert rlc['validation_status'] == 'placeholder', rlc
+print('declared placeholder ok')
+"
+pass declared_placeholder_fails_validation true
 
 echo "collect-pr-work-history simulations passed"

@@ -19,8 +19,14 @@ code/config/test targets to manually declare 8 fields (`selected_project_type`,
 `selected_template`, `selected_roadmap`, `selected_result_loop_contract`,
 `required_user_simulation`, `local_creator_review_path`, `telemetry_export_path`,
 `evidence_policy_rule`) — should be wired into CI. The decision: **no**. That checker stays unwired,
-by design, not by oversight. Per-PR operational evidence is instead satisfied by the artifact and
-gate this document describes. Route Plan is not expanded into a heavier manual-reporting burden.
+by design, not by oversight. Route Plan is not expanded into a heavier manual-reporting burden.
+
+A real `chatgpt-codex-connector` review on PR #237 correctly found that, at that point, this document's
+artifact/gate did **not** actually cover the per-PR `selected_result_loop_contract` declaration
+dimension — it only covered `automatic_sources:` and learning-loop routing, so closing
+`operational-work-history-foundation` had not closed `result-loop-contract-enforcement`. The
+"Result-loop contract selection" section below is the fix for that specific finding: one deterministic,
+mostly-derived, machine-readable field — not a revival of the 8-field Route Plan requirement.
 
 ## Two existing layers this builds on, not replaces
 
@@ -122,10 +128,85 @@ paths and commit subjects are used transiently inside the CI workspace to comput
 buckets, and friction heuristics; the persisted artifact stores hashed/bucketed path metadata and
 commit-subject hashes, not the raw values.
 
+## Result-loop contract selection
+
+`docs/operations/known-gaps.tsv` row 27 (`result-loop-contract-enforcement`) stayed open after a real
+`chatgpt-codex-connector` review on PR #237 found that everything above — `automatic_sources:` and
+`learning_loop_artifact:`/`learning_loop_result:` — never asked a PR to declare **which result-loop
+contract governs the change** (`selected_result_loop_contract`). This section closes that specific
+blind spot without reintroducing `check-route-plan-contract.sh`'s 8-field Route Plan requirement.
+
+**When it is required.** Any PR with changed files requires a resolved `selected_result_loop_contract`,
+with exactly one narrow exception: a true empty diff (`empty_run`/zero changed files). This mirrors
+Stage 1's own no-automatic-filename-exemption rule above — there is no broad `docs/*` or filename-only
+carve-out for this dimension either.
+
+**How it is resolved.** `scripts/monitoring/collect-pr-work-history.py` classifies every changed path:
+a path under `templates/<project_type_id>/...` where `<project_type_id>` is a real row in
+`scripts/enforcement/result-loop-requirements.tsv` maps to that id; every other changed path (which
+covers Engineering OS's own governance/tooling surface — scripts, workflows, docs, manifests) maps to
+one non-scaffolded sentinel id, `engineering-os-governance` (added to `result-loop-requirements.tsv`
+and `project-type-roadmaps.tsv` with `status=exempt`, so it registers a real, non-placeholder contract
+row without pulling `check-scaling-extension.py`'s active-project documentation/pattern/skill coverage
+requirements onto a project type that isn't actually scaffolded).
+
+- If every changed path maps to exactly **one** candidate id, the collector **derives** the contract —
+  no PR-body field needed. This covers the overwhelming majority of real PRs, including every PR in
+  this repository's own governance-tooling surface.
+- If changed paths imply **more than one** candidate (for example a PR that touches both
+  `templates/web-application/...` and an Engineering OS enforcement script), the collector looks for a
+  minimal structured field under `## Operational Work History Evidence`:
+
+  ```
+  selected_result_loop_contract: <contract-id>
+  ```
+
+  The declared id must be a real `project_type_id` from `result-loop-requirements.tsv` **and** one of
+  the actual candidates implied by the diff — a valid-but-unrelated id (e.g. declaring `cli-tool` on a
+  PR that only touches `web-application`/governance paths) is rejected, not just any known id. Missing,
+  placeholder (`todo`/`tbd`/`unknown`/`n/a`/`none`/`later`/...), or unknown-id declarations all fail
+  closed with a concrete `ERROR_FOR_AGENT`.
+
+**How it is validated.** `scripts/enforcement/check-operational-work-history-evidence.sh` reads the
+artifact's `result_loop_contract` object directly — it never re-parses the PR body for this field. This
+is what guarantees a PR body cannot override the checker: only the CI-regenerated artifact (already
+SHA-matched against the real PR head) decides.
+
+**Artifact shape** (`.engineering-os/work-history/latest.json`):
+
+```json
+"result_loop_contract": {
+  "required": true,
+  "selection_source": "derived",
+  "selected_result_loop_contract": "engineering-os-governance",
+  "validation_status": "valid",
+  "matched_manifest_row": "scripts/enforcement/result-loop-requirements.tsv#engineering-os-governance",
+  "reason": "deterministically derived: all N changed path(s) map to exactly one result-loop contract (engineering-os-governance)."
+}
+```
+
+`selection_source` is one of `derived` / `declared` / `ambiguous` (no declaration found) /
+`not_required` (empty diff) / `manifest_unavailable` (defensive — the manifest was not found next to
+the collector script, e.g. an installed downstream target project that has not re-run
+`install-policy-gates.sh` since this dimension shipped). `validation_status` is one of `valid` /
+`missing` / `unknown_id` / `placeholder` / `invalid` (declared but unrelated to the diff) /
+`not_applicable` (not required) / `unavailable`. Only ids, short reason sentences, and a manifest row
+reference are stored — no raw paths or prose, consistent with the metadata-only privacy contract above.
+
+**What this does not claim.** `check-route-plan-contract.sh` stays unwired by design — this is not a
+disguised revival of its 8-field requirement, only one machine-readable field, required only when
+derivation is ambiguous. Deep judgment about whether the *content* of a result-loop contract is truly
+adequate for a given change stays out of scope, same as every other "structural, not semantic" gate in
+this repository; this only proves a PR names a real, diff-relevant contract id.
+
 ## What this does NOT claim
 
 - Does not claim `monitoring-metrics-sufficiency` (open) or `project-8-real-run-evidence` (blocked)
   are closed — those require a real target-project run, not this foundation.
+- Does not, by itself, close `result-loop-contract-enforcement` — this document is the design and
+  implementation description; closure requires real positive **and** real negative PR evidence per
+  `docs/operations/operational-work-history-rollout.md`'s evidence-log convention, tracked in
+  `docs/operations/known-gaps.tsv` row 27.
 - Does not claim universal automatic tools/connectors/skills capture: CI can always compute
   git/GitHub facts, but seeing Claude's local telemetry requires the same-workspace handoff
   described in `docs/operations/operational-work-history-rollout.md` (Stage 1.5), which only works

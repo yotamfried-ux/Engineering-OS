@@ -47,6 +47,43 @@ single changed-file path.
       zero. Closing this gap fully requires either a documented per-target-project handoff wiring or
       Stage 3 (below).
 
+## Stage 1.6 — result-loop contract selection (this PR)
+
+- [x] Add `derive_result_loop_contract` to `scripts/monitoring/collect-pr-work-history.py`: classifies
+      changed paths into `templates/<project_type_id>/...` candidates or the `engineering-os-governance`
+      sentinel, derives when unambiguous, and validates a declared
+      `selected_result_loop_contract:` PR-body field (against both the real manifest id set and the
+      actual diff candidates) only when ambiguous.
+- [x] Add `engineering-os-governance` as a `status=exempt` row to both
+      `scripts/enforcement/result-loop-requirements.tsv` and `scripts/enforcement/project-type-roadmaps.tsv`
+      — registers a real, non-placeholder contract for Engineering OS's own governance/tooling surface
+      without pulling `check-scaling-extension.py`'s active-project coverage requirements onto a project
+      type that isn't actually scaffolded (verified: `check-result-loop-contract.py --root .` and
+      `check-scaling-extension.py --root .` both still pass).
+- [x] Add `scripts/enforcement/check-operational-work-history-evidence.sh` validation of the artifact's
+      new `result_loop_contract` object — required+invalid fails closed with the collector-computed
+      `ERROR_FOR_AGENT` reason; the checker never re-parses the PR body for this field, so a PR body
+      cannot override what the CI-regenerated, SHA-matched artifact says.
+- [x] Add `pr-policy.yml -> scripts/enforcement/result-loop-requirements.tsv` to
+      `scripts/enforcement/policy-gate-dependencies.tsv` so downstream `install-policy-gates.sh`
+      installs copy the manifest the collector needs.
+- [x] Extend `scripts/enforcement/tests/test-collect-pr-work-history.sh` and
+      `scripts/enforcement/tests/test-operational-work-history-evidence.sh` with derived/declared/
+      ambiguous/unknown-id/placeholder/declared-unrelated-to-diff/not-required/stale-artifact/
+      PR-body-cannot-override fixtures, plus a regression assertion that
+      `check-route-plan-contract.sh` remains referenced only by its own test file.
+- [ ] Real positive-evidence PR: the PR implementing this stage exercises the new gate on its own real,
+      non-fixture diff (governance-surface-only changes → single candidate → derived,
+      `engineering-os-governance`). Row added to the Real-PR evidence log below once merged.
+- [ ] Real negative-evidence PR/branch: a throwaway PR touching both `templates/web-application/...`
+      and an Engineering OS governance file, with no `selected_result_loop_contract:` declared, proving
+      the real `pr-policy` job fails with the expected `ERROR_FOR_AGENT`. Closed without merging once
+      captured; row added to the Real-PR evidence log below.
+
+This stage does not close `result-loop-contract-enforcement` by itself — see
+`docs/operations/known-gaps.tsv` row 27 for the closure bar (implementation + fixtures + one real
+positive PR + one real negative PR + review resolution + green CI).
+
 ## Stage 2 — broader Claude Code hook wiring (documented, not enabled)
 
 Already wired as real hooks in `.claude/settings.json`: `SessionStart`, `PreToolUse` (Bash,

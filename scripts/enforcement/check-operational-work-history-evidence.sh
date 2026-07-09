@@ -188,5 +188,31 @@ else:
     if friction_any and not friction_signal_re.search(reason):
         fail("artifact shows friction signals (failures/retries/unavailable metadata/waiver); learning_loop_result reason must concretely address the observed signal, not generic prose.")
 
+# 7. Result-loop contract selection (per-PR declaration dimension of
+# gap:result-loop-contract-enforcement). Source of truth is the artifact's
+# own result_loop_contract object, computed by collect-pr-work-history.py —
+# this never re-parses the PR body for this field, so a hand-edited or stale
+# PR-body claim cannot override what the freshly regenerated artifact says.
+def concrete_id(value: str) -> bool:
+    # Real project_type_id values (e.g. "cli-tool", "ai-agent") can be shorter
+    # than the 12-char prose threshold `concrete()` uses, so ids get their own,
+    # shorter, still placeholder-rejecting check.
+    clean = value.strip()
+    return len(clean) >= 2 and not placeholder.fullmatch(clean)
+
+
+rlc = record.get("result_loop_contract")
+if not isinstance(rlc, dict):
+    fail("Operational Work History artifact is missing result_loop_contract; regenerate via collect-pr-work-history.py (stale or pre-upgrade artifact).")
+
+if rlc.get("required"):
+    if rlc.get("validation_status") != "valid":
+        fail(rlc.get("reason") or "selected_result_loop_contract is required but not validly resolved.")
+    if not concrete_id(str(rlc.get("selected_result_loop_contract") or "")):
+        fail("result_loop_contract.selected_result_loop_contract must be a concrete, non-placeholder id when required.")
+else:
+    if not concrete(str(rlc.get("reason") or "")):
+        fail("result_loop_contract.reason must be a concrete, non-placeholder explanation when required is false.")
+
 print("operational work history evidence passed")
 PY

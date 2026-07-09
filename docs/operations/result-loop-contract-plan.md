@@ -6,6 +6,8 @@ This document is a plan, not a readiness claim. Full readiness requires determin
 
 **Per-PR declaration decision:** the per-PR "does this PR declare its result-loop contract" dimension of `gap:result-loop-contract-enforcement` is satisfied by the CI-generated Operational Work History artifact and gate (`docs/operations/operational-work-history.md`, `gap:operational-work-history-foundation`), not by wiring `check-route-plan-contract.sh`'s 8-field Route Plan requirement into CI. That checker stays unwired by explicit design.
 
+A real `chatgpt-codex-connector` review on PR #237 found that the artifact/gate did not, at that point, actually implement this dimension — it only covered `automatic_sources:` and learning-loop routing. `docs/operations/operational-work-history.md`'s "Result-loop contract selection" section now implements it: the collector deterministically derives `selected_result_loop_contract` from changed paths (`templates/<project_type_id>/...` maps to that project type; every other changed path — Engineering OS's own governance/tooling surface — maps to a new non-scaffolded sentinel id, `engineering-os-governance`, registered as a `status=exempt` row in `result-loop-requirements.tsv`/`project-type-roadmaps.tsv` so it does not pull in `check-scaling-extension.py`'s active-project documentation/pattern/skill coverage requirements), and only asks for one minimal declared PR-body field when derivation is genuinely ambiguous. This closes the semantic gap the 8-field checker was meant to catch without reviving it.
+
 ## Result Loop Contract fields
 
 Every project type contract must define these fields:

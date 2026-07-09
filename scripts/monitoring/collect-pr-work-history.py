@@ -29,6 +29,11 @@ SCHEMA_VERSION = "eos.work_history.v1"
 FIX_RETRY_REVERT_RE = re.compile(r"\b(fix|fixes|fixed|retry|retries|revert|reverts|reverted)\b", re.I)
 FAILING_CONCLUSIONS = {"failure", "timed_out", "cancelled", "action_required"}
 
+GOVERNANCE_CONTRACT_ID = "engineering-os-governance"
+CONTRACT_PLACEHOLDER_RE = re.compile(
+    r"^\s*(todo|tbd|placeholder|unknown|n/?a|none|later|fix later|not sure|unclear)\W*$", re.I
+)
+
 
 def stable_hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()[:16]
@@ -101,6 +106,175 @@ def path_metadata(paths: list[str]) -> dict[str, Any]:
         "changed_file_extension_counts": dict(sorted(extensions.items())),
         "changed_file_top_level_counts": dict(sorted(top_level.items())),
         "governance_changed_files_count": governance_count,
+    }
+
+
+def load_result_loop_contract_ids() -> tuple[set[str], bool]:
+    """Returns (valid_ids, manifest_unavailable).
+
+    Resolved relative to this script's own file location (mirroring how
+    check-operational-work-history-evidence.sh resolves ROOT from
+    SCRIPT_DIR), not from --root, so this works the same whether the script
+    runs inside the Engineering OS repo or an installed downstream target
+    project that copied both files alongside each other via
+    policy-gate-dependencies.tsv.
+    """
+    manifest_path = Path(__file__).resolve().parent.parent / "enforcement" / "result-loop-requirements.tsv"
+    if not manifest_path.is_file():
+        return set(), True
+    lines = manifest_path.read_text(encoding="utf-8").splitlines()
+    header_line = next((line for line in lines if line.startswith("# ") and "\t" in line), "")
+    header = header_line[2:].split("\t") if header_line else []
+    if "project_type_id" not in header:
+        return set(), True
+    idx = header.index("project_type_id")
+    ids: set[str] = set()
+    for raw in lines:
+        if not raw or raw.startswith("#"):
+            continue
+        cells = raw.split("\t")
+        if len(cells) > idx and cells[idx].strip():
+            ids.add(cells[idx].strip())
+    return ids, False
+
+
+def concrete_contract_value(value: str) -> bool:
+    clean = value.strip()
+    return bool(clean) and len(clean) >= 2 and not CONTRACT_PLACEHOLDER_RE.fullmatch(clean)
+
+
+def declared_result_loop_contract(pr_body: str) -> str | None:
+    match = re.search(r"^##\s+Operational Work History Evidence\s*$", pr_body, re.I | re.M)
+    if not match:
+        return None
+    rest = pr_body[match.end():]
+    nxt = re.search(r"^##\s+", rest, re.M)
+    section = rest[:nxt.start()] if nxt else rest
+    field = re.search(r"(^|\n)\s*[-*]?\s*selected_result_loop_contract\s*:\s*(.+)", section, re.I)
+    return field.group(2).strip() if field else None
+
+
+def classify_result_loop_candidates(paths: list[str], valid_ids: set[str]) -> set[str]:
+    """templates/<id>/... maps to that project_type_id when <id> is a known
+    manifest id; every other changed path (including docs, since Stage 1 has
+    no automatic filename-only exemption) falls into the governance bucket
+    for Engineering OS's own tooling surface."""
+    candidates: set[str] = set()
+    for raw in paths:
+        normalized = raw.replace("\\", "/")
+        parts = normalized.split("/", 2)
+        if len(parts) >= 2 and parts[0] == "templates" and parts[1] in valid_ids:
+            candidates.add(parts[1])
+        else:
+            candidates.add(GOVERNANCE_CONTRACT_ID)
+    return candidates
+
+
+def derive_result_loop_contract(paths: list[str], pr_body: str, empty_run: bool) -> dict[str, Any]:
+    """Computes the selected_result_loop_contract dimension of the artifact.
+    Prefers deterministic derivation from changed paths; only consults a
+    declared `selected_result_loop_contract:` PR-body field when derivation
+    is genuinely ambiguous, and only accepts a declared value that is both a
+    real manifest id and a member of the actual candidate set implied by the
+    diff (rejects a valid-but-unrelated id)."""
+    if empty_run or not paths:
+        return {
+            "required": False,
+            "selection_source": "not_required",
+            "selected_result_loop_contract": "",
+            "validation_status": "not_applicable",
+            "matched_manifest_row": "",
+            "reason": "no changed files (empty run); no code/config/test/system-affecting path exists to select a result-loop contract for.",
+        }
+
+    valid_ids, manifest_unavailable = load_result_loop_contract_ids()
+    if manifest_unavailable:
+        return {
+            "required": True,
+            "selection_source": "manifest_unavailable",
+            "selected_result_loop_contract": "",
+            "validation_status": "unavailable",
+            "matched_manifest_row": "",
+            "reason": "scripts/enforcement/result-loop-requirements.tsv was not found next to this script; cannot derive or validate a result-loop contract.",
+        }
+
+    candidates = classify_result_loop_candidates(paths, valid_ids)
+
+    if len(candidates) == 1:
+        selected = next(iter(candidates))
+        return {
+            "required": True,
+            "selection_source": "derived",
+            "selected_result_loop_contract": selected,
+            "validation_status": "valid",
+            "matched_manifest_row": f"scripts/enforcement/result-loop-requirements.tsv#{selected}",
+            "reason": f"deterministically derived: all {len(paths)} changed path(s) map to exactly one result-loop contract ({selected}).",
+        }
+
+    sorted_candidates = sorted(candidates)
+    declared = declared_result_loop_contract(pr_body)
+    if declared is None:
+        return {
+            "required": True,
+            "selection_source": "ambiguous",
+            "selected_result_loop_contract": "",
+            "validation_status": "missing",
+            "matched_manifest_row": "",
+            "reason": (
+                "changed paths imply multiple candidate result-loop contracts "
+                f"({', '.join(sorted_candidates)}) and no selected_result_loop_contract: "
+                "field was declared under ## Operational Work History Evidence."
+            ),
+        }
+
+    declared = declared.strip()
+    if not concrete_contract_value(declared):
+        return {
+            "required": True,
+            "selection_source": "declared",
+            "selected_result_loop_contract": declared,
+            "validation_status": "placeholder",
+            "matched_manifest_row": "",
+            "reason": (
+                f"declared selected_result_loop_contract '{declared}' looks like a placeholder; "
+                f"declare a real contract id from ({', '.join(sorted_candidates)})."
+            ),
+        }
+    if declared not in valid_ids:
+        return {
+            "required": True,
+            "selection_source": "declared",
+            "selected_result_loop_contract": declared,
+            "validation_status": "unknown_id",
+            "matched_manifest_row": "",
+            "reason": (
+                f"declared selected_result_loop_contract '{declared}' is not a known "
+                "project_type_id in scripts/enforcement/result-loop-requirements.tsv."
+            ),
+        }
+    if declared not in candidates:
+        return {
+            "required": True,
+            "selection_source": "declared",
+            "selected_result_loop_contract": declared,
+            "validation_status": "invalid",
+            "matched_manifest_row": "",
+            "reason": (
+                f"declared selected_result_loop_contract '{declared}' does not match any contract "
+                f"implied by the changed paths (candidates: {', '.join(sorted_candidates)})."
+            ),
+        }
+
+    return {
+        "required": True,
+        "selection_source": "declared",
+        "selected_result_loop_contract": declared,
+        "validation_status": "valid",
+        "matched_manifest_row": f"scripts/enforcement/result-loop-requirements.tsv#{declared}",
+        "reason": (
+            f"explicitly declared in PR body; matches one of the {len(sorted_candidates)} candidate "
+            f"contracts implied by changed paths ({', '.join(sorted_candidates)})."
+        ),
     }
 
 
@@ -258,6 +432,13 @@ def build_summary(record: dict[str, Any]) -> str:
         f"- waiver_mentioned: {friction['waiver_mentioned']}",
         f"- any: {friction['any']}",
         "",
+        "## Result-loop contract",
+        "",
+        f"- required: {record['result_loop_contract']['required']}",
+        f"- selection_source: {record['result_loop_contract']['selection_source']}",
+        f"- selected_result_loop_contract: {record['result_loop_contract']['selected_result_loop_contract'] or 'none'}",
+        f"- validation_status: {record['result_loop_contract']['validation_status']}",
+        "",
         "Privacy note: metadata-only. No raw model/user text, file contents, raw shell commands,",
         "raw repository paths, connector payloads, environment values, or credentials/secrets are stored.",
     ]
@@ -320,6 +501,8 @@ def main() -> int:
         friction["waiver_mentioned"],
     ])
 
+    result_loop_contract = derive_result_loop_contract(raw_files, pr_body, bool(args.empty_run))
+
     record: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -339,6 +522,7 @@ def main() -> int:
         **reviews,
         **telemetry,
         "friction_signals": friction,
+        "result_loop_contract": result_loop_contract,
         "privacy_contract": "metadata-only",
     }
 
