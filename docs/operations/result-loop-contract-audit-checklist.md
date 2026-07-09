@@ -12,11 +12,11 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 - [x] Implementation exists: `derive_result_loop_contract` in `scripts/monitoring/collect-pr-work-history.py`, validated by `scripts/enforcement/check-operational-work-history-evidence.sh`.
 - [x] Fixture tests pass: `scripts/enforcement/tests/test-collect-pr-work-history.sh` and `scripts/enforcement/tests/test-operational-work-history-evidence.sh` cover derived, declared-valid, missing/ambiguous, unknown-id, placeholder, declared-unrelated-to-diff, not-required, stale-artifact, and PR-body-cannot-override cases.
-- [ ] Real positive PR evidence exists.
-- [ ] Real negative PR evidence exists.
-- [ ] Review threads resolved and CI green on both.
+- [x] Real positive PR evidence exists: [PR #239](https://github.com/yotamfried-ux/Engineering-OS/pull/239) — governance-only diff, CI green, artifact derived `selected_result_loop_contract=engineering-os-governance`.
+- [x] Real negative PR evidence exists: [PR #240](https://github.com/yotamfried-ux/Engineering-OS/pull/240) — genuinely ambiguous diff, no declaration, real `pr-policy` failure with the expected `ERROR_FOR_AGENT` reproduced across two CI runs, closed without merging.
+- [x] Review threads resolved and CI green on both: PR #239's chatgpt-codex-connector classification-bug thread and CodeRabbit markdown-lint thread are both resolved; CI green on PR #239 (enforcement-tests, pr-policy, workflow-evidence-policy, connector-evidence-policy, capability-evidence-policy, documentation-asset-policy); PR #240's only real failure was the intended result-loop-contract one, all other real gates green.
 
-`gap:result-loop-contract-enforcement` in `docs/operations/known-gaps.tsv` stays open until all rows above are checked.
+`gap:result-loop-contract-enforcement` in `docs/operations/known-gaps.tsv` is closed — all rows above are checked.
 
 ## Research references
 

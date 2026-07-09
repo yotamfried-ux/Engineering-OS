@@ -72,17 +72,18 @@ single changed-file path.
       ambiguous/unknown-id/placeholder/declared-unrelated-to-diff/not-required/stale-artifact/
       PR-body-cannot-override fixtures, plus a regression assertion that
       `check-route-plan-contract.sh` remains referenced only by its own test file.
-- [ ] Real positive-evidence PR: the PR implementing this stage exercises the new gate on its own real,
-      non-fixture diff (governance-surface-only changes → single candidate → derived,
-      `engineering-os-governance`). Row added to the Real-PR evidence log below once merged.
-- [ ] Real negative-evidence PR/branch: a throwaway PR touching both `templates/web-application/...`
-      and an Engineering OS governance file, with no `selected_result_loop_contract:` declared, proving
-      the real `pr-policy` job fails with the expected `ERROR_FOR_AGENT`. Closed without merging once
-      captured; row added to the Real-PR evidence log below.
+- [x] Real positive-evidence PR: [PR #239](https://github.com/yotamfried-ux/Engineering-OS/pull/239)
+      exercised the new gate on its own real, non-fixture diff (governance-surface-only changes →
+      single candidate → derived, `engineering-os-governance`). Row added to the Real-PR evidence log
+      below.
+- [x] Real negative-evidence PR/branch: [PR #240](https://github.com/yotamfried-ux/Engineering-OS/pull/240)
+      touched both `templates/web-application/README.md` and an Engineering OS governance file, with no
+      `selected_result_loop_contract:` declared, proving the real `pr-policy` job fails with the
+      expected `ERROR_FOR_AGENT`. Closed without merging; row added to the Real-PR evidence log below.
 
-This stage does not close `result-loop-contract-enforcement` by itself — see
-`docs/operations/known-gaps.tsv` row 27 for the closure bar (implementation + fixtures + one real
-positive PR + one real negative PR + review resolution + green CI).
+This stage, combined with the evidence above, closes `result-loop-contract-enforcement` — see
+`docs/operations/known-gaps.tsv` row 27 for the closure bar this satisfies (implementation + fixtures +
+one real positive PR + one real negative PR + review resolution + green CI).
 
 ## Stage 2 — broader Claude Code hook wiring (documented, not enabled)
 
@@ -156,6 +157,8 @@ recorded facts match the real PR they claim to describe.
 | 1 | [#234](https://github.com/yotamfried-ux/Engineering-OS/pull/234) (merged) | doc-only: this section (`operational-work-history-rollout.md`) | `52186af` | 1 | pr-policy (`Require ready-for-review PR`): success; `enforcement-tests`: success | no | Real job log confirmed `pr_head_sha` matched, `operational work history evidence passed`. Bonus real evidence beyond the plan: a review-driven fix commit produced one real transient CI failure (stale `expected-head-sha`), and once fixed the artifact's real `ci_failure_count` correctly triggered the friction-signal path, requiring (and getting) a concrete `learning_loop_result` reason — proving the friction-routing logic against real CI history, not a fixture. |
 | 2 | [#235](https://github.com/yotamfried-ux/Engineering-OS/pull/235) (merged) | doc-accuracy: `runtime-telemetry-archive-plan.md` checklist sync | `0e80d3e` | 2 | pr-policy (`Require ready-for-review PR`): success; `enforcement-tests`: success | no | Real job log confirmed `pr_head_sha` matched, `operational work history evidence passed` — first-attempt clean pass, proving the gate generalizes beyond pass #1's surface. |
 | 3 | [#236](https://github.com/yotamfried-ux/Engineering-OS/pull/236) (closed, not merged) | negative validation: PR intentionally missing `## Operational Work History Evidence` | `c3fb003` | 1 | pr-policy (`Require ready-for-review PR`): **failure** (intended) | yes | Real job log: `PR review and merge-readiness evidence passed` → `operational behavior evidence passed` → `ERROR_FOR_AGENT: PR body must include ## Operational Work History Evidence for any PR with changed files; no filename-only exemption is allowed.` The gate blocked a real missing-evidence case, isolated to this one failing reason (verified — a real chatgpt-codex-connector review flagged an earlier, now-fixed compounding failure, confirmed stale against the final run in the PR thread). PR closed without merging, per design. |
+| 4 | [#239](https://github.com/yotamfried-ux/Engineering-OS/pull/239) (open, not yet merged) | result-loop-contract-selection positive: governance-only diff (scripts/docs/tsv, no `templates/` paths) | `380098c` | 16 | enforcement-tests: success; pr-policy: success; workflow-evidence-policy: success; connector-evidence-policy: success; capability-evidence-policy: success; documentation-asset-policy: success | no | Real job log confirmed the artifact derived `result_loop_contract.selected_result_loop_contract=engineering-os-governance` with `selection_source=derived`, `validation_status=valid`, from this PR's own real, non-fixture diff, and `check-operational-work-history-evidence.sh` passed against it. Two real review findings (chatgpt-codex-connector classification bug, CodeRabbit markdown-lint) were found and fixed in commit 36b85c2; both threads now resolved. |
+| 5 | [#240](https://github.com/yotamfried-ux/Engineering-OS/pull/240) (closed, not merged) | result-loop-contract-selection negative: ambiguous diff (`templates/web-application/README.md` + `scripts/enforcement/check-known-gaps.sh`), no `selected_result_loop_contract:` declared | `4215e2e` | 18 | pr-policy: **failure** (intended, isolated to the result-loop-contract dimension); enforcement-tests, workflow-evidence-policy, connector-evidence-policy, capability-evidence-policy, documentation-asset-policy: success | yes | Real job log confirmed `ERROR_FOR_AGENT` naming the unresolved candidate set (`engineering-os-governance`, `web-application`) and the missing PR-body declaration, reproduced identically across two independent CI runs (jobs 86141419117 and 86141578142) after unrelated PR-body field-format issues (`checks:`/`evidence:`/`threads:` minimum-length and placeholder-word rules) were fixed first, confirming the result-loop-contract dimension was the sole real cause. PR closed without merging, per design. |
 
 ### Closure bar evaluation
 
