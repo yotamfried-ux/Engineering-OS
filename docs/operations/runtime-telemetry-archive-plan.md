@@ -142,18 +142,18 @@ Create:
 scripts/monitoring/export-telemetry-run.sh
 ```
 
-Responsibilities:
+Responsibilities (implemented in `scripts/monitoring/export-telemetry-run.py`, wrapped by `export-telemetry-run.sh`; verified against the actual source below):
 
-- [ ] Locate the target project root using `git rev-parse --show-toplevel` with a safe fallback to `pwd`.
-- [ ] Locate `.engineering-os/telemetry/events.jsonl`.
-- [ ] Locate `.engineering-os/telemetry/latest-summary.md`.
-- [ ] Read `.engineering-os/telemetry/run_id` if present.
-- [ ] Create an export bundle directory.
-- [ ] Copy events and summary into the bundle.
-- [ ] Generate `manifest.json`.
-- [ ] Count events.
-- [ ] Fail clearly if no events file exists unless an explicit empty-run mode is provided.
-- [ ] Avoid copying unrelated local files.
+- [x] Locate the target project root using `git rev-parse --show-toplevel` with a safe fallback to `pwd` (`repo_root()`).
+- [x] Locate `.engineering-os/telemetry/events.jsonl`.
+- [x] Locate `.engineering-os/telemetry/latest-summary.md`.
+- [x] Read `.engineering-os/telemetry/run_id` if present.
+- [x] Create an export bundle directory.
+- [x] Copy events and summary into the bundle.
+- [x] Generate `manifest.json`.
+- [x] Count events.
+- [x] Fail clearly if no events file exists unless an explicit empty-run mode is provided.
+- [x] Avoid copying unrelated local files (only `events.jsonl`, `latest-summary.md`, and the generated `manifest.json` are written to the bundle).
 
 Initial command shape:
 
@@ -169,17 +169,17 @@ Create:
 scripts/monitoring/import-telemetry-run.py
 ```
 
-Responsibilities:
+Responsibilities (implemented in `scripts/monitoring/import-telemetry-run.py`; verified against the actual source below):
 
-- [ ] Read an export bundle.
-- [ ] Validate `manifest.json`.
-- [ ] Validate `events.jsonl` is valid JSONL.
-- [ ] Validate every event has `schema_version`, `trace_id`, `span_id`, `name`, `timestamp`, `resource`, and `attributes`.
-- [ ] Validate no banned raw fields are present.
-- [ ] Copy bundle into `telemetry-archive/runs/<date>/<project>/<run_id>/`.
-- [ ] Create or update `findings.md` placeholder.
-- [ ] Append a row to `telemetry-archive/indexes/runs.jsonl`.
-- [ ] Avoid duplicate import unless `--replace` is explicitly used.
+- [x] Read an export bundle.
+- [x] Validate `manifest.json` (`validate_manifest()`).
+- [x] Validate `events.jsonl` is valid JSONL (`load_events()`).
+- [x] Validate every event has `schema_version`, `trace_id`, `span_id`, `name`, `timestamp`, `resource`, and `attributes` (`EVENT_REQUIRED`).
+- [x] Validate no banned raw fields are present (`validate_metadata_only()`, `BANNED_KEYS`/`BANNED_PATTERNS`).
+- [x] Copy bundle into `telemetry-archive/runs/<date>/<project>/<run_id>/`.
+- [x] Create or update `findings.md` placeholder.
+- [x] Append a row to `telemetry-archive/indexes/runs.jsonl`.
+- [x] Avoid duplicate import unless `--replace` is explicitly used.
 
 Initial command shape:
 
@@ -195,14 +195,14 @@ Create:
 scripts/monitoring/analyze-telemetry-archive.py
 ```
 
-Responsibilities:
+Responsibilities (implemented in `scripts/monitoring/analyze-telemetry-archive.py`; verified against the actual source below):
 
-- [ ] Read `telemetry-archive/indexes/runs.jsonl`.
-- [ ] Compare event counts by project.
-- [ ] Compare missing session/turn/transcript/cwd coverage.
-- [ ] Compare command category distribution.
-- [ ] Surface repeated missing coverage patterns.
-- [ ] Produce a markdown report that can become or update `findings.md`.
+- [x] Read `telemetry-archive/indexes/runs.jsonl`.
+- [x] Compare event counts by project (`Project-level summary`: min/max/total events).
+- [x] Compare missing session/turn/transcript/cwd coverage (`coverage_counts()`).
+- [x] Compare command category distribution (`command_categories()`).
+- [x] Surface repeated missing coverage patterns (`Recurring missing coverage`, requires ≥2 affected runs).
+- [x] Produce a markdown report that can become or update `findings.md` (`--output` writes the report to any target path).
 
 Initial command shape:
 
@@ -340,12 +340,12 @@ Not allowed:
 
 ### Phase 2: implementation
 
-- [ ] Add `scripts/monitoring/export-telemetry-run.sh`.
-- [ ] Add `scripts/monitoring/import-telemetry-run.py`.
-- [ ] Add `scripts/monitoring/analyze-telemetry-archive.py`.
-- [ ] Add `telemetry-archive/README.md`.
-- [ ] Add `.gitkeep` or documented empty archive directory strategy.
-- [ ] Add tests in `scripts/enforcement/tests/test-telemetry-archive.sh`.
+- [x] Add `scripts/monitoring/export-telemetry-run.sh` (thin wrapper around `export-telemetry-run.py`).
+- [x] Add `scripts/monitoring/import-telemetry-run.py`.
+- [x] Add `scripts/monitoring/analyze-telemetry-archive.py`.
+- [x] Add `telemetry-archive/README.md`.
+- [x] Empty archive directory strategy: `telemetry-archive/indexes/` is committed with real (currently empty/near-empty) index files (`runs.jsonl`, `gaps.jsonl`, `projects.json`) rather than a `.gitkeep`, and `README.md` documents the layout — no target-project run has populated `telemetry-archive/runs/` yet.
+- [x] Add tests in `scripts/enforcement/tests/test-telemetry-archive.sh`.
 
 ### Phase 3: Project 8 run
 

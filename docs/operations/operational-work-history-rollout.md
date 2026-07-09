@@ -114,6 +114,6 @@ recorded facts match the real PR they claim to describe.
 
 | Pass | PR | Surface | pr_head_sha (short) | Changed files | CI checks observed | Blocked-case? | Notes |
 |---|---|---|---|---|---|---|---|
-| 1 | pending | doc-only: this section (`operational-work-history-rollout.md`) | pending | pending | pending | no | To be filled in by a later PR once this PR has merged. |
+| 1 | [#234](https://github.com/yotamfried-ux/Engineering-OS/pull/234) (merged) | doc-only: this section (`operational-work-history-rollout.md`) | `52186af` | 1 | pr-policy (`Require ready-for-review PR`): success; `enforcement-tests`: success | no | Real job log confirmed `pr_head_sha` matched, `operational work history evidence passed`. Bonus real evidence beyond the plan: a review-driven fix commit produced one real transient CI failure (stale `expected-head-sha`), and once fixed the artifact's real `ci_failure_count` correctly triggered the friction-signal path, requiring (and getting) a concrete `learning_loop_result` reason — proving the friction-routing logic against real CI history, not a fixture. |
 | 2 | pending | doc-accuracy: `runtime-telemetry-archive-plan.md` checklist sync | pending | pending | pending | no | To be filled in by a later PR once that PR has merged. |
 | 3 | pending | negative validation: PR intentionally missing `## Operational Work History Evidence` | pending | pending | pending | yes | Not merged; closed after capturing the real failing check/reason, then recorded by a later PR. |
