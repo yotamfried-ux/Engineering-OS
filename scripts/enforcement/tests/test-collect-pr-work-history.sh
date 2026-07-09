@@ -27,11 +27,12 @@ mkdir -p "$REPO"
 BASE_SHA="$(cd "$REPO" && git rev-parse HEAD)"
 (
   cd "$REPO"
-  echo "two" > b.txt
-  git add b.txt
+  mkdir -p scripts
+  echo "two" > scripts/b.txt
+  git add scripts/b.txt
   git commit -qm "add feature"
-  echo "three" > c.txt
-  git add c.txt
+  echo "three" > scripts/c.txt
+  git add scripts/c.txt
   git commit -qm "fix flaky retry in feature"
 )
 HEAD_SHA="$(cd "$REPO" && git rev-parse HEAD)"
@@ -208,10 +209,10 @@ mkdir -p "$AMBIG_REPO"
 AMBIG_BASE="$(cd "$AMBIG_REPO" && git rev-parse HEAD)"
 (
   cd "$AMBIG_REPO"
-  mkdir -p templates/web-application
+  mkdir -p templates/web-application scripts
   echo "<html></html>" > templates/web-application/index.html
-  echo "note" > notes.txt
-  git add templates/web-application/index.html notes.txt
+  echo "note" > scripts/notes.txt
+  git add templates/web-application/index.html scripts/notes.txt
   git commit -qm "touch template and governance surface"
 )
 AMBIG_HEAD="$(cd "$AMBIG_REPO" && git rev-parse HEAD)"
@@ -319,5 +320,98 @@ assert rlc['validation_status'] == 'placeholder', rlc
 print('declared placeholder ok')
 "
 pass declared_placeholder_fails_validation true
+
+# 9. templates/rag-system/... (a real alias of the ai-agent project type, per
+# project-type-roadmaps.tsv's template_path column) resolves to ai-agent, not
+# an unrelated/unregistered bucket.
+RAG_REPO="$TMP/rag-repo"
+mkdir -p "$RAG_REPO"
+(
+  cd "$RAG_REPO"
+  git init -q
+  git config user.email work-history@example.invalid
+  git config user.name work-history-test
+  echo "base" > base.txt
+  git add base.txt
+  git commit -qm "base commit"
+)
+RAG_BASE="$(cd "$RAG_REPO" && git rev-parse HEAD)"
+(
+  cd "$RAG_REPO"
+  mkdir -p templates/rag-system
+  echo "content" > templates/rag-system/README.md
+  git add templates/rag-system/README.md
+  git commit -qm "touch rag-system template alias"
+)
+RAG_HEAD="$(cd "$RAG_REPO" && git rev-parse HEAD)"
+OUT9="$TMP/out9"
+python3 "$COLLECTOR" --root "$RAG_REPO" --pr-head-sha "$RAG_HEAD" --base-sha "$RAG_BASE" --out "$OUT9" >/dev/null
+python3 -c "
+import json
+rlc = json.load(open('$OUT9/latest.json'))['result_loop_contract']
+assert rlc['selection_source'] == 'derived', rlc
+assert rlc['selected_result_loop_contract'] == 'ai-agent', rlc
+assert rlc['validation_status'] == 'valid', rlc
+print('rag-system alias resolves to ai-agent ok')
+"
+pass rag_system_alias_resolves_to_ai_agent true
+
+# 10. Ordinary application source outside any recognized template/governance
+# surface (simulating a downstream installed target project's own app code,
+# e.g. src/App.tsx) is left unclassified — it must NOT silently resolve to
+# engineering-os-governance, and must NOT be satisfied by an unrelated
+# declared value either.
+APP_REPO="$TMP/app-repo"
+mkdir -p "$APP_REPO"
+(
+  cd "$APP_REPO"
+  git init -q
+  git config user.email work-history@example.invalid
+  git config user.name work-history-test
+  echo "base" > base.txt
+  git add base.txt
+  git commit -qm "base commit"
+)
+APP_BASE="$(cd "$APP_REPO" && git rev-parse HEAD)"
+(
+  cd "$APP_REPO"
+  mkdir -p src
+  echo "export default function App() {}" > src/App.tsx
+  git add src/App.tsx
+  git commit -qm "add App component"
+)
+APP_HEAD="$(cd "$APP_REPO" && git rev-parse HEAD)"
+OUT10A="$TMP/out10a"
+python3 "$COLLECTOR" --root "$APP_REPO" --pr-head-sha "$APP_HEAD" --base-sha "$APP_BASE" \
+  --pr-body-file "$BODY_NONE" --out "$OUT10A" >/dev/null
+python3 -c "
+import json
+rlc = json.load(open('$OUT10A/latest.json'))['result_loop_contract']
+assert rlc['selection_source'] != 'derived', rlc
+assert rlc['selected_result_loop_contract'] != 'engineering-os-governance', rlc
+assert rlc['validation_status'] == 'missing', rlc
+print('unclassified app source does not silently resolve to governance ok')
+"
+pass unclassified_app_source_not_silently_governance true
+
+BODY_APP_DECLARED="$TMP/body-app-declared.md"
+cat > "$BODY_APP_DECLARED" <<'EOF'
+## Operational Work History Evidence
+
+automatic_sources: .engineering-os/work-history/latest.json
+selected_result_loop_contract: web-application
+EOF
+OUT10B="$TMP/out10b"
+python3 "$COLLECTOR" --root "$APP_REPO" --pr-head-sha "$APP_HEAD" --base-sha "$APP_BASE" \
+  --pr-body-file "$BODY_APP_DECLARED" --out "$OUT10B" >/dev/null
+python3 -c "
+import json
+rlc = json.load(open('$OUT10B/latest.json'))['result_loop_contract']
+assert rlc['selection_source'] == 'declared', rlc
+assert rlc['selected_result_loop_contract'] == 'web-application', rlc
+assert rlc['validation_status'] == 'valid', rlc
+print('unclassified app source accepts a real declared contract ok')
+"
+pass unclassified_app_source_accepts_declared_contract true
 
 echo "collect-pr-work-history simulations passed"

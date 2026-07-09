@@ -141,29 +141,46 @@ with exactly one narrow exception: a true empty diff (`empty_run`/zero changed f
 Stage 1's own no-automatic-filename-exemption rule above — there is no broad `docs/*` or filename-only
 carve-out for this dimension either.
 
-**How it is resolved.** `scripts/monitoring/collect-pr-work-history.py` classifies every changed path:
-a path under `templates/<project_type_id>/...` where `<project_type_id>` is a real row in
-`scripts/enforcement/result-loop-requirements.tsv` maps to that id; every other changed path (which
-covers Engineering OS's own governance/tooling surface — scripts, workflows, docs, manifests) maps to
-one non-scaffolded sentinel id, `engineering-os-governance` (added to `result-loop-requirements.tsv`
-and `project-type-roadmaps.tsv` with `status=exempt`, so it registers a real, non-placeholder contract
-row without pulling `check-scaling-extension.py`'s active-project documentation/pattern/skill coverage
-requirements onto a project type that isn't actually scaffolded).
+**How it is resolved.** `scripts/monitoring/collect-pr-work-history.py` classifies every changed path
+into one of three buckets, deliberately **not** a blanket "anything that isn't `templates/<id>/` is
+governance" rule — this same collector is also installed into downstream target projects
+(`policy-gate-dependencies.tsv`), where ordinary application source (e.g. `src/App.tsx`) must not
+silently resolve to Engineering OS's own governance sentinel instead of that project's real contract:
 
-- If every changed path maps to exactly **one** candidate id, the collector **derives** the contract —
-  no PR-body field needed. This covers the overwhelming majority of real PRs, including every PR in
-  this repository's own governance-tooling surface.
-- If changed paths imply **more than one** candidate (for example a PR that touches both
-  `templates/web-application/...` and an Engineering OS enforcement script), the collector looks for a
-  minimal structured field under `## Operational Work History Evidence`:
+1. A path under `templates/<alias>/...` where `<alias>` is a real template alias of some
+   `project_type_id` in `project-type-roadmaps.tsv`'s `template_path` column (a project type can list
+   more than one alias — e.g. `ai-agent` claims both `templates/ai-agent` and `templates/rag-system` —
+   and a template shared across types, like `templates/web-application` under both `web-application`
+   and `full-stack`, resolves to the type that claims it exclusively) maps to that project type.
+2. A path matching a known Engineering OS governance/tooling prefix (`scripts/`, `core/`, `docs/`,
+   `.github/`, `.claude/`, `templates/` itself, `external-skills/`, `external-systems/`, `patterns/`,
+   `lessons-learned/`, `failed-solutions/`, `architecture-decisions/`, `evals/`, or
+   `README.md`/`CHANGELOG.md`/`LICENSE`/`CLAUDE.md`) maps to one non-scaffolded sentinel id,
+   `engineering-os-governance` (added to `result-loop-requirements.tsv` and `project-type-roadmaps.tsv`
+   with `status=exempt`, so it registers a real, non-placeholder contract row without pulling
+   `check-scaling-extension.py`'s active-project documentation/pattern/skill coverage requirements onto
+   a project type that isn't actually scaffolded).
+3. Anything else — most importantly, ordinary application source that isn't under a recognized
+   template or governance path — is left **unclassified** rather than folded into either bucket.
 
-  ```
+- If every changed path resolves to bucket 1 or 2, and they all agree on exactly **one** candidate id,
+  the collector **derives** the contract — no PR-body field needed. This covers the overwhelming
+  majority of real PRs, including every PR in this repository's own governance-tooling surface.
+- If changed paths imply **more than one** candidate, or include any unclassified (bucket 3) path (for
+  example a PR that touches both `templates/web-application/...` and an Engineering OS enforcement
+  script, or a downstream target project's own `src/` alongside its copied policy-gate scripts), the
+  collector looks for a minimal structured field under `## Operational Work History Evidence`:
+
+  ```yaml
   selected_result_loop_contract: <contract-id>
   ```
 
-  The declared id must be a real `project_type_id` from `result-loop-requirements.tsv` **and** one of
-  the actual candidates implied by the diff — a valid-but-unrelated id (e.g. declaring `cli-tool` on a
-  PR that only touches `web-application`/governance paths) is rejected, not just any known id. Missing,
+  Whenever the candidate set is fully known (no unclassified path), the declared id must be a real
+  `project_type_id` from `result-loop-requirements.tsv` **and** one of the actual candidates implied by
+  the diff — a valid-but-unrelated id (e.g. declaring `cli-tool` on a PR that only touches
+  `web-application`/governance paths) is rejected, not just any known id. When an unclassified path
+  exists, the candidate set is incomplete by construction, so any real, non-placeholder manifest id is
+  accepted — the same trust boundary the old, never-wired 8-field Route Plan checker used. Missing,
   placeholder (`todo`/`tbd`/`unknown`/`n/a`/`none`/`later`/...), or unknown-id declarations all fail
   closed with a concrete `ERROR_FOR_AGENT`.
 
