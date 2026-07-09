@@ -117,3 +117,9 @@ recorded facts match the real PR they claim to describe.
 | 1 | pending | doc-only: this section (`operational-work-history-rollout.md`) | pending | pending | pending | no | To be filled in by a later PR once this PR has merged. |
 | 2 | pending | doc-accuracy: `runtime-telemetry-archive-plan.md` checklist sync | pending | pending | pending | no | To be filled in by a later PR once that PR has merged. |
 | 3 | pending | negative validation: PR intentionally missing `## Operational Work History Evidence` | pending | pending | pending | yes | Not merged; closed after capturing the real failing check/reason, then recorded by a later PR. |
+
+Row 3's negative-case PR keeps every other required PR-body section (Operational
+Behavior Evidence, Review Fallback Evidence, Merge Readiness) valid and only omits
+the `## Operational Work History Evidence` section itself, so the resulting CI
+failure is attributable specifically to this gate and not to an unrelated gap in
+the PR body.
