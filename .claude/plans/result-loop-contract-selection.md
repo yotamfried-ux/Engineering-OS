@@ -56,9 +56,9 @@ Plan Scope: standard
 ## Connector Usage Evidence
 
 - source: GitHub repository `yotamfried-ux/Engineering-OS`, `docs/operations/known-gaps.tsv` row 27, PR #237's real `chatgpt-codex-connector` review finding, PR #228/#233's prior plans (`.claude/plans/result-loop-gate-wiring.md`, `.claude/plans/operational-work-history.md`) read for precedent.
-- action: read the merged main state of every source-of-truth file above via GitHub-backed local checkout before any edit; will open a real ready-for-review PR exercising the new gate on its own real diff (Task 4), and a real throwaway ready-for-review PR proving the negative case (Task 5).
-- result: (updated at the mid/pre-merge checkpoints once PR numbers exist).
-- decision: reuse the existing `pr-policy.yml` / `check-pr-review-evidence.sh` / `check-operational-work-history-evidence.sh` call chain; add no new workflow, no new top-level checker script, no new manifest file beyond the two required rows in the existing result-loop-requirements.tsv / project-type-roadmaps.tsv manifests.
+- action: read the merged main state of every source-of-truth file above via GitHub-backed local checkout before any edit; opened real ready-for-review PR #239 exercising the new gate on its own real diff (Task 4); a real throwaway ready-for-review PR proving the negative case (Task 5) follows once #239 is green.
+- result: opened PR #239 (`yotamfried-ux/Engineering-OS`); `chatgpt-codex-connector` and CodeRabbit real reviews on PR #239 found two valid classification bugs plus one markdown-lint issue, fixed in commit 36b85c2.
+- decision: implemented the fix by reusing the existing `pr-policy.yml` / `check-pr-review-evidence.sh` / `check-operational-work-history-evidence.sh` call chain and adding no new workflow, no new top-level checker script, no new manifest file beyond the two required rows in the existing result-loop-requirements.tsv / project-type-roadmaps.tsv manifests; changed the path-classification logic per the real review findings on PR #239.
 - target: scripts/enforcement/result-loop-requirements.tsv; scripts/enforcement/project-type-roadmaps.tsv; scripts/enforcement/policy-gate-dependencies.tsv; scripts/monitoring/collect-pr-work-history.py; scripts/enforcement/check-operational-work-history-evidence.sh.
 
 ## Capability Evidence
