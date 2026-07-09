@@ -82,11 +82,12 @@ generation, not a real change to either file's behavior.
 
 ## Capability Waiver
 
-- `template.project-template-checked` — the Task 5 negative-evidence branch adds a single throwaway
-  comment line to `templates/web-application/README.md` purely to create a real ambiguous two-candidate
-  diff for the result-loop-contract negative fixture; it is not a real template selection, extension, or
-  usage decision, so the full template-checked evidence (architecture review, stack selection, etc.)
-  does not apply. The branch is closed unmerged once the negative CI evidence is captured.
+- `template.project-template-checked` — waived because the Task 5 negative-evidence branch adds a
+  single throwaway comment line to `templates/web-application/README.md` purely to create a real
+  ambiguous two-candidate diff for the result-loop-contract negative fixture; it is not a real template
+  selection, extension, or usage decision, so the full template-checked evidence (architecture review,
+  stack selection, etc.) is out of scope for this focused evidence-capture branch. The branch is closed
+  unmerged once the negative CI evidence is captured.
 
 ## Claude Run Trace
 
