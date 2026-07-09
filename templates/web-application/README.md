@@ -3,6 +3,9 @@
 ## Overview
 Use this template for full-stack web applications with a React/Next.js frontend, an API backend, and a relational or document database. Suitable for dashboards, marketplaces, SaaS UIs, and content-driven sites where SEO, auth, and CRUD operations are central concerns.
 
+<!-- eos-result-loop-negative-evidence: deliberate throwaway change, part of a
+     negative-case fixture PR for gap:result-loop-contract-enforcement; do not merge. -->
+
 ## Recommended Architecture Options
 
 | Option | Pros | Cons |

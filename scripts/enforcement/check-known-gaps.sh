@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# eos-result-loop-negative-evidence: deliberate throwaway comment, part of a
+# negative-case fixture PR for gap:result-loop-contract-enforcement; do not merge.
 set -euo pipefail
 EOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)" python3 - "$@" <<'PY'
 import os, re, sys
