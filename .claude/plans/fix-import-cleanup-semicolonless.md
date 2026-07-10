@@ -64,3 +64,4 @@ Move the inline parser into a small standalone checker and make static-import te
 ## Progress Lifecycle Evidence
 
 - start: verified the existing regex only matches static imports ending in semicolons and committed this plan before implementation.
+- mid: added a standalone parser that recognizes complete semicolonless and semicolon-terminated static imports while preserving the existing waiver and metadata-only failure output.
