@@ -23,3 +23,4 @@ capability-evidence-policy.yml	scripts/enforcement/check-cv-external-system-sele
 capability-evidence-policy.yml	scripts/enforcement/capability-staged-map.tsv
 capability-evidence-policy.yml	core/capability-registry.yaml
 documentation-asset-policy.yml	scripts/enforcement/check-documentation-asset-evidence.sh
+import-cleanup-policy.yml	scripts/enforcement/check-import-cleanup.py
