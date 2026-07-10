@@ -35,11 +35,11 @@ The previous workflow parser required a trailing semicolon. Project 8 uses semic
 
 ## Experiment
 
-A dedicated executable suite covers a semicolonless unused default import, semicolonless unused named imports, a used semicolonless import, semicolon-terminated behavior, multiline named imports, namespace imports, side-effect imports, and a concrete waiver.
+A dedicated executable suite covers semicolonless unused and used bindings, semicolon-terminated behavior, multiline named imports, namespace imports, side-effect imports, concrete waivers, and both modern `with {}` and legacy `assert {}` import attributes.
 
 ## Fix
 
-The inline workflow parser was replaced by a focused standalone checker. Static imports are considered complete when their module specifier closes, with or without a trailing semicolon. The gate remains fail-closed and preserves the existing waiver behavior.
+The inline workflow parser was replaced by a focused standalone checker. Static imports are considered complete when their module specifier and optional import-attribute block close, with or without a trailing semicolon. The gate remains fail-closed and preserves the existing waiver behavior.
 
 ## Definition of Done
 
@@ -49,6 +49,7 @@ The inline workflow parser was replaced by a focused standalone checker. Static 
 - [x] Used semicolonless import is covered by a passing fixture.
 - [x] Existing semicolon-terminated behavior remains enforced by a fixture.
 - [x] Multiline, namespace, side-effect, and waiver cases are covered.
+- [x] Modern `with {}` and legacy `assert {}` import attributes are covered.
 - [x] Installer dependency manifest includes the checker.
 - [x] Workflow invokes the standalone checker rather than duplicated inline logic.
 
@@ -56,14 +57,14 @@ Final-head CI, automated review, and thread resolution remain mandatory external
 
 ## Connector Evidence
 
-- GitHub: used as the source of truth for the canonical workflow, current `main`, Project 8 PR #3, the review finding, branch commits, and CI results.
+- GitHub: used as the source of truth for the canonical workflow, current `main`, Project 8 PR #3, the review findings, branch commits, and CI results.
 
 ## Connector Usage Evidence
 
 - source: GitHub
-- action: inspected `yotamfried-ux/Engineering-OS/.github/workflows/import-cleanup-policy.yml` and `yotamfried-ux/project-8` PR #3 review thread, then created upstream PR #242
-- result: added `scripts/enforcement/check-import-cleanup.py` and `scripts/enforcement/tests/test-import-cleanup-policy.sh` on PR #242
-- decision: implemented the fix upstream so installed target projects receive one canonical tested policy rather than a Project 8-only workaround
+- action: inspected `yotamfried-ux/Engineering-OS/.github/workflows/import-cleanup-policy.yml`, Project 8 PR #3, and PR #242 review findings
+- result: added and hardened `scripts/enforcement/check-import-cleanup.py` plus `scripts/enforcement/tests/test-import-cleanup-policy.sh` on PR #242
+- decision: implemented and review-hardened the fix upstream so installed target projects receive one canonical tested policy rather than a Project 8-only workaround
 - target: `.github/workflows/import-cleanup-policy.yml`, `scripts/enforcement/check-import-cleanup.py`, `scripts/enforcement/tests/test-import-cleanup-policy.sh`, `scripts/enforcement/policy-gate-dependencies.tsv`
 
 ## Capability Evidence
@@ -89,16 +90,18 @@ Final-head CI, automated review, and thread resolution remain mandatory external
 3. Committed this Route Plan before implementation.
 4. Added a standalone checker, then recorded the mid checkpoint.
 5. Added pass/fail fixtures, rewired the workflow, and registered the install dependency.
-6. Recorded the pre-merge checkpoint after the final code/config/test change.
+6. Recorded a pre-merge checkpoint after the initial final code/config/test change.
 7. Corrected Route Plan evidence formatting after the real policy gates identified missing table-based fields.
+8. Codex identified import-attribute syntax as a real regression risk; extended the checker and added fail/pass fixtures for `with {}` and `assert {}`.
+9. Updated this pre-merge checkpoint after the final review-driven code/test changes.
 
 ## Operational Work History Evidence
 
 - automatic_sources: .engineering-os/work-history/latest.json
-- learning_loop_result: none-with-reason — the new regression suite is the permanent learning artifact for this enforcement defect.
+- learning_loop_result: none-with-reason — the regression suite, including the review-driven import-attribute fixtures, is the permanent learning artifact for this enforcement defect.
 
 ## Progress Lifecycle Evidence
 
 - start: verified the existing regex only matches static imports ending in semicolons and committed this plan before implementation.
 - mid: added a standalone parser that recognizes complete semicolonless and semicolon-terminated static imports while preserving the existing waiver and metadata-only failure output.
-- pre-merge: completed workflow wiring, installer dependency registration, regression fixtures, and full Route Plan evidence; the branch is ready for final-head CI and review validation.
+- pre-merge: completed import-attribute hardening, workflow wiring, installer dependency registration, regression fixtures, and full Route Plan evidence after the final code/test change.
