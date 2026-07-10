@@ -2,7 +2,8 @@
 """Fail when changed JS/TS files contain unused static imports.
 
 This intentionally stays lightweight: it handles default, named, namespace,
-multiline, side-effect, semicolon-terminated, and semicolonless ES imports.
+multiline, side-effect, semicolon-terminated, semicolonless, and attributed ES
+imports (`with { ... }` and legacy `assert { ... }`).
 """
 
 from __future__ import annotations
@@ -15,8 +16,15 @@ from pathlib import Path
 
 SUPPORTED_SUFFIXES = {".js", ".jsx", ".ts", ".tsx"}
 IDENT = re.compile(r"^[A-Za-z_$][\w$]*$")
-FROM_END = re.compile(r"\bfrom\s+(['\"])[^'\"\n]+\1\s*;?\s*(?://[^\n]*)?$", re.S)
-SIDE_EFFECT_END = re.compile(r"^\s*import\s+(['\"])[^'\"\n]+\1\s*;?\s*(?://[^\n]*)?$", re.S)
+IMPORT_ATTRIBUTES = r"(?:\s+(?:with|assert)\s*\{.*?\})?"
+FROM_END = re.compile(
+    r"\bfrom\s+(['\"])[^'\"\n]+\1" + IMPORT_ATTRIBUTES + r"\s*;?\s*(?://[^\n]*)?$",
+    re.S,
+)
+SIDE_EFFECT_END = re.compile(
+    r"^\s*import\s+(['\"])[^'\"\n]+\1" + IMPORT_ATTRIBUTES + r"\s*;?\s*(?://[^\n]*)?$",
+    re.S,
+)
 
 
 def changed_files(root: Path, base: str, head: str) -> list[Path]:
@@ -71,9 +79,6 @@ def import_spans(text: str) -> list[tuple[int, int, str, int]]:
 
         if FROM_END.search(statement.rstrip("\r\n")) or SIDE_EFFECT_END.search(statement.rstrip("\r\n")):
             spans.append((start, end, statement, start_line))
-            for consumed in range(index, cursor + 1):
-                if consumed > index:
-                    offset += len(lines[consumed])
             index = cursor + 1
             offset = end
         else:
