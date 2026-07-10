@@ -5,22 +5,33 @@ Task class: engineering_os_governance
 Domain tags: cleanup, javascript, typescript, ci, governance
 Plan Scope: focused
 Planning Mode: staged
-Templates: existing enforcement-test pattern under `scripts/enforcement/tests/`
-Architecture guides: `core/debugging-policy.md` reproduce-before-fix loop
-Patterns: fail-before/pass-after regression fixture
+Architecture guides: `core/debugging-policy.md`
 External systems/connectors: GitHub
-Skills: not required because this is a focused internal static-analysis correction with executable regression coverage
-Validation gates: enforcement-tests, workflow-evidence-policy, pr-policy, import-cleanup-policy, capability-evidence-policy, connector-evidence-policy, documentation-asset-policy, plan-policy
-Evidence to check: `.github/workflows/import-cleanup-policy.yml`, `scripts/enforcement/check-import-cleanup.py`, `scripts/enforcement/tests/test-import-cleanup-policy.sh`, `scripts/enforcement/policy-gate-dependencies.tsv`, and Project 8 PR #3
-User decisions required: no new decision; the owner already instructed execution through validated merge
-Target paths: `.github/workflows/import-cleanup-policy.yml`, `scripts/enforcement/check-import-cleanup.py`, `scripts/enforcement/tests/test-import-cleanup-policy.sh`, `scripts/enforcement/policy-gate-dependencies.tsv`
+Evidence to check: canonical workflow, checker, regression suite, dependency manifest, and Project 8 PR #3
+User decisions required: no new decision; the owner instructed execution through validated merge
+
+## Route Plan Evidence
+
+| Field | Value |
+|---|---|
+| Task-router evidence | `core/task-router.md` read; classified as `engineering_os_governance` before implementation |
+| Workflow evidence | `core/workflow.md` and `core/debugging-policy.md` read; plan-first reproduce-fix-verify sequence applied |
+| Templates | existing enforcement test structure in `scripts/enforcement/tests/test-import-cleanup-policy.sh` |
+| Patterns | fail-before/pass-after regression fixture design |
+| Skills | not required |
+| Validation gates | enforcement-tests, workflow-evidence-policy, pr-policy, import-cleanup-policy, capability-evidence-policy, connector-evidence-policy, documentation-asset-policy, plan-policy |
+| Target paths | `.github/workflows/import-cleanup-policy.yml`, `scripts/enforcement/check-import-cleanup.py`, `scripts/enforcement/tests/test-import-cleanup-policy.sh`, `scripts/enforcement/policy-gate-dependencies.tsv` |
 
 ## Source of Truth Checks
 
-- `.github/workflows/import-cleanup-policy.yml`: verified the previous parser required a trailing semicolon.
-- `yotamfried-ux/project-8` PR #3: verified real repository style contains semicolonless JS/JSX imports and review thread `PRRT_kwDOQk64s86P5GRR` reported the blind spot.
-- `scripts/enforcement/policy-gate-dependencies.tsv`: registered the standalone checker for target-repository installation.
-- `core/capability-registry.yaml`: selected `engineering_os_governance` because this changes canonical enforcement scripts and workflows.
+| Source | Status |
+|---|---|
+| `.github/workflows/import-cleanup-policy.yml` | read |
+| `scripts/enforcement/policy-gate-dependencies.tsv` | checked |
+| `core/capability-registry.yaml` | read |
+| `yotamfried-ux/project-8` PR #3 review thread `PRRT_kwDOQk64s86P5GRR` | validated |
+
+The previous workflow parser required a trailing semicolon. Project 8 uses semicolonless JS/JSX imports, so the installed gate could silently skip real imports. The capability registry confirms this canonical enforcement change belongs to `engineering_os_governance`.
 
 ## Experiment
 
@@ -41,11 +52,11 @@ The inline workflow parser was replaced by a focused standalone checker. Static 
 - [x] Installer dependency manifest includes the checker.
 - [x] Workflow invokes the standalone checker rather than duplicated inline logic.
 
-Final-head CI, automated review, and thread resolution remain mandatory merge gates and will be verified directly on GitHub before merge.
+Final-head CI, automated review, and thread resolution remain mandatory external merge gates and are verified directly on GitHub before merge.
 
 ## Connector Evidence
 
-- GitHub: used as the source of truth for the canonical workflow, current `main`, Project 8 PR #3, the unresolved review finding, branch commits, and CI results.
+- GitHub: used as the source of truth for the canonical workflow, current `main`, Project 8 PR #3, the review finding, branch commits, and CI results.
 
 ## Connector Usage Evidence
 
@@ -70,6 +81,16 @@ Final-head CI, automated review, and thread resolution remain mandatory merge ga
 - internal: `.github/workflows/import-cleanup-policy.yml`, `core/debugging-policy.md`, `core/capability-registry.yaml`, and `scripts/enforcement/policy-gate-dependencies.tsv`
 - context7: not required because this change is entirely internal enforcement logic and does not implement or integrate an external library, framework, SDK, API, or service
 - decision: the existing workflow and debugging policy confirmed that the correct solution is a reproduce-before-fix regression suite plus one installable checker, not a target-project workaround
+
+## Claude Run Trace
+
+1. Read the canonical import-cleanup workflow and confirmed its regex required `;`.
+2. Verified the real semicolonless style and open review finding on Project 8 PR #3.
+3. Committed this Route Plan before implementation.
+4. Added a standalone checker, then recorded the mid checkpoint.
+5. Added pass/fail fixtures, rewired the workflow, and registered the install dependency.
+6. Recorded the pre-merge checkpoint after the final code/config/test change.
+7. Corrected Route Plan evidence formatting after the real policy gates identified missing table-based fields.
 
 ## Operational Work History Evidence
 
