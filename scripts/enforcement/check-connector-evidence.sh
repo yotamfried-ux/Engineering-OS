@@ -27,8 +27,12 @@ def field(text, name_re):
         cells=[clean(c) for c in line.split('|')]
         for i,c in enumerate(cells[:-1]):
             if re.fullmatch(name_re, c, re.I): return cells[i+1].strip()
-    m=re.search(name_re+r'\s*[:=-]\s*(.+)$', text, re.I|re.M)
-    return m.group(1).strip() if m else ''
+    # name_re may itself contain capturing groups (e.g. an alternation like
+    # "systems/connectors|systems|connectors"), so the value must be captured
+    # by a uniquely-named group rather than a positional one, or a match on the
+    # field-name alternation itself would be mistaken for the field's value.
+    m=re.search(r'(?:'+name_re+r')\s*[:=-]\s*(?P<value>.+)$', text, re.I|re.M)
+    return m.group('value').strip() if m else ''
 
 def section(text, title_re):
     lines=text.splitlines(); out=[]; on=False
