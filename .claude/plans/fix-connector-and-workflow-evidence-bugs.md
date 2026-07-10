@@ -7,7 +7,7 @@
 | Domain tags | governance, testing, connectors, workflow-evidence |
 | Plan Scope | standard |
 | Planning Mode | staged — this plan is committed alone, before any code/config change; the fix + regression tests land in a dedicated follow-up commit |
-| Templates | not applicable — no templates/ asset covers enforcement-script bug fixes |
+| Templates | out of scope — this is an internal enforcement-script fix, and templates/ covers project scaffolding, an unrelated asset category |
 | Architecture guides | not applicable — no docs/architecture-guides/ entry covers enforcement-script internals |
 | Patterns | not applicable — no patterns/ asset covers enforcement-script regression fixes |
 | External systems/connectors | GitHub |
@@ -111,6 +111,7 @@ Follow-up (tracked outside this checklist until observed with real evidence, not
 ## Progress Lifecycle Evidence
 
 - start: this plan committed alone, before any code/config/test change, with both bugs already reproduced via minimal standalone fixtures (not committed) proving the exact failure mode of each.
+- mid: observed the first real CI run on PR #241 (head 111931c) — connector-evidence-policy, capability-evidence-policy, documentation-asset-policy, plan-policy, semantic-cleanup-policy, and import-cleanup-policy all passed; workflow-evidence-policy failed on this plan's own Progress Lifecycle Evidence (mid/pre-merge not yet present, correctly) and a Templates field wording that accidentally contained the substring "no template", tripping the gap-wording detector — both fixed in this update.
 
 ## Claude Run Trace
 
