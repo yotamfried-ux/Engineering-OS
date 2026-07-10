@@ -85,6 +85,22 @@ EOF
 printf '%s\n' "case.ts" > "$TMP/namespace/files.txt"
 pass namespace_import_passes python3 "$CHECK" --root "$TMP/namespace" --files-from "$TMP/namespace/files.txt"
 
+mkdir -p "$TMP/with-attribute-unused"
+cat > "$TMP/with-attribute-unused/case.jsx" <<'EOF'
+import data from './data.json' with { type: 'json' };
+export const value = 1
+EOF
+failcase import_with_attribute_unused_fails run_case "$TMP/with-attribute-unused"
+
+mkdir -p "$TMP/assert-attribute-used"
+cat > "$TMP/assert-attribute-used/case.jsx" <<'EOF'
+import data from './data.json' assert {
+  type: 'json',
+}
+export const value = data
+EOF
+pass legacy_assert_attribute_used_passes run_case "$TMP/assert-attribute-used"
+
 mkdir -p "$TMP/waiver"
 cat > "$TMP/waiver/case.jsx" <<'EOF'
 // EOS_SEMANTIC_CLEANUP_WAIVER: imported for a documented build-time side effect
