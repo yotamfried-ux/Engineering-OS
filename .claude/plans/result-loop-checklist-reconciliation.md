@@ -42,7 +42,7 @@ Plan Scope: standard
 | scripts/enforcement/tests/test-result-loop-contract.sh | checked | Ran locally against `main`: positive smoke test passes, all 6 `expect_reject` negative fixtures (missing-contract-row, placeholder-field, mobile-no-local-review, api-no-performance, missing-telemetry-export, game-no-playable) genuinely reject. |
 | scripts/enforcement/project-type-roadmaps.tsv | checked | 22 rows `status=active`, 1 `exempt`, 0 `deferred`/`planned` — confirms `registry-coverage-backfill`'s claim that all 10 previously-deferred project types now carry real, active coverage. |
 | .github/workflows/enforcement-tests.yml | checked | Named steps "Verify result loop contract gate" and "Verify scaling extension gate" run `check-result-loop-contract.py --root .` / `check-scaling-extension.py --root .` unconditionally; `test-result-loop-contract.sh`/`test-scaling-extension.sh` are covered by the `test-[m-r]*.sh`/`test-[s-z]*.sh` group steps and the final aggregate `test-*.sh` sweep. |
-| core/capability-registry.yaml, scripts/enforcement/capability-staged-map.tsv | checked | `docs/operations/` is not a staged-map path prefix, so this docs-only change does not imply `validation.policy-change-has-validator` or `validation.actions-checked`; only the baseline plan/workflow/routing capabilities apply. |
+| core/capability-registry.yaml, scripts/enforcement/capability-staged-map.tsv | checked | `docs/operations/` is not a staged-map path prefix, so no path-triggered capability applies from that manifest; however `core/capability-registry.yaml`'s `engineering_os_governance` task class unconditionally requires `validation.policy-change-has-validator` regardless of which paths changed, confirmed the hard way when `capability-evidence-policy` failed on the first push and was fixed by adding that id to Capability Evidence. |
 
 ## Documentation Asset Evidence
 
@@ -58,8 +58,8 @@ Plan Scope: standard
 
 - source: GitHub repository `yotamfried-ux/Engineering-OS`, local clone at `/home/user/Engineering-OS`, branch `claude/engineering-os-audit-gaps-159hth`.
 - action: read `known-gaps.tsv`, `operational-readiness-audit.md`, both checker scripts in full, both test suites in full, and `project-type-roadmaps.tsv`/`result-loop-requirements.tsv` headers; ran both checkers and both test suites locally against `main` to independently confirm the closure claims and identify exactly which checklist items are enforced versus not.
-- result: confirmed `result-loop-contract-enforcement`, `scaling-extension-enforcement`, and `registry-coverage-backfill` hold up as closed (no reopening needed); identified the precise line-level state of every checklist item in "Scaling gate implementation," "Scaling fixtures and regression tests," and "Enforcement implementation" (roughly half now demonstrably enforced, roughly half genuinely still open); confirmed "Scaling category coverage," "Real-run evidence," and "Completion criteria" remain correctly unchecked, tied to `monitoring-metrics-sufficiency` (open) and `project-8-real-run-evidence` (blocked).
-- decision: edit only `docs/operations/result-loop-contract-audit-checklist.md`; do not touch `known-gaps.tsv` or `operational-readiness-audit.md` (already correct); do not touch `scaling-extension-procedure.md` / `project-type-roadmaps.md` stale "future manifest" wording (out of scope per user decision).
+- result: confirmed `result-loop-contract-enforcement`, `scaling-extension-enforcement`, and `registry-coverage-backfill` hold up as closed (no reopening needed) at commit `bb4d4ac6e86843b485303e55c72f867af0471256`; identified the precise line-level state of every checklist item in `docs/operations/result-loop-contract-audit-checklist.md`'s "Scaling gate implementation," "Scaling fixtures and regression tests," and "Enforcement implementation" sections (roughly half now demonstrably enforced, roughly half genuinely still open); confirmed "Scaling category coverage," "Real-run evidence," and "Completion criteria" remain correctly unchecked, tied to `monitoring-metrics-sufficiency` (open) and `project-8-real-run-evidence` (blocked) in `docs/operations/known-gaps.tsv`. PR #243 (github.com/yotamfried-ux/Engineering-OS/pull/243) carries this change; a subsequent self-review round, prompted by `chatgpt-codex-connector[bot]`'s review on commit `ff47129424a7520e3a8237b42c7470ac1431d3bf`, found one real overclaim (a checked item claiming `check-scaling-extension.py` catches unregistered project types named in `docs/` prose or `.claude/plans/*.md`, which it does not) and corrected it to unchecked with a citation.
+- decision: chose to edit only `docs/operations/result-loop-contract-audit-checklist.md`; kept `known-gaps.tsv` and `operational-readiness-audit.md` unchanged (already correct); rejected touching `scaling-extension-procedure.md` / `project-type-roadmaps.md` stale "future manifest" wording (out of scope per user decision); updated the checklist again after the Codex finding instead of leaving the overclaim in place.
 - target: docs/operations/result-loop-contract-audit-checklist.md
 
 ## Capability Evidence
@@ -68,7 +68,8 @@ Plan Scope: standard
 - `workflow.workflow-read` — core/workflow.md read.
 - `plan.route-plan-before-write` — this plan came before the checklist edit.
 - `source.github-repo-read` — repository files read via local clone + GitHub state already verified earlier in this task.
-- `validation.coderabbit-policy` — review or fallback required before merge.
+- `validation.policy-change-has-validator` — no new validator was added because no enforcement script changed; this docs-only change was itself validated by running the two existing validators it describes (`scripts/enforcement/check-result-loop-contract.py`, `scripts/enforcement/check-scaling-extension.py`) plus their test suites locally against `main` before any checkbox was edited, and again after the Codex review finding to confirm the correction.
+- `validation.coderabbit-policy` — CodeRabbit hit its per-developer rate limit on commit `ff47129424a7520e3a8237b42c7470ac1431d3bf` ("Next review available in: 52 minutes"); `chatgpt-codex-connector[bot]`'s automated review ran instead and found one real issue (addressed above); self-review fallback recorded in the PR body's Review Fallback Evidence section.
 
 ## Claude Run Trace
 
@@ -113,8 +114,8 @@ Plan Scope: standard
 ## Progress Lifecycle Evidence
 
 - start: source-of-truth checks (known-gaps.tsv, audit doc, both checker scripts, both test suites, roadmap manifest) happened before editing the checklist.
-- mid: read both checker scripts fully, ran both checkers and both test suites locally, classified every affected checklist line item, wrote the reconciled checklist file.
-- pre-merge: final plan matches the single changed file; this plan's evidence sections were written after the checklist edit was finalized.
+- mid: read both checker scripts fully, ran both checkers and both test suites locally, classified every affected checklist line item, wrote the reconciled checklist file, opened PR #243 at commit `ff47129424a7520e3a8237b42c7470ac1431d3bf`.
+- mid: CI on `ff47129424a7520e3a8237b42c7470ac1431d3bf` failed 4 real gates (`connector-evidence-policy`: Connector Usage Evidence result/decision fields too vague; `capability-evidence-policy`: missing `validation.policy-change-has-validator` for the `engineering_os_governance` task class; `pr-policy`: PR body was missing the required `## Operational Work History Evidence` section; `plan-policy`: expected, since this plan's own DoD still had 2 unchecked items at that point) plus the expected unchecked-DoD failure; `chatgpt-codex-connector[bot]`'s automated review (CodeRabbit was rate-limited) found a real overclaim in the checklist edit itself (an item claiming scaling-gate coverage of `docs/`/Route-Plan project-type mentions that the checker does not actually provide). Fixed all of these: corrected the checklist item, added concrete identifiers/decision-impact language to Connector Usage Evidence, added `validation.policy-change-has-validator` to Capability Evidence, and added `## Operational Work History Evidence` to the PR body.
 
 ## DoD
 
@@ -124,5 +125,7 @@ Plan Scope: standard
 - [x] Reconcile `result-loop-contract-audit-checklist.md` line-by-line against real enforcement evidence.
 - [x] Add section-level notes explaining what remains genuinely open and why, tied to `monitoring-metrics-sufficiency`/`project-8-real-run-evidence` where applicable.
 - [x] Leave `known-gaps.tsv` and `operational-readiness-audit.md` untouched (already correct).
-- [ ] Push branch, open ready-for-review PR, confirm all CI green.
+- [x] Push branch, open ready-for-review PR #243.
+- [x] Fix the 4 real CI failures from the first push (connector-evidence-policy, capability-evidence-policy, pr-policy, and the checklist overclaim `chatgpt-codex-connector[bot]` found).
+- [ ] Confirm all CI green on the corrected head SHA.
 - [ ] Resolve review threads (CodeRabbit or self-review fallback).
