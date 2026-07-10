@@ -29,7 +29,7 @@ User decisions required: no new decision; the owner instructed execution through
 | `.github/workflows/import-cleanup-policy.yml` | read |
 | `scripts/enforcement/policy-gate-dependencies.tsv` | checked |
 | `core/capability-registry.yaml` | read |
-| `yotamfried-ux/project-8` PR #3 review thread `PRRT_kwDOQk64s86P5GRR` | validated |
+| `https://github.com/yotamfried-ux/project-8/pull/3` | validated |
 
 The previous workflow parser required a trailing semicolon. Project 8 uses semicolonless JS/JSX imports, so the installed gate could silently skip real imports. The capability registry confirms this canonical enforcement change belongs to `engineering_os_governance`.
 
@@ -94,6 +94,7 @@ Final-head CI, automated review, and thread resolution remain mandatory external
 7. Corrected Route Plan evidence formatting after the real policy gates identified missing table-based fields.
 8. Codex identified import-attribute syntax as a real regression risk; extended the checker and added fail/pass fixtures for `with {}` and `assert {}`.
 9. Updated this pre-merge checkpoint after the final review-driven code/test changes.
+10. Replaced the PR-thread shorthand in Source of Truth Checks with a concrete GitHub URL so the source itself is auditable by the workflow-evidence gate.
 
 ## Operational Work History Evidence
 
