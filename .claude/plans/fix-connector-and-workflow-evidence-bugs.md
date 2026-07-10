@@ -103,6 +103,7 @@ None currently open. If CodeRabbit or CI surfaces something requiring a design d
 - [x] Bug 1's existing 15 fixtures in `test-connector-evidence.sh` still all pass — enforcement not weakened.
 - [x] Bug 2 reproduced with a minimal standalone fixture and a new regression fixture in `test-workflow-evidence.sh` that fails on unmodified `check-workflow-evidence.sh`.
 - [x] Bug 2 fixed via an opt-in, git-verified "Inherited base commit" marker; the passing fixture now passes, and 5 new fail-case fixtures (no marker, invalid SHA, marker at/after the plan commit, own code still before own plan despite a valid marker, marker without a concrete reason) all still correctly fail.
+- [x] Bug 2 follow-up fix (from PR review): the marker exemption now also filters `plans` itself, not just `code_idxs` — an inherited branch's own `.claude/plans/*.md` file (a different path than this branch's own plan) no longer corrupts `first_plan` or gets re-validated against this branch's own DoD/Progress-Lifecycle timeline. New regression fixture `inherited-own-plan-file-does-not-corrupt-check` confirmed failing on the pre-fix code and passing after.
 - [x] Bug 2's existing 7 fixtures in `test-workflow-evidence.sh` (code-without-plan, plan-and-code-same-commit, plan-before-code, missing-router-evidence, missing-source-checks, missing-skill-evidence, template-gap-no-waiver/with-waiver) still all pass — enforcement not weakened.
 - [x] Full local enforcement test sweep (all `scripts/enforcement/tests/*.sh`, 83 files) run and green.
 

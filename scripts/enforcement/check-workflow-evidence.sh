@@ -121,12 +121,26 @@ if code:
         exempt_idx=commits.index(resolved)+1
 
     first_plan=first_code=0
+    plan_first_idx={}
     for idx,c in enumerate(commits,1):
         fs=sh('git','diff-tree','--no-commit-id','--name-only','-r',c); commit_files[c]=fs
-        if not first_plan and any(re.match(r'^\.claude/plans/.*\.md$',f) for f in fs): first_plan=idx
+        for f in fs:
+            if re.match(r'^\.claude/plans/.*\.md$',f) and f not in plan_first_idx: plan_first_idx[f]=idx
         cfs=[f for f in fs if f and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',f)]
         if cfs and idx>exempt_idx: code_idxs.append(idx)
         if not first_code and cfs and idx>exempt_idx: first_code=idx
+
+    # Plan files whose first appearance is at/before the exempted boundary belong to
+    # the inherited history, not this branch's own Route Plan — exclude them from
+    # first_plan and from the downstream per-plan evidence checks below, the same way
+    # exempt_idx already excludes inherited commits from code classification. Without
+    # this, an inherited branch's own (already-validated-elsewhere) plan file would
+    # both miscompute first_plan and get re-validated against this branch's own
+    # DoD/Progress-Lifecycle timeline, which this script was never meant to do for a
+    # plan this PR didn't author.
+    if exempt_idx:
+        plans=[p for p in plans if plan_first_idx.get(p,0)>exempt_idx]
+    first_plan=min((i for p,i in plan_first_idx.items() if not exempt_idx or i>exempt_idx),default=0)
 
     if exempt_idx:
         if not first_plan or exempt_idx>=first_plan:

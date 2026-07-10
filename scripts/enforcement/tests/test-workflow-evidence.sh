@@ -264,6 +264,35 @@ git add .claude/plans/task.md
 git commit -qm plan-pre-merge
 expect_fail inherited-marker-short-reason-fails "$(git rev-parse HEAD)"
 
+# Regression (found in PR review): inherited history that itself includes its own,
+# already-policy-compliant Route Plan (a different path than this branch's own plan)
+# must not corrupt first_plan or get re-validated against this branch's own
+# DoD/Progress-Lifecycle timeline. Only this branch's own plan path should be used.
+git checkout -q -b inherited-own-plan-file-does-not-corrupt-check "$BASE"
+reset_workspace
+write_good_plan .claude/plans/inherited-guidance.md full
+git add .claude/plans/inherited-guidance.md
+git commit -qm "inherited: add guidance route plan"
+echo "guidance v1" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance doc"
+INHERITED_SHA="$(git rev-parse HEAD)"
+reset_workspace
+write_good_plan .claude/plans/task.md start "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in), including its own already-validated route plan file, that predate this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-first
+reset_workspace
+echo 'console.log("hello")' > src/app.js
+git add src/app.js
+git commit -qm code-second
+write_good_plan .claude/plans/task.md mid "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in), including its own already-validated route plan file, that predate this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-mid
+write_good_plan .claude/plans/task.md full "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in), including its own already-validated route plan file, that predate this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-pre-merge
+expect_pass inherited-own-plan-file-does-not-corrupt-check "$(git rev-parse HEAD)"
+
 # Missing task-router evidence fails.
 git checkout -q -b missing-router-evidence "$BASE"
 reset_workspace
