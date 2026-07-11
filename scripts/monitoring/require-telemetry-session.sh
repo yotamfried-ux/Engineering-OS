@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+block() {
+  echo "ERROR_FOR_AGENT: $1" >&2
+  [ -z "${2:-}" ] || echo "ACTION: $2" >&2
+  # Claude Code PreToolUse hooks block only on exit code 2. Exit code 1 is a
+  # non-blocking hook error, so every telemetry preflight failure must use 2.
+  exit 2
+}
+
 if [ "${EOS_TELEMETRY_DISABLED:-0}" = "1" ]; then
-  echo "ERROR_FOR_AGENT: Engineering OS telemetry is disabled for this session." >&2
-  echo "ACTION: start a fresh Claude session with telemetry enabled before continuing the experiment." >&2
-  exit 1
+  block "Engineering OS telemetry is disabled for this session." \
+    "start a fresh Claude session with telemetry enabled before continuing the experiment."
 fi
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -12,23 +19,14 @@ EVENTS="${EOS_TELEMETRY_FILE:-$ROOT/.engineering-os/telemetry/events.jsonl}"
 RUN_ID_FILE="${EOS_TELEMETRY_RUN_ID_FILE:-$ROOT/.engineering-os/telemetry/run_id}"
 SETTINGS="${EOS_CLAUDE_SETTINGS_FILE:-$ROOT/.claude/settings.json}"
 
-[ -f "$SETTINGS" ] || {
-  echo "ERROR_FOR_AGENT: .claude/settings.json is missing; telemetry hooks cannot be active." >&2
-  echo "ACTION: re-run the current Engineering OS installer, then restart Claude." >&2
-  exit 1
-}
-[ -s "$RUN_ID_FILE" ] || {
-  echo "ERROR_FOR_AGENT: telemetry run_id is missing; the SessionStart hook did not initialize this session." >&2
-  echo "ACTION: restart Claude in this repository and verify the SessionStart hook runs." >&2
-  exit 1
-}
-[ -s "$EVENTS" ] || {
-  echo "ERROR_FOR_AGENT: telemetry events are missing; no current-session evidence exists." >&2
-  echo "ACTION: restart Claude after installing the telemetry hooks." >&2
-  exit 1
-}
+[ -f "$SETTINGS" ] || block ".claude/settings.json is missing; telemetry hooks cannot be active." \
+  "re-run the current Engineering OS installer, then restart Claude."
+[ -s "$RUN_ID_FILE" ] || block "telemetry run_id is missing; the SessionStart hook did not initialize this session." \
+  "restart Claude in this repository and verify the SessionStart hook runs."
+[ -s "$EVENTS" ] || block "telemetry events are missing; no current-session evidence exists." \
+  "restart Claude after installing the telemetry hooks."
 
-python3 - "$EVENTS" "$RUN_ID_FILE" "$SETTINGS" <<'PY'
+if ! python3 - "$EVENTS" "$RUN_ID_FILE" "$SETTINGS" <<'PY'
 from __future__ import annotations
 
 import json
@@ -71,3 +69,6 @@ if not has_current_start:
 
 print(f"telemetry session ready: events={count}")
 PY
+then
+  exit 2
+fi
