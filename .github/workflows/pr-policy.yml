@@ -58,11 +58,15 @@ jobs:
 
           # Branch-level pull-request run history preserves earlier failures that a
           # final green check snapshot would otherwise erase from friction evidence.
-          if gh run list -R "$REPO" --branch "$HEAD_REF" --event pull_request --limit 100 \
-            --json workflowName,conclusion,status,headSha,createdAt,updatedAt > /tmp/ci-history.json 2>/tmp/ci-history.err; then
+          # Use the paginated Actions API rather than a fixed gh-run-list limit so a
+          # long correction loop cannot silently truncate its earliest failures.
+          if gh api --paginate -X GET "repos/$REPO/actions/runs" \
+            -f branch="$HEAD_REF" -f event=pull_request -f per_page=100 \
+            --jq '.workflow_runs[] | {workflowName: .name, conclusion: .conclusion, status: .status, headSha: .head_sha, createdAt: .created_at, updatedAt: .updated_at}' \
+            | jq -s '.' > /tmp/ci-history.json 2>/tmp/ci-history.err; then
             :
           else
-            echo "gh run list (history) unavailable:"; cat /tmp/ci-history.err || true
+            echo "gh api (CI history) unavailable:"; cat /tmp/ci-history.err || true
             rm -f /tmp/ci-history.json
           fi
           exit 0
