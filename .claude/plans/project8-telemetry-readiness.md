@@ -7,7 +7,7 @@ Plan Scope: focused
 Planning Mode: staged
 External systems/connectors: GitHub
 Architecture guides: `docs/operations/runtime-telemetry-archive-plan.md`, `docs/operations/operational-work-history-rollout.md`, `core/debugging-policy.md`, `https://code.claude.com/docs/en/hooks`
-Evidence to check: Project 8 `main`, installed settings, session events/run id, export bundle, branch CI history, Operational Work History, named regression steps, reviews, and exact final-head checks
+Evidence to check: Project 8 `main`, installed settings, session events/run id, export bundle, complete paginated branch CI history, Operational Work History, named regression steps, reviews, and exact final-head checks
 User decisions required: owner approval before merging PR #244; no provider or Project 8 application decision is needed here
 
 ## Route Plan Evidence
@@ -30,7 +30,8 @@ User decisions required: owner approval before merging PR #244; no provider or P
 | `scripts/install-policy-gates.sh` | read | direct installation created CI gates but did not create missing Claude settings |
 | `.claude/settings.json` | read | canonical hooks existed but were not installed by the direct path |
 | `scripts/monitoring/eos-telemetry-event.sh` | read | the original run-id behavior could merge separate sessions |
-| `.github/workflows/pr-policy.yml` | read | the final check snapshot omitted earlier branch failures |
+| `.github/workflows/pr-policy.yml` | read | the final check snapshot omitted earlier branch failures, and the first history implementation capped collection at 100 runs |
+| PR #244 Operational Work History artifact `operational-work-history-244-29160272110` | validated | exactly 100 branch runs were recorded despite a 32-commit correction loop, proving the fixed `--limit 100` path could truncate early friction |
 | `https://code.claude.com/docs/en/hooks` | validated | `PreToolUse` blocks only on exit 2 and the required lifecycle events are supported |
 
 ## Implemented fixes
@@ -41,8 +42,9 @@ User decisions required: owner approval before merging PR #244; no provider or P
 4. The preflight requires settings, run id, events, and a matching session start; all denials return Claude's blocking exit code 2.
 5. Recorder output contains hashes, categories, buckets, booleans, and safe tokens only; fixtures prove raw prompt, error, path, command, response, and secrets are not retained.
 6. `pr-policy` collects branch PR-run history and enriches Operational Work History with aggregate historical failures, including `startup_failure`, without raw logs, URLs, ids, branches, or payloads.
-7. Named installer and Project 8 telemetry steps were added to `enforcement-tests` while preserving the full existing `use-in-project` contract.
-8. `docs/operations/project8-telemetry-preflight.md` defines fresh-session verification and non-empty export/import preparation.
+7. Branch CI history uses the paginated GitHub Actions API and combines every page into one metadata array; a static wiring regression rejects fixed `gh run list --limit` collection.
+8. Named installer and Project 8 telemetry steps were added to `enforcement-tests` while preserving the full existing `use-in-project` contract.
+9. `docs/operations/project8-telemetry-preflight.md` defines fresh-session verification and non-empty export/import preparation.
 
 ## Definition of Done
 
@@ -55,22 +57,23 @@ User decisions required: owner approval before merging PR #244; no provider or P
 - [x] Tool and lifecycle metadata coverage is installed for the next experiment.
 - [x] Privacy fixture proves raw sensitive content is not stored.
 - [x] Historical CI failures and `startup_failure` feed friction evidence.
+- [x] Branch CI history is paginated rather than silently capped at 100 runs.
 - [x] Installer/runtime/privacy/history changes have executable regression tests and named CI steps.
-- [x] Implementation head `22af2809d5093d1da0164d4b4a95780f2b495d4f` passed all 26 enforcement steps and every non-lifecycle policy gate.
+- [x] Implementation head `e85563397812824c45c4aa1f2eaef77bb1ddcb41` passed all 26 enforcement steps, including simulation coverage and the aggregate suite.
 - [x] Three Codex findings and CodeRabbit's `startup_failure` finding were fixed with regression coverage and their implementation threads were resolved.
 
 Final merge remains externally gated on all nine workflows passing on the final plan-only head, zero unresolved valid review threads, and explicit owner approval.
 
 ## Connector Evidence
 
-- GitHub was used to inspect Project 8 `main`, Engineering OS sources, PR #244 check runs, job steps, and review threads. This evidence changed the installer, runtime, CI-history implementation, and regression structure.
+- GitHub was used to inspect Project 8 `main`, Engineering OS sources, PR #244 check runs, job steps, review threads, and the generated Operational Work History artifact. This evidence changed the installer, runtime, CI-history implementation, pagination strategy, and regression structure.
 
 ## Connector Usage Evidence
 
 - source: GitHub
-- action: inspected Project 8 installation state, canonical installer/telemetry/workflow files, PR #244 CI jobs, and Codex/CodeRabbit threads
-- result: implementation head `22af2809d5093d1da0164d4b4a95780f2b495d4f` contains corrections in `scripts/install-policy-gates.sh`, `scripts/monitoring/`, `.github/workflows/`, and the telemetry regression suites and passed the complete enforcement job
-- decision: changed canonical upstream installation and telemetry behavior rather than adding a Project 8-only workaround; CI and review evidence changed code and tests
+- action: inspected Project 8 installation state, canonical installer/telemetry/workflow files, PR #244 CI jobs, review threads, and artifact `operational-work-history-244-29160272110`
+- result: implementation head `e85563397812824c45c4aa1f2eaef77bb1ddcb41` contains corrections in `scripts/install-policy-gates.sh`, `scripts/monitoring/`, `.github/workflows/`, and the telemetry/CI-history regression suites and passed the complete 26-step enforcement job
+- decision: changed canonical upstream installation and telemetry behavior rather than adding a Project 8-only workaround; the artifact's exact 100-run count caused replacement of the fixed limit with paginated Actions API collection
 - target: `scripts/install-policy-gates.sh`, `scripts/monitoring/`, `.github/workflows/pr-policy.yml`, `.github/workflows/enforcement-tests.yml`, and `scripts/enforcement/tests/`
 
 ## Capability Evidence
@@ -78,8 +81,8 @@ Final merge remains externally gated on all nine workflows passing on the final 
 - `routing.task-router-read`: classified as `engineering_os_governance`.
 - `workflow.workflow-read`: used plan-first staged correction.
 - `plan.route-plan-before-write`: plan commit preceded implementation.
-- `source.github-repo-read`: Project 8 and Engineering OS sources, CI, and reviews were inspected before corrections.
-- `validation.policy-change-has-validator`: every behavior change has executable regression coverage.
+- `source.github-repo-read`: Project 8 and Engineering OS sources, CI, reviews, and the generated artifact were inspected before corrections.
+- `validation.policy-change-has-validator`: every behavior change, including paginated CI-history wiring, has executable regression coverage.
 - `validation.coderabbit-policy`: valid Codex/CodeRabbit findings were fixed and resolved before this checkpoint.
 - `validation.actions-checked`: implementation-head Actions were checked; final plan-only head must pass again.
 
@@ -87,7 +90,7 @@ Final merge remains externally gated on all nine workflows passing on the final 
 
 - internal: `docs/operations/runtime-telemetry-archive-plan.md`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/operational-work-history-rollout.md`, `docs/operations/project8-telemetry-preflight.md`
 - context7: `https://code.claude.com/docs/en/hooks` was checked directly for hook events, stdin payloads, cadence, matcher behavior, parallel handlers, and blocking exit semantics
-- decision: official documentation changed the implementation to exit 2, all-tools matching, and privacy-safe lifecycle coverage; no new backend was introduced
+- decision: official documentation changed the implementation to exit 2, all-tools matching, and privacy-safe lifecycle coverage; real artifact inspection changed CI history from a fixed limit to pagination; no new backend was introduced
 
 ## Claude Run Trace
 
@@ -98,15 +101,18 @@ Final merge remains externally gated on all nine workflows passing on the final 
 5. Applied official hook semantics, including exit code 2 and supported lifecycle events.
 6. Restored the full `use-in-project` contract after simulation coverage detected removed assertions.
 7. Added `startup_failure` after CodeRabbit review.
-8. Implementation head `22af2809d5093d1da0164d4b4a95780f2b495d4f` passed all 26 enforcement steps; implementation review threads were resolved.
+8. Inspected the PR artifact and found the branch history stopped at exactly 100 runs.
+9. Replaced fixed-limit collection with paginated Actions API retrieval and added a static regression that rejects reintroduction of `gh run list --limit`.
+10. Preserved the existing simulation-coverage contract token after the meta-gate correctly detected an accidental output-token rename.
+11. Implementation head `e85563397812824c45c4aa1f2eaef77bb1ddcb41` passed all 26 enforcement steps, including every shard, aggregate sweep, and use-in-project validation.
 
 ## Operational Work History Evidence
 
 - automatic_sources: `.engineering-os/work-history/latest.json`
-- learning_loop_result: none-with-reason — CI failures and review findings were fixed inline with permanent regression coverage, so this PR and plan are the durable record.
+- learning_loop_result: none-with-reason — CI failures, the 100-run truncation, simulation-contract friction, and review findings were fixed inline with permanent regression coverage, so this PR and plan are the durable record.
 
 ## Progress Lifecycle Evidence
 
 - start: verified the missing settings/recorder, zero-event result, persistent run id, and point-in-time CI limitation before implementation.
 - mid: corrected installation, lifecycle coverage, session isolation, blocking semantics, privacy, historical CI aggregation, named CI visibility, and review findings.
-- pre-merge: after the last code/test change, implementation head `22af2809d5093d1da0164d4b4a95780f2b495d4f` passed all 26 enforcement steps and every non-lifecycle policy gate; all implementation findings were resolved. This plan-only update records the final checkpoint while merge remains conditional on a clean exact-head rerun and owner approval.
+- pre-merge: after the final workflow/test changes, implementation head `e85563397812824c45c4aa1f2eaef77bb1ddcb41` passed all 26 enforcement steps, including paginated CI-history wiring, simulation coverage, aggregate enforcement, and use-in-project validation. This plan-only update records the completed implementation checkpoint while merge remains conditional on a clean exact-head rerun and owner approval.
