@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-FAILING = {"failure", "timed_out", "cancelled", "action_required"}
+FAILING = {"failure", "timed_out", "cancelled", "action_required", "startup_failure"}
 START = "<!-- EOS_CI_HISTORY_START -->"
 END = "<!-- EOS_CI_HISTORY_END -->"
 
