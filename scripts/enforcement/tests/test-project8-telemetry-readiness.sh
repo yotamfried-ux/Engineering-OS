@@ -48,8 +48,6 @@ SEED="stable-process-level-seed"
 blockcase preflight_blocks_before_session bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
 blockcase preflight_blocks_when_disabled bash -c "cd '$TARGET' && EOS_TELEMETRY_DISABLED=1 EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
 
-# Intentionally omit ENGINEERING_OS_HOME: installed settings use the wrapper's
-# absolute path, and the wrapper must resolve its recorder beside itself.
 printf '%s' '{"session_id":"first-session","hook_event_name":"SessionStart","source":"startup","model":"claude-test"}' | \
   (cd "$TARGET" && EOS_TELEMETRY_RUN_ID="$SEED" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
   EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" EOS_TELEMETRY_SUMMARY_FILE="$SUMMARY" \
@@ -57,8 +55,6 @@ printf '%s' '{"session_id":"first-session","hook_event_name":"SessionStart","sou
 first_run="$(cat "$RUN_ID")"
 pass preflight_passes_after_session bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
 
-# Keep the same process-level seed. The run-id file must win, preserving the
-# current session id rather than replacing it with the static seed hash.
 printf '%s' '{"session_id":"first-session","tool_name":"Bash","tool_input":{"command":"npm test"}}' | \
   (cd "$TARGET" && EOS_TELEMETRY_RUN_ID="$SEED" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" bash "$RECORDER" post_tool_use)
 
@@ -101,8 +97,6 @@ PY
 pass privacy_safe_lifecycle_events true
 pass run_id_file_precedes_process_seed true
 
-# Stop summary must also resolve its analyzer beside the recorder without
-# ENGINEERING_OS_HOME being exported in the target process.
 printf '%s' '{"session_id":"first-session","hook_event_name":"Stop"}' | \
   (cd "$TARGET" && EOS_TELEMETRY_RUN_ID="$SEED" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" EOS_TELEMETRY_SUMMARY_FILE="$SUMMARY" bash "$RECORDER" stop)
 pass stop_summary_created_without_home test -f "$SUMMARY"
@@ -151,6 +145,7 @@ cat > "$HISTORY" <<'JSON'
   {"workflowName":"pr-policy","status":"completed","conclusion":"failure","headSha":"aaa","createdAt":"2026-07-10T10:00:00Z"},
   {"workflowName":"pr-policy","status":"completed","conclusion":"success","headSha":"aaa","createdAt":"2026-07-10T10:10:00Z"},
   {"workflowName":"enforcement-tests","status":"completed","conclusion":"failure","headSha":"bbb","createdAt":"2026-07-10T10:20:00Z"},
+  {"workflowName":"yaml-validation","status":"completed","conclusion":"startup_failure","headSha":"ccc","createdAt":"2026-07-10T10:30:00Z"},
   {"workflowName":"old-run","status":"completed","conclusion":"failure","headSha":"old","createdAt":"2026-07-01T10:00:00Z"}
 ]
 JSON
@@ -158,14 +153,15 @@ python3 "$ENRICHER" --artifact "$ARTIFACT" --summary "$SUMMARY_FILE" --ci-histor
 python3 - "$ARTIFACT" <<'PY'
 import json, sys
 r = json.load(open(sys.argv[1]))
-assert r['ci_history_runs_count'] == 3, r
-assert r['ci_history_failure_count'] == 2, r
-assert r['ci_history_failed_workflow_counts'] == {'enforcement-tests': 1, 'pr-policy': 1}, r
-assert r['friction_signals']['ci_historical_failures'] == 2, r
+assert r['ci_history_runs_count'] == 4, r
+assert r['ci_history_failure_count'] == 3, r
+assert r['ci_history_failed_workflow_counts'] == {'enforcement-tests': 1, 'pr-policy': 1, 'yaml-validation': 1}, r
+assert r['friction_signals']['ci_historical_failures'] == 3, r
 assert r['friction_signals']['any'] is True, r
 assert r['privacy_contract'] == 'metadata-only'
 PY
 pass historical_ci_friction_preserved true
-pass summary_includes_history grep -q 'historical failing runs: 2' "$SUMMARY_FILE"
+pass startup_failure_friction_preserved true
+pass summary_includes_history grep -q 'historical failing runs: 3' "$SUMMARY_FILE"
 
 echo "project8 telemetry readiness tests passed"
