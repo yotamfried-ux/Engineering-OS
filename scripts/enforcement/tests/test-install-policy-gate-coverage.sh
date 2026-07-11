@@ -15,6 +15,7 @@ installed_workflows() {
 
 pass() { echo "ok: $1"; }
 fail() { echo "fail: $1"; exit 1; }
+manifest_has() { grep -Fqx "$1"$'\t'"$2" "$MANIFEST"; }
 
 [ -f "$MANIFEST" ] || fail "manifest_present"
 pass manifest_present
@@ -38,7 +39,7 @@ for wf in "$WORKFLOWS_DIR"/*.yml; do
   case " $INSTALLED " in *" $name "*) ;; *) continue ;; esac
   while IFS= read -r called; do
     [ -n "$called" ] || continue
-    grep -qE "^${name}\t${called}$" "$MANIFEST" \
+    manifest_has "$name" "$called" \
       || { echo "  fail: $name calls $called with no matching manifest row"; bad=1; }
   done < <(grep -oE 'scripts/(enforcement|monitoring)/[A-Za-z0-9_.-]+\.(sh|py)' "$wf" | sort -u)
 done
@@ -53,15 +54,14 @@ jobs:
     steps:
       - run: bash scripts/monitoring/check-fake-thing.sh
 EOF
-if grep -oE 'scripts/(enforcement|monitoring)/[A-Za-z0-9_.-]+\.(sh|py)' "$TMP/fake-policy.yml" \
-     | xargs -I{} grep -qE "^fake-policy.yml\t{}$" "$MANIFEST"; then
+if manifest_has "fake-policy.yml" "scripts/monitoring/check-fake-thing.sh"; then
   fail "undeclared_dependency_should_not_be_found_in_manifest"
 fi
 pass undeclared_dependency_correctly_absent_from_manifest
 
 # Build a hermetic fake Engineering OS home containing every source the direct
 # installer now requires: workflows, manifest dependencies, canonical settings,
-# and the telemetry settings patcher.
+# telemetry settings patcher, and the referenced runtime scripts.
 FAKE_HOME="$TMP/fake-eos-home"
 mkdir -p "$FAKE_HOME/.github/workflows" "$FAKE_HOME/scripts/enforcement" "$FAKE_HOME/scripts/monitoring" "$FAKE_HOME/.claude"
 for wf in $INSTALLED; do
@@ -75,7 +75,9 @@ while IFS=$'\t' read -r workflow dep; do
 done < "$MANIFEST"
 cp "$MANIFEST" "$FAKE_HOME/scripts/enforcement/policy-gate-dependencies.tsv"
 cp "$ROOT/.claude/settings.json" "$FAKE_HOME/.claude/settings.json"
-cp "$ROOT/scripts/monitoring/patch-settings-telemetry.py" "$FAKE_HOME/scripts/monitoring/patch-settings-telemetry.py"
+for runtime in patch-settings-telemetry.py eos-telemetry-session-start.sh eos-telemetry-event.sh require-telemetry-session.sh eos-telemetry-summary.py; do
+  cp "$ROOT/scripts/monitoring/$runtime" "$FAKE_HOME/scripts/monitoring/$runtime"
+done
 
 TARGET_OK="$TMP/install-target-ok"
 mkdir -p "$TARGET_OK"
