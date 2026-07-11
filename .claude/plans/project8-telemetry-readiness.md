@@ -18,7 +18,7 @@ User decisions required: owner approval before merging PR #244; no provider or P
 | Workflow evidence | `core/workflow.md` and `core/debugging-policy.md` read; plan-first reproduce-fix-verify lifecycle used |
 | Templates | existing enforcement shell-fixture pattern in `scripts/enforcement/tests/` |
 | Patterns | reproduce-before-fix; fail-closed preflight; metadata-only telemetry |
-| Skills | not required because this is a focused internal enforcement correction with executable regression coverage |
+| Skills | not required |
 | Validation gates | enforcement-tests, plan-policy, pr-policy, connector-evidence-policy, capability-evidence-policy, workflow-evidence-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy |
 | Target paths | `.claude/settings.json`; `.github/workflows/pr-policy.yml`; `.github/workflows/enforcement-tests.yml`; `scripts/install-policy-gates.sh`; `scripts/monitoring/`; `scripts/enforcement/tests/`; `docs/operations/project8-telemetry-preflight.md` |
 
