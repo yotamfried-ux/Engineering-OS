@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Merge Engineering OS telemetry hooks into a Claude settings file.
 
-Custom hooks are preserved. Missing telemetry hooks and the fail-closed session
-preflight guard are added idempotently.
+Custom hooks are preserved. Legacy telemetry handlers are normalized into one
+metadata-only all-tools stream, while missing lifecycle hooks and the fail-closed
+session guard are added idempotently.
 """
 
 from __future__ import annotations
@@ -76,6 +77,22 @@ def ensure_hook(
         hook_list.append(entry)
 
 
+def remove_recorder_hooks(event: str) -> None:
+    """Remove only prior EOS recorder handlers; preserve all custom/enforcement hooks."""
+    for block in blocks(event):
+        existing = block.get("hooks", [])
+        if not isinstance(existing, list):
+            continue
+        block["hooks"] = [
+            hook
+            for hook in existing
+            if not (
+                isinstance(hook, dict)
+                and "eos-telemetry-event.sh" in str(hook.get("command") or "")
+            )
+        ]
+
+
 def replace_legacy_session_start() -> None:
     for block in blocks("SessionStart"):
         for hook in block.get("hooks", []):
@@ -87,20 +104,31 @@ def replace_legacy_session_start() -> None:
 
 
 replace_legacy_session_start()
+remove_recorder_hooks("PreToolUse")
+remove_recorder_hooks("PostToolUse")
+remove_recorder_hooks("PostToolUseFailure")
 
-for matcher in ("Bash", "Read|Glob", "Write|Edit|MultiEdit|NotebookEdit", "Agent"):
-    ensure_hook("PreToolUse", matcher, "require-telemetry-session.sh", GUARD, prepend=True)
+# One all-tools guard prevents MCP and newer tools from bypassing the session
+# preflight. Claude Code may execute matching handlers in parallel; the guard is
+# independently fail-closed and does not rely on hook ordering.
+ensure_hook("PreToolUse", ".*", "require-telemetry-session.sh", GUARD, prepend=True)
+ensure_hook("PreToolUse", ".*", "pre_tool_use", f"{RECORDER} pre_tool_use")
+ensure_hook("PostToolUse", ".*", "post_tool_use", f"{RECORDER} post_tool_use")
+ensure_hook("PostToolUseFailure", ".*", "post_tool_use_failure", f"{RECORDER} post_tool_use_failure")
+ensure_hook("PermissionDenied", ".*", "permission_denied", f"{RECORDER} permission_denied")
 
-ensure_hook("PreToolUse", "Bash", "pre_tool_use_bash", f"{RECORDER} pre_tool_use_bash")
-ensure_hook("PreToolUse", "Read|Glob", "pre_tool_use_read_glob", f"{RECORDER} pre_tool_use_read_glob")
-ensure_hook("PreToolUse", "Write|Edit|MultiEdit|NotebookEdit", "pre_tool_use_write_edit", f"{RECORDER} pre_tool_use_write_edit")
-ensure_hook("PreToolUse", "Agent", "pre_tool_use_agent", f"{RECORDER} pre_tool_use_agent")
-
-ensure_hook("PostToolUse", "mcp__.*", "post_tool_use_mcp", f"{RECORDER} post_tool_use_mcp")
-ensure_hook("PostToolUse", "Bash", "post_tool_use_bash", f"{RECORDER} post_tool_use_bash")
-ensure_hook("PostToolUse", "Read", "post_tool_use_read", f"{RECORDER} post_tool_use_read")
-
+# Turn/session/instruction/task lifecycle coverage. These hooks store hashes,
+# categories, booleans, and length buckets only; never raw prompt or response text.
 ensure_hook("SessionStart", None, "eos-telemetry-session-start.sh", SESSION_START, prepend=True)
+ensure_hook("UserPromptSubmit", None, "user_prompt_submit", f"{RECORDER} user_prompt_submit")
+ensure_hook("InstructionsLoaded", None, "instructions_loaded", f"{RECORDER} instructions_loaded")
+ensure_hook("SubagentStart", ".*", "subagent_start", f"{RECORDER} subagent_start")
+ensure_hook("SubagentStop", ".*", "subagent_stop", f"{RECORDER} subagent_stop")
+ensure_hook("TaskCreated", None, "task_created", f"{RECORDER} task_created")
+ensure_hook("TaskCompleted", None, "task_completed", f"{RECORDER} task_completed")
+ensure_hook("PostCompact", None, "post_compact", f"{RECORDER} post_compact")
 ensure_hook("Stop", None, "eos-telemetry-event.sh", f"{RECORDER} stop")
+ensure_hook("StopFailure", None, "stop_failure", f"{RECORDER} stop_failure")
+ensure_hook("SessionEnd", None, "session_end", f"{RECORDER} session_end")
 
 path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
