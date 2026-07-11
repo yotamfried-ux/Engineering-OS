@@ -13,6 +13,7 @@ if [ "${EOS_TELEMETRY_DISABLED:-0}" = "1" ]; then
   exit 0
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 OUT="${EOS_TELEMETRY_FILE:-$ROOT/.engineering-os/telemetry/events.jsonl}"
 RUN_ID_FILE="${EOS_TELEMETRY_RUN_ID_FILE:-$ROOT/.engineering-os/telemetry/run_id}"
@@ -89,14 +90,18 @@ def length_bucket(value: str) -> str:
 
 
 def ensure_trace_id() -> str:
-    env_run_id = os.environ.get("EOS_TELEMETRY_RUN_ID", "").strip()
-    if env_run_id:
-        return sha_text(env_run_id, 32)
+    # A SessionStart wrapper writes a fresh per-session run id. Prefer that file
+    # over a process-level EOS_TELEMETRY_RUN_ID seed, otherwise every session in
+    # the same environment would collapse into one trace.
     if RUN_ID_FILE.exists():
         value = RUN_ID_FILE.read_text(encoding="utf-8", errors="replace").strip()
         if value:
             return value
-    value = secrets.token_hex(16)
+    env_run_id = os.environ.get("EOS_TELEMETRY_RUN_ID", "").strip()
+    if env_run_id:
+        value = sha_text(env_run_id, 32)
+    else:
+        value = secrets.token_hex(16)
     RUN_ID_FILE.write_text(value + "\n", encoding="utf-8")
     return value
 
@@ -255,8 +260,8 @@ PY
 
 if [ "$EVENT_NAME" = "stop" ]; then
   SUMMARY="${EOS_TELEMETRY_SUMMARY_FILE:-$ROOT/.engineering-os/telemetry/latest-summary.md}"
-  TOOL_HOME="${ENGINEERING_OS_HOME:-$ROOT}"
-  if [ -f "$TOOL_HOME/scripts/monitoring/eos-telemetry-summary.py" ] && [ -f "$OUT" ]; then
-    python3 "$TOOL_HOME/scripts/monitoring/eos-telemetry-summary.py" "$OUT" --output "$SUMMARY" >/dev/null 2>&1 || true
+  SUMMARY_TOOL="$SCRIPT_DIR/eos-telemetry-summary.py"
+  if [ -f "$SUMMARY_TOOL" ] && [ -f "$OUT" ]; then
+    python3 "$SUMMARY_TOOL" "$OUT" --output "$SUMMARY" >/dev/null 2>&1 || true
   fi
 fi
