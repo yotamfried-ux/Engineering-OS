@@ -31,7 +31,7 @@ User decisions required: owner approval before merging PR #244; no provider or P
 | `.claude/settings.json` | read | canonical hooks existed but were not installed by the direct path |
 | `scripts/monitoring/eos-telemetry-event.sh` | read | the original run-id behavior could merge separate sessions |
 | `.github/workflows/pr-policy.yml` | read | the final check snapshot omitted earlier branch failures, and the first history implementation capped collection at 100 runs |
-| PR #244 Operational Work History artifact `operational-work-history-244-29160272110` | validated | exactly 100 branch runs were recorded despite a 32-commit correction loop, proving the fixed `--limit 100` path could truncate early friction |
+| `https://github.com/yotamfried-ux/Engineering-OS/actions/runs/29160272110` | validated | artifact `operational-work-history-244-29160272110` recorded exactly 100 branch runs despite a 32-commit correction loop, proving the fixed `--limit 100` path could truncate early friction |
 | `https://code.claude.com/docs/en/hooks` | validated | `PreToolUse` blocks only on exit 2 and the required lifecycle events are supported |
 
 ## Implemented fixes
