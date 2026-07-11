@@ -7,8 +7,8 @@
 #
 # This exists so the new checker cannot end up tested only in isolation while
 # the real workflow file silently stops wiring it in (steps reordered, the
-# artifact hookup dropped, checkout unpinned, permissions narrowed away, or
-# diff collection changed back to fail-open).
+# artifact hookup dropped, checkout unpinned, permissions narrowed away, diff
+# collection changed back to fail-open, or CI history silently truncated).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -54,6 +54,21 @@ require(collector_idx != -1 and checker_idx != -1 and collector_idx < checker_id
 require(".engineering-os/work-history" in text,
         "workflow must wire the collector's --out to .engineering-os/work-history (not just reference the path in prose)")
 
+# Historical CI collection must traverse every Actions API page. A fixed
+# `gh run list --limit N` loses early failures on long correction loops.
+require("gh api --paginate" in text,
+        "workflow must collect branch CI history through paginated GitHub Actions API calls")
+require("repos/$REPO/actions/runs" in text,
+        "workflow must query the repository Actions runs endpoint")
+require("-f branch=\"$HEAD_REF\"" in text and "-f event=pull_request" in text,
+        "workflow must scope paginated CI history to the PR head branch and pull_request event")
+require("jq -s '.'" in text,
+        "workflow must combine all paginated run records into one JSON array")
+require("gh run list" not in text and "--limit 100" not in text,
+        "workflow must not reintroduce a fixed-size CI history limit")
+require("enrich-work-history-ci-history.py" in text,
+        "workflow must enrich Operational Work History with aggregate branch CI history")
+
 # The evidence-check invocation must receive the real head SHA, changed-file metadata,
 # and the generated artifact path. Diff collection must be fail-closed.
 require(checker_idx != -1, "could not locate the check-pr-review-evidence.sh invocation")
@@ -81,8 +96,8 @@ for ref in upload_matches:
 if failures:
     print("❌ pr-policy.yml workflow wiring check failed")
     for f in failures:
-        print(f" - {f}")
+        print(" -", f)
     sys.exit(1)
 
-print("✅ pr-policy.yml wires the Operational Work History artifact end-to-end")
+print("✅ pr-policy.yml wires complete CI history and Operational Work History end-to-end")
 PY
