@@ -30,22 +30,22 @@ EVENTS="$TARGET/.engineering-os/telemetry/events.jsonl"
 RUN_ID="$TARGET/.engineering-os/telemetry/run_id"
 SUMMARY="$TARGET/.engineering-os/telemetry/latest-summary.md"
 
-failcase preflight_fails_before_session env EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" bash "$REQUIRE"
+failcase preflight_fails_before_session bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
 
 printf '%s' '{"session_id":"first-session","hook_event_name":"SessionStart"}' | \
-  ENGINEERING_OS_HOME="$ROOT" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
+  (cd "$TARGET" && ENGINEERING_OS_HOME="$ROOT" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
   EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" EOS_TELEMETRY_SUMMARY_FILE="$SUMMARY" \
-  bash "$SESSION_START"
+  bash "$SESSION_START")
 first_run="$(cat "$RUN_ID")"
-pass preflight_passes_after_session env EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" bash "$REQUIRE"
+pass preflight_passes_after_session bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
 
 printf '%s' '{"tool_name":"Bash","tool_input":{"command":"npm test"}}' | \
-  ENGINEERING_OS_HOME="$ROOT" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" bash "$RECORDER" post_tool_use_bash
+  (cd "$TARGET" && ENGINEERING_OS_HOME="$ROOT" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" bash "$RECORDER" post_tool_use_bash)
 
 printf '%s' '{"session_id":"second-session","hook_event_name":"SessionStart"}' | \
-  ENGINEERING_OS_HOME="$ROOT" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
+  (cd "$TARGET" && ENGINEERING_OS_HOME="$ROOT" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
   EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" EOS_TELEMETRY_SUMMARY_FILE="$SUMMARY" \
-  bash "$SESSION_START"
+  bash "$SESSION_START")
 second_run="$(cat "$RUN_ID")"
 [ "$first_run" != "$second_run" ] || { echo "fail: session run id did not rotate"; exit 1; }
 pass previous_session_archived bash -c "find '$TARGET/.engineering-os/telemetry/history' -name events.jsonl -type f | grep -q ."
