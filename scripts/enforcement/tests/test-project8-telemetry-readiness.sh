@@ -29,26 +29,45 @@ pass settings_rendered_to_reference grep -q "$ROOT/scripts/monitoring" "$TARGET/
 EVENTS="$TARGET/.engineering-os/telemetry/events.jsonl"
 RUN_ID="$TARGET/.engineering-os/telemetry/run_id"
 SUMMARY="$TARGET/.engineering-os/telemetry/latest-summary.md"
+SEED="stable-process-level-seed"
 
 failcase preflight_fails_before_session bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
 
+# Intentionally omit ENGINEERING_OS_HOME: installed settings use the wrapper's
+# absolute path, and the wrapper must resolve its recorder beside itself.
 printf '%s' '{"session_id":"first-session","hook_event_name":"SessionStart"}' | \
-  (cd "$TARGET" && ENGINEERING_OS_HOME="$ROOT" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
+  (cd "$TARGET" && EOS_TELEMETRY_RUN_ID="$SEED" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
   EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" EOS_TELEMETRY_SUMMARY_FILE="$SUMMARY" \
   bash "$SESSION_START")
 first_run="$(cat "$RUN_ID")"
 pass preflight_passes_after_session bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
 
+# Keep the same process-level seed. The run-id file must win, preserving the
+# current session id rather than replacing it with the static seed hash.
 printf '%s' '{"tool_name":"Bash","tool_input":{"command":"npm test"}}' | \
-  (cd "$TARGET" && ENGINEERING_OS_HOME="$ROOT" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" bash "$RECORDER" post_tool_use_bash)
+  (cd "$TARGET" && EOS_TELEMETRY_RUN_ID="$SEED" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" bash "$RECORDER" post_tool_use_bash)
+python3 - "$EVENTS" "$first_run" <<'PY'
+import json, sys
+lines = [json.loads(x) for x in open(sys.argv[1]) if x.strip()]
+assert len(lines) == 2, lines
+assert all(item['trace_id'] == sys.argv[2] for item in lines), lines
+PY
+pass run_id_file_precedes_process_seed true
+
+# Stop summary must also resolve its analyzer beside the recorder without
+# ENGINEERING_OS_HOME being exported in the target process.
+printf '%s' '{"session_id":"first-session","hook_event_name":"Stop"}' | \
+  (cd "$TARGET" && EOS_TELEMETRY_RUN_ID="$SEED" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" EOS_TELEMETRY_SUMMARY_FILE="$SUMMARY" bash "$RECORDER" stop)
+pass stop_summary_created_without_home test -f "$SUMMARY"
 
 printf '%s' '{"session_id":"second-session","hook_event_name":"SessionStart"}' | \
-  (cd "$TARGET" && ENGINEERING_OS_HOME="$ROOT" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
+  (cd "$TARGET" && EOS_TELEMETRY_RUN_ID="$SEED" EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
   EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" EOS_TELEMETRY_SUMMARY_FILE="$SUMMARY" \
   bash "$SESSION_START")
 second_run="$(cat "$RUN_ID")"
-[ "$first_run" != "$second_run" ] || { echo "fail: session run id did not rotate"; exit 1; }
+[ "$first_run" != "$second_run" ] || { echo "fail: session run id did not rotate with stable seed"; exit 1; }
 pass previous_session_archived bash -c "find '$TARGET/.engineering-os/telemetry/history' -name events.jsonl -type f | grep -q ."
+pass previous_summary_archived bash -c "find '$TARGET/.engineering-os/telemetry/history' -name latest-summary.md -type f | grep -q ."
 python3 - "$EVENTS" "$second_run" <<'PY'
 import json, sys
 lines = [json.loads(x) for x in open(sys.argv[1]) if x.strip()]
