@@ -99,5 +99,5 @@ if failures:
         print(" -", f)
     sys.exit(1)
 
-print("✅ pr-policy.yml wires complete CI history and Operational Work History end-to-end")
+print("✅ pr-policy.yml wires the Operational Work History artifact end-to-end with complete paginated CI history")
 PY
