@@ -46,8 +46,20 @@ if [ -x "$mcp_installer" ]; then
 fi
 
 # Direct policy-gate installation must also install the Claude runtime hook layer.
-# Project 8 used this entrypoint directly; previously a missing settings file meant
-# telemetry stayed completely inactive while CI gates still appeared installed.
+# Validate every path that the rendered target settings will invoke before writing
+# those settings, otherwise the target can look instrumented while all hooks fail.
+for runtime in \
+  scripts/monitoring/patch-settings-telemetry.py \
+  scripts/monitoring/eos-telemetry-session-start.sh \
+  scripts/monitoring/eos-telemetry-event.sh \
+  scripts/monitoring/require-telemetry-session.sh \
+  scripts/monitoring/eos-telemetry-summary.py; do
+  if [ ! -f "$home_dir/$runtime" ]; then
+    echo "missing telemetry runtime dependency: $home_dir/$runtime" >&2
+    exit 1
+  fi
+done
+
 settings="$target/.claude/settings.json"
 mkdir -p "$(dirname "$settings")"
 if [ ! -f "$settings" ]; then
@@ -61,10 +73,6 @@ if [ ! -f "$settings" ]; then
 fi
 
 telemetry_patcher="$home_dir/scripts/monitoring/patch-settings-telemetry.py"
-if [ ! -f "$telemetry_patcher" ]; then
-  echo "missing telemetry settings patcher: $telemetry_patcher" >&2
-  exit 1
-fi
 python3 "$telemetry_patcher" "$settings"
 echo "installed/verified telemetry hooks and session preflight"
 
