@@ -8,7 +8,7 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 **Per-PR declaration cross-reference:** see `docs/operations/operational-work-history.md` and `gap:operational-work-history-foundation` for the resolved decision on the per-PR result-loop declaration dimension — it is satisfied by a CI-generated artifact/gate, not by wiring `check-route-plan-contract.sh`'s 8-field Route Plan requirement into CI.
 
-**2026-07-10 reconciliation note:** `docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md` mark `result-loop-contract-enforcement` and `scaling-extension-enforcement` `closed`, but several sections below were still fully unchecked, contradicting that status. This pass re-verified every item against the actual current enforcer code (`scripts/enforcement/check-result-loop-contract.py`, `scripts/enforcement/check-scaling-extension.py`) and by running both checkers plus `scripts/enforcement/tests/test-result-loop-contract.sh` and `scripts/enforcement/tests/test-scaling-extension.sh` locally against `main` (all passed, all negative fixtures genuinely rejected). Items are now checked only where a concrete artifact/test backs them; genuinely unimplemented items stay unchecked. This does **not** reopen `result-loop-contract-enforcement` or `scaling-extension-enforcement` — their gap-level closure bar was already explicit that some narrower items (e.g. `check-route-plan-contract.sh` staying unwired) were intentionally left open. It also does not touch `monitoring-metrics-sufficiency` (open) or `project-8-real-run-evidence` (blocked), which remain the reason the real-run sections below stay unchecked.
+**2026-07-10 reconciliation note, updated 2026-07-12:** `docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md` mark `result-loop-contract-enforcement` and `scaling-extension-enforcement` `closed`, while narrower unchecked items below remain intentionally incomplete. The 2026-07-12 Project 8 PR #4 run now supplies the first real target-project OWH/result-loop evidence, and Engineering OS PR #244 removes the installation/session preflight blocker for the next run. `monitoring-metrics-sufficiency` and `project-8-real-run-evidence` remain `open`, because the completed run had zero session telemetry and no non-empty bundle has been exported, imported, or analyzed.
 
 ## Per-PR declaration dimension (result-loop-contract-enforcement)
 
@@ -185,14 +185,14 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 ## Real-run evidence
 
-> Unchanged in this pass. All items below require an actual real target-project run, which is exactly the scope of `monitoring-metrics-sufficiency` (open, P2) and `project-8-real-run-evidence` (blocked, P1) in `docs/operations/known-gaps.tsv`. This reconciliation pass does not perform a real run and does not close either of those gaps.
+> Project 8 PR #4 is the first real target-project run using a valid selected `booking-system` result-loop contract. Its Operational Work History and product outcomes are recorded in `docs/operations/project8-first-real-run-findings.md`. The run had `telemetry_available=false` and zero events, so the telemetry export/import/review items below remain incomplete. Both `monitoring-metrics-sufficiency` and `project-8-real-run-evidence` remain `open`.
 
-- [ ] Run the first real target-project using the new result-loop contract.
+- [x] Run the first real target-project using the new result-loop contract. — Project 8 PR #4, merge `2d26b3cde2c68ff260c9f91a87700a953c6e29c8`, selected valid `booking-system` contract.
 - [ ] Export telemetry bundle after the run.
 - [ ] Import first real-run telemetry into `telemetry-store`.
 - [ ] Review visual, operational, logical and performance evidence artifacts.
-- [ ] Identify missing coverage from the real run.
-- [ ] Convert severe or repeated missing coverage into follow-up work.
+- [x] Identify missing coverage from the real run. — missing exact-workspace settings/session telemetry and historical CI aggregation were recorded in `docs/operations/project8-first-real-run-findings.md`.
+- [x] Convert severe or repeated missing coverage into follow-up work. — merged Engineering OS PR #244 fixes installation, session isolation, fail-closed preflight and historical CI aggregation.
 - [ ] Compare with at least one later target-project run before claiming broad readiness.
 - [ ] Run a scaling simulation that adds a new dummy project type and proves enforcement accepts a complete registration. — note: this is distinct from the existing fixtures, which mutate/remove data from *existing* real project types rather than adding a new one; still not done.
 - [ ] Run a scaling simulation that adds an incomplete project type and proves enforcement rejects it.
@@ -200,7 +200,7 @@ Purpose: track the work needed to make long AI development sessions result-drive
 
 ## Completion criteria
 
-> Unchanged in this pass. Most CI-enforcement-only criteria below now hold for every `status=active` project type (see "Scaling gate implementation" and "Enforcement implementation" above), but this section represents full completion, which also requires the "Scaling category coverage" inventory audit and the real-run evidence blocked on `monitoring-metrics-sufficiency` / `project-8-real-run-evidence`. Left fully unchecked rather than partially checked to avoid implying broad readiness that isn't true yet.
+> Most CI-enforcement-only criteria below now hold for every `status=active` project type, but full completion still requires the scaling-category inventory audit and real telemetry-store evidence. The Project 8 gap is `open`, not blocked: a real OWH-only target run exists, while export/import/analyze and later-run comparison remain incomplete.
 
 - [ ] Every applicable template/project type has a result-loop contract.
 - [ ] Every applicable template/project type has a roadmap entry or explicit exemption.
