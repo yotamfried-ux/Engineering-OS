@@ -13,17 +13,17 @@ Status: implementation complete; merge remains externally gated
 | Domain tags | observability, workflow, governance, testing |
 | Plan Scope | focused |
 | Planning Mode | approved |
-| Templates | Not required because no reusable project asset is introduced |
+| Templates | Not required |
 | Architecture guides | `docs/operations/runtime-telemetry-archive-plan.md`; `docs/operations/operational-work-history-rollout.md` |
 | Patterns | evidence separation; fail-closed telemetry preflight; metadata-only observability; audit freshness |
 | External systems/connectors | GitHub |
-| Skills | Not required for focused documentation reconciliation |
+| Skills | Not required |
 | Validation gates | enforcement-tests; plan-policy; pr-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy; semantic-cleanup-policy; import-cleanup-policy |
-| Evidence to check | Project 8 PR #4 and OWH artifact; Engineering OS PR #244; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-telemetry-preflight.md` |
+| Evidence to check | Project 8 PR #4 and OWH artifact; Engineering OS PR #244; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-telemetry-preflight.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md` |
 | User decisions required | No implementation decision; owner merge approval is required after exact-head evidence |
 | Task-router evidence | `core/task-router.md` read; selected Engineering OS governance |
 | Workflow evidence | `core/workflow.md` read; plan commit `7fab9bc23118f942f86d9b1afeb8af8d023f6d97` preceded documentation changes |
-| Target paths | `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md` |
+| Target paths | `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md` |
 
 ## Capability Evidence
 
@@ -41,10 +41,10 @@ Status: implementation complete; merge remains externally gated
 ## Connector Usage Evidence
 
 - source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
-- action: inspected PRs #4, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist and Project 8 `.claude/settings.json` state.
-- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, and `docs/operations/runtime-telemetry-archive-audit-checklist.md`.
-- decision: updated the Project 8 gap from blocked to open, kept monitoring open, and blocked telemetry closure until a fresh non-empty export/import/analyze cycle exists.
-- target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`.
+- action: inspected PRs #4, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist, stale operational references, and Project 8 `.claude/settings.json` state.
+- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/operational-work-history.md`, and `docs/operations/result-loop-contract-audit-checklist.md`.
+- decision: updated the Project 8 gap from blocked to open, kept monitoring open, marked old blocked references as historical/currently superseded, and blocked telemetry closure until a fresh non-empty export/import/analyze cycle exists.
+- target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md`.
 
 ## Documentation Asset Evidence
 
@@ -60,6 +60,8 @@ Status: implementation complete; merge remains externally gated
 | `docs/operations/operational-readiness-audit.md` | read | audit said the Project 8 run was not performed |
 | `docs/operations/runtime-telemetry-archive-audit-checklist.md` | read | telemetry export/import/findings items remained incomplete |
 | `docs/operations/project8-telemetry-preflight.md` | read | next valid run requires exact workspace, fresh session and positive preflight |
+| `docs/operations/operational-work-history.md` | read | a non-historical note still called Project 8 evidence blocked |
+| `docs/operations/result-loop-contract-audit-checklist.md` | read | reconciliation and real-run sections still called the gap blocked |
 | `docs/operations/project8-first-real-run-findings.md` | validated | exact PR #4 and OWH facts are recorded without calling OWH telemetry |
 
 ## Decision
@@ -86,12 +88,13 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 4. Inspected the Project 8 OWH artifact and missing target settings.
 5. Committed the plan before documentation updates.
 6. Opened PR #245 and used first-run CI to identify Route Plan evidence omissions.
+7. CodeRabbit confirmed the initial Route Plan findings were addressed; Codex found two remaining stale blocked-status references.
 
 ## Progress Lifecycle Evidence
 
 - start: audit, gaps, checklist, preflight, Project 8 PR #4, its OWH artifact, missing target settings and merged PR #244 were verified before writes.
-- mid: findings, checklist separation, audit reconciliation and blocked-to-open transition were committed; first PR CI isolated Route Plan contract omissions.
-- pre-merge: PR #245 is open with failed evidence-contract checks; no readiness claim or merge request has been made.
+- mid: findings, checklist separation, audit reconciliation and blocked-to-open transition were committed; first PR CI isolated Route Plan contract omissions, and automated review identified stale blocked-status references in two operational documents.
+- pre-merge: PR #245 remains open with the stale-reference correction and exact-head validation still pending; no readiness claim or merge request has been made.
 
 ## Merge Gate
 
