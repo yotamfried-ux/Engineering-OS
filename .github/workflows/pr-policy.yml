@@ -32,35 +32,42 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Collect real GitHub CI/review metadata snapshot
+      - name: Collect real GitHub CI/review metadata
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
           REPO: ${{ github.repository }}
         run: |
           set -uo pipefail
-          # Point-in-time snapshot only (design correction 7): pending/in_progress
-          # checks — including this very pr-policy run — are recorded as-is, never
-          # treated as failure. gh pr checks may exit non-zero for pending or
-          # failing checks while still writing useful JSON; preserve that file
-          # whenever stdout produced content, and only mark metadata unavailable
-          # when the JSON file is empty or missing.
+          # Current check snapshot. Pending checks are retained and are not failures.
           if gh pr checks "$PR_NUMBER" -R "$REPO" --json name,state,workflow > /tmp/ci.json 2>/tmp/ci-checks.err; then
             :
           else
             echo "gh pr checks returned non-zero:"; cat /tmp/ci-checks.err || true
-            if [ -s /tmp/ci.json ]; then
-              echo "preserving non-empty /tmp/ci.json from gh pr checks"
-            else
-              echo "gh pr checks unavailable: no JSON snapshot produced"
-              rm -f /tmp/ci.json
-            fi
+            [ -s /tmp/ci.json ] || rm -f /tmp/ci.json
           fi
+
           if gh pr view "$PR_NUMBER" -R "$REPO" --json reviewDecision,reviews > /tmp/reviews.json 2>/tmp/reviews.err; then
             :
           else
             echo "gh pr view (reviews) unavailable:"; cat /tmp/reviews.err || true
             rm -f /tmp/reviews.json
+          fi
+
+          # Branch-level pull-request run history preserves earlier failures that a
+          # final green check snapshot would otherwise erase from friction evidence.
+          # Use the paginated Actions API rather than a fixed gh-run-list limit so a
+          # long correction loop cannot silently truncate its earliest failures.
+          if gh api --paginate -X GET "repos/$REPO/actions/runs" \
+            -f branch="$HEAD_REF" -f event=pull_request -f per_page=100 \
+            --jq '.workflow_runs[] | {workflowName: .name, conclusion: .conclusion, status: .status, headSha: .head_sha, createdAt: .created_at, updatedAt: .updated_at}' \
+            | jq -s '.' > /tmp/ci-history.json 2>/tmp/ci-history.err; then
+            :
+          else
+            echo "gh api (CI history) unavailable:"; cat /tmp/ci-history.err || true
+            rm -f /tmp/ci-history.json
           fi
           exit 0
 
@@ -68,6 +75,7 @@ jobs:
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
@@ -78,6 +86,12 @@ jobs:
           [ -f /tmp/ci.json ] && args+=(--ci-json /tmp/ci.json)
           [ -f /tmp/reviews.json ] && args+=(--reviews-json /tmp/reviews.json)
           python3 scripts/monitoring/collect-pr-work-history.py "${args[@]}"
+
+          history_args=(--artifact .engineering-os/work-history/latest.json
+                        --summary .engineering-os/work-history/latest-summary.md
+                        --since "$PR_CREATED_AT")
+          [ -f /tmp/ci-history.json ] && history_args+=(--ci-history-json /tmp/ci-history.json)
+          python3 scripts/monitoring/enrich-work-history-ci-history.py "${history_args[@]}"
 
       - name: Publish Operational Work History summary (auditability only, not the gate's source of truth)
         if: always()

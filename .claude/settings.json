@@ -10,10 +10,6 @@
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_bash"
-          },
-          {
-            "type": "command",
             "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *grep*|*rg\\ *|*ripgrep*|*find\\ *|*fd\\ *) [ -f graphify-out/graph.json ] && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"MANDATORY: graphify-out/graph.json exists. Run graphify query before broad raw file search.\"}}' || true ;; esac"
           },
           {
@@ -43,10 +39,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_read_glob"
-          },
-          {
-            "type": "command",
             "command": "HIT=$(python3 -c \"import json,sys;d=json.load(sys.stdin);t=d.get('tool_input',d);s=(str(t.get('file_path') or '')+' '+str(t.get('pattern') or '')+' '+str(t.get('path') or '')).lower().replace(chr(92),'/');sys.stdout.write('1' if 'graphify-out/' not in s and any(e in s for e in ('.py','.js','.ts','.tsx','.jsx','.go','.rs','.java','.rb','.c','.h','.cpp','.hpp','.cc','.cs','.kt','.swift','.php','.scala','.lua','.sh','.md','.rst','.txt','.mdx')) else '')\" 2>/dev/null || true); if [ \"$HIT\" = 1 ] && [ -f graphify-out/graph.json ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"MANDATORY: graphify-out/graph.json exists. Run graphify before reading source files.\"}}'; fi || true"
           }
         ]
@@ -57,10 +49,6 @@
           {
             "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-json-guard.sh\""
-          },
-          {
-            "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_write_edit"
           },
           {
             "type": "command",
@@ -81,11 +69,20 @@
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use_agent"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-workflow.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/require-telemetry-session.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\" \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/enforce-workflow.sh\""
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use"
           }
         ]
       }
@@ -94,10 +91,6 @@
       {
         "matcher": "mcp__.*",
         "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_mcp"
-          },
           {
             "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-mcp.sh\" 2>/dev/null || true"
@@ -109,10 +102,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_docs_connector"
-          },
-          {
-            "type": "command",
             "command": "INPUT=$(cat 2>/dev/null || true); if printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; sys.exit(0 if name.startswith('mcp__Context7__') else 1)\" >/dev/null 2>&1; then bash -c '. \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\" 2>/dev/null && evidence_record context7' 2>/dev/null; fi || true"
           }
         ]
@@ -120,10 +109,6 @@
       {
         "matcher": "Bash",
         "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_bash"
-          },
           {
             "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-bash.sh\" 2>/dev/null || true"
@@ -135,10 +120,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_read"
-          },
-          {
-            "type": "command",
             "command": "F=$(python3 -c \"import json,sys; d=json.load(sys.stdin); t=d.get('tool_input',d); print(t.get('file_path','') or '')\" 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; case \"$F\" in core/pattern-lifecycle.md|*/core/pattern-lifecycle.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_pattern_lifecycle ;; core/maintenance-routine.md|*/core/maintenance-routine.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_maintenance_routine ;; core/hooks-policy.md|*/core/hooks-policy.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_hooks_policy ;; patterns/*|*/patterns/*) DOM=$(printf '%s' \"$F\" | sed 's|.*/patterns/||; s|/.*||'); . \"$EOS_LIB\" 2>/dev/null && { [ -n \"$DOM\" ] && evidence_record \"patterns_read_${DOM}\" || true; } ;; .claude/plans/*.md|*/.claude/plans/*.md) FNAME=$(basename \"$F\" .md); TOTAL=$(grep -cE '^\\- \\[(x| )\\]' \"$F\" 2>/dev/null) || TOTAL=0; . \"$EOS_LIB\" 2>/dev/null && { EXISTING=$(evidence_get \"dod_initial_${FNAME}\" 2>/dev/null || true); [ -n \"$EXISTING\" ] || evidence_record \"dod_initial_${FNAME}\" \"$TOTAL\"; } ;; .claude/commands/superpowers-verify.md|*/.claude/commands/superpowers-verify.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record superpowers_verify_run ;; esac 2>/dev/null || true"
           }
         ]
@@ -148,11 +129,38 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_notion"
-          },
+            "command": "INPUT=$(cat 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; if PAGE_ID=$(printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; r=d.get('tool_response','') or {}; assert name.startswith('mcp__Notion__'); print((r.get('id','') or r.get('page_id','') or '') if isinstance(r,dict) else '')\" 2>/dev/null); then . \"$EOS_LIB\" 2>/dev/null && evidence_record notion_spec_created && { [ -n \"$PAGE_ID\" ] && evidence_record notion_page_id \"$PAGE_ID\" || true; }; fi 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
           {
             "type": "command",
-            "command": "INPUT=$(cat 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; if PAGE_ID=$(printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; r=d.get('tool_response','') or {}; assert name.startswith('mcp__Notion__'); print((r.get('id','') or r.get('page_id','') or '') if isinstance(r,dict) else '')\" 2>/dev/null); then . \"$EOS_LIB\" 2>/dev/null && evidence_record notion_spec_created && { [ -n \"$PAGE_ID\" ] && evidence_record notion_page_id \"$PAGE_ID\" || true; }; fi 2>/dev/null || true"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_tool_use_failure"
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" permission_denied"
           }
         ]
       }
@@ -162,11 +170,83 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" session_start"
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-session-start.sh\""
           },
           {
             "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/session-setup.sh\" 2>&1 | head -50 || true"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" user_prompt_submit"
+          }
+        ]
+      }
+    ],
+    "InstructionsLoaded": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" instructions_loaded"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" subagent_start"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" subagent_stop"
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" task_created"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" task_completed"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" post_compact"
           }
         ]
       }
@@ -181,6 +261,26 @@
           {
             "type": "command",
             "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" stop"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" stop_failure"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" session_end"
           }
         ]
       }

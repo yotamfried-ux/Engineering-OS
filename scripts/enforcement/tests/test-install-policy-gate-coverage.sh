@@ -8,20 +8,18 @@ INSTALLER="$ROOT/scripts/install-policy-gates.sh"
 
 # The set of workflows install-policy-gates.sh actually installs downstream —
 # derived from the installer's own `for name in ...` line so this test cannot
-# drift from what is really shipped (enforcement-tests.yml, post-merge-validation.yml,
-# etc. are Engineering-OS-repo-only CI and are never installed).
+# drift from what is really shipped.
 installed_workflows() {
   grep -oE '^for name in [^;]+' "$INSTALLER" | sed -E 's/^for name in //'
 }
 
 pass() { echo "ok: $1"; }
 fail() { echo "fail: $1"; exit 1; }
+manifest_has() { grep -Fqx "$1"$'\t'"$2" "$MANIFEST"; }
 
 [ -f "$MANIFEST" ] || fail "manifest_present"
 pass manifest_present
 
-# Every dependency row must point at a file that actually exists in this repo,
-# so the manifest itself cannot silently go stale.
 bad=0
 while IFS=$'\t' read -r workflow dep; do
   case "${workflow:-}" in ''|'#'*) continue ;; esac
@@ -30,10 +28,9 @@ while IFS=$'\t' read -r workflow dep; do
 done < "$MANIFEST"
 if [ "$bad" -eq 0 ]; then pass all_manifest_dependencies_exist; else fail all_manifest_dependencies_exist; fi
 
-# Every real `bash scripts/enforcement/<name>.sh` (or .py) call site inside an
-# installed policy workflow must have a matching manifest row for that workflow,
-# so a newly added gate dependency cannot be silently forgotten (the PR D bug
-# this manifest exists to prevent).
+# Every real scripts/enforcement or scripts/monitoring call site inside an
+# installed workflow must have a matching manifest row. Project 8 exposed that
+# monitoring helpers are just as runtime-critical as enforcement helpers.
 bad=0
 INSTALLED="$(installed_workflows)"
 [ -n "$INSTALLED" ] || fail "installed_workflows_list_non_empty"
@@ -42,14 +39,12 @@ for wf in "$WORKFLOWS_DIR"/*.yml; do
   case " $INSTALLED " in *" $name "*) ;; *) continue ;; esac
   while IFS= read -r called; do
     [ -n "$called" ] || continue
-    grep -qE "^${name}	scripts/enforcement/${called}$" "$MANIFEST" \
-      || { echo "  fail: $name calls scripts/enforcement/$called with no matching manifest row"; bad=1; }
-  done < <(grep -oE 'scripts/enforcement/[A-Za-z0-9_.-]+\.(sh|py)' "$wf" | sed 's#scripts/enforcement/##' | sort -u)
+    manifest_has "$name" "$called" \
+      || { echo "  fail: $name calls $called with no matching manifest row"; bad=1; }
+  done < <(grep -oE 'scripts/(enforcement|monitoring)/[A-Za-z0-9_.-]+\.(sh|py)' "$wf" | sort -u)
 done
 if [ "$bad" -eq 0 ]; then pass every_real_call_site_has_a_manifest_row; else fail every_real_call_site_has_a_manifest_row; fi
 
-# Negative: a workflow calling an undeclared script must be caught by the same
-# cross-check logic used above (regression guard for the coverage check itself).
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 cat > "$TMP/fake-policy.yml" <<'EOF'
@@ -57,24 +52,18 @@ name: fake-policy
 jobs:
   x:
     steps:
-      - run: bash scripts/enforcement/check-fake-thing.sh
+      - run: bash scripts/monitoring/check-fake-thing.sh
 EOF
-if grep -oE 'scripts/enforcement/[A-Za-z0-9_.-]+\.(sh|py)' "$TMP/fake-policy.yml" \
-     | sed 's#scripts/enforcement/##' \
-     | xargs -I{} grep -qE "^fake-policy.yml	scripts/enforcement/{}$" "$MANIFEST"; then
+if manifest_has "fake-policy.yml" "scripts/monitoring/check-fake-thing.sh"; then
   fail "undeclared_dependency_should_not_be_found_in_manifest"
 fi
 pass undeclared_dependency_correctly_absent_from_manifest
 
-# Installer behavior: the dependency manifest is a hard requirement of
-# install-policy-gates.sh (PR #184's CodeRabbit Major finding — a missing
-# manifest must fail closed, never silently skip the dependency-copy loop).
-# Run the REAL installer from $ROOT against a hermetic fake Engineering OS
-# home built entirely inside $TMP from repo-relative sources, so both paths
-# are deterministic on any machine: no ~/.engineering-os, no network, and the
-# repo under test is never mutated.
+# Build a hermetic fake Engineering OS home containing every source the direct
+# installer now requires: workflows, manifest dependencies, canonical settings,
+# telemetry settings patcher, and the referenced runtime scripts.
 FAKE_HOME="$TMP/fake-eos-home"
-mkdir -p "$FAKE_HOME/.github/workflows" "$FAKE_HOME/scripts/enforcement"
+mkdir -p "$FAKE_HOME/.github/workflows" "$FAKE_HOME/scripts/enforcement" "$FAKE_HOME/scripts/monitoring" "$FAKE_HOME/.claude"
 for wf in $INSTALLED; do
   cp "$WORKFLOWS_DIR/$wf" "$FAKE_HOME/.github/workflows/$wf"
 done
@@ -85,6 +74,10 @@ while IFS=$'\t' read -r workflow dep; do
   cp "$ROOT/$dep" "$FAKE_HOME/$dep"
 done < "$MANIFEST"
 cp "$MANIFEST" "$FAKE_HOME/scripts/enforcement/policy-gate-dependencies.tsv"
+cp "$ROOT/.claude/settings.json" "$FAKE_HOME/.claude/settings.json"
+for runtime in patch-settings-telemetry.py eos-telemetry-session-start.sh eos-telemetry-event.sh require-telemetry-session.sh eos-telemetry-summary.py; do
+  cp "$ROOT/scripts/monitoring/$runtime" "$FAKE_HOME/scripts/monitoring/$runtime"
+done
 
 TARGET_OK="$TMP/install-target-ok"
 mkdir -p "$TARGET_OK"
@@ -110,11 +103,11 @@ while IFS=$'\t' read -r workflow dep; do
   esac
 done < "$MANIFEST"
 if [ "$bad" -eq 0 ]; then pass installer_copies_every_manifest_dependency; else fail installer_copies_every_manifest_dependency; fi
+[ -f "$TARGET_OK/.claude/settings.json" ] || fail installer_creates_claude_settings
+pass installer_creates_claude_settings
+grep -q 'eos-telemetry-session-start.sh' "$TARGET_OK/.claude/settings.json" || fail installer_settings_include_telemetry
+pass installer_settings_include_telemetry
 
-# Negative: with the manifest absent from the fake home, the installer must
-# exit non-zero with the explicit missing-manifest error and must not copy
-# any dependency into the target (the workflow YAMLs above the manifest check
-# may already be copied — that ordering is the documented contract).
 rm "$FAKE_HOME/scripts/enforcement/policy-gate-dependencies.tsv"
 TARGET_MISSING="$TMP/install-target-missing"
 mkdir -p "$TARGET_MISSING"
@@ -135,12 +128,6 @@ case "$install_err" in
     fail missing_manifest_error_is_explicit
     ;;
 esac
-# Scan the whole target, not just scripts/ (CodeRabbit nitpick on this PR):
-# manifest dependencies can live outside scripts/ (e.g. core/capability-registry.yaml
-# per policy-gate-dependencies.tsv), so a future manifest row there must still be
-# caught. .github/workflows/ is excluded because those files are copied by the
-# documented workflow-copy loop that runs BEFORE the manifest existence check —
-# that's expected, unrelated output, not a dependency-copy leak.
 if find "$TARGET_MISSING" -mindepth 1 -type f 2>/dev/null | grep -v '/\.github/workflows/' | grep -q .; then
   fail no_dependency_copied_after_missing_manifest_failure
 else

@@ -13,6 +13,7 @@ if [ "${EOS_TELEMETRY_DISABLED:-0}" = "1" ]; then
   exit 0
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 OUT="${EOS_TELEMETRY_FILE:-$ROOT/.engineering-os/telemetry/events.jsonl}"
 RUN_ID_FILE="${EOS_TELEMETRY_RUN_ID_FILE:-$ROOT/.engineering-os/telemetry/run_id}"
@@ -57,7 +58,7 @@ if not isinstance(data, dict):
 tool_name = str(data.get("tool_name") or data.get("tool") or "unknown")
 tool_input = data.get("tool_input") if isinstance(data.get("tool_input"), dict) else {}
 tool_response = data.get("tool_response")
-tool_error = data.get("tool_error")
+tool_error = data.get("tool_error") if data.get("tool_error") is not None else data.get("error")
 
 
 def git_value(args: list[str]) -> str:
@@ -89,14 +90,18 @@ def length_bucket(value: str) -> str:
 
 
 def ensure_trace_id() -> str:
-    env_run_id = os.environ.get("EOS_TELEMETRY_RUN_ID", "").strip()
-    if env_run_id:
-        return sha_text(env_run_id, 32)
+    # A SessionStart wrapper writes a fresh per-session run id. Prefer that file
+    # over a process-level EOS_TELEMETRY_RUN_ID seed, otherwise every session in
+    # the same environment would collapse into one trace.
     if RUN_ID_FILE.exists():
         value = RUN_ID_FILE.read_text(encoding="utf-8", errors="replace").strip()
         if value:
             return value
-    value = secrets.token_hex(16)
+    env_run_id = os.environ.get("EOS_TELEMETRY_RUN_ID", "").strip()
+    if env_run_id:
+        value = sha_text(env_run_id, 32)
+    else:
+        value = secrets.token_hex(16)
     RUN_ID_FILE.write_text(value + "\n", encoding="utf-8")
     return value
 
@@ -147,6 +152,11 @@ def common_hook_attributes() -> dict[str, Any]:
     transcript_path = str(data.get("transcript_path") or "")
     cwd = str(data.get("cwd") or "")
     prompt = str(data.get("prompt") or "") if "prompt" in data else ""
+    effort = data.get("effort") if isinstance(data.get("effort"), dict) else {}
+    agent_id = str(data.get("agent_id") or "")
+    instruction_path = str(data.get("file_path") or data.get("trigger_file_path") or "")
+    task_id = str(data.get("task_id") or "")
+    task_subject = str(data.get("subject") or "")
     return {
         "eos.claude.hook_event_name": safe_token(data.get("hook_event_name") or EVENT_NAME),
         "eos.claude.session.hash": sha_text(session_id, 32),
@@ -158,10 +168,21 @@ def common_hook_attributes() -> dict[str, Any]:
         "eos.claude.cwd.hash": sha_text(cwd, 32),
         "eos.claude.cwd.present": bool(cwd),
         "eos.claude.permission_mode": safe_token(data.get("permission_mode") or ""),
+        "eos.claude.effort.level": safe_token(effort.get("level") or ""),
         "eos.claude.agent_type": safe_token(data.get("agent_type") or ""),
+        "eos.claude.agent.hash": sha_text(agent_id, 32),
+        "eos.claude.agent.present": bool(agent_id),
         "eos.claude.source": safe_token(data.get("source") or data.get("trigger") or ""),
         "eos.claude.model": safe_token(data.get("model") or ""),
+        "eos.claude.instruction.target": path_meta(instruction_path),
+        "eos.claude.instruction.memory_type": safe_token(data.get("memory_type") or ""),
+        "eos.claude.instruction.load_reason": safe_token(data.get("load_reason") or ""),
+        "eos.task.id.hash": sha_text(task_id, 32),
+        "eos.task.id.present": bool(task_id),
+        "eos.task.subject.hash": sha_text(task_subject),
+        "eos.task.subject.length_bucket": length_bucket(task_subject),
         "eos.prompt.present": "prompt" in data,
+        "eos.prompt.hash": sha_text(prompt),
         "eos.prompt.length_bucket": length_bucket(prompt),
         "eos.privacy.raw_prompt_stored": False,
     }
@@ -194,6 +215,7 @@ def safe_tool_attributes() -> dict[str, Any]:
         "eos.tool.response.type": type(tool_response).__name__ if tool_response is not None else "",
         "eos.tool.response.hash": sha_text(response_text) if response_text else "",
         "eos.tool.error.present": tool_error is not None,
+        "eos.tool.error.type": type(tool_error).__name__ if tool_error is not None else "",
         "eos.tool.error.hash": sha_text(error_text) if error_text else "",
     }
 
@@ -255,8 +277,8 @@ PY
 
 if [ "$EVENT_NAME" = "stop" ]; then
   SUMMARY="${EOS_TELEMETRY_SUMMARY_FILE:-$ROOT/.engineering-os/telemetry/latest-summary.md}"
-  TOOL_HOME="${ENGINEERING_OS_HOME:-$ROOT}"
-  if [ -f "$TOOL_HOME/scripts/monitoring/eos-telemetry-summary.py" ] && [ -f "$OUT" ]; then
-    python3 "$TOOL_HOME/scripts/monitoring/eos-telemetry-summary.py" "$OUT" --output "$SUMMARY" >/dev/null 2>&1 || true
+  SUMMARY_TOOL="$SCRIPT_DIR/eos-telemetry-summary.py"
+  if [ -f "$SUMMARY_TOOL" ] && [ -f "$OUT" ]; then
+    python3 "$SUMMARY_TOOL" "$OUT" --output "$SUMMARY" >/dev/null 2>&1 || true
   fi
 fi
