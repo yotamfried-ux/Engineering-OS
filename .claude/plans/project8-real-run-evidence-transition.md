@@ -2,76 +2,97 @@
 
 Date: 2026-07-12
 Base: `c2572b03f296703d1ff6c84cfbf4e0796b62f588`
-Status: implementation approved; merge requires separate owner approval
+Status: implementation complete; merge remains externally gated
 
 ## Route Plan
 
 | Field | Value |
 |---|---|
-| Task type | Engineering OS docs/governance maintenance |
+| Task type | Engineering OS docs / governance maintenance |
 | Task class | engineering_os_governance |
 | Domain tags | observability, workflow, governance, testing |
 | Plan Scope | focused |
 | Planning Mode | approved |
-| Templates | none required |
+| Templates | Not required because no reusable project asset is introduced |
 | Architecture guides | `docs/operations/runtime-telemetry-archive-plan.md`; `docs/operations/operational-work-history-rollout.md` |
 | Patterns | evidence separation; fail-closed telemetry preflight; metadata-only observability; audit freshness |
-| Connectors | GitHub for Project 8 PR, CI, artifact and exact-SHA evidence |
-| Skills | none required |
+| External systems/connectors | GitHub |
+| Skills | Not required for focused documentation reconciliation |
 | Validation gates | enforcement-tests; plan-policy; pr-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy; semantic-cleanup-policy; import-cleanup-policy |
-| Evidence | Project 8 PR #4 and OWH artifact; Engineering OS PR #244; audit, gaps, checklist and preflight docs |
-| User decisions | none for implementation; merge approval remains required |
+| Evidence to check | Project 8 PR #4 and OWH artifact; Engineering OS PR #244; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-telemetry-preflight.md` |
+| User decisions required | No implementation decision; owner merge approval is required after exact-head evidence |
+| Task-router evidence | `core/task-router.md` read; selected Engineering OS governance |
+| Workflow evidence | `core/workflow.md` read; plan commit `7fab9bc23118f942f86d9b1afeb8af8d023f6d97` preceded documentation changes |
 | Target paths | `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md` |
 
 ## Capability Evidence
 
-- `routing.task-router-read`: `core/task-router.md` read; task classified as Engineering OS governance.
-- `workflow.workflow-read`: `core/workflow.md` read; plan precedes documentation changes.
-- `plan.route-plan-before-write`: this is the first branch change.
-- `source.github-repo-read`: both repositories, PRs, CI and the OWH artifact were inspected through GitHub.
-- `validation.policy-change-has-validator`: existing audit and known-gap freshness gates cover this status reconciliation.
+- `routing.task-router-read` — task router read before planning.
+- `workflow.workflow-read` — workflow read and plan-first ordering used.
+- `plan.route-plan-before-write` — plan commit preceded all documentation changes.
+- `source.github-repo-read` — both repositories, PRs, CI, exact SHAs and the OWH artifact were inspected through GitHub.
+- `validation.policy-change-has-validator` — existing audit, known-gap and plan validators cover this evidence/status reconciliation; no new validator is required.
+- `validation.coderabbit-policy` — work is isolated in PR #245; automated review and thread state remain merge gates.
 
-## Verified facts
+## Connector Evidence
 
-- Project 8 PR #4 merged as `2d26b3cde2c68ff260c9f91a87700a953c6e29c8`.
-- Its OWH artifact records 33 changed files, 49 commits, 14 checks, zero current failures, one review, a valid `booking-system` result-loop contract, 25 repeated-cycle commits, `telemetry_available=false`, and zero telemetry events.
-- Engineering OS PR #244 merged as `c2572b03f296703d1ff6c84cfbf4e0796b62f588` and fixes installation, session isolation, preflight and historical CI aggregation.
-- Project 8 `main` still has no `.claude/settings.json`; PR #4 cannot be retroactively treated as session telemetry.
+- GitHub provided Project 8 PR #4, Engineering OS PR #244, exact SHAs, workflow metadata, missing target settings, and artifact `operational-work-history-4-29178357323`.
+
+## Connector Usage Evidence
+
+- source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
+- action: inspected PRs #4, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist and Project 8 `.claude/settings.json` state.
+- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, and `docs/operations/runtime-telemetry-archive-audit-checklist.md`.
+- decision: updated the Project 8 gap from blocked to open, kept monitoring open, and blocked telemetry closure until a fresh non-empty export/import/analyze cycle exists.
+- target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`.
+
+## Documentation Asset Evidence
+
+- internal: `docs/operations/runtime-telemetry-archive-plan.md`; `docs/operations/operational-work-history-rollout.md`; `docs/operations/project8-telemetry-preflight.md`.
+- context7: not required because no external API, SDK or runtime implementation changes.
+- decision: internal archive and preflight contracts require OWH and session telemetry to remain separate.
+
+## Source of Truth Checks
+
+| Source | Status | Finding |
+|---|---|---|
+| `docs/operations/known-gaps.tsv` | read | Project 8 status was blocked and assumed no real target evidence |
+| `docs/operations/operational-readiness-audit.md` | read | audit said the Project 8 run was not performed |
+| `docs/operations/runtime-telemetry-archive-audit-checklist.md` | read | telemetry export/import/findings items remained incomplete |
+| `docs/operations/project8-telemetry-preflight.md` | read | next valid run requires exact workspace, fresh session and positive preflight |
+| `docs/operations/project8-first-real-run-findings.md` | validated | exact PR #4 and OWH facts are recorded without calling OWH telemetry |
 
 ## Decision
 
-PR #4 is a real Engineering OS target-project run with valid Operational Work History and real Project 8 improvements. It is not a valid telemetry archive run. The technical blocker is removed by PR #244, so `project-8-real-run-evidence` should move from `blocked` to `open`, while all telemetry export/import/findings requirements remain incomplete.
-
-## Scope
-
-1. Add a first-run findings report separating OWH, session telemetry and Project 8 outcomes.
-2. Change the Project 8 gap from blocked to open without closing it.
-3. Reconcile the readiness audit with the real run and PR #244.
-4. Add preliminary evidence to the telemetry checklist while leaving real run/export/import/findings boxes unchecked.
-5. Require the next experiment to use the exact Project 8 workspace, current Engineering OS installation, a new Claude session, positive preflight, a meaningful Project 8 task and non-empty export/import/analyze evidence.
-
-## Non-goals
-
-- No telemetry run is claimed.
-- No Project 8 code or provider migration is changed.
-- No monitoring gap is closed.
-- OWH is not relabeled as session telemetry.
-- No merge without final CI, review verification and owner approval.
+Project 8 PR #4 is a real target run with valid OWH and real product improvements, but it had zero session events. PR #244 removed the installation blocker, so the gap moves from blocked to open while telemetry closure remains incomplete.
 
 ## Definition of Done
 
-- [ ] Plan commit precedes documentation changes.
-- [ ] Findings report cites exact merge and artifact facts.
-- [ ] Project 8 evidence gap is open, not blocked or closed.
-- [ ] Monitoring sufficiency remains open.
-- [ ] Audit separates OWH evidence from missing session telemetry.
-- [ ] Real telemetry run/export/import/findings boxes remain unchecked.
-- [ ] Next-run preflight boundary is explicit.
-- [ ] Exact-head CI passes and review threads are checked.
-- [ ] Owner approves merge separately.
+- [x] Plan commit precedes documentation changes.
+- [x] Findings report records exact merge and artifact facts.
+- [x] Project 8 evidence gap is open.
+- [x] Monitoring sufficiency remains open.
+- [x] Audit separates OWH from missing telemetry.
+- [x] Telemetry completion boxes remain unchecked.
+- [x] Next-run preflight boundary is explicit.
+- [ ] Exact-head CI passes all named gates.
+- [ ] Automated review and inline threads are inspected.
+
+## Claude Run Trace
+
+1. Merged verified Project 8 PR #4.
+2. Re-centered work on Engineering OS.
+3. Read audit, gaps, checklist, preflight and PR #244.
+4. Inspected the Project 8 OWH artifact and missing target settings.
+5. Committed the plan before documentation updates.
+6. Opened PR #245 and used first-run CI to identify Route Plan evidence omissions.
 
 ## Progress Lifecycle Evidence
 
-- start: current audit/gaps/checklist/preflight, Project 8 PR #4, its OWH artifact, missing Project 8 settings, and merged Engineering OS PR #244 were verified before writes.
-- mid: pending documentation reconciliation.
-- pre-merge: pending exact-head checks, review and owner approval.
+- start: audit, gaps, checklist, preflight, Project 8 PR #4, its OWH artifact, missing target settings and merged PR #244 were verified before writes.
+- mid: findings, checklist separation, audit reconciliation and blocked-to-open transition were committed; first PR CI isolated Route Plan contract omissions.
+- pre-merge: PR #245 is open with failed evidence-contract checks; no readiness claim or merge request has been made.
+
+## Merge Gate
+
+Merge remains blocked until exact-head CI is green, automated review and threads are checked, and the owner gives separate approval.
