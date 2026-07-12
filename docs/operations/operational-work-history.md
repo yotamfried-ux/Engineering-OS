@@ -218,8 +218,10 @@ this repository; this only proves a PR names a real, diff-relevant contract id.
 
 ## What this does NOT claim
 
-- Does not claim `monitoring-metrics-sufficiency` (open) or `project-8-real-run-evidence` (blocked)
-  are closed — those require a real target-project run, not this foundation.
+- Does not claim `monitoring-metrics-sufficiency` or `project-8-real-run-evidence` are closed. The
+  Project 8 gap is open after the OWH-only PR #4 run and merged PR #244 removed the installation
+  blocker, but closure still requires a fresh instrumented target run, non-empty export, import,
+  analysis, and reviewed findings.
 - Does not, by itself, close `result-loop-contract-enforcement` — this document is the design and
   implementation description; closure requires real positive **and** real negative PR evidence per
   `docs/operations/operational-work-history-rollout.md`'s evidence-log convention, tracked in
