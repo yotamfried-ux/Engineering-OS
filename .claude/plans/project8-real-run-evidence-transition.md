@@ -2,7 +2,7 @@
 
 Date: 2026-07-12
 Base: `c2572b03f296703d1ff6c84cfbf4e0796b62f588`
-Status: implementation complete; merge remains externally gated
+Status: implementation evidence complete; merge remains externally gated
 
 ## Route Plan
 
@@ -32,7 +32,7 @@ Status: implementation complete; merge remains externally gated
 - `plan.route-plan-before-write` — plan commit preceded all documentation changes.
 - `source.github-repo-read` — both repositories, PRs, CI, exact SHAs and the OWH artifact were inspected through GitHub.
 - `validation.policy-change-has-validator` — existing audit, known-gap and plan validators cover this evidence/status reconciliation; no new validator is required.
-- `validation.coderabbit-policy` — work is isolated in PR #245; automated review and thread state remain merge gates.
+- `validation.coderabbit-policy` — CodeRabbit and Codex reviews were inspected; both CodeRabbit threads and the Codex stale-reference thread are resolved.
 
 ## Connector Evidence
 
@@ -41,9 +41,9 @@ Status: implementation complete; merge remains externally gated
 ## Connector Usage Evidence
 
 - source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
-- action: inspected PRs #4, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist, stale operational references, and Project 8 `.claude/settings.json` state.
-- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/operational-work-history.md`, and `docs/operations/result-loop-contract-audit-checklist.md`.
-- decision: updated the Project 8 gap from blocked to open, kept monitoring open, marked old blocked references as historical/currently superseded, and blocked telemetry closure until a fresh non-empty export/import/analyze cycle exists.
+- action: inspected PRs #4, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist, stale operational references, CI runs, reviews, threads, and Project 8 `.claude/settings.json` state.
+- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/operational-work-history.md`, and `docs/operations/result-loop-contract-audit-checklist.md` passed the content/evidence gates on head `025223911c100e96816eb93944f980009a9b08cd`.
+- decision: updated the Project 8 gap from blocked to open, kept monitoring open, corrected stale blocked references, and blocked telemetry closure until a fresh non-empty export/import/analyze cycle exists.
 - target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md`.
 
 ## Documentation Asset Evidence
@@ -68,6 +68,20 @@ Status: implementation complete; merge remains externally gated
 
 Project 8 PR #4 is a real target run with valid OWH and real product improvements, but it had zero session events. PR #244 removed the installation blocker, so the gap moves from blocked to open while telemetry closure remains incomplete.
 
+## Validation Evidence
+
+Application/content evidence head: `025223911c100e96816eb93944f980009a9b08cd`.
+
+- enforcement-tests: passed, including known-gaps, readiness-audit, direct installation telemetry, Project 8 telemetry readiness, all grouped/full suites, result-loop and scaling gates.
+- capability-evidence-policy: passed.
+- connector-evidence-policy: passed.
+- workflow-evidence-policy: passed.
+- documentation-asset-policy: passed.
+- semantic-cleanup-policy: passed.
+- import-cleanup-policy: passed.
+- automated review: CodeRabbit and Codex inspected; three inline threads resolved.
+- plan-policy and pr-policy were intentionally deferred to this separate evidence-only checkpoint and final PR-body SHA update.
+
 ## Definition of Done
 
 - [x] Plan commit precedes documentation changes.
@@ -77,8 +91,8 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 - [x] Audit separates OWH from missing telemetry.
 - [x] Telemetry completion boxes remain unchecked.
 - [x] Next-run preflight boundary is explicit.
-- [ ] Exact-head CI passes all named gates.
-- [ ] Automated review and inline threads are inspected.
+- [x] Application/content head passes enforcement-tests and every independent evidence gate.
+- [x] Automated reviews and all inline threads are inspected and resolved.
 
 ## Claude Run Trace
 
@@ -89,13 +103,16 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 5. Committed the plan before documentation updates.
 6. Opened PR #245 and used first-run CI to identify Route Plan evidence omissions.
 7. CodeRabbit confirmed the initial Route Plan findings were addressed; Codex found two remaining stale blocked-status references.
+8. Reconciled both stale documents and recorded the first real result-loop run without marking telemetry complete.
+9. Verified enforcement-tests and all independent policy gates on application/content head `025223911c100e96816eb93944f980009a9b08cd`.
+10. Resolved all three inline review threads and added this separate evidence-only checkpoint.
 
 ## Progress Lifecycle Evidence
 
 - start: audit, gaps, checklist, preflight, Project 8 PR #4, its OWH artifact, missing target settings and merged PR #244 were verified before writes.
 - mid: findings, checklist separation, audit reconciliation and blocked-to-open transition were committed; first PR CI isolated Route Plan contract omissions, and automated review identified stale blocked-status references in two operational documents.
-- pre-merge: PR #245 remains open with the stale-reference correction and exact-head validation still pending; no readiness claim or merge request has been made.
+- pre-merge: application/content head `025223911c100e96816eb93944f980009a9b08cd` passed enforcement-tests and all independent evidence gates; CodeRabbit and Codex reviews were inspected, all three inline threads are resolved, and this evidence-only commit now triggers final plan-policy/pr-policy validation. Merge remains blocked on exact final-head checks and separate owner approval.
 
 ## Merge Gate
 
-Merge remains blocked until exact-head CI is green, automated review and threads are checked, and the owner gives separate approval.
+Merge remains blocked until all workflows pass on the exact final evidence head and the owner gives separate explicit approval.
