@@ -106,8 +106,8 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 ## Progress Lifecycle Evidence
 
 - start: audit, gaps, checklist, preflight, Project 8 PR #4, its OWH artifact, missing target settings and merged PR #244 were verified before writes.
-- mid: after the cumulative PR added remote telemetry code, named handoff CI, privacy negatives, live-thread enforcement, and workflow diagnostics, this original evidence-transition scope was rechecked against the combined diff; its audit status remained accurate and no telemetry completion claim was introduced.
-- pre-merge: implementation head `e7af77a01109a84e8e1899b577be47bb132c8250` passed all enforcement steps and both named telemetry-handoff jobs; workflow diagnostic artifact `workflow-evidence-log-29289025034` identified the cumulative lifecycle/source mismatches, commits `dcfd0bc97e2086eac002ba31191bb0af672f53d4` and `27235a4cddd1bfd90b1dae57c16269b47ba31a16` separated the mid evidence, and all existing review threads are resolved. Exact-head checks and owner approval remain external merge gates.
+- mid: after Codex identified provisional PR binding and stale concurrent overwrite risks, cumulative code commits `6718669befa4184e8e2e96d8bbd6591feb39227e`, `5d9cfdfdefd5cd05c41227d18458f873f1ed16ef`, and `10601c49f901e187cfd584de7208a70ffc895be3` added provisional exact-head selection, exact rebinding, monotonic remote progress protection, and regression coverage without changing the audit closure claims.
+- pre-merge: implementation head `e7af77a01109a84e8e1899b577be47bb132c8250` passed all enforcement steps and both named telemetry-handoff jobs; workflow diagnostic artifact `workflow-evidence-log-29289025034` identified the cumulative lifecycle/source mismatches, commits `dcfd0bc97e2086eac002ba31191bb0af672f53d4` and `27235a4cddd1bfd90b1dae57c16269b47ba31a16` separated the earlier mid evidence, and all existing review threads are resolved. Exact-head checks and owner approval remain external merge gates.
 
 ## Merge Gate
 
