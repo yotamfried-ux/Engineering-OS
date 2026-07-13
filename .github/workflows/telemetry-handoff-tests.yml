@@ -1,0 +1,55 @@
+name: telemetry-handoff-tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry-handoff:
+    name: Verify remote telemetry handoff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Prepare Git simulation
+        run: |
+          set -euo pipefail
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+
+      - name: Run remote workspace handoff regression
+        id: handoff
+        shell: bash
+        run: |
+          set +e
+          bash scripts/enforcement/tests/test-remote-telemetry-handoff.sh > /tmp/telemetry-handoff.log 2>&1
+          status=$?
+          cat /tmp/telemetry-handoff.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+      - name: Upload telemetry handoff test log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: telemetry-handoff-test-log-${{ github.run_id }}
+          path: /tmp/telemetry-handoff.log
+          retention-days: 14
+          if-no-files-found: error
+
+  live-review-threads:
+    name: Verify live review thread gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/enforcement/tests/test-live-review-threads.sh
