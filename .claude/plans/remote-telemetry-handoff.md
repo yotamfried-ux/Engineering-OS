@@ -83,11 +83,12 @@ No external skill is required; repository-native regression suites validate the 
 5. Used CI artifacts to correct repository identity and lifecycle evidence.
 6. Applied Codex review findings for provisional PR association and monotonic concurrent sync.
 7. Verified all enforcement and named handoff suites on the post-review code.
+8. Final pr-policy inspection found `hashFiles()` skipped a selected gitignored bundle; commits `819555260cf4ab878c7e9c18c98ea1137b5d576a` and `4af3d6641a8bb75a13e167f75dac9edab1c0f7b8` replaced it with explicit selector output and regression coverage.
 
 ## Progress Lifecycle Evidence
 
 - start: PR #6 evidence, telemetry runtime, CI workflow, installer, and live thread state were inspected before implementation; both false-green paths were reproduced.
-- mid: Codex review findings drove provisional exact-head bundles before PR creation, exact PR rebinding once available, protection against stale concurrent overwrite, and regression coverage in commits `6718669befa4184e8e2e96d8bbd6591feb39227e`, `5d9cfdfdefd5cd05c41227d18458f873f1ed16ef`, and `10601c49f901e187cfd584de7208a70ffc895be3`.
+- mid: after final pr-policy inspection showed a selected bundle was not uploaded, commits `819555260cf4ab878c7e9c18c98ea1137b5d576a` and `4af3d6641a8bb75a13e167f75dac9edab1c0f7b8` added explicit `available=true` output from the selector and a wiring test that rejects `hashFiles()` for gitignored telemetry.
 - pre-merge: post-review head `4fe3c408254f0fc0c7dfdd2510a0c8347d3ca47c` passed all 26 enforcement steps and both named handoff jobs; provisional PR binding and monotonic stale-sync protection are covered, and both Codex threads are resolved. Exact-head evidence-only checks and owner approval remain external merge gates.
 
 ## Merge Gate
