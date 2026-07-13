@@ -14,24 +14,45 @@ Status: implementation in validation; merge requires separate explicit owner app
 | Domain tags | observability, workflow, governance, testing, security |
 | Plan Scope | standard |
 | Planning Mode | approved |
-| Templates | Not required — this extends the existing telemetry runtime and installed policy workflow |
+| Templates | Not required |
 | Architecture guides | `docs/operations/runtime-telemetry-archive-plan.md`; `docs/operations/operational-work-history.md` |
-| Patterns | Not required — existing metadata-only telemetry and OWH contracts are the implementation source of truth |
-| External systems / connectors | GitHub connector; official Claude Code hooks documentation; official GitHub refs/token documentation |
+| Patterns | Not required |
+| External systems / connectors | GitHub |
 | Skills | Not required |
 | Validation gates | enforcement-tests; project8 telemetry readiness; telemetry archive tests; installer coverage; pr-policy workflow wiring; live review threads; plan-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy; semantic-cleanup-policy; import-cleanup-policy |
 | Evidence to check | `scripts/monitoring/eos-telemetry-session-start.sh`; `scripts/monitoring/record-and-sync-telemetry.sh`; `scripts/monitoring/sync-telemetry-run.py`; `scripts/monitoring/select-pr-telemetry.py`; `scripts/monitoring/export-telemetry-run.py`; `.github/workflows/pr-policy.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; Project 8 PR #6 OWH artifact |
 | User decisions required | none for implementation; explicit merge approval remains required after exact-head evidence |
+| Task-router evidence | `core/task-router.md` read; task classified as Engineering OS observability/governance maintenance |
+| Workflow evidence | `core/workflow.md` read; plan commit `e530ecc3dcea93458ba38b865ab617a9e185e19c` preceded implementation |
 | Target paths | `scripts/monitoring/`; `.github/workflows/pr-policy.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/enforcement/tests/`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `docs/operations/` |
 
 ## Capability Evidence
 
-- `routing.task-router-read` — `core/task-router.md` was read; task classified as Engineering OS observability/governance maintenance.
-- `workflow.workflow-read` — `core/workflow.md` was read; plan commit `e530ecc3dcea93458ba38b865ab617a9e185e19c` preceded implementation.
-- `plan.route-plan-before-write` — this file was the first implementation-series commit.
+- `routing.task-router-read` — task router read before planning.
+- `workflow.workflow-read` — workflow read and plan-first ordering used.
+- `plan.route-plan-before-write` — plan commit preceded implementation.
 - `source.github-repo-read` — Engineering OS `main`, PR #245, Project 8 PR #6, CI, OWH artifact, and live review threads were inspected through GitHub.
 - `validation.policy-change-has-validator` — remote persistence, exact-head selection, privacy/checksum rejection, installer wiring, OWH correlation, and live-thread state have fixtures.
+- `validation.actions-checked` — `.github/workflows/pr-policy.yml` changes are validated by static wiring fixtures and live Actions runs.
 - `validation.coderabbit-policy` — work remains isolated in PR #245; exact-head Actions and automated review remain merge gates.
+
+## Connector Evidence
+
+- GitHub — required to inspect Project 8 PR #6, its CI/OWH artifact and live review threads; also the durable transport and CI source of truth for the fix.
+
+## Connector Usage Evidence
+
+- source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
+- action: inspected PR #6 merge `b6dd9a662a31e7ef1bad8c7e420450ab80c9ef26`, OWH artifact `operational-work-history-6-29245891365`, current telemetry runtime/workflows, and two unresolved PR #6 review threads.
+- result: `scripts/monitoring/sync-telemetry-run.py`, `scripts/monitoring/select-pr-telemetry.py`, `.github/workflows/pr-policy.yml`, and `scripts/enforcement/check-live-review-threads.py` now implement durable handoff and live-state validation.
+- decision: selected an isolated same-repository branch with exact PR/head matching instead of product-branch commits or manual export.
+- target: `scripts/monitoring/`; `.github/workflows/pr-policy.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/enforcement/tests/`.
+
+## Documentation Asset Evidence
+
+- internal: `docs/operations/runtime-telemetry-archive-plan.md`; `docs/operations/operational-work-history.md`; `docs/operations/project8-telemetry-preflight.md`.
+- official: Claude Code hooks lifecycle documentation and GitHub refs/token documentation were consulted for session boundaries, parallel hook behavior, Git transport, and workflow authentication.
+- decision: boundary recording and sync are sequential inside one handler; CI accepts only exact matched metadata-only bundles.
 
 ## Source of Truth Checks
 
@@ -81,9 +102,10 @@ Claude Code web wrote telemetry to a gitignored file in its remote workspace, wh
 4. Committed the Route Plan before implementation.
 5. Implemented a dedicated-branch handoff, exact PR/head selector, sequential boundary hooks, fail-closed preflight, CI artifact wiring, and live-thread gate.
 6. Ran a local bare-Git simulation proving remote persistence, sanitized selection, OWH correlation, mismatch rejection, and missing-state blocking.
+7. First CI pass identified missing simulation-registry and explicit connector/capability evidence; both were corrected without weakening gates.
 
 ## Progress Lifecycle Evidence
 
 - start: verified the merged Project 8 run, OWH artifact, local telemetry runtime, clean CI workflow, installer manifest, and live review-thread state before implementation; durable-handoff and live-thread gaps were reproduced from real evidence.
-- mid: after implementation began, a local bare-remote run created `engineering-os-telemetry`, selected a non-empty exact-head bundle from a separate checkout, supplied it to OWH, rejected mismatches/checksum tampering, and blocked preflight after deleting handoff state; CI validation is now running on the committed implementation.
+- mid: after implementation began, a local bare-remote run created `engineering-os-telemetry`, selected a non-empty exact-head bundle from a separate checkout, supplied it to OWH, rejected mismatches/checksum tampering, and blocked preflight after deleting handoff state; first CI feedback then drove explicit simulation registration and connector/capability evidence corrections.
 - pre-merge: not recorded yet.
