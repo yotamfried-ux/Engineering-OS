@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Base branch: `main`
 Working branch: `docs/project8-real-run-evidence-transition`
-Status: implementation authorized; merge requires separate explicit owner approval
+Status: implementation in validation; merge requires separate explicit owner approval
 
 ## Route Plan
 
@@ -16,79 +16,74 @@ Status: implementation authorized; merge requires separate explicit owner approv
 | Planning Mode | approved |
 | Templates | Not required — this extends the existing telemetry runtime and installed policy workflow |
 | Architecture guides | `docs/operations/runtime-telemetry-archive-plan.md`; `docs/operations/operational-work-history.md` |
-| Patterns | Not required — the existing metadata-only telemetry and OWH contracts are the implementation source of truth |
+| Patterns | Not required — existing metadata-only telemetry and OWH contracts are the implementation source of truth |
 | External systems / connectors | GitHub connector; official Claude Code hooks documentation; official GitHub refs/token documentation |
 | Skills | Not required |
-| Validation gates | enforcement-tests; project8 telemetry readiness; telemetry archive tests; installer coverage; pr-policy workflow wiring; PR review evidence; plan-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy; semantic-cleanup-policy; import-cleanup-policy |
-| Evidence to check | `scripts/monitoring/eos-telemetry-event.sh`; `scripts/monitoring/eos-telemetry-session-start.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/monitoring/export-telemetry-run.py`; `scripts/monitoring/collect-pr-work-history.py`; `.github/workflows/pr-policy.yml`; `scripts/enforcement/check-pr-review-evidence.sh`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; Project 8 PR #6 OWH artifact |
+| Validation gates | enforcement-tests; project8 telemetry readiness; telemetry archive tests; installer coverage; pr-policy workflow wiring; live review threads; plan-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy; semantic-cleanup-policy; import-cleanup-policy |
+| Evidence to check | `scripts/monitoring/eos-telemetry-session-start.sh`; `scripts/monitoring/record-and-sync-telemetry.sh`; `scripts/monitoring/sync-telemetry-run.py`; `scripts/monitoring/select-pr-telemetry.py`; `scripts/monitoring/export-telemetry-run.py`; `.github/workflows/pr-policy.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; Project 8 PR #6 OWH artifact |
 | User decisions required | none for implementation; explicit merge approval remains required after exact-head evidence |
-| Target paths | `scripts/monitoring/`; `.github/workflows/pr-policy.yml`; `scripts/enforcement/check-pr-review-evidence.sh`; `scripts/enforcement/tests/`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `docs/operations/` |
+| Target paths | `scripts/monitoring/`; `.github/workflows/pr-policy.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/enforcement/tests/`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `docs/operations/` |
 
 ## Capability Evidence
 
-- `routing.task-router-read` — `core/task-router.md` was read; this is Engineering OS observability/governance maintenance with a production-facing Git transport boundary.
-- `workflow.workflow-read` — `core/workflow.md` was read; this plan is committed before the new implementation changes.
-- `plan.route-plan-before-write` — this file is the first commit for the telemetry-handoff implementation.
-- `source.github-repo-read` — Engineering OS `main`, open PR #245, Project 8 PR #6, its final CI and OWH artifact were inspected through GitHub.
-- `validation.policy-change-has-validator` — positive and negative fixtures are required for remote persistence, exact-head selection, privacy, installer coverage, and unresolved review threads.
-- `validation.coderabbit-policy` — work remains isolated in PR #245; Actions and automated review are required before requesting merge approval.
+- `routing.task-router-read` — `core/task-router.md` was read; task classified as Engineering OS observability/governance maintenance.
+- `workflow.workflow-read` — `core/workflow.md` was read; plan commit `e530ecc3dcea93458ba38b865ab617a9e185e19c` preceded implementation.
+- `plan.route-plan-before-write` — this file was the first implementation-series commit.
+- `source.github-repo-read` — Engineering OS `main`, PR #245, Project 8 PR #6, CI, OWH artifact, and live review threads were inspected through GitHub.
+- `validation.policy-change-has-validator` — remote persistence, exact-head selection, privacy/checksum rejection, installer wiring, OWH correlation, and live-thread state have fixtures.
+- `validation.coderabbit-policy` — work remains isolated in PR #245; exact-head Actions and automated review remain merge gates.
 
 ## Source of Truth Checks
 
 | Source | Status | Finding |
 |---|---|---|
-| `scripts/monitoring/eos-telemetry-event.sh` | read | hook events are written only to the target workspace local JSONL file |
-| `scripts/monitoring/collect-pr-work-history.py` | read | CI reads only `.engineering-os/telemetry/events.jsonl` from its clean checkout unless `--telemetry-file` is supplied |
-| `.github/workflows/pr-policy.yml` | read | the workflow never retrieves telemetry from the remote Claude workspace and therefore reports zero events |
-| `scripts/monitoring/export-telemetry-run.py` | read | export exists but is manual and copies the local bundle only after the session |
-| `scripts/monitoring/require-telemetry-session.sh` | read | preflight proves local recording but does not prove durable remote handoff |
-| `scripts/enforcement/check-pr-review-evidence.sh` | read | the gate validates a free-text `threads:` field but does not inspect live GitHub review-thread state |
-| `scripts/enforcement/tests/test-project8-telemetry-readiness.sh` | read | tests prove local recording/session isolation but do not simulate a separate CI checkout |
-| Project 8 PR #6 OWH artifact | validated | 38 CI runs and 15 historical failures were retained, but `telemetry_available=false` and `telemetry_events_count=0` |
+| `scripts/monitoring/eos-telemetry-event.sh` | read | events were local-only in the remote Claude workspace |
+| `scripts/monitoring/collect-pr-work-history.py` | read | clean CI checkout sees telemetry only when an explicit telemetry file is supplied |
+| `.github/workflows/pr-policy.yml` | read | previous workflow had no remote handoff checkout and trusted body text for thread state |
+| `scripts/monitoring/export-telemetry-run.py` | read | previous export was manual and preserved raw branch metadata |
+| `scripts/monitoring/require-telemetry-session.sh` | read | previous preflight proved local recording but not durable delivery |
+| `scripts/enforcement/tests/test-project8-telemetry-readiness.sh` | read | previous tests did not simulate a separate CI workspace |
+| Project 8 PR #6 OWH artifact | validated | full CI history was retained, but telemetry was unavailable with zero events |
 
 ## Root Cause
 
-Claude Code on the web writes metadata-only events into a gitignored file inside its remote workspace. GitHub Actions later checks out the repository into a separate clean workspace. No durable transport connects those workspaces, so local preflight can pass while OWH sees zero events. A SessionEnd/webhook lifecycle confirmation does not carry the telemetry bundle.
+Claude Code web wrote telemetry to a gitignored file in its remote workspace, while GitHub Actions used a clean independent checkout. No durable channel connected them. Separately, merge readiness trusted a free-text `threads:` assertion instead of live GitHub review-thread metadata.
 
-A second independent gap allowed PR #6 to merge with two live unresolved review threads because the gate trusted PR-body prose instead of GitHub thread metadata.
+## Implementation
 
-## Implementation Contract
-
-1. Persist each active telemetry run to a dedicated GitHub branch without modifying the product branch or `main`.
-2. Perform the first persistence during `SessionStart`; required-mode preflight must block all tools until that push succeeds.
-3. Refresh the same run after every `Stop`, `StopFailure`, and `SessionEnd` so phone/remote sessions do not depend on a manual final command.
-4. Export only metadata-safe events; hash the source branch name before remote persistence.
-5. Match CI telemetry by PR number, branch hash, and exact PR head SHA; stale or unrelated bundles must fail in required mode.
-6. Feed the selected remote bundle into OWH and upload it as a separate Actions artifact for later archive import.
-7. Collect live GitHub review threads and block readiness while any thread is unresolved.
-8. Keep `monitoring-metrics-sufficiency` and `project-8-real-run-evidence` open until a new non-empty run is imported and analyzed.
+1. SessionStart creates a metadata-only bundle and pushes it to the isolated `engineering-os-telemetry` branch.
+2. Stop, StopFailure, and SessionEnd record then refresh the same run sequentially.
+3. Required-mode preflight blocks tools until the current run has a successful durable handoff.
+4. Export hashes the source branch, rejects raw/sensitive fields, and regenerates the summary from sanitized events.
+5. PR policy selects only a non-empty bundle matching repository, PR number, branch hash, and exact head SHA.
+6. The selected bundle feeds OWH and is uploaded as a separate Actions artifact.
+7. The remote sync dispatches `pr-policy` after a PR exists, avoiding dependence on a manual final export.
+8. PR policy fetches live review threads and blocks every unresolved current or outdated thread.
 
 ## Definition of Done
 
-- [ ] A local bare-remote simulation proves SessionStart creates a durable telemetry branch and matching non-empty bundle.
-- [ ] Required preflight fails when the remote handoff is absent, failed, stale, or for another run.
-- [ ] Stop/SessionEnd refresh the durable bundle without touching the product branch.
-- [ ] CI selection rejects wrong PR, wrong branch hash, stale head SHA, zero-event, checksum-mismatched, and privacy-invalid bundles.
-- [ ] OWH receives non-zero telemetry from a separate checkout fixture.
-- [ ] Installed target workflows retrieve and upload the matched bundle.
-- [ ] Installer coverage includes every new runtime and CI dependency.
-- [ ] PR review evidence fails with a live unresolved thread and passes when all threads are resolved.
-- [ ] Existing telemetry archive export/import/analyze tests remain green.
-- [ ] Full enforcement suite and all policy workflows pass on the exact final head.
+- [x] Bare-remote simulation proves a fresh session creates a durable telemetry branch and non-empty bundle.
+- [x] Required preflight fails when durable handoff state is absent.
+- [x] Stop refreshes the durable bundle without modifying the product branch.
+- [x] CI selector rejects wrong PR, wrong branch hash, stale head SHA, and checksum mismatch.
+- [x] OWH receives non-zero telemetry from a separate checkout fixture.
+- [x] Installed workflow wiring retrieves, selects, supplies, and uploads the matched bundle.
+- [x] Installer manifest includes new runtime and CI dependencies.
+- [x] Live thread fixture rejects unresolved current and outdated threads.
+- [ ] Full telemetry archive and enforcement suites pass on the exact final head.
 - [ ] Automated review findings are resolved or disproved with evidence.
 
 ## Claude Run Trace
 
-1. Verified Project 8 PR #6 merged successfully and materially improved the Postgres foundation.
-2. Downloaded and inspected its CI-generated OWH artifact.
-3. Confirmed the OWH retained full CI friction but reported no session telemetry.
-4. Compared the local recorder/preflight contract with the clean-checkout OWH workflow.
-5. Identified the missing durable workspace-to-CI transport as the root cause.
-6. Confirmed PR #6 also retained two unresolved GitHub review threads after merge.
-7. Read official Claude Code hook lifecycle documentation and GitHub refs/token documentation before selecting the transport design.
+1. Verified Project 8 PR #6 and downloaded its OWH artifact.
+2. Reproduced the clean-checkout boundary that caused zero session events.
+3. Confirmed two unresolved review threads remained after merge.
+4. Committed the Route Plan before implementation.
+5. Implemented a dedicated-branch handoff, exact PR/head selector, sequential boundary hooks, fail-closed preflight, CI artifact wiring, and live-thread gate.
+6. Ran a local bare-Git simulation proving remote persistence, sanitized selection, OWH correlation, mismatch rejection, and missing-state blocking.
 
 ## Progress Lifecycle Evidence
 
-- start: verified the merged Project 8 run, OWH artifact, local telemetry runtime, clean CI workflow, installer manifest, and live review-thread state before implementation; the durable-handoff and live-thread gaps are reproduced from real evidence.
-- mid: not recorded yet.
+- start: verified the merged Project 8 run, OWH artifact, local telemetry runtime, clean CI workflow, installer manifest, and live review-thread state before implementation; durable-handoff and live-thread gaps were reproduced from real evidence.
+- mid: after implementation began, a local bare-remote run created `engineering-os-telemetry`, selected a non-empty exact-head bundle from a separate checkout, supplied it to OWH, rejected mismatches/checksum tampering, and blocked preflight after deleting handoff state; CI validation is now running on the committed implementation.
 - pre-merge: not recorded yet.
