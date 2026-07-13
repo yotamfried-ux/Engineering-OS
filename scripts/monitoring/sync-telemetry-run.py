@@ -69,19 +69,21 @@ def repo_slug_from_url(value: str) -> str:
 def detect_repo_slug(root: Path, explicit: str = "") -> str:
     if explicit:
         return explicit
-    env_repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
-    if env_repo.count("/") == 1:
-        return env_repo
     remote_url = git(root, "remote", "get-url", "origin", required=False)
     candidate = repo_slug_from_url(remote_url)
     if candidate:
         return candidate
+    env_repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    if env_repo.count("/") == 1:
+        return env_repo
     return root.name
 
 
 def detect_pr_number(root: Path, repo_slug: str, explicit: str = "") -> int:
     raw = explicit or os.environ.get("EOS_TELEMETRY_PR_NUMBER", "")
-    if str(raw).strip().isdigit():
+    if str(raw).strip():
+        if not str(raw).strip().isdigit() or int(str(raw).strip()) <= 0:
+            raise HandoffError("EOS_TELEMETRY_PR_NUMBER must be a positive integer")
         return int(str(raw).strip())
     if not shutil.which("gh") or repo_slug.count("/") != 1:
         return 0
@@ -117,6 +119,7 @@ def write_handoff_manifest(
         "schema_version": HANDOFF_SCHEMA,
         "repo": repo_slug,
         "pr_number": pr_number,
+        "pr_binding": "exact" if pr_number > 0 else "provisional",
         "source_branch_hash": branch_hash,
         "head_sha": head_sha,
         "run_id_hash": stable_hash(run_id),
@@ -140,6 +143,37 @@ def write_handoff_manifest(
     return manifest
 
 
+def load_bundle_progress(bundle: Path) -> tuple[int, int, int]:
+    manifest_path = bundle / "manifest.json"
+    if not manifest_path.is_file():
+        return (0, 0, 0)
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        handoff = manifest.get("handoff") if isinstance(manifest.get("handoff"), dict) else {}
+        return (
+            int(manifest.get("event_count") or handoff.get("event_count") or 0),
+            int(handoff.get("boundary_position") or 0),
+            int(handoff.get("pr_number") or 0),
+        )
+    except Exception:
+        return (0, 0, 0)
+
+
+def bind_bundle_to_pr(bundle: Path, pr_number: int) -> None:
+    manifest_path = bundle / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    handoff = manifest.get("handoff") if isinstance(manifest.get("handoff"), dict) else {}
+    handoff["pr_number"] = pr_number
+    handoff["pr_binding"] = "exact"
+    handoff["synced_at"] = utc_now()
+    manifest["handoff"] = handoff
+    validate_metadata_only(manifest)
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 def commit_bundle(
     *,
     root: Path,
@@ -147,7 +181,9 @@ def commit_bundle(
     bundle: Path,
     run_id: str,
     event_count: int,
-) -> str:
+    boundary_position: int,
+    pr_number: int,
+) -> tuple[str, bool]:
     remote_url = git(root, "remote", "get-url", policy["remote"])
     branch = policy["branch"]
     for attempt in range(1, 4):
@@ -177,6 +213,32 @@ def commit_bundle(
                 )
 
             destination = tmp / "runs" / run_id
+            existing_events, existing_boundary, existing_pr = load_bundle_progress(destination)
+            remote_is_newer = (existing_events, existing_boundary) > (event_count, boundary_position)
+
+            if remote_is_newer:
+                if pr_number > 0 and existing_pr <= 0:
+                    bind_bundle_to_pr(destination, pr_number)
+                    run(["git", "-C", str(tmp), "add", str(destination.relative_to(tmp))])
+                    run([
+                        "git", "-C", str(tmp), "commit", "-q", "-m",
+                        f"telemetry: bind {stable_hash(run_id, 12)} to PR {pr_number}",
+                    ])
+                    pushed = run(
+                        ["git", "-C", str(tmp), "push", "origin", f"HEAD:refs/heads/{branch}"],
+                        check=False,
+                    )
+                    if pushed.returncode == 0:
+                        return git(tmp, "rev-parse", "HEAD"), True
+                else:
+                    return git(tmp, "rev-parse", "HEAD"), True
+                if attempt < 3:
+                    time.sleep(attempt)
+                continue
+
+            if existing_pr > 0 and pr_number <= 0:
+                bind_bundle_to_pr(bundle, existing_pr)
+
             if destination.exists():
                 shutil.rmtree(destination)
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -184,7 +246,7 @@ def commit_bundle(
             run(["git", "-C", str(tmp), "add", "README.md", "runs"])
             changed = run(["git", "-C", str(tmp), "status", "--porcelain"]).stdout.strip()
             if not changed:
-                return git(tmp, "rev-parse", "HEAD")
+                return git(tmp, "rev-parse", "HEAD"), False
             run([
                 "git", "-C", str(tmp), "commit", "-q", "-m",
                 f"telemetry: sync {stable_hash(run_id, 12)} events={event_count}",
@@ -194,7 +256,7 @@ def commit_bundle(
                 check=False,
             )
             if pushed.returncode == 0:
-                return git(tmp, "rev-parse", "HEAD")
+                return git(tmp, "rev-parse", "HEAD"), False
         if attempt < 3:
             time.sleep(attempt)
     raise HandoffError("failed to push telemetry handoff branch after 3 attempts")
@@ -245,9 +307,16 @@ def check_state(root: Path, policy: dict[str, Any]) -> int:
         raise HandoffError("latest completed session boundary was not handed off remotely")
     if str(state.get("remote_branch") or "") != policy["branch"]:
         raise HandoffError("remote handoff state uses the wrong telemetry branch")
+    repo_slug = str(state.get("repo") or detect_repo_slug(root))
+    current_pr = detect_pr_number(root, repo_slug)
+    state_pr = int(state.get("pr_number") or 0)
+    if current_pr > 0 and state_pr != current_pr:
+        raise HandoffError(
+            f"current branch is PR #{current_pr}, but durable handoff is still provisional or bound elsewhere; run a fresh sync"
+        )
     print(
         f"telemetry remote handoff ready: events={state.get('event_count', 0)} "
-        f"boundary={state.get('boundary_position', 0)}"
+        f"boundary={state.get('boundary_position', 0)} pr={state_pr or 'provisional'}"
     )
     return 0
 
@@ -298,19 +367,30 @@ def sync(root: Path, policy: dict[str, Any], args: argparse.Namespace) -> int:
             event_count=len(events),
             boundary_position=boundary,
         )
-        remote_commit = commit_bundle(
+        remote_commit, stale_skip = commit_bundle(
             root=root,
             policy=policy,
             bundle=bundle,
             run_id=run_id,
             event_count=len(events),
+            boundary_position=boundary,
+            pr_number=pr_number,
         )
+
+    dispatch_pr_policy(root, repo_slug, source_branch, pr_number)
+    if stale_skip:
+        print(
+            f"telemetry handoff skipped stale local bundle: events={len(events)} "
+            f"pr={pr_number or 'provisional'} remote_commit={remote_commit[:12]}"
+        )
+        return 0
 
     state = {
         "schema_version": HANDOFF_SCHEMA,
         "run_id_hash": stable_hash(run_id),
         "repo": repo_slug,
         "pr_number": pr_number,
+        "pr_binding": "exact" if pr_number > 0 else "provisional",
         "source_branch_hash": branch_hash,
         "head_sha": head_sha,
         "event_count": len(events),
@@ -321,10 +401,9 @@ def sync(root: Path, policy: dict[str, Any], args: argparse.Namespace) -> int:
         "synced_at": manifest["handoff"]["synced_at"],
     }
     validate_metadata_only(state)
-    dispatch_pr_policy(root, repo_slug, source_branch, pr_number)
     atomic_write_json(state_path(root), state)
     print(
-        f"telemetry handoff synced: events={len(events)} pr={pr_number or 'unassigned'} "
+        f"telemetry handoff synced: events={len(events)} pr={pr_number or 'provisional'} "
         f"remote_commit={remote_commit[:12]}"
     )
     return 0
