@@ -17,7 +17,7 @@ Purpose: track execution of the runtime telemetry archive update. This checklist
 - [x] Privacy model documented.
 - [x] Full implementation plan created.
 
-## Implementation
+## Archive implementation
 
 - [x] Add export command.
 - [x] Add import command.
@@ -29,33 +29,52 @@ Purpose: track execution of the runtime telemetry archive update. This checklist
 - [x] Add duplicate-run handling.
 - [x] Add archive index files.
 
+## Remote workspace handoff implementation
+
+- [x] Identify the clean-checkout boundary that caused local Claude events to disappear from OWH.
+- [x] Add metadata-only persistence to an isolated Git branch.
+- [x] Record and sync SessionStart, Stop, StopFailure, and SessionEnd sequentially.
+- [x] Block required-mode tool use until the current run has durable handoff state.
+- [x] Hash source branch metadata before remote persistence.
+- [x] Reject raw/sensitive fields and checksum-invalid bundles.
+- [x] Select bundles by repository, PR number, source-branch hash, and exact PR head SHA.
+- [x] Feed the selected event file to Operational Work History.
+- [x] Upload the matched bundle as a separate Actions artifact.
+- [x] Add separate-workspace positive and stale/unrelated/tampered negative fixtures.
+- [x] Query live GitHub review threads and block every unresolved thread.
+
+These implementation items prove the transport and gates in fixtures. They do not prove that a new real Project 8 Claude session has produced, imported, and analyzed a non-empty bundle.
+
 ## Preliminary Project 8 evidence
 
-- [x] Perform a real Engineering OS target-project run with Operational Work History.
-- [x] Inspect the Project 8 PR #4 OWH artifact and record its exact facts.
-- [x] Confirm the completed run had `telemetry_available: false` and zero events.
-- [x] Record that OWH and Project 8 product outcomes do not substitute for session telemetry.
+- [x] Perform real Engineering OS target-project work with Operational Work History.
+- [x] Inspect Project 8 PR #4 and PR #6 OWH artifacts and record their exact facts.
+- [x] Confirm both completed runs lacked usable session telemetry in CI.
+- [x] Record that OWH, webhook lifecycle closure, and Project 8 product outcomes do not substitute for session telemetry.
 - [x] Merge the canonical installation/session/preflight fixes in Engineering OS PR #244.
-- [x] Write `docs/operations/project8-first-real-run-findings.md`.
-
-These items establish a real OWH-only run and remove the technical installation blocker. They do not satisfy the telemetry evidence section below.
+- [x] Capture the durable-handoff root cause in `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md`.
 
 ## Project 8 telemetry evidence
 
-- [ ] Install current Engineering OS in the exact Project 8 Claude workspace.
+- [ ] Merge the Engineering OS durable-handoff implementation.
+- [ ] Install that exact Engineering OS version in Project 8.
+- [ ] Merge the updated `pr-policy.yml` and telemetry runtime into `project-8/main` before the real workload.
+- [ ] Enable required remote handoff in `.engineering-os/telemetry-policy.json`.
 - [ ] Start a fresh Claude session after installation.
-- [ ] Pass `require-telemetry-session.sh` with a positive event count before application work.
-- [ ] Run Project 8 with the current Engineering OS telemetry baseline.
-- [ ] Export a non-empty Project 8 telemetry bundle.
-- [ ] Import Project 8 telemetry into the archive.
+- [ ] Pass `require-telemetry-session.sh` with positive local events and positive remote handoff state.
+- [ ] Run one bounded Project 8 task with the current telemetry baseline.
+- [ ] Produce an exact PR/head-matched non-empty session telemetry artifact.
+- [ ] Confirm Operational Work History reports non-zero telemetry events.
+- [ ] Import the Project 8 telemetry artifact into the archive.
+- [ ] Analyze the imported run.
 - [ ] Write instrumented Project 8 findings.
 - [ ] Identify missing telemetry coverage.
 - [ ] Convert repeated missing coverage into follow-up work.
 
 ## Longitudinal learning
 
-- [ ] Import at least one future target-project run.
-- [ ] Compare Project 8 with a later run.
+- [ ] Import at least one later target-project run.
+- [ ] Compare Project 8 with the later run.
 - [ ] Record recurring patterns.
 - [ ] Decide whether the local archive is sufficient.
 - [ ] Decide whether a later backend is needed.
@@ -63,8 +82,9 @@ These items establish a real OWH-only run and remove the technical installation 
 
 ## Completion evidence
 
-- [ ] Export/import/analyzer PR merged.
-- [ ] Project 8 archive run imported.
+- [ ] Durable-handoff PR merged.
+- [ ] Project 8 installation/configuration PR merged.
+- [ ] Project 8 non-empty archive run imported.
 - [ ] Instrumented Project 8 findings reviewed.
 - [ ] At least one comparison run exists.
 - [ ] Monitoring sufficiency decision is backed by real runs.
