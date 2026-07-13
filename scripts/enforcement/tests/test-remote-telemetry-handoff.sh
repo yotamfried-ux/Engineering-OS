@@ -4,6 +4,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SESSION_START="$ROOT/scripts/monitoring/eos-telemetry-session-start.sh"
 RECORDER="$ROOT/scripts/monitoring/eos-telemetry-event.sh"
 BOUNDARY="$ROOT/scripts/monitoring/record-and-sync-telemetry.sh"
+SYNC="$ROOT/scripts/monitoring/sync-telemetry-run.py"
 REQUIRE="$ROOT/scripts/monitoring/require-telemetry-session.sh"
 SELECT="$ROOT/scripts/monitoring/select-pr-telemetry.py"
 COLLECT="$ROOT/scripts/monitoring/collect-pr-work-history.py"
@@ -40,34 +41,66 @@ printf '%s' '{"session_id":"remote-session","hook_event_name":"Stop"}' | (cd "$T
 
 HANDOFF="$TMP/handoff"
 git clone -q --branch engineering-os-telemetry "$REMOTE" "$HANDOFF"
-SELECTED="$TMP/selected"
-python3 "$SELECT" --root "$TARGET" --handoff-root "$HANDOFF" --repo target --pr-number 0 --head-ref feature/test --head-sha "$HEAD" --out "$SELECTED" >/dev/null
-python3 - "$SELECTED" "$RUN_ID" <<'PY'
-import json, sys
+PROVISIONAL="$TMP/provisional"
+python3 "$SELECT" --root "$TARGET" --handoff-root "$HANDOFF" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$PROVISIONAL" >/dev/null
+python3 - "$PROVISIONAL" "$RUN_ID" <<'PY'
+import json,sys
 from pathlib import Path
 bundle=Path(sys.argv[1]); run_id=sys.argv[2]
 m=json.loads((bundle/'manifest.json').read_text())
 rows=[json.loads(x) for x in (bundle/'events.jsonl').read_text().splitlines() if x.strip()]
 assert m['event_count']==len(rows)>=2
 assert all(x['trace_id']==run_id for x in rows)
+assert m['handoff']['pr_number']==0
+assert m['handoff']['pr_binding']=='provisional'
 assert m['handoff']['boundary_position']==len(rows)
 raw=(bundle/'events.jsonl').read_text()
 assert '"eos.git.branch"' not in raw
 assert 'eos.git.branch.hash' in raw
 PY
 
+# Once a PR number becomes available, the same run is rebound exactly.
+printf '%s' '{"session_id":"remote-session","hook_event_name":"PostToolUse","tool_name":"Read"}' | (cd "$TARGET" && bash "$RECORDER" post_tool_use)
+(cd "$TARGET" && EOS_TELEMETRY_PR_NUMBER=42 python3 "$SYNC" --repo target) >/dev/null
+git -C "$HANDOFF" pull -q
+SELECTED="$TMP/selected"
+python3 "$SELECT" --root "$TARGET" --handoff-root "$HANDOFF" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$SELECTED" >/dev/null
+python3 - "$SELECTED" <<'PY'
+import json,sys
+from pathlib import Path
+m=json.loads((Path(sys.argv[1])/'manifest.json').read_text())
+assert m['handoff']['pr_number']==42
+assert m['handoff']['pr_binding']=='exact'
+assert m['event_count']>=3
+PY
+(cd "$TARGET" && EOS_TELEMETRY_PR_NUMBER=42 EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" bash "$REQUIRE") >/dev/null
+
 for bad in \
   "--repo target --pr-number 9 --head-ref feature/test --head-sha $HEAD" \
-  "--repo target --pr-number 0 --head-ref other --head-sha $HEAD" \
-  "--repo target --pr-number 0 --head-ref feature/test --head-sha 0000000000000000000000000000000000000000"; do
+  "--repo target --pr-number 42 --head-ref other --head-sha $HEAD" \
+  "--repo target --pr-number 42 --head-ref feature/test --head-sha 0000000000000000000000000000000000000000"; do
   if python3 "$SELECT" --root "$TARGET" --handoff-root "$HANDOFF" $bad --out "$TMP/bad" >/dev/null 2>&1; then
     echo "unexpected pass: mismatched bundle $bad"; exit 1
   fi
 done
 
+# A stale overlapping sync cannot downgrade the newer remote event/boundary count.
+cp "$TARGET/.engineering-os/telemetry/events.jsonl" "$TMP/full-events.jsonl"
+head -n 2 "$TMP/full-events.jsonl" > "$TARGET/.engineering-os/telemetry/events.jsonl"
+stale_output="$(cd "$TARGET" && EOS_TELEMETRY_PR_NUMBER=42 python3 "$SYNC" --repo target)"
+case "$stale_output" in *"skipped stale local bundle"*) ;; *) echo "$stale_output"; echo 'missing stale-sync protection'; exit 1 ;; esac
+mv "$TMP/full-events.jsonl" "$TARGET/.engineering-os/telemetry/events.jsonl"
+git -C "$HANDOFF" pull -q
+python3 - "$HANDOFF/runs/$RUN_ID/manifest.json" <<'PY'
+import json,sys
+m=json.load(open(sys.argv[1]))
+assert m['event_count']>=3
+assert m['handoff']['pr_number']==42
+PY
+
 cp -R "$HANDOFF" "$TMP/corrupt"
 printf 'tamper\n' >> "$TMP/corrupt/runs/$RUN_ID/events.jsonl"
-if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/corrupt" --repo target --pr-number 0 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/corrupt" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
   echo 'unexpected pass: checksum mismatch'; exit 1
 fi
 
@@ -83,7 +116,7 @@ manifest=json.loads(m.read_text())
 manifest['checksums']['events_sha256']=hashlib.sha256(e.read_bytes()).hexdigest()
 m.write_text(json.dumps(manifest,sort_keys=True))
 PY
-if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/privacy" --repo target --pr-number 0 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/privacy" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
   echo 'unexpected pass: privacy-invalid bundle'; exit 1
 fi
 
@@ -100,7 +133,7 @@ manifest['handoff']['boundary_position']=0
 manifest['checksums']['events_sha256']=hashlib.sha256(b'').hexdigest()
 m.write_text(json.dumps(manifest,sort_keys=True))
 PY
-if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/empty" --repo target --pr-number 0 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/empty" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
   echo 'unexpected pass: zero-event bundle'; exit 1
 fi
 
@@ -111,13 +144,13 @@ cat > "$TMP/body.md" <<'MD'
 ## Operational Work History Evidence
 selected_result_loop_contract: booking-system
 MD
-python3 "$COLLECT" --root "$CHECKOUT" --pr-head-sha "$HEAD" --base-sha "$BASE" --pr-number 1 \
+python3 "$COLLECT" --root "$CHECKOUT" --pr-head-sha "$HEAD" --base-sha "$BASE" --pr-number 42 \
   --pr-body-file "$TMP/body.md" --telemetry-file "$SELECTED/events.jsonl" --out "$TMP/work-history" >/dev/null
 python3 - "$TMP/work-history/latest.json" <<'PY'
 import json,sys
 r=json.load(open(sys.argv[1]))
 assert r['telemetry_available'] is True
-assert r['telemetry_events_count'] >= 2
+assert r['telemetry_events_count'] >= 3
 PY
 
 rm -f "$TARGET/.engineering-os/telemetry/handoff-state.json"
