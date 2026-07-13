@@ -81,12 +81,13 @@ No external skill is required; repository-native regression suites validate the 
 4. Added positive and negative regression tests.
 5. Used CI artifacts to correct repository identity and lifecycle evidence.
 6. Verified the enforcement and named handoff suites.
+7. Applied Codex review findings for provisional PR association and monotonic concurrent sync.
 
 ## Progress Lifecycle Evidence
 
-- start: PR #6 evidence, telemetry runtime, CI workflow, installer, and live threads were inspected before implementation; both false-green paths were reproduced.
-- mid: a bare-remote simulation delivered exact non-empty telemetry to a separate checkout; OWH consumed it, invalid bundles failed, and CI feedback drove repository binding, privacy, coverage, and diagnostics.
-- pre-merge: implementation head `e7af77a01109a84e8e1899b577be47bb132c8250` passed enforcement and named handoff jobs; diagnostic artifact `workflow-evidence-log-29289025034` isolated lifecycle/source failures, and the mid checkpoints were committed in `dcfd0bc97e2086eac002ba31191bb0af672f53d4` and `27235a4cddd1bfd90b1dae57c16269b47ba31a16`. Existing threads are resolved; exact-head checks and owner approval remain external merge gates.
+- start: PR #6 evidence, telemetry runtime, CI workflow, installer, and live thread state were inspected before implementation; both false-green paths were reproduced.
+- mid: Codex review findings drove provisional exact-head bundles before PR creation, exact PR rebinding once available, protection against stale concurrent overwrite, and regression coverage in commits `6718669befa4184e8e2e96d8bbd6591feb39227e`, `5d9cfdfdefd5cd05c41227d18458f873f1ed16ef`, and `10601c49f901e187cfd584de7208a70ffc895be3`.
+- pre-merge: implementation head `e7af77a01109a84e8e1899b577be47bb132c8250` passed enforcement and named handoff jobs; diagnostic artifact `workflow-evidence-log-29289025034` isolated earlier lifecycle/source failures, and previous mid checkpoints were committed in `dcfd0bc97e2086eac002ba31191bb0af672f53d4` and `27235a4cddd1bfd90b1dae57c16269b47ba31a16`. Existing threads are resolved; exact-head checks and owner approval remain external merge gates.
 
 ## Merge Gate
 
