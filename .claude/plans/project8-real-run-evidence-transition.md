@@ -70,17 +70,11 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 
 ## Validation Evidence
 
-Application/content evidence head: `025223911c100e96816eb93944f980009a9b08cd`.
-
-- enforcement-tests: passed, including known-gaps, readiness-audit, direct installation telemetry, Project 8 telemetry readiness, all grouped/full suites, result-loop and scaling gates.
-- capability-evidence-policy: passed.
-- connector-evidence-policy: passed.
-- workflow-evidence-policy: passed.
-- documentation-asset-policy: passed.
-- semantic-cleanup-policy: passed.
-- import-cleanup-policy: passed.
-- automated review: CodeRabbit and Codex inspected; three inline threads resolved.
-- plan-policy and pr-policy were intentionally deferred to this separate evidence-only checkpoint and final PR-body SHA update.
+- original documentation evidence head `025223911c100e96816eb93944f980009a9b08cd` passed enforcement-tests and every independent evidence gate;
+- the cumulative PR was later extended by the separate remote-telemetry plan;
+- cumulative implementation head `e7af77a01109a84e8e1899b577be47bb132c8250` passed all 26 enforcement steps and both named telemetry-handoff jobs;
+- capability, connector, documentation-asset, semantic-cleanup, and import-cleanup policies passed on that implementation head;
+- every existing inline review thread is resolved.
 
 ## Definition of Done
 
@@ -92,7 +86,7 @@ Application/content evidence head: `025223911c100e96816eb93944f980009a9b08cd`.
 - [x] Telemetry completion boxes remain unchecked.
 - [x] Next-run preflight boundary is explicit.
 - [x] Application/content head passes enforcement-tests and every independent evidence gate.
-- [x] Automated reviews and all inline threads are inspected and resolved.
+- [x] Automated reviews and all existing inline threads are inspected and resolved.
 
 ## Claude Run Trace
 
@@ -105,14 +99,15 @@ Application/content evidence head: `025223911c100e96816eb93944f980009a9b08cd`.
 7. CodeRabbit confirmed the initial Route Plan findings were addressed; Codex found two remaining stale blocked-status references.
 8. Reconciled both stale documents and recorded the first real result-loop run without marking telemetry complete.
 9. Verified enforcement-tests and all independent policy gates on application/content head `025223911c100e96816eb93944f980009a9b08cd`.
-10. Resolved all three inline review threads and added this separate evidence-only checkpoint.
-11. PR #245 was later extended with a separate Route Plan for the remote telemetry handoff; this plan's GitHub target was linked to the combined workflow diff so connector validation remains truthful across the cumulative PR.
+10. Resolved all three original inline review threads and added a separate evidence checkpoint.
+11. PR #245 was later extended with `remote-telemetry-handoff.md`; this plan's GitHub target was linked to the cumulative workflow diff.
+12. Refreshed this plan after the later code work so its lifecycle checkpoint reflects the cumulative PR rather than the earlier docs-only head.
 
 ## Progress Lifecycle Evidence
 
 - start: audit, gaps, checklist, preflight, Project 8 PR #4, its OWH artifact, missing target settings and merged PR #244 were verified before writes.
 - mid: findings, checklist separation, audit reconciliation and blocked-to-open transition were committed; first PR CI isolated Route Plan contract omissions, and automated review identified stale blocked-status references in two operational documents.
-- pre-merge: application/content head `025223911c100e96816eb93944f980009a9b08cd` passed enforcement-tests and all independent evidence gates; CodeRabbit and Codex reviews were inspected, all three inline threads are resolved. The cumulative PR remains blocked on the newer telemetry-handoff plan's exact-head checks and separate owner approval.
+- pre-merge: after the cumulative PR's last implementation change, head `e7af77a01109a84e8e1899b577be47bb132c8250` passed all enforcement steps and both named telemetry-handoff jobs; all existing threads were resolved. The final evidence head remains blocked only on its own rerun, requested final review inspection, and separate owner approval.
 
 ## Merge Gate
 
