@@ -32,7 +32,7 @@ Status: implementation evidence complete; merge remains externally gated
 - `plan.route-plan-before-write` — plan commit preceded all documentation changes.
 - `source.github-repo-read` — both repositories, PRs, CI, exact SHAs and the OWH artifact were inspected through GitHub.
 - `validation.policy-change-has-validator` — existing audit, known-gap and plan validators cover this evidence/status reconciliation; no new validator is required.
-- `validation.coderabbit-policy` — CodeRabbit and Codex reviews were inspected; both CodeRabbit threads and the Codex stale-reference thread are resolved.
+- `validation.coderabbit-policy` — CodeRabbit and Codex reviews were inspected; all valid findings are resolved or disproved with evidence.
 
 ## Connector Evidence
 
@@ -42,8 +42,8 @@ Status: implementation evidence complete; merge remains externally gated
 
 - source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
 - action: inspected PRs #4, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist, stale operational references, CI runs, reviews, threads, and Project 8 `.claude/settings.json` state.
-- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/operational-work-history.md`, `docs/operations/result-loop-contract-audit-checklist.md`, and the combined PR workflow `.github/workflows/pr-policy.yml` passed or entered exact-head validation.
-- decision: updated the Project 8 gap from blocked to open, kept monitoring open, corrected stale blocked references, and kept the combined PR blocked until telemetry handoff and live-thread enforcement pass.
+- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled audit/gap/checklist sources and `.github/workflows/pr-policy.yml` entered exact-head validation with the durable handoff work.
+- decision: updated the Project 8 gap from blocked to open, kept monitoring open, corrected stale references, and kept the combined PR gated by telemetry and live review evidence.
 - target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md`; `.github/workflows/pr-policy.yml`.
 
 ## Documentation Asset Evidence
@@ -71,10 +71,9 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 ## Validation Evidence
 
 - original documentation evidence head `025223911c100e96816eb93944f980009a9b08cd` passed enforcement-tests and every independent evidence gate;
-- the cumulative PR was later extended by the separate remote-telemetry plan;
-- cumulative implementation head `e7af77a01109a84e8e1899b577be47bb132c8250` passed all 26 enforcement steps and both named telemetry-handoff jobs;
-- capability, connector, documentation-asset, semantic-cleanup, and import-cleanup policies passed on that implementation head;
-- every existing inline review thread is resolved.
+- post-review implementation head `4fe3c408254f0fc0c7dfdd2510a0c8347d3ca47c` passed all 26 enforcement steps and both named telemetry-handoff jobs;
+- capability, connector, workflow, documentation-asset, semantic-cleanup, and import-cleanup policies passed for the post-review code;
+- all existing inline review threads are resolved.
 
 ## Definition of Done
 
@@ -85,7 +84,7 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 - [x] Audit separates OWH from missing telemetry.
 - [x] Telemetry completion boxes remain unchecked.
 - [x] Next-run preflight boundary is explicit.
-- [x] Application/content head passes enforcement-tests and every independent evidence gate.
+- [x] Application and telemetry implementation pass all named validation gates.
 - [x] Automated reviews and all existing inline threads are inspected and resolved.
 
 ## Claude Run Trace
@@ -93,21 +92,17 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 1. Merged verified Project 8 PR #4.
 2. Re-centered work on Engineering OS.
 3. Read audit, gaps, checklist, preflight and PR #244.
-4. Inspected the Project 8 OWH artifact and missing target settings.
-5. Committed the plan before documentation updates.
-6. Opened PR #245 and used first-run CI to identify Route Plan evidence omissions.
-7. CodeRabbit confirmed the initial Route Plan findings were addressed; Codex found two remaining stale blocked-status references.
-8. Reconciled both stale documents and recorded the first real result-loop run without marking telemetry complete.
-9. Verified enforcement-tests and all independent policy gates on application/content head `025223911c100e96816eb93944f980009a9b08cd`.
-10. Resolved all three original inline review threads and added a separate evidence checkpoint.
-11. PR #245 was later extended with `remote-telemetry-handoff.md`; this plan's GitHub target was linked to the cumulative workflow diff.
-12. Refreshed this plan after the later code work so its lifecycle evidence reflects the cumulative PR rather than the earlier docs-only head.
+4. Inspected Project 8 OWH and missing target telemetry.
+5. Reconciled stale evidence sources without claiming telemetry completion.
+6. Added durable remote handoff and live-thread enforcement under a separate plan.
+7. Applied Codex findings for provisional PR binding and stale concurrent sync.
+8. Verified all enforcement and named handoff suites.
 
 ## Progress Lifecycle Evidence
 
-- start: audit, gaps, checklist, preflight, Project 8 PR #4, its OWH artifact, missing target settings and merged PR #244 were verified before writes.
-- mid: after Codex identified provisional PR binding and stale concurrent overwrite risks, cumulative code commits `6718669befa4184e8e2e96d8bbd6591feb39227e`, `5d9cfdfdefd5cd05c41227d18458f873f1ed16ef`, and `10601c49f901e187cfd584de7208a70ffc895be3` added provisional exact-head selection, exact rebinding, monotonic remote progress protection, and regression coverage without changing the audit closure claims.
-- pre-merge: implementation head `e7af77a01109a84e8e1899b577be47bb132c8250` passed all enforcement steps and both named telemetry-handoff jobs; workflow diagnostic artifact `workflow-evidence-log-29289025034` identified the cumulative lifecycle/source mismatches, commits `dcfd0bc97e2086eac002ba31191bb0af672f53d4` and `27235a4cddd1bfd90b1dae57c16269b47ba31a16` separated the earlier mid evidence, and all existing review threads are resolved. Exact-head checks and owner approval remain external merge gates.
+- start: audit, gaps, checklist, preflight, Project 8 evidence, missing target settings, and merged PR #244 were verified before writes.
+- mid: after Codex identified provisional PR binding and stale concurrent overwrite risks, commits `6718669befa4184e8e2e96d8bbd6591feb39227e`, `5d9cfdfdefd5cd05c41227d18458f873f1ed16ef`, and `10601c49f901e187cfd584de7208a70ffc895be3` added exact-head provisional selection, PR rebinding, monotonic remote progress protection, and regression coverage.
+- pre-merge: post-review head `4fe3c408254f0fc0c7dfdd2510a0c8347d3ca47c` passed all 26 enforcement steps and both named telemetry-handoff jobs; both Codex findings are implemented and their live review threads are resolved. Monitoring closure remains unclaimed; exact-head evidence-only checks and owner approval remain external merge gates.
 
 ## Merge Gate
 
