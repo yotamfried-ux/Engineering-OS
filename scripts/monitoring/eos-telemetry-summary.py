@@ -67,7 +67,7 @@ def build_summary(events: list[dict[str, Any]]) -> str:
     hooks = Counter(attr(e, "eos.claude.hook_event_name", "") or "unknown" for e in events)
     permissions = Counter(attr(e, "eos.claude.permission_mode", "") or "none" for e in events)
     plans = Counter(attr(e, "eos.plan.active.basename", "") or "none" for e in events)
-    branches = Counter(attr(e, "eos.git.branch", "unknown") for e in events)
+    branch_hashes = Counter(attr(e, "eos.git.branch.hash", "") or "missing" for e in events)
     extensions = Counter(nested_attr(e, "eos.tool.target_path", "extension", "none") or "none" for e in events)
     top_dirs = Counter(nested_attr(e, "eos.tool.target_path", "top_dir", "none") or "none" for e in events)
     response_presence = Counter("response" if attr_bool(e, "eos.tool.response.present") else "none" for e in events)
@@ -100,7 +100,7 @@ def build_summary(events: list[dict[str, Any]]) -> str:
         f"Trace count: {len(traces)}",
         f"Observed duration ns: {duration}",
         "",
-        "Privacy note: telemetry does not store model text, file contents, raw commands, raw paths, connector payloads, environment values, or sensitive values.",
+        "Privacy note: telemetry does not store model text, file contents, raw commands, raw paths, raw branch names, connector payloads, environment values, or sensitive values.",
         "",
         "## Investigation coverage",
         "",
@@ -123,7 +123,7 @@ def build_summary(events: list[dict[str, Any]]) -> str:
     lines.extend(render_counter("Permission modes", permissions))
     lines.extend(render_counter("Tool response presence", response_presence))
     lines.extend(render_counter("Active plans", plans))
-    lines.extend(render_counter("Branches", branches))
+    lines.extend(render_counter("Branch hashes", branch_hashes))
     lines.extend(render_counter("Target path extensions", extensions))
     lines.extend(render_counter("Target top directories", top_dirs))
     return "\n".join(lines).rstrip() + "\n"
