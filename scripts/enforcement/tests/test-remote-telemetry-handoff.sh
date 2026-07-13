@@ -71,6 +71,39 @@ if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/corrupt" --repo targe
   echo 'unexpected pass: checksum mismatch'; exit 1
 fi
 
+cp -R "$HANDOFF" "$TMP/privacy"
+python3 - "$TMP/privacy/runs/$RUN_ID" <<'PY'
+import hashlib,json,sys
+from pathlib import Path
+b=Path(sys.argv[1]); e=b/'events.jsonl'; m=b/'manifest.json'
+rows=[json.loads(x) for x in e.read_text().splitlines() if x.strip()]
+rows[0]['prompt']='VALUE_SHOULD_NOT_APPEAR'
+e.write_text('\n'.join(json.dumps(x,sort_keys=True) for x in rows)+'\n')
+manifest=json.loads(m.read_text())
+manifest['checksums']['events_sha256']=hashlib.sha256(e.read_bytes()).hexdigest()
+m.write_text(json.dumps(manifest,sort_keys=True))
+PY
+if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/privacy" --repo target --pr-number 0 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+  echo 'unexpected pass: privacy-invalid bundle'; exit 1
+fi
+
+cp -R "$HANDOFF" "$TMP/empty"
+python3 - "$TMP/empty/runs/$RUN_ID" <<'PY'
+import hashlib,json,sys
+from pathlib import Path
+b=Path(sys.argv[1]); e=b/'events.jsonl'; m=b/'manifest.json'
+e.write_text('')
+manifest=json.loads(m.read_text())
+manifest['event_count']=0
+manifest['handoff']['event_count']=0
+manifest['handoff']['boundary_position']=0
+manifest['checksums']['events_sha256']=hashlib.sha256(b'').hexdigest()
+m.write_text(json.dumps(manifest,sort_keys=True))
+PY
+if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/empty" --repo target --pr-number 0 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+  echo 'unexpected pass: zero-event bundle'; exit 1
+fi
+
 CHECKOUT="$TMP/checkout"
 git clone -q "$REMOTE" "$CHECKOUT"
 git -C "$CHECKOUT" checkout -q feature/test
