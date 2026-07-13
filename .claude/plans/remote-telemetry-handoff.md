@@ -40,7 +40,7 @@ No external skill is required; repository-native regression suites validate the 
 - `source.github-repo-read` — Project 8 PR #6, CI, OWH, and review threads inspected through GitHub.
 - `validation.policy-change-has-validator` — positive and negative fixtures cover delivery, matching, privacy, OWH, and live threads.
 - `validation.actions-checked` — modified workflows validated in live Actions.
-- `validation.coderabbit-policy` — existing findings resolved or disproved; final Codex review requested.
+- `validation.coderabbit-policy` — valid review findings are resolved and covered by regression tests.
 
 ## Connector Evidence
 
@@ -70,7 +70,8 @@ No external skill is required; repository-native regression suites validate the 
 - [x] OWH consumes non-zero events from a clean checkout.
 - [x] Required preflight rejects missing durable state.
 - [x] Live unresolved threads fail.
-- [x] All 26 enforcement steps and both named handoff jobs passed on `e7af77a01109a84e8e1899b577be47bb132c8250`.
+- [x] All 26 enforcement steps and both named handoff jobs passed on `4fe3c408254f0fc0c7dfdd2510a0c8347d3ca47c`.
+- [x] Provisional PR binding and stale concurrent overwrite findings have regression coverage.
 - [x] Verified lesson captures prevention and tests.
 
 ## Claude Run Trace
@@ -80,14 +81,14 @@ No external skill is required; repository-native regression suites validate the 
 3. Implemented isolated-branch delivery, exact selection, sequential hooks, and live-thread blocking.
 4. Added positive and negative regression tests.
 5. Used CI artifacts to correct repository identity and lifecycle evidence.
-6. Verified the enforcement and named handoff suites.
-7. Applied Codex review findings for provisional PR association and monotonic concurrent sync.
+6. Applied Codex review findings for provisional PR association and monotonic concurrent sync.
+7. Verified all enforcement and named handoff suites on the post-review code.
 
 ## Progress Lifecycle Evidence
 
 - start: PR #6 evidence, telemetry runtime, CI workflow, installer, and live thread state were inspected before implementation; both false-green paths were reproduced.
 - mid: Codex review findings drove provisional exact-head bundles before PR creation, exact PR rebinding once available, protection against stale concurrent overwrite, and regression coverage in commits `6718669befa4184e8e2e96d8bbd6591feb39227e`, `5d9cfdfdefd5cd05c41227d18458f873f1ed16ef`, and `10601c49f901e187cfd584de7208a70ffc895be3`.
-- pre-merge: implementation head `e7af77a01109a84e8e1899b577be47bb132c8250` passed enforcement and named handoff jobs; diagnostic artifact `workflow-evidence-log-29289025034` isolated earlier lifecycle/source failures, and previous mid checkpoints were committed in `dcfd0bc97e2086eac002ba31191bb0af672f53d4` and `27235a4cddd1bfd90b1dae57c16269b47ba31a16`. Existing threads are resolved; exact-head checks and owner approval remain external merge gates.
+- pre-merge: post-review head `4fe3c408254f0fc0c7dfdd2510a0c8347d3ca47c` passed all 26 enforcement steps and both named handoff jobs; provisional PR binding and monotonic stale-sync protection are covered, and both Codex threads are resolved. Exact-head evidence-only checks and owner approval remain external merge gates.
 
 ## Merge Gate
 
