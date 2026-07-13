@@ -2,6 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SESSION_START="$ROOT/scripts/monitoring/eos-telemetry-session-start.sh"
+RECORDER="$ROOT/scripts/monitoring/eos-telemetry-event.sh"
 BOUNDARY="$ROOT/scripts/monitoring/record-and-sync-telemetry.sh"
 REQUIRE="$ROOT/scripts/monitoring/require-telemetry-session.sh"
 SELECT="$ROOT/scripts/monitoring/select-pr-telemetry.py"
@@ -26,7 +27,7 @@ cat > "$TARGET/.engineering-os/telemetry-policy.json" <<'JSON'
 {"schema_version":"eos.telemetry.policy.v1","remote_handoff":{"mode":"required","remote":"origin","branch":"engineering-os-telemetry"}}
 JSON
 cat > "$TARGET/.claude/settings.json" <<JSON
-{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bash $SESSION_START"}]}],"PreToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"bash $REQUIRE"}]}],"Stop":[{"hooks":[{"type":"command","command":"bash $BOUNDARY stop"}]}]}}
+{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bash $SESSION_START"}]}],"PreToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"bash $REQUIRE"},{"type":"command","command":"bash $RECORDER pre_tool_use"}]}],"PostToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"bash $RECORDER post_tool_use"}]}],"Stop":[{"hooks":[{"type":"command","command":"bash $BOUNDARY stop"}]}]}}
 JSON
 
 export EOS_TELEMETRY_HANDOFF_DISPATCH=0
