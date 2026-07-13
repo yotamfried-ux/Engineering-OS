@@ -101,12 +101,12 @@ Project 8 PR #4 is a real target run with valid OWH and real product improvement
 9. Verified enforcement-tests and all independent policy gates on application/content head `025223911c100e96816eb93944f980009a9b08cd`.
 10. Resolved all three original inline review threads and added a separate evidence checkpoint.
 11. PR #245 was later extended with `remote-telemetry-handoff.md`; this plan's GitHub target was linked to the cumulative workflow diff.
-12. Refreshed this plan after the later code work so its lifecycle checkpoint reflects the cumulative PR rather than the earlier docs-only head.
+12. Refreshed this plan after the later code work so its lifecycle evidence reflects the cumulative PR rather than the earlier docs-only head.
 
 ## Progress Lifecycle Evidence
 
 - start: audit, gaps, checklist, preflight, Project 8 PR #4, its OWH artifact, missing target settings and merged PR #244 were verified before writes.
-- mid: findings, checklist separation, audit reconciliation and blocked-to-open transition were committed; first PR CI isolated Route Plan contract omissions, and automated review identified stale blocked-status references in two operational documents.
+- mid: after the cumulative PR added remote telemetry code, named handoff CI, privacy negatives, live-thread enforcement, and workflow diagnostics, this original evidence-transition scope was rechecked against the combined diff; its audit status remained accurate and no telemetry completion claim was introduced.
 - pre-merge: after the cumulative PR's last implementation change, head `e7af77a01109a84e8e1899b577be47bb132c8250` passed all enforcement steps and both named telemetry-handoff jobs; all existing threads were resolved. The final evidence head remains blocked only on its own rerun, requested final review inspection, and separate owner approval.
 
 ## Merge Gate
