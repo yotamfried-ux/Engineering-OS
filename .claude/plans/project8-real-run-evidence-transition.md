@@ -42,14 +42,14 @@ Status: implementation evidence complete; merge remains externally gated
 
 - source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
 - action: inspected PRs #4, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist, stale operational references, CI runs, reviews, threads, and Project 8 `.claude/settings.json` state.
-- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/operational-work-history.md`, and `docs/operations/result-loop-contract-audit-checklist.md` passed the content/evidence gates on head `025223911c100e96816eb93944f980009a9b08cd`.
-- decision: updated the Project 8 gap from blocked to open, kept monitoring open, corrected stale blocked references, and blocked telemetry closure until a fresh non-empty export/import/analyze cycle exists.
-- target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md`.
+- result: `docs/operations/project8-first-real-run-findings.md` plus reconciled `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/operational-work-history.md`, `docs/operations/result-loop-contract-audit-checklist.md`, and the combined PR workflow `.github/workflows/pr-policy.yml` passed or entered exact-head validation.
+- decision: updated the Project 8 gap from blocked to open, kept monitoring open, corrected stale blocked references, and kept the combined PR blocked until telemetry handoff and live-thread enforcement pass.
+- target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md`; `.github/workflows/pr-policy.yml`.
 
 ## Documentation Asset Evidence
 
 - internal: `docs/operations/runtime-telemetry-archive-plan.md`; `docs/operations/operational-work-history-rollout.md`; `docs/operations/project8-telemetry-preflight.md`.
-- context7: not required because no external API, SDK or runtime implementation changes.
+- context7: not required because the original evidence reconciliation introduced no external API, SDK, or runtime implementation decisions.
 - decision: internal archive and preflight contracts require OWH and session telemetry to remain separate.
 
 ## Source of Truth Checks
@@ -106,12 +106,13 @@ Application/content evidence head: `025223911c100e96816eb93944f980009a9b08cd`.
 8. Reconciled both stale documents and recorded the first real result-loop run without marking telemetry complete.
 9. Verified enforcement-tests and all independent policy gates on application/content head `025223911c100e96816eb93944f980009a9b08cd`.
 10. Resolved all three inline review threads and added this separate evidence-only checkpoint.
+11. PR #245 was later extended with a separate Route Plan for the remote telemetry handoff; this plan's GitHub target was linked to the combined workflow diff so connector validation remains truthful across the cumulative PR.
 
 ## Progress Lifecycle Evidence
 
 - start: audit, gaps, checklist, preflight, Project 8 PR #4, its OWH artifact, missing target settings and merged PR #244 were verified before writes.
 - mid: findings, checklist separation, audit reconciliation and blocked-to-open transition were committed; first PR CI isolated Route Plan contract omissions, and automated review identified stale blocked-status references in two operational documents.
-- pre-merge: application/content head `025223911c100e96816eb93944f980009a9b08cd` passed enforcement-tests and all independent evidence gates; CodeRabbit and Codex reviews were inspected, all three inline threads are resolved, and this evidence-only commit now triggers final plan-policy/pr-policy validation. Merge remains blocked on exact final-head checks and separate owner approval.
+- pre-merge: application/content head `025223911c100e96816eb93944f980009a9b08cd` passed enforcement-tests and all independent evidence gates; CodeRabbit and Codex reviews were inspected, all three inline threads are resolved. The cumulative PR remains blocked on the newer telemetry-handoff plan's exact-head checks and separate owner approval.
 
 ## Merge Gate
 
