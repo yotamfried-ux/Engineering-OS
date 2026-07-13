@@ -46,6 +46,15 @@ def validate_bundle(bundle: Path) -> dict[str, Any]:
     handoff = manifest.get("handoff")
     if not isinstance(handoff, dict) or handoff.get("schema_version") != HANDOFF_SCHEMA:
         fail(f"telemetry bundle has no valid handoff metadata: {bundle}")
+    pr_number = int(handoff.get("pr_number") or 0)
+    binding = str(handoff.get("pr_binding") or ("exact" if pr_number > 0 else "provisional"))
+    if binding not in {"exact", "provisional"}:
+        fail(f"telemetry handoff PR binding is invalid: {bundle}")
+    if (binding == "exact") != (pr_number > 0):
+        fail(f"telemetry handoff PR binding contradicts pr_number: {bundle}")
+    handoff["pr_binding"] = binding
+    manifest["handoff"] = handoff
+
     checksums = manifest.get("checksums") if isinstance(manifest.get("checksums"), dict) else {}
     if checksums.get("events_sha256") != file_digest(events_path):
         fail(f"telemetry events checksum mismatch: {bundle}")
@@ -78,9 +87,10 @@ def validate_bundle(bundle: Path) -> dict[str, Any]:
     return manifest
 
 
-def synced_sort_key(manifest: dict[str, Any]) -> tuple[str, int]:
+def synced_sort_key(manifest: dict[str, Any]) -> tuple[int, str, int]:
     handoff = manifest.get("handoff") if isinstance(manifest.get("handoff"), dict) else {}
-    return (str(handoff.get("synced_at") or ""), int(manifest.get("event_count") or 0))
+    exact_rank = 1 if int(handoff.get("pr_number") or 0) > 0 else 0
+    return (exact_rank, str(handoff.get("synced_at") or ""), int(manifest.get("event_count") or 0))
 
 
 def safe_observed_descriptor(manifest: dict[str, Any]) -> str:
@@ -88,6 +98,7 @@ def safe_observed_descriptor(manifest: dict[str, Any]) -> str:
     return ",".join([
         f"repo={str(handoff.get('repo') or manifest.get('repo') or '')}",
         f"pr={int(handoff.get('pr_number') or 0)}",
+        f"binding={str(handoff.get('pr_binding') or '')}",
         f"branch_hash={str(handoff.get('source_branch_hash') or '')}",
         f"head={str(handoff.get('head_sha') or manifest.get('head_sha') or '')}",
         f"events={int(manifest.get('event_count') or 0)}",
@@ -127,7 +138,8 @@ def main() -> int:
             handoff = manifest["handoff"]
             if str(handoff.get("repo") or manifest.get("repo") or "") != args.repo:
                 continue
-            if int(handoff.get("pr_number") or 0) != args.pr_number:
+            bundle_pr = int(handoff.get("pr_number") or 0)
+            if bundle_pr not in (0, args.pr_number):
                 continue
             if str(handoff.get("source_branch_hash") or "") != stable_hash(args.head_ref):
                 continue
@@ -143,7 +155,7 @@ def main() -> int:
         details = [f"expected[{expected}]", f"valid_bundles={len(observed)}", f"invalid_bundles={len(invalid)}"]
         if observed:
             details.append("observed[" + ";".join(observed[:5]) + "]")
-        message = "no non-empty telemetry bundle matches exact PR/head metadata; " + "; ".join(details)
+        message = "no non-empty telemetry bundle matches exact branch/head metadata and compatible PR binding; " + "; ".join(details)
         if policy["mode"] == "required":
             fail(message)
         print(f"WARNING_FOR_AGENT: {message}", file=sys.stderr)
@@ -153,8 +165,10 @@ def main() -> int:
     if args.out.exists():
         shutil.rmtree(args.out)
     shutil.copytree(selected, args.out)
+    binding = manifest["handoff"].get("pr_binding")
     print(f"selected telemetry bundle: {selected}")
     print(f"events: {manifest['event_count']}")
+    print(f"pr_binding: {binding}")
     print(f"run_id_hash: {manifest['handoff']['run_id_hash']}")
     return 0
 
