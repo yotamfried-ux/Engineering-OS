@@ -52,6 +52,7 @@ for runtime in \
   cp "$ROOT/scripts/monitoring/$runtime" "$FAKE_HOME/scripts/monitoring/$runtime"
 done
 TARGET_OK="$TMP/install-target-ok"; mkdir -p "$TARGET_OK"
+printf 'existing-entry\n' > "$TARGET_OK/.gitignore"
 if EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$FAKE_HOME" bash "$INSTALLER" "$TARGET_OK" >/dev/null 2>&1; then pass installer_succeeds_with_manifest_present; else fail installer_succeeds_with_manifest_present; fi
 bad=0
 while IFS=$'\t' read -r workflow dep; do
@@ -66,14 +67,29 @@ grep -q 'eos-telemetry-session-start.sh' "$TARGET_OK/.claude/settings.json" || f
 grep -q 'record-and-sync-telemetry.sh' "$TARGET_OK/.claude/settings.json" || fail installer_settings_include_handoff
 grep -q 'require-telemetry-session.sh' "$TARGET_OK/.claude/settings.json" || fail installer_settings_include_preflight
 pass installer_settings_include_telemetry_handoff
-python3 - "$TARGET_OK/.engineering-os/telemetry-policy.json" <<'PY'
+python3 - "$TARGET_OK/.engineering-os/telemetry-policy.json" "$TARGET_OK/.gitignore" <<'PY'
 import json,sys
+from pathlib import Path
 p=json.load(open(sys.argv[1]))
 assert p['schema_version']=='eos.telemetry.policy.v1'
 assert p['remote_handoff']['mode']=='disabled'
 assert p['remote_handoff']['branch']=='engineering-os-telemetry'
+lines=Path(sys.argv[2]).read_text().splitlines()
+assert 'existing-entry' in lines
+for required in (
+    '.engineering-os/telemetry/',
+    '.engineering-os/work-history/',
+    '.engineering-os/remote-telemetry/',
+    '.engineering-os/selected-telemetry/',
+):
+    assert lines.count(required)==1
+assert '.engineering-os/' not in lines
+assert '.engineering-os/telemetry-policy.json' not in lines
 PY
-pass installer_creates_safe_default_handoff_policy
+pass installer_creates_safe_policy_and_runtime_ignore_rules
+EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$FAKE_HOME" bash "$INSTALLER" "$TARGET_OK" >/dev/null 2>&1
+[ "$(grep -Fc '# BEGIN Engineering OS local runtime artifacts' "$TARGET_OK/.gitignore")" -eq 1 ] || fail installer_gitignore_block_is_idempotent
+pass installer_gitignore_block_is_idempotent
 rm "$FAKE_HOME/scripts/enforcement/policy-gate-dependencies.tsv"
 TARGET_MISSING="$TMP/install-target-missing"; mkdir -p "$TARGET_MISSING"; rc=0
 install_err="$(EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$FAKE_HOME" bash "$INSTALLER" "$TARGET_MISSING" 2>&1 >/dev/null)" || rc=$?
