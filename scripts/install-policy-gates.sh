@@ -105,4 +105,31 @@ JSON
   echo "installed default telemetry handoff policy (disabled until target opts in)"
 fi
 
+gitignore="$target/.gitignore"
+touch "$gitignore"
+python3 - "$gitignore" <<'PY'
+import sys
+from pathlib import Path
+path=Path(sys.argv[1])
+start="# BEGIN Engineering OS local runtime artifacts"
+end="# END Engineering OS local runtime artifacts"
+block="\n".join([
+    start,
+    ".engineering-os/telemetry/",
+    ".engineering-os/work-history/",
+    ".engineering-os/remote-telemetry/",
+    ".engineering-os/selected-telemetry/",
+    end,
+])
+text=path.read_text(encoding="utf-8", errors="replace")
+if start in text and end in text:
+    before=text.split(start,1)[0].rstrip("\n")
+    after=text.split(end,1)[1].lstrip("\n")
+    text=(before+"\n\n" if before else "")+block+("\n\n"+after if after else "\n")
+else:
+    text=text.rstrip("\n")+("\n\n" if text.strip() else "")+block+"\n"
+path.write_text(text,encoding="utf-8")
+PY
+
+echo "installed local telemetry/work-history ignore rules; telemetry-policy.json remains trackable"
 echo "rendered .claude/settings.json with Engineering OS reference path"
