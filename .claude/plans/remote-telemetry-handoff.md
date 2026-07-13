@@ -20,11 +20,11 @@ Status: implementation complete; merge requires exact-head validation, final rev
 | External systems/connectors | GitHub |
 | Skills | Not required |
 | Validation gates | enforcement-tests; telemetry-handoff-tests; project8 telemetry readiness; telemetry archive tests; installer coverage; pr-policy workflow wiring; live review threads; plan-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy; semantic-cleanup-policy; import-cleanup-policy |
-| Evidence to check | `scripts/monitoring/eos-telemetry-session-start.sh`; `scripts/monitoring/record-and-sync-telemetry.sh`; `scripts/monitoring/sync-telemetry-run.py`; `scripts/monitoring/select-pr-telemetry.py`; `scripts/monitoring/export-telemetry-run.py`; `.github/workflows/pr-policy.yml`; `.github/workflows/telemetry-handoff-tests.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `operational-work-history-6-29245891365` |
+| Evidence to check | `scripts/monitoring/eos-telemetry-session-start.sh`; `scripts/monitoring/record-and-sync-telemetry.sh`; `scripts/monitoring/sync-telemetry-run.py`; `scripts/monitoring/select-pr-telemetry.py`; `scripts/monitoring/export-telemetry-run.py`; `.github/workflows/pr-policy.yml`; `.github/workflows/telemetry-handoff-tests.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md` |
 | User decisions required | none for implementation; explicit merge approval remains required after exact-head evidence |
 | Task-router evidence | `core/task-router.md` read; task classified as Engineering OS observability/governance maintenance |
 | Workflow evidence | `core/workflow.md` read; plan commit `e530ecc3dcea93458ba38b865ab617a9e185e19c` preceded implementation |
-| Target paths | `scripts/monitoring/`; `.github/workflows/pr-policy.yml`; `.github/workflows/telemetry-handoff-tests.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/enforcement/tests/`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `docs/operations/project8-telemetry-preflight.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md` |
+| Target paths | `scripts/monitoring/`; `.github/workflows/pr-policy.yml`; `.github/workflows/telemetry-handoff-tests.yml`; `.github/workflows/workflow-evidence-policy.yml`; `scripts/enforcement/check-live-review-threads.py`; `scripts/enforcement/tests/`; `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `docs/operations/project8-telemetry-preflight.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md` |
 
 ## Template Gap Waiver
 
@@ -41,7 +41,7 @@ No external skill is required. The implementation is validated by repository-nat
 - `plan.route-plan-before-write` — plan commit preceded implementation.
 - `source.github-repo-read` — Engineering OS `main`, PR #245, Project 8 PR #6, CI, OWH artifact, and live review threads were inspected through GitHub.
 - `validation.policy-change-has-validator` — remote persistence, exact-head selection, privacy/checksum rejection, installer wiring, OWH correlation, and live-thread state have positive and negative fixtures.
-- `validation.actions-checked` — both modified workflows are validated by static wiring fixtures and live Actions runs.
+- `validation.actions-checked` — all modified workflows are validated by static wiring fixtures or live Actions runs.
 - `validation.coderabbit-policy` — work remained isolated in PR #245; all existing inline review threads were resolved or disproved with evidence, CodeRabbit's final line review was rate-limited, and a focused Codex review was requested for the implementation head.
 
 ## Connector Evidence
@@ -72,7 +72,7 @@ No external skill is required. The implementation is validated by repository-nat
 | `scripts/monitoring/export-telemetry-run.py` | read | previous export was manual and preserved raw branch metadata |
 | `scripts/monitoring/require-telemetry-session.sh` | read | previous preflight proved local recording but not durable delivery |
 | `scripts/enforcement/tests/test-project8-telemetry-readiness.sh` | read | previous tests did not simulate a separate CI workspace |
-| `operational-work-history-6-29245891365` | validated | full CI history was retained, but telemetry was unavailable with zero events |
+| `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md` | validated | records the PR #6 artifact facts, zero-event failure, workspace boundary, root cause, prevention, and regression tests |
 
 ## Root Cause
 
@@ -90,6 +90,7 @@ Claude Code web wrote telemetry to a gitignored file in its remote workspace, wh
 8. PR policy fetches live review threads and blocks every unresolved current or outdated thread.
 9. The installer preserves a trackable telemetry policy while ignoring local runtime and generated evidence directories.
 10. Repository identity is derived from the active workspace remote and passed explicitly to the handoff, avoiding contamination from unrelated CI environment variables.
+11. Workflow-evidence failures are preserved as short diagnostic artifacts, avoiding repeated guesses when lifecycle ordering fails.
 
 ## Definition of Done
 
@@ -116,11 +117,12 @@ Claude Code web wrote telemetry to a gitignored file in its remote workspace, wh
 6. Added separate-workspace positive tests and wrong-PR, wrong-branch, stale-head, empty, checksum, privacy, and unresolved-thread negative tests.
 7. Used an uploaded CI test log to identify repository identity contamination from `GITHUB_REPOSITORY`, then bound handoff identity to the target workspace remote.
 8. Verified the full enforcement sweep and both named telemetry-handoff jobs on implementation head `e7af77a01109a84e8e1899b577be47bb132c8250`.
+9. Added workflow-evidence diagnostic artifacts, then used the exact output to identify lifecycle ordering and source-reference issues in the cumulative plan files.
 
 ## Progress Lifecycle Evidence
 
 - start: verified the merged Project 8 run, OWH artifact, local telemetry runtime, clean CI workflow, installer manifest, and live review-thread state before implementation; durable-handoff and live-thread gaps were reproduced from real evidence.
-- mid: after implementation began, a local bare-remote run created `engineering-os-telemetry`, selected a non-empty exact-head bundle from a separate checkout, supplied it to OWH, rejected mismatches/checksum tampering, and blocked preflight after deleting handoff state; first CI feedback then drove explicit simulation registration and connector/capability evidence corrections.
+- mid: after implementation began, a local bare-remote run created `engineering-os-telemetry`, selected a non-empty exact-head bundle from a separate checkout, supplied it to OWH, rejected mismatches/checksum tampering, and blocked preflight after deleting handoff state; first CI feedback then drove explicit simulation registration, repository identity binding, connector/capability evidence, privacy negatives, and diagnostic artifact coverage.
 - pre-merge: after the last implementation change, `enforcement-tests` passed all 26 steps on `e7af77a01109a84e8e1899b577be47bb132c8250`; named `telemetry-handoff-tests` passed both jobs; capability, connector, documentation, semantic-cleanup, and import-cleanup policies were green. This evidence-only checkpoint intentionally precedes a final exact-head rerun and separate owner approval.
 
 ## Merge Gate
