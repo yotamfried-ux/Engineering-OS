@@ -83,6 +83,17 @@ def synced_sort_key(manifest: dict[str, Any]) -> tuple[str, int]:
     return (str(handoff.get("synced_at") or ""), int(manifest.get("event_count") or 0))
 
 
+def safe_observed_descriptor(manifest: dict[str, Any]) -> str:
+    handoff = manifest.get("handoff") if isinstance(manifest.get("handoff"), dict) else {}
+    return ",".join([
+        f"repo={str(handoff.get('repo') or manifest.get('repo') or '')}",
+        f"pr={int(handoff.get('pr_number') or 0)}",
+        f"branch_hash={str(handoff.get('source_branch_hash') or '')}",
+        f"head={str(handoff.get('head_sha') or manifest.get('head_sha') or '')}",
+        f"events={int(manifest.get('event_count') or 0)}",
+    ])
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Select an exact PR/head-matched remote telemetry bundle.")
     parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -102,6 +113,7 @@ def main() -> int:
 
     runs_root = args.handoff_root / "runs"
     candidates: list[tuple[dict[str, Any], Path]] = []
+    observed: list[str] = []
     invalid: list[str] = []
     if runs_root.is_dir():
         for manifest_path in sorted(runs_root.glob("*/manifest.json")):
@@ -111,6 +123,7 @@ def main() -> int:
             except Exception as exc:
                 invalid.append(str(exc))
                 continue
+            observed.append(safe_observed_descriptor(manifest))
             handoff = manifest["handoff"]
             if str(handoff.get("repo") or manifest.get("repo") or "") != args.repo:
                 continue
@@ -123,11 +136,14 @@ def main() -> int:
             candidates.append((manifest, bundle))
 
     if not candidates:
-        details = f"; invalid bundles observed: {len(invalid)}" if invalid else ""
-        message = (
-            f"no non-empty telemetry bundle matches repo={args.repo}, PR #{args.pr_number}, "
-            f"branch hash, and exact head {args.head_sha}{details}"
+        expected = (
+            f"repo={args.repo},pr={args.pr_number},branch_hash={stable_hash(args.head_ref)},"
+            f"head={args.head_sha}"
         )
+        details = [f"expected[{expected}]", f"valid_bundles={len(observed)}", f"invalid_bundles={len(invalid)}"]
+        if observed:
+            details.append("observed[" + ";".join(observed[:5]) + "]")
+        message = "no non-empty telemetry bundle matches exact PR/head metadata; " + "; ".join(details)
         if policy["mode"] == "required":
             fail(message)
         print(f"WARNING_FOR_AGENT: {message}", file=sys.stderr)
