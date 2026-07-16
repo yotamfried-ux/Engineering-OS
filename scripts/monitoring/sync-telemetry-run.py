@@ -183,7 +183,7 @@ def commit_bundle(
     event_count: int,
     boundary_position: int,
     pr_number: int,
-) -> tuple[str, bool]:
+) -> tuple[str, bool, int]:
     remote_url = git(root, "remote", "get-url", policy["remote"])
     branch = policy["branch"]
     for attempt in range(1, 4):
@@ -214,6 +214,12 @@ def commit_bundle(
 
             destination = tmp / "runs" / run_id
             existing_events, existing_boundary, existing_pr = load_bundle_progress(destination)
+            if existing_pr > 0 and pr_number > 0 and existing_pr != pr_number:
+                raise HandoffError(
+                    f"remote telemetry bundle is already bound to PR #{existing_pr}, "
+                    f"not requested PR #{pr_number}"
+                )
+            effective_pr_number = existing_pr or pr_number
             remote_is_newer = (existing_events, existing_boundary) > (event_count, boundary_position)
 
             if remote_is_newer:
@@ -229,9 +235,9 @@ def commit_bundle(
                         check=False,
                     )
                     if pushed.returncode == 0:
-                        return git(tmp, "rev-parse", "HEAD"), True
+                        return git(tmp, "rev-parse", "HEAD"), True, pr_number
                 else:
-                    return git(tmp, "rev-parse", "HEAD"), True
+                    return git(tmp, "rev-parse", "HEAD"), True, effective_pr_number
                 if attempt < 3:
                     time.sleep(attempt)
                 continue
@@ -246,7 +252,7 @@ def commit_bundle(
             run(["git", "-C", str(tmp), "add", "README.md", "runs"])
             changed = run(["git", "-C", str(tmp), "status", "--porcelain"]).stdout.strip()
             if not changed:
-                return git(tmp, "rev-parse", "HEAD"), False
+                return git(tmp, "rev-parse", "HEAD"), False, effective_pr_number
             run([
                 "git", "-C", str(tmp), "commit", "-q", "-m",
                 f"telemetry: sync {stable_hash(run_id, 12)} events={event_count}",
@@ -256,7 +262,7 @@ def commit_bundle(
                 check=False,
             )
             if pushed.returncode == 0:
-                return git(tmp, "rev-parse", "HEAD"), False
+                return git(tmp, "rev-parse", "HEAD"), False, effective_pr_number
         if attempt < 3:
             time.sleep(attempt)
     raise HandoffError("failed to push telemetry handoff branch after 3 attempts")
@@ -357,7 +363,7 @@ def sync(root: Path, policy: dict[str, Any], args: argparse.Namespace) -> int:
             "--head-sha", head_sha,
             "--engineering-os-head-sha", engineering_os_head(),
         ], cwd=root)
-        manifest = write_handoff_manifest(
+        write_handoff_manifest(
             bundle,
             run_id=run_id,
             repo_slug=repo_slug,
@@ -367,7 +373,7 @@ def sync(root: Path, policy: dict[str, Any], args: argparse.Namespace) -> int:
             event_count=len(events),
             boundary_position=boundary,
         )
-        remote_commit, stale_skip = commit_bundle(
+        remote_commit, stale_skip, effective_pr_number = commit_bundle(
             root=root,
             policy=policy,
             bundle=bundle,
@@ -377,20 +383,13 @@ def sync(root: Path, policy: dict[str, Any], args: argparse.Namespace) -> int:
             pr_number=pr_number,
         )
 
-    dispatch_pr_policy(root, repo_slug, source_branch, pr_number)
-    if stale_skip:
-        print(
-            f"telemetry handoff skipped stale local bundle: events={len(events)} "
-            f"pr={pr_number or 'provisional'} remote_commit={remote_commit[:12]}"
-        )
-        return 0
-
+    dispatch_pr_policy(root, repo_slug, source_branch, effective_pr_number)
     state = {
         "schema_version": HANDOFF_SCHEMA,
         "run_id_hash": stable_hash(run_id),
         "repo": repo_slug,
-        "pr_number": pr_number,
-        "pr_binding": "exact" if pr_number > 0 else "provisional",
+        "pr_number": effective_pr_number,
+        "pr_binding": "exact" if effective_pr_number > 0 else "provisional",
         "source_branch_hash": branch_hash,
         "head_sha": head_sha,
         "event_count": len(events),
@@ -398,13 +397,21 @@ def sync(root: Path, policy: dict[str, Any], args: argparse.Namespace) -> int:
         "remote": policy["remote"],
         "remote_branch": policy["branch"],
         "remote_commit": remote_commit,
-        "synced_at": manifest["handoff"]["synced_at"],
+        "synced_at": utc_now(),
     }
     validate_metadata_only(state)
     atomic_write_json(state_path(root), state)
+
+    if stale_skip:
+        print(
+            f"telemetry handoff skipped stale local bundle: events={len(events)} "
+            f"pr={effective_pr_number or 'provisional'} remote_commit={remote_commit[:12]}"
+        )
+        return 0
+
     print(
-        f"telemetry handoff synced: events={len(events)} pr={pr_number or 'provisional'} "
-        f"remote_commit={remote_commit[:12]}"
+        f"telemetry handoff synced: events={len(events)} "
+        f"pr={effective_pr_number or 'provisional'} remote_commit={remote_commit[:12]}"
     )
     return 0
 
