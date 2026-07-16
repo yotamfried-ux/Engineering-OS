@@ -40,6 +40,9 @@ jobs:
       - name: Verify telemetry policy modes and source overrides
         run: bash scripts/enforcement/tests/test-telemetry-policy-and-path-overrides.sh
 
+      - name: Verify product-head advancement
+        run: bash scripts/enforcement/tests/test-telemetry-head-advancement.sh
+
       - name: Upload telemetry handoff test log
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
