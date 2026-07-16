@@ -40,14 +40,14 @@ jobs:
       - name: Verify telemetry policy modes and source overrides
         run: bash scripts/enforcement/tests/test-telemetry-policy-and-path-overrides.sh
 
-      - name: Verify telemetry export allowlist
-        run: bash scripts/enforcement/tests/test-telemetry-export-allowlist.sh
-
       - name: Verify product-head advancement
         run: bash scripts/enforcement/tests/test-telemetry-head-advancement.sh
 
       - name: Verify telemetry progress ordering
         run: bash scripts/enforcement/tests/test-telemetry-progress-ordering.sh
+
+      - name: Verify telemetry export allowlist
+        run: bash scripts/enforcement/tests/test-telemetry-export-allowlist.sh
 
       - name: Upload telemetry handoff test log
         if: always()
