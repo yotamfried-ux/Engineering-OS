@@ -57,6 +57,11 @@ def repo_root() -> Path:
         return Path.cwd()
 
 
+def resolve_source(root: Path, configured: Path | None, fallback: Path) -> Path:
+    candidate = configured or fallback
+    return candidate if candidate.is_absolute() else root / candidate
+
+
 def safe_source_descriptor(configured: str, resolved: Path) -> str:
     raw = str(configured or "")
     candidate = Path(raw)
@@ -115,6 +120,8 @@ def main() -> int:
     )
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--telemetry-dir", default=".engineering-os/telemetry")
+    parser.add_argument("--events-file", type=Path)
+    parser.add_argument("--run-id-file", type=Path)
     parser.add_argument("--project")
     parser.add_argument("--project-slug")
     parser.add_argument("--repo")
@@ -128,8 +135,8 @@ def main() -> int:
     telemetry_root = Path(args.telemetry_dir)
     if not telemetry_root.is_absolute():
         telemetry_root = root / telemetry_root
-    events_src = telemetry_root / "events.jsonl"
-    run_id_file = telemetry_root / "run_id"
+    events_src = resolve_source(root, args.events_file, telemetry_root / "events.jsonl")
+    run_id_file = resolve_source(root, args.run_id_file, telemetry_root / "run_id")
 
     if not events_src.exists() and not args.empty_run:
         fail(
@@ -180,6 +187,12 @@ def main() -> int:
         "engineering_os_head_sha": engineering_os_head_sha,
         "exported_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "source_telemetry_dir": safe_source_descriptor(args.telemetry_dir, telemetry_root),
+        "source_events": safe_source_descriptor(
+            str(args.events_file or "events.jsonl"), events_src
+        ),
+        "source_run_id": safe_source_descriptor(
+            str(args.run_id_file or "run_id"), run_id_file
+        ),
         "events_file": "events.jsonl",
         "summary_file": "latest-summary.md",
         "event_count": event_count,
