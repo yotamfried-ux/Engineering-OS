@@ -25,6 +25,14 @@ Status: evidence reconciliation and application-head validation complete; merge 
 | Workflow evidence | `core/workflow.md` read; plan commit `7fab9bc23118f942f86d9b1afeb8af8d023f6d97` preceded documentation changes |
 | Target paths | `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md`; `.github/workflows/pr-policy.yml`; `.github/workflows/telemetry-handoff-tests.yml`; `scripts/monitoring/`; `scripts/enforcement/` |
 
+## Template Gap Waiver
+
+No template applies to this evidence reconciliation and extension of existing telemetry and policy assets.
+
+## Skill Evidence
+
+No external skill was required; repository-native plans, validators, simulations, and live GitHub evidence covered the work.
+
 ## Capability Evidence
 
 - `routing.task-router-read` — task router read before planning.
