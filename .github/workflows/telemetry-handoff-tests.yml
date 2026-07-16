@@ -13,6 +13,7 @@ jobs:
   telemetry-handoff:
     name: Verify remote telemetry handoff
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
@@ -48,6 +49,7 @@ jobs:
   live-review-threads:
     name: Verify live review thread gate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
