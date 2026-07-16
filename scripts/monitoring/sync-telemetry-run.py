@@ -74,8 +74,9 @@ def repo_slug_from_url(value: str) -> str:
 def detect_repo_slug(root: Path, explicit: str = "") -> str:
     if str(explicit or "").strip():
         return validate_repo_slug(explicit)
-    remote_url = git(root, "remote", "get-url", "origin", required=False)
-    candidate = repo_slug_from_url(remote_url)
+    candidate = repo_slug_from_url(
+        git(root, "remote", "get-url", "origin", required=False)
+    )
     if candidate:
         return candidate
     env_repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
@@ -124,7 +125,10 @@ def write_handoff_manifest(
 ) -> dict[str, Any]:
     manifest_path = bundle / "manifest.json"
     manifest = load_json_object(manifest_path)
-    handoff = {
+    manifest["repo"] = repo_slug
+    manifest["head_sha"] = head_sha
+    manifest["engineering_os_head_sha"] = engineering_os_head()
+    manifest["handoff"] = {
         "schema_version": HANDOFF_SCHEMA,
         "repo": repo_slug,
         "pr_number": pr_number,
@@ -136,10 +140,6 @@ def write_handoff_manifest(
         "boundary_position": boundary_position,
         "synced_at": utc_now(),
     }
-    manifest["repo"] = repo_slug
-    manifest["head_sha"] = head_sha
-    manifest["engineering_os_head_sha"] = engineering_os_head()
-    manifest["handoff"] = handoff
     manifest["checksums"] = {
         "events_sha256": file_digest(bundle / "events.jsonl"),
         "summary_sha256": file_digest(bundle / "latest-summary.md"),
@@ -181,7 +181,8 @@ def bind_bundle_to_pr(
     existing_pr = int(handoff.get("pr_number") or 0)
     if existing_pr > 0 and existing_pr != pr_number:
         raise HandoffError(
-            f"telemetry bundle is already bound to PR #{existing_pr}, not requested PR #{pr_number}"
+            f"telemetry bundle is already bound to PR #{existing_pr}, "
+            f"not requested PR #{pr_number}"
         )
     handoff["pr_number"] = pr_number
     handoff["pr_binding"] = "exact"
@@ -198,91 +199,6 @@ def bind_bundle_to_pr(
         expected_branch_hash=branch_hash,
         expected_head_sha=head_sha,
         expected_run_id=run_id,
-    )
-
-
-def commit_bundle(
-    *,
-    root: Path,
-    policy: dict[str, Any],
-    bundle: Path,
-    run_id: str,
-    repo_slug: str,
-    branch_hash: str,
-    head_sha: str,
-    event_count: int,
-    boundary_position: int,
-    pr_number: int,
-) -> tuple[str, bool, int]:
-    remote_url ==False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    return manifest
-
-
-def load_bundle_progress(
-    bundle: Path,
-    *,
-    expected_repo: str,
-    expected_branch_hash: str,
-    expected_head_sha: str,
-    expected_run_id: str,
-) -> tuple[int, int, int]:
-    if not bundle.exists():
-        return (0, 0, 0)
-    manifest = validate_bundle(
-        bundle,
-        expected_repo=expected_repo,
-        expected_branch_hash=expected_branch_hash,
-        expected_head_sha=expected_head_sha,
-        expected_run_id=expected_run_id,
-    )
-    handoff = manifest["handoff"]
-    return (
-        int(manifest["event_count"]),
-        int(handoff["boundary_position"]),
-        int(handoff.get("pr_number") or 0),
-    )
-
-
-def bind_bundle_to_pr(
-    bundle: Path,
-    pr_number: int,
-    *,
-    expected_repo: str,
-    expected_branch_hash: str,
-    expected_head_sha: str,
-    expected_run_id: str,
-) -> None:
-    manifest = validate_bundle(
-        bundle,
-        expected_repo=expected_repo,
-        expected_branch_hash=expected_branch_hash,
-        expected_head_sha=expected_head_sha,
-        expected_run_id=expected_run_id,
-    )
-    handoff = manifest["handoff"]
-    existing_pr = int(handoff.get("pr_number") or 0)
-    if existing_pr > 0 and existing_pr != pr_number:
-        raise HandoffError(
-            f"remote telemetry bundle is already bound to PR #{existing_pr}, "
-            f"not requested PR #{pr_number}"
-        )
-    handoff["pr_number"] = pr_number
-    handoff["pr_binding"] = "exact"
-    handoff["synced_at"] = utc_now()
-    manifest["handoff"] = handoff
-    validate_metadata_only(manifest)
-    (bundle / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    validate_bundle(
-        bundle,
-        expected_repo=expected_repo,
-        expected_branch_hash=expected_branch_hash,
-        expected_head_sha=expected_head_sha,
-        expected_run_id=expected_run_id,
     )
 
 
@@ -317,41 +233,51 @@ def commit_bundle(
             else:
                 run(["git", "-C", str(tmp), "checkout", "-q", "--orphan", branch])
                 for child in tmp.iterdir():
-                    if child.name != ".git":
-                        if child.is_dir():
-                            shutil.rmtree(child)
-                        else:
-                            child.unlink()
+                    if child.name == ".git":
+                        continue
+                    if child.is_dir():
+                        shutil.rmtree(child)
+                    else:
+                        child.unlink()
                 (tmp / "README.md").write_text(
-                    "# Engineering OS telemetry handoff\n\nMetadata-only bundles generated by instrumented Claude sessions.\n",
+                    "# Engineering OS telemetry handoff\n\n"
+                    "Metadata-only bundles generated by instrumented Claude sessions.\n",
                     encoding="utf-8",
                 )
 
             destination = tmp / "runs" / run_id
-            existing_events, existing_boundary, existing_pr = load_bundle_progress(
-                destination,
-                expected_repo=repo_slug,
-                expected_branch_hash=branch_hash,
-                expected_head_sha=head_sha,
-                expected_run_id=run_id,
-            )
+            if destination.exists():
+                existing_manifest = validate_bundle(
+                    destination,
+                    expected_repo=repo_slug,
+                    expected_branch_hash=branch_hash,
+                    expected_head_sha=head_sha,
+                    expected_run_id=run_id,
+                )
+                existing_events, existing_boundary, existing_pr = bundle_progress(existing_manifest)
+            else:
+                existing_events, existing_boundary, existing_pr = (0, 0, 0)
+
             if existing_pr > 0 and pr_number > 0 and existing_pr != pr_number:
                 raise HandoffError(
                     f"remote telemetry bundle is already bound to PR #{existing_pr}, "
                     f"not requested PR #{pr_number}"
                 )
             effective_pr_number = existing_pr or pr_number
-            remote_is_newer = (existing_events, existing_boundary) > (event_count, boundary_position)
+            remote_is_newer = (existing_events, existing_boundary) > (
+                event_count,
+                boundary_position,
+            )
 
             if remote_is_newer:
                 if pr_number > 0 and existing_pr <= 0:
                     bind_bundle_to_pr(
                         destination,
                         pr_number,
-                        expected_repo=repo_slug,
-                        expected_branch_hash=branch_hash,
-                        expected_head_sha=head_sha,
-                        expected_run_id=run_id,
+                        repo_slug=repo_slug,
+                        branch_hash=branch_hash,
+                        head_sha=head_sha,
+                        run_id=run_id,
                     )
                     run(["git", "-C", str(tmp), "add", str(destination.relative_to(tmp))])
                     run([
@@ -374,10 +300,10 @@ def commit_bundle(
                 bind_bundle_to_pr(
                     bundle,
                     existing_pr,
-                    expected_repo=repo_slug,
-                    expected_branch_hash=branch_hash,
-                    expected_head_sha=head_sha,
-                    expected_run_id=run_id,
+                    repo_slug=repo_slug,
+                    branch_hash=branch_hash,
+                    head_sha=head_sha,
+                    run_id=run_id,
                 )
 
             if destination.exists():
@@ -430,7 +356,10 @@ def state_path(root: Path) -> Path:
 def check_state(root: Path, policy: dict[str, Any]) -> int:
     if policy["mode"] == "disabled":
         return 0
-    telemetry_root = Path(os.environ.get("EOS_TELEMETRY_DIR", root / ".engineering-os" / "telemetry"))
+    telemetry_root = Path(os.environ.get(
+        "EOS_TELEMETRY_DIR",
+        root / ".engineering-os" / "telemetry",
+    ))
     events_path = Path(os.environ.get("EOS_TELEMETRY_FILE", telemetry_root / "events.jsonl"))
     run_id_path = Path(os.environ.get("EOS_TELEMETRY_RUN_ID_FILE", telemetry_root / "run_id"))
     state_file = state_path(root)
@@ -442,11 +371,8 @@ def check_state(root: Path, policy: dict[str, Any]) -> int:
         raise HandoffError("current telemetry events do not match the active run")
     validate_metadata_only(events)
 
-    try:
-        state = json.loads(state_file.read_text(encoding="utf-8"))
-    except Exception as exc:
-        raise HandoffError(f"invalid remote handoff state JSON: {exc}") from exc
-    if not isinstance(state, dict) or state.get("schema_version") != HANDOFF_SCHEMA:
+    state = load_json_object(state_file)
+    if state.get("schema_version") != HANDOFF_SCHEMA:
         raise HandoffError("remote handoff state schema is invalid")
     validate_metadata_only(state)
     if str(state.get("run_id_hash") or "") != stable_hash(run_id):
@@ -459,24 +385,26 @@ def check_state(root: Path, policy: dict[str, Any]) -> int:
 
     current_repo = detect_repo_slug(root)
     current_branch = git(root, "rev-parse", "--abbrev-ref", "HEAD")
-    current_branch_hash = stable_hash(current_branch)
     current_head = git(root, "rev-parse", "HEAD")
     expected = {
         "repo": current_repo,
-        "source_branch_hash": current_branch_hash,
+        "source_branch_hash": stable_hash(current_branch),
         "head_sha": current_head,
         "remote": policy["remote"],
         "remote_branch": policy["branch"],
     }
     for key, expected_value in expected.items():
         if str(state.get(key) or "") != expected_value:
-            raise HandoffError(f"remote handoff state {key} does not match the current workspace")
+            raise HandoffError(
+                f"remote handoff state {key} does not match the current workspace"
+            )
 
     current_pr = detect_pr_number(root, current_repo)
     state_pr = int(state.get("pr_number") or 0)
     if current_pr > 0 and state_pr != current_pr:
         raise HandoffError(
-            f"current branch is PR #{current_pr}, but durable handoff is still provisional or bound elsewhere; run a fresh sync"
+            f"current branch is PR #{current_pr}, but durable handoff is still "
+            "provisional or bound elsewhere; run a fresh sync"
         )
     if not str(state.get("remote_commit") or ""):
         raise HandoffError("remote handoff state has no durable commit identifier")
@@ -497,7 +425,9 @@ def sync(root: Path, policy: dict[str, Any], args: argparse.Namespace) -> int:
     run_id_path = Path(os.environ.get("EOS_TELEMETRY_RUN_ID_FILE", telemetry_root / "run_id"))
     run_id = read_run_id(run_id_path)
     if not run_id or not events_path.is_file():
-        raise HandoffError("cannot hand off telemetry before the current run has events and a run_id")
+        raise HandoffError(
+            "cannot hand off telemetry before the current run has events and a run_id"
+        )
     events = load_jsonl_strict(events_path)
     if not events or any(str(item.get("trace_id") or "") != run_id for item in events):
         raise HandoffError("current telemetry file is empty or mixes multiple run ids")
@@ -575,19 +505,22 @@ def sync(root: Path, policy: dict[str, Any], args: argparse.Namespace) -> int:
     if stale_skip:
         print(
             f"telemetry handoff skipped stale local bundle: events={len(events)} "
-            f"pr={effective_pr_number or 'provisional'} remote_commit={remote_commit[:12]}"
+            f"pr={effective_pr_number or 'provisional'} "
+            f"remote_commit={remote_commit[:12]}"
         )
         return 0
-
     print(
         f"telemetry handoff synced: events={len(events)} "
-        f"pr={effective_pr_number or 'provisional'} remote_commit={remote_commit[:12]}"
+        f"pr={effective_pr_number or 'provisional'} "
+        f"remote_commit={remote_commit[:12]}"
     )
     return 0
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Persist or verify a metadata-only telemetry handoff.")
+    parser = argparse.ArgumentParser(
+        description="Persist or verify a metadata-only telemetry handoff."
+    )
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--telemetry-dir", default=".engineering-os/telemetry")
     parser.add_argument("--policy-file", type=Path)
@@ -602,7 +535,10 @@ def main() -> int:
         return check_state(root, policy) if args.check else sync(root, policy, args)
     except Exception as exc:
         if policy["mode"] == "best_effort" and not args.check:
-            print(f"WARNING_FOR_AGENT: telemetry remote handoff failed: {exc}", file=sys.stderr)
+            print(
+                f"WARNING_FOR_AGENT: telemetry remote handoff failed: {exc}",
+                file=sys.stderr,
+            )
             return 0
         print(f"ERROR_FOR_AGENT: telemetry remote handoff failed: {exc}", file=sys.stderr)
         return 2
