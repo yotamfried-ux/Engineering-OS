@@ -42,26 +42,6 @@ print(hashlib.sha256(f"{seed}:{nonce}".encode()).hexdigest()[:32])
 PY
 )"
 
-repo_slug="$(python3 - "$ROOT" <<'PY'
-import subprocess,sys
-from pathlib import Path
-root=Path(sys.argv[1])
-try:
-    value=subprocess.check_output(['git','-C',str(root),'remote','get-url','origin'],text=True,stderr=subprocess.DEVNULL).strip()
-except Exception:
-    value=''
-trimmed=value[:-4] if value.endswith('.git') else value
-slug=''
-for marker in ('github.com/','github.com:'):
-    if marker in trimmed:
-        candidate=trimmed.split(marker,1)[1].strip('/')
-        if candidate.count('/')==1:
-            slug=candidate
-            break
-print(slug or root.name)
-PY
-)"
-
 printf '%s\n' "$new_run_id" > "$RUN_ID_FILE"
 : > "$OUT"
 rm -f "$SUMMARY"
@@ -71,4 +51,4 @@ rm -f "$SUMMARY"
 
 payload="$(cat || true)"
 printf '%s' "$payload" | bash "$RECORDER" session_start
-python3 "$SYNC" --event session_start --repo "$repo_slug"
+python3 "$SYNC" --event session_start
