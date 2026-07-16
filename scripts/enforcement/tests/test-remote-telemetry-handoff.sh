@@ -77,6 +77,7 @@ PY
 (cd "$TARGET" && EOS_TELEMETRY_PR_NUMBER=42 EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" bash "$REQUIRE") >/dev/null
 
 for bad in \
+  "--repo other-repo --pr-number 42 --head-ref feature/test --head-sha $HEAD" \
   "--repo target --pr-number 9 --head-ref feature/test --head-sha $HEAD" \
   "--repo target --pr-number 42 --head-ref other --head-sha $HEAD" \
   "--repo target --pr-number 42 --head-ref feature/test --head-sha 0000000000000000000000000000000000000000"; do
