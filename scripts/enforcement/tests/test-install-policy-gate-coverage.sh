@@ -15,7 +15,7 @@ while IFS=$'\t' read -r workflow dep; do
   [ -n "${dep:-}" ] || { echo "  fail: malformed row for $workflow"; bad=1; continue; }
   [ -f "$ROOT/$dep" ] || { echo "  fail: $workflow declares missing dependency $dep"; bad=1; }
 done < "$MANIFEST"
-[ "$bad" -eq 0 ] && pass all_manifest_dependencies_exist || fail all_manifest_dependencies_exist
+if [ "$bad" -eq 0 ]; then pass all_manifest_dependencies_exist; else fail all_manifest_dependencies_exist; fi
 bad=0; INSTALLED="$(installed_workflows)"; [ -n "$INSTALLED" ] || fail installed_workflows_list_non_empty
 for wf in "$WORKFLOWS_DIR"/*.yml; do
   name="$(basename "$wf")"; case " $INSTALLED " in *" $name "*) ;; *) continue ;; esac
@@ -24,7 +24,7 @@ for wf in "$WORKFLOWS_DIR"/*.yml; do
     manifest_has "$name" "$called" || { echo "  fail: $name calls $called with no matching manifest row"; bad=1; }
   done < <(grep -oE 'scripts/(enforcement|monitoring)/[A-Za-z0-9_.-]+\.(sh|py)' "$wf" | sort -u)
 done
-[ "$bad" -eq 0 ] && pass every_real_call_site_has_a_manifest_row || fail every_real_call_site_has_a_manifest_row
+if [ "$bad" -eq 0 ]; then pass every_real_call_site_has_a_manifest_row; else fail every_real_call_site_has_a_manifest_row; fi
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 cat > "$TMP/fake-policy.yml" <<'EOF'
 name: fake-policy
@@ -61,7 +61,7 @@ while IFS=$'\t' read -r workflow dep; do
   [ -f "$TARGET_OK/$dep" ] || { echo "  fail: $dep missing from installed target"; bad=1; }
   case "$dep" in *.sh) [ -x "$TARGET_OK/$dep" ] || { echo "  fail: $dep installed without executable bit"; bad=1; } ;; esac
 done < "$MANIFEST"
-[ "$bad" -eq 0 ] && pass installer_copies_every_manifest_dependency || fail installer_copies_every_manifest_dependency
+if [ "$bad" -eq 0 ]; then pass installer_copies_every_manifest_dependency; else fail installer_copies_every_manifest_dependency; fi
 [ -f "$TARGET_OK/.claude/settings.json" ] || fail installer_creates_claude_settings; pass installer_creates_claude_settings
 grep -q 'eos-telemetry-session-start.sh' "$TARGET_OK/.claude/settings.json" || fail installer_settings_include_telemetry
 grep -q 'record-and-sync-telemetry.sh' "$TARGET_OK/.claude/settings.json" || fail installer_settings_include_handoff
@@ -93,7 +93,7 @@ pass installer_gitignore_block_is_idempotent
 rm "$FAKE_HOME/scripts/enforcement/policy-gate-dependencies.tsv"
 TARGET_MISSING="$TMP/install-target-missing"; mkdir -p "$TARGET_MISSING"; rc=0
 install_err="$(EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$FAKE_HOME" bash "$INSTALLER" "$TARGET_MISSING" 2>&1 >/dev/null)" || rc=$?
-[ "$rc" -ne 0 ] && pass installer_fails_closed_when_manifest_missing || fail installer_fails_closed_when_manifest_missing
+if [ "$rc" -ne 0 ]; then pass installer_fails_closed_when_manifest_missing; else fail installer_fails_closed_when_manifest_missing; fi
 case "$install_err" in *"missing policy-gate dependency manifest:"*) pass missing_manifest_error_is_explicit ;; *) echo "stderr was: $install_err"; fail missing_manifest_error_is_explicit ;; esac
 if find "$TARGET_MISSING" -mindepth 1 -type f 2>/dev/null | grep -v '/\.github/workflows/' | grep -q .; then fail no_dependency_copied_after_missing_manifest_failure; else pass no_dependency_copied_after_missing_manifest_failure; fi
 echo "install policy-gate coverage simulations passed"
