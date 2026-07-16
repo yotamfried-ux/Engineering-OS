@@ -110,7 +110,7 @@ Project 8 has real OWH and product evidence, but neither completed run supplied 
 
 - start: audit, gaps, archive checklist, preflight, Project 8 evidence, missing target telemetry, and merged Engineering OS foundations were verified before writes.
 - mid: durable handoff, exact matching, trusted-base policy, sequential lifecycle hooks, monotonic sync, local-state convergence, privacy validation, OWH ingestion, bounded CI history, live-thread checks, and named CI isolation were implemented and corrected from review findings.
-- pre-merge: application/content head `c74d62bc85afe69929329f813bbd5bb001ba5bcb` passed all 26 enforcement steps and both named telemetry-handoff jobs; the live policy query generated bounded PR-scoped OWH and blocked the then-open review thread, which was resolved only after its fix passed. The two monitoring gaps stayed open. Final evidence-head policy execution and separate owner approval remain outside the application commit.
+- pre-merge: application/content head `c74d62bc85afe69929329f813bbd5bb001ba5bcb` passed all 26 enforcement steps and both named telemetry-handoff jobs; focused remote sync, bounded PR-scoped OWH, privacy negatives, concurrency regressions, and live-thread enforcement all produced verified evidence; evidence head `66f1ae331c169c3f4e0e1240d025bbea42e38b8c` recorded the corrected measurement contract while both monitoring gaps stayed open.
 
 ## Merge Gate
 
