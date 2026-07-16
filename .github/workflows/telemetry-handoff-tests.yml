@@ -58,18 +58,6 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      - name: Upload exact telemetry runtime sources
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: telemetry-runtime-source-${{ github.run_id }}
-          path: |
-            scripts/monitoring/sync-telemetry-run.py
-            scripts/monitoring/telemetry_handoff.py
-            scripts/monitoring/export-telemetry-run.py
-          retention-days: 1
-          if-no-files-found: error
-
   shallow-head-ancestry:
     name: Verify shallow product-head ancestry
     runs-on: ubuntu-latest
@@ -94,6 +82,26 @@ jobs:
         with:
           persist-credentials: false
       - run: bash scripts/enforcement/tests/test-telemetry-invalid-utf8.sh
+
+  boundary-validation:
+    name: Verify telemetry boundary validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/enforcement/tests/test-telemetry-boundary-validation.sh
+
+  state-atomic-write:
+    name: Verify telemetry state atomic writes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/enforcement/tests/test-telemetry-state-atomic-write.sh
 
   live-review-threads:
     name: Verify live review thread gate
