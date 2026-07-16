@@ -124,7 +124,7 @@ jobs:
           fi
 
           if gh api --paginate -X GET "repos/$REPO/actions/runs" \
-            -f event=pull_request -f per_page=100 \
+            -f event=pull_request -f created=">=$PR_CREATED_AT" -f per_page=100 \
             --jq ".workflow_runs[] | select([.pull_requests[]?.number] | index(${PR_NUMBER})) | {workflowName: .name, conclusion: .conclusion, status: .status, headSha: .head_sha, createdAt: .created_at, updatedAt: .updated_at}" \
             | jq -s 'unique_by(.workflowName, .headSha, .createdAt)' > /tmp/ci-history.json 2>/tmp/ci-history.err; then :; else
             echo "gh api (PR-scoped CI history) unavailable:"; cat /tmp/ci-history.err || true
