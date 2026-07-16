@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -135,8 +136,14 @@ def main() -> int:
     telemetry_root = Path(args.telemetry_dir)
     if not telemetry_root.is_absolute():
         telemetry_root = root / telemetry_root
-    events_src = resolve_source(root, args.events_file, telemetry_root / "events.jsonl")
-    run_id_file = resolve_source(root, args.run_id_file, telemetry_root / "run_id")
+    configured_events = args.events_file
+    if configured_events is None and os.environ.get("EOS_TELEMETRY_FILE"):
+        configured_events = Path(os.environ["EOS_TELEMETRY_FILE"])
+    configured_run_id = args.run_id_file
+    if configured_run_id is None and os.environ.get("EOS_TELEMETRY_RUN_ID_FILE"):
+        configured_run_id = Path(os.environ["EOS_TELEMETRY_RUN_ID_FILE"])
+    events_src = resolve_source(root, configured_events, telemetry_root / "events.jsonl")
+    run_id_file = resolve_source(root, configured_run_id, telemetry_root / "run_id")
 
     if not events_src.exists() and not args.empty_run:
         fail(
@@ -188,10 +195,10 @@ def main() -> int:
         "exported_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "source_telemetry_dir": safe_source_descriptor(args.telemetry_dir, telemetry_root),
         "source_events": safe_source_descriptor(
-            str(args.events_file or "events.jsonl"), events_src
+            str(configured_events or "events.jsonl"), events_src
         ),
         "source_run_id": safe_source_descriptor(
-            str(args.run_id_file or "run_id"), run_id_file
+            str(configured_run_id or "run_id"), run_id_file
         ),
         "events_file": "events.jsonl",
         "summary_file": "latest-summary.md",
