@@ -132,9 +132,6 @@ Project 8 has real OWH and product evidence, but neither completed run supplied 
 - start: audit, gaps, archive checklist, preflight, Project 8 evidence, missing target telemetry, and merged Engineering OS foundations were verified before writes.
 - mid: durable handoff, exact matching, trusted-base policy, sequential lifecycle hooks, canonical identity, source-path consistency, policy-mode semantics, complete remote validation, product-head ancestry, independently monotonic progress, positive export allowlisting, OWH ingestion, bounded CI history, live-thread checks, and named CI isolation were implemented and corrected through focused result loops.
 - pre-merge: application/content head `b8f974a35b780b960afbbe7db8aa8f0dae18216f` passed complete `enforcement-tests` run `29501895512` and focused `telemetry-handoff-tests` run `29501895601`; failing reproductions `29500646182` and `29500578566` proved both final defects before repair; all known review threads were resolved after passing evidence; verified lesson commit `5c8d73e1e8fa454f1d24b9dd4675a635b5d05136` recorded the corrected measurement contract while both monitoring gaps stayed open.
-
-## Final Pre-Merge Checkpoint — 2026-07-16
-
 - pre-merge: final application head `4e7f9d1faa0d6018e8d22ead60d0e42bf23230fe` passed seven focused regressions in helper run `29508718994`; Verified Lesson commit `3c6e7cb22e8a4ec25867f22ecdc1c4227841611e` recorded shallow-history recovery, strict UTF-8 privacy input, event-derived lifecycle evidence, and per-writer atomic state after the last runtime correction; focused run `29508908367` and complete enforcement run `29508908285` passed after that lesson while `monitoring-metrics-sufficiency` and `project-8-real-run-evidence` remained open.
 
 ## Merge Gate
