@@ -24,7 +24,8 @@ HEAD="$(git -C "$TARGET" rev-parse HEAD)"
 git -C "$TARGET" remote add origin "$REMOTE"
 git -C "$TARGET" push -q -u origin feature/test
 mkdir -p "$TARGET/.engineering-os" "$TARGET/.claude"
-cat > "$TARGET/.engineering-os/telemetry-policy.json" <<'JSON'
+POLICY="$TARGET/.engineering-os/telemetry-policy.json"
+cat > "$POLICY" <<'JSON'
 {"schema_version":"eos.telemetry.policy.v1","remote_handoff":{"mode":"required","remote":"origin","branch":"engineering-os-telemetry"}}
 JSON
 cat > "$TARGET/.claude/settings.json" <<JSON
@@ -42,7 +43,7 @@ printf '%s' '{"session_id":"remote-session","hook_event_name":"Stop"}' | (cd "$T
 HANDOFF="$TMP/handoff"
 git clone -q --branch engineering-os-telemetry "$REMOTE" "$HANDOFF"
 PROVISIONAL="$TMP/provisional"
-python3 "$SELECT" --root "$TARGET" --handoff-root "$HANDOFF" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$PROVISIONAL" >/dev/null
+python3 "$SELECT" --root "$TARGET" --policy-file "$POLICY" --handoff-root "$HANDOFF" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$PROVISIONAL" >/dev/null
 python3 - "$PROVISIONAL" "$RUN_ID" <<'PY'
 import json,sys
 from pathlib import Path
@@ -64,7 +65,7 @@ printf '%s' '{"session_id":"remote-session","hook_event_name":"PostToolUse","too
 (cd "$TARGET" && EOS_TELEMETRY_PR_NUMBER=42 python3 "$SYNC" --repo target) >/dev/null
 git -C "$HANDOFF" pull -q
 SELECTED="$TMP/selected"
-python3 "$SELECT" --root "$TARGET" --handoff-root "$HANDOFF" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$SELECTED" >/dev/null
+python3 "$SELECT" --root "$TARGET" --policy-file "$POLICY" --handoff-root "$HANDOFF" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$SELECTED" >/dev/null
 python3 - "$SELECTED" <<'PY'
 import json,sys
 from pathlib import Path
@@ -79,10 +80,22 @@ for bad in \
   "--repo target --pr-number 9 --head-ref feature/test --head-sha $HEAD" \
   "--repo target --pr-number 42 --head-ref other --head-sha $HEAD" \
   "--repo target --pr-number 42 --head-ref feature/test --head-sha 0000000000000000000000000000000000000000"; do
-  if python3 "$SELECT" --root "$TARGET" --handoff-root "$HANDOFF" $bad --out "$TMP/bad" >/dev/null 2>&1; then
+  if python3 "$SELECT" --root "$TARGET" --policy-file "$POLICY" --handoff-root "$HANDOFF" $bad --out "$TMP/bad" >/dev/null 2>&1; then
     echo "unexpected pass: mismatched bundle $bad"; exit 1
   fi
 done
+
+# A PR-controlled root policy cannot disable a selector using the trusted policy file.
+MALICIOUS_ROOT="$TMP/malicious-root"
+mkdir -p "$MALICIOUS_ROOT/.engineering-os"
+cat > "$MALICIOUS_ROOT/.engineering-os/telemetry-policy.json" <<'JSON'
+{"schema_version":"eos.telemetry.policy.v1","remote_handoff":{"mode":"disabled"}}
+JSON
+if python3 "$SELECT" --root "$MALICIOUS_ROOT" --policy-file "$POLICY" --handoff-root "$HANDOFF" \
+  --repo target --pr-number 42 --head-ref feature/test --head-sha 0000000000000000000000000000000000000000 \
+  --out "$TMP/bad" >/dev/null 2>&1; then
+  echo 'unexpected pass: PR-controlled policy disabled trusted required mode'; exit 1
+fi
 
 # A stale overlapping sync cannot downgrade the newer remote event/boundary count.
 cp "$TARGET/.engineering-os/telemetry/events.jsonl" "$TMP/full-events.jsonl"
@@ -100,7 +113,7 @@ PY
 
 cp -R "$HANDOFF" "$TMP/corrupt"
 printf 'tamper\n' >> "$TMP/corrupt/runs/$RUN_ID/events.jsonl"
-if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/corrupt" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+if python3 "$SELECT" --root "$TARGET" --policy-file "$POLICY" --handoff-root "$TMP/corrupt" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
   echo 'unexpected pass: checksum mismatch'; exit 1
 fi
 
@@ -116,8 +129,24 @@ manifest=json.loads(m.read_text())
 manifest['checksums']['events_sha256']=hashlib.sha256(e.read_bytes()).hexdigest()
 m.write_text(json.dumps(manifest,sort_keys=True))
 PY
-if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/privacy" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+if python3 "$SELECT" --root "$TARGET" --policy-file "$POLICY" --handoff-root "$TMP/privacy" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
   echo 'unexpected pass: privacy-invalid bundle'; exit 1
+fi
+
+cp -R "$HANDOFF" "$TMP/array-secret"
+python3 - "$TMP/array-secret/runs/$RUN_ID" <<'PY'
+import hashlib,json,sys
+from pathlib import Path
+b=Path(sys.argv[1]); e=b/'events.jsonl'; m=b/'manifest.json'
+rows=[json.loads(x) for x in e.read_text().splitlines() if x.strip()]
+rows[0].setdefault('attributes', {})['labels']=['safe', 'ghp_12345678901234567890']
+e.write_text('\n'.join(json.dumps(x,sort_keys=True) for x in rows)+'\n')
+manifest=json.loads(m.read_text())
+manifest['checksums']['events_sha256']=hashlib.sha256(e.read_bytes()).hexdigest()
+m.write_text(json.dumps(manifest,sort_keys=True))
+PY
+if python3 "$SELECT" --root "$TARGET" --policy-file "$POLICY" --handoff-root "$TMP/array-secret" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+  echo 'unexpected pass: array-nested secret'; exit 1
 fi
 
 cp -R "$HANDOFF" "$TMP/empty"
@@ -133,7 +162,7 @@ manifest['handoff']['boundary_position']=0
 manifest['checksums']['events_sha256']=hashlib.sha256(b'').hexdigest()
 m.write_text(json.dumps(manifest,sort_keys=True))
 PY
-if python3 "$SELECT" --root "$TARGET" --handoff-root "$TMP/empty" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
+if python3 "$SELECT" --root "$TARGET" --policy-file "$POLICY" --handoff-root "$TMP/empty" --repo target --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad" >/dev/null 2>&1; then
   echo 'unexpected pass: zero-event bundle'; exit 1
 fi
 
