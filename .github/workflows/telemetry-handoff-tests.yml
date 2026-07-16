@@ -66,6 +66,7 @@ jobs:
           path: |
             scripts/monitoring/sync-telemetry-run.py
             scripts/monitoring/telemetry_handoff.py
+            scripts/monitoring/export-telemetry-run.py
           retention-days: 1
           if-no-files-found: error
 
