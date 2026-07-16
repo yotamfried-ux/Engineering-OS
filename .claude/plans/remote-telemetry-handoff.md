@@ -109,7 +109,7 @@ No external skill is required; repository-native regression suites validate the 
 
 - start: PR #6 evidence, telemetry runtime, CI workflow, installer, and live thread state were inspected before implementation; both false-green paths were reproduced.
 - mid: exact selection, durable state, provisional/exact PR binding, monotonic sync, local-state convergence, explicit artifact availability, trusted-base policy resolution, array privacy validation, bounded CI history, and named CI isolation were implemented with focused regressions.
-- pre-merge: application/content head `c74d62bc85afe69929329f813bbd5bb001ba5bcb` passed all 26 enforcement steps and both named telemetry-handoff jobs; the focused artifact recorded non-empty remote sync and a passing handoff suite, the live query generated complete PR-scoped OWH inside the documented API bound, and all known review threads were resolved. Final evidence-head policy execution and separate owner approval remain outside the application commit.
+- pre-merge: application/content head `c74d62bc85afe69929329f813bbd5bb001ba5bcb` passed all 26 enforcement steps and both named telemetry-handoff jobs; focused remote sync, bounded PR-scoped OWH, privacy negatives, concurrency regressions, and live-thread enforcement all produced verified evidence; evidence head `66f1ae331c169c3f4e0e1240d025bbea42e38b8c` recorded the verified lesson after every identified review finding was fixed and resolved.
 
 ## Merge Gate
 
