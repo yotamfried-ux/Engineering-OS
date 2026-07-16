@@ -11,6 +11,7 @@ on:
 jobs:
   enforcement-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       # Pinned to a full commit SHA (supply-chain hardening); no auth git ops needed.
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -53,6 +54,12 @@ jobs:
 
       - name: Verify Project 8 telemetry readiness suite
         run: bash scripts/enforcement/tests/test-project8-telemetry-readiness.sh
+
+      - name: Verify remote telemetry handoff suite
+        run: bash scripts/enforcement/tests/test-remote-telemetry-handoff.sh
+
+      - name: Verify live review thread suite
+        run: bash scripts/enforcement/tests/test-live-review-threads.sh
 
       - name: Verify enforcement suites group A-F
         run: |
