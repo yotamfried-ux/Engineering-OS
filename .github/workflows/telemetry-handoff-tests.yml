@@ -58,6 +58,31 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  shallow-head-ancestry:
+    name: Verify shallow product-head ancestry
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - name: Prepare Git simulation
+        run: |
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+      - run: bash scripts/enforcement/tests/test-telemetry-shallow-head-ancestry.sh
+
+  invalid-utf8:
+    name: Verify malformed telemetry UTF-8 rejection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/enforcement/tests/test-telemetry-invalid-utf8.sh
+
   live-review-threads:
     name: Verify live review thread gate
     runs-on: ubuntu-latest
