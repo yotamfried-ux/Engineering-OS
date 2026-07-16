@@ -15,5 +15,8 @@ cat > "$TMP/outdated.json" <<'JSON'
 [{"id":"a","isResolved":false,"isOutdated":true}]
 JSON
 if python3 "$CHECK" --threads-json "$TMP/outdated.json" >/dev/null 2>&1; then echo 'unexpected pass: outdated unresolved thread'; exit 1; fi
+cat > "$TMP/missing.json" <<'JSON'
+[{"id":"a"}]
+JSON
 if python3 "$CHECK" --threads-json "$TMP/missing.json" >/dev/null 2>&1; then echo 'unexpected pass: missing thread metadata'; exit 1; fi
 echo 'live review thread tests passed'
