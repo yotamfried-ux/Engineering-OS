@@ -31,19 +31,19 @@ Status: evidence reconciliation and application-head validation complete; merge 
 - `workflow.workflow-read` — workflow read and plan-first ordering used.
 - `plan.route-plan-before-write` — plan commit preceded all documentation changes.
 - `source.github-repo-read` — both repositories, PRs, CI, exact SHAs and OWH artifacts were inspected through GitHub.
-- `validation.policy-change-has-validator` — audit, known-gap, telemetry, workflow, installer, privacy, live-thread, and plan validators cover the change.
+- `validation.policy-change-has-validator` — audit, known-gap, telemetry, workflow, installer, privacy, concurrency, live-thread, CI-history, and plan validators cover the change.
 - `validation.coderabbit-policy` — CodeRabbit and Codex findings were inspected against current code; valid findings were fixed and tested.
 
 ## Connector Evidence
 
-- GitHub provided Project 8 PRs #4 and #6, Engineering OS PRs #244 and #245, exact SHAs, workflow metadata, missing target telemetry, and OWH artifacts `operational-work-history-4-29178357323` and `operational-work-history-6-29245891365`.
+- GitHub provided Project 8 PRs #4 and #6, Engineering OS PRs #244 and #245, exact SHAs, workflow metadata, missing target telemetry, OWH artifacts `operational-work-history-4-29178357323` and `operational-work-history-6-29245891365`, and official workflow-run query constraints.
 
 ## Connector Usage Evidence
 
 - source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
-- action: inspected PRs #4, #6, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist, CI runs, reviews, threads, runtime workflows, and Project 8 telemetry installation state.
-- result: `.github/workflows/pr-policy.yml` and `scripts/monitoring/select-pr-telemetry.py` entered exact-head validation while readiness sources kept OWH and session telemetry separate.
-- decision: kept both monitoring gaps open, fixed the transport capability required for a valid later run, and kept Project 8 product work outside this PR.
+- action: inspected PRs #4, #6, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist, CI runs, reviews, threads, runtime workflows, Project 8 telemetry installation state, and GitHub's workflow-run search contract.
+- result: `.github/workflows/pr-policy.yml`, `scripts/monitoring/sync-telemetry-run.py`, and `scripts/monitoring/select-pr-telemetry.py` passed application-head validation while readiness sources kept OWH and session telemetry separate.
+- decision: kept both monitoring gaps open, fixed the transport and evidence-history capabilities required for a valid later run, and kept Project 8 product work outside this PR.
 - target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md`; `.github/workflows/pr-policy.yml`; `scripts/monitoring/`; `scripts/enforcement/`.
 
 ## Documentation Asset Evidence
@@ -63,6 +63,8 @@ Status: evidence reconciliation and application-head validation complete; merge 
 | `docs/operations/operational-work-history.md` | validated | OWH can exist without session telemetry and cannot substitute for it |
 | `docs/operations/result-loop-contract-audit-checklist.md` | validated | first real target evidence exists while telemetry and comparison-run criteria remain incomplete |
 | `docs/operations/project8-first-real-run-findings.md` | validated | Project 8 PR #4 is classified as OWH-only rather than valid telemetry evidence; Project 8 PR #6 artifact `operational-work-history-6-29245891365` also reported zero session events |
+| `scripts/monitoring/sync-telemetry-run.py` | validated | stale exact binding converges remote and local durable state without allowing a conflicting PR rebind |
+| `.github/workflows/pr-policy.yml` | validated | CI history is bounded from PR creation before exact PR-number filtering and OWH enrichment |
 
 ## Decision
 
@@ -70,11 +72,12 @@ Project 8 has real OWH and product evidence, but neither completed run supplied 
 
 ## Validation Evidence
 
-- application/content head `a02085a53928fece09181ef536e3f4d31967aeb8` passed all 26 steps in `enforcement-tests` run `29463304115`;
-- the same head passed both named jobs in `telemetry-handoff-tests` run `29463304133`;
-- plan-policy, connector-evidence-policy, capability-evidence-policy, documentation-asset-policy, semantic-cleanup-policy, and import-cleanup-policy passed on the application head;
-- workflow-evidence-policy and pr-policy were intentionally left to re-evaluate the exact evidence head after lifecycle and PR-body evidence were updated;
-- every existing inline review thread was resolved before the evidence commit.
+- application/content head `c74d62bc85afe69929329f813bbd5bb001ba5bcb` passed all 26 steps in `enforcement-tests` run `29464405770`;
+- the same head passed both named jobs in `telemetry-handoff-tests` run `29464405805`;
+- plan-policy, connector-evidence-policy, capability-evidence-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy, and focused telemetry validation passed on the application head;
+- live `pr-policy` run `29464405759` accepted the bounded CI-history query, generated OWH with 737 PR-associated runs, and then blocked the outstanding review thread as designed;
+- the outstanding thread was resolved only after the query and wiring regression passed;
+- workflow-evidence-policy and final pr-policy were left to re-evaluate the exact evidence head after lifecycle and PR-body evidence were updated.
 
 ## Definition of Done
 
@@ -85,8 +88,10 @@ Project 8 has real OWH and product evidence, but neither completed run supplied 
 - [x] Audit separates OWH from missing telemetry.
 - [x] Telemetry completion boxes remain unchecked.
 - [x] Next-run preflight boundary is explicit.
-- [x] Application and telemetry implementation passed `enforcement-tests` run `29463304115` and `telemetry-handoff-tests` run `29463304133`.
-- [x] Automated reviews and all existing inline threads were inspected; valid findings were fixed or documented as non-blocking.
+- [x] Stale provisional binding converges local durable state and conflicting PR binding fails closed.
+- [x] PR CI history uses a server-side PR-created-at bound and exact local PR filtering.
+- [x] Application and telemetry implementation passed `enforcement-tests` run `29464405770` and `telemetry-handoff-tests` run `29464405805`.
+- [x] Automated reviews and all known inline threads were inspected; valid findings were fixed and tested.
 
 ## Claude Run Trace
 
@@ -97,13 +102,15 @@ Project 8 has real OWH and product evidence, but neither completed run supplied 
 5. Implemented durable isolated-branch handoff, exact selection, trusted policy resolution, and live-thread enforcement.
 6. Added focused positive, mismatch, tampering, privacy, concurrency, installer, and workflow-wiring regressions.
 7. Isolated named CI failures rather than polling a truncated aggregate log.
-8. Verified the application/content head through complete enforcement and named telemetry workflows.
+8. Reproduced and fixed stale remote exact/local provisional state divergence.
+9. Applied the final Codex server-side CI-history bound and verified it in live pr-policy.
+10. Verified the application/content head through complete enforcement and named telemetry workflows.
 
 ## Progress Lifecycle Evidence
 
 - start: audit, gaps, archive checklist, preflight, Project 8 evidence, missing target telemetry, and merged Engineering OS foundations were verified before writes.
-- mid: durable handoff, exact matching, trusted-base policy, sequential lifecycle hooks, monotonic sync, privacy validation, OWH ingestion, live-thread checks, and named CI isolation were implemented and corrected from review findings.
-- pre-merge: application/content head `a02085a53928fece09181ef536e3f4d31967aeb8` passed all 26 enforcement steps and both named telemetry-handoff jobs; all existing live review threads were resolved, and the two monitoring gaps stayed open. Final evidence-head policy execution and separate owner approval were left outside the application commit.
+- mid: durable handoff, exact matching, trusted-base policy, sequential lifecycle hooks, monotonic sync, local-state convergence, privacy validation, OWH ingestion, bounded CI history, live-thread checks, and named CI isolation were implemented and corrected from review findings.
+- pre-merge: application/content head `c74d62bc85afe69929329f813bbd5bb001ba5bcb` passed all 26 enforcement steps and both named telemetry-handoff jobs; the live policy query generated bounded PR-scoped OWH and blocked the then-open review thread, which was resolved only after its fix passed. The two monitoring gaps stayed open. Final evidence-head policy execution and separate owner approval remain outside the application commit.
 
 ## Merge Gate
 

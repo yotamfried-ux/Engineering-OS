@@ -38,7 +38,7 @@ No external skill is required; repository-native regression suites validate the 
 - `workflow.workflow-read` — workflow source read.
 - `plan.route-plan-before-write` — plan preceded implementation.
 - `source.github-repo-read` — Project 8 PR #6, CI, OWH, and review threads inspected through GitHub.
-- `validation.policy-change-has-validator` — positive and negative fixtures cover delivery, matching, privacy, OWH, and live threads.
+- `validation.policy-change-has-validator` — positive and negative fixtures cover delivery, matching, privacy, concurrency, OWH, CI history, and live threads.
 - `validation.actions-checked` — modified workflows validated in live Actions.
 - `validation.coderabbit-policy` — valid CodeRabbit and Codex findings were verified against current code, fixed when applicable, and covered by regression tests.
 
@@ -49,9 +49,9 @@ No external skill is required; repository-native regression suites validate the 
 ## Connector Usage Evidence
 
 - source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
-- action: inspected merge `b6dd9a662a31e7ef1bad8c7e420450ab80c9ef26`, artifact `operational-work-history-6-29245891365`, runtime workflows, current Actions results, and live review threads.
-- result: `scripts/monitoring/sync-telemetry-run.py`, `scripts/monitoring/select-pr-telemetry.py`, `.github/workflows/pr-policy.yml`, and `scripts/enforcement/check-live-review-threads.py` implement durable delivery and live-state validation.
-- decision: selected an isolated same-repository telemetry branch with trusted-base policy resolution and exact repository, PR, branch-hash, and head matching.
+- action: inspected merge `b6dd9a662a31e7ef1bad8c7e420450ab80c9ef26`, artifact `operational-work-history-6-29245891365`, runtime workflows, current Actions results, official GitHub workflow-run query limits, and live review threads.
+- result: `scripts/monitoring/sync-telemetry-run.py`, `scripts/monitoring/select-pr-telemetry.py`, `.github/workflows/pr-policy.yml`, and `scripts/enforcement/check-live-review-threads.py` implement durable delivery, monotonic exact binding, bounded CI history, and live-state validation.
+- decision: selected an isolated same-repository telemetry branch with trusted-base policy resolution and exact repository, PR, branch-hash, and head matching; bounded historical run retrieval from PR creation before local PR filtering.
 - target: `scripts/monitoring/`; `.github/workflows/pr-policy.yml`; `scripts/enforcement/check-live-review-threads.py`.
 
 ## Source of Truth Checks
@@ -59,19 +59,22 @@ No external skill is required; repository-native regression suites validate the 
 | Source | Status | Finding |
 |---|---|---|
 | `scripts/monitoring/eos-telemetry-event.sh` | read | previous events stayed in the remote Claude workspace |
-| `.github/workflows/pr-policy.yml` | validated | CI now reads policy from the exact base SHA, retrieves an isolated telemetry branch, selects an exact matching bundle, and checks live review threads |
+| `scripts/monitoring/sync-telemetry-run.py` | validated | stale syncs preserve newer remote progress, persist the effective exact PR binding locally, and reject conflicting PR rebinds |
+| `.github/workflows/pr-policy.yml` | validated | CI reads policy from the exact base SHA, retrieves an isolated telemetry branch, selects an exact matching bundle, bounds CI history from PR creation, and checks live review threads |
 | `scripts/monitoring/require-telemetry-session.sh` | validated | required mode checks durable handoff state rather than treating local recording as delivery |
-| `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md` | validated | records the root cause, prevention rule, and regression evidence |
+| `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md` | validated | records the root cause, concurrency/state prevention rules, CI history bound, and regression evidence |
 
 ## Validation Evidence
 
-- application/content head `a02085a53928fece09181ef536e3f4d31967aeb8` passed all 26 steps in `enforcement-tests` run `29463304115`;
-- the same head passed both jobs in `telemetry-handoff-tests` run `29463304133`;
+- application/content head `c74d62bc85afe69929329f813bbd5bb001ba5bcb` passed all 26 steps in `enforcement-tests` run `29464405770`;
+- the same head passed both jobs in `telemetry-handoff-tests` run `29464405805`;
 - the named remote handoff test produced non-empty separate-workspace syncs and ended with `remote telemetry handoff tests passed`;
-- negative coverage rejected repository, PR, branch-hash, exact-head, checksum, empty-bundle, raw-field, array-nested-secret, untrusted-policy, stale-overwrite, and missing-durable-state cases;
+- negative coverage rejected repository, selector PR, conflicting sync PR, branch-hash, exact-head, checksum, empty-bundle, raw-field, array-nested-secret, untrusted-policy, stale-overwrite, and missing-durable-state cases;
+- the stale provisional rebind simulation proved that a newer remote bundle can become exact without leaving local durable state provisional;
 - the live review-thread suite rejected unresolved current, unresolved outdated, and missing-metadata fixtures;
+- `pr-policy` run `29464405759` accepted the server-side `created` bound, generated OWH with 737 PR-associated runs across 76 head SHAs, and then failed at the deliberately unresolved live thread;
 - installer coverage, Project 8 telemetry readiness, telemetry archive export/import/analyze, simulation coverage, result-loop, scaling, and generated-target installation tests passed in the full enforcement run;
-- live GitHub review state showed every existing inline thread resolved before this evidence commit.
+- every review thread found before this evidence commit was resolved only after its finding was fixed or verified against live evidence.
 
 ## Definition of Done
 
@@ -81,6 +84,8 @@ No external skill is required; repository-native regression suites validate the 
 - [x] Required preflight rejects missing durable state.
 - [x] Trusted base policy prevents a PR checkout from disabling required handoff.
 - [x] Live unresolved current and outdated threads fail.
+- [x] Stale provisional rebind persists exact local state and rejects a conflicting PR.
+- [x] PR CI history is bounded server-side from PR creation and remains locally PR-scoped.
 - [x] Application/content head passed all 26 enforcement steps and both named handoff jobs.
 - [x] Provisional PR binding and stale concurrent overwrite findings have regression coverage.
 - [x] Verified lesson captures prevention and tests.
@@ -96,13 +101,15 @@ No external skill is required; repository-native regression suites validate the 
 7. Replaced PR-controlled policy resolution with an exact-base trusted policy checkout.
 8. Added array-scalar privacy scanning, a real missing-metadata fixture, repository mismatch coverage, named CI steps, and job timeouts.
 9. Isolated the simulation registry mismatch from its named failing step and updated only the stale coverage token.
-10. Verified the application/content head through the complete enforcement and telemetry workflows.
+10. Reproduced and fixed the stale-provisional remote/local state race, including conflicting-PR rejection.
+11. Applied the final Codex CI-history finding with a server-side PR-created-at bound and wiring enforcement.
+12. Verified the application/content head through the complete enforcement and telemetry workflows.
 
 ## Progress Lifecycle Evidence
 
 - start: PR #6 evidence, telemetry runtime, CI workflow, installer, and live thread state were inspected before implementation; both false-green paths were reproduced.
-- mid: exact selection, durable state, provisional/exact PR binding, monotonic sync, explicit artifact availability, trusted-base policy resolution, array privacy validation, and named CI isolation were implemented with focused regressions.
-- pre-merge: application/content head `a02085a53928fece09181ef536e3f4d31967aeb8` passed all 26 enforcement steps and both named telemetry-handoff jobs; the focused artifact recorded non-empty remote sync and a passing handoff suite, and all existing live review threads were resolved. Final evidence-head policy execution and separate owner approval were left outside the application commit.
+- mid: exact selection, durable state, provisional/exact PR binding, monotonic sync, local-state convergence, explicit artifact availability, trusted-base policy resolution, array privacy validation, bounded CI history, and named CI isolation were implemented with focused regressions.
+- pre-merge: application/content head `c74d62bc85afe69929329f813bbd5bb001ba5bcb` passed all 26 enforcement steps and both named telemetry-handoff jobs; the focused artifact recorded non-empty remote sync and a passing handoff suite, the live query generated complete PR-scoped OWH inside the documented API bound, and all known review threads were resolved. Final evidence-head policy execution and separate owner approval remain outside the application commit.
 
 ## Merge Gate
 
