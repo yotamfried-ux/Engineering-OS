@@ -67,7 +67,6 @@ head -n 1 "$TMP/provisional-full-events.jsonl" > "$TARGET/.engineering-os/teleme
 race_output="$(cd "$TARGET" && EOS_TELEMETRY_PR_NUMBER=42 python3 "$SYNC" --repo target)"
 case "$race_output" in *"skipped stale local bundle"*) ;; *) echo "$race_output"; echo 'missing stale provisional rebind path'; exit 1 ;; esac
 (cd "$TARGET" && EOS_TELEMETRY_PR_NUMBER=42 EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" bash "$REQUIRE") >/dev/null
-mv "$TMP/provisional-full-events.jsonl" "$TARGET/.engineering-os/telemetry/events.jsonl"
 git -C "$HANDOFF" pull -q
 python3 - "$HANDOFF/runs/$RUN_ID/manifest.json" "$TARGET/.engineering-os/telemetry/handoff-state.json" <<'PY'
 import json,sys
@@ -78,6 +77,10 @@ assert remote['handoff']['pr_binding']=='exact'
 assert state['pr_number']==42
 assert state['pr_binding']=='exact'
 PY
+if (cd "$TARGET" && EOS_TELEMETRY_PR_NUMBER=43 python3 "$SYNC" --repo target) >/dev/null 2>&1; then
+  echo 'unexpected pass: remote run rebound to a conflicting PR'; exit 1
+fi
+mv "$TMP/provisional-full-events.jsonl" "$TARGET/.engineering-os/telemetry/events.jsonl"
 
 # Once a PR number becomes available, the same run is rebound exactly.
 printf '%s' '{"session_id":"remote-session","hook_event_name":"PostToolUse","tool_name":"Read"}' | (cd "$TARGET" && bash "$RECORDER" post_tool_use)
