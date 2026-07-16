@@ -181,7 +181,9 @@ def iter_paths(value: Any, prefix: str = ""):
             yield from iter_paths(child, path)
     elif isinstance(value, list):
         for index, child in enumerate(value):
-            yield from iter_paths(child, f"{prefix}[{index}]")
+            path = f"{prefix}[{index}]"
+            yield path, child
+            yield from iter_paths(child, path)
 
 
 def validate_metadata_only(value: Any) -> None:
