@@ -144,4 +144,39 @@ else:
     raise AssertionError("invalid UTF-8 summary unexpectedly passed")
 PY
 
+EXPORT_REPO="$TMP/export-repo"
+CUSTOM="$TMP/custom"
+git init -q "$EXPORT_REPO"
+git -C "$EXPORT_REPO" config user.email telemetry@example.invalid
+git -C "$EXPORT_REPO" config user.name telemetry
+printf 'base\n' > "$EXPORT_REPO/README.md"
+git -C "$EXPORT_REPO" add README.md
+git -C "$EXPORT_REPO" commit -qm base
+mkdir -p "$CUSTOM"
+printf 'utf8-export-run\n' > "$CUSTOM/run_id"
+printf '{"trace_id":"utf8-export-run","name":"eos.st\377op","attributes":{"eos.event.name":"stop"}}\n' > "$CUSTOM/events.jsonl"
+if (
+  cd "$EXPORT_REPO"
+  EOS_TELEMETRY_FILE="$CUSTOM/events.jsonl" \
+  EOS_TELEMETRY_RUN_ID_FILE="$CUSTOM/run_id" \
+    python3 "$ROOT/scripts/monitoring/export-telemetry-run.py" \
+      --out "$TMP/export-invalid-events" --repo example/utf8-target \
+      --branch feature/utf8 --head-sha "$(git rev-parse HEAD)" >/dev/null 2>&1
+); then
+  echo 'invalid UTF-8 export events unexpectedly passed'; exit 1
+fi
+
+printf '{"trace_id":"utf8-export-run","name":"eos.stop","attributes":{"eos.event.name":"stop"}}\n' > "$CUSTOM/events.jsonl"
+printf 'utf8-\377-run\n' > "$CUSTOM/run_id"
+if (
+  cd "$EXPORT_REPO"
+  EOS_TELEMETRY_FILE="$CUSTOM/events.jsonl" \
+  EOS_TELEMETRY_RUN_ID_FILE="$CUSTOM/run_id" \
+    python3 "$ROOT/scripts/monitoring/export-telemetry-run.py" \
+      --out "$TMP/export-invalid-run-id" --repo example/utf8-target \
+      --branch feature/utf8 --head-sha "$(git rev-parse HEAD)" >/dev/null 2>&1
+); then
+  echo 'invalid UTF-8 export run id unexpectedly passed'; exit 1
+fi
+
 echo 'telemetry invalid UTF-8 tests passed'
