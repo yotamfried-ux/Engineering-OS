@@ -119,9 +119,6 @@ No external skill was required; repository-native regression suites and live Git
 - start: PR #6 evidence, telemetry runtime, CI workflow, installer, and live thread state were inspected before implementation; the remote-workspace/clean-CI false green was reproduced.
 - mid: exact selection, durable state, provisional/exact PR binding, trusted-base policy, privacy validation, canonical identity, source-path consistency, policy-mode semantics, bounded CI history, product-head ancestry, named CI isolation, independently monotonic progress, and positive export allowlisting were implemented through repeated focused result loops.
 - pre-merge: application/content head `b8f974a35b780b960afbbe7db8aa8f0dae18216f` passed complete `enforcement-tests` run `29501895512` and focused `telemetry-handoff-tests` run `29501895601`; failing reproductions `29500646182` and `29500578566` proved both final defects before repair; all known review threads were resolved after passing evidence; verified lesson commit `5c8d73e1e8fa454f1d24b9dd4675a635b5d05136` recorded the complete prevention contract after the last runtime and workflow changes.
-
-## Final Pre-Merge Checkpoint — 2026-07-16
-
 - pre-merge: final application head `4e7f9d1faa0d6018e8d22ead60d0e42bf23230fe` passed seven focused regressions in helper run `29508718994`; Verified Lesson commit `3c6e7cb22e8a4ec25867f22ecdc1c4227841611e` recorded bounded shallow-history recovery, strict UTF-8 privacy input, event-derived boundary validation, and unique atomic state writes after the last runtime correction; focused run `29508908367` passed every telemetry job and complete run `29508908285` passed every enforcement stage, grouped A-Z suites, aggregate execution, and repository contract check after that lesson without another runtime change.
 
 ## Merge Gate
