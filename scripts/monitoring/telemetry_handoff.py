@@ -10,10 +10,12 @@ from pathlib import Path
 from typing import Any
 
 POLICY_SCHEMA = "eos.telemetry.policy.v1"
+RUN_SCHEMA = "eos.telemetry.run.v1"
 HANDOFF_SCHEMA = "eos.telemetry.handoff.v1"
 DEFAULT_REMOTE = "origin"
 DEFAULT_BRANCH = "engineering-os-telemetry"
 VALID_MODES = {"disabled", "best_effort", "required"}
+REPO_SLUG_RE = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
 BOUNDARY_EVENTS = {
     "eos.session_start",
     "eos.stop",
@@ -62,6 +64,16 @@ def repo_root(start: Path | None = None) -> Path:
         return Path(out)
     except Exception:
         return cwd.resolve()
+
+
+def validate_repo_slug(value: str) -> str:
+    value = str(value or "").strip()
+    if not REPO_SLUG_RE.fullmatch(value):
+        raise HandoffError(
+            "canonical repository identity must be owner/repo; provide --repo, "
+            "configure a GitHub origin, or set GITHUB_REPOSITORY"
+        )
+    return value
 
 
 def validate_ref_name(value: str) -> str:
@@ -207,6 +219,117 @@ def file_digest(path: Path) -> str:
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def load_json_object(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise HandoffError(f"invalid JSON in {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise HandoffError(f"{path} must contain a JSON object")
+    return value
+
+
+def load_jsonl_strict(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for line_number, raw in enumerate(
+        path.read_text(encoding="utf-8", errors="replace").splitlines(),
+        start=1,
+    ):
+        if not raw.strip():
+            continue
+        try:
+            row = json.loads(raw)
+        except Exception as exc:
+            raise HandoffError(f"invalid JSONL at {path}:{line_number}: {exc}") from exc
+        if not isinstance(row, dict):
+            raise HandoffError(f"telemetry event must be an object at {path}:{line_number}")
+        rows.append(row)
+    return rows
+
+
+def validate_bundle(
+    bundle: Path,
+    *,
+    expected_repo: str = "",
+    expected_branch_hash: str = "",
+    expected_head_sha: str = "",
+    expected_run_id: str = "",
+) -> dict[str, Any]:
+    manifest_path = bundle / "manifest.json"
+    events_path = bundle / "events.jsonl"
+    summary_path = bundle / "latest-summary.md"
+    if not (manifest_path.is_file() and events_path.is_file() and summary_path.is_file()):
+        raise HandoffError(f"incomplete telemetry bundle: {bundle}")
+
+    manifest = load_json_object(manifest_path)
+    if manifest.get("schema_version") != RUN_SCHEMA:
+        raise HandoffError(f"unsupported telemetry manifest schema in {bundle}")
+    if manifest.get("privacy_contract") != "metadata-only":
+        raise HandoffError(f"telemetry bundle privacy contract is not metadata-only: {bundle}")
+
+    handoff = manifest.get("handoff")
+    if not isinstance(handoff, dict) or handoff.get("schema_version") != HANDOFF_SCHEMA:
+        raise HandoffError(f"telemetry bundle has no valid handoff metadata: {bundle}")
+
+    manifest_repo = validate_repo_slug(str(manifest.get("repo") or ""))
+    handoff_repo = validate_repo_slug(str(handoff.get("repo") or ""))
+    if manifest_repo != handoff_repo:
+        raise HandoffError(f"telemetry bundle repository identity is inconsistent: {bundle}")
+
+    manifest_head = str(manifest.get("head_sha") or "")
+    handoff_head = str(handoff.get("head_sha") or "")
+    if not re.fullmatch(r"[0-9a-f]{40}", manifest_head) or manifest_head != handoff_head:
+        raise HandoffError(f"telemetry bundle head identity is invalid: {bundle}")
+
+    branch_hash = str(handoff.get("source_branch_hash") or "")
+    if not re.fullmatch(r"[0-9a-f]{32}", branch_hash):
+        raise HandoffError(f"telemetry bundle branch hash is invalid: {bundle}")
+
+    pr_number = int(handoff.get("pr_number") or 0)
+    binding = str(handoff.get("pr_binding") or ("exact" if pr_number > 0 else "provisional"))
+    if binding not in {"exact", "provisional"} or (binding == "exact") != (pr_number > 0):
+        raise HandoffError(f"telemetry handoff PR binding is invalid: {bundle}")
+    handoff["pr_binding"] = binding
+    manifest["handoff"] = handoff
+
+    checksums = manifest.get("checksums") if isinstance(manifest.get("checksums"), dict) else {}
+    if checksums.get("events_sha256") != file_digest(events_path):
+        raise HandoffError(f"telemetry events checksum mismatch: {bundle}")
+    if checksums.get("summary_sha256") != file_digest(summary_path):
+        raise HandoffError(f"telemetry summary checksum mismatch: {bundle}")
+
+    rows = load_jsonl_strict(events_path)
+    if len(rows) != int(manifest.get("event_count") or -1):
+        raise HandoffError(f"telemetry event_count mismatch: {bundle}")
+    if not rows:
+        raise HandoffError(f"zero-event telemetry bundle is not valid for a required experiment: {bundle}")
+
+    run_id = str(manifest.get("run_id") or "")
+    if not run_id or any(str(row.get("trace_id") or "") != run_id for row in rows):
+        raise HandoffError(f"telemetry bundle run correlation is invalid: {bundle}")
+    if str(handoff.get("run_id_hash") or "") != stable_hash(run_id):
+        raise HandoffError(f"telemetry bundle run hash is invalid: {bundle}")
+    if int(handoff.get("event_count") or -1) != len(rows):
+        raise HandoffError(f"telemetry handoff event count mismatch: {bundle}")
+    boundary = int(handoff.get("boundary_position") or 0)
+    if boundary <= 0 or boundary > len(rows):
+        raise HandoffError(f"telemetry handoff boundary position is invalid: {bundle}")
+
+    validate_metadata_only(manifest)
+    validate_metadata_only(rows)
+    validate_metadata_only({"summary_text": summary_path.read_text(encoding="utf-8", errors="replace")})
+
+    if expected_repo and manifest_repo != validate_repo_slug(expected_repo):
+        raise HandoffError(f"telemetry bundle repository does not match current repository: {bundle}")
+    if expected_branch_hash and branch_hash != expected_branch_hash:
+        raise HandoffError(f"telemetry bundle branch hash does not match current branch: {bundle}")
+    if expected_head_sha and manifest_head != expected_head_sha:
+        raise HandoffError(f"telemetry bundle head does not match current head: {bundle}")
+    if expected_run_id and run_id != expected_run_id:
+        raise HandoffError(f"telemetry bundle run id does not match current run: {bundle}")
+    return manifest
 
 
 def atomic_write_json(path: Path, value: dict[str, Any]) -> None:
