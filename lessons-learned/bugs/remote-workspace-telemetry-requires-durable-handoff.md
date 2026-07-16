@@ -12,6 +12,8 @@ During repair, several related false-green and false-negative paths were reprodu
 - noncanonical repository identity, custom telemetry source paths, and `best_effort` policy behavior could diverge between recording, export, sync, and preflight;
 - strict exact-head validation rejected a valid remote bundle after the product branch advanced to a descendant commit;
 - a stale workspace could otherwise overwrite telemetry already associated with a newer descendant product head;
+- lexicographic `(event_count, boundary_position)` comparison could accept more local events while silently lowering the latest completed lifecycle boundary;
+- export from a caller-selected telemetry file copied unknown top-level and nested fields because the privacy check was denylist-based rather than schema-allowlisted;
 - PR CI history was filtered locally after an upstream capped query;
 - merge readiness trusted PR-body prose rather than live review-thread state.
 
@@ -19,9 +21,11 @@ During repair, several related false-green and false-negative paths were reprodu
 
 Claude Code web recorded metadata-only events into a gitignored file inside its remote workspace. GitHub Actions generated Operational Work History from a separate clean checkout. No durable transport copied or correlated the local run into the CI workspace. The lifecycle webhook only closed the subscription; it did not carry the telemetry bundle.
 
-The follow-on defects came from treating delivery as a single local-state check instead of an end-to-end contract. Policy, repository identity, telemetry source paths, remote bundle integrity, product-head ancestry, PR binding, remote progress, local durable state, CI selection, and live review state were validated in different places with inconsistent assumptions.
+The follow-on defects came from treating delivery as a single local-state check instead of an end-to-end contract. Policy, repository identity, telemetry source paths, remote bundle integrity, product-head ancestry, PR binding, remote progress, local durable state, export schema, CI selection, and live review state were validated in different places with inconsistent assumptions.
 
 The product-head variant was especially subtle: exact-head selection is correct in CI, but sync must first validate an existing remote bundle independently of the current head, then allow replacement only when its head is the same commit or an ancestor of the current product head. A descendant or unrelated remote head must fail closed to prevent stale downgrade.
+
+Telemetry progress is a partial order, not a lexicographic tuple. A bundle with more events but an older completed boundary is incomparable with the remote bundle and must fail closed rather than overwrite either dimension. Privacy is also a positive contract: an exported event must be reconstructed from an explicit schema allowlist. A denylist scanner remains a secondary safeguard, not permission to copy arbitrary caller-supplied fields.
 
 ## השערות שנבדקו
 
@@ -31,6 +35,8 @@ The product-head variant was especially subtle: exact-head selection is correct 
 - The workspaces lacked a durable bridge — confirmed by comparing the remote local-only recorder path with the clean CI checkout and reproducing the boundary in a bare-Git simulation.
 - A stale sync only affected remote event ordering — rejected after reproducing correct remote exact binding with stale local durable state.
 - Exact current-head validation was required for every sync read — rejected because it blocked a normal descendant commit before the existing bundle could be safely replaced.
+- Comparing `(event_count, boundary_position)` lexicographically preserved monotonic progress — rejected by a remote `3/2` versus local `4/1` reproduction that downgraded the completed boundary.
+- Metadata denylist validation was sufficient for a custom event source — rejected after arbitrary unknown fields survived export without matching a forbidden-key pattern.
 - `gh api --paginate` guaranteed complete PR history — rejected because the upstream filtered search can be capped before client-side PR selection.
 - A configured `best_effort` mode could reuse the required preflight unchanged — rejected because missing durable state then blocked the next tool call.
 - The exporter automatically followed the same custom source paths as the recorder — rejected until `EOS_TELEMETRY_FILE` and `EOS_TELEMETRY_RUN_ID_FILE` were propagated consistently.
@@ -41,10 +47,12 @@ The product-head variant was especially subtle: exact-head selection is correct 
 - `scripts/enforcement/tests/test-remote-telemetry-handoff.sh` proves separate-workspace persistence, exact clean-checkout selection, trusted-policy enforcement, privacy and checksum rejection, canonical identity, monotonic remote progress, local exact-state convergence, and conflicting-PR rejection.
 - `scripts/enforcement/tests/test-telemetry-policy-and-path-overrides.sh` proves `best_effort` remains nonblocking, `required` remains fail-closed, and custom event/run-id paths are exported without silently reading default files.
 - `scripts/enforcement/tests/test-telemetry-head-advancement.sh` proves stale local state is rejected after a commit, a validated ancestor-head bundle can advance to the current descendant head, and a stale product head cannot downgrade a newer remote bundle.
+- `scripts/enforcement/tests/test-telemetry-progress-ordering.sh` proves event count and lifecycle-boundary position advance independently and incomparable progress cannot overwrite the validated remote bundle.
+- `scripts/enforcement/tests/test-telemetry-export-allowlist.sh` proves custom sources retain only the approved telemetry schema and strip unknown top-level, resource, status, attribute, nested-path, and span-event fields.
 - `scripts/enforcement/tests/test-live-review-threads.sh` proves unresolved current and outdated threads are blocked from readiness.
 - `scripts/enforcement/tests/test-pr-policy-workflow-wiring.sh` requires trusted exact-base policy resolution and a server-side PR-created-at bound before local PR filtering.
-- `telemetry-handoff-tests` run `29498660824` passed the named remote handoff, policy/path override, product-head advancement, and live-thread stages on application head `8bc8682aa5719dcba8e4cd89df881fecc7b24aab`.
-- `enforcement-tests` run `29498660859` passed all 26 stages, including the aggregate all-suites pass, on the same application head.
+- `telemetry-handoff-tests` run `29501895601` passed the named remote handoff, policy/path override, product-head advancement, progress-ordering, export-allowlist, and live-thread stages on application head `b8f974a35b780b960afbbe7db8aa8f0dae18216f`.
+- `enforcement-tests` run `29501895512` passed the complete suite on the same application head.
 - Live `pr-policy` run `29464405759` accepted the bounded query and generated OWH containing 737 PR-associated workflow runs before the live-thread gate blocked the outstanding thread.
 
 ## רמת ביטחון
@@ -58,10 +66,12 @@ Treat these states as explicit failures before starting a real target task:
 - local events exist but no durable handoff state exists in `required` mode;
 - `best_effort` unexpectedly blocks tool execution after a transport failure;
 - recording validates one telemetry path while export reads another;
+- exported telemetry contains a key or nested field outside the approved schema allowlist;
 - repository identity is not canonical `owner/repo`;
 - a fetched remote bundle has not passed schema, checksum, JSONL, privacy, run, repository, branch, and PR-binding validation;
 - the remote product head is a descendant of or unrelated to the local product head;
 - the current product head advanced but local telemetry progress is behind the validated ancestor-head remote bundle;
+- local and remote event/boundary progress each lead in a different dimension;
 - CI has no exact PR/head-matched telemetry bundle;
 - the remote bundle is exact but local durable state is still provisional or bound elsewhere;
 - the same run attempts to bind to a second PR;
@@ -75,10 +85,12 @@ Treat these states as explicit failures before starting a real target task:
 - Resolve repository identity canonically and fail closed when `owner/repo` cannot be established.
 - Read handoff policy from the exact trusted base SHA in CI, never from the PR-controlled checkout.
 - Use the same explicit event and run-id source paths for validation, export, sync, and readiness.
+- Reconstruct every exported event from an explicit top-level and nested schema allowlist; use sensitive-pattern scanning only as defense in depth.
 - Keep `best_effort` nonblocking and `required` fail-closed through both sync and preflight.
 - Validate every fetched bundle completely before trusting progress or PR binding.
 - Match CI bundles by repository, PR number, source-branch hash, and exact head SHA.
 - During sync, distinguish same, ancestor, descendant, and unrelated product heads: permit safe ancestor advancement, reject stale descendant downgrade, and fail closed on unrelated history.
+- Compare event and lifecycle-boundary progress independently; reject incomparable states and never reduce either validated dimension.
 - Preserve the greater validated remote event/boundary progress and never overwrite it with stale local data.
 - Treat exact PR binding as immutable for a run and return the effective remote binding from every sync path.
 - Persist local durable state after every successful remote outcome without claiming a head or progress state that the remote bundle does not contain.
@@ -93,6 +105,8 @@ Treat these states as explicit failures before starting a real target task:
 - `scripts/enforcement/tests/test-remote-telemetry-handoff.sh`
 - `scripts/enforcement/tests/test-telemetry-policy-and-path-overrides.sh`
 - `scripts/enforcement/tests/test-telemetry-head-advancement.sh`
+- `scripts/enforcement/tests/test-telemetry-progress-ordering.sh`
+- `scripts/enforcement/tests/test-telemetry-export-allowlist.sh`
 - `scripts/enforcement/tests/test-live-review-threads.sh`
 - `scripts/enforcement/tests/test-pr-policy-workflow-wiring.sh`
 - `scripts/enforcement/tests/test-install-policy-gate-coverage.sh`
