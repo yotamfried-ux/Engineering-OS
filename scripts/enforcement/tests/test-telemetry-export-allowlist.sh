@@ -33,7 +33,17 @@ JSON
 python3 - "$OUT/events.jsonl" <<'PY'
 import json
 import sys
-row = json.loads(open(sys.argv[1]).readline())
+
+row = json.loads(open(sys.argv[1], encoding="utf-8").readline())
+serialized = json.dumps(row, sort_keys=True)
+for sensitive_value in (
+    "customer-private-status",
+    "customer-private-request",
+    "customer-private-event",
+    "/Users/alice/private",
+):
+    assert sensitive_value not in serialized
+
 assert row["name"] == "eos.session_start"
 assert row["trace_id"] == "allowlist-run"
 assert row["attributes"]["eos.event.name"] == "session_start"
