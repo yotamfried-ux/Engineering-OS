@@ -20,6 +20,7 @@ jobs:
   no-draft-pr:
     name: Require ready-for-review PR
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Resolve live pull request metadata
         env:
@@ -59,6 +60,15 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Checkout trusted base telemetry policy
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ env.PR_BASE_SHA }}
+          path: .engineering-os/trusted-policy-source
+          sparse-checkout: .engineering-os/telemetry-policy.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Checkout remote telemetry handoff branch
         continue-on-error: true
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -77,6 +87,7 @@ jobs:
           python3 scripts/monitoring/select-pr-telemetry.py \
             --root . \
             --handoff-root .engineering-os/remote-telemetry \
+            --policy-file .engineering-os/trusted-policy-source/.engineering-os/telemetry-policy.json \
             --repo "$REPO" \
             --pr-number "$PR_NUMBER" \
             --head-ref "$PR_HEAD_REF" \
