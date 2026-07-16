@@ -202,6 +202,29 @@ def bind_bundle_to_pr(
     )
 
 
+def product_head_relation(root: Path, existing_head: str, current_head: str) -> str:
+    if existing_head == current_head:
+        return "same"
+
+    existing_is_ancestor = run(
+        ["git", "-C", str(root), "merge-base", "--is-ancestor", existing_head, current_head],
+        check=False,
+    )
+    if existing_is_ancestor.returncode == 0:
+        return "ancestor"
+
+    existing_is_descendant = run(
+        ["git", "-C", str(root), "merge-base", "--is-ancestor", current_head, existing_head],
+        check=False,
+    )
+    if existing_is_descendant.returncode == 0:
+        return "descendant"
+
+    raise HandoffError(
+        "remote telemetry bundle head is unrelated to the current product head"
+    )
+
+
 def commit_bundle(
     *,
     root: Path,
@@ -246,14 +269,25 @@ def commit_bundle(
                 )
 
             destination = tmp / "runs" / run_id
+            existing_head_relation = "same"
             if destination.exists():
                 existing_manifest = validate_bundle(
                     destination,
                     expected_repo=repo_slug,
                     expected_branch_hash=branch_hash,
-                    expected_head_sha=head_sha,
                     expected_run_id=run_id,
                 )
+                existing_head = str(existing_manifest.get("head_sha") or "")
+                existing_head_relation = product_head_relation(
+                    root,
+                    existing_head,
+                    head_sha,
+                )
+                if existing_head_relation == "descendant":
+                    raise HandoffError(
+                        "remote telemetry bundle head is newer than the current product head; "
+                        "refusing a stale downgrade"
+                    )
                 existing_events, existing_boundary, existing_pr = bundle_progress(existing_manifest)
             else:
                 existing_events, existing_boundary, existing_pr = (0, 0, 0)
@@ -268,6 +302,11 @@ def commit_bundle(
                 event_count,
                 boundary_position,
             )
+            if existing_head_relation == "ancestor" and remote_is_newer:
+                raise HandoffError(
+                    "current product head advanced, but local telemetry progress is behind "
+                    "the validated remote bundle"
+                )
 
             if remote_is_newer:
                 if pr_number > 0 and existing_pr <= 0:
