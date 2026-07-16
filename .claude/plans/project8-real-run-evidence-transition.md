@@ -42,7 +42,7 @@ Status: evidence reconciliation and application-head validation complete; merge 
 
 - source: GitHub repositories `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
 - action: inspected PRs #4, #6, #244 and #245, merged SHAs, OWH data, current audit/gaps/checklist, CI runs, reviews, threads, runtime workflows, and Project 8 telemetry installation state.
-- result: readiness sources keep OWH and session telemetry separate while the remote handoff and live-thread gate entered exact-head validation.
+- result: `.github/workflows/pr-policy.yml` and `scripts/monitoring/select-pr-telemetry.py` entered exact-head validation while readiness sources kept OWH and session telemetry separate.
 - decision: kept both monitoring gaps open, fixed the transport capability required for a valid later run, and kept Project 8 product work outside this PR.
 - target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/runtime-telemetry-archive-audit-checklist.md`; `docs/operations/project8-first-real-run-findings.md`; `docs/operations/operational-work-history.md`; `docs/operations/result-loop-contract-audit-checklist.md`; `.github/workflows/pr-policy.yml`; `scripts/monitoring/`; `scripts/enforcement/`.
 
@@ -62,8 +62,7 @@ Status: evidence reconciliation and application-head validation complete; merge 
 | `docs/operations/project8-telemetry-preflight.md` | validated | next valid run requires exact workspace, fresh session, positive local event count, and ready remote handoff |
 | `docs/operations/operational-work-history.md` | validated | OWH can exist without session telemetry and cannot substitute for it |
 | `docs/operations/result-loop-contract-audit-checklist.md` | validated | first real target evidence exists while telemetry and comparison-run criteria remain incomplete |
-| `docs/operations/project8-first-real-run-findings.md` | validated | Project 8 PR #4 is classified as OWH-only rather than valid telemetry evidence |
-| `operational-work-history-6-29245891365` | validated | PR #6 retained CI history but reported `telemetry_available=false` and zero events |
+| `docs/operations/project8-first-real-run-findings.md` | validated | Project 8 PR #4 is classified as OWH-only rather than valid telemetry evidence; Project 8 PR #6 artifact `operational-work-history-6-29245891365` also reported zero session events |
 
 ## Decision
 
@@ -86,7 +85,7 @@ Project 8 has real OWH and product evidence, but neither completed run supplied 
 - [x] Audit separates OWH from missing telemetry.
 - [x] Telemetry completion boxes remain unchecked.
 - [x] Next-run preflight boundary is explicit.
-- [x] Application and telemetry implementation passed complete enforcement and named handoff validation.
+- [x] Application and telemetry implementation passed `enforcement-tests` run `29463304115` and `telemetry-handoff-tests` run `29463304133`.
 - [x] Automated reviews and all existing inline threads were inspected; valid findings were fixed or documented as non-blocking.
 
 ## Claude Run Trace
