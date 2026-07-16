@@ -31,6 +31,7 @@ req('--telemetry-file .engineering-os/selected-telemetry/events.jsonl' in text,'
 req('session-telemetry-${{ env.PR_NUMBER }}-${{ github.run_id }}' in text,'matched telemetry must be uploaded as an artifact')
 req('reviewThreads(first:100,after:$endCursor)' in text and 'check-live-review-threads.py' in text,'workflow must fetch and validate live review threads')
 req('gh api --paginate' in text and 'index(${PR_NUMBER})' in text,'CI history must be paginated and PR-scoped')
+req('-f created=">=$PR_CREATED_AT"' in text,'CI history must be bounded server-side by PR creation time')
 req('-f branch="$HEAD_REF"' not in text and 'gh run list' not in text and '--limit 100' not in text,'branch-only or fixed-limit CI history must not return')
 collector=text.find('collect-pr-work-history.py'); checker=text.find('check-pr-review-evidence.sh'); live=text.find('check-live-review-threads.py')
 req(collector!=-1 and checker!=-1 and collector<checker,'OWH collector must precede evidence gate')
