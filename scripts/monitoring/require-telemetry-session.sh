@@ -75,6 +75,23 @@ then
   exit 2
 fi
 
+POLICY_MODE="$(python3 - "$ROOT" "$SCRIPT_DIR" <<'PY'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+sys.path.insert(0, sys.argv[2])
+from telemetry_handoff import load_policy
+print(load_policy(root)["mode"])
+PY
+)"
+
+if [ "$POLICY_MODE" = "best_effort" ]; then
+  if ! python3 "$SYNC" --check; then
+    echo "WARNING_FOR_AGENT: best-effort telemetry handoff is not ready; local telemetry remains available." >&2
+  fi
+  exit 0
+fi
+
 python3 "$SYNC" --check || block \
   "current telemetry session has not completed the required durable GitHub handoff." \
   "verify GitHub authentication and the telemetry policy, then restart or retry the session."
