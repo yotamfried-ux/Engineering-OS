@@ -18,6 +18,22 @@ jobs:
           persist-credentials: false
 
       - name: Check workflow execution evidence
+        shell: bash
         run: |
-          set -euo pipefail
-          bash scripts/enforcement/check-workflow-evidence.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+          set +e
+          bash scripts/enforcement/check-workflow-evidence.sh \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            > /tmp/workflow-evidence.log 2>&1
+          status=$?
+          cat /tmp/workflow-evidence.log
+          exit "$status"
+
+      - name: Upload workflow evidence diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: workflow-evidence-log-${{ github.run_id }}
+          path: /tmp/workflow-evidence.log
+          retention-days: 14
+          if-no-files-found: error
