@@ -48,6 +48,13 @@ def digest(path: Path) -> str:
     return h.hexdigest()
 
 
+def read_text_strict(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        fail(f"invalid UTF-8 in {path}: {exc}")
+
+
 def repo_root() -> Path:
     try:
         out = subprocess.check_output(
@@ -209,9 +216,7 @@ def write_sanitized_events(source: Path, destination: Path) -> int:
     with destination.open("w", encoding="utf-8") as out:
         if not source.is_file():
             return 0
-        for line_number, raw in enumerate(
-            source.read_text(encoding="utf-8", errors="replace").splitlines(), start=1
-        ):
+        for line_number, raw in enumerate(read_text_strict(source).splitlines(), start=1):
             if not raw.strip():
                 continue
             try:
@@ -277,7 +282,7 @@ def main() -> int:
     project_slug = slugify(args.project_slug or project)
     repo = args.repo or project
     run_id = (
-        run_id_file.read_text(encoding="utf-8", errors="replace").splitlines()[0].strip()
+        read_text_strict(run_id_file).splitlines()[0].strip()
         if run_id_file.exists()
         else ""
     )

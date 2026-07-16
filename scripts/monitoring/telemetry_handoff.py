@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -231,12 +232,16 @@ def load_json_object(path: Path) -> dict[str, Any]:
     return value
 
 
+def read_text_strict(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise HandoffError(f"invalid UTF-8 in {path}: {exc}") from exc
+
+
 def load_jsonl_strict(path: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for line_number, raw in enumerate(
-        path.read_text(encoding="utf-8", errors="replace").splitlines(),
-        start=1,
-    ):
+    for line_number, raw in enumerate(read_text_strict(path).splitlines(), start=1):
         if not raw.strip():
             continue
         try:
@@ -314,12 +319,13 @@ def validate_bundle(
     if int(handoff.get("event_count") or -1) != len(rows):
         raise HandoffError(f"telemetry handoff event count mismatch: {bundle}")
     boundary = int(handoff.get("boundary_position") or 0)
-    if boundary <= 0 or boundary > len(rows):
+    recomputed_boundary = latest_boundary_position(rows)
+    if boundary <= 0 or boundary > len(rows) or boundary != recomputed_boundary:
         raise HandoffError(f"telemetry handoff boundary position is invalid: {bundle}")
 
     validate_metadata_only(manifest)
     validate_metadata_only(rows)
-    validate_metadata_only({"summary_text": summary_path.read_text(encoding="utf-8", errors="replace")})
+    validate_metadata_only({"summary_text": read_text_strict(summary_path)})
 
     if expected_repo and manifest_repo != validate_repo_slug(expected_repo):
         raise HandoffError(f"telemetry bundle repository does not match current repository: {bundle}")
@@ -334,6 +340,20 @@ def validate_bundle(
 
 def atomic_write_json(path: Path, value: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    tmp.replace(path)
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as tmp:
+            json.dump(value, tmp, ensure_ascii=False, indent=2, sort_keys=True)
+            tmp.write("\n")
+            temp_path = Path(tmp.name)
+        temp_path.replace(path)
+    finally:
+        if temp_path is not None and temp_path.exists():
+            temp_path.unlink()

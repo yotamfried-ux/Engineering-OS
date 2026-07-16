@@ -37,6 +37,7 @@ def run(
     cwd: Path | None = None,
     check: bool = True,
     capture: bool = True,
+    timeout: int | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         args,
@@ -45,6 +46,7 @@ def run(
         text=True,
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.PIPE if capture else None,
+        timeout=timeout,
     )
 
 
@@ -202,10 +204,7 @@ def bind_bundle_to_pr(
     )
 
 
-def product_head_relation(root: Path, existing_head: str, current_head: str) -> str:
-    if existing_head == current_head:
-        return "same"
-
+def merge_base_relation(root: Path, existing_head: str, current_head: str) -> str:
     existing_is_ancestor = run(
         ["git", "-C", str(root), "merge-base", "--is-ancestor", existing_head, current_head],
         check=False,
@@ -220,8 +219,42 @@ def product_head_relation(root: Path, existing_head: str, current_head: str) -> 
     if existing_is_descendant.returncode == 0:
         return "descendant"
 
+    if existing_is_ancestor.returncode == 1 and existing_is_descendant.returncode == 1:
+        return "unrelated"
+    return "lookup_failed"
+
+
+def fetch_ancestry_history(root: Path) -> None:
+    remotes = [line.strip() for line in git(root, "remote", required=False).splitlines() if line.strip()]
+    for remote in remotes:
+        for deepen_by in (64, 256, 1024):
+            fetched = run(
+                [
+                    "git", "-C", str(root), "fetch", "--no-tags",
+                    f"--deepen={deepen_by}", remote,
+                ],
+                check=False,
+                timeout=30,
+            )
+            if fetched.returncode == 0:
+                return
+
+
+def product_head_relation(root: Path, existing_head: str, current_head: str) -> str:
+    if existing_head == current_head:
+        return "same"
+
+    relation = merge_base_relation(root, existing_head, current_head)
+    if relation in {"ancestor", "descendant", "unrelated"}:
+        return relation
+
+    fetch_ancestry_history(root)
+    relation = merge_base_relation(root, existing_head, current_head)
+    if relation in {"ancestor", "descendant", "unrelated"}:
+        return relation
+
     raise HandoffError(
-        "remote telemetry bundle head is unrelated to the current product head"
+        "could not resolve product-head ancestry after bounded history fetch"
     )
 
 
