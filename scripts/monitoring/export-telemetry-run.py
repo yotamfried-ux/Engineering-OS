@@ -71,14 +71,136 @@ def safe_source_descriptor(configured: str, resolved: Path) -> str:
     return f"sha256:{stable_hash(str(resolved))}"
 
 
+EVENT_SCALAR_FIELDS = {
+    "schema_version",
+    "otel_signal",
+    "trace_id",
+    "span_id",
+    "parent_span_id",
+    "name",
+    "kind",
+    "start_time_unix_nano",
+    "end_time_unix_nano",
+    "timestamp",
+}
+STATUS_FIELDS = {"code"}
+RESOURCE_FIELDS = {
+    "service.name",
+    "service.namespace",
+    "service.instance.id",
+    "deployment.environment.name",
+}
+ATTRIBUTE_FIELDS = {
+    "eos.event.name",
+    "eos.repo.name",
+    "eos.git.branch.hash",
+    "eos.git.branch.present",
+    "eos.git.head.short",
+    "eos.plan.active.basename",
+    "eos.engineering_os_home.set",
+    "eos.claude.hook_event_name",
+    "eos.claude.session.hash",
+    "eos.claude.session.present",
+    "eos.claude.prompt.hash",
+    "eos.claude.prompt.present",
+    "eos.claude.transcript.hash",
+    "eos.claude.transcript.present",
+    "eos.claude.cwd.hash",
+    "eos.claude.cwd.present",
+    "eos.claude.permission_mode",
+    "eos.claude.effort.level",
+    "eos.claude.agent_type",
+    "eos.claude.agent.hash",
+    "eos.claude.agent.present",
+    "eos.claude.source",
+    "eos.claude.model",
+    "eos.claude.instruction.memory_type",
+    "eos.claude.instruction.load_reason",
+    "eos.task.id.hash",
+    "eos.task.id.present",
+    "eos.task.subject.hash",
+    "eos.task.subject.length_bucket",
+    "eos.prompt.present",
+    "eos.prompt.hash",
+    "eos.prompt.length_bucket",
+    "eos.privacy.raw_prompt_stored",
+    "eos.tool.name",
+    "eos.tool.command.category",
+    "eos.tool.command.hash",
+    "eos.tool.payload.hash",
+    "eos.tool.response.present",
+    "eos.tool.response.type",
+    "eos.tool.response.hash",
+    "eos.tool.error.present",
+    "eos.tool.error.type",
+    "eos.tool.error.hash",
+}
+NESTED_ATTRIBUTE_FIELDS = {
+    "eos.claude.instruction.target": {"present", "top_dir", "extension", "path_hash"},
+    "eos.tool.target_path": {"present", "top_dir", "extension", "path_hash"},
+}
+SPAN_EVENT_FIELDS = {"name", "time_unix_nano"}
+SPAN_EVENT_ATTRIBUTE_FIELDS = {
+    "eos.privacy.raw_payload_stored",
+    "eos.privacy.raw_command_stored",
+    "eos.privacy.raw_path_stored",
+    "eos.privacy.raw_response_stored",
+    "eos.privacy.sensitive_values_stored",
+}
+
+
+def allowlisted_scalars(value: Any, fields: set[str]) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    return {
+        key: child
+        for key, child in value.items()
+        if key in fields and isinstance(child, (str, int, float, bool))
+    }
+
+
 def sanitize_event(record: dict[str, Any]) -> dict[str, Any]:
-    attrs = record.get("attributes")
-    if isinstance(attrs, dict):
-        raw_branch = str(attrs.pop("eos.git.branch", "") or "")
+    sanitized = allowlisted_scalars(record, EVENT_SCALAR_FIELDS)
+
+    status = allowlisted_scalars(record.get("status"), STATUS_FIELDS)
+    if status:
+        sanitized["status"] = status
+
+    resource = allowlisted_scalars(record.get("resource"), RESOURCE_FIELDS)
+    if resource:
+        sanitized["resource"] = resource
+
+    raw_attrs = record.get("attributes")
+    attrs = allowlisted_scalars(raw_attrs, ATTRIBUTE_FIELDS)
+    if isinstance(raw_attrs, dict):
+        raw_branch = str(raw_attrs.get("eos.git.branch") or "")
         if raw_branch and not attrs.get("eos.git.branch.hash"):
             attrs["eos.git.branch.hash"] = stable_hash(raw_branch)
         attrs["eos.git.branch.present"] = bool(attrs.get("eos.git.branch.hash"))
-    return record
+        for key, fields in NESTED_ATTRIBUTE_FIELDS.items():
+            nested = allowlisted_scalars(raw_attrs.get(key), fields)
+            if nested:
+                attrs[key] = nested
+    if attrs:
+        sanitized["attributes"] = attrs
+
+    span_events: list[dict[str, Any]] = []
+    raw_events = record.get("events")
+    if isinstance(raw_events, list):
+        for raw_event in raw_events:
+            event = allowlisted_scalars(raw_event, SPAN_EVENT_FIELDS)
+            if isinstance(raw_event, dict):
+                event_attrs = allowlisted_scalars(
+                    raw_event.get("attributes"),
+                    SPAN_EVENT_ATTRIBUTE_FIELDS,
+                )
+                if event_attrs:
+                    event["attributes"] = event_attrs
+            if event:
+                span_events.append(event)
+    if span_events:
+        sanitized["events"] = span_events
+    return sanitized
 
 
 def write_sanitized_events(source: Path, destination: Path) -> int:

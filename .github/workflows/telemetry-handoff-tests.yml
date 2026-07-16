@@ -58,17 +58,6 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      - name: Upload telemetry runtime source snapshot
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: telemetry-runtime-source-${{ github.run_id }}
-          path: |
-            scripts/monitoring/sync-telemetry-run.py
-            scripts/monitoring/export-telemetry-run.py
-          retention-days: 1
-          if-no-files-found: error
-
   live-review-threads:
     name: Verify live review thread gate
     runs-on: ubuntu-latest

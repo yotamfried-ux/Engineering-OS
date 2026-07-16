@@ -298,10 +298,20 @@ def commit_bundle(
                     f"not requested PR #{pr_number}"
                 )
             effective_pr_number = existing_pr or pr_number
-            remote_is_newer = (existing_events, existing_boundary) > (
-                event_count,
-                boundary_position,
+            remote_ahead = (
+                existing_events > event_count
+                or existing_boundary > boundary_position
             )
+            local_ahead = (
+                event_count > existing_events
+                or boundary_position > existing_boundary
+            )
+            if remote_ahead and local_ahead:
+                raise HandoffError(
+                    "local and remote telemetry progress are incomparable; refusing "
+                    "to regress event or lifecycle-boundary progress"
+                )
+            remote_is_newer = remote_ahead
             if existing_head_relation == "ancestor" and remote_is_newer:
                 raise HandoffError(
                     "current product head advanced, but local telemetry progress is behind "
