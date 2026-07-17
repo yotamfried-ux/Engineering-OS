@@ -223,4 +223,5 @@ EOF_SKILLS
   [ -z "$missing" ] || fail "Route Plan declares skills '$skills' but missing skill evidence for: ${missing}." "run each declared skill before implementation, or change the plan to an explicit none/waiver."
 fi
 
+evidence_record runtime_active_plan "$PLAN" 2>/dev/null || true
 exit 0
