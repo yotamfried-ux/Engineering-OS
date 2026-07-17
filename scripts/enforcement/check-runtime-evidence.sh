@@ -4,12 +4,26 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
 
+select_current_plan() {
+  local selected=""
+  if [ -n "${EOS_ACTIVE_PLAN:-}" ]; then
+    printf '%s\n' "$EOS_ACTIVE_PLAN"
+    return 0
+  fi
+  if [ -f .claude/plans/active.md ]; then
+    printf '%s\n' .claude/plans/active.md
+    return 0
+  fi
+  selected="$(evidence_get runtime_active_plan 2>/dev/null || true)"
+  [ -z "$selected" ] || printf '%s\n' "$selected"
+}
+
 plan="${1:-}"
 if [ -z "$plan" ]; then
-  plan="$(ls -t .claude/plans/*.md 2>/dev/null | head -1 || true)"
+  plan="$(select_current_plan)"
 fi
-[ -n "$plan" ] || { echo "runtime evidence: no plan found"; exit 0; }
-[ -f "$plan" ] || { echo "runtime evidence: plan not found: $plan"; exit 1; }
+[ -n "$plan" ] || { echo "runtime evidence: no active plan for this session"; exit 0; }
+[ -f "$plan" ] || { echo "runtime evidence: active plan not found: $plan"; exit 1; }
 
 field_value() {
   local plan_file="$1"
@@ -58,6 +72,58 @@ connector_has_evidence() {
   evidence_has connector_used "$key" 2>/dev/null || evidence_has "connector_${key}" 2>/dev/null
 }
 
+connector_is_waived() {
+  python3 - "$plan" "$1" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+plan_path, connector = sys.argv[1:3]
+text = Path(plan_path).read_text(encoding="utf-8", errors="replace")
+
+def norm(value: str) -> str:
+    value = re.sub(r"[`*_]", "", value or "").lower()
+    return re.sub(r"[^a-z0-9]+", " ", value).strip()
+
+def section(title: str) -> str:
+    lines = text.splitlines()
+    out = []
+    active = False
+    for line in lines:
+        if re.match(r"^#{1,4}\s+" + title + r"(?:\s|$)", line, re.I):
+            active = True
+            continue
+        if active and re.match(r"^#{1,4}\s+", line):
+            break
+        if active:
+            out.append(line)
+    return "\n".join(out)
+
+needle = norm(connector)
+marker = re.compile(r"\b(unavailable|not available|fallback|waived|waiver|not used)\b", re.I)
+for body in (section(r"Connector\s+Evidence"), section(r"Connector\s+Usage\s+Evidence")):
+    lines = body.splitlines()
+    for index, line in enumerate(lines):
+        if needle and not re.search(r"(?<![a-z0-9])" + re.escape(needle) + r"(?![a-z0-9])", norm(line)):
+            continue
+        block = [line]
+        base_indent = len(line) - len(line.lstrip())
+        for following in lines[index + 1:]:
+            if not following.strip() or re.match(r"^#{1,4}\s+", following):
+                break
+            indent = len(following) - len(following.lstrip())
+            if re.match(r"^\s*[-*]\s+\S", following) and indent <= base_indent:
+                break
+            if indent > base_indent:
+                block.append(following)
+                continue
+            break
+        if marker.search("\n".join(block)):
+            raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
 skill_has_evidence() {
   local item key
   item="$1"
@@ -80,9 +146,10 @@ bad=0
 if ! is_none_value "$connectors"; then
   while IFS= read -r connector; do
     [ -n "$connector" ] || continue
+    connector_is_waived "$connector" && continue
     if ! connector_has_evidence "$connector"; then
-      echo "ERROR_FOR_AGENT: Runtime evidence missing — plan declares connector '$connector' but matching connector evidence does not exist this session."
-      echo "ACTION: use the declared source-of-truth connector, or update the plan with an explicit none/waiver if no connector is required."
+      echo "ERROR_FOR_AGENT: Runtime evidence missing — active plan declares connector '$connector' but matching connector evidence does not exist this session."
+      echo "ACTION: use the declared source-of-truth connector, or update the active plan with a documented connector waiver if no connector is required."
       bad=1
     fi
   done <<EOF_CONNECTORS
@@ -96,10 +163,10 @@ if ! is_none_value "$skills"; then
     if ! skill_has_evidence "$skill"; then
       key="$(canon_key "$skill")"
       if [ "$key" = "superpowers-verify" ] || [ "$key" = "superpowers_verify" ]; then
-        echo "ERROR_FOR_AGENT: Runtime evidence missing — plan declares superpowers-verify but no superpowers_verify_run evidence exists this session."
+        echo "ERROR_FOR_AGENT: Runtime evidence missing — active plan declares superpowers-verify but no superpowers_verify_run evidence exists this session."
         echo "ACTION: run /superpowers-verify or read .claude/commands/superpowers-verify.md before marking done."
       else
-        echo "ERROR_FOR_AGENT: Runtime evidence missing — plan declares skill '$skill' but matching skill evidence does not exist this session."
+        echo "ERROR_FOR_AGENT: Runtime evidence missing — active plan declares skill '$skill' but matching skill evidence does not exist this session."
         echo "ACTION: run the declared skill or add a documented waiver."
       fi
       bad=1
@@ -110,4 +177,4 @@ EOF_SKILLS
 fi
 
 [ "$bad" -eq 0 ] || exit 1
-echo "Runtime evidence checks passed."
+echo "Runtime evidence checks passed for active plan: $(basename "$plan")"
