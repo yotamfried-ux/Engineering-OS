@@ -7,6 +7,11 @@ block() {
   exit 2
 }
 
+warn() {
+  echo "WARNING_FOR_AGENT: $1" >&2
+  [ -z "${2:-}" ] || echo "ACTION: $2" >&2
+}
+
 if [ "${EOS_TELEMETRY_DISABLED:-0}" = "1" ]; then
   block "Engineering OS telemetry is disabled for this session." \
     "start a fresh Claude session with telemetry enabled before continuing the experiment."
@@ -19,14 +24,31 @@ SETTINGS="${EOS_CLAUDE_SETTINGS_FILE:-$ROOT/.claude/settings.json}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SYNC="$SCRIPT_DIR/sync-telemetry-run.py"
 
+POLICY_MODE="$(python3 - "$ROOT" "$SCRIPT_DIR" <<'PY'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+sys.path.insert(0, sys.argv[2])
+from telemetry_handoff import load_policy
+print(load_policy(root)["mode"])
+PY
+)"
+
 [ -f "$SETTINGS" ] || block ".claude/settings.json is missing; telemetry hooks cannot be active." \
   "re-run the current Engineering OS installer, then restart Claude."
 [ -s "$RUN_ID_FILE" ] || block "telemetry run_id is missing; the SessionStart hook did not initialize this session." \
   "restart Claude in this repository and verify the SessionStart hook runs."
 [ -s "$EVENTS" ] || block "telemetry events are missing; no current-session evidence exists." \
   "restart Claude after installing the telemetry hooks."
-[ -f "$SYNC" ] || block "telemetry remote handoff runtime is missing." \
-  "update Engineering OS and re-run the installer before restarting Claude."
+
+if [ ! -f "$SYNC" ]; then
+  if [ "$POLICY_MODE" = "required" ]; then
+    block "telemetry remote handoff runtime is missing." \
+      "update Engineering OS and re-run the installer before restarting Claude."
+  fi
+  warn "telemetry remote handoff runtime is missing; local telemetry remains available." \
+    "update Engineering OS and re-run the installer before a required-handoff experiment."
+fi
 
 if ! python3 - "$EVENTS" "$RUN_ID_FILE" "$SETTINGS" <<'PY'
 from __future__ import annotations
@@ -42,7 +64,6 @@ settings_text = settings_path.read_text(encoding="utf-8", errors="replace")
 for required in (
     "eos-telemetry-session-start.sh",
     "eos-telemetry-event.sh",
-    "record-and-sync-telemetry.sh",
     "require-telemetry-session.sh",
 ):
     if required not in settings_text:
@@ -75,23 +96,33 @@ then
   exit 2
 fi
 
-POLICY_MODE="$(python3 - "$ROOT" "$SCRIPT_DIR" <<'PY'
-from pathlib import Path
-import sys
-root = Path(sys.argv[1])
-sys.path.insert(0, sys.argv[2])
-from telemetry_handoff import load_policy
-print(load_policy(root)["mode"])
-PY
-)"
-
-if [ "$POLICY_MODE" = "best_effort" ]; then
-  if ! python3 "$SYNC" --check; then
-    echo "WARNING_FOR_AGENT: best-effort telemetry handoff is not ready; local telemetry remains available." >&2
+BOUNDARY_MARKER="record-and-sync-telemetry.sh"
+if ! grep -qF "$BOUNDARY_MARKER" "$SETTINGS" 2>/dev/null; then
+  if [ "$POLICY_MODE" = "required" ]; then
+    block "telemetry settings do not register durable Stop/SessionEnd handoff hooks." \
+      "re-run the current Engineering OS installer, then restart Claude before required-handoff work."
   fi
-  exit 0
+  warn "telemetry settings use legacy local-only Stop/SessionEnd hooks; research tools remain available." \
+    "re-run the current Engineering OS installer before a required-handoff experiment."
 fi
 
-python3 "$SYNC" --check || block \
-  "current telemetry session has not completed the required durable GitHub handoff." \
-  "verify GitHub authentication and the telemetry policy, then restart or retry the session."
+case "$POLICY_MODE" in
+  disabled)
+    exit 0
+    ;;
+  best_effort)
+    if [ -f "$SYNC" ] && ! python3 "$SYNC" --check; then
+      warn "best-effort telemetry handoff is not ready; local telemetry remains available."
+    fi
+    exit 0
+    ;;
+  required)
+    python3 "$SYNC" --check || block \
+      "current telemetry session has not completed the required durable GitHub handoff." \
+      "verify GitHub authentication and the telemetry policy, then restart or retry the session."
+    ;;
+  *)
+    block "unknown telemetry policy mode '$POLICY_MODE'." \
+      "repair .engineering-os/telemetry-policy.json before continuing."
+    ;;
+esac
