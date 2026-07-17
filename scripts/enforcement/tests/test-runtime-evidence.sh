@@ -75,5 +75,6 @@ expect_fail "write before workflow read" run_precheck src/app.ts
 record_read core/workflow.md
 expect_pass "write after plan and router/workflow evidence" run_precheck src/app.ts
 grep -q 'capability_plan_validated' .claude/.evidence/ledger
+grep -q $'\truntime_active_plan\t.claude/plans/task.md' .claude/.evidence/ledger
 
 echo "runtime evidence checker tests passed"
