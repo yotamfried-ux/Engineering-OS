@@ -79,7 +79,7 @@ Exact-head green status remains an external merge gate and will be re-establishe
 
 - source: GitHub
 - action: inspected `yotamfried-ux/Engineering-OS` main files, PR #80, PR #244, PR #245, PR #246 Actions, CodeRabbit quota notice, and the live P2 review thread on `check-runtime-evidence.sh`
-- result: implemented policy-aware telemetry preflight, current-session plan recording, Stop scoping, shared waiver semantics, and focused regression suites; accepted and corrected the valid review finding that waivers were previously Stop-only
+- result: PR #246 commit `7844d7d9e8063f5bba008fd7a0e11e73e0f9eab3` added shared waiver semantics in `scripts/enforcement/lib/evidence.sh` and write-time regression coverage after accepting the live P2 finding
 - decision: kept all-tools telemetry coverage and fail-closed required mode, removed unconditional local-only lockout and stale historical plan inference, and made waiver enforcement consistent without broadening waiver scope
 - target: `scripts/monitoring/require-telemetry-session.sh`, `scripts/enforcement/lib/evidence.sh`, `scripts/enforcement/pre-tool-use-runtime-evidence.sh`, `scripts/enforcement/check-runtime-evidence.sh`, `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh`, `scripts/enforcement/tests/test-runtime-evidence.sh`, `scripts/enforcement/tests/test-stop-runtime-plan-scoping.sh`
 
@@ -115,7 +115,8 @@ Exact-head green status remains an external merge gate and will be re-establishe
 12. Verified CodeRabbit did not run because of quota, documented the fallback review honestly, and inspected live review threads directly.
 13. Accepted P2 thread `PRRT_kwDOS6Ejks6R6hn1`: Stop accepted a connector waiver that Write/Edit could not use.
 14. Moved waiver parsing into `lib/evidence.sh`, wired both runtime gates to it, and added write-time negative/positive waiver fixtures through code head `7844d7d9e8063f5bba008fd7a0e11e73e0f9eab3`.
-15. Recorded this new pre-merge checkpoint after the review-finding implementation and before the final exact-head CI rerun.
+15. Recorded pre-merge checkpoint `b820be754c57eca003c6a977d8f9d081f4c005bf` after the review-finding implementation.
+16. Read connector-evidence-policy run `29618935170` and made the Connector Usage result concrete with PR #246, path, and implementation SHA before the next exact-head validation loop.
 
 ## Operational Work History Evidence
 
@@ -127,4 +128,4 @@ Exact-head green status remains an external merge gate and will be re-establishe
 
 - start: reproduced both contradictions from canonical source and identified PR #80, PR #244, and PR #245 before implementation.
 - mid: implemented mode-aware telemetry behavior, current-session plan recording, Stop scoping, connector waiver preservation, and focused regression fixtures.
-- pre-merge: after the initial exact-head green run, inspected the live P2 thread, corrected waiver consistency in commits `5bca65754d297b34cca4e189eaafa105f4d9cdd1` through `7844d7d9e8063f5bba008fd7a0e11e73e0f9eab3`, and queued a complete exact-head validation loop before resolution or merge.
+- pre-merge: after the initial exact-head green run, corrected waiver consistency through `7844d7d9e8063f5bba008fd7a0e11e73e0f9eab3`, documented the review finding, and corrected connector-evidence-policy source specificity before rerunning the complete exact-head gate set.
