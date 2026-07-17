@@ -28,9 +28,9 @@ User decisions required: explicit owner approval before merge; no change to the 
 |---|---|---|
 | `.claude/settings.json` on `main` | read | all-tools telemetry guard is installed, but canonical Stop/StopFailure/SessionEnd hooks still use the local recorder rather than the durable boundary wrapper |
 | `scripts/monitoring/require-telemetry-session.sh` | read | guard treated the missing durable-boundary registration as an unconditional exit-2 failure, so even disabled/local-only policy denied every tool |
-| PR #244 / commit `c2572b03f296703d1ff6c84cfbf4e0796b62f588` | validated | introduced intentional all-tools fail-closed telemetry preflight |
-| PR #245 / commit `7f0c2ccbb78e866186e4beb80c3018696f08d3b9` | validated | added durable handoff requirement and idempotent settings patcher without updating canonical settings |
-| PR #80 / commit `b9ee21712d8fc2ea6217249fce42a56622aab750` | validated | introduced Stop-time runtime evidence with newest-plan-by-mtime fallback |
+| `https://github.com/yotamfried-ux/Engineering-OS/pull/244` | validated | commit `c2572b03f296703d1ff6c84cfbf4e0796b62f588` introduced intentional all-tools fail-closed telemetry preflight |
+| `https://github.com/yotamfried-ux/Engineering-OS/pull/245` | validated | commit `7f0c2ccbb78e866186e4beb80c3018696f08d3b9` added durable handoff requirement and idempotent settings patcher without updating canonical settings |
+| `https://github.com/yotamfried-ux/Engineering-OS/pull/80` | validated | commit `b9ee21712d8fc2ea6217249fce42a56622aab750` introduced Stop-time runtime evidence with newest-plan-by-mtime fallback |
 | `scripts/enforcement/check-runtime-evidence.sh` | read | selected arbitrary newest historical plan when no current-task plan was supplied |
 | `scripts/enforcement/lib/evidence.sh` | read | provides a per-session evidence ledger suitable for recording the plan actually selected by a successful write gate |
 
@@ -74,8 +74,8 @@ Exact-head green status and automated review remain external merge gates; they a
 ## Connector Usage Evidence
 
 - source: GitHub
-- action: inspected `yotamfried-ux/Engineering-OS` main files, PR #80, PR #244, PR #245, their merge commits, current enforcement tests, and PR #246 workflow run `29618267427`
-- result: implemented policy-aware telemetry preflight, current-session plan recording, Stop scoping, three regression suites, and corrected the workflow-evidence plan format on PR #246
+- action: inspected `yotamfried-ux/Engineering-OS` main files, PR #80, PR #244, PR #245, their merge commits, current enforcement tests, and PR #246 workflow runs
+- result: implemented policy-aware telemetry preflight, current-session plan recording, Stop scoping, three regression suites, and corrected the workflow-evidence plan format/source references on PR #246
 - decision: kept all-tools telemetry coverage and fail-closed required mode, while removing unconditional local-only lockout and stale historical plan inference
 - target: `scripts/monitoring/require-telemetry-session.sh`, `scripts/enforcement/pre-tool-use-runtime-evidence.sh`, `scripts/enforcement/check-runtime-evidence.sh`, `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh`, `scripts/enforcement/tests/test-runtime-evidence.sh`, `scripts/enforcement/tests/test-stop-runtime-plan-scoping.sh`
 
@@ -87,7 +87,7 @@ Exact-head green status and automated review remain external merge gates; they a
 - `source.github-repo-read`: inspected canonical GitHub source and the introducing PRs/commits.
 - `validation.policy-change-has-validator`: added executable negative and positive regression cases.
 - `validation.coderabbit-policy`: automated review and live thread state are mandatory before merge.
-- `validation.actions-checked`: PR #246 workflows were inspected on implementation head `40bef934317c3fe63885bfdba589d011be1ab3b9`; exact final-head confirmation remains a merge gate.
+- `validation.actions-checked`: PR #246 workflows were inspected on implementation heads `40bef934317c3fe63885bfdba589d011be1ab3b9` and `2f515e22cd3735c2a046494695de960a25cf97fe`; exact final-head confirmation remains a merge gate.
 
 ## Documentation Asset Evidence
 
@@ -107,7 +107,8 @@ Exact-head green status and automated review remain external merge gates; they a
 8. Replaced newest-plan Stop inference with explicit/current-session selection and added connector-waiver handling consistent with connector policy.
 9. Added fresh-session, active-plan, stale-plan, required-mode, and waiver regression fixtures.
 10. Opened PR #246; the first workflow-evidence run identified DoD/checkpoint formatting while the other completed policy workflows were green.
-11. Replaced the DoD status table with concrete checked verification items and recorded this ordered pre-merge checkpoint after the final code/test commit.
+11. Replaced the DoD status table with concrete checked verification items and recorded an ordered pre-merge checkpoint after the final code/test commit.
+12. Read the second workflow diagnostic artifact and replaced shorthand PR/commit source labels with concrete GitHub PR URLs.
 
 ## Operational Work History Evidence
 
@@ -119,4 +120,4 @@ Exact-head green status and automated review remain external merge gates; they a
 
 - start: reproduced both contradictions from canonical source and identified PR #80, PR #244, and PR #245 before implementation.
 - mid: implemented mode-aware telemetry behavior, current-session plan recording, Stop scoping, connector waiver preservation, and focused regression fixtures.
-- pre-merge: reviewed the complete seven-file diff after the final code/test commit, opened PR #246, and corrected the workflow-evidence DoD/checkpoint format exposed by run `29618267427`.
+- pre-merge: reviewed the complete seven-file diff after the final code/test commit, opened PR #246, and corrected both workflow-evidence diagnostics from runs `29618267427` and `29618344383`.
