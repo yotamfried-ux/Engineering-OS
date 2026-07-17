@@ -89,6 +89,11 @@ connector_has_evidence() {
   evidence_has connector_used "$key" 2>/dev/null || evidence_has "connector_${key}" 2>/dev/null
 }
 
+connector_is_waived() {
+  declare -f eos_connector_is_waived >/dev/null 2>&1 || return 1
+  eos_connector_is_waived "$PLAN" "$1"
+}
+
 skill_has_evidence() {
   local key key_us
   key="$(canon_key "$1")"
@@ -185,11 +190,12 @@ if ! is_none_value "$connectors"; then
   missing=""
   while IFS= read -r connector; do
     [ -n "$connector" ] || continue
+    connector_is_waived "$connector" && continue
     connector_has_evidence "$connector" || missing="${missing}${connector} "
   done <<EOF_CONNECTORS
 $(normalize_list "$connectors")
 EOF_CONNECTORS
-  [ -z "$missing" ] || fail "Route Plan declares connectors '$connectors' but missing connector evidence for: ${missing}." "use each declared connector/source-of-truth before implementation, or change the plan to an explicit none/waiver."
+  [ -z "$missing" ] || fail "Route Plan declares connectors '$connectors' but missing connector evidence for: ${missing}." "use each declared connector/source-of-truth before implementation, or add a documented connector waiver."
 fi
 
 if grep -q 'source.github-repo-read' "$PLAN" 2>/dev/null; then
