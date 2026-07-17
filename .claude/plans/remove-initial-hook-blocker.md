@@ -20,7 +20,7 @@ User decisions required: explicit owner approval before merge; no change to the 
 | Patterns | fail-before/pass-after fixtures; active-plan evidence instead of newest-file inference |
 | Skills | not required |
 | Validation gates | enforcement-tests, telemetry-handoff-tests, plan-policy, pr-policy, connector-evidence-policy, capability-evidence-policy, workflow-evidence-policy, documentation-asset-policy, semantic-cleanup-policy, import-cleanup-policy |
-| Target paths | `scripts/monitoring/require-telemetry-session.sh`, `scripts/enforcement/pre-tool-use-runtime-evidence.sh`, `scripts/enforcement/check-runtime-evidence.sh`, `scripts/enforcement/tests/` |
+| Target paths | `scripts/monitoring/require-telemetry-session.sh`, `scripts/enforcement/lib/evidence.sh`, `scripts/enforcement/pre-tool-use-runtime-evidence.sh`, `scripts/enforcement/check-runtime-evidence.sh`, `scripts/enforcement/tests/` |
 
 ## Source of Truth Checks
 
@@ -32,17 +32,18 @@ User decisions required: explicit owner approval before merge; no change to the 
 | `https://github.com/yotamfried-ux/Engineering-OS/pull/245` | validated | commit `7f0c2ccbb78e866186e4beb80c3018696f08d3b9` added durable handoff requirement and idempotent settings patcher without updating canonical settings |
 | `https://github.com/yotamfried-ux/Engineering-OS/pull/80` | validated | commit `b9ee21712d8fc2ea6217249fce42a56622aab750` introduced Stop-time runtime evidence with newest-plan-by-mtime fallback |
 | `scripts/enforcement/check-runtime-evidence.sh` | read | selected arbitrary newest historical plan when no current-task plan was supplied |
-| `scripts/enforcement/lib/evidence.sh` | read | provides a per-session evidence ledger suitable for recording the plan actually selected by a successful write gate |
+| `scripts/enforcement/lib/evidence.sh` | read | provides a per-session evidence ledger and now owns shared connector-waiver parsing for both Write/Edit and Stop gates |
 
 ## Experiment
 
-Executable fixtures cover both failures:
+Executable fixtures cover both failures and the review correction:
 
 1. A fresh local-only telemetry session invokes the guard for Bash, Read, Glob, Grep, ToolSearch, AskUserQuestion, and an MCP GitHub tool; all must remain available after a valid SessionStart.
 2. Required-handoff policy with legacy boundary wiring remains fail-closed.
 3. A research-only fresh session with stale plans present must not inherit connector requirements from the newest historical plan.
 4. A write session records the exact plan it selected, and Stop runtime evidence still blocks when that active plan genuinely lacks declared connector evidence.
 5. Explicit active-plan selection and the documented connector waiver remain supported.
+6. A connector waiver must have identical semantics at Write/Edit and Stop: without evidence or waiver the write blocks; with a connector-specific documented waiver the write passes and records the active plan.
 
 ## Fix
 
@@ -50,7 +51,8 @@ Executable fixtures cover both failures:
 - Preserve the intentional all-tools matcher so telemetry coverage is not silently reduced.
 - Record the target-aware Route Plan selected by a successful Write/Edit runtime gate into the current session evidence ledger.
 - Make Stop runtime evidence select only an explicit active plan, `.claude/plans/active.md`, or the plan actually selected during this session; remove arbitrary newest-file inference.
-- Preserve connector evidence enforcement and documented connector waiver behavior whenever a current plan is present.
+- Centralize connector-waiver parsing in `lib/evidence.sh` and use the same helper at Write/Edit and Stop so documented waivers cannot be accepted at only one lifecycle stage.
+- Preserve connector evidence enforcement whenever neither matching evidence nor a connector-specific documented waiver exists.
 
 ## Definition of Done
 
@@ -61,23 +63,25 @@ Executable fixtures cover both failures:
 - [x] `test-stop-runtime-plan-scoping.sh` proves unrelated historical plans are ignored without session selection.
 - [x] Stop-time tests prove missing connector evidence still blocks for the selected current plan.
 - [x] Stop-time tests prove matching connector evidence and a documented connector waiver pass.
+- [x] Write-time tests prove a declared connector without evidence or waiver blocks, while a connector-specific documented waiver passes.
+- [x] Write/Edit and Stop consume the same shared connector-waiver parser.
 - [x] Existing Write/Edit Route Plan and Agent tasks.json gates remain unchanged and covered by the aggregate enforcement suite.
-- [x] PR #246 runs all required GitHub Actions and records any correction loop on exact heads.
+- [x] PR #246 runs all required GitHub Actions and records every correction loop on exact heads.
 - [x] Merge remains disabled until exact-head checks, review threads, and explicit owner approval are all satisfied.
 
-Exact-head green status and automated review remain external merge gates; they are not claimed by this implementation checkpoint.
+Exact-head green status remains an external merge gate and will be re-established after this review-finding correction.
 
 ## Connector Evidence
 
-- GitHub: used to inspect canonical source, commit/PR history, branch state, Actions, and review threads.
+- GitHub: used to inspect canonical source, commit/PR history, branch state, Actions, comments, and review threads.
 
 ## Connector Usage Evidence
 
 - source: GitHub
-- action: inspected `yotamfried-ux/Engineering-OS` main files, PR #80, PR #244, PR #245, their merge commits, current enforcement tests, and PR #246 workflow runs
-- result: implemented policy-aware telemetry preflight, current-session plan recording, Stop scoping, three regression suites, and corrected the workflow-evidence plan format/source references on PR #246
-- decision: kept all-tools telemetry coverage and fail-closed required mode, while removing unconditional local-only lockout and stale historical plan inference
-- target: `scripts/monitoring/require-telemetry-session.sh`, `scripts/enforcement/pre-tool-use-runtime-evidence.sh`, `scripts/enforcement/check-runtime-evidence.sh`, `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh`, `scripts/enforcement/tests/test-runtime-evidence.sh`, `scripts/enforcement/tests/test-stop-runtime-plan-scoping.sh`
+- action: inspected `yotamfried-ux/Engineering-OS` main files, PR #80, PR #244, PR #245, PR #246 Actions, CodeRabbit quota notice, and the live P2 review thread on `check-runtime-evidence.sh`
+- result: implemented policy-aware telemetry preflight, current-session plan recording, Stop scoping, shared waiver semantics, and focused regression suites; accepted and corrected the valid review finding that waivers were previously Stop-only
+- decision: kept all-tools telemetry coverage and fail-closed required mode, removed unconditional local-only lockout and stale historical plan inference, and made waiver enforcement consistent without broadening waiver scope
+- target: `scripts/monitoring/require-telemetry-session.sh`, `scripts/enforcement/lib/evidence.sh`, `scripts/enforcement/pre-tool-use-runtime-evidence.sh`, `scripts/enforcement/check-runtime-evidence.sh`, `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh`, `scripts/enforcement/tests/test-runtime-evidence.sh`, `scripts/enforcement/tests/test-stop-runtime-plan-scoping.sh`
 
 ## Capability Evidence
 
@@ -85,15 +89,15 @@ Exact-head green status and automated review remain external merge gates; they a
 - `workflow.workflow-read`: applied plan-first reproduce-fix-verify sequencing.
 - `plan.route-plan-before-write`: commit `665234ffc44c68850fda1b1115944cc60904931d` created this plan before implementation.
 - `source.github-repo-read`: inspected canonical GitHub source and the introducing PRs/commits.
-- `validation.policy-change-has-validator`: added executable negative and positive regression cases.
-- `validation.coderabbit-policy`: automated review and live thread state are mandatory before merge.
-- `validation.actions-checked`: PR #246 workflows were inspected on implementation heads `40bef934317c3fe63885bfdba589d011be1ab3b9` and `2f515e22cd3735c2a046494695de960a25cf97fe`; exact final-head confirmation remains a merge gate.
+- `validation.policy-change-has-validator`: added executable negative and positive regression cases, including write-time waiver coverage.
+- `validation.coderabbit-policy`: CodeRabbit was quota-limited; a structured fallback review was documented, and a separate live P2 review finding was accepted and fixed.
+- `validation.actions-checked`: exact-head Actions were green at `6eaae8bcfc6a92414e6d1eca191277bff216cf99` before the review correction; all required workflows must rerun on the new final head.
 
 ## Documentation Asset Evidence
 
-- internal: `core/hooks-policy.md`, `core/connector-policy.md`, `core/debugging-policy.md`, `.claude/settings.json`, telemetry patcher, and existing enforcement suites
+- internal: `core/hooks-policy.md`, `core/connector-policy.md`, `core/debugging-policy.md`, `.claude/settings.json`, telemetry patcher, shared evidence library, and existing enforcement suites
 - context7: not required; the defect is internal configuration/scoping drift, while PR #244 already validated official Claude hook exit semantics
-- decision: restore mode-appropriate failure behavior and current-task scoping without changing the governing enforcement principles
+- decision: restore mode-appropriate failure behavior, current-task scoping, and lifecycle-consistent waiver handling without changing the governing enforcement principles
 
 ## Claude Run Trace
 
@@ -106,18 +110,21 @@ Exact-head green status and automated review remain external merge gates; they a
 7. Recorded the plan selected by the successful write gate.
 8. Replaced newest-plan Stop inference with explicit/current-session selection and added connector-waiver handling consistent with connector policy.
 9. Added fresh-session, active-plan, stale-plan, required-mode, and waiver regression fixtures.
-10. Opened PR #246; the first workflow-evidence run identified DoD/checkpoint formatting while the other completed policy workflows were green.
-11. Replaced the DoD status table with concrete checked verification items and recorded an ordered pre-merge checkpoint after the final code/test commit.
-12. Read the second workflow diagnostic artifact and replaced shorthand PR/commit source labels with concrete GitHub PR URLs.
+10. Opened PR #246 and corrected two workflow-evidence diagnostics without changing implementation behavior.
+11. Confirmed all exact-head code, telemetry, and policy workflows green at `6eaae8bcfc6a92414e6d1eca191277bff216cf99`; corrected PR review metadata separately.
+12. Verified CodeRabbit did not run because of quota, documented the fallback review honestly, and inspected live review threads directly.
+13. Accepted P2 thread `PRRT_kwDOS6Ejks6R6hn1`: Stop accepted a connector waiver that Write/Edit could not use.
+14. Moved waiver parsing into `lib/evidence.sh`, wired both runtime gates to it, and added write-time negative/positive waiver fixtures through code head `7844d7d9e8063f5bba008fd7a0e11e73e0f9eab3`.
+15. Recorded this new pre-merge checkpoint after the review-finding implementation and before the final exact-head CI rerun.
 
 ## Operational Work History Evidence
 
 - automatic_sources: `.engineering-os/work-history/latest.json`
 - selected_result_loop_contract: engineering-os-governance
-- learning_loop_result: none-with-reason — the introducing PR/commit trace, executable regression fixtures, and PR #246 correction history form the durable learning record
+- learning_loop_result: the live P2 review finding became a shared helper plus a permanent write-time regression fixture, preventing lifecycle divergence from recurring
 
 ## Progress Lifecycle Evidence
 
 - start: reproduced both contradictions from canonical source and identified PR #80, PR #244, and PR #245 before implementation.
 - mid: implemented mode-aware telemetry behavior, current-session plan recording, Stop scoping, connector waiver preservation, and focused regression fixtures.
-- pre-merge: reviewed the complete seven-file diff after the final code/test commit, opened PR #246, and corrected both workflow-evidence diagnostics from runs `29618267427` and `29618344383`.
+- pre-merge: after the initial exact-head green run, inspected the live P2 thread, corrected waiver consistency in commits `5bca65754d297b34cca4e189eaafa105f4d9cdd1` through `7844d7d9e8063f5bba008fd7a0e11e73e0f9eab3`, and queued a complete exact-head validation loop before resolution or merge.
