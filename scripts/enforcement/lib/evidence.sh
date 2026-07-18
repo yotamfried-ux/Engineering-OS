@@ -107,6 +107,64 @@ EOF_TARGETS
   [ -n "$newest" ] && printf '%s\n' "$newest"
 }
 
+# eos_connector_is_waived <plan-file> <connector> — exit 0 only when the
+# connector's own entry in a documented Connector Evidence section explicitly
+# records an unavailable/fallback/waiver decision. Shared by Write/Edit and Stop
+# gates so a valid waiver has identical semantics throughout the task lifecycle.
+eos_connector_is_waived() {
+  local plan_file="${1:-}" connector="${2:-}"
+  [ -f "$plan_file" ] && [ -n "$connector" ] || return 1
+  python3 - "$plan_file" "$connector" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+plan_path, connector = sys.argv[1:3]
+text = Path(plan_path).read_text(encoding="utf-8", errors="replace")
+
+def norm(value: str) -> str:
+    value = re.sub(r"[`*_]", "", value or "").lower()
+    return re.sub(r"[^a-z0-9]+", " ", value).strip()
+
+def section(title: str) -> str:
+    lines = text.splitlines()
+    out = []
+    active = False
+    for line in lines:
+        if re.match(r"^#{1,4}\s+" + title + r"(?:\s|$)", line, re.I):
+            active = True
+            continue
+        if active and re.match(r"^#{1,4}\s+", line):
+            break
+        if active:
+            out.append(line)
+    return "\n".join(out)
+
+needle = norm(connector)
+marker = re.compile(r"\b(unavailable|not available|fallback|waived|waiver|not used)\b", re.I)
+for body in (section(r"Connector\s+Evidence"), section(r"Connector\s+Usage\s+Evidence")):
+    lines = body.splitlines()
+    for index, line in enumerate(lines):
+        if needle and not re.search(r"(?<![a-z0-9])" + re.escape(needle) + r"(?![a-z0-9])", norm(line)):
+            continue
+        block = [line]
+        base_indent = len(line) - len(line.lstrip())
+        for following in lines[index + 1:]:
+            if not following.strip() or re.match(r"^#{1,4}\s+", following):
+                break
+            indent = len(following) - len(following.lstrip())
+            if re.match(r"^\s*[-*]\s+\S", following) and indent <= base_indent:
+                break
+            if indent > base_indent:
+                block.append(following)
+                continue
+            break
+        if marker.search("\n".join(block)):
+            raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
 # bypass_active <ENV_VAR_NAME> — exit 0 if that env var is set to a truthy value.
 # Side effect: logs to evidence ledger + stderr when bypass is active (audit trail).
 bypass_active() {
