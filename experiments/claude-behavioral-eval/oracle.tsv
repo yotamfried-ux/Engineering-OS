@@ -1,0 +1,17 @@
+# task_id	check	artifact	value	description
+01-review-overlay	required	route-plan.md	external systems	Needs connector decision field.
+01-review-overlay	required	route-plan.md	supervision	Visual review route should select or waive supervision.
+01-review-overlay	required_any	route-plan.md	computer-vision||video||review overlay	Needs visual domain classification.
+01-review-overlay	required	route-plan.md	superpowers	Needs baseline planning skill.
+
+02-checkout-webhook	required	route-plan.md	security-review	Needs security review.
+02-checkout-webhook	required_any	route-plan.md	billing||checkout||webhook	Needs billing route classification.
+02-checkout-webhook	required_any	route-plan.md	official docs||context7||source.official-docs-checked	Needs source check.
+02-checkout-webhook	required	route-plan.md	user decisions required	Missing choices must be explicit.
+
+03-new-booking-product	required	route-plan.md	new_project_or_saas	Needs new project task class.
+03-new-booking-product	required_any	route-plan.md	plan scope | project||plan scope: project	Needs project scope.
+03-new-booking-product	required	route-plan.md	templates	Needs templates.
+03-new-booking-product	required	route-plan.md	architecture guides	Needs architecture guides.
+03-new-booking-product	required	route-plan.md	security-review	Needs security review.
+03-new-booking-product	forbidden_any	route-plan.md	user decisions required | none||user decisions required: none	Should not claim no user decisions.
