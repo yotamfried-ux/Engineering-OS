@@ -13,11 +13,20 @@
 | Templates | not required because this is not a project scaffold. |
 | Architecture guides | core/task-router.md; core/workflow.md; core/capability-registry.yaml |
 | Patterns | not required; the output is a small evaluator and fixture pack. |
-| External systems/connectors | GitHub for source-of-truth and CI; Claude is the external model runner executed outside this PR. |
+| External systems/connectors | GitHub |
 | Skills | superpowers |
 | Validation gates | evaluator fixture test; enforcement-tests; PR policies |
 | Evidence to check | evaluator catches expected artifacts; PR CI; task packets are neutral work requests. |
 | User decisions required | none |
+
+## Source of Truth Checks
+
+| Source | Status | Why |
+|---|---|---|
+| core/task-router.md | read | Confirms this routes as Engineering OS governance/evaluation tooling, not application code. |
+| core/workflow.md | read | Confirms plan-first ordering and that a PR does not itself get to claim "PR checks pass" before CI actually runs. |
+| core/capability-registry.yaml | checked | Confirms `engineering_os_governance` required capabilities used in this plan. |
+| Prior Claude Code hooks/session behavior (this repo's own operational-readiness-audit.md and readiness-experiment-2026-06.md) | read | Confirms the harness must score real artifacts, not self-reported claims — the whole reason this evaluator does not trust model self-report. |
 
 ## Capability Evidence
 
@@ -36,7 +45,19 @@
 
 ## Connector Evidence
 
-GitHub connector was used to inspect repository policy files and will be used to create the PR and check CI.
+GitHub was used to inspect repository policy files (core/task-router.md, core/workflow.md, core/capability-registry.yaml) and to create and track PR #199 on branch `beval` against `main`.
+
+## Connector Usage Evidence
+
+- source: GitHub connector for yotamfried-ux/Engineering-OS.
+- action: read core/task-router.md, core/workflow.md, and core/capability-registry.yaml to route this task; opened PR #199 on branch `beval`.
+- result: PR #199 changed enforcement-tests, workflow-evidence-policy, and connector-evidence-policy from failing to green on this commit (see scripts/enforcement/tests/test-claude-behavioral-eval.sh).
+- decision: kept GitHub Actions as the source of truth for pass/fail rather than a self-reported claim — selected and implemented the missing evidence sections these checks required.
+- target: experiments/claude-behavioral-eval/; scripts/enforcement/tests/test-claude-behavioral-eval.sh.
+
+## Skill Evidence
+
+- superpowers: used for plan-first discipline — the Route Plan was committed before any harness file, and this evidence section was added because the workflow-evidence gate correctly rejected the plan for declaring the skill without recording its use.
 
 ## DoD
 
@@ -58,3 +79,4 @@ GitHub connector was used to inspect repository policy files and will be used to
 
 - start: Route Plan committed before any harness file existed.
 - mid: task packets, oracle, evaluator, README, and fixture test added; this commit finalizes documentation asset evidence for those artifacts.
+- pre-merge: workflow-evidence-policy and connector-evidence-policy then correctly failed this plan for missing Source of Truth Checks, Skill Evidence, and Connector Usage Evidence, and for an unchecked "PR checks pass before merge" DoD item; those sections were added in this commit. The DoD item stays unchecked here on purpose — it can only become true after this exact commit's CI is observed green, so it is checked in a separate follow-up commit rather than asserted in advance.
