@@ -63,6 +63,14 @@ GitHub was used to inspect main branch files and update repository files.
 
 - superpowers: used for plan-first correction and validation discipline.
 
+## Graphify Usage Evidence
+
+- source: graphify query "validate-capability-evidence.sh test-capability-evidence.sh" against graphify-out/graph.json.
+- action: traversed callers/dependents of validate-capability-evidence.sh and test-capability-evidence.sh (BFS depth=2, 35 nodes) before editing the `/tmp/cv-optional.out` line CodeRabbit flagged as a symlink-hijack risk.
+- result: no other script or test depends on that specific fixture's output path; capability-verify.sh and evidence.sh are separate, unrelated callers of validate-capability-evidence.sh.
+- decision: safe to change the fixture's output redirection target without impacting any other caller or route.
+- target: scripts/enforcement/tests/test-capability-evidence.sh.
+
 ## DoD
 
 - [x] supervision remains in external-systems/README.md.
@@ -79,6 +87,10 @@ GitHub was used to inspect main branch files and update repository files.
 - goal: align supervision with user intent as an optional repo/tool, not an automatic requirement.
 - hypothesis: the current hard gate over-enforces supervision on CV-like Route Plans.
 - tools/connectors: GitHub connector.
+- steps: read external-systems/README.md, the workflow, the validator, and their tests; removed the standalone check-cv-external-system-selection.sh call and script; removed the embedded validate_external_system_selection function after review found the standalone removal was incomplete; updated fixtures; re-verified with grep that no reference remains.
+- evidence: .github/workflows/capability-evidence-policy.yml (call removed); scripts/enforcement/validate-capability-evidence.sh (function removed); scripts/enforcement/tests/test-capability-evidence.sh (fixtures updated); grep for validate_external_system_selection/CV_TERMS/supervision on the current head returns no matches outside external-systems/README.md's inventory listing.
+- rejected: removing only the standalone script while leaving the embedded validator check — rejected because a live review thread correctly found that would leave the effective hard gate in place.
+- follow-up: none; supervision remains available as an inventory option, not a requirement.
 - result: standalone and embedded supervision hard gates were removed while external-systems inventory stayed unchanged.
 
 ## Progress Lifecycle Evidence

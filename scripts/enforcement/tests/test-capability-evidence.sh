@@ -61,6 +61,6 @@ grep -q 'missing required capability evidence' /tmp/missing-cap.out
 
 cp .claude/plans/pass.md .claude/plans/cv-optional.md
 sed -i 's/| Domain tags | governance |/| Domain tags | computer-vision |/' .claude/plans/cv-optional.md
-bash "$VALIDATOR" .claude/plans/cv-optional.md >/tmp/cv-optional.out
+bash "$VALIDATOR" .claude/plans/cv-optional.md >"$TMP/cv-optional.out"
 
 echo "capability evidence validator tests passed"
