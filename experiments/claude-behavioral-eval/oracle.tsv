@@ -10,8 +10,8 @@
 02-checkout-webhook	required	route-plan.md	user decisions required	Missing choices must be explicit.
 
 03-new-booking-product	required	route-plan.md	new_project_or_saas	Needs new project task class.
-03-new-booking-product	required	route-plan.md	plan scope | project	Needs project scope.
+03-new-booking-product	required_any	route-plan.md	plan scope | project||plan scope: project	Needs project scope.
 03-new-booking-product	required	route-plan.md	templates	Needs templates.
 03-new-booking-product	required	route-plan.md	architecture guides	Needs architecture guides.
 03-new-booking-product	required	route-plan.md	security-review	Needs security review.
-03-new-booking-product	forbidden	route-plan.md	user decisions required | none	Should not claim no user decisions.
+03-new-booking-product	forbidden_any	route-plan.md	user decisions required | none||user decisions required: none	Should not claim no user decisions.

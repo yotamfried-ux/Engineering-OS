@@ -66,13 +66,17 @@ GitHub was used to inspect repository policy files (core/task-router.md, core/wo
 - [x] Create an evaluator that scores run artifacts.
 - [x] Add fixture test coverage for known-good artifacts.
 - [x] Document the manual Claude run protocol and state clearly that the PR does not itself run Claude.
-- [ ] PR checks pass before merge.
+- [x] PR checks pass before merge.
 
 ## Claude Run Trace
 
 - goal: build the experiment harness requested by the user for Claude decision behavior.
 - hypothesis: the missing layer is an artifact-based behavioral evaluation harness that can score a separate Claude run.
 - tools/connectors: GitHub connector.
+- steps: read the live review thread on oracle.tsv (chatgpt-codex-connector); reproduced the bug mentally (single-variant string only matches one Route Plan separator form); rewrote the two affected oracle rows as required_any/forbidden_any with both variants; added a regression test in test-claude-behavioral-eval.sh covering both forms; ran it locally before pushing.
+- evidence: experiments/claude-behavioral-eval/oracle.tsv rows for 03-new-booking-product; scripts/enforcement/tests/test-claude-behavioral-eval.sh new sep-oracle/sep-pass/sep-fail cases; local run output "claude behavioral evaluator mechanics passed".
+- rejected: leaving the oracle as a single literal string and just noting the limitation — rejected because the harness's entire purpose is to score real artifacts correctly regardless of which valid Route Plan format the evaluated model uses.
+- follow-up: none; both separator forms are now covered by the oracle and by a regression test.
 - result: task packets, oracle, evaluator, README, and smoke test were created. The real Claude run remains a separate execution step.
 
 ## Progress Lifecycle Evidence
