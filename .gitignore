@@ -8,3 +8,12 @@
 
 # Graphify knowledge graph (rebuilt each session via session-setup.sh)
 graphify-out/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+
+# Local runtime telemetry baseline (raw session events; export via
+# scripts/monitoring/export-telemetry-run.py for the metadata-only archive
+# bundle instead of committing raw local state directly)
+.engineering-os/

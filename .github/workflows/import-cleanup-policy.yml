@@ -18,37 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           base="${{ github.event.pull_request.base.sha || github.sha }}"
-          files="$(git diff --name-only --diff-filter=ACMR "$base"...HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' || true)"
-          [ -z "$files" ] && exit 0
-          python3 - <<'PY'
-          import os, re, subprocess, sys
-          base=os.environ.get('BASE_SHA','HEAD~1')
-          files=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMR',base+'...HEAD','--','*.js','*.jsx','*.ts','*.tsx'],text=True).splitlines()
-          failures=[]
-          for path in files:
-              try: text=open(path,encoding='utf-8',errors='ignore').read()
-              except FileNotFoundError: continue
-              if any('EOS_SEMANTIC_CLEANUP_WAIVER:' in line and len(line.split(':',1)[1].strip())>=25 for line in text.splitlines()[:20]): continue
-              spans=[]; names=[]
-              for m in re.finditer(r'(?ms)^\s*import\s+(.+?)\s*;', text):
-                  clause=m.group(1).strip(); line=text[:m.start()].count('\n')+1; spans.append(m.span())
-                  if clause.startswith(('"',"'")): continue
-                  left=clause.split(' from ',1)[0].strip() if ' from ' in clause else clause
-                  named=re.search(r'\{([^}]*)\}', left, re.S)
-                  if named:
-                      for part in named.group(1).split(','):
-                          part=part.strip()
-                          if part: names.append((part.rsplit(' as ',1)[1].strip() if ' as ' in part else part,line))
-                  default=re.sub(r'\{[^}]*\}','',left,flags=re.S).strip().strip(',')
-                  if default and not default.startswith('*'): names.append((default.split(',',1)[0].strip(),line))
-              body=text
-              for start,end in reversed(spans): body=body[:start]+' '*(end-start)+body[end:]
-              for name,line in names:
-                  if re.match(r'^[A-Za-z_$][\w$]*$',name) and not re.search(r'(?<![\w$])'+re.escape(name)+r'(?![\w$])',body): failures.append(f'{path}:{line}: unused import {name}')
-          if failures:
-              print('ERROR_FOR_AGENT: import cleanup failed')
-              print('\n'.join('- '+x for x in failures))
-              sys.exit(1)
-          PY
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+          python3 scripts/enforcement/check-import-cleanup.py \
+            --root . \
+            --base "$base" \
+            --head HEAD

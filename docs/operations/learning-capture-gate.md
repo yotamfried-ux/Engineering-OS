@@ -40,3 +40,14 @@ This gate does not replace existing learning enforcement:
 - `enforce-learning.sh` still validates the schema of staged lessons and failed-solutions.
 - `check-learning-reuse.sh` still requires reuse of relevant existing lessons before writing in known areas.
 - `enforce-learning-capture.sh` only enforces that bug/debug/incident work creates learning output or an explicit waiver.
+
+## Relationship to Operational Work History
+
+`scripts/enforcement/check-operational-work-history-evidence.sh` (see
+`docs/operations/operational-work-history.md`) adds a second, PR-level routing rule that is
+additive to this local, task-class-keyed gate: it inspects the CI-generated Operational Work
+History artifact for friction signals (CI failures, `fix`/`retry`/`revert` commit patterns,
+unavailable CI/review metadata, waiver mentions) and, when any are present, requires the PR body to
+reference either a real `lessons-learned/`/`failed-solutions/` file or a concrete
+`learning_loop_result: none-with-reason` — never a new free-text judgment field of its own. This
+gate is keyed off what the artifact actually observed, not off the active Route Plan's task class.

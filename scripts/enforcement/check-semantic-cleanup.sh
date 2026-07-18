@@ -58,6 +58,8 @@ if not waived and path.endswith('.py'):
                 for alias in node.names:
                     imports[alias.asname or alias.name.split('.')[0]] = node.lineno
             elif isinstance(node, ast.ImportFrom):
+                if node.module == '__future__':
+                    continue
                 for alias in node.names:
                     if alias.name != '*':
                         imports[alias.asname or alias.name] = node.lineno

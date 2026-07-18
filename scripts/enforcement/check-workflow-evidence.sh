@@ -87,14 +87,66 @@ knowledge=[p for p in changed if re.match(r'^(lessons-learned/|failed-solutions/
 commits=[]; commit_files={}; code_idxs=[]
 if code:
     commits=sh('git','rev-list','--reverse',f'{base}..{head}')
+
+    # A branch may legitimately build on another open PR/branch whose commits are
+    # already merged in (e.g. via fast-forward) before this branch's own Route Plan
+    # commit. Those inherited commits should not be treated as this PR's own
+    # code-before-plan violation. A plan may declare the exact inherited boundary via
+    # "Inherited base commit: <sha>" (+ a concrete "Inherited base reason: ..." of at
+    # least 20 characters) naming the tip of the pre-existing history it builds on.
+    # This only ever exempts commits at/before that declared, git-verified ancestor
+    # from "code" classification — every commit from there to head (including this
+    # branch's own plan and its own code) is still fully subject to the ordering rule,
+    # so a branch cannot use the marker to move its own code ahead of its own plan.
+    inherited_marker_re=re.compile(r'^\s*Inherited\s+base\s+commit\s*:\s*([0-9a-fA-F]{7,40})\s*$',re.I|re.M)
+    inherited_reason_re=re.compile(r'^\s*Inherited\s+base\s+reason\s*:\s*(.+)$',re.I|re.M)
+    inherited_plan=inherited_sha=inherited_reason=None
+    for p in plans:
+        ptext=gt('git','show',f'{head}:{p}')
+        if not ptext: continue
+        m=inherited_marker_re.search(ptext)
+        if m:
+            inherited_plan, inherited_sha = p, m.group(1)
+            rm=inherited_reason_re.search(ptext)
+            inherited_reason = rm.group(1).strip() if rm else ''
+            break
+
+    exempt_idx=0
+    if inherited_sha:
+        resolved=gt('git','rev-parse',inherited_sha).strip()
+        if not resolved or resolved not in commits:
+            print(f'ERROR_FOR_AGENT: {inherited_plan} declares Inherited base commit {inherited_sha} but it is not an ancestor commit within this diff range ({base}..{head}).'); sys.exit(1)
+        if len(clean(inherited_reason))<20:
+            print(f'ERROR_FOR_AGENT: {inherited_plan} declares Inherited base commit {inherited_sha} but Inherited base reason is missing or too short (need a concrete reason of at least 20 characters explaining what is inherited and from where).'); sys.exit(1)
+        exempt_idx=commits.index(resolved)+1
+
     first_plan=first_code=0
+    plan_first_idx={}
     for idx,c in enumerate(commits,1):
         fs=sh('git','diff-tree','--no-commit-id','--name-only','-r',c); commit_files[c]=fs
-        if not first_plan and any(re.match(r'^\.claude/plans/.*\.md$',f) for f in fs): first_plan=idx
+        for f in fs:
+            if re.match(r'^\.claude/plans/.*\.md$',f) and f not in plan_first_idx: plan_first_idx[f]=idx
         cfs=[f for f in fs if f and not re.match(r'^\.claude/plans/|^docs/|^README\.md$|^CHANGELOG\.md$|^LICENSE',f)]
-        if cfs: code_idxs.append(idx)
-        if not first_code and cfs: first_code=idx
-    if not first_plan or not first_code or first_code<=first_plan:
+        if cfs and idx>exempt_idx: code_idxs.append(idx)
+        if not first_code and cfs and idx>exempt_idx: first_code=idx
+
+    # Plan files whose first appearance is at/before the exempted boundary belong to
+    # the inherited history, not this branch's own Route Plan — exclude them from
+    # first_plan and from the downstream per-plan evidence checks below, the same way
+    # exempt_idx already excludes inherited commits from code classification. Without
+    # this, an inherited branch's own (already-validated-elsewhere) plan file would
+    # both miscompute first_plan and get re-validated against this branch's own
+    # DoD/Progress-Lifecycle timeline, which this script was never meant to do for a
+    # plan this PR didn't author.
+    if exempt_idx:
+        plans=[p for p in plans if plan_first_idx.get(p,0)>exempt_idx]
+    first_plan=min((i for p,i in plan_first_idx.items() if not exempt_idx or i>exempt_idx),default=0)
+
+    if exempt_idx:
+        if not first_plan or exempt_idx>=first_plan:
+            print(f'ERROR_FOR_AGENT: {inherited_plan} Inherited base commit {inherited_sha} must be an ancestor of this branch\'s own Route Plan commit, not at or after it — it cannot be used to exempt commits from the ordering rule.'); sys.exit(1)
+
+    if not first_plan or (code_idxs and (not first_code or first_code<=first_plan)):
         print('ERROR_FOR_AGENT: Route Plan must be committed before the first code/config/test change, not in the same or later commit.'); sys.exit(1)
 if not plans:
     print('No changed plan files.'); sys.exit(0)

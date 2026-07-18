@@ -1,0 +1,2 @@
+# waiver_id	status	linked_requirement_id	reason	scope	owner_context	expiry_or_revisit_trigger	audit_link	gap_link
+scaling-waiver-schema	planned	scaling-extension-check	Waiver rows must be scoped before use	future scaling waivers	Engineering OS governance	Revisit when the first waiver is requested	docs/operations/result-loop-contract-audit-checklist.md#scaling-gate-implementation	docs/operations/known-gaps.tsv

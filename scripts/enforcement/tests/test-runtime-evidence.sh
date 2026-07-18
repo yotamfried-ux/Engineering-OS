@@ -75,5 +75,24 @@ expect_fail "write before workflow read" run_precheck src/app.ts
 record_read core/workflow.md
 expect_pass "write after plan and router/workflow evidence" run_precheck src/app.ts
 grep -q 'capability_plan_validated' .claude/.evidence/ledger
+grep -q $'\truntime_active_plan\t.claude/plans/task.md' .claude/.evidence/ledger
+
+python3 - <<'PY'
+from pathlib import Path
+path = Path('.claude/plans/task.md')
+text = path.read_text(encoding='utf-8')
+path.write_text(text.replace(
+    '| External systems/connectors | not required |',
+    '| External systems/connectors | GitHub |',
+), encoding='utf-8')
+PY
+expect_fail "declared connector without evidence remains blocked" run_precheck src/app.ts
+cat >> .claude/plans/task.md <<'PLAN'
+
+## Connector Evidence
+
+- GitHub: waived — this local fixture deliberately validates the documented fallback path.
+PLAN
+expect_pass "documented connector waiver permits write gate" run_precheck src/app.ts
 
 echo "runtime evidence checker tests passed"

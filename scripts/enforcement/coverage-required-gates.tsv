@@ -25,3 +25,8 @@ required-patterns	pattern-governance	active	Registry-driven pattern selection mu
 capability-staged-changes	capability-governance	active	Staged-change capability guard must remain covered.
 tests-tool-contract	validation-governance	active	Missing-tool environment contract must remain covered.
 active-plan-selection	workflow-governance	active	Target-aware plan selection must remain covered.
+operational-behavior-evidence	ops-readiness	active	Operational behavior evidence PR-body enforcement must remain covered.
+result-loop-contract	ops-readiness	active	Result loop contract manifest completeness enforcement must remain covered.
+scaling-extension	ops-readiness	active	Scaling extension manifest completeness enforcement must remain covered.
+operational-work-history	ops-readiness	active	Operational work history artifact/gate enforcement must remain covered, including the selected_result_loop_contract derivation/declaration dimension (derived/declared/ambiguous/unknown/placeholder/not_required cases).
+pr-policy-workflow-wiring	ops-readiness	active	Real pr-policy.yml wiring of the Operational Work History artifact must remain covered.

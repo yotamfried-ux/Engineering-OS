@@ -3,35 +3,186 @@ name: pr-policy
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, edited]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to re-evaluate after telemetry handoff
+        required: true
+        type: string
 
 permissions:
   contents: read
+  pull-requests: read
+  checks: read
+  actions: read
 
 jobs:
   no-draft-pr:
     name: Require ready-for-review PR
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
+      - name: Resolve live pull request metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${EVENT_PR_NUMBER:-${INPUT_PR_NUMBER:-}}"
+          [[ "$PR_NUMBER" =~ ^[0-9]+$ ]] || { echo "ERROR_FOR_AGENT: valid PR number is required."; exit 1; }
+          gh api "repos/$REPO/pulls/$PR_NUMBER" > /tmp/pr.json
+          jq -r '.body // ""' /tmp/pr.json > /tmp/pr-body.md
+          {
+            echo "PR_NUMBER=$PR_NUMBER"
+            echo "PR_DRAFT=$(jq -r '.draft' /tmp/pr.json)"
+            echo "PR_CREATED_AT=$(jq -r '.created_at' /tmp/pr.json)"
+            echo "PR_HEAD_REF=$(jq -r '.head.ref' /tmp/pr.json)"
+            echo "PR_HEAD_SHA=$(jq -r '.head.sha' /tmp/pr.json)"
+            echo "PR_BASE_SHA=$(jq -r '.base.sha' /tmp/pr.json)"
+          } >> "$GITHUB_ENV"
+
       - name: Block draft pull requests
         run: |
           set -euo pipefail
-          if [ "${{ github.event.pull_request.draft }}" = "true" ]; then
+          if [ "$PR_DRAFT" = "true" ]; then
             echo "ERROR_FOR_AGENT: Pull requests must be ready for review, not draft."
             echo "ACTION: mark the PR ready for review so review gates can run."
             exit 1
           fi
           echo "✅ pull request is ready for review"
 
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout exact PR head
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
+          ref: ${{ env.PR_HEAD_SHA }}
+          fetch-depth: 0
           persist-credentials: false
 
-      - name: Validate PR review and merge-readiness evidence
+      - name: Checkout trusted base telemetry policy
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ env.PR_BASE_SHA }}
+          path: .engineering-os/trusted-policy-source
+          sparse-checkout: .engineering-os/telemetry-policy.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Checkout remote telemetry handoff branch
+        continue-on-error: true
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: refs/heads/engineering-os-telemetry
+          path: .engineering-os/remote-telemetry
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Select exact PR telemetry bundle
+        id: telemetry
         env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          printf '%s' "$PR_BODY" > /tmp/pr-body.md
-          bash scripts/enforcement/check-pr-review-evidence.sh --body /tmp/pr-body.md --head-sha "$PR_HEAD_SHA"
+          python3 scripts/monitoring/select-pr-telemetry.py \
+            --root . \
+            --handoff-root .engineering-os/remote-telemetry \
+            --policy-file .engineering-os/trusted-policy-source/.engineering-os/telemetry-policy.json \
+            --repo "$REPO" \
+            --pr-number "$PR_NUMBER" \
+            --head-ref "$PR_HEAD_REF" \
+            --head-sha "$PR_HEAD_SHA" \
+            --out .engineering-os/selected-telemetry
+          if [ -f .engineering-os/selected-telemetry/manifest.json ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Collect real GitHub CI, review, and thread metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          if gh pr checks "$PR_NUMBER" -R "$REPO" --json name,state,workflow > /tmp/ci.json 2>/tmp/ci-checks.err; then :; else
+            echo "gh pr checks returned non-zero:"; cat /tmp/ci-checks.err || true
+            [ -s /tmp/ci.json ] || rm -f /tmp/ci.json
+          fi
+          if gh pr view "$PR_NUMBER" -R "$REPO" --json reviewDecision,reviews > /tmp/reviews.json 2>/tmp/reviews.err; then :; else
+            echo "gh pr view (reviews) unavailable:"; cat /tmp/reviews.err || true
+            rm -f /tmp/reviews.json
+          fi
+
+          owner="${REPO%%/*}"; name="${REPO#*/}"
+          if gh api graphql --paginate \
+            -F owner="$owner" -F name="$name" -F number="$PR_NUMBER" \
+            -f query='query($owner:String!,$name:String!,$number:Int!,$endCursor:String){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100,after:$endCursor){nodes{id isResolved isOutdated} pageInfo{hasNextPage endCursor}}}}}' \
+            | jq -s '[.[].data.repository.pullRequest.reviewThreads.nodes[]]' > /tmp/review-threads.json 2>/tmp/review-threads.err; then :; else
+            echo "gh api (review threads) unavailable:"; cat /tmp/review-threads.err || true
+            rm -f /tmp/review-threads.json
+          fi
+
+          if gh api --paginate -X GET "repos/$REPO/actions/runs" \
+            -f event=pull_request -f created=">=$PR_CREATED_AT" -f per_page=100 \
+            --jq ".workflow_runs[] | select([.pull_requests[]?.number] | index(${PR_NUMBER})) | {workflowName: .name, conclusion: .conclusion, status: .status, headSha: .head_sha, createdAt: .created_at, updatedAt: .updated_at}" \
+            | jq -s 'unique_by(.workflowName, .headSha, .createdAt)' > /tmp/ci-history.json 2>/tmp/ci-history.err; then :; else
+            echo "gh api (PR-scoped CI history) unavailable:"; cat /tmp/ci-history.err || true
+            rm -f /tmp/ci-history.json
+          fi
+          exit 0
+
+      - name: Generate Operational Work History artifact
+        run: |
+          set -euo pipefail
+          args=(--root . --pr-head-sha "$PR_HEAD_SHA" --base-sha "$PR_BASE_SHA" --pr-number "$PR_NUMBER"
+                --pr-body-file /tmp/pr-body.md --out .engineering-os/work-history)
+          [ -f /tmp/ci.json ] && args+=(--ci-json /tmp/ci.json)
+          [ -f /tmp/reviews.json ] && args+=(--reviews-json /tmp/reviews.json)
+          [ -f .engineering-os/selected-telemetry/events.jsonl ] && args+=(--telemetry-file .engineering-os/selected-telemetry/events.jsonl)
+          python3 scripts/monitoring/collect-pr-work-history.py "${args[@]}"
+
+          history_args=(--artifact .engineering-os/work-history/latest.json
+                        --summary .engineering-os/work-history/latest-summary.md
+                        --since "$PR_CREATED_AT")
+          [ -f /tmp/ci-history.json ] && history_args+=(--ci-history-json /tmp/ci-history.json)
+          python3 scripts/monitoring/enrich-work-history-ci-history.py "${history_args[@]}"
+
+      - name: Publish Operational Work History summary
+        if: always()
+        run: |
+          set -euo pipefail
+          [ ! -f .engineering-os/work-history/latest-summary.md ] || cat .engineering-os/work-history/latest-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Operational Work History artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: operational-work-history-${{ env.PR_NUMBER }}-${{ github.run_id }}
+          path: .engineering-os/work-history
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload matched session telemetry bundle
+        if: ${{ steps.telemetry.outputs.available == 'true' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: session-telemetry-${{ env.PR_NUMBER }}-${{ github.run_id }}
+          path: .engineering-os/selected-telemetry
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Validate live review threads
+        run: python3 scripts/enforcement/check-live-review-threads.py --threads-json /tmp/review-threads.json
+
+      - name: Validate PR review and merge-readiness evidence
+        run: |
+          set -euo pipefail
+          git diff --name-only "$PR_BASE_SHA...$PR_HEAD_SHA" > /tmp/changed-files.txt
+          if [ ! -s /tmp/changed-files.txt ]; then
+            echo "ERROR_FOR_AGENT: changed-files metadata is empty; refusing to skip Operational Work History evidence."
+            exit 1
+          fi
+          bash scripts/enforcement/check-pr-review-evidence.sh --body /tmp/pr-body.md --head-sha "$PR_HEAD_SHA" \
+            --changed-files /tmp/changed-files.txt \
+            --work-history-artifact .engineering-os/work-history/latest.json
