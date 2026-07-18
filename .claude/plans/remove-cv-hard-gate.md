@@ -98,5 +98,5 @@ GitHub was used to inspect main branch files and update repository files.
 - start: Route Plan created before modifying workflow, dependency manifest, or enforcement scripts.
 - mid: removed the workflow call and dependency manifest entry after verifying supervision remains in external-systems/README.md.
 - mid: removed the embedded supervision requirement from validate-capability-evidence.sh after review found the standalone removal was incomplete.
-- pre-merge: updated capability validator fixtures so CV-like Route Plans without supervision are accepted; CI remains the final gate.
+- pre-merge: updated capability validator fixtures so CV-like Route Plans without supervision are accepted; resolved the live review thread confirming the embedded gate removal and fixed a CodeRabbit-flagged symlink-hijack risk in the fixture; CI is the final gate before merge.
 - pre-merge: refreshed target paths and evidence after removing the remaining embedded hard gate.
