@@ -229,4 +229,50 @@ put '# Task
 ci connector-marked-unavailable-passes
 ok connector-marked-unavailable-passes
 
+# Regression: prose (non-table) "External systems/connectors:" field must extract the
+# actual declared value, not the field-name regex's own alternation group. Before the
+# fix, field()'s fallback regex returned "systems/connectors" (the field-name match)
+# instead of "GitHub, Supabase, Vercel" (the real value), so real, complete evidence
+# for real connectors still failed with "must mention declared connector systems/connectors".
+mk connector-prose-field-extracts-real-value
+put '# Task
+
+External systems/connectors: GitHub, Supabase, Vercel
+
+## Connector Evidence
+- GitHub: read the repository checker.
+- Supabase: unavailable this session; MCP tool call requires approval.
+- Vercel: unavailable this session; MCP tool call requires approval.
+
+## Connector Usage Evidence
+- source: GitHub scripts/enforcement/check-connector-evidence.sh.
+- action: checked GitHub checker behavior.
+- result: GitHub showed scripts/enforcement/check-connector-evidence.sh validation code.
+- decision: changed the checker based on GitHub evidence.
+- target: scripts/enforcement/check-connector-evidence.sh.'
+echo ok > scripts/enforcement/check-connector-evidence.sh
+ci connector-prose-field-extracts-real-value
+ok connector-prose-field-extracts-real-value
+
+# Same fixture, but the declared value is genuinely absent from evidence (using the
+# literal buggy extraction target "systems/connectors" as evidence text) must still fail
+# — proves the fix parses real connector names, not that it stopped checking anything.
+mk connector-prose-field-still-checks-evidence
+put '# Task
+
+External systems/connectors: GitHub, Supabase, Vercel
+
+## Connector Evidence
+- systems/connectors: workaround text only, no real connector names mentioned here.
+
+## Connector Usage Evidence
+- source: systems/connectors placeholder.
+- action: systems/connectors placeholder.
+- result: systems/connectors placeholder file.md.
+- decision: changed systems/connectors placeholder.
+- target: scripts/enforcement/check-connector-evidence.sh.'
+echo ok > scripts/enforcement/check-connector-evidence.sh
+ci connector-prose-field-still-checks-evidence
+no connector-prose-field-still-checks-evidence
+
 echo "connector route plan checker tests passed"

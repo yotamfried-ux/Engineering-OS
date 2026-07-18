@@ -23,6 +23,8 @@ expect_fail() { local name="$1" head="$2"; if "$CHECKER" "$BASE" "$head"; then e
 write_good_plan() {
   local path="$1"
   local progress_body="${2:-full}"
+  local inherited_sha="${3:-}"
+  local inherited_reason="${4:-}"
   cat > "$path" <<PLAN
 # Route Plan
 
@@ -37,6 +39,11 @@ write_good_plan() {
 | Validation gates | npm test, PR CI |
 | Task-router evidence | core/task-router.md routing matrix consulted |
 | Workflow evidence | core/workflow.md steps consulted before coding |
+
+$(if [ -n "$inherited_sha" ]; then
+  echo "Inherited base commit: $inherited_sha"
+  echo "Inherited base reason: $inherited_reason"
+fi)
 
 ## DoD
 
@@ -125,6 +132,166 @@ write_good_plan .claude/plans/task.md full
 git add .claude/plans/task.md
 git commit -qm plan-pre-merge
 expect_pass plan-before-code "$(git rev-parse HEAD)"
+
+# Regression: a branch that fast-forwards/inherits another branch's pre-existing
+# commits (touching a non-doc/non-plan file, e.g. root guidance docs) before its own
+# Route Plan commit must not be falsely flagged, provided it declares a valid,
+# git-verified "Inherited base commit" marker with a concrete reason. Without the
+# marker, the same commit shape must still fail (safe default, no silent bypass).
+git checkout -q -b inherited-without-marker-fails "$BASE"
+reset_workspace
+echo "guidance v1" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance v1"
+echo "guidance v2" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance v2"
+reset_workspace
+write_good_plan .claude/plans/task.md start
+git add .claude/plans/task.md
+git commit -qm plan-first
+reset_workspace
+echo 'console.log("hello")' > src/app.js
+git add src/app.js
+git commit -qm code-second
+write_good_plan .claude/plans/task.md mid
+git add .claude/plans/task.md
+git commit -qm plan-mid
+write_good_plan .claude/plans/task.md full
+git add .claude/plans/task.md
+git commit -qm plan-pre-merge
+expect_fail inherited-without-marker-fails "$(git rev-parse HEAD)"
+
+git checkout -q -b inherited-with-valid-marker-passes "$BASE"
+reset_workspace
+echo "guidance v1" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance v1"
+echo "guidance v2" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance v2"
+INHERITED_SHA="$(git rev-parse HEAD)"
+reset_workspace
+write_good_plan .claude/plans/task.md start "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in) that predate this branch's own plan; those commits are not this PR's own work."
+git add .claude/plans/task.md
+git commit -qm plan-first
+reset_workspace
+echo 'console.log("hello")' > src/app.js
+git add src/app.js
+git commit -qm code-second
+write_good_plan .claude/plans/task.md mid "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in) that predate this branch's own plan; those commits are not this PR's own work."
+git add .claude/plans/task.md
+git commit -qm plan-mid
+write_good_plan .claude/plans/task.md full "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in) that predate this branch's own plan; those commits are not this PR's own work."
+git add .claude/plans/task.md
+git commit -qm plan-pre-merge
+expect_pass inherited-with-valid-marker-passes "$(git rev-parse HEAD)"
+
+# Marker referencing a SHA that is not in this diff range at all must fail loudly,
+# not silently fall back to unexempted (which would just look like the no-marker case
+# and could mask a copy-paste error), and must not grant any exemption.
+git checkout -q -b inherited-marker-invalid-sha-fails "$BASE"
+reset_workspace
+echo "guidance v1" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance v1"
+reset_workspace
+write_good_plan .claude/plans/task.md start "0000000deadbeef0000000000000000deadbeef" "reused an already-open guidance branch's commits that predate this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-first
+reset_workspace
+echo 'console.log("hello")' > src/app.js
+git add src/app.js
+git commit -qm code-second
+write_good_plan .claude/plans/task.md full "0000000deadbeef0000000000000000deadbeef" "reused an already-open guidance branch's commits that predate this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-pre-merge
+expect_fail inherited-marker-invalid-sha-fails "$(git rev-parse HEAD)"
+
+# A marker cannot point at (or past) this branch's own plan commit or later — that
+# would let a branch relabel its own code as "inherited" to dodge the ordering rule.
+git checkout -q -b inherited-marker-after-plan-fails "$BASE"
+reset_workspace
+write_good_plan .claude/plans/task.md start
+git add .claude/plans/task.md
+git commit -qm plan-first
+PLAN_SHA="$(git rev-parse HEAD)"
+reset_workspace
+echo 'console.log("hello")' > src/app.js
+git add src/app.js
+git commit -qm code-second
+write_good_plan .claude/plans/task.md full "$PLAN_SHA" "claims its own plan commit as the inherited boundary, which must be rejected."
+git add .claude/plans/task.md
+git commit -qm plan-pre-merge
+expect_fail inherited-marker-after-plan-fails "$(git rev-parse HEAD)"
+
+# A valid marker for genuinely inherited commits must not exempt this branch's own
+# code from still needing to come after this branch's own plan commit.
+git checkout -q -b inherited-marker-own-code-before-own-plan-fails "$BASE"
+reset_workspace
+echo "guidance v1" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance v1"
+INHERITED_SHA="$(git rev-parse HEAD)"
+reset_workspace
+echo 'console.log("own sneaky code before own plan")' > src/app.js
+git add src/app.js
+git commit -qm "own code committed before own plan"
+reset_workspace
+write_good_plan .claude/plans/task.md full "$INHERITED_SHA" "reused an already-open guidance branch's single commit that predates this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-after-own-code
+expect_fail inherited-marker-own-code-before-own-plan-fails "$(git rev-parse HEAD)"
+
+# A marker without a concrete reason of at least 20 characters must fail — the marker
+# alone is not "explicit evidence"; a documented reason is required.
+git checkout -q -b inherited-marker-short-reason-fails "$BASE"
+reset_workspace
+echo "guidance v1" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance v1"
+INHERITED_SHA="$(git rev-parse HEAD)"
+reset_workspace
+write_good_plan .claude/plans/task.md start "$INHERITED_SHA" "n/a"
+git add .claude/plans/task.md
+git commit -qm plan-first
+reset_workspace
+echo 'console.log("hello")' > src/app.js
+git add src/app.js
+git commit -qm code-second
+write_good_plan .claude/plans/task.md full "$INHERITED_SHA" "n/a"
+git add .claude/plans/task.md
+git commit -qm plan-pre-merge
+expect_fail inherited-marker-short-reason-fails "$(git rev-parse HEAD)"
+
+# Regression (found in PR review): inherited history that itself includes its own,
+# already-policy-compliant Route Plan (a different path than this branch's own plan)
+# must not corrupt first_plan or get re-validated against this branch's own
+# DoD/Progress-Lifecycle timeline. Only this branch's own plan path should be used.
+git checkout -q -b inherited-own-plan-file-does-not-corrupt-check "$BASE"
+reset_workspace
+write_good_plan .claude/plans/inherited-guidance.md full
+git add .claude/plans/inherited-guidance.md
+git commit -qm "inherited: add guidance route plan"
+echo "guidance v1" > GUIDE.md
+git add GUIDE.md
+git commit -qm "inherited: add guidance doc"
+INHERITED_SHA="$(git rev-parse HEAD)"
+reset_workspace
+write_good_plan .claude/plans/task.md start "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in), including its own already-validated route plan file, that predate this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-first
+reset_workspace
+echo 'console.log("hello")' > src/app.js
+git add src/app.js
+git commit -qm code-second
+write_good_plan .claude/plans/task.md mid "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in), including its own already-validated route plan file, that predate this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-mid
+write_good_plan .claude/plans/task.md full "$INHERITED_SHA" "reused an already-open guidance branch's commits (fast-forwarded in), including its own already-validated route plan file, that predate this branch's own plan."
+git add .claude/plans/task.md
+git commit -qm plan-pre-merge
+expect_pass inherited-own-plan-file-does-not-corrupt-check "$(git rev-parse HEAD)"
 
 # Missing task-router evidence fails.
 git checkout -q -b missing-router-evidence "$BASE"

@@ -11,20 +11,95 @@ on:
 jobs:
   enforcement-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       # Pinned to a full commit SHA (supply-chain hardening); no auth git ops needed.
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           persist-credentials: false
 
-      - name: Run all enforcement test suites
+      - name: Prepare enforcement test environment
         run: |
-          set -u
-          # Each test bootstraps its own temp git repo, so give git an identity.
+          set -euo pipefail
           git config --global user.email "ci@engineering-os.local"
           git config --global user.name "engineering-os-ci"
           git config --global init.defaultBranch main
 
+      - name: Verify operational behavior evidence suite
+        run: bash scripts/enforcement/tests/test-operational-behavior-evidence.sh
+
+      - name: Verify operational work history evidence suite
+        run: bash scripts/enforcement/tests/test-operational-work-history-evidence.sh
+
+      - name: Verify operational work history collector suite
+        run: bash scripts/enforcement/tests/test-collect-pr-work-history.sh
+
+      - name: Verify pr-policy workflow wiring
+        run: bash scripts/enforcement/tests/test-pr-policy-workflow-wiring.sh
+
+      - name: Verify PR review evidence suite
+        run: bash scripts/enforcement/tests/test-pr-review-evidence.sh
+
+      - name: Verify known gaps suite
+        run: bash scripts/enforcement/tests/test-known-gaps.sh
+
+      - name: Verify simulation coverage suite
+        run: bash scripts/enforcement/tests/test-simulation-coverage.sh
+
+      - name: Verify readiness audit suite
+        run: bash scripts/enforcement/tests/test-readiness-audit.sh
+
+      - name: Verify direct policy-gate installation telemetry contract
+        run: bash scripts/enforcement/tests/test-install-policy-gate-coverage.sh
+
+      - name: Verify Project 8 telemetry readiness suite
+        run: bash scripts/enforcement/tests/test-project8-telemetry-readiness.sh
+
+      - name: Verify remote telemetry handoff suite
+        run: bash scripts/enforcement/tests/test-remote-telemetry-handoff.sh
+
+      - name: Verify live review thread suite
+        run: bash scripts/enforcement/tests/test-live-review-threads.sh
+
+      - name: Verify enforcement suites group A-F
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[a-f]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group G-L
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[g-l]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group M-R
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[m-r]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Verify enforcement suites group S-Z
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[s-z]*.sh; do
+            echo "──────── $t ────────"
+            bash "$t"
+          done
+
+      - name: Run all enforcement test suites
+        run: |
+          set -u
           fail=0
           for t in scripts/enforcement/tests/test-*.sh; do
             echo "──────── $t ────────"
@@ -101,6 +176,16 @@ jobs:
           set -euo pipefail
           bash scripts/enforcement/check-readiness-audit.sh
 
+      - name: Verify result loop contract gate
+        run: |
+          set -euo pipefail
+          python3 scripts/enforcement/check-result-loop-contract.py --root .
+
+      - name: Verify scaling extension gate
+        run: |
+          set -euo pipefail
+          python3 scripts/enforcement/check-scaling-extension.py --root .
+
       - name: Verify use-in-project output contract
         run: |
           set -euo pipefail
@@ -126,6 +211,11 @@ jobs:
             grep -q 'pre-tool-use-runtime-evidence.sh' .claude/settings.json
             grep -q 'post-tool-use-mcp.sh' .claude/settings.json
             grep -q 'post-tool-use-read-evidence.sh' .claude/settings.json
+            grep -q 'require-telemetry-session.sh' .claude/settings.json
+            grep -q 'eos-telemetry-session-start.sh' .claude/settings.json
+            grep -q 'user_prompt_submit' .claude/settings.json
+            grep -q 'post_tool_use_failure' .claude/settings.json
+            grep -q 'instructions_loaded' .claude/settings.json
             python3 - <<'PY'
           import json
           import os
@@ -140,6 +230,8 @@ jobs:
           assert f'{workspace}/scripts/enforcement/enforce-workflow.sh' in serialized
           assert f'{workspace}/scripts/session-setup.sh' in serialized
           assert f'{workspace}/scripts/enforcement/post-stop-hook.sh' in serialized
+          assert f'{workspace}/scripts/monitoring/require-telemetry-session.sh' in serialized
+          assert f'{workspace}/scripts/monitoring/eos-telemetry-session-start.sh' in serialized
           pre = s['hooks']['PreToolUse']
           post = s['hooks']['PostToolUse']
           assert any(
@@ -153,6 +245,20 @@ jobs:
               and any('post-tool-use-read-evidence.sh' in h.get('command', '') for h in x.get('hooks', []))
               for x in post
           )
+          assert any(
+              x.get('matcher') == '.*'
+              and any('require-telemetry-session.sh' in h.get('command', '') for h in x.get('hooks', []))
+              for x in pre
+          )
+          assert any(
+              x.get('matcher') == '.*'
+              and any('eos-telemetry-event.sh' in h.get('command', '') and 'post_tool_use' in h.get('command', '') for h in x.get('hooks', []))
+              for x in post
+          )
+          assert 'UserPromptSubmit' in s['hooks']
+          assert 'PostToolUseFailure' in s['hooks']
+          assert 'InstructionsLoaded' in s['hooks']
+          assert 'SessionEnd' in s['hooks']
           stop_cmd = s['hooks']['Stop'][0]['hooks'][0]['command']
           assert 'post-stop-hook.sh' in stop_cmd
           assert not re.search(r'\|\|\s*true\b', stop_cmd)

@@ -145,6 +145,16 @@ write_body "$TMP/installed-body.md" "
 - decision: safe to merge after CI is green.
 - evidence: scripts/enforcement/tests/test-clean-install-and-usage.sh.
 
+## Operational Behavior Evidence
+
+- behavior_summary: Installed-target smoke check ran the extracted checker against a fixture body.
+- engineering_os_influence: The pr-policy checker and workflow evidence gate constrained this fixture to a real PR-body schema.
+- efficiency_signals: single installed-target smoke invocation; no retries needed.
+- friction_or_false_positives: none observed in this installed-target smoke check.
+- quality_signals: installed checker exit code and stdout were both verified against the fixture body.
+- usage_surrogate: exact_token_usage_available=no; wall_clock_minutes=not_metered; tool_calls=fixture.
+- next_system_improvement: keep this fixture in sync whenever check-pr-review-evidence.sh gains new required PR-body sections.
+
 ## Merge Readiness
 
 - base: main

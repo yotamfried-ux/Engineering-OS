@@ -11,6 +11,14 @@
 #
 # workflow	dependency
 pr-policy.yml	scripts/enforcement/check-pr-review-evidence.sh
+pr-policy.yml	scripts/enforcement/check-operational-behavior-evidence.sh
+pr-policy.yml	scripts/enforcement/check-operational-work-history-evidence.sh
+pr-policy.yml	scripts/enforcement/check-live-review-threads.py
+pr-policy.yml	scripts/monitoring/collect-pr-work-history.py
+pr-policy.yml	scripts/monitoring/enrich-work-history-ci-history.py
+pr-policy.yml	scripts/monitoring/select-pr-telemetry.py
+pr-policy.yml	scripts/monitoring/telemetry_handoff.py
+pr-policy.yml	scripts/enforcement/result-loop-requirements.tsv
 connector-evidence-policy.yml	scripts/enforcement/check-connector-evidence.sh
 workflow-evidence-policy.yml	scripts/enforcement/check-workflow-evidence.sh
 capability-evidence-policy.yml	scripts/enforcement/check-capability-staged-changes.sh
@@ -19,3 +27,4 @@ capability-evidence-policy.yml	scripts/enforcement/check-cv-external-system-sele
 capability-evidence-policy.yml	scripts/enforcement/capability-staged-map.tsv
 capability-evidence-policy.yml	core/capability-registry.yaml
 documentation-asset-policy.yml	scripts/enforcement/check-documentation-asset-evidence.sh
+import-cleanup-policy.yml	scripts/enforcement/check-import-cleanup.py
