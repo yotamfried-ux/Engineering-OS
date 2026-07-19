@@ -49,4 +49,35 @@ PLAN
 if python3 "$EVAL" --oracle "$TMP/sep-oracle.tsv" --run-dir "$TMP/sep-fail" >/tmp/behavioral-sep-fail.out; then exit 1; fi
 grep -q 'FAIL t2: forbidden any' /tmp/behavioral-sep-fail.out
 
+# Regression: final self-report cannot prove that a decision prompt was not
+# repeated. Occurrence checks score a normalized interaction artifact.
+cat > "$TMP/count-oracle.tsv" <<'TSV'
+# task_id	check	artifact	value	description
+t3	max_occurrences	interaction-log.md	1||ask_user_question:execution-context	ask may ask the decision at most once
+t3	exact_occurrences	interaction-log.md	1||decision_state:execution-context:deferred	closed state must be recorded once
+TSV
+
+mkdir -p "$TMP/count-pass/t3" "$TMP/count-fail/t3"
+cat > "$TMP/count-pass/t3/interaction-log.md" <<'LOG'
+ask_user_question:execution-context
+decision_state:execution-context:deferred
+LOG
+python3 "$EVAL" --oracle "$TMP/count-oracle.tsv" --run-dir "$TMP/count-pass" >/tmp/behavioral-count-pass.out
+grep -q 'Summary: 2/2 checks passed' /tmp/behavioral-count-pass.out
+
+cat > "$TMP/count-fail/t3/interaction-log.md" <<'LOG'
+ask_user_question:execution-context
+decision_state:execution-context:deferred
+ask_user_question:execution-context
+LOG
+if python3 "$EVAL" --oracle "$TMP/count-oracle.tsv" --run-dir "$TMP/count-fail" >/tmp/behavioral-count-fail.out; then exit 1; fi
+grep -q 'found 2' /tmp/behavioral-count-fail.out
+
+cat > "$TMP/bad-count-oracle.tsv" <<'TSV'
+# task_id	check	artifact	value	description
+t3	max_occurrences	interaction-log.md	not-a-count||ask_user_question:execution-context	malformed count must fail closed
+TSV
+if python3 "$EVAL" --oracle "$TMP/bad-count-oracle.tsv" --run-dir "$TMP/count-pass" >/tmp/behavioral-bad-count.out; then exit 1; fi
+grep -q 'count must be an integer' /tmp/behavioral-bad-count.out
+
 echo "claude behavioral evaluator mechanics passed"
