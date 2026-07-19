@@ -174,3 +174,19 @@ jobs:
           git config --global user.name "engineering-os-ci"
           git config --global init.defaultBranch main
       - run: bash scripts/enforcement/tests/test-dispatch-downstream-pr-matching.sh
+
+  dispatch-failure-modes:
+    name: Verify dispatcher failure-mode handling (malformed input, traversal, idempotency)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - name: Prepare Git simulation
+        run: |
+          set -euo pipefail
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+      - run: bash scripts/enforcement/tests/test-dispatch-failure-modes.sh
