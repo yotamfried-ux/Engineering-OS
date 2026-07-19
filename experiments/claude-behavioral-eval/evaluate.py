@@ -67,6 +67,20 @@ def parse_occurrence_value(rule: Rule) -> tuple[int, str]:
     return limit, needle.strip().lower()
 
 
+def parse_required_all_any(rule: Rule) -> list[list[str]]:
+    groups: list[list[str]] = []
+    for raw_group in rule.value.split("||"):
+        if not raw_group.strip():
+            raise ValueError(f"{rule.task_id}: required_all_any contains an empty alternative")
+        terms = [term.strip().lower() for term in raw_group.split("&&")]
+        if any(not term for term in terms):
+            raise ValueError(f"{rule.task_id}: required_all_any contains an empty required term")
+        groups.append(terms)
+    if not groups:
+        raise ValueError(f"{rule.task_id}: required_all_any requires at least one alternative")
+    return groups
+
+
 def check_rule(run_dir: Path, rule: Rule) -> tuple[bool, str]:
     text = read_artifact(run_dir, rule.task_id, rule.artifact)
     if text is None:
@@ -90,6 +104,18 @@ def check_rule(run_dir: Path, rule: Rule) -> tuple[bool, str]:
         options = [option.strip().lower() for option in rule.value.split("||") if option.strip()]
         ok = not any(option in text for option in options)
         return ok, f"{rule.task_id}: forbidden any of {options!r} in {rule.artifact} — {rule.description}"
+
+    if rule.check == "required_all_any":
+        try:
+            groups = parse_required_all_any(rule)
+        except ValueError as exc:
+            return False, str(exc)
+        ok = any(all(term in text for term in group) for group in groups)
+        return (
+            ok,
+            f"{rule.task_id}: required one complete alternative {groups!r} in "
+            f"{rule.artifact} — {rule.description}",
+        )
 
     if rule.check in {"max_occurrences", "exact_occurrences"}:
         try:
