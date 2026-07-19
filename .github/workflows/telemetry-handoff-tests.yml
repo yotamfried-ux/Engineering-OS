@@ -112,3 +112,13 @@ jobs:
         with:
           persist-credentials: false
       - run: bash scripts/enforcement/tests/test-live-review-threads.sh
+
+  multirepo-dispatch:
+    name: Verify multi-repo telemetry dispatch (discovery, attribution, isolation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/enforcement/tests/test-multirepo-dispatch.sh
