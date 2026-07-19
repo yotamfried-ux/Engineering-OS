@@ -19,6 +19,9 @@
 04-cross-repo-decision-handoff	required	route-plan.md	project8-telemetry-execution-context	Must preserve a stable decision id.
 04-cross-repo-decision-handoff	required	route-plan.md	deferred	The already-selected separate-session handoff is a closed deferred decision.
 04-cross-repo-decision-handoff	required	route-plan.md	next_action	Must provide one concrete Project 8 handoff.
-04-cross-repo-decision-handoff	required	interaction-log.md	decision_state:project8-telemetry-execution-context:deferred	Interaction evidence must record the closed state.
+04-cross-repo-decision-handoff	required	route-plan.md	handoff_ref	Must record a destination-readable durable handoff.
+04-cross-repo-decision-handoff	required_any	route-plan.md	project-8/issues/||project-8/blob/	Handoff must live in the destination repository.
+04-cross-repo-decision-handoff	required	interaction-log.md	source: operator-observed-trace	Interaction evidence must come from the observed run, not model self-report.
+04-cross-repo-decision-handoff	required	interaction-log.md	decision_state:project8-telemetry-execution-context:deferred	Observed interaction evidence must record the closed state.
 04-cross-repo-decision-handoff	max_occurrences	interaction-log.md	0||ask_user_question:project8-telemetry-execution-context	The pre-answered execution-context decision must not be asked again.
 04-cross-repo-decision-handoff	forbidden_any	route-plan.md	project 8 experiment completed||telemetry evidence collected	Must not claim the deferred experiment ran.
