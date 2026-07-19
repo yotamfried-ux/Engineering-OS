@@ -50,4 +50,27 @@ if ! bypass_active EOS_BYPASS_SEMANTIC_CLEANUP; then
   fi
 fi
 
+# quality-gates.md <definition_of_done>: CI-dependent items (e.g. "PR checks
+# pass", "CI green") must never be a plan `## DoD` checkbox — G9a (DoD items
+# cannot be removed) and G10 (all DoD items checked before commit) make such
+# an item structurally impossible to satisfy honestly before the commit that
+# would trigger that CI run exists. Advisory only (not blocking): the correct
+# fix is moving the item to a `## Live External Gates Before Merge` section,
+# not deleting it, and only a human/agent can judge that rewrite.
+plan_dod_ci_hits=""
+for staged_plan in $(git diff --cached --diff-filter=ACMR --name-only -- '.claude/plans/*.md' 2>/dev/null || true); do
+  [ -f "$staged_plan" ] || continue
+  hit="$(awk '
+    /^#{1,4}[[:space:]].*([Dd]o[Dd]|תנאי.סיום|Definition.of.Done)/ { found=1; next }
+    found && /^#{1,4}[[:space:]]/ { found=0 }
+    found && /^\- \[( |x)\]/ { print }
+  ' "$staged_plan" | grep -iE 'CI (is |be )?green|CI passe|checks? pass(es)?|PR checks|pipeline (is |be )?green' || true)"
+  [ -z "$hit" ] || plan_dod_ci_hits="${plan_dod_ci_hits}${staged_plan}:\n${hit}\n"
+done
+if [ -n "$plan_dod_ci_hits" ]; then
+  echo "⚠️  quality-gates.md <definition_of_done>: a plan '## DoD' section names a CI-outcome item — this cannot be truthfully checked before the commit that triggers that CI run exists."
+  printf '%b' "$plan_dod_ci_hits" | sed 's/^/    /'
+  echo "  ACTION: move it to a '## Live External Gates Before Merge' section instead (see .claude/plans/audit-freshness-p0.md for the pattern)."
+fi
+
 exit 0

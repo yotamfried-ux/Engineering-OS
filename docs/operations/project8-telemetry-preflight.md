@@ -64,7 +64,7 @@ Required mode is intentional: authentication or push failures must stop the expe
 
 ## Fresh-session verification
 
-After installation or policy changes, close the current Claude session and open a new one. Claude Code loads hooks only at session startup.
+After installation or policy changes, close the current Claude session and open a new one. Claude Code reloads `.claude/settings.json` and hook files live via a file watcher, so the hook wiring itself does not require a fresh session. What actually requires a fresh session is `SessionStart`-scoped state: the run id and the telemetry bundle are only created/opened once, by the `SessionStart` hook. A session that was already running before installation or a policy change never re-fires `SessionStart`, so it keeps its stale (or absent) run id and telemetry bundle regardless of live hook reload.
 
 Before application work, run:
 

@@ -151,4 +151,21 @@
 > ניתן לגבות את סגירת הרשימה הזו ב-Stop hook שמאמת את תנאי הסיום לפני סימון המשימה
 > כגמורה (ראה [`hooks-policy.md`](./hooks-policy.md) › `<hooks>`).
 
+### פריטים תלויי-CI אינם DoD checkbox
+
+G9a (אסור להקטין את מספר פריטי ה-DoD בקובץ plan) ו-G10 (חסימת commit כל עוד יש
+פריט DoD לא מסומן) יוצרים יחד סתירה מבנית לכל פריט שאמיתותו נקבעת רק **אחרי**
+ה-commit/push שאמור לגרום לה — למשל "PR checks pass" או "CI green". אי אפשר
+לסמן פריט כזה `[x]` באמת לפני שה-CI רץ על ה-SHA הסופי, אבל G10 חוסם את אותו
+commit כל עוד הוא לא מסומן.
+
+**הכלל:** פריט שתלוי בתוצאת CI/מיזוג בפועל **לעולם לא** נכנס לרשימת `## DoD`
+בקובץ plan. במקום זאת — הוסף בקובץ ה-plan section נפרד בשם `## Live External
+Gates Before Merge` (ראו דוגמה חיה ב-[`.claude/plans/audit-freshness-p0.md`](../.claude/plans/audit-freshness-p0.md)),
+עם פסקת הסבר שהפריטים בו **אינם** checklist items מכוונת, כדי ש-`plan-policy`
+לא יתייחס אליהם כחוסמים. ה-section הזה מאומת בפועל מול ה-PR ב-GitHub
+(head SHA, check-runs חיים, review threads) ולא דרך סימון ידני בקובץ plan —
+ראו [`git-policy.md`](./git-policy.md) ו-`check-pr-review-evidence.sh`'s
+`expected-head-sha` verification.
+
 </definition_of_done>

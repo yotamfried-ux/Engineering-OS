@@ -70,6 +70,35 @@ out="$(bash "$ENFORCER" 2>&1)"; code=$?
 { [ "$code" = 0 ] && printf '%s' "$out" | grep -q 'debug-style output'; } \
   && ok "Go fmt.Printf emits a warning" || bad "Go fmt.Printf emits a warning"
 
+echo "── advisory: plan DoD CI-outcome items (C2) ──"
+git reset -q 2>/dev/null
+mkdir -p .claude/plans
+printf '%s\n' \
+  "# Sample Plan" "" "## DoD" "" "- [ ] PR checks pass before merge" "- [x] Code implemented" \
+  > .claude/plans/sample.md
+git add .claude/plans/sample.md 2>/dev/null
+out="$(bash "$ENFORCER" 2>&1)"; code=$?
+{ [ "$code" = 0 ] && printf '%s' "$out" | grep -q 'CI-outcome item'; } \
+  && ok "DoD item naming 'PR checks pass' warns, does not block" || bad "DoD item naming 'PR checks pass' warns, does not block"
+
+git reset -q 2>/dev/null
+printf '%s\n' \
+  "# Sample Plan" "" "## DoD" "" "- [x] CI is green on the final head SHA" \
+  > .claude/plans/sample2.md
+git add .claude/plans/sample2.md 2>/dev/null
+out="$(bash "$ENFORCER" 2>&1)"; code=$?
+{ [ "$code" = 0 ] && printf '%s' "$out" | grep -q 'CI-outcome item'; } \
+  && ok "already-checked 'CI is green' DoD item still warns" || bad "already-checked 'CI is green' DoD item still warns"
+
+git reset -q 2>/dev/null
+printf '%s\n' \
+  "# Sample Plan" "" "## DoD" "" "- [ ] Code implemented" "- [ ] Tests pass locally" "" "## Live External Gates Before Merge" "" "- CI is green on the final PR head." \
+  > .claude/plans/sample3.md
+git add .claude/plans/sample3.md 2>/dev/null
+out="$(bash "$ENFORCER" 2>&1)"; code=$?
+{ [ "$code" = 0 ] && ! printf '%s' "$out" | grep -q 'CI-outcome item'; } \
+  && ok "CI language outside ## DoD (Live External Gates) does not warn" || bad "CI language outside ## DoD (Live External Gates) does not warn"
+
 echo "── bypasses ──"
 git reset -q 2>/dev/null; printf '%s\n' "debugger;" > b.js; git add b.js 2>/dev/null
 EOS_BYPASS_CLEANUP=1 bash "$ENFORCER" >/dev/null 2>&1; expect "EOS_BYPASS_CLEANUP skips gate" 0 $?
