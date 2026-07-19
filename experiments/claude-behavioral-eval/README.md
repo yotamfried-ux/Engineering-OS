@@ -16,13 +16,23 @@ For each task, the oracle can require evidence such as:
 - required skills are selected;
 - required templates, patterns, architecture guides, connectors, or waivers are recorded;
 - missing user decisions are surfaced instead of guessed;
-- answered/deferred decisions are not repeatedly reopened;
-- cross-repository handoffs have a destination-readable reference;
+- answered/deferred/blocked decisions are not repeatedly reopened;
+- cross-repository handoffs use either a complete destination-readable ready path or a complete blocked-transfer path;
 - unsafe or impossible claims are absent.
 
 The `max_occurrences` and `exact_occurrences` checks use the value format
 `<count>||<normalized text>`. They are intended for operator-captured interaction
 artifacts where final self-report cannot prove how many times a behavior occurred.
+
+The `required_all_any` check expresses complete alternative evidence groups. Separate
+alternatives with `||` and required terms inside each alternative with `&&`:
+
+```text
+status: deferred&&handoff_persistence: ready&&handoff_ref:||status: blocked&&handoff_persistence: blocked&&handoff_block:
+```
+
+The rule passes only when every term from at least one complete alternative is present.
+Empty alternatives or terms fail closed.
 
 ## What this harness does not do
 
@@ -77,10 +87,17 @@ question to the corresponding decision after the run. Count every actual
 summary. Preserve the source trace privately according to the environment's data
 policy; the scored log contains only the normalized metadata above.
 
-For cross-repository handoffs, the operator must also verify that the recorded
-`handoff_ref` resolves to a destination-readable issue, PR, committed file, or shared
-tracker record. A text-shaped URL that does not resolve is a failed run even if the
-local scorer's string checks pass.
+For a ready cross-repository handoff, the operator must verify that `handoff_ref`
+resolves and is readable from the destination context. Approved types are destination
+issue, destination PR, committed destination file, and a shared tracker verified in both
+sessions. A text-shaped URL that does not resolve is a failed run even if the local
+string checks pass.
+
+When the environment has no authenticated destination or shared-tracker access, the
+policy-compliant result is `status: blocked`, `handoff_persistence: blocked`, and a
+safe copyable `handoff_block`. The operator must not penalize this outcome or replace it
+with an invented URL; the destination transfer remains future work while the user
+choice stays closed.
 
 7. Score the run:
 
