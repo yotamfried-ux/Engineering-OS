@@ -50,6 +50,37 @@ def read_artifact(run_dir: Path, task_id: str, artifact: str) -> str | None:
     return norm(path.read_text(encoding="utf-8"))
 
 
+def parse_occurrence_value(rule: Rule) -> tuple[int, str]:
+    raw_limit, separator, needle = rule.value.partition("||")
+    if not separator or not needle.strip():
+        raise ValueError(
+            f"{rule.task_id}: {rule.check} value must be '<count>||<text>', got {rule.value!r}"
+        )
+    try:
+        limit = int(raw_limit.strip())
+    except ValueError as exc:
+        raise ValueError(
+            f"{rule.task_id}: {rule.check} count must be an integer, got {raw_limit!r}"
+        ) from exc
+    if limit < 0:
+        raise ValueError(f"{rule.task_id}: {rule.check} count cannot be negative")
+    return limit, needle.strip().lower()
+
+
+def parse_required_all_any(rule: Rule) -> list[list[str]]:
+    groups: list[list[str]] = []
+    for raw_group in rule.value.split("||"):
+        if not raw_group.strip():
+            raise ValueError(f"{rule.task_id}: required_all_any contains an empty alternative")
+        terms = [term.strip().lower() for term in raw_group.split("&&")]
+        if any(not term for term in terms):
+            raise ValueError(f"{rule.task_id}: required_all_any contains an empty required term")
+        groups.append(terms)
+    if not groups:
+        raise ValueError(f"{rule.task_id}: required_all_any requires at least one alternative")
+    return groups
+
+
 def check_rule(run_dir: Path, rule: Rule) -> tuple[bool, str]:
     text = read_artifact(run_dir, rule.task_id, rule.artifact)
     if text is None:
@@ -73,6 +104,36 @@ def check_rule(run_dir: Path, rule: Rule) -> tuple[bool, str]:
         options = [option.strip().lower() for option in rule.value.split("||") if option.strip()]
         ok = not any(option in text for option in options)
         return ok, f"{rule.task_id}: forbidden any of {options!r} in {rule.artifact} — {rule.description}"
+
+    if rule.check == "required_all_any":
+        try:
+            groups = parse_required_all_any(rule)
+        except ValueError as exc:
+            return False, str(exc)
+        ok = any(all(term in text for term in group) for group in groups)
+        return (
+            ok,
+            f"{rule.task_id}: required one complete alternative {groups!r} in "
+            f"{rule.artifact} — {rule.description}",
+        )
+
+    if rule.check in {"max_occurrences", "exact_occurrences"}:
+        try:
+            expected, needle = parse_occurrence_value(rule)
+        except ValueError as exc:
+            return False, str(exc)
+        actual = text.count(needle)
+        if rule.check == "max_occurrences":
+            ok = actual <= expected
+            relation = "at most"
+        else:
+            ok = actual == expected
+            relation = "exactly"
+        return (
+            ok,
+            f"{rule.task_id}: {relation} {expected} occurrence(s) of {needle!r} in "
+            f"{rule.artifact}; found {actual} — {rule.description}",
+        )
 
     return False, f"{rule.task_id}: unknown check {rule.check!r}"
 
