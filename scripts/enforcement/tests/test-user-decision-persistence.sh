@@ -22,7 +22,7 @@ grep -q 'core/user-decision-policy.md' "$ENTRY" || fail "CLAUDE.md does not load
 grep -q '| החלטות משתמש ו-handoff | `core/user-decision-policy.md` |' "$ENTRY" || fail "concept ownership is missing"
 
 for status in unanswered answered deferred blocked superseded; do
-  grep -Eq "`?$status`?" "$POLICY" || fail "decision status missing: $status"
+  grep -Fq -- "- \`$status\`" "$POLICY" || fail "decision status missing: $status"
 done
 
 grep -q 'אל תשאל שוב' "$POLICY" || fail "ask-once prohibition is missing"
@@ -34,6 +34,7 @@ grep -q 'שינוי ניסוח, turn חדש, checklist פתוח' "$POLICY" || fa
 
 grep -q $'04-cross-repo-decision-handoff\tmax_occurrences\tinteraction-log.md\t0||ask_user_question:project8-telemetry-execution-context' "$ORACLE" || fail "oracle does not reject the repeated Project 8 question"
 
+awk -F '\t' 'NR == 1 || $1 == "04-cross-repo-decision-handoff"' "$ORACLE" > "$TMP/decision-oracle.tsv"
 mkdir -p "$TMP/pass/04-cross-repo-decision-handoff" "$TMP/fail/04-cross-repo-decision-handoff"
 cat > "$TMP/pass/04-cross-repo-decision-handoff/route-plan.md" <<'PLAN'
 decision_id: project8-telemetry-execution-context
@@ -43,12 +44,12 @@ PLAN
 cat > "$TMP/pass/04-cross-repo-decision-handoff/interaction-log.md" <<'LOG'
 decision_state:project8-telemetry-execution-context:deferred
 LOG
-python3 "$EVAL" --oracle "$ORACLE" --run-dir "$TMP/pass" >/tmp/user-decision-pass.out
+python3 "$EVAL" --oracle "$TMP/decision-oracle.tsv" --run-dir "$TMP/pass" >/tmp/user-decision-pass.out
 grep -q '04-cross-repo-decision-handoff: at most 0 occurrence' /tmp/user-decision-pass.out || fail "positive fixture did not score the ask-once rule"
 
 cp -R "$TMP/pass/04-cross-repo-decision-handoff/." "$TMP/fail/04-cross-repo-decision-handoff/"
 printf '%s\n' 'ask_user_question:project8-telemetry-execution-context' >> "$TMP/fail/04-cross-repo-decision-handoff/interaction-log.md"
-if python3 "$EVAL" --oracle "$ORACLE" --run-dir "$TMP/fail" >/tmp/user-decision-fail.out; then
+if python3 "$EVAL" --oracle "$TMP/decision-oracle.tsv" --run-dir "$TMP/fail" >/tmp/user-decision-fail.out; then
   fail "repeated pre-answered decision unexpectedly passed"
 fi
 grep -q 'found 1' /tmp/user-decision-fail.out || fail "negative fixture did not report the repeated question"
