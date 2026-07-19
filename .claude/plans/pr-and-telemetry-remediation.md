@@ -46,7 +46,7 @@ Plan Scope: standard
 ## Progress Lifecycle Evidence
 
 - start: this plan is committed before any code/doc changes for B1/B4/C1/C2.
-- mid: checklist, doc fix, stale-CI check, DoD-paradox policy fix, and telemetry attribute aliases land after this plan.
+- mid: the checklist, `project8-telemetry-preflight.md` wording fix, `check-pr-review-evidence.sh` stale-CI check, `quality-gates.md` DoD-paradox policy text, `enforce-quality.sh` advisory check, and `eos-telemetry-event.sh` gen_ai.* attributes all landed in the code/doc commit that followed this plan; each item's own test suite ran green locally before that commit.
 - pre-merge: CI, review threads, mergeability, and expected head SHA must be checked live in GitHub before merge.
 
 ## Skill Evidence
