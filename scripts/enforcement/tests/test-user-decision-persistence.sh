@@ -28,11 +28,21 @@ done
 grep -q 'אל תשאל שוב' "$POLICY" || fail "ask-once prohibition is missing"
 grep -q 'Plan Mode' "$POLICY" || fail "Plan Mode behavior is missing"
 grep -q 'read-only' "$POLICY" || fail "read-only behavior is missing"
-grep -q 'Cross-repo / unavailable workspace' "$POLICY" || fail "cross-repo handoff behavior is missing"
+grep -q 'Durable cross-repository handoff' "$POLICY" || fail "durable cross-repo handoff contract is missing"
+grep -q 'handoff_ref' "$POLICY" || fail "destination-readable handoff reference is missing"
+grep -q '\[Engineering OS handoff\]' "$POLICY" || fail "destination issue discovery convention is missing"
+grep -q 'Route Plan ו-`.claude/tasks.json`' "$POLICY" || fail "local state is not rejected as a durable handoff"
+grep -q 'operator' "$POLICY" || fail "external behavioral observation requirement is missing"
 grep -q 'Checklist semantics' "$POLICY" || fail "open-checklist semantics are missing"
 grep -q 'שינוי ניסוח, turn חדש, checklist פתוח' "$POLICY" || fail "non-material repeat triggers are not rejected"
 
+if grep -Eq 'For evaluation|interaction-log\.md|project8-telemetry-execution-context' "$PACKET"; then
+  fail "neutral task packet leaks evaluation artifacts or oracle identifiers"
+fi
+
 grep -q $'04-cross-repo-decision-handoff\tmax_occurrences\tinteraction-log.md\t0||ask_user_question:project8-telemetry-execution-context' "$ORACLE" || fail "oracle does not reject the repeated Project 8 question"
+grep -q $'04-cross-repo-decision-handoff\trequired\tinteraction-log.md\tsource: operator-observed-trace' "$ORACLE" || fail "oracle does not require external trace evidence"
+grep -q $'04-cross-repo-decision-handoff\trequired\troute-plan.md\thandoff_ref' "$ORACLE" || fail "oracle does not require a durable handoff reference"
 
 awk -F '\t' 'NR == 1 || $1 == "04-cross-repo-decision-handoff"' "$ORACLE" > "$TMP/decision-oracle.tsv"
 mkdir -p "$TMP/pass/04-cross-repo-decision-handoff" "$TMP/fail/04-cross-repo-decision-handoff"
@@ -40,18 +50,20 @@ cat > "$TMP/pass/04-cross-repo-decision-handoff/route-plan.md" <<'PLAN'
 decision_id: project8-telemetry-execution-context
 status: deferred
 next_action: open a fresh session inside project-8 and run telemetry preflight
+handoff_ref: https://github.example/yotamfried-ux/project-8/issues/42
 PLAN
 cat > "$TMP/pass/04-cross-repo-decision-handoff/interaction-log.md" <<'LOG'
+source: operator-observed-trace
 decision_state:project8-telemetry-execution-context:deferred
 LOG
-python3 "$EVAL" --oracle "$TMP/decision-oracle.tsv" --run-dir "$TMP/pass" >/tmp/user-decision-pass.out
-grep -q '04-cross-repo-decision-handoff: at most 0 occurrence' /tmp/user-decision-pass.out || fail "positive fixture did not score the ask-once rule"
+python3 "$EVAL" --oracle "$TMP/decision-oracle.tsv" --run-dir "$TMP/pass" >"$TMP/user-decision-pass.out"
+grep -q '04-cross-repo-decision-handoff: at most 0 occurrence' "$TMP/user-decision-pass.out" || fail "positive fixture did not score the ask-once rule"
 
 cp -R "$TMP/pass/04-cross-repo-decision-handoff/." "$TMP/fail/04-cross-repo-decision-handoff/"
 printf '%s\n' 'ask_user_question:project8-telemetry-execution-context' >> "$TMP/fail/04-cross-repo-decision-handoff/interaction-log.md"
-if python3 "$EVAL" --oracle "$TMP/decision-oracle.tsv" --run-dir "$TMP/fail" >/tmp/user-decision-fail.out; then
+if python3 "$EVAL" --oracle "$TMP/decision-oracle.tsv" --run-dir "$TMP/fail" >"$TMP/user-decision-fail.out"; then
   fail "repeated pre-answered decision unexpectedly passed"
 fi
-grep -q 'found 1' /tmp/user-decision-fail.out || fail "negative fixture did not report the repeated question"
+grep -q 'found 1' "$TMP/user-decision-fail.out" || fail "negative fixture did not report the repeated question"
 
 echo "user decision persistence contract passed"
