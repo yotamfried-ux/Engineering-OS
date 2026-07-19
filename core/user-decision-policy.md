@@ -21,7 +21,7 @@ project8-telemetry-execution-context
 - `unanswered` — נדרש קלט משתמש ועדיין אין תשובה שמאפשרת להמשיך.
 - `answered` — המשתמש בחר אפשרות שניתנת לביצוע בהקשר הנוכחי.
 - `deferred` — המשתמש החליט לבצע את הפעולה מאוחר יותר או בסשן נפרד.
-- `blocked` — ההחלטה ידועה, אך תנאי חיצוני מונע כרגע את הפעולה.
+- `blocked` — ההחלטה ידועה, אך תנאי חיצוני מונע כרגע את הפעולה או את העברת ה-handoff.
 - `superseded` — עובדה חדשה ומהותית ביטלה החלטה קודמת; מצביעים להחלטה החדשה.
 
 `answered`, `deferred` ו-`blocked` הם מצבים סגורים לשאלה. הם אינם `unanswered` רק
@@ -81,7 +81,7 @@ handoff durable לסשן שנפתח ב-repository אחר, ואסור להציג 
 מקור שנמצא רק ב-Route Plan זמני, `.claude/tasks.json`, working tree מקומי, או טקסט
 שלא נשלח ליעד — אינו durable handoff.
 
-ל-handoff חובה לרשום:
+בכל מסלול חובה לרשום את metadata הבסיסי הבא:
 
 ```text
 decision_id: <stable-id>
@@ -91,6 +91,13 @@ source_repo: <owner/repo>
 destination_repo: <owner/repo>
 next_action: <one concrete first action in the destination session>
 source_ref: <PR/commit/run that provides context>
+```
+
+כאשר ה-handoff נשמר בהצלחה, הוסף:
+
+```text
+handoff_persistence: ready
+handoff_type: destination_issue|destination_pr|destination_file|shared_tracker
 handoff_ref: <destination-readable issue/PR/file/tracker URL>
 ```
 
@@ -104,17 +111,26 @@ handoff_ref: <destination-readable issue/PR/file/tracker URL>
 לאחר היצירה, שמור את URL ה-issue כ-`handoff_ref`. בתחילת סשן ב-repository יעד, ולפני
 שאלה על עבודה deferred, חפש issues/PRs פתוחים עם prefix זה או עם ה-`decision_id`.
 
-אם אין אפשרות ליצור אף מקור durable, ההחלטה עצמה נשארת סגורה אך ה-handoff מסומן
-`blocked`; הצג למשתמש handoff block מוכן להעברה ופעולה אחת ליצירתו. אל תשאל שוב על
-הבחירה שכבר התקבלה. אל תסמן cross-repo handoff כ-`deferred` מוכן ללא `handoff_ref`.
+אם אין הרשאה או אפשרות ליצור מקור durable, אל תמציא URL ואל תסמן את ה-handoff
+`ready`. שמור את ההחלטה כסגורה ורשום:
+
+```text
+status: blocked
+handoff_persistence: blocked
+handoff_block: <copyable safe metadata block for the destination>
+```
+
+הצג פעולה אחת שמאפשרת להעביר את ה-handoff בהמשך. אל תשאל שוב על הבחירה שכבר
+התקבלה. רק לאחר יצירת מקור destination-readable אפשר להחליף את הסטטוס ל-`deferred`
+ואת `handoff_persistence` ל-`ready`.
 
 ### Cross-repo / unavailable workspace
 
 כאשר פעולה דורשת repository, directory, connector או session שאינם נגישים כרגע:
 
 1. אל תציג בחירה שכבר נענתה כאילו היא עדיין פתוחה.
-2. סמן את הפעולה `deferred` רק עם `handoff_ref` destination-readable; אחרת סמן את
-   persistence של ה-handoff כ-`blocked`, בלי לפתוח מחדש את החלטת המשתמש.
+2. סמן `deferred` רק עם `handoff_persistence: ready` ו-`handoff_ref` אמיתי; ללא גישה
+   ליעד סמן `blocked` עם `handoff_persistence: blocked` ו-`handoff_block` מוכן.
 3. תעד `next_action` אחד קונקרטי: לדוגמה "open a fresh session in project-8 and run
    the telemetry preflight".
 4. המשך את כל העבודה האפשרית ב-repository ובסשן הנוכחיים.
@@ -126,8 +142,8 @@ handoff_ref: <destination-readable issue/PR/file/tracker URL>
 
 פריט checklist פתוח מתאר עבודה שלא הושלמה; הוא אינו מוכיח שחסרה החלטת משתמש.
 כאשר ההחלטה סגורה אך העבודה עתידית, השאר את הפריט פתוח והוסף לידו סטטוס,
-`decision_id`, `next_action` ו-`handoff_ref` אם ההמשך חוצה repository. אין להפוך פריט
-פתוח ללולאת שאלות.
+`decision_id`, `next_action`, `source_ref`, וסטטוס persistence של ה-handoff. אין להפוך
+פריט פתוח ללולאת שאלות.
 
 ## <required_behavioral_evidence>
 
@@ -136,8 +152,8 @@ handoff_ref: <destination-readable issue/PR/file/tracker URL>
 - decision ID יציב;
 - מספר הפעמים שהשאלה הועלתה;
 - הסטטוס לאחר התשובה;
-- ה-handoff או הפעולה הבאה;
-- `handoff_ref` destination-readable כאשר ההמשך חוצה repository;
+- כל metadata הבסיס של ה-handoff;
+- `handoff_type` ו-`handoff_ref` אמיתי במסלול ready, או `handoff_block` במסלול blocked;
 - האם עובדה חדשה הצדיקה שאלה חוזרת.
 
 הוכחת "שאל פעם אחת" נאספת מה-tool/conversation trace בפועל על ידי host, harness או
