@@ -183,6 +183,8 @@ jobs:
             echo "ERROR_FOR_AGENT: changed-files metadata is empty; refusing to skip Operational Work History evidence."
             exit 1
           fi
-          bash scripts/enforcement/check-pr-review-evidence.sh --body /tmp/pr-body.md --head-sha "$PR_HEAD_SHA" \
-            --changed-files /tmp/changed-files.txt \
-            --work-history-artifact .engineering-os/work-history/latest.json
+          args=(--body /tmp/pr-body.md --head-sha "$PR_HEAD_SHA"
+                --changed-files /tmp/changed-files.txt
+                --work-history-artifact .engineering-os/work-history/latest.json)
+          [ -f /tmp/ci.json ] && args+=(--check-runs /tmp/ci.json)
+          bash scripts/enforcement/check-pr-review-evidence.sh "${args[@]}"

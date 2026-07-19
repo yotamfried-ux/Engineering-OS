@@ -36,6 +36,18 @@ pass contains_resource grep -q '"resource"' "$TMP/.engineering-os/telemetry/even
 pass contains_attributes grep -q '"attributes"' "$TMP/.engineering-os/telemetry/events.jsonl"
 pass contains_dependency_category grep -q '"dependency.install"' "$TMP/.engineering-os/telemetry/events.jsonl"
 
+# B4: additive OpenTelemetry GenAI semantic-convention attributes must appear
+# alongside (not instead of) the existing eos.claude.* fields, and the
+# operation.name must reflect whether the event was a tool call or not.
+pass contains_gen_ai_system grep -q '"gen_ai.system": "anthropic"' "$TMP/.engineering-os/telemetry/events.jsonl"
+pass contains_gen_ai_request_model grep -q '"gen_ai.request.model"' "$TMP/.engineering-os/telemetry/events.jsonl"
+pass contains_gen_ai_operation_execute_tool grep -q '"gen_ai.operation.name": "execute_tool"' "$TMP/.engineering-os/telemetry/events.jsonl"
+pass existing_eos_claude_model_field_unchanged grep -q '"eos.claude.model"' "$TMP/.engineering-os/telemetry/events.jsonl"
+failcase gen_ai_token_usage_not_fabricated grep -q 'gen_ai.usage' "$TMP/.engineering-os/telemetry/events.jsonl"
+
+printf '%s' '{"hook_event_name":"SessionStart"}' | ENGINEERING_OS_HOME="$ROOT" EOS_TELEMETRY_FILE="$TMP/.engineering-os/telemetry/events.jsonl" bash "$RECORDER" session_start
+pass contains_gen_ai_operation_invoke_agent grep -q '"gen_ai.operation.name": "invoke_agent"' "$TMP/.engineering-os/telemetry/events.jsonl"
+
 failcase raw_sensitive_value_not_recorded grep -q 'VALUE_SHOULD_NOT_APPEAR' "$TMP/.engineering-os/telemetry/events.jsonl"
 failcase raw_command_not_recorded grep -q 'npm install example-package' "$TMP/.engineering-os/telemetry/events.jsonl"
 failcase raw_path_not_recorded grep -q 'src/private/customer-file.ts' "$TMP/.engineering-os/telemetry/events.jsonl"

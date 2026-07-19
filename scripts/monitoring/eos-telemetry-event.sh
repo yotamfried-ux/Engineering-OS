@@ -220,6 +220,23 @@ def safe_tool_attributes() -> dict[str, Any]:
     }
 
 
+def genai_semconv_attributes() -> dict[str, Any]:
+    # Additive OpenTelemetry GenAI semantic-convention aliases (experimental,
+    # SIG-defined) alongside the existing eos.claude.* fields — not a
+    # replacement. Existing consumers (eos-telemetry-summary.py, export/
+    # import/sync, archive fixtures) read eos.claude.* unchanged.
+    # gen_ai.usage.input_tokens/output_tokens are intentionally omitted: Claude
+    # Code hook payloads do not expose per-call token counts, and this recorder
+    # never fabricates a field it cannot populate from real hook data.
+    tool_event = bool(tool_name and tool_name != "unknown")
+    operation = "execute_tool" if tool_event else "invoke_agent"
+    return {
+        "gen_ai.system": "anthropic",
+        "gen_ai.request.model": safe_token(data.get("model") or ""),
+        "gen_ai.operation.name": operation,
+    }
+
+
 trace_id = ensure_trace_id()
 span_id = secrets.token_hex(8)
 now_ns = time.time_ns()
@@ -256,6 +273,7 @@ record = {
         "eos.engineering_os_home.set": bool(os.environ.get("ENGINEERING_OS_HOME")),
         **common_hook_attributes(),
         **safe_tool_attributes(),
+        **genai_semconv_attributes(),
     },
     "events": [{
         "name": f"eos.hook.{EVENT_NAME}",
