@@ -16,7 +16,12 @@ For each task, the oracle can require evidence such as:
 - required skills are selected;
 - required templates, patterns, architecture guides, connectors, or waivers are recorded;
 - missing user decisions are surfaced instead of guessed;
+- answered/deferred decisions are not repeatedly reopened;
 - unsafe or impossible claims are absent.
+
+The `max_occurrences` and `exact_occurrences` checks use the value format
+`<count>||<normalized text>`. They are intended for interaction artifacts where
+final self-report cannot prove how many times a behavior occurred.
 
 ## What this harness does not do
 
@@ -43,12 +48,21 @@ Required artifact:
 route-plan.md
 ```
 
-Optional artifacts:
+Optional artifacts (or required by a task-specific oracle):
 
 ```text
 changed-files.txt
 notes.md
 run-trace.md
+interaction-log.md
+```
+
+`interaction-log.md` should contain normalized metadata events, not raw private
+conversation text. For user-decision tasks, use stable lines such as:
+
+```text
+ask_user_question:<decision-id>
+decision_state:<decision-id>:answered|deferred|blocked|superseded
 ```
 
 7. Score the run:
