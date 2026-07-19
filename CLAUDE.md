@@ -55,6 +55,9 @@
 > "לחץ זמן" ו-"כבר מובן לי" — **אינם חריגים.** המשתמש יאשר או יעקוף במודע.
 
 - אל תכתוב קוד לפני שהבנת את הדרישה. אם היא עמומה — שאל שאלה אחת ממוקדת, אל תנחש ארכיטקטורה.
+- לפני `AskUserQuestion`, ולאחר כל תשובת משתמש שמשנה תוכנית או handoff, פעל לפי
+  [`core/user-decision-policy.md`](./core/user-decision-policy.md): שאל פעם אחת, שמור
+  `decision_id` וסטטוס, ואל תפתח מחדש החלטה שכבר נענתה/נדחתה/נחסמה ללא שינוי מהותי.
 - **אל תתחיל פרויקט/משימה לפני שעברת את שלב התכנון ואיסוף המידע** — אפיון דרך Notion,
   ואז משיכת מקור אמין (כולל Context7) ודוגמה לעבוד מולה. הסדר המלא:
   [`core/workflow.md`](./core/workflow.md) › `<workflow>`.
@@ -100,6 +103,7 @@
 | קובץ | מתי לגשת | Enforcer |
 |---|---|---|
 | [`core/workflow.md`](./core/workflow.md) | לפני כל משימה: תכנון, איסוף מידע, scaffold, DoD | `enforce-workflow.sh` |
+| [`core/user-decision-policy.md`](./core/user-decision-policy.md) | לפני שאלת משתמש, אחרי תשובה, וב-handoff חוצה repository/session | NONE (behavioral policy + eval) |
 | [`core/task-router.md`](./core/task-router.md) | בתחילת כל משימה: ניתוב ל-templates/patterns/skills/connectors | NONE (routing) |
 | [`core/precedence.md`](./core/precedence.md) | כשהנחיות מתנגשות: סולם ההכרעה המלא | NONE (judgment) |
 | [`core/connector-policy.md`](./core/connector-policy.md) | בחירת מקורות מידע/connectors, env/secrets, fallback, אכיפת Connector Evidence | `enforce-connector.sh` |
@@ -125,6 +129,7 @@
 | מושג | בעלים קנוני | כל השאר |
 |---|---|---|
 | ניתוב משימה | `core/task-router.md` | — |
+| החלטות משתמש ו-handoff | `core/user-decision-policy.md` | workflow/plans/evals מפנים אליו ולא מגדירים lifecycle חלופי |
 | הכרעת התנגשויות | `core/precedence.md` | — |
 | אוצר capabilities (task→capability) | `core/capability-registry.yaml` | Validators/runbooks רק מאמתים או מסבירים |
 | **מדיניות** connectors (מתי/איזה) | `core/connector-policy.md` | אינדקסים מקשרים, לא מגדירים |
