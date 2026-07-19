@@ -47,11 +47,12 @@ This project uses **[Engineering OS](./engineering-os/)** as the authoritative s
 Before writing any code or making any decision, consult Engineering OS **in this exact order**:
 
 1. `./engineering-os/core/task-router.md` — classify the task and build the route plan.
-2. `./engineering-os/templates/` — Does a matching project template exist? **Use it as the starting point.**
-3. `./engineering-os/docs/architecture-guides/` — Is there an architecture guide for this domain?
-4. `./engineering-os/patterns/` — Are there established patterns for this type of problem?
-5. `./engineering-os/external-systems/` — Which service does the OS recommend for this use case?
-6. `./engineering-os/docs/troubleshooting/` — Are there known bugs in this domain to avoid upfront?
+2. `./engineering-os/core/user-decision-policy.md` — before `AskUserQuestion`, after a user answer, or when work must move to another repository/session: ask once, persist the decision state, and create a concrete deferred/blocked handoff instead of reopening the same choice.
+3. `./engineering-os/templates/` — Does a matching project template exist? **Use it as the starting point.**
+4. `./engineering-os/docs/architecture-guides/` — Is there an architecture guide for this domain?
+5. `./engineering-os/patterns/` — Are there established patterns for this type of problem?
+6. `./engineering-os/external-systems/` — Which service does the OS recommend for this use case?
+7. `./engineering-os/docs/troubleshooting/` — Are there known bugs in this domain to avoid upfront?
 
 **If you skip this protocol, you are operating outside the Engineering OS. Stop and go back.**
 
@@ -110,6 +111,7 @@ Fill this in at the start of the project and update it as the stack changes.
 | What you need | Where to look |
 |---|---|
 | Task routing — which template/pattern/skill/connector applies | `./engineering-os/core/task-router.md` |
+| User decisions — ask once, persist answer/deferred/blocked state, cross-repo handoff | `./engineering-os/core/user-decision-policy.md` |
 | Project structure / boilerplate | `./engineering-os/templates/` |
 | Architecture for a domain (web, AI, API, mobile, data, MCP) | `./engineering-os/docs/architecture-guides/` |
 | Code pattern (auth, billing, database, API, AI agents, observability) | `./engineering-os/patterns/` |
