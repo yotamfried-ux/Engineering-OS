@@ -32,7 +32,12 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from telemetry_repo_discovery import RepoInfo, attribute_event, discover_managed_repos
+from telemetry_repo_discovery import (
+    RepoInfo,
+    attribute_event,
+    discover_managed_repos,
+    has_conflicting_project_local_hooks,
+)
 
 FANOUT_EVENTS = {"session_start", "stop", "stop_failure", "session_end"}
 CACHE_DIR = Path(
@@ -114,7 +119,20 @@ def main() -> int:
     if cached is not None and not needs_fresh_discovery:
         discovered = [RepoInfo(Path(p)) for p in cached.get("repos", [])]
     else:
-        discovered = discover_managed_repos(Path(event_cwd))
+        all_managed = discover_managed_repos(Path(event_cwd))
+        # Never dispatch to a repo that already has its own working
+        # project-local hook installation — Claude Code merges hooks across
+        # scopes rather than overriding, so a session that started inside
+        # such a repo would already get that repo's own direct hooks firing;
+        # the dispatcher recording the same event too would double-count it.
+        # This repo simply isn't the dispatcher's job. See
+        # has_conflicting_project_local_hooks() for the full reasoning.
+        discovered = []
+        for repo in all_managed:
+            if has_conflicting_project_local_hooks(repo.root):
+                print(f"SKIPPED_SELF_SUFFICIENT:{repo.root}", file=sys.stderr)
+                continue
+            discovered.append(repo)
         write_cache(key, discovered, correlation_id)
 
     if is_fanout:

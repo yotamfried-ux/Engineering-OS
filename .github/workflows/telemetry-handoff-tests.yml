@@ -132,3 +132,13 @@ jobs:
         with:
           persist-credentials: false
       - run: bash scripts/enforcement/tests/test-user-level-telemetry-installer.sh
+
+  dispatch-project-local-coexistence:
+    name: Verify dispatcher does not double-record alongside project-local hooks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/enforcement/tests/test-dispatch-project-local-coexistence.sh

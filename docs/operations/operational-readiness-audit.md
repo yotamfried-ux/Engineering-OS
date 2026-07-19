@@ -52,6 +52,9 @@ Every matrix row names Gate, Owner, and Evidence. Missing or partial rows link a
 | monitoring-metrics-sufficiency | open | P2 | Monitoring metrics sufficiency. |
 | project-8-real-run-evidence | open | P1 | Project 8 real-run evidence. |
 | operational-work-history-foundation | closed | P1 | Operational work history evidence. |
+| dispatch-scope-double-record | mitigated | P1 | Multi-repo telemetry dispatch — hook-scope double-recording. |
+| multirepo-remote-telemetry-validation | open | P1 | Multi-repo telemetry dispatch — real Remote experiment closure. |
+| eos-repo-boundary-sync-drift | open | P3 | This repo's own settings.json drift (Stop/StopFailure/SessionEnd). |
 
 ## Current status matrix
 

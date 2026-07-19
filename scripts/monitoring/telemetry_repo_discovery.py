@@ -19,6 +19,19 @@ from telemetry_handoff import HandoffError, load_policy
 
 MARKER_RELATIVE_PATH = Path(".engineering-os") / "telemetry-policy.json"
 
+# Kept in sync with patch-settings-telemetry.py's own MARKERS tuple (can't
+# import it directly — that module's filename has hyphens, not a valid
+# Python module name). Used only to detect "this repo already has its own
+# working project-local hook installation" — see
+# has_conflicting_project_local_hooks() below.
+_OWNED_HOOK_MARKERS = (
+    "require-telemetry-session.sh",
+    "eos-telemetry-session-start.sh",
+    "eos-telemetry-event.sh",
+    "record-and-sync-telemetry.sh",
+    "eos-telemetry-dispatch.sh",
+)
+
 
 class RepoInfo:
     __slots__ = ("root",)
@@ -75,6 +88,31 @@ def _has_valid_marker(repo_root: Path) -> bool:
     except Exception:
         return False
     return True
+
+
+def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
+    """True if repo_root has its own .claude/settings.json already carrying
+    Engineering-OS-owned hook entries (installed the "direct" way, e.g. via
+    install-policy-gates.sh).
+
+    Claude Code hooks from different settings scopes MERGE rather than
+    override (confirmed against official docs: "hooks... merge across
+    scopes"; identical command+args are deduplicated, non-identical ones all
+    run). That means a session that starts *inside* such a repo would fire
+    that repo's own project-local hooks directly AND the user-level
+    dispatcher would also resolve to this same repo — double-recording
+    every event. The dispatcher must never record for a repo that already
+    has a working project-local installation; it exists only for repos a
+    project-local install could never reach in this session (siblings the
+    session didn't start inside)."""
+    settings_path = repo_root / ".claude" / "settings.json"
+    if not settings_path.is_file():
+        return False
+    try:
+        text = settings_path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return any(marker in text for marker in _OWNED_HOOK_MARKERS)
 
 
 def discover_managed_repos(start_cwd: Path) -> list[RepoInfo]:
