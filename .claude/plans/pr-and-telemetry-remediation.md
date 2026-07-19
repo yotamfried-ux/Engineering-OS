@@ -29,6 +29,7 @@ Plan Scope: standard
 - `source.github-repo-read`
 - `validation.policy-change-has-validator`
 - `validation.coderabbit-policy`
+- `validation.actions-checked` — this PR edits `.github/workflows/pr-policy.yml`; the change was verified locally (`python3 -c "import yaml; yaml.safe_load(...)"`) and against real CI on the PR's own head SHA before merge.
 
 ## Connector Evidence
 
@@ -71,8 +72,9 @@ Plan Scope: standard
 
 ## Documentation Asset Evidence
 
-- asset: `docs/operations/operational-readiness-audit.md`, `docs/operations/known-gaps.tsv`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/project8-telemetry-preflight.md`.
-- reason: these are the canonical source-of-truth documents for readiness status and the telemetry data-collection gap; the task explicitly requires reading them before proposing a remediation plan.
+- internal: `docs/operations/operational-readiness-audit.md`, `docs/operations/known-gaps.tsv`, `docs/operations/runtime-telemetry-archive-audit-checklist.md`, `docs/operations/project8-telemetry-preflight.md`, `docs/operations/main-required-checks.md`.
+- context7: not required — this PR touches only internal governance scripts/docs and does not add or integrate an external library, framework, SDK, or API; the two external references used (OpenTelemetry GenAI semantic conventions, GitHub REST API check-runs docs) are cited directly by URL in Source of Truth Checks rather than via Context7, since they were one-off doc lookups, not a dependency being integrated.
+- decision: `operational-readiness-audit.md` and `known-gaps.tsv` confirmed the two remaining open gaps (monitoring-metrics-sufficiency, project-8-real-run-evidence) and their exact closure bar; `project8-telemetry-preflight.md` was the source of the imprecise claim fixed in B1; `main-required-checks.md` confirmed the real workflow-name-vs-check-run-context mapping needed to fix the C1 review finding.
 
 ## Source of Truth Checks
 
