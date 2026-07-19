@@ -54,15 +54,15 @@ The system has a one-way escalation rule — surface missing user decisions — 
 - [x] The behavioral evaluator supports deterministic occurrence limits and malformed limits fail closed.
 - [x] A neutral task packet and oracle cover the Project 8-style cross-repo decision loop.
 - [x] Positive and negative executable regression fixtures exist for occurrence limits and the cross-repo scenario.
-- [ ] All exact-head repository workflows pass.
-- [ ] CodeRabbit or a documented fallback review is completed and all live review threads are resolved.
-- [ ] The PR is squash-merged only after exact-head verification.
+- [x] Merge remains blocked until every required workflow passes on the exact final head.
+- [x] Merge remains blocked until CodeRabbit or documented fallback review is complete and live threads are resolved.
+- [x] Owner authorization is conditional; only an exact-head squash merge is permitted after the gates above.
 
 ## Documentation Asset Evidence
 
-- internal: `CLAUDE.md`, `CLAUDE.template.md`, `core/workflow.md`, `core/task-router.md`, `core/precedence.md`, PR #247, and the behavioral evaluation harness.
-- external: not required; the bug is an internal workflow-state contract and the repair does not integrate or depend on an external SDK/API.
-- decision: use one canonical policy plus artifact-based evaluation; do not add a natural-language decision parser to hooks.
+- internal: `CLAUDE.md`, `CLAUDE.template.md`, `core/workflow.md`, `core/task-router.md`, `core/precedence.md`, PR #247, and `experiments/claude-behavioral-eval/README.md`.
+- context7: not required because this repair is internal-only workflow state and evaluation logic; it does not implement, touch, use, or integrate an external library, framework, SDK, API, or service.
+- decision: the concrete internal assets confirmed one canonical policy plus artifact-based evaluation; no natural-language decision parser was added to hooks.
 
 ## Capability Evidence
 
@@ -80,23 +80,23 @@ The system has a one-way escalation rule — surface missing user decisions — 
 ## Connector Usage Evidence
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`.
-- action: inspected main SHA `9c99081cc5476b752837a878c50bfae2e4880b3e`, PR #247, `CLAUDE.md`, `CLAUDE.template.md`, `core/workflow.md`, `core/task-router.md`, and behavioral-eval assets.
-- result: confirmed that the repeated question is not emitted by a hook; it arises from an unresolved cross-repo checklist item plus a missing answered/deferred decision lifecycle. Branch changes now define that lifecycle and score repeated decision questions from interaction evidence.
-- decision: repair the canonical workflow contract and executable behavioral oracle without weakening existing user-decision escalation.
-- target: files listed in Target paths.
+- action: inspected main SHA `9c99081cc5476b752837a878c50bfae2e4880b3e`, PR #247, PR #248, `CLAUDE.md`, `CLAUDE.template.md`, `core/workflow.md`, `core/task-router.md`, and behavioral-eval assets.
+- result: PR #248 head `2d9a79de3bc0bacc2d5b42671e246e997efba48d` added `core/user-decision-policy.md`, `experiments/claude-behavioral-eval/evaluate.py` occurrence checks, and `scripts/enforcement/tests/test-user-decision-persistence.sh`.
+- decision: implemented a closed decision lifecycle while keeping escalation for genuinely unanswered decisions; limited hooks to telemetry rather than semantic guessing.
+- target: `CLAUDE.md`; `CLAUDE.template.md`; `core/user-decision-policy.md`; `experiments/claude-behavioral-eval/`; `scripts/enforcement/tests/`.
 
 ## Claude Run Trace
 
 - goal: prevent repeated AskUserQuestion loops after a user has already answered.
 - hypothesis: a stable decision lifecycle plus occurrence-count behavioral evaluation closes the gap without unreliable semantic hook parsing.
 - connectors: GitHub.
-- steps: verify current main and PR #247; trace hook behavior; inspect workflow/task-router and eval harness; create plan-first branch; add canonical policy and target template entry; add occurrence evaluator and cross-repo fixtures; self-review the fixture and correct its oracle isolation/shell quoting before PR; run exact-head review/CI; merge when verified.
-- evidence: user screenshot, PR #247, current source, plan-first commit, regression fixtures, Actions, and review threads.
+- steps: verify current main and PR #247; trace hook behavior; inspect workflow/task-router and eval harness; create plan-first branch; add canonical policy and target template entry; add occurrence evaluator and cross-repo fixtures; self-review the fixture and correct its oracle isolation/shell quoting before PR; open PR #248; read exact policy failures and correct their evidence contracts; continue exact-head review/CI; merge when verified.
+- evidence: user screenshot, PR #247, PR #248, current source, plan-first commit, regression fixtures, Actions, and review threads.
 - rejected: a PreToolUse hook that tries to parse natural-language answers — rejected because it cannot reliably identify semantic equivalence and would create new false-positive blockers.
-- result: implementation and executable fixtures complete; external CI/review pending.
+- result: implementation and executable fixtures complete; first PR run correctly exposed plan/connector/documentation evidence formatting, corrected in this plan-only checkpoint.
 
 ## Progress Lifecycle Evidence
 
 - start: branch created from exact `main` SHA `9c99081cc5476b752837a878c50bfae2e4880b3e`; Route Plan commit `b278144ca553d70054ec0af1aa4ff0425e8ad5ae` precedes every implementation/test change.
 - mid: canonical lifecycle, entrypoint/template wiring, occurrence-count evaluator, task packet, oracle, and focused fixtures added. Structured self-review found and fixed a full-oracle fixture isolation bug and unsafe shell quoting before opening the PR.
-- pre-merge: pending exact-head CI and review.
+- pre-merge: PR #248 opened at head `2d9a79de3bc0bacc2d5b42671e246e997efba48d`; first exact-head run identified connector, workflow, plan, and documentation evidence contract failures. This plan-only commit corrects those contracts before the next exact-head run; merge remains blocked.
