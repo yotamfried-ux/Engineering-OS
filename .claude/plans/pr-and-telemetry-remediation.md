@@ -47,7 +47,7 @@ Plan Scope: standard
 
 - start: this plan is committed before any code/doc changes for B1/B4/C1/C2.
 - mid: the checklist, `project8-telemetry-preflight.md` wording fix, `check-pr-review-evidence.sh` stale-CI check, `quality-gates.md` DoD-paradox policy text, `enforce-quality.sh` advisory check, and `eos-telemetry-event.sh` gen_ai.* attributes all landed in the code/doc commit that followed this plan; each item's own test suite ran green locally before that commit.
-- pre-merge: CI, review threads, mergeability, and expected head SHA must be checked live in GitHub before merge.
+- pre-merge: a live chatgpt-codex-connector review on the first push surfaced 3 real findings (B3 self-gate contradiction, workflow-vs-job-name matching, pr-policy self-referential validation) — all three are fixed in this commit range. CI, remaining review threads, mergeability, and the final head SHA get one more live check in GitHub immediately before merge.
 
 ## Skill Evidence
 
