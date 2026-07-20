@@ -103,6 +103,7 @@ Executable coverage includes:
 - required/best-effort/disabled policy isolation;
 - boundary fan-out with required failure propagation;
 - complete direct and dispatcher Stop/StopFailure/SessionEnd hook registration;
+- product-head advancement with current durable handoff identity;
 - separate repository run IDs/events with shared host correlation;
 - installer creation, migration, exact verification, idempotency, backup, malformed JSON refusal, dry-run, and uninstall;
 - resolver errors, cache retention, traversal, malformed inputs, and privacy-safe diagnostics;
@@ -149,17 +150,17 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`.
 - action: inspected original head `aaa498b7587cefc6653c49320877c4d1ed9ec87c`, run `29705789876`, subsequent exact-head runs, and every Codex/CodeRabbit thread; then updated runtime, tests, workflow, plan, runbook, gap registry, and audit.
-- result: implementation commit `ff974707978c0cfac72850233e1923f06ae20018` contains managed discovery, evidence-safe attribution, dispatcher-aware guard validation, boundary failure propagation, complete lifecycle hook fixtures, diagnostics, retention, and regressions.
+- result: implementation commit `ff974707978c0cfac72850233e1923f06ae20018` plus head-advancement fixture correction `d2bad5096c8860e6740f5add92605d6b615dcf75` contain managed discovery, evidence-safe attribution, dispatcher-aware guard validation, lifecycle failure propagation, complete hook fixtures, diagnostics, retention, and regressions.
 - decision: kept the hard repository guard and durable-handoff contract while fixing attribution, settings scope, and test fixtures at the root.
-- target: `scripts/monitoring/`, `scripts/enforcement/tests/test-remote-telemetry-handoff.sh`, `.github/workflows/telemetry-handoff-tests.yml`, and operational documentation.
+- target: `scripts/monitoring/`, telemetry handoff fixtures, `.github/workflows/telemetry-handoff-tests.yml`, and operational documentation.
 
 ## Claude Run Trace
 
 - goal: obtain reliable per-repository telemetry from parent-started Remote sessions without monitoring unmanaged work or globally blocking the host.
 - hypothesis: a narrow user-level bootstrap plus authoritative explicit-target reconciliation can safely reuse the existing per-repository pipeline.
 - connectors: GitHub; Claude Code runtime was observed directly but was not used as a connector.
-- steps: verify settings scope; create plan-first commit; implement bootstrap/discovery/attribution/isolation; open PR; run real Remote attempt; diagnose two live failures; correct project-hook activation, guard routing, user-settings validation, explicit-target precedence, malformed targets, Grep path handling, lifecycle failure propagation, mode migration, diagnostics, retention, and tests; align legacy handoff and policy-override fixtures with complete lifecycle hooks; rerun exact-head gates and review.
-- evidence: PR #250, plan-first commit `4fe393c786cdc76fa05215524733191bf6b3b772`, implementation commit `ff974707978c0cfac72850233e1923f06ae20018`, mid-checkpoint commit `855d1277c1e6f310cca18ec77ed60a1953f4e9c8`, live Remote report, Actions runs, review threads, and focused fixtures.
+- steps: verify settings scope; create plan-first commit; implement bootstrap/discovery/attribution/isolation; open PR; run real Remote attempt; diagnose two live failures; correct project-hook activation, guard routing, user-settings validation, explicit-target precedence, malformed targets, Grep path handling, lifecycle failure propagation, mode migration, diagnostics, retention, and tests; align legacy handoff, policy-override, and product-head fixtures with complete lifecycle hooks; rerun exact-head gates and review.
+- evidence: PR #250, plan-first commit `4fe393c786cdc76fa05215524733191bf6b3b772`, implementation commit `ff974707978c0cfac72850233e1923f06ae20018`, mid-checkpoint commit `855d1277c1e6f310cca18ec77ed60a1953f4e9c8`, fixture correction `d2bad5096c8860e6740f5add92605d6b615dcf75`, live Remote report, Actions runs, review threads, and focused fixtures.
 - rejected: disabling the guard, recursively scanning home, trusting on-disk project settings as active, or assigning explicit outside activity to a default repository.
 - result: deterministic implementation and regression evidence are present; fresh successful Remote evidence remains a separate post-merge gate.
 
@@ -167,7 +168,7 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 
 - start: Route Plan commit `4fe393c786cdc76fa05215524733191bf6b3b772` recorded approved scope and validation contracts before implementation.
 - mid: implementation commit `ff974707978c0cfac72850233e1923f06ae20018` consolidated the dispatcher, installer, attribution, guard, lifecycle, privacy, documentation, and regression changes after the real Remote failure and review loops.
-- pre-merge: mid-checkpoint commit `855d1277c1e6f310cca18ec77ed60a1953f4e9c8` follows the implementation; this separate checkpoint records corrected source evidence, complete lifecycle fixtures, capability coverage, and merge-gate readiness before exact-head CI.
+- pre-merge: fixture correction `d2bad5096c8860e6740f5add92605d6b615dcf75` follows the earlier mid checkpoint and is the last code/test change; this separate Route Plan checkpoint records product-head coverage and final evidence before exact-head CI.
 
 ## Definition of Done
 
@@ -180,6 +181,7 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 - [x] Repository state, policy, run IDs, events, and downstream matching remain isolated.
 - [x] Required lifecycle handoff failures remain observable after full fan-out.
 - [x] Complete Stop, StopFailure, and SessionEnd hooks are validated under their actual events.
+- [x] Product-head advancement rejects stale durable state and preserves the new head after resync.
 - [x] Diagnostics and cache retention preserve the privacy and lifecycle contracts.
 - [x] Automated CI tests and focused positive/negative fixtures cover the live defects and every valid review finding.
 - [x] The failed real Remote attempt is recorded honestly and successful closure gaps remain open.
