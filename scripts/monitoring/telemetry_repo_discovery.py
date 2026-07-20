@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Discover managed repositories and attribute hook events safely.
-
-This module is used by the user-level telemetry dispatcher. Its responsibility
-ends at resolving a hook payload to zero or one managed repository root;
-downstream recording, handoff, and PR matching remain in the existing
-per-repository telemetry scripts.
-"""
+"""Discover opted-in repositories and attribute hook events without guessing."""
 from __future__ import annotations
 
 import json
@@ -28,11 +22,10 @@ _REPOSITORY_SIGNAL_KEYS = (
     "repo",
     "repository_name",
 )
+_PATH_SIGNAL_KEYS = ("file_path", "path")
 
 
 class RepoInfo:
-    """Resolved identity for one discovered managed repository."""
-
     __slots__ = ("root",)
 
     def __init__(self, root: Path) -> None:
@@ -44,47 +37,36 @@ class RepoInfo:
     def __hash__(self) -> int:
         return hash(self.root)
 
-    def __repr__(self) -> str:  # pragma: no cover - debugging aid only
+    def __repr__(self) -> str:
         return f"RepoInfo({self.root})"
 
 
 def _git_toplevel(path: Path) -> Path | None:
-    """Return the resolved Git root containing path, or None."""
-
     try:
-        out = subprocess.check_output(
+        output = subprocess.check_output(
             ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
             text=True,
             stderr=subprocess.DEVNULL,
         ).strip()
     except Exception:
         return None
-    if not out:
-        return None
-    return Path(out).resolve()
+    return Path(output).resolve() if output else None
 
 
 def _has_valid_marker(repo_root: Path) -> bool:
-    """Return whether repo_root carries a valid, non-escaping policy marker."""
-
     marker = repo_root / MARKER_RELATIVE_PATH
     if not marker.is_file():
         return False
     try:
-        resolved_marker = marker.resolve(strict=True)
-        resolved_marker.relative_to(repo_root)
-    except (OSError, ValueError):
-        return False
-    try:
-        load_policy(repo_root, resolved_marker)
+        resolved = marker.resolve(strict=True)
+        resolved.relative_to(repo_root)
+        load_policy(repo_root, resolved)
     except Exception:
         return False
     return True
 
 
 def managed_repo_for_root(candidate: Path) -> RepoInfo | None:
-    """Validate that candidate is still an opted-in Git root."""
-
     try:
         resolved = candidate.resolve(strict=True)
     except OSError:
@@ -92,19 +74,17 @@ def managed_repo_for_root(candidate: Path) -> RepoInfo | None:
     if not resolved.is_dir():
         return None
     root = _git_toplevel(resolved)
-    if root is None or root != resolved or not _has_valid_marker(root):
+    if root != resolved or not _has_valid_marker(resolved):
         return None
-    return RepoInfo(root)
+    return RepoInfo(resolved)
 
 
 def managed_repo_for_cwd(start_cwd: Path) -> RepoInfo | None:
-    """Return the managed Git repository containing start_cwd, if any."""
-
     try:
-        resolved_cwd = start_cwd.resolve()
+        resolved = start_cwd.resolve()
     except OSError:
         return None
-    root = _git_toplevel(resolved_cwd)
+    root = _git_toplevel(resolved)
     if root is None or not _has_valid_marker(root):
         return None
     return RepoInfo(root)
@@ -116,8 +96,6 @@ def _commands_for_event(
     *,
     catch_all_only: bool = False,
 ) -> list[str]:
-    """Return commands registered for event, optionally only catch-all blocks."""
-
     blocks = hooks.get(event)
     if not isinstance(blocks, list):
         return []
@@ -141,12 +119,7 @@ def _has_command(commands: list[str], predicate: Callable[[str], bool]) -> bool:
 
 
 def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
-    """Return whether a complete direct project-local installation is active.
-
-    A partial or stale settings file must not suppress the user-level dispatcher:
-    doing so would leave the missing guard, recorder, or boundary hooks absent for
-    the rest of the session.
-    """
+    """Require a complete direct install before suppressing user-level dispatch."""
 
     settings_path = repo_root / ".claude" / "settings.json"
     if not settings_path.is_file():
@@ -159,26 +132,14 @@ def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
     if not isinstance(hooks, dict):
         return False
 
-    session_commands = _commands_for_event(hooks, "SessionStart")
-    pre_commands = _commands_for_event(hooks, "PreToolUse", catch_all_only=True)
-    boundaries = {
-        "Stop": "stop",
-        "StopFailure": "stop_failure",
-        "SessionEnd": "session_end",
-    }
-
-    if not _has_command(
-        session_commands,
-        lambda command: "eos-telemetry-session-start.sh" in command,
-    ):
+    session = _commands_for_event(hooks, "SessionStart")
+    pretool = _commands_for_event(hooks, "PreToolUse", catch_all_only=True)
+    if not _has_command(session, lambda command: "eos-telemetry-session-start.sh" in command):
+        return False
+    if not _has_command(pretool, lambda command: "require-telemetry-session.sh" in command):
         return False
     if not _has_command(
-        pre_commands,
-        lambda command: "require-telemetry-session.sh" in command,
-    ):
-        return False
-    if not _has_command(
-        pre_commands,
+        pretool,
         lambda command: (
             "eos-telemetry-event.sh" in command
             and command.rstrip().endswith(" pre_tool_use")
@@ -186,9 +147,14 @@ def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
     ):
         return False
 
-    for event, suffix in boundaries.items():
+    for event, suffix in (
+        ("Stop", "stop"),
+        ("StopFailure", "stop_failure"),
+        ("SessionEnd", "session_end"),
+    ):
+        commands = _commands_for_event(hooks, event)
         if not _has_command(
-            _commands_for_event(hooks, event),
+            commands,
             lambda command, suffix=suffix: (
                 "record-and-sync-telemetry.sh" in command
                 and command.rstrip().endswith(f" {suffix}")
@@ -199,41 +165,35 @@ def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
 
 
 def discover_managed_repos(start_cwd: Path) -> list[RepoInfo]:
-    """Discover managed repositories without recursively scanning the host."""
-
     try:
-        start_cwd = start_cwd.resolve()
+        start = start_cwd.resolve()
     except OSError:
         return []
-
-    native = managed_repo_for_cwd(start_cwd)
+    native = managed_repo_for_cwd(start)
     if native is not None:
         return [native]
 
     try:
         children = sorted(
-            path for path in start_cwd.iterdir()
-            if path.is_dir() and not path.is_symlink()
+            child for child in start.iterdir()
+            if child.is_dir() and not child.is_symlink()
         )
     except OSError:
-        children = []
+        return []
 
     found: list[RepoInfo] = []
     seen: set[Path] = set()
     for child in children:
-        managed = managed_repo_for_root(child)
-        if managed is None or managed.root in seen:
+        repo = managed_repo_for_root(child)
+        if repo is None or repo.root in seen:
             continue
-        seen.add(managed.root)
-        found.append(managed)
-
+        seen.add(repo.root)
+        found.append(repo)
     found.sort(key=lambda repo: str(repo.root))
     return found
 
 
 def _resolve_path_field(value: str, event_cwd: Path | None) -> Path | None:
-    """Resolve one path-like tool field relative to event_cwd when needed."""
-
     if not value:
         return None
     path = Path(value)
@@ -247,27 +207,23 @@ def _resolve_path_field(value: str, event_cwd: Path | None) -> Path | None:
         return None
 
 
-def _repo_for_path(resolved_path: Path, discovered: list[RepoInfo]) -> RepoInfo | None:
-    """Return the deepest discovered repository containing resolved_path."""
-
-    best: RepoInfo | None = None
+def _repo_for_path(path: Path, discovered: list[RepoInfo]) -> RepoInfo | None:
+    matches: list[RepoInfo] = []
     for repo in discovered:
         try:
-            resolved_path.relative_to(repo.root)
+            path.relative_to(repo.root)
         except ValueError:
             continue
-        if best is None or len(str(repo.root)) > len(str(best.root)):
-            best = repo
-    return best
+        matches.append(repo)
+    if not matches:
+        return None
+    return max(matches, key=lambda repo: len(str(repo.root)))
 
 
 def _normalize_repo_slug(value: str) -> str | None:
-    """Normalize an exact owner/repo identity or supported Git remote URL."""
-
     raw = value.strip()
     if not raw:
         return None
-
     if raw.startswith("git@"):
         if ":" not in raw:
             return None
@@ -277,7 +233,6 @@ def _normalize_repo_slug(value: str) -> str | None:
         if not parsed.scheme or not parsed.netloc:
             return None
         raw = parsed.path
-
     raw = raw.strip().strip("/")
     if raw.endswith(".git"):
         raw = raw[:-4]
@@ -288,8 +243,6 @@ def _normalize_repo_slug(value: str) -> str | None:
 
 
 def _repo_remote_slug(repo_root: Path) -> str | None:
-    """Read and normalize the repository's origin remote slug."""
-
     try:
         remote = subprocess.check_output(
             ["git", "-C", str(repo_root), "config", "--get", "remote.origin.url"],
@@ -306,14 +259,25 @@ def _tool_input(payload: dict[str, Any]) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _payload_path_targets(payload: dict[str, Any]) -> tuple[bool, list[str] | None]:
+    """Return present path evidence, rejecting non-string or empty values."""
+
+    tool_input = _tool_input(payload)
+    present = any(key in tool_input for key in _PATH_SIGNAL_KEYS)
+    if not present:
+        return False, []
+    values: list[str] = []
+    for key in _PATH_SIGNAL_KEYS:
+        if key not in tool_input:
+            continue
+        value = tool_input[key]
+        if not isinstance(value, str) or not value.strip():
+            return True, None
+        values.append(value)
+    return True, values
+
+
 def _payload_repo_target(payload: dict[str, Any]) -> tuple[bool, str | None]:
-    """Return whether repository evidence exists and its agreed normalized slug.
-
-    Every present repository identity form is authoritative. A malformed signal,
-    incomplete owner/repo pair, or disagreement among forms returns ``(True,
-    None)`` so cwd and sole-repository fallback cannot hide the conflict.
-    """
-
     tool_input = _tool_input(payload)
     present = any(
         key in tool_input and tool_input.get(key) not in (None, "")
@@ -324,33 +288,32 @@ def _payload_repo_target(payload: dict[str, Any]) -> tuple[bool, str | None]:
 
     normalized: list[str] = []
     invalid = False
-
     for key in ("repository_full_name", "repo_full_name", "repository"):
         if key not in tool_input or tool_input.get(key) in (None, ""):
             continue
-        value = tool_input.get(key)
+        value = tool_input[key]
         slug = _normalize_repo_slug(value) if isinstance(value, str) else None
         if slug is None:
             invalid = True
         else:
             normalized.append(slug)
 
-    owner_values = [
+    owners = [
         tool_input[key]
         for key in ("owner", "org")
         if key in tool_input and tool_input.get(key) not in (None, "")
     ]
-    repo_values = [
+    repos = [
         tool_input[key]
         for key in ("repo", "repository_name")
         if key in tool_input and tool_input.get(key) not in (None, "")
     ]
-    if owner_values or repo_values:
-        if not owner_values or not repo_values:
+    if owners or repos:
+        if not owners or not repos:
             invalid = True
         else:
-            for owner in owner_values:
-                for repo in repo_values:
+            for owner in owners:
+                for repo in repos:
                     slug = (
                         _normalize_repo_slug(f"{owner}/{repo}")
                         if isinstance(owner, str) and isinstance(repo, str)
@@ -367,42 +330,30 @@ def _payload_repo_target(payload: dict[str, Any]) -> tuple[bool, str | None]:
 
 
 def _repo_for_slug(slug: str, discovered: list[RepoInfo]) -> RepoInfo | None:
-    matches = [
-        repo for repo in discovered
-        if _repo_remote_slug(repo.root) == slug
-    ]
+    matches = [repo for repo in discovered if _repo_remote_slug(repo.root) == slug]
     return matches[0] if len(matches) == 1 else None
 
 
 def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> RepoInfo | None:
-    """Attribute one hook event without guessing.
-
-    Explicit filesystem and repository targets are authoritative and must agree.
-    Cwd is considered only when no explicit target exists. A sole-repository
-    fallback is allowed only when the payload contains no routing signal.
-    """
+    """Reconcile every explicit target before considering cwd or fallback."""
 
     if not discovered:
         return None
-
-    event_cwd_raw = str(payload.get("cwd") or "")
+    cwd_raw = payload.get("cwd")
+    if cwd_raw not in (None, "") and not isinstance(cwd_raw, str):
+        return None
+    event_cwd_raw = cwd_raw if isinstance(cwd_raw, str) else ""
     try:
         event_cwd = Path(event_cwd_raw).resolve() if event_cwd_raw else None
     except OSError:
         event_cwd = None
 
-    tool_input = _tool_input(payload)
-
-    # Only actual path fields are filesystem targets. Grep/Glob search patterns
-    # are expressions, not paths; their optional `path` field carries location.
-    explicit_paths = [
-        str(tool_input[key])
-        for key in ("file_path", "path")
-        if tool_input.get(key)
-    ]
+    path_signal, explicit_paths = _payload_path_targets(payload)
+    if path_signal and explicit_paths is None:
+        return None
     path_target: RepoInfo | None = None
     if explicit_paths:
-        matched: list[RepoInfo] = []
+        matches: list[RepoInfo] = []
         for raw in explicit_paths:
             resolved = _resolve_path_field(raw, event_cwd)
             if resolved is None:
@@ -410,9 +361,9 @@ def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> Repo
             repo = _repo_for_path(resolved, discovered)
             if repo is None:
                 return None
-            matched.append(repo)
-        path_target = matched[0]
-        if not all(repo == path_target for repo in matched):
+            matches.append(repo)
+        path_target = matches[0]
+        if any(repo != path_target for repo in matches[1:]):
             return None
 
     repo_signal, slug = _payload_repo_target(payload)
@@ -430,13 +381,10 @@ def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> Repo
         return path_target
     if repo_target is not None:
         return repo_target
-
     if event_cwd_raw:
         if event_cwd is None:
             return None
         return _repo_for_path(event_cwd, discovered)
-
-    if len(discovered) == 1:
+    if not path_signal and not repo_signal and len(discovered) == 1:
         return discovered[0]
-
     return None
