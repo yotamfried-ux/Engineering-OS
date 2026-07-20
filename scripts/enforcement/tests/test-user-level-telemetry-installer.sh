@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# User-level settings lifecycle: creation, exact verification, idempotent update,
-# preservation of user hooks, malformed JSON refusal, dry-run, uninstall, and
-# actionable runtime-path failure.
+# User-level settings lifecycle: creation, mode migration, exact verification,
+# idempotent update, preservation of user hooks, malformed JSON refusal,
+# dry-run, uninstall, and actionable runtime-path failure.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 INSTALLER="$ROOT/scripts/monitoring/install-user-level-telemetry-hooks.sh"
@@ -19,39 +19,74 @@ run_installer() {
   HOME="$HOME_DIR" ENGINEERING_OS_HOME="$ROOT" bash "$INSTALLER" "$@"
 }
 
-# 1. New user settings file is valid and uses only dispatcher-mode commands.
-run_installer > "$TMP/install.log"
-python3 -c "import json; json.load(open('$SETTINGS'))"
-grep -q "$ROOT/scripts/monitoring/eos-telemetry-dispatch.sh" "$SETTINGS"
-if grep -q 'require-telemetry-session.sh' "$SETTINGS"; then
-  echo "ERROR_FOR_AGENT: user-level settings must route the guard through the dispatcher" >&2
-  exit 1
-fi
-if grep -q 'ENGINEERING_OS_HOME' "$SETTINGS"; then
-  echo "ERROR_FOR_AGENT: unresolved runtime placeholder leaked into user settings" >&2
-  exit 1
-fi
-python3 - "$SETTINGS" "$ROOT" <<'PY'
+assert_dispatcher_only() {
+  python3 - "$SETTINGS" "$ROOT" <<'PY'
 import json
 import sys
 from pathlib import Path
 
 settings = json.loads(Path(sys.argv[1]).read_text())
 root = sys.argv[2]
-commands = [
+all_commands = [
+    hook["command"]
+    for blocks in settings.get("hooks", {}).values()
+    if isinstance(blocks, list)
+    for block in blocks
+    if isinstance(block, dict)
+    for hook in block.get("hooks", [])
+    if isinstance(hook, dict) and isinstance(hook.get("command"), str)
+]
+pretool = [
     hook["command"]
     for block in settings["hooks"]["PreToolUse"]
     for hook in block.get("hooks", [])
 ]
-expected_guard = f'bash "{root}/scripts/monitoring/eos-telemetry-dispatch.sh" guard'
-assert commands.count(expected_guard) == 1, commands
-assert sum(command.endswith(" pre_tool_use") for command in commands) == 1, commands
+session_start = [
+    hook["command"]
+    for block in settings["hooks"]["SessionStart"]
+    for hook in block.get("hooks", [])
+]
+expected_dispatch = f'bash "{root}/scripts/monitoring/eos-telemetry-dispatch.sh"'
+assert pretool.count(f"{expected_dispatch} guard") == 1, pretool
+assert sum(command.endswith(" pre_tool_use") for command in pretool) == 1, pretool
+assert session_start == [f"{expected_dispatch} session_start"], session_start
+for stale_direct in (
+    "require-telemetry-session.sh",
+    "eos-telemetry-session-start.sh",
+    "eos-telemetry-event.sh",
+    "record-and-sync-telemetry.sh",
+):
+    assert not any(stale_direct in command for command in all_commands), (
+        stale_direct,
+        all_commands,
+    )
 PY
+}
+
+# 1. New user settings file is valid and uses only dispatcher-mode commands.
+run_installer > "$TMP/install.log"
+python3 -c "import json; json.load(open('$SETTINGS'))"
+grep -q "$ROOT/scripts/monitoring/eos-telemetry-dispatch.sh" "$SETTINGS"
+if grep -q 'ENGINEERING_OS_HOME' "$SETTINGS"; then
+  echo "ERROR_FOR_AGENT: unresolved runtime placeholder leaked into user settings" >&2
+  exit 1
+fi
+assert_dispatcher_only
 
 # 2. Exact verification succeeds for a current install.
 run_installer --verify
 
-# 3. Verification catches a stale absolute runtime path before reinstall fixes it.
+# 3. Converting pre-existing direct settings removes every direct hook,
+# including the dedicated SessionStart entry, before dispatcher hooks are added.
+rm -f "$SETTINGS"
+mkdir -p "$(dirname "$SETTINGS")"
+python3 "$PATCHER" "$SETTINGS" --mode direct --home "$ROOT" --no-backup >/dev/null
+grep -q 'eos-telemetry-session-start.sh' "$SETTINGS"
+run_installer >/dev/null
+assert_dispatcher_only
+run_installer --verify
+
+# 4. Verification catches a stale absolute runtime path before reinstall fixes it.
 python3 - "$SETTINGS" <<'PY'
 import json
 import sys
@@ -73,7 +108,7 @@ grep -q 'stale owned hook' "$TMP/stale.err"
 run_installer > /dev/null
 run_installer --verify
 
-# 4. A current reinstall is a true no-op and creates no new backup.
+# 5. A current reinstall is a true no-op and creates no new backup.
 rm -f "$HOME_DIR/.claude"/*.backup.*
 run_installer > "$TMP/noop.log"
 grep -q 'no changes needed' "$TMP/noop.log"
@@ -82,7 +117,7 @@ grep -q 'no changes needed' "$TMP/noop.log"
   exit 1
 }
 
-# 5. Existing unrelated settings and hooks survive installation.
+# 6. Existing unrelated settings and hooks survive installation.
 cat > "$SETTINGS" <<'JSON'
 {
   "model": "claude-opus",
@@ -106,8 +141,9 @@ commands = [
 ]
 assert "echo my-custom-hook" in commands, commands
 PY
+assert_dispatcher_only
 
-# 6. Malformed JSON is rejected without a partial overwrite.
+# 7. Malformed JSON is rejected without a partial overwrite.
 echo '{not valid json' > "$SETTINGS"
 cp "$SETTINGS" "$TMP/broken.orig"
 if run_installer >"$TMP/broken.out" 2>"$TMP/broken.err"; then
@@ -117,7 +153,7 @@ fi
 grep -q 'ERROR_FOR_AGENT' "$TMP/broken.err"
 diff -q "$SETTINGS" "$TMP/broken.orig" >/dev/null
 
-# 7. Dry-run changes nothing.
+# 8. Dry-run changes nothing.
 rm -f "$SETTINGS"
 run_installer > /dev/null
 cp "$SETTINGS" "$TMP/before-dry-run.json"
@@ -125,7 +161,7 @@ python3 "$PATCHER" "$SETTINGS" --mode dispatcher --home "$ROOT" --uninstall --dr
 diff -q "$SETTINGS" "$TMP/before-dry-run.json" >/dev/null
 grep -q 'dry-run' "$TMP/dry.log"
 
-# 8. Uninstall removes only Engineering-OS-owned entries and retains the file.
+# 9. Uninstall removes only Engineering-OS-owned entries and retains the file.
 python3 - "$SETTINGS" <<'PY'
 import json
 import sys
@@ -154,7 +190,7 @@ assert "echo unrelated-user-hook" in text, data
 PY
 [ -f "$SETTINGS" ]
 
-# 9. An invalid runtime path fails with the installer's actionable convention.
+# 10. An invalid runtime path fails with the installer's actionable convention.
 if HOME="$HOME_DIR" ENGINEERING_OS_HOME="$TMP/missing-runtime" bash "$INSTALLER" \
   >"$TMP/missing.out" 2>"$TMP/missing.err"; then
   echo "ERROR_FOR_AGENT: missing Engineering OS checkout unexpectedly succeeded" >&2
@@ -163,4 +199,4 @@ fi
 grep -q 'ERROR_FOR_AGENT: Engineering OS checkout not found' "$TMP/missing.err"
 grep -q 'ACTION:' "$TMP/missing.err"
 
-echo 'user-level telemetry installer tests passed: exact dispatcher guard, stale-path detection, idempotency, preservation, refusal, dry-run, uninstall, and actionable path failure'
+echo 'user-level telemetry installer tests passed: exact dispatcher install, direct-mode migration, stale-path detection, idempotency, preservation, refusal, dry-run, uninstall, and actionable path failure'
