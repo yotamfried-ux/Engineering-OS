@@ -1,23 +1,9 @@
 #!/usr/bin/env python3
 """Resolve which managed repositories a dispatched hook event applies to.
 
-Called by eos-telemetry-dispatch.sh (the user-level hook entry point). Reads
-the hook's JSON payload from stdin, reads/creates a per-session discovery
-cache under $HOME/.engineering-os/telemetry/dispatch-sessions/, and prints
-one absolute repo path per line for the dispatcher to cd into and delegate
-to the existing, unmodified per-repo scripts.
-
-Fan-out events (SessionStart, Stop, StopFailure, SessionEnd) print every
-discovered managed repo. Per-tool-call events (PreToolUse, PostToolUse,
-PostToolUseFailure, PermissionDenied) print at most one repo — the result of
-the attribution algorithm — and print nothing (empty output, exit 0) when the
-event cannot be safely attributed to a single repo. The caller is
-responsible for logging the unattributed diagnostic; this script only
-decides "which repo, if any."
-
-The last line of output is always "CORRELATION:<id>" — a host-session
-correlation id, stable for the lifetime of the Claude Code session, generated
-once and cached. It never replaces any repo's own run_id.
+The resolver reads one Claude hook payload from stdin, maintains a per-session
+cache of discovered repositories and a host correlation id, and prints zero or
+more repository roots followed by ``CORRELATION:<id>``.
 """
 from __future__ import annotations
 
@@ -37,32 +23,42 @@ from telemetry_repo_discovery import (
     attribute_event,
     discover_managed_repos,
     has_conflicting_project_local_hooks,
+    managed_repo_for_cwd,
 )
 
 FANOUT_EVENTS = {"session_start", "stop", "stop_failure", "session_end"}
 CACHE_DIR = Path(
     os.environ.get(
         "EOS_DISPATCH_CACHE_DIR",
-        str(Path(os.environ.get("EOS_DISPATCH_HOME", str(Path.home()))) / ".engineering-os" / "telemetry" / "dispatch-sessions"),
+        str(
+            Path(os.environ.get("EOS_DISPATCH_HOME", str(Path.home())))
+            / ".engineering-os"
+            / "telemetry"
+            / "dispatch-sessions"
+        ),
     )
 )
+DEFAULT_CACHE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60
 
 
 def session_hash(payload: dict[str, Any]) -> str:
+    """Return a privacy-preserving cache key for one Claude session."""
+
     session_id = str(payload.get("session_id") or "")
     if not session_id:
-        # No session_id on this payload (should not normally happen per the
-        # documented hook schema) — fail safe into a single shared bucket
-        # rather than crashing; discovery just re-runs more often.
         return "unknown-session"
     return hashlib.sha256(session_id.encode("utf-8", errors="replace")).hexdigest()[:32]
 
 
 def cache_path(session_key: str) -> Path:
+    """Return the cache file for session_key."""
+
     return CACHE_DIR / f"{session_key}.json"
 
 
 def load_cache(session_key: str) -> dict[str, Any] | None:
+    """Load and minimally validate an existing session cache."""
+
     path = cache_path(session_key)
     if not path.is_file():
         return None
@@ -76,31 +72,78 @@ def load_cache(session_key: str) -> dict[str, Any] | None:
 
 
 def write_cache(session_key: str, repos: list[RepoInfo], correlation_id: str) -> None:
+    """Atomically persist one session's repository set and correlation id."""
+
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     path = cache_path(session_key)
-    tmp = path.with_suffix(".tmp")
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}-{time.time_ns()}")
     payload = {
-        "schema_version": "eos.dispatch.session_cache.v1",
+        "schema_version": "eos.dispatch.session_cache.v2",
         "correlation_id": correlation_id,
-        "repos": sorted(str(r.root) for r in repos),
+        "repos": sorted(str(repo.root) for repo in repos),
         "updated_at": time.time(),
     }
     tmp.write_text(json.dumps(payload), encoding="utf-8")
     tmp.replace(path)
 
 
+def prune_expired_cache() -> None:
+    """Delete stale dispatch-session cache files on SessionStart only."""
+
+    raw_max_age = os.environ.get(
+        "EOS_DISPATCH_CACHE_MAX_AGE_SECONDS",
+        str(DEFAULT_CACHE_MAX_AGE_SECONDS),
+    )
+    try:
+        max_age = max(0, int(raw_max_age))
+    except ValueError:
+        max_age = DEFAULT_CACHE_MAX_AGE_SECONDS
+
+    if not CACHE_DIR.is_dir():
+        return
+
+    cutoff = time.time() - max_age
+    for path in CACHE_DIR.glob("*.json"):
+        try:
+            if path.stat().st_mtime < cutoff:
+                path.unlink()
+        except OSError:
+            continue
+
+
 def ensure_correlation_id(existing: dict[str, Any] | None) -> str:
+    """Reuse a cached correlation id or generate a new one."""
+
     if existing and existing.get("correlation_id"):
         return str(existing["correlation_id"])
     return secrets.token_hex(16)
 
 
+def discovery_for_event(event_name: str, event_cwd: Path) -> list[RepoInfo]:
+    """Discover repos and suppress only an actually active native direct install.
+
+    Project-local settings are loaded only for the repository in which an actual
+    SessionStart occurs. A sibling repository may have direct hooks on disk but
+    those hooks are not active in a parent-started session, so siblings must never
+    be removed merely because their settings file exists.
+    """
+
+    all_managed = discover_managed_repos(event_cwd)
+    if event_name != "session_start":
+        return all_managed
+
+    native = managed_repo_for_cwd(event_cwd)
+    if native is None or not has_conflicting_project_local_hooks(native.root):
+        return all_managed
+
+    return [repo for repo in all_managed if repo.root != native.root]
+
+
 def main() -> int:
+    """Resolve the current event and print repository roots plus correlation."""
+
     event_name = sys.argv[1] if len(sys.argv) > 1 else "unknown"
-    try:
-        raw = sys.stdin.read()
-    except Exception:
-        raw = ""
+    raw = sys.stdin.read()
     try:
         payload = json.loads(raw) if raw.strip() else {}
     except Exception:
@@ -112,27 +155,18 @@ def main() -> int:
     cached = load_cache(key)
     correlation_id = ensure_correlation_id(cached)
 
-    event_cwd = str(payload.get("cwd") or os.getcwd())
+    event_cwd_raw = str(payload.get("cwd") or os.getcwd())
+    event_cwd = Path(event_cwd_raw)
     is_fanout = event_name in FANOUT_EVENTS
-    needs_fresh_discovery = is_fanout and event_name == "session_start"
+    is_session_start = event_name == "session_start"
 
-    if cached is not None and not needs_fresh_discovery:
-        discovered = [RepoInfo(Path(p)) for p in cached.get("repos", [])]
+    if is_session_start:
+        prune_expired_cache()
+
+    if cached is not None and not is_session_start:
+        discovered = [RepoInfo(Path(path)) for path in cached.get("repos", [])]
     else:
-        all_managed = discover_managed_repos(Path(event_cwd))
-        # Never dispatch to a repo that already has its own working
-        # project-local hook installation — Claude Code merges hooks across
-        # scopes rather than overriding, so a session that started inside
-        # such a repo would already get that repo's own direct hooks firing;
-        # the dispatcher recording the same event too would double-count it.
-        # This repo simply isn't the dispatcher's job. See
-        # has_conflicting_project_local_hooks() for the full reasoning.
-        discovered = []
-        for repo in all_managed:
-            if has_conflicting_project_local_hooks(repo.root):
-                print(f"SKIPPED_SELF_SUFFICIENT:{repo.root}", file=sys.stderr)
-                continue
-            discovered.append(repo)
+        discovered = discovery_for_event(event_name, event_cwd)
         write_cache(key, discovered, correlation_id)
 
     if is_fanout:
