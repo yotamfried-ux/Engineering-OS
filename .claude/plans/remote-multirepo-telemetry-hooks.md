@@ -9,7 +9,7 @@
 | Domain tags | governance, observability, privacy, cross-repository, Claude Code hooks |
 | Plan Scope | project |
 | Planning Mode | approved — the owner authorized implementation and conditional squash merge after exact-head validation |
-| Target paths | `scripts/monitoring/`; `scripts/enforcement/tests/`; `.github/workflows/telemetry-handoff-tests.yml`; `docs/operations/remote-multirepo-telemetry-hooks.md` |
+| Target paths | `scripts/monitoring/`; `scripts/enforcement/tests/`; `.github/workflows/telemetry-handoff-tests.yml`; `docs/operations/remote-multirepo-telemetry-hooks.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md` |
 | Task-router evidence | `core/task-router.md` was read before implementation and classified this as Engineering OS governance |
 | Workflow evidence | `core/workflow.md` was followed through plan-first, experiment-fix loops, exact-head validation, and review correction |
 | Templates | waiver — no registered template owns a Claude Code user-level dispatcher |
@@ -92,26 +92,26 @@ The real pre-merge attempt proved installation, verification, and dynamic loadin
 ## Connector Usage Evidence
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`.
-- action: inspected PR #250, exact-head Actions, and all review threads; updated runtime, tests, runbook, and checkpoints.
-- result: final code and tests through `a9ac60ef2194e3e80b819bc5335ccbe3997aedc8` plus checkpoint `960732b96747f64bfeab7465047d77d6cc030fb8` implement typed path rejection, secure pre-write modes, and exact complete hook verification.
+- action: inspected PR #250, exact-head Actions, and all review threads; updated runtime, tests, runbook, audit files, and checkpoints.
+- result: final code and tests through `a9ac60ef2194e3e80b819bc5335ccbe3997aedc8` implement typed path rejection, secure pre-write modes, exact complete hook verification, and all runtime fixes; final evidence commits align the declared operational scope.
 - decision: kept the hard guard and implemented root-cause fixes rather than weakening enforcement.
-- target: `scripts/monitoring/patch-settings-telemetry.py`, `scripts/monitoring/telemetry_repo_discovery.py`, and focused installer/attribution tests.
+- target: `scripts/monitoring/patch-settings-telemetry.py`, `scripts/monitoring/telemetry_repo_discovery.py`, focused installer/attribution tests, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
 
 ## Claude Run Trace
 
 - goal: reliable per-repository telemetry from parent-started Remote sessions without unmanaged monitoring or global blocking.
 - hypothesis: current opt-in plus authoritative typed target reconciliation can safely reuse the repository-local pipeline.
 - connectors: GitHub; Claude Code runtime was observed but not used as a connector.
-- steps: plan-first; implement bootstrap/discovery/attribution; run a real attempt; diagnose failures; repeat CI/review-fix loops for hook completeness, guard scope, identity, cache, lifecycle, permissions, ownership, typed paths, atomic modes, exact verification, diagnostics, retention, and fixtures.
+- steps: plan-first; implement bootstrap/discovery/attribution; run a real attempt; diagnose failures; repeat CI/review-fix loops for hook completeness, guard scope, identity, cache, lifecycle, permissions, ownership, typed paths, atomic modes, exact verification, diagnostics, retention, fixtures, and evidence scope.
 - evidence: PR #250, start `4fe393c786cdc76fa05215524733191bf6b3b772`, implementation history, live report, Actions, reviews, fixtures, and last code/test commit `a9ac60ef2194e3e80b819bc5335ccbe3997aedc8`.
-- rejected: disabling the guard, recursive scanning, trusting partial settings or stale cache, stringifying malformed targets, transiently broad settings modes, or accepting additional owned hooks.
+- rejected: disabling the guard, recursive scanning, trusting partial settings or stale cache, stringifying malformed targets, transiently broad settings modes, accepting additional owned hooks, or omitting changed audit documents from declared scope.
 - result: deterministic implementation and regression evidence are present; fresh successful Remote validation remains post-merge.
 
 ## Progress Lifecycle Evidence
 
 - start: `4fe393c786cdc76fa05215524733191bf6b3b772` recorded scope and validation before implementation.
 - mid: `ff974707978c0cfac72850233e1923f06ae20018` and `855d1277c1e6f310cca18ec77ed60a1953f4e9c8` recorded implementation and the mid checkpoint.
-- pre-merge: final code/tests through `a9ac60ef2194e3e80b819bc5335ccbe3997aedc8` precede checkpoints `960732b96747f64bfeab7465047d77d6cc030fb8` and the final evidence-only corrections.
+- pre-merge: final code/tests through `a9ac60ef2194e3e80b819bc5335ccbe3997aedc8` precede the final evidence-only scope corrections.
 
 ## Definition of Done
 
@@ -121,7 +121,7 @@ The real pre-merge attempt proved installation, verification, and dynamic loadin
 - [x] Explicit signals are typed, strict, complete, and mutually consistent.
 - [x] The guard requires current attribution and catch-all coverage.
 - [x] Verification rejects stale, missing, duplicate, misplaced, or additional owned hooks.
-- [x] Repository state, lifecycle failures, privacy, and downstream matching remain isolated and validated.
+- [x] Repository state, lifecycle failures, privacy, audit scope, and downstream matching remain isolated and validated.
 - [x] Exact-head tests and CI suites validate every available review finding.
 - [x] The failed live attempt is documented honestly and successful closure gaps remain open.
 
