@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-"""Merge Engineering OS telemetry hooks into a Claude settings file.
-
-Direct mode preserves the existing project-local installation contract.
-Dispatcher mode installs user-level hooks that resolve each event to a managed
-repository before invoking the existing per-repository telemetry runtime.
-"""
+"""Safely manage Engineering OS telemetry hooks in Claude settings."""
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 import os
 import shutil
@@ -47,58 +43,44 @@ ALL_EVENTS = EVENTS_WITH_MATCHER + EVENTS_WITHOUT_MATCHER
 
 
 class PatchError(ValueError):
-    """Raised when settings cannot be patched safely."""
+    """Raised when settings cannot be changed safely."""
 
 
 def home_placeholder() -> str:
-    """Return the legacy project-local runtime placeholder."""
-
     return "${ENGINEERING_OS_HOME:-$(pwd)}"
 
 
 def command_set(mode: str, home: str | None = None) -> dict[str, str]:
-    """Build the commands owned by one installation mode."""
-
     runtime_home = home or home_placeholder()
     if mode == "direct":
-        guard = f'bash "{runtime_home}/scripts/monitoring/require-telemetry-session.sh"'
-        session_start = (
-            f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-session-start.sh"'
-        )
-        recorder = f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-event.sh"'
-        boundary = (
-            f'bash "{runtime_home}/scripts/monitoring/record-and-sync-telemetry.sh"'
-        )
-    elif mode == "dispatcher":
+        return {
+            "guard": f'bash "{runtime_home}/scripts/monitoring/require-telemetry-session.sh"',
+            "session_start": f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-session-start.sh"',
+            "recorder": f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-event.sh"',
+            "boundary": f'bash "{runtime_home}/scripts/monitoring/record-and-sync-telemetry.sh"',
+        }
+    if mode == "dispatcher":
         dispatch = f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-dispatch.sh"'
-        guard = f"{dispatch} guard"
-        session_start = f"{dispatch} session_start"
-        recorder = dispatch
-        boundary = dispatch
-    else:
-        raise PatchError(f"unknown mode: {mode}")
-
-    return {
-        "guard": guard,
-        "session_start": session_start,
-        "recorder": recorder,
-        "boundary": boundary,
-    }
+        return {
+            "guard": f"{dispatch} guard",
+            "session_start": f"{dispatch} session_start",
+            "recorder": dispatch,
+            "boundary": dispatch,
+        }
+    raise PatchError(f"unknown mode: {mode}")
 
 
 def desired_hooks(
     mode: str,
     home: str | None = None,
 ) -> list[tuple[str, str | None, str, str, bool]]:
-    """Return owned hook declarations as event/matcher/marker/command/prepend."""
-
     commands = command_set(mode, home)
     guard_marker = (
         "require-telemetry-session.sh"
         if mode == "direct"
         else 'eos-telemetry-dispatch.sh" guard'
     )
-    session_start_marker = (
+    session_marker = (
         "eos-telemetry-session-start.sh"
         if mode == "direct"
         else "eos-telemetry-dispatch.sh"
@@ -108,120 +90,67 @@ def desired_hooks(
         if mode == "direct"
         else "eos-telemetry-dispatch.sh"
     )
-
+    recorder = commands["recorder"]
+    boundary = commands["boundary"]
     return [
         ("PreToolUse", ".*", guard_marker, commands["guard"], True),
-        (
-            "PreToolUse",
-            ".*",
-            "pre_tool_use",
-            f'{commands["recorder"]} pre_tool_use',
-            False,
-        ),
-        (
-            "PostToolUse",
-            ".*",
-            "post_tool_use",
-            f'{commands["recorder"]} post_tool_use',
-            False,
-        ),
+        ("PreToolUse", ".*", "pre_tool_use", f"{recorder} pre_tool_use", False),
+        ("PostToolUse", ".*", "post_tool_use", f"{recorder} post_tool_use", False),
         (
             "PostToolUseFailure",
             ".*",
             "post_tool_use_failure",
-            f'{commands["recorder"]} post_tool_use_failure',
+            f"{recorder} post_tool_use_failure",
             False,
         ),
         (
             "PermissionDenied",
             ".*",
             "permission_denied",
-            f'{commands["recorder"]} permission_denied',
+            f"{recorder} permission_denied",
             False,
         ),
-        ("SessionStart", None, session_start_marker, commands["session_start"], True),
+        ("SessionStart", None, session_marker, commands["session_start"], True),
         (
             "UserPromptSubmit",
             None,
             "user_prompt_submit",
-            f'{commands["recorder"]} user_prompt_submit',
+            f"{recorder} user_prompt_submit",
             False,
         ),
         (
             "InstructionsLoaded",
             None,
             "instructions_loaded",
-            f'{commands["recorder"]} instructions_loaded',
+            f"{recorder} instructions_loaded",
             False,
         ),
-        (
-            "SubagentStart",
-            ".*",
-            "subagent_start",
-            f'{commands["recorder"]} subagent_start',
-            False,
-        ),
-        (
-            "SubagentStop",
-            ".*",
-            "subagent_stop",
-            f'{commands["recorder"]} subagent_stop',
-            False,
-        ),
-        (
-            "TaskCreated",
-            None,
-            "task_created",
-            f'{commands["recorder"]} task_created',
-            False,
-        ),
-        (
-            "TaskCompleted",
-            None,
-            "task_completed",
-            f'{commands["recorder"]} task_completed',
-            False,
-        ),
-        (
-            "PostCompact",
-            None,
-            "post_compact",
-            f'{commands["recorder"]} post_compact',
-            False,
-        ),
-        ("Stop", None, boundary_marker, f'{commands["boundary"]} stop', False),
+        ("SubagentStart", ".*", "subagent_start", f"{recorder} subagent_start", False),
+        ("SubagentStop", ".*", "subagent_stop", f"{recorder} subagent_stop", False),
+        ("TaskCreated", None, "task_created", f"{recorder} task_created", False),
+        ("TaskCompleted", None, "task_completed", f"{recorder} task_completed", False),
+        ("PostCompact", None, "post_compact", f"{recorder} post_compact", False),
+        ("Stop", None, boundary_marker, f"{boundary} stop", False),
         (
             "StopFailure",
             None,
             boundary_marker,
-            f'{commands["boundary"]} stop_failure',
+            f"{boundary} stop_failure",
             False,
         ),
-        (
-            "SessionEnd",
-            None,
-            boundary_marker,
-            f'{commands["boundary"]} session_end',
-            False,
-        ),
+        ("SessionEnd", None, boundary_marker, f"{boundary} session_end", False),
     ]
 
 
 def is_marker_owned(command: str) -> bool:
-    """Return whether a command belongs to Engineering OS telemetry."""
-
     return any(marker in command for marker in MARKERS)
 
 
 def is_owned_declaration(command: str, marker: str) -> bool:
-    """Match one declaration without claiming unrelated action-named hooks."""
-
     return is_marker_owned(command) and marker in command
 
 
 def load_settings(path: Path) -> dict[str, Any]:
-    """Load a settings object without silently replacing malformed JSON."""
-
     if not path.is_file():
         return {}
     try:
@@ -237,14 +166,12 @@ def load_settings(path: Path) -> dict[str, Any]:
 
 
 def backup_path(path: Path) -> Path:
-    """Return a timestamped settings backup path."""
-
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     return path.with_name(f"{path.name}.backup.{stamp}")
 
 
 def atomic_write(path: Path, data: dict[str, Any]) -> None:
-    """Validate and atomically replace settings without weakening permissions."""
+    """Create the temporary file with its final mode before writing content."""
 
     serialized = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     json.loads(serialized)
@@ -254,12 +181,21 @@ def atomic_write(path: Path, data: dict[str, Any]) -> None:
     except OSError:
         mode = 0o600
 
-    tmp = path.with_name(f".{path.name}.tmp-{time.time_ns()}")
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}-{time.time_ns()}")
+    fd = -1
     try:
-        tmp.write_text(serialized, encoding="utf-8")
-        os.chmod(tmp, mode)
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
+        os.fchmod(fd, mode)
+        stream = os.fdopen(fd, "w", encoding="utf-8")
+        fd = -1
+        with stream:
+            stream.write(serialized)
+            stream.flush()
+            os.fsync(stream.fileno())
         tmp.replace(path)
     finally:
+        if fd >= 0:
+            os.close(fd)
         try:
             tmp.unlink()
         except FileNotFoundError:
@@ -267,202 +203,160 @@ def atomic_write(path: Path, data: dict[str, Any]) -> None:
 
 
 class Blocks:
-    """Typed access to Claude settings hook blocks."""
-
     def __init__(self, hooks: dict[str, Any]) -> None:
         self.hooks = hooks
 
     def get(self, event: str) -> list[dict[str, Any]]:
-        """Return dictionary blocks for event."""
-
         value = self.hooks.setdefault(event, [])
         if not isinstance(value, list):
             raise PatchError(f"settings hooks.{event} must be an array")
         return [item for item in value if isinstance(item, dict)]
 
     def find(self, event: str, matcher: str | None) -> dict[str, Any] | None:
-        """Find the block with the exact matcher."""
-
         for block in self.get(event):
             if block.get("matcher") == matcher:
                 return block
         return None
 
 
+def iter_hook_commands(hooks: dict[str, Any]):
+    for event, blocks in hooks.items():
+        if not isinstance(blocks, list):
+            continue
+        for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            matcher = block.get("matcher")
+            entries = block.get("hooks")
+            if not isinstance(entries, list):
+                continue
+            for hook in entries:
+                if isinstance(hook, dict) and isinstance(hook.get("command"), str):
+                    yield event, matcher, hook, hook["command"]
+
+
+def remove_owned_hooks(hooks: dict[str, Any]) -> bool:
+    changed = False
+    for event in list(hooks):
+        blocks = hooks.get(event)
+        if not isinstance(blocks, list):
+            continue
+        kept_blocks: list[Any] = []
+        for block in blocks:
+            if not isinstance(block, dict):
+                kept_blocks.append(block)
+                continue
+            entries = block.get("hooks")
+            if not isinstance(entries, list):
+                kept_blocks.append(block)
+                continue
+            kept_entries = [
+                hook
+                for hook in entries
+                if not (
+                    isinstance(hook, dict)
+                    and is_marker_owned(str(hook.get("command") or ""))
+                )
+            ]
+            if len(kept_entries) != len(entries):
+                changed = True
+            block["hooks"] = kept_entries
+            if kept_entries:
+                kept_blocks.append(block)
+        if kept_blocks:
+            hooks[event] = kept_blocks
+        else:
+            del hooks[event]
+    return changed
+
+
 def ensure_hook(
-    blocks: Blocks,
+    hooks: dict[str, Any],
     event: str,
     matcher: str | None,
-    marker: str,
     command: str,
     *,
     prepend: bool,
-) -> bool:
-    """Add or update one owned hook and return whether settings changed."""
-
-    sequence = blocks.hooks.setdefault(event, [])
+) -> None:
+    sequence = hooks.setdefault(event, [])
     if not isinstance(sequence, list):
         raise PatchError(f"settings hooks.{event} must be an array")
-    block = blocks.find(event, matcher)
+    block = next(
+        (
+            item
+            for item in sequence
+            if isinstance(item, dict) and item.get("matcher") == matcher
+        ),
+        None,
+    )
     if block is None:
         block = {"hooks": []}
         if matcher is not None:
             block["matcher"] = matcher
         sequence.append(block)
-
-    hook_list = block.setdefault("hooks", [])
-    if not isinstance(hook_list, list):
+    entries = block.setdefault("hooks", [])
+    if not isinstance(entries, list):
         raise PatchError(f"hooks for {event}/{matcher} must be an array")
-
-    for hook in hook_list:
-        if not isinstance(hook, dict):
-            continue
-        installed = str(hook.get("command") or "")
-        if not is_owned_declaration(installed, marker):
-            continue
-        if installed == command:
-            return False
-        hook["command"] = command
-        return True
-
     entry = {"type": "command", "command": command}
-    hook_list.insert(0, entry) if prepend else hook_list.append(entry)
-    return True
+    entries.insert(0, entry) if prepend else entries.append(entry)
 
 
-def remove_owned_recorder_hooks(blocks: Blocks, event: str) -> bool:
-    """Remove Engineering-OS-owned hooks from one event."""
-
-    changed = False
-    for block in blocks.get(event):
-        existing = block.get("hooks", [])
-        if not isinstance(existing, list):
-            continue
-        kept = [
-            hook
-            for hook in existing
-            if not (
-                isinstance(hook, dict)
-                and is_marker_owned(str(hook.get("command") or ""))
-            )
-        ]
-        changed = changed or len(kept) != len(existing)
-        block["hooks"] = kept
-    return changed
-
-
-def prune_empty(hooks: dict[str, Any]) -> None:
-    """Remove empty hook blocks and events."""
-
-    for event in list(hooks):
-        blocks_list = hooks.get(event)
-        if not isinstance(blocks_list, list):
-            continue
-        pruned = [
-            block
-            for block in blocks_list
-            if not (isinstance(block, dict) and not block.get("hooks"))
-        ]
-        if pruned:
-            hooks[event] = pruned
-        else:
-            del hooks[event]
-
-
-def apply_install(
-    data: dict[str, Any],
-    mode: str,
-    home: str | None = None,
-) -> bool:
-    """Install the exact desired telemetry hook set for mode."""
-
+def apply_install(data: dict[str, Any], mode: str, home: str | None = None) -> bool:
     hooks = data.setdefault("hooks", {})
     if not isinstance(hooks, dict):
         raise PatchError("settings hooks must be a JSON object")
-    blocks = Blocks(hooks)
-    changed = False
-    for event in ALL_EVENTS:
-        changed = remove_owned_recorder_hooks(blocks, event) or changed
-    prune_empty(hooks)
-    for event, matcher, marker, command, prepend in desired_hooks(mode, home):
-        changed = (
-            ensure_hook(
-                blocks,
-                event,
-                matcher,
-                marker,
-                command,
-                prepend=prepend,
-            )
-            or changed
-        )
-    return changed
+    before = json.dumps(hooks, ensure_ascii=False, sort_keys=True)
+    remove_owned_hooks(hooks)
+    for event, matcher, _marker, command, prepend in desired_hooks(mode, home):
+        ensure_hook(hooks, event, matcher, command, prepend=prepend)
+    return before != json.dumps(hooks, ensure_ascii=False, sort_keys=True)
 
 
 def apply_uninstall(data: dict[str, Any]) -> bool:
-    """Remove only Engineering-OS-owned telemetry entries."""
-
     hooks = data.get("hooks")
     if not isinstance(hooks, dict):
         return False
-    blocks = Blocks(hooks)
-    changed = False
-    for event in ALL_EVENTS:
-        changed = remove_owned_recorder_hooks(blocks, event) or changed
-    prune_empty(hooks)
+    changed = remove_owned_hooks(hooks)
     if not hooks:
         del data["hooks"]
-        changed = True
     return changed
 
 
 def describe_owned(data: dict[str, Any]) -> list[str]:
-    """Describe owned hook commands for dry-run output."""
-
     hooks = data.get("hooks")
     if not isinstance(hooks, dict):
         return []
-    found: list[str] = []
-    for event, blocks_list in hooks.items():
-        if not isinstance(blocks_list, list):
-            continue
-        for block in blocks_list:
-            if not isinstance(block, dict):
-                continue
-            for hook in block.get("hooks", []):
-                if (
-                    isinstance(hook, dict)
-                    and is_marker_owned(str(hook.get("command") or ""))
-                ):
-                    found.append(f"{event}: {hook.get('command')}")
-    return found
+    return [
+        f"{event}: {command}"
+        for event, _matcher, _hook, command in iter_hook_commands(hooks)
+        if is_marker_owned(command)
+    ]
 
 
 def verify(path: Path, mode: str, home: str | None = None) -> list[str]:
-    """Return installation problems, including stale mode or runtime paths."""
-
     if not path.is_file():
         return [f"settings file does not exist: {path}"]
     try:
         data = load_settings(path)
     except PatchError as exc:
         return [str(exc)]
-
     hooks = data.get("hooks")
     if not isinstance(hooks, dict):
         return ["no hooks object present"]
 
+    desired = desired_hooks(mode, home)
     problems: list[str] = []
     blocks = Blocks(hooks)
-    for event, matcher, marker, command, _prepend in desired_hooks(mode, home):
+    for event, matcher, marker, command, _prepend in desired:
         block = blocks.find(event, matcher)
         if block is None:
             problems.append(f"missing hook block for {event}/{matcher}")
             continue
-
+        entries = block.get("hooks")
+        entries = entries if isinstance(entries, list) else []
         matches = [
             hook
-            for hook in block.get("hooks", [])
+            for hook in entries
             if isinstance(hook, dict)
             and is_owned_declaration(str(hook.get("command") or ""), marker)
         ]
@@ -481,35 +375,29 @@ def verify(path: Path, mode: str, home: str | None = None) -> list[str]:
                     f"stale owned hook for {event} (marker={marker}): "
                     f"installed command does not match mode={mode}"
                 )
+
+    expected_counts = Counter(command for _e, _m, _k, command, _p in desired)
+    actual_counts = Counter(
+        command
+        for _event, _matcher, _hook, command in iter_hook_commands(hooks)
+        if is_marker_owned(command)
+    )
+    for command, count in sorted((actual_counts - expected_counts).items()):
+        problems.append(f"unexpected owned hook ({count} entries): {command}")
+    for command, count in sorted((expected_counts - actual_counts).items()):
+        problems.append(f"missing expected owned command ({count} entries): {command}")
     return problems
 
 
 def main() -> int:
-    """Parse arguments and apply, verify, or remove telemetry hooks."""
-
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("settings", type=Path)
-    parser.add_argument(
-        "--mode",
-        choices=("direct", "dispatcher"),
-        default="direct",
-    )
-    parser.add_argument(
-        "--home",
-        default=None,
-        help=(
-            "bake this absolute Engineering OS path directly into commands "
-            "instead of the project-local placeholder"
-        ),
-    )
+    parser.add_argument("--mode", choices=("direct", "dispatcher"), default="direct")
+    parser.add_argument("--home", default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--verify", action="store_true")
     parser.add_argument("--uninstall", action="store_true")
-    parser.add_argument(
-        "--no-backup",
-        action="store_true",
-        help="skip writing a backup file (testing only)",
-    )
+    parser.add_argument("--no-backup", action="store_true")
     args = parser.parse_args()
 
     if args.verify:
@@ -533,15 +421,13 @@ def main() -> int:
         )
         return 1
 
-    before_serialized = json.dumps(data, ensure_ascii=False, sort_keys=True)
+    before = json.dumps(data, ensure_ascii=False, sort_keys=True)
+    action = "uninstall" if args.uninstall else "install"
     if args.uninstall:
         apply_uninstall(data)
-        action = "uninstall"
     else:
         apply_install(data, args.mode, args.home)
-        action = "install"
-    after_serialized = json.dumps(data, ensure_ascii=False, sort_keys=True)
-    changed = before_serialized != after_serialized
+    changed = before != json.dumps(data, ensure_ascii=False, sort_keys=True)
 
     if args.dry_run:
         if changed:
@@ -566,10 +452,7 @@ def main() -> int:
 
     atomic_write(args.settings, data)
     verb = "uninstalled" if args.uninstall else "installed/verified"
-    print(
-        f"{verb} Engineering OS telemetry hooks: "
-        f"{args.settings} (mode={args.mode})"
-    )
+    print(f"{verb} Engineering OS telemetry hooks: {args.settings} (mode={args.mode})")
     return 0
 
 
