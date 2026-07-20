@@ -17,14 +17,21 @@ from telemetry_handoff import load_policy
 
 MARKER_RELATIVE_PATH = Path(".engineering-os") / "telemetry-policy.json"
 
-# Kept in sync with patch-settings-telemetry.py's MARKERS tuple. These markers
-# identify repositories with direct project-local telemetry hooks installed.
 _OWNED_HOOK_MARKERS = (
     "require-telemetry-session.sh",
     "eos-telemetry-session-start.sh",
     "eos-telemetry-event.sh",
     "record-and-sync-telemetry.sh",
     "eos-telemetry-dispatch.sh",
+)
+_REPOSITORY_SIGNAL_KEYS = (
+    "repository_full_name",
+    "repo_full_name",
+    "repository",
+    "owner",
+    "org",
+    "repo",
+    "repository_name",
 )
 
 
@@ -97,9 +104,8 @@ def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
     """Return whether repo_root has direct Engineering-OS hooks on disk.
 
     Presence alone does not prove those hooks are active in the current session.
-    The resolver therefore uses this result only for the native repository of an
-    actual SessionStart event. Sibling project settings are not loaded when a
-    session starts from their parent directory and must remain dispatchable.
+    The resolver uses this result only for the native repository of an actual
+    SessionStart event.
     """
 
     settings_path = repo_root / ".claude" / "settings.json"
@@ -113,12 +119,7 @@ def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
 
 
 def discover_managed_repos(start_cwd: Path) -> list[RepoInfo]:
-    """Discover managed repositories from start_cwd without recursive scanning.
-
-    If start_cwd is inside a managed repository, only that repository is
-    returned. Otherwise only immediate child directories that are themselves Git
-    roots with valid telemetry policy markers are considered.
-    """
+    """Discover managed repositories without recursively scanning the host."""
 
     try:
         start_cwd = start_cwd.resolve()
@@ -218,35 +219,48 @@ def _repo_remote_slug(repo_root: Path) -> str | None:
     return _normalize_repo_slug(remote)
 
 
-def _payload_repo_slug(payload: dict[str, Any]) -> str | None:
-    """Extract an explicit repository identifier from a tool payload."""
+def _tool_input(payload: dict[str, Any]) -> dict[str, Any]:
+    value = payload.get("tool_input")
+    return value if isinstance(value, dict) else {}
 
-    tool_input = payload.get("tool_input")
-    if not isinstance(tool_input, dict):
-        return None
+
+def _payload_repo_target(payload: dict[str, Any]) -> tuple[bool, str | None]:
+    """Return whether a repo signal exists and its normalized slug.
+
+    A present but malformed signal returns ``(True, None)`` so cwd cannot hide
+    the invalid explicit target.
+    """
+
+    tool_input = _tool_input(payload)
+    present = any(
+        key in tool_input and tool_input.get(key) not in (None, "")
+        for key in _REPOSITORY_SIGNAL_KEYS
+    )
+    if not present:
+        return False, None
 
     for key in ("repository_full_name", "repo_full_name"):
         value = tool_input.get(key)
         if isinstance(value, str):
             normalized = _normalize_repo_slug(value)
             if normalized:
-                return normalized
+                return True, normalized
+            return True, None
 
     owner = tool_input.get("owner") or tool_input.get("org")
     repo = tool_input.get("repo") or tool_input.get("repository_name")
-    if isinstance(owner, str) and isinstance(repo, str):
-        return _normalize_repo_slug(f"{owner}/{repo}")
+    if owner is not None or repo is not None:
+        if isinstance(owner, str) and isinstance(repo, str):
+            return True, _normalize_repo_slug(f"{owner}/{repo}")
+        return True, None
 
     repository = tool_input.get("repository")
-    if isinstance(repository, str) and "/" in repository:
-        return _normalize_repo_slug(repository)
-
-    return None
+    if isinstance(repository, str):
+        return True, _normalize_repo_slug(repository)
+    return True, None
 
 
 def _repo_for_slug(slug: str, discovered: list[RepoInfo]) -> RepoInfo | None:
-    """Return the unique discovered repository matching slug."""
-
     matches = [
         repo for repo in discovered
         if _repo_remote_slug(repo.root) == slug
@@ -257,11 +271,9 @@ def _repo_for_slug(slug: str, discovered: list[RepoInfo]) -> RepoInfo | None:
 def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> RepoInfo | None:
     """Attribute one hook event without guessing.
 
-    Explicit filesystem and repository targets are authoritative. Any explicit
-    target that is invalid, outside the discovered managed set, or conflicts
-    with another explicit target makes the event unattributed; cwd must not
-    override it. Cwd is considered only when no explicit target exists, followed
-    by a sole-repository fallback only when the payload has no routing signal.
+    Explicit filesystem and repository targets are authoritative and must agree.
+    Cwd is considered only when no explicit target exists. A sole-repository
+    fallback is allowed only when the payload contains no routing signal.
     """
 
     if not discovered:
@@ -273,18 +285,16 @@ def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> Repo
     except OSError:
         event_cwd = None
 
-    tool_input = payload.get("tool_input")
-    if not isinstance(tool_input, dict):
-        tool_input = {}
+    tool_input = _tool_input(payload)
 
-    # Tier 1: all explicit path-like fields must resolve to the same managed
-    # repository. One outside, malformed, or conflicting explicit path rejects
-    # attribution instead of falling through to cwd.
+    # Only actual path fields are filesystem targets. Grep/Glob search patterns
+    # are expressions, not paths; their optional `path` field carries location.
     explicit_paths = [
         str(tool_input[key])
-        for key in ("file_path", "path", "pattern")
+        for key in ("file_path", "path")
         if tool_input.get(key)
     ]
+    path_target: RepoInfo | None = None
     if explicit_paths:
         matched: list[RepoInfo] = []
         for raw in explicit_paths:
@@ -295,24 +305,31 @@ def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> Repo
             if repo is None:
                 return None
             matched.append(repo)
-        first = matched[0]
-        return first if all(repo == first for repo in matched) else None
+        path_target = matched[0]
+        if not all(repo == path_target for repo in matched):
+            return None
 
-    # Tier 2: an explicit MCP/GitHub repository identifier is authoritative.
-    # A slug outside the discovered set rejects attribution even when cwd is
-    # inside a managed repository.
-    slug = _payload_repo_slug(payload)
-    if slug is not None:
-        return _repo_for_slug(slug, discovered)
+    repo_signal, slug = _payload_repo_target(payload)
+    repo_target: RepoInfo | None = None
+    if repo_signal:
+        if slug is None:
+            return None
+        repo_target = _repo_for_slug(slug, discovered)
+        if repo_target is None:
+            return None
 
-    # Tier 3: the hook payload's cwd is used only in the absence of an explicit
-    # filesystem or repository target.
+    if path_target is not None and repo_target is not None:
+        return path_target if path_target == repo_target else None
+    if path_target is not None:
+        return path_target
+    if repo_target is not None:
+        return repo_target
+
     if event_cwd_raw:
         if event_cwd is None:
             return None
         return _repo_for_path(event_cwd, discovered)
 
-    # Tier 4: payloads with no routing signal at all may use the sole repo.
     if len(discovered) == 1:
         return discovered[0]
 
