@@ -8,224 +8,169 @@
 | Task class | `engineering_os_governance` |
 | Domain tags | governance, observability, privacy, cross-repository, Claude Code hooks |
 | Plan Scope | project |
-| Planning Mode | approved — the owner approved the architecture and later explicitly authorized completing and merging PR #250 once exact-head CI and review are clean |
-| Target paths | `scripts/monitoring/`; dispatcher test suites; telemetry workflow; operational runbook; known-gaps and readiness audit |
-| Templates | waiver — no Engineering OS template owns a Claude Code user-level hook dispatcher |
+| Planning Mode | approved — the owner authorized implementation and squash merge after exact-head validation and clean review |
+| Target paths | `scripts/monitoring/`; telemetry dispatcher tests; telemetry workflow; operational runbook; known-gaps and readiness audit |
+| Templates | waiver — no registered template owns a Claude Code user-level dispatcher |
 | Architecture guides | `architecture-decisions/ADR-2026-002-managed-settings-rollout.md`; `docs/operations/managed-settings-deployment-proof.md`; `docs/operations/project8-telemetry-preflight.md` |
-| Patterns | waiver — no registered pattern covers cross-repository Claude hook attribution; existing per-repository telemetry entry points are reused instead |
-| External systems/connectors | GitHub; Claude Code settings/hooks runtime |
-| Skills | security review and verification-before-completion behavior are required by the privacy-sensitive runtime scope |
+| Patterns | waiver — no registered pattern covers cross-repository hook attribution; the existing per-repository telemetry pipeline is reused |
+| External systems/connectors | GitHub; Claude Code settings and hooks runtime |
+| Skills | security review and verification-before-completion behavior are required by the privacy-sensitive scope |
 | Validation gates | telemetry-handoff-tests; enforcement-tests; pr-policy; plan/workflow/connector/capability/documentation/cleanup policies |
-| Evidence to check | PR #250, its exact-head Actions runs and review threads; official Claude Code settings/hooks documentation; live Remote experiment evidence; test fixtures |
-| User decisions required | none outstanding — implementation and conditional squash merge are authorized |
+| Evidence to check | PR #250 exact-head Actions and review threads; official Claude Code documentation; live Remote failure evidence; executable fixtures |
+| User decisions required | none outstanding |
 
 ## Source of Truth Checks
 
 | Source | Status | Finding |
 |---|---|---|
-| Official Claude Code settings/hooks documentation | checked through the dedicated documentation agent before implementation | User-level `$HOME/.claude/settings.json` applies across sessions, while project settings are tied to the project/session scope; hooks from settings scopes merge rather than override. |
-| `scripts/monitoring/require-telemetry-session.sh` | read | The guard is intentionally fail-closed for a managed repository without a matching current SessionStart and therefore must never run globally before repository attribution. |
-| `scripts/monitoring/eos-telemetry-session-start.sh` | read and fixture-tested | It owns per-repository run initialization and rotation; the dispatcher should delegate rather than duplicate this state model. |
-| `scripts/monitoring/eos-telemetry-event.sh` | read and fixture-tested | It retains the metadata-only privacy contract and repository-local event schema. |
-| `scripts/monitoring/record-and-sync-telemetry.sh` and downstream handoff scripts | read and compatibility-tested | Push, manifest, branch/head and PR matching stay per-repository and are not redesigned by this change. |
-| PR #250 live Remote experiment | partially validated | User-level installation and dynamic hook loading were observed in a real Remote host. The experiment found two real defects before the session became correctly blocked and required restart. A fresh successful end-to-end session is still required. |
+| Official Claude Code settings/hooks documentation | checked before implementation | User-level settings load across sessions; project settings depend on project/session scope; hooks from applicable scopes merge. |
+| `require-telemetry-session.sh` | read and changed | The guard remains fail-closed for an attributed managed repository but now validates either direct project settings or dispatcher-mode user settings under the correct hook events. |
+| `eos-telemetry-session-start.sh` | read and fixture-tested | It remains the owner of repository-local run initialization and rotation. |
+| `eos-telemetry-event.sh` | read and fixture-tested | It retains the metadata-only event schema. |
+| Boundary, handoff, and PR-selection scripts | read and compatibility-tested | Repository, branch, head, bundle, push, and PR matching remain downstream and per repository. |
+| Real PR #250 Remote attempt | partially validated | Installation, verification, and dynamic hook loading worked; two runtime defects were reproduced. The attempt ended with a required restart, so a fresh successful run remains open. |
 
 ## Root Cause
 
-A Claude Code Remote session may begin from a parent directory rather than inside
-`project-8` or `Engineering-OS`. In that shape, repository-local hook settings are
-not active, so telemetry never starts. A user-level hook is therefore required,
-but a user-level hook has no single repository identity of its own.
+A Remote session can start from a parent directory where repository-local hook settings are not active. A user-level bootstrap solves hook loading, but it has no repository identity of its own. The original implementation also confused project settings present on disk with hooks active in the current session and allowed a sole-repository fallback to override explicit outside-repository evidence.
 
-The first implementation had two unsafe assumptions:
-
-1. It treated project-local hook entries found on disk as if they were active in
-   the current session. Parent-started sibling repositories were skipped even
-   though their project settings had never loaded.
-2. When exactly one managed repository was discovered, it attributed any event
-   without a successful in-repo match to that repository. An explicit outside
-   path such as an unmanaged file could therefore inherit the managed repo's hard
-   guard and block every tool call in the host session.
-
-The repair separates **presence on disk** from **active hook scope**, and treats an
-explicit outside-repository signal as evidence against repository attribution,
-not as permission to use a sole-repository fallback.
+The result was first zero telemetry for `project-8`, then a session-wide false block when an unrelated operation inherited `project-8`'s correct missing-SessionStart guard.
 
 ## Architecture
 
-### User-level bootstrap
+### User-level installation
 
-`scripts/monitoring/install-user-level-telemetry-hooks.sh` safely merges
-Engineering-OS-owned commands into `$HOME/.claude/settings.json` without sudo.
-Installation is idempotent, preserves unrelated settings/hooks, verifies exact
-commands and runtime paths, writes atomically with backups, and supports dry-run
-and uninstall.
+`install-user-level-telemetry-hooks.sh` manages `$HOME/.claude/settings.json` without sudo. It preserves unrelated entries, backs up and writes atomically, rejects malformed JSON, verifies exact commands and runtime paths, supports dry-run/uninstall, and removes stale direct-mode entries before installing dispatcher mode.
 
-The user-level PreToolUse guard is not invoked directly. It runs as:
+### Discovery and project-hook coexistence
 
-`eos-telemetry-dispatch.sh guard`
-
-The dispatcher first proves the repository target. An unattributed or unmanaged
-event is not blocked by another repository's policy. A safely attributed managed
-repository still receives the existing fail-closed guard unchanged.
-
-### Managed repository discovery
-
-1. If the event/session cwd is inside a Git repository with a valid
-   `.engineering-os/telemetry-policy.json`, discover that repository.
-2. Otherwise scan immediate child directories only; never recursively scan the
-   user's home directory.
-3. Require each candidate to be its own Git root with a valid non-escaping policy
-   marker.
-4. Resolve and deduplicate real paths, then sort deterministically.
-
-Project-local direct hooks are suppressed only for the native repository of an
-**actual SessionStart** inside that repository. A sibling's settings file merely
-existing on disk does not make those hooks active in a parent-started session.
-A non-SessionStart cache miss also does not infer active project-local hooks.
+- Cwd is checked first.
+- Otherwise only immediate children are inspected; no recursive home scan exists.
+- A repository must be its own Git root with a valid, regular, non-escaping telemetry policy marker.
+- Direct project hooks are suppressed only for the native repository of an actual in-repository `SessionStart`.
+- Parent siblings and non-SessionStart cache misses remain dispatchable even when project settings exist on disk.
 
 ### Event attribution
 
-Evidence order:
+All explicit targets are authoritative and must agree:
 
-1. Explicit path-like tool input, realpath-resolved.
-2. Hook payload cwd.
-3. Explicit GitHub/MCP repository identifier matched to the discovered repo's
-   real `origin` slug.
-4. Sole-repository fallback only when the payload contains no routing signal at
-   all.
+1. Actual path fields such as `file_path` and `path`, after realpath normalization. Search expressions such as `Grep.pattern` are not treated as paths.
+2. Explicit GitHub/MCP repository identity matched to a discovered repository's real `origin` slug.
+3. Payload cwd only when no explicit target exists.
+4. Sole-repository fallback only when the payload contains no routing signal.
 
-Any explicit path, cwd or repository identifier that points outside the managed
-set makes the event unattributed. The dispatcher never replaces that evidence
-with the sole discovered repository. Unattributed diagnostics contain event type,
-host correlation and timestamp only — no raw command, prompt, path or payload.
+An invalid, unmanaged, malformed, or conflicting explicit target makes the event unattributed. Cwd and fallback cannot override that result.
 
-### Per-repository isolation
+### Repository-scoped guard
 
-The dispatcher changes cwd to the resolved root and invokes the existing
-per-repository SessionStart, recorder, guard or boundary script. Each repository
-keeps its own run id, events file, policy, branch/head and handoff state. A shared
-host correlation id is additive and never substitutes for a repository run id.
-The existing push, manifest and PR-matching pipeline remains unchanged.
+User-level PreToolUse uses `eos-telemetry-dispatch.sh guard`. The dispatcher resolves the repository first and invokes the existing guard only for that repository. It passes dispatcher mode and the active user settings path, so a marker-only managed repository can validate SessionStart, guard, recorder, and boundary commands under their actual hook events.
 
-### Failure behavior
+Unmanaged or unattributed activity does not inherit another repository's enforcement.
 
-- A managed, attributed repository retains existing required/best-effort/disabled
-  semantics.
-- Unmanaged and unattributed activity is outside enforcement scope.
-- Resolver failures are distinguishable from normal unattributed events through a
-  metadata-only `dispatch-errors.jsonl` record containing a diagnostic hash rather
-  than raw stderr or hook payload.
-- Dispatch-session cache files are pruned on SessionStart after a bounded retention
-  period instead of growing indefinitely.
+### Isolation and boundaries
+
+Each repository keeps its own run ID, events, policy, branch/head, bundle, and handoff state. A shared host correlation ID is additive only.
+
+Lifecycle fan-out visits every repository. For Stop, StopFailure, and SessionEnd, any required durable-handoff failure is returned after all siblings have been visited rather than swallowed.
+
+### Failure diagnostics and retention
+
+Resolver failures are separate from normal unattributed events and produce metadata-only hashed diagnostics. Session-cache files are pruned on SessionStart after a bounded retention period.
 
 ## Privacy and Security
 
-- Only explicit Engineering-OS policy markers opt repositories in.
-- No recursive filesystem monitoring is introduced.
-- Raw prompts, responses, tool inputs, commands, paths, file contents, environment
-  values and secrets are not written to telemetry or diagnostics.
-- Marker and event paths are resolved before boundary checks; symlink/path traversal
-  cannot make an outside target appear inside a managed repo.
-- A user-level guard cannot convert one repository's required policy into a global
-  host-session blocker.
+- Only explicit policy markers opt repositories in.
+- No recursive monitoring is introduced.
+- Raw prompts, responses, commands, full tool inputs, file contents, paths, environment values, and secrets are excluded from diagnostics and repository telemetry.
+- Realpath and repository-boundary checks reject traversal and escaping symlinks.
+- Explicit outside targets cannot be overridden by cwd.
+- A user-level guard cannot become a global host-session blocker.
 
 ## Validation Matrix
 
-- Existing in-repository telemetry behavior and downstream handoff remain covered
-  by the pre-existing telemetry suites.
-- Parent discovery proves managed siblings are found and unmanaged siblings are not
-  touched.
-- Installer tests cover new/existing settings, exact verification, stale path
-  detection, idempotent update, malformed JSON refusal, dry-run, uninstall and
-  actionable missing-runtime failures.
-- Coexistence tests distinguish native active project hooks from inactive sibling
-  settings and mid-session cache misses.
-- Attribution tests cover explicit file paths, cwd, GitHub repository identifiers,
-  outside-repository rejection, ambiguous events and cross-repository isolation.
-- Guard tests prove an unmanaged explicit path is not blocked, an attributed managed
-  path is blocked before SessionStart, and that same path passes after a matching
-  SessionStart.
-- Failure tests cover malformed policies/payloads, path traversal, run-id rotation
-  and empty lifecycle fan-out.
-- Downstream compatibility tests retain repository/branch/head/PR matching isolation.
+Executable coverage includes:
+
+- managed-only parent discovery and unmanaged exclusion;
+- native active hooks versus inactive parent siblings and mid-session cache misses;
+- file, cwd, Grep path, and GitHub/MCP attribution;
+- agreement and conflict across filesystem and repository targets;
+- malformed repository targets as negative evidence;
+- marker-only dispatcher guard behavior and event-placement validation;
+- required/best-effort/disabled policy isolation;
+- boundary fan-out with required failure propagation;
+- separate repository run IDs/events with shared host correlation;
+- installer creation, migration, exact verification, idempotency, backup, malformed JSON refusal, dry-run, and uninstall;
+- resolver errors, cache retention, traversal, malformed inputs, and privacy-safe diagnostics;
+- downstream repository/branch/head/PR matching compatibility.
 
 ## Live Claude Code Remote Evidence
 
-A real Remote host experiment was started before merge:
+The real pre-merge attempt proved installation, `--verify`, and dynamic hook loading. It reproduced and informed fixes for:
 
-- the dispatcher was installed into the real `$HOME/.claude/settings.json`;
-- installer verification passed;
-- hooks were observed loading dynamically during the existing session;
-- the project-local-scope defect was reproduced, diagnosed and corrected;
-- after that correction, the managed-repository guard correctly detected that the
-  installation occurred after the current session began and required a restart;
-- the sole-repository fallback defect then made that correct guard apply to an
-  unrelated file operation, locking the session as a whole and proving the need for
-  repository-scoped guard dispatch.
+1. inactive project settings being treated as active;
+2. unrelated explicit activity inheriting the sole managed repository and its guard.
 
-This is real failure evidence, not a simulation, but it is not a successful closure
-run. `multirepo-remote-telemetry-validation` remains open until a genuinely fresh
-session proves successful discovery, attribution, unmanaged exclusion, bundle
-creation and PR matching after the merged repair.
+This is valid failure evidence, not successful closure. `multirepo-remote-telemetry-validation`, `project-8-real-run-evidence`, and `monitoring-metrics-sufficiency` remain open until a fresh post-merge session produces the required successful evidence.
 
 ## Documentation Asset Evidence
 
 - internal: `docs/operations/remote-multirepo-telemetry-hooks.md`, `docs/operations/project8-telemetry-preflight.md`, `docs/operations/managed-settings-deployment-proof.md`, `architecture-decisions/ADR-2026-002-managed-settings-rollout.md`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
-- context7: not required — no third-party library, framework or SDK is integrated; the external behavior is Claude Code itself and was checked against its official settings/hooks documentation.
-- decision: use the narrower user-level bootstrap rather than sudo-managed machine settings, while preserving explicit repository opt-in and existing downstream telemetry contracts.
+- context7: not required — no third-party library, framework, or SDK was introduced; Claude Code behavior was checked against official documentation.
+- decision: use a user-level bootstrap restricted to explicitly managed repositories and retain the existing repository-local downstream pipeline.
 
 ## Capability Evidence
 
 - `routing.task-router-read` — classified as Engineering OS governance and telemetry runtime work.
-- `workflow.workflow-read` — followed plan-first, evidence checkpoints, exact-head validation and merge authorization rules.
-- `source.docs-read` — official Claude Code hook/settings behavior was checked before design decisions.
-- `source.github-repo-read` — PR #250 files, Actions diagnostics and live review threads were inspected through GitHub.
-- `validation.policy-change-has-validator` — dispatcher, installer, attribution, guard, policy, failure and downstream compatibility fixtures exercise every changed contract.
-- `validation.coderabbit-policy` — Codex and CodeRabbit findings are fixed or explicitly reviewed before resolution and merge.
+- `workflow.workflow-read` — plan-first, evidence checkpoints, exact-head validation, and conditional merge authorization were followed.
+- `source.docs-read` — official Claude Code settings/hooks behavior informed the design.
+- `source.github-repo-read` — PR #250, Actions diagnostics, and all review threads were inspected through GitHub.
+- `validation.policy-change-has-validator` — every changed runtime contract has positive and negative executable coverage.
+- `validation.coderabbit-policy` — valid Codex and CodeRabbit findings are fixed before thread resolution and merge.
+- security-sensitive change waiver: no waiver is used; repository boundaries, privacy, guard scope, traversal, malformed targets, and failure propagation are tested explicitly.
 
 ## Connector Evidence
 
-- GitHub was required to inspect and update `yotamfried-ux/Engineering-OS`, read PR #250 review findings, examine exact workflow failures and validate the final reviewed head.
+GitHub was required to inspect and update `yotamfried-ux/Engineering-OS`, read PR #250 reviews and Actions diagnostics, and validate the final head.
 
 ## Connector Usage Evidence
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`.
-- action: inspected PR #250 at original head `aaa498b7587cefc6653c49320877c4d1ed9ec87c`, its review threads and Actions run `29705789876`, then updated the dispatcher, resolver, attribution, installer and regression tests on the PR branch.
-- result: commits from `aae837411da5f530e8d9d35e7153f5e90c9a2049` through `a4f2e4c1b8949e10043096c59c7249e5f61efb6e` implement evidence-safe attribution, actual-SessionStart hook coexistence, repository-scoped guard dispatch, exact installer verification and live-bug regressions.
-- decision: fix the root attribution/scope contracts rather than weaken `require-telemetry-session.sh` or bypass its correct restart requirement.
-- target: `scripts/monitoring/telemetry_repo_discovery.py`, `scripts/monitoring/eos-telemetry-dispatch-resolve.py`, `scripts/monitoring/eos-telemetry-dispatch.sh`, `scripts/monitoring/patch-settings-telemetry.py`, installer and dispatcher test suites.
+- action: inspected original head `aaa498b7587cefc6653c49320877c4d1ed9ec87c`, run `29705789876`, subsequent exact-head runs, and every Codex/CodeRabbit thread; then updated runtime, tests, workflow, plan, runbook, gap registry, and audit.
+- result: implementation commits through focused test-wiring commit `e0295c4f1fd6d9ee20a130ff22d3e3c9fbf26ffa` add managed discovery, evidence-safe attribution, dispatcher-aware guard validation, boundary failure propagation, exact mode migration, diagnostics, retention, and regressions.
+- decision: preserve the hard repository guard and durable-handoff contract while fixing attribution and settings scope at the root.
+- target: telemetry dispatcher/resolver/discovery/guard/patcher/installer, focused tests, workflow, and operational documentation.
 
 ## Claude Run Trace
 
-- goal: collect reliable per-repository telemetry in parent-started Claude Code Remote sessions without monitoring unmanaged work or globally blocking the host session.
-- hypothesis: a user-level bootstrap plus evidence-first repository attribution can reuse the existing per-repository telemetry pipeline safely.
-- connectors: GitHub; official Claude Code documentation agent during the source-of-truth phase.
-- steps: verify settings scope; create plan-first commit; implement installer/discovery/attribution/isolation; add tests and docs; open PR #250; run live Remote experiment; diagnose two live defects; read CI and review findings; scope project-local suppression to actual SessionStart; route guard through attribution; reject explicit outside signals; add MCP repo matching, exact verification and regressions; rerun exact-head gates.
-- evidence: PR #250, plan-first commit `9c10bae`, live Remote session report, review threads, dispatcher test files and GitHub Actions.
-- rejected: disabling the hard guard globally — rejected because it would hide missing SessionStart evidence inside managed repositories; treating on-disk project settings as active — rejected by the live parent-started experiment; sole-repo fallback after explicit outside evidence — rejected because it caused the session-wide deadlock.
-- result: deterministic fixes and regressions are implemented; fresh-session success remains a separately tracked live validation step.
+- goal: obtain reliable per-repository telemetry from parent-started Remote sessions without monitoring unmanaged work or globally blocking the host.
+- hypothesis: a narrow user-level bootstrap plus authoritative explicit-target reconciliation can safely reuse the existing per-repository pipeline.
+- connectors: GitHub and the official-documentation research agent.
+- steps: verify settings scope; create plan-first commit; implement bootstrap/discovery/attribution/isolation; open PR; run real Remote attempt; diagnose two live failures; correct project-hook activation, guard routing, user-settings validation, explicit-target precedence, malformed targets, Grep path handling, lifecycle failure propagation, mode migration, diagnostics, retention, and tests; rerun exact-head gates and review.
+- evidence: PR #250, plan-first commit `9c10bae`, live Remote report, Actions runs, review threads, and focused fixtures.
+- rejected: disabling the guard, recursively scanning home, trusting on-disk project settings as active, or assigning explicit outside activity to a default repository.
+- result: deterministic implementation and regression evidence are present; fresh successful Remote evidence remains a separate post-merge gate.
 
 ## Progress Lifecycle Evidence
 
 - start: Route Plan commit `9c10bae` preceded implementation.
-- mid: implementation/test commits built installer, discovery, attribution, isolation, policy and downstream compatibility before PR review; the live Remote experiment then produced two concrete failures rather than a false success claim.
-- pre-merge: commits `aae837411da5f530e8d9d35e7153f5e90c9a2049` through `a4f2e4c1b8949e10043096c59c7249e5f61efb6e` repair the live and review findings; the final exact-head SHA and Actions/review evidence will be recorded after the last correction.
+- mid: the initial implementation reached a real Remote attempt, which exposed two concrete failures rather than producing a false success claim.
+- pre-merge: implementation and review corrections through code/test workflow head `e0295c4f1fd6d9ee20a130ff22d3e3c9fbf26ffa` cover the live defects and later review findings; this plan checkpoint follows the last runtime/test change.
 
 ## Definition of Done
 
-- [x] User approved the architecture and implementation.
-- [x] User-level installation is idempotent, exact-verifiable and reversible.
-- [x] Discovery is managed-only, bounded, deterministic and symlink-safe.
-- [x] Per-repository telemetry state and host correlation remain isolated.
-- [x] Native active project hooks are deduplicated without suppressing inactive siblings.
-- [x] Explicit outside-repository evidence cannot trigger sole-repo fallback.
-- [x] The hard telemetry guard is applied only after safe repository attribution.
-- [x] Explicit GitHub/MCP repository identifiers are supported for discovered repos.
-- [x] Diagnostics retain the metadata-only privacy contract.
-- [x] Existing downstream handoff and PR matching remain in scope for regression validation.
-- [x] A real Remote attempt was documented honestly and the successful fresh-session closure gap remains open.
-- [ ] All required workflows pass on the exact final head.
-- [ ] All valid review findings are fixed and every thread is resolved.
-- [ ] The PR body records final Operational Work History, Operational Behavior, review and Merge Readiness evidence.
-- [x] The repository owner authorized squash merge once the preceding exact-head gates are clean.
+- [x] User-level installation is idempotent, exact-verifiable, reversible, and safely migrates modes.
+- [x] Discovery is managed-only, bounded, deterministic, and symlink-safe.
+- [x] Active native project hooks are deduplicated without suppressing inactive siblings.
+- [x] All explicit path and repository targets are reconciled and malformed/conflicting targets fail unattributed.
+- [x] Search patterns are not misclassified as filesystem paths.
+- [x] The hard guard runs only after attribution and validates dispatcher commands under their actual hook events.
+- [x] Repository state, policy, run IDs, events, and downstream matching remain isolated.
+- [x] Required lifecycle handoff failures remain observable after full fan-out.
+- [x] Diagnostics and cache retention preserve the privacy and lifecycle contracts.
+- [x] Automated coverage includes the live defects and every valid review finding.
+- [x] The failed real Remote attempt is recorded honestly and successful closure gaps remain open.
+- [x] PR evidence sections and conditional owner approval are recorded.
+
+## Merge Gates
+
+Merge remains blocked until every required workflow succeeds on one exact final head, the current-head review has no remaining valid finding, all fixed threads are resolved, and the PR body references that exact head and its evidence.
