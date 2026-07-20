@@ -49,48 +49,57 @@ def main() -> int:
         }
         assert discovery.attribute_event(agreeing_multi_identity, repos) == repo_a
 
-        conflicting_payload = {
-            "cwd": "/workspace/repo-a",
-            "tool_input": {
-                "file_path": "/workspace/repo-a/README.md",
-                "repository_full_name": "example/repo-b",
+        negative_payloads = [
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {
+                    "file_path": "/workspace/repo-a/README.md",
+                    "repository_full_name": "example/repo-b",
+                },
             },
-        }
-        assert discovery.attribute_event(conflicting_payload, repos) is None
-
-        conflicting_identity_forms = {
-            "cwd": "/workspace/repo-a",
-            "tool_input": {
-                "repository_full_name": "example/repo-a",
-                "owner": "example",
-                "repo": "repo-b",
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {
+                    "repository_full_name": "example/repo-a",
+                    "owner": "example",
+                    "repo": "repo-b",
+                },
             },
-        }
-        assert discovery.attribute_event(conflicting_identity_forms, repos) is None
-
-        malformed_repo_payload = {
-            "cwd": "/workspace/repo-a",
-            "tool_input": {"repository_full_name": "invalid"},
-        }
-        assert discovery.attribute_event(malformed_repo_payload, repos) is None
-
-        extra_component_payload = {
-            "cwd": "/workspace/repo-a",
-            "tool_input": {"repository_full_name": "other/example/repo-a"},
-        }
-        assert discovery.attribute_event(extra_component_payload, repos) is None
-
-        incomplete_pair_payload = {
-            "cwd": "/workspace/repo-a",
-            "tool_input": {"owner": "example"},
-        }
-        assert discovery.attribute_event(incomplete_pair_payload, repos) is None
-
-        outside_path_payload = {
-            "cwd": "/workspace/repo-a",
-            "tool_input": {"file_path": "/workspace/unmanaged/file.txt"},
-        }
-        assert discovery.attribute_event(outside_path_payload, repos) is None
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {"repository_full_name": "invalid"},
+            },
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {"repository_full_name": "other/example/repo-a"},
+            },
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {"owner": "example"},
+            },
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {"file_path": "/workspace/unmanaged/file.txt"},
+            },
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {"file_path": {}},
+            },
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {"path": 1},
+            },
+            {
+                "cwd": "/workspace/repo-a",
+                "tool_input": {"path": ""},
+            },
+            {
+                "cwd": {"malformed": True},
+                "tool_input": {},
+            },
+        ]
+        for payload in negative_payloads:
+            assert discovery.attribute_event(payload, repos) is None, payload
     finally:
         discovery._repo_remote_slug = original_remote_slug
 
