@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Remote-like simulation for parent-directory discovery, per-repository
-# attribution, explicit GitHub/MCP repository routing, isolation, and
-# privacy-safe unattributed diagnostics. This is not a live Remote-host proof.
+# attribution, explicit GitHub/MCP repository routing, conflict rejection,
+# isolation, and privacy-safe diagnostics. This is not live Remote-host proof.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 DISPATCH="$ROOT/scripts/monitoring/eos-telemetry-dispatch.sh"
@@ -70,11 +70,16 @@ dispatch post_tool_use "$HOME_DIR/Engineering-OS" '{"tool_name":"Bash","tool_inp
 # Explicit GitHub repository identifier disambiguates a parent-cwd event.
 dispatch post_tool_use "$HOME_DIR" '{"tool_name":"mcp__github__fetch_pr","tool_input":{"repository_full_name":"yotamfried-ux/project-8","pr_number":9}}'
 
-# Both an ambiguous parent-cwd Bash event and an explicit unmanaged path must
-# remain unattributed. The single-repo fallback may never override an explicit
-# out-of-repository path/cwd signal.
+# An explicit path is stronger than a conflicting managed cwd. This event must
+# go to Engineering-OS rather than project-8.
+dispatch post_tool_use "$HOME_DIR/project-8" '{"tool_name":"Read","tool_input":{"file_path":"'"$HOME_DIR"'/Engineering-OS/README.md"}}'
+
+# Ambiguous or explicit outside targets remain unattributed. Neither a managed
+# cwd nor a sole-repository fallback may override that negative evidence.
 dispatch post_tool_use "$HOME_DIR" '{"tool_name":"Bash","tool_input":{"command":"ls"}}'
 dispatch post_tool_use "$HOME_DIR" '{"tool_name":"Read","tool_input":{"file_path":"'"$HOME_DIR"'/random-folder/note.txt"}}'
+dispatch post_tool_use "$HOME_DIR/project-8" '{"tool_name":"Read","tool_input":{"file_path":"'"$HOME_DIR"'/random-folder/note.txt"}}'
+dispatch post_tool_use "$HOME_DIR/project-8" '{"tool_name":"mcp__github__fetch_pr","tool_input":{"repository_full_name":"yotamfried-ux/unmanaged-repo","pr_number":1}}'
 
 python3 - "$HOME_DIR" <<'PY'
 import json
@@ -92,10 +97,11 @@ eos = events("Engineering-OS")
 p8_names = [row["attributes"]["eos.event.name"] for row in p8]
 eos_names = [row["attributes"]["eos.event.name"] for row in eos]
 assert p8_names == ["session_start", "post_tool_use", "post_tool_use"], p8_names
-assert eos_names == ["session_start", "post_tool_use"], eos_names
+assert eos_names == ["session_start", "post_tool_use", "post_tool_use"], eos_names
 assert p8[1]["attributes"].get("eos.tool.name") == "Read", p8[1]
 assert p8[2]["attributes"].get("eos.tool.name") == "mcp__github__fetch_pr", p8[2]
 assert eos[1]["attributes"].get("eos.tool.name") == "Bash", eos[1]
+assert eos[2]["attributes"].get("eos.tool.name") == "Read", eos[2]
 
 p8_run = (home / "project-8" / ".engineering-os" / "telemetry" / "run_id").read_text().strip()
 eos_run = (home / "Engineering-OS" / ".engineering-os" / "telemetry" / "run_id").read_text().strip()
@@ -106,14 +112,21 @@ assert corr_p8 and corr_p8 == corr_eos, (corr_p8, corr_eos)
 
 unattributed = home / ".engineering-os" / "telemetry" / "unattributed.jsonl"
 rows = [json.loads(line) for line in unattributed.read_text().splitlines() if line.strip()]
-assert len(rows) == 2, rows
+assert len(rows) == 4, rows
 serialized = json.dumps(rows)
-for forbidden in ("command", "file_path", "random-folder", "note.txt"):
+for forbidden in (
+    "command",
+    "file_path",
+    "random-folder",
+    "note.txt",
+    "unmanaged-repo",
+    "repository_full_name",
+):
     assert forbidden not in serialized, (forbidden, serialized)
 
 assert not (home / "unrelated-repo" / ".engineering-os").exists()
 assert not (home / "random-folder" / ".engineering-os").exists()
-print("multirepo dispatch verified: discovery, path/cwd/repo-id attribution, isolation, and unmanaged exclusion")
+print("multirepo dispatch verified: discovery, authoritative explicit targets, conflict rejection, isolation, and unmanaged exclusion")
 PY
 
 echo 'multirepo telemetry dispatch tests passed (simulation; fresh Remote validation remains separate)'
