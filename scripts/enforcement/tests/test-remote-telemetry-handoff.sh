@@ -33,7 +33,7 @@ cat > "$POLICY" <<'JSON'
 {"schema_version":"eos.telemetry.policy.v1","remote_handoff":{"mode":"required","remote":"origin","branch":"engineering-os-telemetry"}}
 JSON
 cat > "$TARGET/.claude/settings.json" <<JSON
-{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bash $SESSION_START"}]}],"PreToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"bash $REQUIRE"},{"type":"command","command":"bash $RECORDER pre_tool_use"}]}],"PostToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"bash $RECORDER post_tool_use"}]}],"Stop":[{"hooks":[{"type":"command","command":"bash $BOUNDARY stop"}]}]}}
+{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bash $SESSION_START"}]}],"PreToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"bash $REQUIRE"},{"type":"command","command":"bash $RECORDER pre_tool_use"}]}],"PostToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"bash $RECORDER post_tool_use"}]}],"Stop":[{"hooks":[{"type":"command","command":"bash $BOUNDARY stop"}]}],"StopFailure":[{"hooks":[{"type":"command","command":"bash $BOUNDARY stop_failure"}]}],"SessionEnd":[{"hooks":[{"type":"command","command":"bash $BOUNDARY session_end"}]}]}}
 JSON
 
 printf '%s' '{"session_id":"remote-session","hook_event_name":"SessionStart"}' | (cd "$TARGET" && bash "$SESSION_START")
