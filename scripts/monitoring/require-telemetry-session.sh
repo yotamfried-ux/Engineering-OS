@@ -79,10 +79,11 @@ hooks = settings.get("hooks") if isinstance(settings, dict) else None
 if not isinstance(hooks, dict):
     raise SystemExit("ERROR_FOR_AGENT: Claude settings do not contain a hooks object")
 
-commands: list[str] = []
-for blocks in hooks.values():
-    if not isinstance(blocks, list):
+commands_by_event: dict[str, list[str]] = {}
+for event, blocks in hooks.items():
+    if not isinstance(event, str) or not isinstance(blocks, list):
         continue
+    event_commands: list[str] = []
     for block in blocks:
         if not isinstance(block, dict):
             continue
@@ -91,30 +92,43 @@ for blocks in hooks.values():
             continue
         for entry in entries:
             if isinstance(entry, dict) and isinstance(entry.get("command"), str):
-                commands.append(entry["command"])
+                event_commands.append(entry["command"])
+    commands_by_event[event] = event_commands
 
 if hook_mode == "direct":
-    requirements = {
-        "SessionStart": lambda command: "eos-telemetry-session-start.sh" in command,
-        "PreToolUse guard": lambda command: "require-telemetry-session.sh" in command,
-        "event recorder": lambda command: "eos-telemetry-event.sh" in command,
-    }
+    requirements = (
+        ("SessionStart", "SessionStart", lambda command: "eos-telemetry-session-start.sh" in command),
+        ("PreToolUse", "PreToolUse guard", lambda command: "require-telemetry-session.sh" in command),
+        (
+            "PreToolUse",
+            "PreToolUse event recorder",
+            lambda command: "eos-telemetry-event.sh" in command and command.rstrip().endswith(" pre_tool_use"),
+        ),
+    )
 else:
-    requirements = {
-        "dispatcher SessionStart": lambda command: (
-            "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" session_start")
+    requirements = (
+        (
+            "SessionStart",
+            "dispatcher SessionStart",
+            lambda command: "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" session_start"),
         ),
-        "dispatcher PreToolUse guard": lambda command: (
-            "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" guard")
+        (
+            "PreToolUse",
+            "dispatcher PreToolUse guard",
+            lambda command: "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" guard"),
         ),
-        "dispatcher event recorder": lambda command: (
-            "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" pre_tool_use")
+        (
+            "PreToolUse",
+            "dispatcher PreToolUse event recorder",
+            lambda command: "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" pre_tool_use"),
         ),
-    }
+    )
 
-for label, predicate in requirements.items():
-    if not any(predicate(command) for command in commands):
-        raise SystemExit(f"ERROR_FOR_AGENT: telemetry settings are incomplete; missing {label}")
+for event, label, predicate in requirements:
+    if not any(predicate(command) for command in commands_by_event.get(event, [])):
+        raise SystemExit(
+            f"ERROR_FOR_AGENT: telemetry settings are incomplete; missing {label} under hooks.{event}"
+        )
 
 count = 0
 has_current_start = False
@@ -153,23 +167,40 @@ from pathlib import Path
 
 settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 hook_mode = sys.argv[2]
-commands = []
-for blocks in settings.get("hooks", {}).values():
-    if not isinstance(blocks, list):
+hooks = settings.get("hooks", {}) if isinstance(settings, dict) else {}
+
+commands_by_event = {}
+for event, blocks in hooks.items():
+    if not isinstance(event, str) or not isinstance(blocks, list):
         continue
+    commands = []
     for block in blocks:
         if not isinstance(block, dict):
             continue
         for entry in block.get("hooks", []):
             if isinstance(entry, dict) and isinstance(entry.get("command"), str):
                 commands.append(entry["command"])
-if hook_mode == "direct":
-    ready = any("record-and-sync-telemetry.sh" in command for command in commands)
-else:
-    ready = any(
-        "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" stop")
-        for command in commands
-    )
+    commands_by_event[event] = commands
+
+expected = {
+    "Stop": "stop",
+    "StopFailure": "stop_failure",
+    "SessionEnd": "session_end",
+}
+ready = True
+for event, suffix in expected.items():
+    commands = commands_by_event.get(event, [])
+    if hook_mode == "direct":
+        present = any(
+            "record-and-sync-telemetry.sh" in command and command.rstrip().endswith(f" {suffix}")
+            for command in commands
+        )
+    else:
+        present = any(
+            "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(f" {suffix}")
+            for command in commands
+        )
+    ready = ready and present
 print("1" if ready else "0")
 PY
 )"
