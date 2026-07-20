@@ -32,7 +32,7 @@ cat > "$EOS_TELEMETRY_FILE" <<'JSON'
 {"name":"eos.session_start","trace_id":"override-run","attributes":{"eos.event.name":"session_start","eos.git.branch.hash":"11111111111111111111111111111111"}}
 JSON
 cat > "$EOS_CLAUDE_SETTINGS_FILE" <<'JSON'
-{"hooks":{"SessionStart":[{"hooks":[{"command":"eos-telemetry-session-start.sh"}]}],"PreToolUse":[{"hooks":[{"command":"require-telemetry-session.sh"},{"command":"eos-telemetry-event.sh"}]}],"Stop":[{"hooks":[{"command":"record-and-sync-telemetry.sh"}]}]}}
+{"hooks":{"SessionStart":[{"hooks":[{"command":"eos-telemetry-session-start.sh"}]}],"PreToolUse":[{"hooks":[{"command":"require-telemetry-session.sh"},{"command":"eos-telemetry-event.sh pre_tool_use"}]}],"Stop":[{"hooks":[{"command":"record-and-sync-telemetry.sh stop"}]}],"StopFailure":[{"hooks":[{"command":"record-and-sync-telemetry.sh stop_failure"}]}],"SessionEnd":[{"hooks":[{"command":"record-and-sync-telemetry.sh session_end"}]}]}}
 JSON
 cat > "$TARGET/.engineering-os/telemetry-policy.json" <<'JSON'
 {"schema_version":"eos.telemetry.policy.v1","remote_handoff":{"mode":"required","remote":"origin","branch":"engineering-os-telemetry"}}

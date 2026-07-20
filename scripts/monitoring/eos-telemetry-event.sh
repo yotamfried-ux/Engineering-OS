@@ -271,6 +271,7 @@ record = {
         "eos.git.head.short": head,
         "eos.plan.active.basename": active_plan_name(),
         "eos.engineering_os_home.set": bool(os.environ.get("ENGINEERING_OS_HOME")),
+        "eos.session.host_correlation_id": safe_token(os.environ.get("EOS_TELEMETRY_HOST_CORRELATION_ID", "")),
         **common_hook_attributes(),
         **safe_tool_attributes(),
         **genai_semconv_attributes(),
