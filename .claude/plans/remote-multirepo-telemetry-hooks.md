@@ -159,7 +159,7 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 - hypothesis: a narrow user-level bootstrap plus authoritative explicit-target reconciliation can safely reuse the existing per-repository pipeline.
 - connectors: GitHub; Claude Code runtime was observed directly but was not used as a connector.
 - steps: verify settings scope; create plan-first commit; implement bootstrap/discovery/attribution/isolation; open PR; run real Remote attempt; diagnose two live failures; correct project-hook activation, guard routing, user-settings validation, explicit-target precedence, malformed targets, Grep path handling, lifecycle failure propagation, mode migration, diagnostics, retention, and tests; align legacy handoff and policy-override fixtures with complete lifecycle hooks; rerun exact-head gates and review.
-- evidence: PR #250, plan-first commit `4fe393c786cdc76fa05215524733191bf6b3b772`, implementation commit `ff974707978c0cfac72850233e1923f06ae20018`, live Remote report, Actions runs, review threads, and focused fixtures.
+- evidence: PR #250, plan-first commit `4fe393c786cdc76fa05215524733191bf6b3b772`, implementation commit `ff974707978c0cfac72850233e1923f06ae20018`, mid-checkpoint commit `855d1277c1e6f310cca18ec77ed60a1953f4e9c8`, live Remote report, Actions runs, review threads, and focused fixtures.
 - rejected: disabling the guard, recursively scanning home, trusting on-disk project settings as active, or assigning explicit outside activity to a default repository.
 - result: deterministic implementation and regression evidence are present; fresh successful Remote evidence remains a separate post-merge gate.
 
@@ -167,7 +167,7 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 
 - start: Route Plan commit `4fe393c786cdc76fa05215524733191bf6b3b772` recorded approved scope and validation contracts before implementation.
 - mid: implementation commit `ff974707978c0cfac72850233e1923f06ae20018` consolidated the dispatcher, installer, attribution, guard, lifecycle, privacy, documentation, and regression changes after the real Remote failure and review loops.
-- pre-merge: boundary-fixture correction `b93d11619fddec58208000f9e6559b02fdf2359c` follows the last code/test finding; this Route Plan update records the exact implementation and evidence contract before final CI.
+- pre-merge: mid-checkpoint commit `855d1277c1e6f310cca18ec77ed60a1953f4e9c8` follows the implementation; this separate checkpoint records corrected source evidence, complete lifecycle fixtures, capability coverage, and merge-gate readiness before exact-head CI.
 
 ## Definition of Done
 
