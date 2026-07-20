@@ -93,3 +93,15 @@ A naive unconditional fix ("always take the last two path segments") would have 
 ## Progress Lifecycle Evidence
 
 - start: this Route Plan is committed before any code/config/test change, recording scope, root cause, and validation approach in advance.
+- mid: commit `d466fc0` implements `parse_repo_slug_from_remote`, updates both call sites, adds the new regression test, wires it into CI, and adds the lesson file — all existing and new test suites pass, and a live check against this repo's real proxied origin confirms the fix.
+
+## Definition of Done
+
+- [x] `parse_repo_slug_from_remote` added to `telemetry_handoff.py`, reusing the existing `REPO_SLUG_RE`, and handling scheme URLs plus the general scp-style `[user@]host:path` grammar (not just literal `git@`).
+- [x] `sync-telemetry-run.py::repo_slug_from_url` removed; `detect_repo_slug` delegates to the shared helper and preserves its raise-on-failure, case-preserving contract.
+- [x] `telemetry_repo_discovery.py::_normalize_repo_slug` reduced to a thin casefolding wrapper over the shared helper; dead `_REPO_COMPONENT_RE`/unused imports removed.
+- [x] New regression test `test-telemetry-repo-slug-parsing.py` added and wired into `.github/workflows/telemetry-handoff-tests.yml`.
+- [x] All existing telemetry test suites pass unchanged.
+- [x] Live sanity check against this repo's real proxied origin returns the correct slug.
+- [x] Full post-merge validation suite passes.
+- [x] Bare 3-component slug strings (e.g. `other/example/repo-a`) remain rejected by `_normalize_repo_slug` (regression guard for hook-attribution strictness).
