@@ -9,6 +9,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 POLICY_SCHEMA = "eos.telemetry.policy.v1"
 RUN_SCHEMA = "eos.telemetry.run.v1"
@@ -75,6 +76,40 @@ def validate_repo_slug(value: str) -> str:
             "configure a GitHub origin, or set GITHUB_REPOSITORY"
         )
     return value
+
+
+def parse_repo_slug_from_remote(value: str) -> str | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    take_last_two = False
+    if "://" in raw:
+        parsed = urlparse(raw)
+        if not parsed.scheme or not parsed.netloc:
+            return None
+        raw = parsed.path
+        take_last_two = True
+    elif ":" in raw and not raw.startswith("/"):
+        # scp-style shorthand per git-clone(1): [<user>@]<host>:<path-to-git-repo>
+        # (e.g. "git@github.com:owner/repo.git" or "github.com:owner/repo.git").
+        host, _, path = raw.partition(":")
+        if not host or not path:
+            return None
+        raw = path
+        take_last_two = True
+    raw = raw.strip().strip("/")
+    if raw.endswith(".git"):
+        raw = raw[:-4]
+    parts = [part for part in raw.split("/") if part]
+    if take_last_two:
+        if len(parts) < 2:
+            return None
+        candidate = f"{parts[-2]}/{parts[-1]}"
+    else:
+        if len(parts) != 2:
+            return None
+        candidate = f"{parts[0]}/{parts[1]}"
+    return candidate if REPO_SLUG_RE.fullmatch(candidate) else None
 
 
 def validate_ref_name(value: str) -> str:

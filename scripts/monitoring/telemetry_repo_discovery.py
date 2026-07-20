@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import urlparse
 
-from telemetry_handoff import load_policy
+from telemetry_handoff import load_policy, parse_repo_slug_from_remote
 
 MARKER_RELATIVE_PATH = Path(".engineering-os") / "telemetry-policy.json"
-_REPO_COMPONENT_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 _REPOSITORY_SIGNAL_KEYS = (
     "repository_full_name",
     "repo_full_name",
@@ -221,25 +218,8 @@ def _repo_for_path(path: Path, discovered: list[RepoInfo]) -> RepoInfo | None:
 
 
 def _normalize_repo_slug(value: str) -> str | None:
-    raw = value.strip()
-    if not raw:
-        return None
-    if raw.startswith("git@"):
-        if ":" not in raw:
-            return None
-        raw = raw.split(":", 1)[1]
-    elif "://" in raw:
-        parsed = urlparse(raw)
-        if not parsed.scheme or not parsed.netloc:
-            return None
-        raw = parsed.path
-    raw = raw.strip().strip("/")
-    if raw.endswith(".git"):
-        raw = raw[:-4]
-    parts = [part for part in raw.split("/") if part]
-    if len(parts) != 2 or not all(_REPO_COMPONENT_RE.fullmatch(part) for part in parts):
-        return None
-    return f"{parts[0]}/{parts[1]}".casefold()
+    slug = parse_repo_slug_from_remote(value)
+    return slug.casefold() if slug else None
 
 
 def _repo_remote_slug(repo_root: Path) -> str | None:
