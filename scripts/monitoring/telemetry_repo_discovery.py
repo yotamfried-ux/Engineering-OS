@@ -257,11 +257,11 @@ def _repo_for_slug(slug: str, discovered: list[RepoInfo]) -> RepoInfo | None:
 def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> RepoInfo | None:
     """Attribute one hook event without guessing.
 
-    Evidence order is: explicit filesystem path, event cwd, explicit repository
-    identifier, then a sole-repository fallback only when the payload provides no
-    routing signal at all. If a supplied path/cwd/repository points outside the
-    discovered set, the event remains unattributed instead of falling through to
-    the sole discovered repository.
+    Explicit filesystem and repository targets are authoritative. Any explicit
+    target that is invalid, outside the discovered managed set, or conflicts
+    with another explicit target makes the event unattributed; cwd must not
+    override it. Cwd is considered only when no explicit target exists, followed
+    by a sole-repository fallback only when the payload has no routing signal.
     """
 
     if not discovered:
@@ -277,40 +277,40 @@ def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> Repo
     if not isinstance(tool_input, dict):
         tool_input = {}
 
-    has_routing_signal = False
+    # Tier 1: all explicit path-like fields must resolve to the same managed
+    # repository. One outside, malformed, or conflicting explicit path rejects
+    # attribution instead of falling through to cwd.
+    explicit_paths = [
+        str(tool_input[key])
+        for key in ("file_path", "path", "pattern")
+        if tool_input.get(key)
+    ]
+    if explicit_paths:
+        matched: list[RepoInfo] = []
+        for raw in explicit_paths:
+            resolved = _resolve_path_field(raw, event_cwd)
+            if resolved is None:
+                return None
+            repo = _repo_for_path(resolved, discovered)
+            if repo is None:
+                return None
+            matched.append(repo)
+        first = matched[0]
+        return first if all(repo == first for repo in matched) else None
 
-    # Tier 1: explicit file/path-like fields.
-    for key in ("file_path", "path", "pattern"):
-        raw = tool_input.get(key)
-        if not raw:
-            continue
-        has_routing_signal = True
-        resolved = _resolve_path_field(str(raw), event_cwd)
-        if resolved is None:
-            continue
-        repo = _repo_for_path(resolved, discovered)
-        if repo is not None:
-            return repo
-
-    # Tier 2: the hook payload's cwd.
-    if event_cwd_raw:
-        has_routing_signal = True
-        if event_cwd is not None:
-            repo = _repo_for_path(event_cwd, discovered)
-            if repo is not None:
-                return repo
-
-    # Tier 3: explicit MCP/GitHub repository identifiers.
+    # Tier 2: an explicit MCP/GitHub repository identifier is authoritative.
+    # A slug outside the discovered set rejects attribution even when cwd is
+    # inside a managed repository.
     slug = _payload_repo_slug(payload)
     if slug is not None:
-        has_routing_signal = True
-        repo = _repo_for_slug(slug, discovered)
-        if repo is not None:
-            return repo
+        return _repo_for_slug(slug, discovered)
 
-    # Never override an explicit out-of-repository signal with a one-repo guess.
-    if has_routing_signal:
-        return None
+    # Tier 3: the hook payload's cwd is used only in the absence of an explicit
+    # filesystem or repository target.
+    if event_cwd_raw:
+        if event_cwd is None:
+            return None
+        return _repo_for_path(event_cwd, discovered)
 
     # Tier 4: payloads with no routing signal at all may use the sole repo.
     if len(discovered) == 1:
