@@ -3,11 +3,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 DISPATCH="$ROOT/scripts/monitoring/eos-telemetry-dispatch.sh"
+INSTALLER="$ROOT/scripts/monitoring/install-user-level-telemetry-hooks.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 HOME_DIR="$TMP/home"
 mkdir -p "$HOME_DIR"
+HOME="$HOME_DIR" ENGINEERING_OS_HOME="$ROOT" bash "$INSTALLER" >/dev/null
 
 dispatch() {
   local event="$1" payload="$2"
@@ -49,16 +51,13 @@ from telemetry_repo_discovery import discover_managed_repos
 assert 'marker-no-git' not in [r.root.name for r in discover_managed_repos(Path('$HOME_DIR'))]
 "
 
-# One managed repository with a direct settings file. In a parent-started
-# session these on-disk hooks are inactive and the dispatcher must initialize it.
+# Marker-only managed repositories are the core user-level installation case:
+# no project-local .claude/settings.json is required for the dispatcher guard.
 MANAGED="$HOME_DIR/managed-repo"
 init_git_repo "$MANAGED"
-mkdir -p "$MANAGED/.engineering-os" "$MANAGED/.claude"
+mkdir -p "$MANAGED/.engineering-os"
 cat > "$MANAGED/.engineering-os/telemetry-policy.json" <<'JSON'
 {"schema_version":"eos.telemetry.policy.v1","remote_handoff":{"mode":"disabled"}}
-JSON
-cat > "$MANAGED/.claude/settings.json" <<JSON
-{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bash \"$ROOT/scripts/monitoring/eos-telemetry-session-start.sh\""}]}],"PreToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"bash \"$ROOT/scripts/monitoring/require-telemetry-session.sh\""},{"type":"command","command":"bash \"$ROOT/scripts/monitoring/eos-telemetry-event.sh\" pre_tool_use"}]}],"Stop":[{"hooks":[{"type":"command","command":"bash \"$ROOT/scripts/monitoring/record-and-sync-telemetry.sh\" stop"}]}]}}
 JSON
 
 # Malformed payload is a privacy-safe no-op, not a crash.
@@ -97,6 +96,29 @@ PAYLOAD_GUARD_START=$(python3 -c "import json; print(json.dumps({'session_id':'$
 dispatch session_start "$PAYLOAD_GUARD_START" >/dev/null
 dispatch guard "$PAYLOAD_INSIDE" >/dev/null
 
+# Even with cwd inside the managed repo, an explicit outside target is negative
+# evidence. It must neither invoke the guard nor enter repository telemetry.
+PAYLOAD_CONFLICT=$(python3 -c "import json; print(json.dumps({'session_id':'$GUARD_SESSION','cwd':'$MANAGED','tool_name':'Read','tool_input':{'file_path':'$HOME_DIR/unmanaged-folder/note.txt'}}))")
+dispatch guard "$PAYLOAD_CONFLICT" >/dev/null
+BEFORE_EVENTS=$(wc -l < "$MANAGED/.engineering-os/telemetry/events.jsonl")
+dispatch post_tool_use "$PAYLOAD_CONFLICT" >/dev/null
+AFTER_EVENTS=$(wc -l < "$MANAGED/.engineering-os/telemetry/events.jsonl")
+[ "$BEFORE_EVENTS" -eq "$AFTER_EVENTS" ] || {
+  echo "ERROR_FOR_AGENT: explicit outside target inherited the managed cwd" >&2
+  exit 1
+}
+python3 - "$HOME_DIR/.engineering-os/telemetry/unattributed.jsonl" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+rows = [json.loads(line) for line in Path(sys.argv[1]).read_text().splitlines() if line.strip()]
+assert rows, rows
+serialized = json.dumps(rows)
+for forbidden in ("file_path", "unmanaged-folder", "note.txt"):
+    assert forbidden not in serialized, (forbidden, serialized)
+PY
+
 # Repeated SessionStart rotates to a distinct non-empty run id.
 ROTATE_SESSION="rotation-$$"
 PAYLOAD_START=$(python3 -c "import json; print(json.dumps({'session_id':'$ROTATE_SESSION','cwd':'$HOME_DIR'}))")
@@ -114,4 +136,4 @@ PAYLOAD_STOP=$(python3 -c "import json; print(json.dumps({'session_id':'empty','
 printf '%s' "$PAYLOAD_STOP" | HOME="$EMPTY_HOME" EOS_DISPATCH_HOME="$EMPTY_HOME" \
   EOS_DISPATCH_CACHE_DIR="$EMPTY_HOME/.dispatch-cache" bash "$DISPATCH" stop
 
-echo 'dispatch failure-mode tests passed: invalid inputs, traversal, scoped guard, run rotation, and empty fan-out'
+echo 'dispatch failure-mode tests passed: marker-only guard, invalid inputs, explicit-target conflict, rotation, and empty fan-out'
