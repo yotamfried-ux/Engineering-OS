@@ -63,6 +63,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 events_path, run_id_path, settings_path = map(Path, sys.argv[1:4])
 hook_mode = sys.argv[4]
@@ -79,55 +80,82 @@ hooks = settings.get("hooks") if isinstance(settings, dict) else None
 if not isinstance(hooks, dict):
     raise SystemExit("ERROR_FOR_AGENT: Claude settings do not contain a hooks object")
 
-commands_by_event: dict[str, list[str]] = {}
-for event, blocks in hooks.items():
-    if not isinstance(event, str) or not isinstance(blocks, list):
-        continue
-    event_commands: list[str] = []
+
+def commands_for(event: str, *, catch_all_only: bool = False) -> list[str]:
+    blocks = hooks.get(event)
+    if not isinstance(blocks, list):
+        return []
+    commands: list[str] = []
     for block in blocks:
         if not isinstance(block, dict):
+            continue
+        if catch_all_only and block.get("matcher") not in (None, ".*"):
             continue
         entries = block.get("hooks")
         if not isinstance(entries, list):
             continue
         for entry in entries:
             if isinstance(entry, dict) and isinstance(entry.get("command"), str):
-                event_commands.append(entry["command"])
-    commands_by_event[event] = event_commands
+                commands.append(entry["command"])
+    return commands
 
+
+session_commands = commands_for("SessionStart")
+pretool_commands = commands_for("PreToolUse", catch_all_only=True)
 if hook_mode == "direct":
-    requirements = (
-        ("SessionStart", "SessionStart", lambda command: "eos-telemetry-session-start.sh" in command),
-        ("PreToolUse", "PreToolUse guard", lambda command: "require-telemetry-session.sh" in command),
+    requirements: tuple[tuple[str, list[str], Any], ...] = (
         (
-            "PreToolUse",
-            "PreToolUse event recorder",
-            lambda command: "eos-telemetry-event.sh" in command and command.rstrip().endswith(" pre_tool_use"),
+            "SessionStart",
+            session_commands,
+            lambda command: "eos-telemetry-session-start.sh" in command,
+        ),
+        (
+            "catch-all PreToolUse guard",
+            pretool_commands,
+            lambda command: "require-telemetry-session.sh" in command,
+        ),
+        (
+            "catch-all PreToolUse event recorder",
+            pretool_commands,
+            lambda command: (
+                "eos-telemetry-event.sh" in command
+                and command.rstrip().endswith(" pre_tool_use")
+            ),
         ),
     )
 else:
     requirements = (
         (
-            "SessionStart",
             "dispatcher SessionStart",
-            lambda command: "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" session_start"),
+            session_commands,
+            lambda command: (
+                "eos-telemetry-dispatch.sh" in command
+                and command.rstrip().endswith(" session_start")
+            ),
         ),
         (
-            "PreToolUse",
-            "dispatcher PreToolUse guard",
-            lambda command: "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" guard"),
+            "dispatcher catch-all PreToolUse guard",
+            pretool_commands,
+            lambda command: (
+                "eos-telemetry-dispatch.sh" in command
+                and command.rstrip().endswith(" guard")
+            ),
         ),
         (
-            "PreToolUse",
-            "dispatcher PreToolUse event recorder",
-            lambda command: "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(" pre_tool_use"),
+            "dispatcher catch-all PreToolUse event recorder",
+            pretool_commands,
+            lambda command: (
+                "eos-telemetry-dispatch.sh" in command
+                and command.rstrip().endswith(" pre_tool_use")
+            ),
         ),
     )
 
-for event, label, predicate in requirements:
-    if not any(predicate(command) for command in commands_by_event.get(event, [])):
+for label, commands, predicate in requirements:
+    if not any(predicate(command) for command in commands):
         raise SystemExit(
-            f"ERROR_FOR_AGENT: telemetry settings are incomplete; missing {label} under hooks.{event}"
+            "ERROR_FOR_AGENT: telemetry settings are incomplete; "
+            f"missing {label} under its applicable hook event/matcher"
         )
 
 count = 0
@@ -207,7 +235,7 @@ PY
 
 if [ "$BOUNDARY_READY" != "1" ]; then
   if [ "$POLICY_MODE" = "required" ]; then
-    block "telemetry settings do not register durable Stop/SessionEnd handoff hooks." \
+    block "telemetry settings do not register durable Stop/StopFailure/SessionEnd handoff hooks." \
       "re-run the current Engineering OS installer, then restart Claude before required-handoff work."
   fi
   warn "telemetry settings use incomplete or legacy boundary hooks; research tools remain available." \
