@@ -16,7 +16,7 @@
 | Architecture guides | Not required — localized bug fix, no architectural change. |
 | Patterns | Not required — no registered pattern covers git-remote-URL parsing. |
 | External systems/connectors | GitHub |
-| Skills | None required for this change. |
+| Skills | waiver |
 | Validation gates | enforcement-tests; telemetry-handoff-tests; run trace; connector evidence; capability evidence; workflow evidence; documentation asset evidence; plan/PR policy; CodeRabbit review |
 | Evidence to check | Live execution of the parsing functions against this repo's actual proxied origin; existing `scripts/enforcement/tests/` suite; `core/git-policy.md`; `core/coderabbit-policy.md` |
 | User decisions required | none outstanding — user confirmed (a) implement the real fix now, (b) delete the stray `engineering-os-telemetry` branch on `yotamfried-ux/project-8` |
@@ -65,6 +65,10 @@ A naive unconditional fix ("always take the last two path segments") would have 
 - `validation.actions-checked` — `.github/workflows/telemetry-handoff-tests.yml` is updated to run the new regression test in the `multirepo-dispatch` job.
 - `validation.coderabbit-policy` — PR review required before merge; review findings addressed before merge.
 
+## Skill Evidence
+
+- waiver — no external-skill applies to this change: it is a narrow, internal Python git-remote-URL parsing fix with no UI, no new security-sensitive surface beyond what the existing attribution test already guards, and no skill-orchestration integration.
+
 ## Connector Evidence
 
 | Connector | Evidence |
@@ -76,7 +80,7 @@ A naive unconditional fix ("always take the last two path segments") would have 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS` and `yotamfried-ux/project-8`.
 - action: listed branches/PRs to verify (and refute) the prior session's uncommitted-fix claim; confirmed the stray telemetry branch on project-8 via the GitHub API; opened ready-for-review PR #252; subscribed to PR activity; reviewed CodeRabbit/Codex findings.
 - result: the prior claim was disproven (no branch, no uncommitted changes existed); the real fix was implemented, tested, committed, and pushed; PR #252 opened against `main`.
-- decision: implement the fix from scratch on the existing branch rather than search for nonexistent prior work.
+- decision: implemented the fix from scratch on the existing branch rather than continuing to search for the prior session's nonexistent work; changed both `sync-telemetry-run.py` and `telemetry_repo_discovery.py` to share one helper instead of keeping the two divergent implementations.
 - target: `scripts/monitoring/telemetry_handoff.py`, `scripts/monitoring/sync-telemetry-run.py`, `scripts/monitoring/telemetry_repo_discovery.py`, new regression test, CI workflow, lesson file.
 
 ## Claude Run Trace
@@ -94,6 +98,7 @@ A naive unconditional fix ("always take the last two path segments") would have 
 
 - start: this Route Plan is committed before any code/config/test change, recording scope, root cause, and validation approach in advance.
 - mid: commit `d466fc0` implements `parse_repo_slug_from_remote`, updates both call sites, adds the new regression test, wires it into CI, and adds the lesson file — all existing and new test suites pass, and a live check against this repo's real proxied origin confirms the fix.
+- pre-merge: no further code/config/test changes follow commit `d466fc0` (this and the mid-checkpoint commit are plan-evidence-only). PR #252 is open, ready-for-review; CI and CodeRabbit results are being monitored, with any required fixes to land as additional code commits before merge if needed.
 
 ## Definition of Done
 
@@ -105,3 +110,7 @@ A naive unconditional fix ("always take the last two path segments") would have 
 - [x] Live sanity check against this repo's real proxied origin returns the correct slug.
 - [x] Full post-merge validation suite passes.
 - [x] Bare 3-component slug strings (e.g. `other/example/repo-a`) remain rejected by `_normalize_repo_slug` (regression guard for hook-attribution strictness).
+
+## Merge Gates
+
+Merge remains blocked until GitHub Actions pass, CodeRabbit review is complete with findings addressed or explicitly justified, and Yotam gives explicit approval — no auto-merge, per `core/coderabbit-policy.md` and `core/git-policy.md` `<safety>`.
