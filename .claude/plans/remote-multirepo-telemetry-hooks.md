@@ -27,12 +27,12 @@
 |---|---|---|
 | `core/task-router.md` | read | The change is Engineering OS governance and requires a Route Plan before implementation writes. |
 | `core/workflow.md` | read | Experiment → fix → experiment, exact-head evidence, review correction, and conditional merge are mandatory. |
-| Official Claude Code settings/hooks documentation | checked | User-level settings load across sessions; project settings depend on project/session scope; hooks from applicable scopes merge. |
+| Official Claude Code settings/hooks documentation | consulted | User-level settings load across sessions; project settings depend on project/session scope; hooks from applicable scopes merge. |
 | `scripts/monitoring/require-telemetry-session.sh` | read | The guard remains fail-closed for an attributed managed repository but validates direct or dispatcher settings under the correct hook events. |
 | `scripts/monitoring/eos-telemetry-session-start.sh` | read | It remains the owner of repository-local run initialization and rotation. |
 | `scripts/monitoring/eos-telemetry-event.sh` | read | It retains the metadata-only event schema. |
 | `scripts/monitoring/record-and-sync-telemetry.sh` | validated | Repository, branch, head, bundle, push, and PR matching remain downstream and per repository. |
-| PR #250 live Remote attempt | validated | Installation, verification, and dynamic hook loading worked; two runtime defects were reproduced. The attempt ended with a required restart, so fresh successful validation remains open. |
+| PR #250 live Remote attempt | observed | Installation, verification, and dynamic hook loading worked; two runtime defects were reproduced. The attempt ended with a required restart, so fresh successful validation remains open. |
 
 ## Root Cause
 
@@ -127,7 +127,7 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 
 - `routing.task-router-read` — classified as Engineering OS governance and telemetry runtime work.
 - `workflow.workflow-read` — plan-first, evidence checkpoints, exact-head validation, and conditional merge authorization were followed.
-- `plan.route-plan-before-write` — Route Plan commit `9c10bae` preceded implementation writes.
+- `plan.route-plan-before-write` — Route Plan commit `4fe393c786cdc76fa05215524733191bf6b3b772` preceded implementation writes.
 - `source.docs-read` — official Claude Code settings/hooks behavior informed the design.
 - `source.github-repo-read` — PR #250, Actions diagnostics, and all review threads were inspected through GitHub.
 - `validation.policy-change-has-validator` — every changed runtime contract has positive and negative executable coverage.
@@ -149,7 +149,7 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`.
 - action: inspected original head `aaa498b7587cefc6653c49320877c4d1ed9ec87c`, run `29705789876`, subsequent exact-head runs, and every Codex/CodeRabbit thread; then updated runtime, tests, workflow, plan, runbook, gap registry, and audit.
-- result: commits through boundary-fixture commit `b93d11619fddec58208000f9e6559b02fdf2359c` implement managed discovery, evidence-safe attribution, dispatcher-aware guard validation, boundary failure propagation, complete lifecycle hook fixtures, diagnostics, retention, and regressions.
+- result: implementation commit `ff974707978c0cfac72850233e1923f06ae20018` contains managed discovery, evidence-safe attribution, dispatcher-aware guard validation, boundary failure propagation, complete lifecycle hook fixtures, diagnostics, retention, and regressions.
 - decision: kept the hard repository guard and durable-handoff contract while fixing attribution, settings scope, and test fixtures at the root.
 - target: `scripts/monitoring/`, `scripts/enforcement/tests/test-remote-telemetry-handoff.sh`, `.github/workflows/telemetry-handoff-tests.yml`, and operational documentation.
 
@@ -158,15 +158,15 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 - goal: obtain reliable per-repository telemetry from parent-started Remote sessions without monitoring unmanaged work or globally blocking the host.
 - hypothesis: a narrow user-level bootstrap plus authoritative explicit-target reconciliation can safely reuse the existing per-repository pipeline.
 - connectors: GitHub; Claude Code runtime was observed directly but was not used as a connector.
-- steps: verify settings scope; create plan-first commit; implement bootstrap/discovery/attribution/isolation; open PR; run real Remote attempt; diagnose two live failures; correct project-hook activation, guard routing, user-settings validation, explicit-target precedence, malformed targets, Grep path handling, lifecycle failure propagation, mode migration, diagnostics, retention, and tests; align the legacy handoff fixture with complete lifecycle hooks; rerun exact-head gates and review.
-- evidence: PR #250, plan-first commit `9c10bae`, boundary-fixture commit `b93d11619fddec58208000f9e6559b02fdf2359c`, live Remote report, Actions runs, review threads, and focused fixtures.
+- steps: verify settings scope; create plan-first commit; implement bootstrap/discovery/attribution/isolation; open PR; run real Remote attempt; diagnose two live failures; correct project-hook activation, guard routing, user-settings validation, explicit-target precedence, malformed targets, Grep path handling, lifecycle failure propagation, mode migration, diagnostics, retention, and tests; align legacy handoff and policy-override fixtures with complete lifecycle hooks; rerun exact-head gates and review.
+- evidence: PR #250, plan-first commit `4fe393c786cdc76fa05215524733191bf6b3b772`, implementation commit `ff974707978c0cfac72850233e1923f06ae20018`, live Remote report, Actions runs, review threads, and focused fixtures.
 - rejected: disabling the guard, recursively scanning home, trusting on-disk project settings as active, or assigning explicit outside activity to a default repository.
 - result: deterministic implementation and regression evidence are present; fresh successful Remote evidence remains a separate post-merge gate.
 
 ## Progress Lifecycle Evidence
 
-- start: Route Plan commit `9c10bae` preceded implementation.
-- mid: the initial implementation reached a real Remote attempt, which exposed two concrete failures rather than producing a false success claim.
+- start: Route Plan commit `4fe393c786cdc76fa05215524733191bf6b3b772` recorded approved scope and validation contracts before implementation.
+- mid: implementation commit `ff974707978c0cfac72850233e1923f06ae20018` consolidated the dispatcher, installer, attribution, guard, lifecycle, privacy, documentation, and regression changes after the real Remote failure and review loops.
 - pre-merge: boundary-fixture correction `b93d11619fddec58208000f9e6559b02fdf2359c` follows the last code/test finding; this Route Plan update records the exact implementation and evidence contract before final CI.
 
 ## Definition of Done
@@ -181,7 +181,7 @@ This is valid failure evidence, not successful closure. `multirepo-remote-teleme
 - [x] Required lifecycle handoff failures remain observable after full fan-out.
 - [x] Complete Stop, StopFailure, and SessionEnd hooks are validated under their actual events.
 - [x] Diagnostics and cache retention preserve the privacy and lifecycle contracts.
-- [x] Automated coverage includes the live defects and every valid review finding.
+- [x] Automated CI tests and focused positive/negative fixtures cover the live defects and every valid review finding.
 - [x] The failed real Remote attempt is recorded honestly and successful closure gaps remain open.
 - [x] PR evidence sections and conditional owner approval are recorded.
 
