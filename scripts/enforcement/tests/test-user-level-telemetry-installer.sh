@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # User-level settings lifecycle: creation, mode migration, exact verification,
-# idempotent update, preservation of user hooks, malformed JSON refusal,
-# dry-run, uninstall, and actionable runtime-path failure.
+# idempotent update, permission preservation, unrelated-hook preservation,
+# malformed JSON refusal, dry-run, uninstall, and actionable path failure.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 INSTALLER="$ROOT/scripts/monitoring/install-user-level-telemetry-hooks.sh"
@@ -17,6 +17,16 @@ SETTINGS="$HOME_DIR/.claude/settings.json"
 
 run_installer() {
   HOME="$HOME_DIR" ENGINEERING_OS_HOME="$ROOT" bash "$INSTALLER" "$@"
+}
+
+assert_mode() {
+  local expected="$1"
+  local actual
+  actual="$(stat -c '%a' "$SETTINGS")"
+  [ "$actual" = "$expected" ] || {
+    echo "ERROR_FOR_AGENT: settings mode is $actual, expected $expected" >&2
+    exit 1
+  }
 }
 
 assert_dispatcher_only() {
@@ -48,7 +58,7 @@ session_start = [
 ]
 expected_dispatch = f'bash "{root}/scripts/monitoring/eos-telemetry-dispatch.sh"'
 assert pretool.count(f"{expected_dispatch} guard") == 1, pretool
-assert sum(command.endswith(" pre_tool_use") for command in pretool) == 1, pretool
+assert sum(command.endswith(" pre_tool_use") and expected_dispatch in command for command in pretool) == 1, pretool
 assert session_start == [f"{expected_dispatch} session_start"], session_start
 for stale_direct in (
     "require-telemetry-session.sh",
@@ -63,7 +73,7 @@ for stale_direct in (
 PY
 }
 
-# 1. New user settings file is valid and uses only dispatcher-mode commands.
+# 1. A new settings file is valid, dispatcher-only, and private by default.
 run_installer > "$TMP/install.log"
 python3 -c "import json; json.load(open('$SETTINGS'))"
 grep -q "$ROOT/scripts/monitoring/eos-telemetry-dispatch.sh" "$SETTINGS"
@@ -72,12 +82,12 @@ if grep -q 'ENGINEERING_OS_HOME' "$SETTINGS"; then
   exit 1
 fi
 assert_dispatcher_only
+assert_mode 600
 
 # 2. Exact verification succeeds for a current install.
 run_installer --verify
 
-# 3. Converting pre-existing direct settings removes every direct hook,
-# including the dedicated SessionStart entry, before dispatcher hooks are added.
+# 3. Converting direct settings removes every direct hook, including SessionStart.
 rm -f "$SETTINGS"
 mkdir -p "$(dirname "$SETTINGS")"
 python3 "$PATCHER" "$SETTINGS" --mode direct --home "$ROOT" --no-backup >/dev/null
@@ -117,16 +127,19 @@ grep -q 'no changes needed' "$TMP/noop.log"
   exit 1
 }
 
-# 6. Existing unrelated settings and hooks survive installation.
+# 6. Existing 0600 settings, unrelated fields, and action-named user hooks survive.
 cat > "$SETTINGS" <<'JSON'
 {
   "model": "claude-opus",
   "hooks": {
-    "PreToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": "echo my-custom-hook"}]}]
+    "PreToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": "echo my-custom-hook"}]}],
+    "PostToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": "bash ~/hooks/post_tool_use-notify.sh"}]}]
   }
 }
 JSON
+chmod 600 "$SETTINGS"
 run_installer > /dev/null
+assert_mode 600
 python3 - "$SETTINGS" <<'PY'
 import json
 import sys
@@ -134,12 +147,18 @@ from pathlib import Path
 
 data = json.loads(Path(sys.argv[1]).read_text())
 assert data["model"] == "claude-opus"
-commands = [
+all_commands = [
     hook["command"]
-    for block in data["hooks"]["PreToolUse"]
+    for blocks in data["hooks"].values()
+    for block in blocks
     for hook in block.get("hooks", [])
 ]
-assert "echo my-custom-hook" in commands, commands
+assert "echo my-custom-hook" in all_commands, all_commands
+assert "bash ~/hooks/post_tool_use-notify.sh" in all_commands, all_commands
+assert sum(
+    "eos-telemetry-dispatch.sh" in command and command.endswith(" post_tool_use")
+    for command in all_commands
+) == 1, all_commands
 PY
 assert_dispatcher_only
 
@@ -199,4 +218,4 @@ fi
 grep -q 'ERROR_FOR_AGENT: Engineering OS checkout not found' "$TMP/missing.err"
 grep -q 'ACTION:' "$TMP/missing.err"
 
-echo 'user-level telemetry installer tests passed: exact dispatcher install, direct-mode migration, stale-path detection, idempotency, preservation, refusal, dry-run, uninstall, and actionable path failure'
+echo 'user-level telemetry installer tests passed: exact install, migration, strict ownership, permission preservation, idempotency, refusal, dry-run, uninstall, and actionable path failure'
