@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify dispatcher guard commands are registered under the correct events."""
+"""Verify dispatcher guard commands are registered under applicable hook scopes."""
 from __future__ import annotations
 
 import json
@@ -90,9 +90,32 @@ def main() -> int:
         settings_path.write_text(json.dumps(misplaced), encoding="utf-8")
         result = run_guard(repo, settings_path)
         assert result.returncode == 2, (result.stdout, result.stderr)
-        assert "missing dispatcher SessionStart under hooks.SessionStart" in result.stderr
+        assert "missing dispatcher SessionStart" in result.stderr
 
-    print("dispatcher guard event-placement regressions passed")
+        narrow = settings()
+        narrow["hooks"]["PreToolUse"][0]["matcher"] = "Read"
+        settings_path.write_text(json.dumps(narrow), encoding="utf-8")
+        result = run_guard(repo, settings_path)
+        assert result.returncode == 2, (result.stdout, result.stderr)
+        assert "catch-all PreToolUse guard" in result.stderr
+
+        split_scope = settings()
+        split_scope["hooks"]["PreToolUse"] = [
+            {
+                "matcher": "Read",
+                "hooks": [{"type": "command", "command": command("guard")}],
+            },
+            {
+                "matcher": ".*",
+                "hooks": [{"type": "command", "command": command("pre_tool_use")}],
+            },
+        ]
+        settings_path.write_text(json.dumps(split_scope), encoding="utf-8")
+        result = run_guard(repo, settings_path)
+        assert result.returncode == 2, (result.stdout, result.stderr)
+        assert "catch-all PreToolUse guard" in result.stderr
+
+    print("dispatcher guard event and catch-all matcher regressions passed")
     return 0
 
 
