@@ -334,28 +334,6 @@ def remove_owned_recorder_hooks(blocks: Blocks, event: str) -> bool:
     return changed
 
 
-def replace_legacy_session_start(
-    blocks: Blocks,
-    session_start_command: str,
-) -> bool:
-    """Replace the pre-dedicated legacy SessionStart recorder command."""
-
-    changed = False
-    for block in blocks.get("SessionStart"):
-        for hook in block.get("hooks", []):
-            if not isinstance(hook, dict):
-                continue
-            command = str(hook.get("command") or "")
-            if (
-                "eos-telemetry-event.sh" in command
-                and "session_start" in command
-                and command != session_start_command
-            ):
-                hook["command"] = session_start_command
-                changed = True
-    return changed
-
-
 def prune_empty(hooks: dict[str, Any]) -> None:
     """Remove empty hook blocks and events."""
 
@@ -379,23 +357,21 @@ def apply_install(
     mode: str,
     home: str | None = None,
 ) -> bool:
-    """Install the desired hook set into a settings object."""
+    """Install the desired hook set into a settings object.
+
+    All owned telemetry entries are removed before the selected mode is added
+    back. This makes direct-to-dispatcher and dispatcher-to-direct migrations
+    exact, including SessionStart, without touching unrelated user hooks.
+    """
 
     hooks = data.setdefault("hooks", {})
     if not isinstance(hooks, dict):
         raise PatchError("settings hooks must be a JSON object")
     blocks = Blocks(hooks)
-    commands = command_set(mode, home)
-    changed = replace_legacy_session_start(blocks, commands["session_start"])
-    for event in (
-        "PreToolUse",
-        "PostToolUse",
-        "PostToolUseFailure",
-        "Stop",
-        "StopFailure",
-        "SessionEnd",
-    ):
+    changed = False
+    for event in ALL_EVENTS:
         changed = remove_owned_recorder_hooks(blocks, event) or changed
+    prune_empty(hooks)
     for event, matcher, marker, command, prepend in desired_hooks(mode, home):
         changed = (
             ensure_hook(
