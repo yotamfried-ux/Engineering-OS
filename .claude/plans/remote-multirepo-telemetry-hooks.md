@@ -111,7 +111,7 @@ The real pre-merge attempt proved installation, verification, and dynamic loadin
 
 - start: `4fe393c786cdc76fa05215524733191bf6b3b772` recorded scope and validation before implementation.
 - mid: `ff974707978c0cfac72850233e1923f06ae20018` and `855d1277c1e6f310cca18ec77ed60a1953f4e9c8` recorded implementation and the mid checkpoint.
-- pre-merge: final code/tests through `a9ac60ef2194e3e80b819bc5335ccbe3997aedc8` precede checkpoints `960732b96747f64bfeab7465047d77d6cc030fb8` and this evidence-only correction.
+- pre-merge: final code/tests through `a9ac60ef2194e3e80b819bc5335ccbe3997aedc8` precede checkpoints `960732b96747f64bfeab7465047d77d6cc030fb8` and the final evidence-only corrections.
 
 ## Definition of Done
 
@@ -122,7 +122,7 @@ The real pre-merge attempt proved installation, verification, and dynamic loadin
 - [x] The guard requires current attribution and catch-all coverage.
 - [x] Verification rejects stale, missing, duplicate, misplaced, or additional owned hooks.
 - [x] Repository state, lifecycle failures, privacy, and downstream matching remain isolated and validated.
-- [x] Every available review finding has focused regression coverage.
+- [x] Exact-head tests and CI suites validate every available review finding.
 - [x] The failed live attempt is documented honestly and successful closure gaps remain open.
 
 ## Merge Gates
