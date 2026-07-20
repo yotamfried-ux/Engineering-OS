@@ -24,6 +24,7 @@ from telemetry_repo_discovery import (
     discover_managed_repos,
     has_conflicting_project_local_hooks,
     managed_repo_for_cwd,
+    managed_repo_for_root,
 )
 
 FANOUT_EVENTS = {"session_start", "stop", "stop_failure", "session_end"}
@@ -120,12 +121,13 @@ def ensure_correlation_id(existing: dict[str, Any] | None) -> str:
 
 
 def discovery_for_event(event_name: str, event_cwd: Path) -> list[RepoInfo]:
-    """Discover repos and suppress only an actually active native direct install.
+    """Discover repos and suppress only an actually active complete direct install.
 
     Project-local settings are loaded only for the repository in which an actual
     SessionStart occurs. A sibling repository may have direct hooks on disk but
     those hooks are not active in a parent-started session, so siblings must never
-    be removed merely because their settings file exists.
+    be removed merely because their settings file exists. A partial native direct
+    installation is not self-sufficient and must remain dispatchable.
     """
 
     all_managed = discover_managed_repos(event_cwd)
@@ -137,6 +139,26 @@ def discovery_for_event(event_name: str, event_cwd: Path) -> list[RepoInfo]:
         return all_managed
 
     return [repo for repo in all_managed if repo.root != native.root]
+
+
+def revalidate_cached_repos(cached: dict[str, Any]) -> list[RepoInfo]:
+    """Revalidate cached paths against current Git-root and policy-marker state."""
+
+    raw_repos = cached.get("repos")
+    if not isinstance(raw_repos, list):
+        return []
+    valid: list[RepoInfo] = []
+    seen: set[Path] = set()
+    for raw in raw_repos:
+        if not isinstance(raw, str):
+            continue
+        repo = managed_repo_for_root(Path(raw))
+        if repo is None or repo.root in seen:
+            continue
+        seen.add(repo.root)
+        valid.append(repo)
+    valid.sort(key=lambda repo: str(repo.root))
+    return valid
 
 
 def main() -> int:
@@ -164,7 +186,13 @@ def main() -> int:
         prune_expired_cache()
 
     if cached is not None and not is_session_start:
-        discovered = [RepoInfo(Path(path)) for path in cached.get("repos", [])]
+        discovered = revalidate_cached_repos(cached)
+        cached_paths = sorted(
+            raw for raw in cached.get("repos", []) if isinstance(raw, str)
+        )
+        valid_paths = sorted(str(repo.root) for repo in discovered)
+        if cached_paths != valid_paths:
+            write_cache(key, discovered, correlation_id)
     else:
         discovered = discovery_for_event(event_name, event_cwd)
         write_cache(key, discovered, correlation_id)
