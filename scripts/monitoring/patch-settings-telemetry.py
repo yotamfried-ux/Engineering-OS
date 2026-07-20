@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
+import stat
 import sys
 import time
 from pathlib import Path
@@ -22,7 +24,6 @@ MARKERS = (
     "record-and-sync-telemetry.sh",
     "eos-telemetry-dispatch.sh",
 )
-
 EVENTS_WITH_MATCHER = (
     "PreToolUse",
     "PostToolUse",
@@ -69,9 +70,7 @@ def command_set(mode: str, home: str | None = None) -> dict[str, str]:
             f'bash "{runtime_home}/scripts/monitoring/record-and-sync-telemetry.sh"'
         )
     elif mode == "dispatcher":
-        dispatch = (
-            f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-dispatch.sh"'
-        )
+        dispatch = f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-dispatch.sh"'
         guard = f"{dispatch} guard"
         session_start = f"{dispatch} session_start"
         recorder = dispatch
@@ -140,13 +139,7 @@ def desired_hooks(
             f'{commands["recorder"]} permission_denied',
             False,
         ),
-        (
-            "SessionStart",
-            None,
-            session_start_marker,
-            commands["session_start"],
-            True,
-        ),
+        ("SessionStart", None, session_start_marker, commands["session_start"], True),
         (
             "UserPromptSubmit",
             None,
@@ -220,6 +213,12 @@ def is_marker_owned(command: str) -> bool:
     return any(marker in command for marker in MARKERS)
 
 
+def is_owned_declaration(command: str, marker: str) -> bool:
+    """Match one declaration without claiming unrelated action-named hooks."""
+
+    return is_marker_owned(command) and marker in command
+
+
 def load_settings(path: Path) -> dict[str, Any]:
     """Load a settings object without silently replacing malformed JSON."""
 
@@ -245,14 +244,26 @@ def backup_path(path: Path) -> Path:
 
 
 def atomic_write(path: Path, data: dict[str, Any]) -> None:
-    """Validate and atomically replace one settings file."""
+    """Validate and atomically replace settings without weakening permissions."""
 
     serialized = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     json.loads(serialized)
     path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600
+    except OSError:
+        mode = 0o600
+
     tmp = path.with_name(f".{path.name}.tmp-{time.time_ns()}")
-    tmp.write_text(serialized, encoding="utf-8")
-    tmp.replace(path)
+    try:
+        tmp.write_text(serialized, encoding="utf-8")
+        os.chmod(tmp, mode)
+        tmp.replace(path)
+    finally:
+        try:
+            tmp.unlink()
+        except FileNotFoundError:
+            pass
 
 
 class Blocks:
@@ -290,6 +301,8 @@ def ensure_hook(
     """Add or update one owned hook and return whether settings changed."""
 
     sequence = blocks.hooks.setdefault(event, [])
+    if not isinstance(sequence, list):
+        raise PatchError(f"settings hooks.{event} must be an array")
     block = blocks.find(event, matcher)
     if block is None:
         block = {"hooks": []}
@@ -302,11 +315,15 @@ def ensure_hook(
         raise PatchError(f"hooks for {event}/{matcher} must be an array")
 
     for hook in hook_list:
-        if isinstance(hook, dict) and marker in str(hook.get("command") or ""):
-            if hook.get("command") == command:
-                return False
-            hook["command"] = command
-            return True
+        if not isinstance(hook, dict):
+            continue
+        installed = str(hook.get("command") or "")
+        if not is_owned_declaration(installed, marker):
+            continue
+        if installed == command:
+            return False
+        hook["command"] = command
+        return True
 
     entry = {"type": "command", "command": command}
     hook_list.insert(0, entry) if prepend else hook_list.append(entry)
@@ -357,12 +374,7 @@ def apply_install(
     mode: str,
     home: str | None = None,
 ) -> bool:
-    """Install the desired hook set into a settings object.
-
-    All owned telemetry entries are removed before the selected mode is added
-    back. This makes direct-to-dispatcher and dispatcher-to-direct migrations
-    exact, including SessionStart, without touching unrelated user hooks.
-    """
+    """Install the exact desired telemetry hook set for mode."""
 
     hooks = data.setdefault("hooks", {})
     if not isinstance(hooks, dict):
@@ -452,7 +464,7 @@ def verify(path: Path, mode: str, home: str | None = None) -> list[str]:
             hook
             for hook in block.get("hooks", [])
             if isinstance(hook, dict)
-            and marker in str(hook.get("command") or "")
+            and is_owned_declaration(str(hook.get("command") or ""), marker)
         ]
         if not matches:
             problems.append(f"missing owned hook for {event} (marker={marker})")
