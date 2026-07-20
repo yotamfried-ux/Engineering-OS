@@ -122,6 +122,8 @@ jobs:
         with:
           persist-credentials: false
       - run: bash scripts/enforcement/tests/test-multirepo-dispatch.sh
+      - run: python3 scripts/enforcement/tests/test-telemetry-repo-attribution.py
+      - run: python3 scripts/enforcement/tests/test-dispatch-guard-settings.py
 
   user-level-installer:
     name: Verify user-level telemetry installer lifecycle
