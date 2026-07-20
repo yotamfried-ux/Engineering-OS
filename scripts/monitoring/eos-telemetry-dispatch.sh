@@ -12,6 +12,7 @@ SESSION_START="$SCRIPT_DIR/eos-telemetry-session-start.sh"
 RECORDER="$SCRIPT_DIR/eos-telemetry-event.sh"
 BOUNDARY="$SCRIPT_DIR/record-and-sync-telemetry.sh"
 GUARD="$SCRIPT_DIR/require-telemetry-session.sh"
+USER_SETTINGS="${EOS_USER_SETTINGS_PATH:-$HOME/.claude/settings.json}"
 HOST_TELEMETRY_DIR="${EOS_DISPATCH_HOST_TELEMETRY_DIR:-$HOME/.engineering-os/telemetry}"
 UNATTRIBUTED_LOG="${EOS_DISPATCH_UNATTRIBUTED_LOG:-$HOST_TELEMETRY_DIR/unattributed.jsonl}"
 ERROR_LOG="${EOS_DISPATCH_ERROR_LOG:-$HOST_TELEMETRY_DIR/dispatch-errors.jsonl}"
@@ -79,7 +80,14 @@ dispatch_to_repo() {
       (cd "$repo_root" && printf '%s' "$PAYLOAD" | EOS_TELEMETRY_HOST_CORRELATION_ID="$CORRELATION_ID" bash "$SESSION_START")
       ;;
     guard)
-      (cd "$repo_root" && printf '%s' "$PAYLOAD" | EOS_TELEMETRY_HOST_CORRELATION_ID="$CORRELATION_ID" bash "$GUARD")
+      (
+        cd "$repo_root" &&
+        printf '%s' "$PAYLOAD" |
+          EOS_TELEMETRY_HOST_CORRELATION_ID="$CORRELATION_ID" \
+          EOS_TELEMETRY_HOOK_MODE=dispatcher \
+          EOS_CLAUDE_SETTINGS_FILE="$USER_SETTINGS" \
+          bash "$GUARD"
+      )
       ;;
     stop|stop_failure|session_end)
       (cd "$repo_root" && printf '%s' "$PAYLOAD" | EOS_TELEMETRY_HOST_CORRELATION_ID="$CORRELATION_ID" bash "$BOUNDARY" "$EVENT_NAME")
@@ -128,6 +136,26 @@ if [ "$EVENT_NAME" = "guard" ]; then
   exit $?
 fi
 
+overall_status=0
 for repo_root in "${REPOS[@]}"; do
-  dispatch_to_repo "$repo_root" || true
+  set +e
+  dispatch_to_repo "$repo_root"
+  repo_status=$?
+  set -e
+  if [ "$repo_status" -ne 0 ]; then
+    overall_status="$repo_status"
+  fi
 done
+
+case "$EVENT_NAME" in
+  stop|stop_failure|session_end)
+    # Visit every sibling, but do not hide a required repository's durable
+    # handoff failure. This preserves the direct boundary contract.
+    exit "$overall_status"
+    ;;
+  *)
+    # SessionStart and metadata recorders remain fan-out tolerant; the
+    # repository-scoped PreToolUse guard reports required readiness failures.
+    exit 0
+    ;;
+esac
