@@ -8,22 +8,17 @@ per-repository telemetry scripts.
 """
 from __future__ import annotations
 
+import json
+import re
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 from telemetry_handoff import load_policy
 
 MARKER_RELATIVE_PATH = Path(".engineering-os") / "telemetry-policy.json"
-
-_OWNED_HOOK_MARKERS = (
-    "require-telemetry-session.sh",
-    "eos-telemetry-session-start.sh",
-    "eos-telemetry-event.sh",
-    "record-and-sync-telemetry.sh",
-    "eos-telemetry-dispatch.sh",
-)
+_REPO_COMPONENT_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 _REPOSITORY_SIGNAL_KEYS = (
     "repository_full_name",
     "repo_full_name",
@@ -87,6 +82,21 @@ def _has_valid_marker(repo_root: Path) -> bool:
     return True
 
 
+def managed_repo_for_root(candidate: Path) -> RepoInfo | None:
+    """Validate that candidate is still an opted-in Git root."""
+
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError:
+        return None
+    if not resolved.is_dir():
+        return None
+    root = _git_toplevel(resolved)
+    if root is None or root != resolved or not _has_valid_marker(root):
+        return None
+    return RepoInfo(root)
+
+
 def managed_repo_for_cwd(start_cwd: Path) -> RepoInfo | None:
     """Return the managed Git repository containing start_cwd, if any."""
 
@@ -100,22 +110,92 @@ def managed_repo_for_cwd(start_cwd: Path) -> RepoInfo | None:
     return RepoInfo(root)
 
 
-def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
-    """Return whether repo_root has direct Engineering-OS hooks on disk.
+def _commands_for_event(
+    hooks: dict[str, Any],
+    event: str,
+    *,
+    catch_all_only: bool = False,
+) -> list[str]:
+    """Return commands registered for event, optionally only catch-all blocks."""
 
-    Presence alone does not prove those hooks are active in the current session.
-    The resolver uses this result only for the native repository of an actual
-    SessionStart event.
+    blocks = hooks.get(event)
+    if not isinstance(blocks, list):
+        return []
+    commands: list[str] = []
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        if catch_all_only and block.get("matcher") not in (None, ".*"):
+            continue
+        entries = block.get("hooks")
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if isinstance(entry, dict) and isinstance(entry.get("command"), str):
+                commands.append(entry["command"])
+    return commands
+
+
+def _has_command(commands: list[str], predicate: Callable[[str], bool]) -> bool:
+    return any(predicate(command) for command in commands)
+
+
+def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
+    """Return whether a complete direct project-local installation is active.
+
+    A partial or stale settings file must not suppress the user-level dispatcher:
+    doing so would leave the missing guard, recorder, or boundary hooks absent for
+    the rest of the session.
     """
 
     settings_path = repo_root / ".claude" / "settings.json"
     if not settings_path.is_file():
         return False
     try:
-        text = settings_path.read_text(encoding="utf-8")
-    except OSError:
+        settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    except Exception:
         return False
-    return any(marker in text for marker in _OWNED_HOOK_MARKERS)
+    hooks = settings.get("hooks") if isinstance(settings, dict) else None
+    if not isinstance(hooks, dict):
+        return False
+
+    session_commands = _commands_for_event(hooks, "SessionStart")
+    pre_commands = _commands_for_event(hooks, "PreToolUse", catch_all_only=True)
+    boundaries = {
+        "Stop": "stop",
+        "StopFailure": "stop_failure",
+        "SessionEnd": "session_end",
+    }
+
+    if not _has_command(
+        session_commands,
+        lambda command: "eos-telemetry-session-start.sh" in command,
+    ):
+        return False
+    if not _has_command(
+        pre_commands,
+        lambda command: "require-telemetry-session.sh" in command,
+    ):
+        return False
+    if not _has_command(
+        pre_commands,
+        lambda command: (
+            "eos-telemetry-event.sh" in command
+            and command.rstrip().endswith(" pre_tool_use")
+        ),
+    ):
+        return False
+
+    for event, suffix in boundaries.items():
+        if not _has_command(
+            _commands_for_event(hooks, event),
+            lambda command, suffix=suffix: (
+                "record-and-sync-telemetry.sh" in command
+                and command.rstrip().endswith(f" {suffix}")
+            ),
+        ):
+            return False
+    return True
 
 
 def discover_managed_repos(start_cwd: Path) -> list[RepoInfo]:
@@ -141,13 +221,11 @@ def discover_managed_repos(start_cwd: Path) -> list[RepoInfo]:
     found: list[RepoInfo] = []
     seen: set[Path] = set()
     for child in children:
-        child_root = _git_toplevel(child)
-        if child_root is None or child_root != child.resolve():
+        managed = managed_repo_for_root(child)
+        if managed is None or managed.root in seen:
             continue
-        if not _has_valid_marker(child_root) or child_root in seen:
-            continue
-        seen.add(child_root)
-        found.append(RepoInfo(child_root))
+        seen.add(managed.root)
+        found.append(managed)
 
     found.sort(key=lambda repo: str(repo.root))
     return found
@@ -184,25 +262,29 @@ def _repo_for_path(resolved_path: Path, discovered: list[RepoInfo]) -> RepoInfo 
 
 
 def _normalize_repo_slug(value: str) -> str | None:
-    """Normalize a Git remote or explicit repository value to owner/repo."""
+    """Normalize an exact owner/repo identity or supported Git remote URL."""
 
     raw = value.strip()
     if not raw:
         return None
 
-    if raw.startswith("git@") and ":" in raw:
+    if raw.startswith("git@"):
+        if ":" not in raw:
+            return None
         raw = raw.split(":", 1)[1]
     elif "://" in raw:
         parsed = urlparse(raw)
+        if not parsed.scheme or not parsed.netloc:
+            return None
         raw = parsed.path
 
     raw = raw.strip().strip("/")
     if raw.endswith(".git"):
         raw = raw[:-4]
     parts = [part for part in raw.split("/") if part]
-    if len(parts) < 2:
+    if len(parts) != 2 or not all(_REPO_COMPONENT_RE.fullmatch(part) for part in parts):
         return None
-    return f"{parts[-2]}/{parts[-1]}".casefold()
+    return f"{parts[0]}/{parts[1]}".casefold()
 
 
 def _repo_remote_slug(repo_root: Path) -> str | None:
@@ -225,10 +307,11 @@ def _tool_input(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _payload_repo_target(payload: dict[str, Any]) -> tuple[bool, str | None]:
-    """Return whether a repo signal exists and its normalized slug.
+    """Return whether repository evidence exists and its agreed normalized slug.
 
-    A present but malformed signal returns ``(True, None)`` so cwd cannot hide
-    the invalid explicit target.
+    Every present repository identity form is authoritative. A malformed signal,
+    incomplete owner/repo pair, or disagreement among forms returns ``(True,
+    None)`` so cwd and sole-repository fallback cannot hide the conflict.
     """
 
     tool_input = _tool_input(payload)
@@ -239,25 +322,48 @@ def _payload_repo_target(payload: dict[str, Any]) -> tuple[bool, str | None]:
     if not present:
         return False, None
 
-    for key in ("repository_full_name", "repo_full_name"):
+    normalized: list[str] = []
+    invalid = False
+
+    for key in ("repository_full_name", "repo_full_name", "repository"):
+        if key not in tool_input or tool_input.get(key) in (None, ""):
+            continue
         value = tool_input.get(key)
-        if isinstance(value, str):
-            normalized = _normalize_repo_slug(value)
-            if normalized:
-                return True, normalized
-            return True, None
+        slug = _normalize_repo_slug(value) if isinstance(value, str) else None
+        if slug is None:
+            invalid = True
+        else:
+            normalized.append(slug)
 
-    owner = tool_input.get("owner") or tool_input.get("org")
-    repo = tool_input.get("repo") or tool_input.get("repository_name")
-    if owner is not None or repo is not None:
-        if isinstance(owner, str) and isinstance(repo, str):
-            return True, _normalize_repo_slug(f"{owner}/{repo}")
+    owner_values = [
+        tool_input[key]
+        for key in ("owner", "org")
+        if key in tool_input and tool_input.get(key) not in (None, "")
+    ]
+    repo_values = [
+        tool_input[key]
+        for key in ("repo", "repository_name")
+        if key in tool_input and tool_input.get(key) not in (None, "")
+    ]
+    if owner_values or repo_values:
+        if not owner_values or not repo_values:
+            invalid = True
+        else:
+            for owner in owner_values:
+                for repo in repo_values:
+                    slug = (
+                        _normalize_repo_slug(f"{owner}/{repo}")
+                        if isinstance(owner, str) and isinstance(repo, str)
+                        else None
+                    )
+                    if slug is None:
+                        invalid = True
+                    else:
+                        normalized.append(slug)
+
+    if invalid or not normalized or len(set(normalized)) != 1:
         return True, None
-
-    repository = tool_input.get("repository")
-    if isinstance(repository, str):
-        return True, _normalize_repo_slug(repository)
-    return True, None
+    return True, normalized[0]
 
 
 def _repo_for_slug(slug: str, discovered: list[RepoInfo]) -> RepoInfo | None:
