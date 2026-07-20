@@ -1,29 +1,24 @@
 #!/usr/bin/env python3
-"""Repository discovery and per-event attribution for multi-repo Claude Code
-sessions (user-level telemetry dispatch).
+"""Discover managed repositories and attribute hook events safely.
 
-Used by eos-telemetry-dispatch.sh. Kept separate from telemetry_handoff.py
-(which owns the push/handoff/PR-matching pipeline, unmodified by this module)
-because this module's job ends once it has resolved "which repository root,
-if any" — everything downstream reuses the existing per-repo scripts.
+This module is used by the user-level telemetry dispatcher. Its responsibility
+ends at resolving a hook payload to zero or one managed repository root;
+downstream recording, handoff, and PR matching remain in the existing
+per-repository telemetry scripts.
 """
 from __future__ import annotations
 
-import json
-import os
 import subprocess
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
-from telemetry_handoff import HandoffError, load_policy
+from telemetry_handoff import load_policy
 
 MARKER_RELATIVE_PATH = Path(".engineering-os") / "telemetry-policy.json"
 
-# Kept in sync with patch-settings-telemetry.py's own MARKERS tuple (can't
-# import it directly — that module's filename has hyphens, not a valid
-# Python module name). Used only to detect "this repo already has its own
-# working project-local hook installation" — see
-# has_conflicting_project_local_hooks() below.
+# Kept in sync with patch-settings-telemetry.py's MARKERS tuple. These markers
+# identify repositories with direct project-local telemetry hooks installed.
 _OWNED_HOOK_MARKERS = (
     "require-telemetry-session.sh",
     "eos-telemetry-session-start.sh",
@@ -34,6 +29,8 @@ _OWNED_HOOK_MARKERS = (
 
 
 class RepoInfo:
+    """Resolved identity for one discovered managed repository."""
+
     __slots__ = ("root",)
 
     def __init__(self, root: Path) -> None:
@@ -50,6 +47,8 @@ class RepoInfo:
 
 
 def _git_toplevel(path: Path) -> Path | None:
+    """Return the resolved Git root containing path, or None."""
+
     try:
         out = subprocess.check_output(
             ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
@@ -64,47 +63,45 @@ def _git_toplevel(path: Path) -> Path | None:
 
 
 def _has_valid_marker(repo_root: Path) -> bool:
-    """A repo is "managed" only if its own marker is a real (non-symlink,
-    non-escaping) regular file under its own resolved root and parses as a
-    valid telemetry policy per the schema telemetry_handoff.py already
-    enforces. Reuses load_policy() rather than re-deriving schema rules."""
+    """Return whether repo_root carries a valid, non-escaping policy marker."""
+
     marker = repo_root / MARKER_RELATIVE_PATH
     if not marker.is_file():
         return False
     try:
         resolved_marker = marker.resolve(strict=True)
-    except OSError:
-        return False
-    # Reject a marker whose real target escapes the repo's own resolved tree
-    # (symlink pointing outside repo_root) — prefix-check on resolved paths.
-    try:
         resolved_marker.relative_to(repo_root)
-    except ValueError:
+    except (OSError, ValueError):
         return False
     try:
         load_policy(repo_root, resolved_marker)
-    except HandoffError:
-        return False
     except Exception:
         return False
     return True
 
 
-def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
-    """True if repo_root has its own .claude/settings.json already carrying
-    Engineering-OS-owned hook entries (installed the "direct" way, e.g. via
-    install-policy-gates.sh).
+def managed_repo_for_cwd(start_cwd: Path) -> RepoInfo | None:
+    """Return the managed Git repository containing start_cwd, if any."""
 
-    Claude Code hooks from different settings scopes MERGE rather than
-    override (confirmed against official docs: "hooks... merge across
-    scopes"; identical command+args are deduplicated, non-identical ones all
-    run). That means a session that starts *inside* such a repo would fire
-    that repo's own project-local hooks directly AND the user-level
-    dispatcher would also resolve to this same repo — double-recording
-    every event. The dispatcher must never record for a repo that already
-    has a working project-local installation; it exists only for repos a
-    project-local install could never reach in this session (siblings the
-    session didn't start inside)."""
+    try:
+        resolved_cwd = start_cwd.resolve()
+    except OSError:
+        return None
+    root = _git_toplevel(resolved_cwd)
+    if root is None or not _has_valid_marker(root):
+        return None
+    return RepoInfo(root)
+
+
+def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
+    """Return whether repo_root has direct Engineering-OS hooks on disk.
+
+    Presence alone does not prove those hooks are active in the current session.
+    The resolver therefore uses this result only for the native repository of an
+    actual SessionStart event. Sibling project settings are not loaded when a
+    session starts from their parent directory and must remain dispatchable.
+    """
+
     settings_path = repo_root / ".claude" / "settings.json"
     if not settings_path.is_file():
         return False
@@ -116,62 +113,64 @@ def has_conflicting_project_local_hooks(repo_root: Path) -> bool:
 
 
 def discover_managed_repos(start_cwd: Path) -> list[RepoInfo]:
-    """Discovery algorithm (Route Plan: remote-multirepo-telemetry-hooks.md):
+    """Discover managed repositories from start_cwd without recursive scanning.
 
-    1. If start_cwd itself resolves to a git repo root with a valid marker,
-       that is the only repo — no further scan.
-    2. Otherwise, list *immediate* child directories of start_cwd only (never
-       recursive) and keep the ones that are themselves git repo roots with a
-       valid marker.
-
-    Results are deduplicated by resolved real path and sorted deterministically.
+    If start_cwd is inside a managed repository, only that repository is
+    returned. Otherwise only immediate child directories that are themselves Git
+    roots with valid telemetry policy markers are considered.
     """
-    start_cwd = start_cwd.resolve()
-    found: list[RepoInfo] = []
-
-    own_root = _git_toplevel(start_cwd)
-    if own_root is not None and _has_valid_marker(own_root):
-        return [RepoInfo(own_root)]
 
     try:
-        children = sorted(p for p in start_cwd.iterdir() if p.is_dir() and not p.is_symlink())
+        start_cwd = start_cwd.resolve()
+    except OSError:
+        return []
+
+    native = managed_repo_for_cwd(start_cwd)
+    if native is not None:
+        return [native]
+
+    try:
+        children = sorted(
+            path for path in start_cwd.iterdir()
+            if path.is_dir() and not path.is_symlink()
+        )
     except OSError:
         children = []
 
+    found: list[RepoInfo] = []
     seen: set[Path] = set()
     for child in children:
         child_root = _git_toplevel(child)
         if child_root is None or child_root != child.resolve():
-            # Only treat the child itself as a candidate root — a child that
-            # merely lives *inside* some deeper/unrelated repo is not a
-            # sibling repo by this algorithm's one-level contract.
             continue
-        if not _has_valid_marker(child_root):
-            continue
-        if child_root in seen:
+        if not _has_valid_marker(child_root) or child_root in seen:
             continue
         seen.add(child_root)
         found.append(RepoInfo(child_root))
 
-    found.sort(key=lambda r: str(r.root))
+    found.sort(key=lambda repo: str(repo.root))
     return found
 
 
 def _resolve_path_field(value: str, event_cwd: Path | None) -> Path | None:
+    """Resolve one path-like tool field relative to event_cwd when needed."""
+
     if not value:
         return None
-    p = Path(value)
-    if not p.is_absolute():
+    path = Path(value)
+    if not path.is_absolute():
         if event_cwd is None:
             return None
-        p = event_cwd / p
+        path = event_cwd / path
     try:
-        return p.resolve(strict=False)
+        return path.resolve(strict=False)
     except OSError:
         return None
 
 
 def _repo_for_path(resolved_path: Path, discovered: list[RepoInfo]) -> RepoInfo | None:
+    """Return the deepest discovered repository containing resolved_path."""
+
     best: RepoInfo | None = None
     for repo in discovered:
         try:
@@ -183,23 +182,109 @@ def _repo_for_path(resolved_path: Path, discovered: list[RepoInfo]) -> RepoInfo 
     return best
 
 
+def _normalize_repo_slug(value: str) -> str | None:
+    """Normalize a Git remote or explicit repository value to owner/repo."""
+
+    raw = value.strip()
+    if not raw:
+        return None
+
+    if raw.startswith("git@") and ":" in raw:
+        raw = raw.split(":", 1)[1]
+    elif "://" in raw:
+        parsed = urlparse(raw)
+        raw = parsed.path
+
+    raw = raw.strip().strip("/")
+    if raw.endswith(".git"):
+        raw = raw[:-4]
+    parts = [part for part in raw.split("/") if part]
+    if len(parts) < 2:
+        return None
+    return f"{parts[-2]}/{parts[-1]}".casefold()
+
+
+def _repo_remote_slug(repo_root: Path) -> str | None:
+    """Read and normalize the repository's origin remote slug."""
+
+    try:
+        remote = subprocess.check_output(
+            ["git", "-C", str(repo_root), "config", "--get", "remote.origin.url"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception:
+        return None
+    return _normalize_repo_slug(remote)
+
+
+def _payload_repo_slug(payload: dict[str, Any]) -> str | None:
+    """Extract an explicit repository identifier from a tool payload."""
+
+    tool_input = payload.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return None
+
+    for key in ("repository_full_name", "repo_full_name"):
+        value = tool_input.get(key)
+        if isinstance(value, str):
+            normalized = _normalize_repo_slug(value)
+            if normalized:
+                return normalized
+
+    owner = tool_input.get("owner") or tool_input.get("org")
+    repo = tool_input.get("repo") or tool_input.get("repository_name")
+    if isinstance(owner, str) and isinstance(repo, str):
+        return _normalize_repo_slug(f"{owner}/{repo}")
+
+    repository = tool_input.get("repository")
+    if isinstance(repository, str) and "/" in repository:
+        return _normalize_repo_slug(repository)
+
+    return None
+
+
+def _repo_for_slug(slug: str, discovered: list[RepoInfo]) -> RepoInfo | None:
+    """Return the unique discovered repository matching slug."""
+
+    matches = [
+        repo for repo in discovered
+        if _repo_remote_slug(repo.root) == slug
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> RepoInfo | None:
-    """Per-event attribution algorithm, in strength order. Returns None
-    (unattributed) rather than guessing when no tier resolves a single,
-    provable repository — never falls back to "the last repo seen"."""
+    """Attribute one hook event without guessing.
+
+    Evidence order is: explicit filesystem path, event cwd, explicit repository
+    identifier, then a sole-repository fallback only when the payload provides no
+    routing signal at all. If a supplied path/cwd/repository points outside the
+    discovered set, the event remains unattributed instead of falling through to
+    the sole discovered repository.
+    """
+
     if not discovered:
         return None
 
     event_cwd_raw = str(payload.get("cwd") or "")
-    event_cwd = Path(event_cwd_raw).resolve() if event_cwd_raw else None
+    try:
+        event_cwd = Path(event_cwd_raw).resolve() if event_cwd_raw else None
+    except OSError:
+        event_cwd = None
 
-    tool_input = payload.get("tool_input") if isinstance(payload.get("tool_input"), dict) else {}
+    tool_input = payload.get("tool_input")
+    if not isinstance(tool_input, dict):
+        tool_input = {}
 
-    # Tier 1: explicit file path from tool input.
+    has_routing_signal = False
+
+    # Tier 1: explicit file/path-like fields.
     for key in ("file_path", "path", "pattern"):
-        raw = tool_input.get(key) if isinstance(tool_input, dict) else None
+        raw = tool_input.get(key)
         if not raw:
             continue
+        has_routing_signal = True
         resolved = _resolve_path_field(str(raw), event_cwd)
         if resolved is None:
             continue
@@ -207,20 +292,28 @@ def attribute_event(payload: dict[str, Any], discovered: list[RepoInfo]) -> Repo
         if repo is not None:
             return repo
 
-    # Tier 2: explicit tool/command working directory (top-level cwd field).
-    if event_cwd is not None:
-        repo = _repo_for_path(event_cwd, discovered)
+    # Tier 2: the hook payload's cwd.
+    if event_cwd_raw:
+        has_routing_signal = True
+        if event_cwd is not None:
+            repo = _repo_for_path(event_cwd, discovered)
+            if repo is not None:
+                return repo
+
+    # Tier 3: explicit MCP/GitHub repository identifiers.
+    slug = _payload_repo_slug(payload)
+    if slug is not None:
+        has_routing_signal = True
+        repo = _repo_for_slug(slug, discovered)
         if repo is not None:
             return repo
 
-    # Tier 3: single unambiguous discovered repo, only when tiers 1-2 gave no
-    # in-repo signal at all (e.g. a tool with no path-like input).
+    # Never override an explicit out-of-repository signal with a one-repo guess.
+    if has_routing_signal:
+        return None
+
+    # Tier 4: payloads with no routing signal at all may use the sole repo.
     if len(discovered) == 1:
         return discovered[0]
-
-    # Tier 4 (MCP/GitHub explicit repo identifier) is handled by the caller
-    # before invoking this function, since it needs repo-slug comparison
-    # against each discovered repo's own git remote — this module only knows
-    # filesystem paths.
 
     return None
