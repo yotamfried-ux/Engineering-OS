@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Covers Route Plan .claude/plans/remote-multirepo-telemetry-hooks.md, Test
-# Plan scenario F (policy isolation): required/best_effort/disabled/unmanaged
-# each behave per-repo exactly as the existing single-repo policy semantics
-# already define (unchanged, reused scripts), and one repo's policy never
-# leaks into a sibling's behavior within the same dispatched session.
+# Covers Route Plan scenario F: required/best_effort/disabled repositories keep
+# independent local state and handoff semantics within one dispatched session.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 DISPATCH="$ROOT/scripts/monitoring/eos-telemetry-dispatch.sh"
@@ -27,54 +24,73 @@ init_managed_repo() {
 JSON
 }
 
-init_managed_repo "$HOME_DIR/repo-required" "required"
-init_managed_repo "$HOME_DIR/repo-best-effort" "best_effort"
-init_managed_repo "$HOME_DIR/repo-disabled" "disabled"
+init_managed_repo "$HOME_DIR/repo-required" required
+init_managed_repo "$HOME_DIR/repo-best-effort" best_effort
+init_managed_repo "$HOME_DIR/repo-disabled" disabled
 
 SESSION_ID="policy-isolation-$$"
-PAYLOAD=$(python3 -c "import json; print(json.dumps({'session_id': '$SESSION_ID', 'cwd': '$HOME_DIR', 'hook_event_name': 'SessionStart'}))")
-printf '%s' "$PAYLOAD" | HOME="$HOME_DIR" EOS_DISPATCH_HOME="$HOME_DIR" bash "$DISPATCH" session_start
+PAYLOAD=$(python3 -c "import json; print(json.dumps({'session_id':'$SESSION_ID','cwd':'$HOME_DIR','hook_event_name':'SessionStart'}))")
+printf '%s' "$PAYLOAD" | HOME="$HOME_DIR" EOS_DISPATCH_HOME="$HOME_DIR" \
+  EOS_DISPATCH_CACHE_DIR="$HOME_DIR/.dispatch-cache" bash "$DISPATCH" session_start
 
-# Every repo (regardless of policy mode) still gets local events recorded —
-# policy mode only ever gated the *remote push*, not local recording, in the
-# existing single-repo scripts this dispatcher reuses unmodified. Verifying
-# that's still true per-repo, not silently changed by this feature.
+# Policy mode affects handoff, not local initialization. Every managed repo gets
+# independent state even though this fixture intentionally has no origin remote.
 for repo in repo-required repo-best-effort repo-disabled; do
   [ -s "$HOME_DIR/$repo/.engineering-os/telemetry/run_id" ] || {
-    echo "ERROR_FOR_AGENT: $repo did not get local telemetry state regardless of its own policy mode" >&2
+    echo "ERROR_FOR_AGENT: $repo did not get local telemetry state" >&2
     exit 1
   }
 done
 
-# None of the three repos has a real GitHub origin remote in this fixture,
-# so each independently fails the *push* step for its own reasons dictated
-# by its own policy mode — that per-repo failure/no-op must never abort
-# recording for the other repos in the same dispatched SessionStart.
 python3 - "$HOME_DIR" <<'PY'
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
-home = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
+home = Path(sys.argv[1])
 for repo in ("repo-required", "repo-best-effort", "repo-disabled"):
     events_path = home / repo / ".engineering-os" / "telemetry" / "events.jsonl"
-    rows = [json.loads(l) for l in events_path.read_text().splitlines() if l.strip()]
+    rows = [json.loads(line) for line in events_path.read_text().splitlines() if line.strip()]
     assert rows and rows[0]["attributes"]["eos.event.name"] == "session_start", (repo, rows)
-print("all three policy modes recorded locally, independently, in one dispatched SessionStart")
 PY
 
-# A second event dispatched only to repo-required must not touch the other
-# two repos' state at all (no cross-repo policy leakage).
+# A normal event attributed only to repo-required must not touch either sibling.
 PRE_BEST_EFFORT=$(wc -l < "$HOME_DIR/repo-best-effort/.engineering-os/telemetry/events.jsonl")
 PRE_DISABLED=$(wc -l < "$HOME_DIR/repo-disabled/.engineering-os/telemetry/events.jsonl")
-
-PAYLOAD2=$(python3 -c "import json; print(json.dumps({'session_id': '$SESSION_ID', 'cwd': '$HOME_DIR/repo-required', 'hook_event_name': 'PostToolUse', 'tool_name': 'Bash', 'tool_input': {'command': 'npm test'}}))")
-printf '%s' "$PAYLOAD2" | HOME="$HOME_DIR" EOS_DISPATCH_HOME="$HOME_DIR" bash "$DISPATCH" post_tool_use
-
+PAYLOAD2=$(python3 -c "import json; print(json.dumps({'session_id':'$SESSION_ID','cwd':'$HOME_DIR/repo-required','hook_event_name':'PostToolUse','tool_name':'Bash','tool_input':{'command':'npm test'}}))")
+printf '%s' "$PAYLOAD2" | HOME="$HOME_DIR" EOS_DISPATCH_HOME="$HOME_DIR" \
+  EOS_DISPATCH_CACHE_DIR="$HOME_DIR/.dispatch-cache" bash "$DISPATCH" post_tool_use
 POST_BEST_EFFORT=$(wc -l < "$HOME_DIR/repo-best-effort/.engineering-os/telemetry/events.jsonl")
 POST_DISABLED=$(wc -l < "$HOME_DIR/repo-disabled/.engineering-os/telemetry/events.jsonl")
+[ "$PRE_BEST_EFFORT" -eq "$POST_BEST_EFFORT" ] || { echo "ERROR_FOR_AGENT: required event leaked into best-effort repo" >&2; exit 1; }
+[ "$PRE_DISABLED" -eq "$POST_DISABLED" ] || { echo "ERROR_FOR_AGENT: required event leaked into disabled repo" >&2; exit 1; }
 
-[ "$PRE_BEST_EFFORT" -eq "$POST_BEST_EFFORT" ] || { echo "ERROR_FOR_AGENT: repo-required's event leaked into repo-best-effort" >&2; exit 1; }
-[ "$PRE_DISABLED" -eq "$POST_DISABLED" ] || { echo "ERROR_FOR_AGENT: repo-required's event leaked into repo-disabled" >&2; exit 1; }
+# Boundary fan-out must visit every repository but retain a required handoff
+# failure. Without this assertion, `|| true` could silently convert an absent
+# required durable handoff into session success.
+PAYLOAD_STOP=$(python3 -c "import json; print(json.dumps({'session_id':'$SESSION_ID','cwd':'$HOME_DIR','hook_event_name':'Stop'}))")
+set +e
+printf '%s' "$PAYLOAD_STOP" | HOME="$HOME_DIR" EOS_DISPATCH_HOME="$HOME_DIR" \
+  EOS_DISPATCH_CACHE_DIR="$HOME_DIR/.dispatch-cache" bash "$DISPATCH" stop \
+  >"$TMP/stop.out" 2>"$TMP/stop.err"
+STOP_STATUS=$?
+set -e
+[ "$STOP_STATUS" -ne 0 ] || {
+  echo "ERROR_FOR_AGENT: required boundary handoff failure was swallowed" >&2
+  exit 1
+}
 
-echo 'policy isolation test passed: required/best_effort/disabled all record independently, no cross-repo policy leakage'
+python3 - "$HOME_DIR" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+home = Path(sys.argv[1])
+for repo in ("repo-required", "repo-best-effort", "repo-disabled"):
+    events_path = home / repo / ".engineering-os" / "telemetry" / "events.jsonl"
+    rows = [json.loads(line) for line in events_path.read_text().splitlines() if line.strip()]
+    names = [row["attributes"]["eos.event.name"] for row in rows]
+    assert "stop" in names, (repo, names)
+PY
+
+echo 'policy isolation test passed: independent state, no event leakage, and required boundary failure propagation after full fan-out'
