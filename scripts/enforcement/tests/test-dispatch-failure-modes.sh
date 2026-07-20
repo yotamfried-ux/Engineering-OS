@@ -51,8 +51,7 @@ from telemetry_repo_discovery import discover_managed_repos
 assert 'marker-no-git' not in [r.root.name for r in discover_managed_repos(Path('$HOME_DIR'))]
 "
 
-# Marker-only managed repositories are the core user-level installation case:
-# no project-local .claude/settings.json is required for the dispatcher guard.
+# Marker-only managed repositories are the core user-level installation case.
 MANAGED="$HOME_DIR/managed-repo"
 init_git_repo "$MANAGED"
 mkdir -p "$MANAGED/.engineering-os"
@@ -73,9 +72,7 @@ if [ -f "$MANAGED/.engineering-os/telemetry/events.jsonl" ]; then
   [ "${count:-0}" -eq 0 ] || { echo "ERROR_FOR_AGENT: traversal attributed to wrong repo" >&2; exit 1; }
 fi
 
-# Repository-scoped guard regression. An explicit unmanaged path must not inherit
-# the sole managed sibling. An explicit managed path remains fail-closed until
-# that session has a matching SessionStart.
+# Repository-scoped guard regression.
 mkdir -p "$HOME_DIR/unmanaged-folder"
 echo harmless > "$HOME_DIR/unmanaged-folder/note.txt"
 GUARD_SESSION="guard-scope-$$"
@@ -96,8 +93,7 @@ PAYLOAD_GUARD_START=$(python3 -c "import json; print(json.dumps({'session_id':'$
 dispatch session_start "$PAYLOAD_GUARD_START" >/dev/null
 dispatch guard "$PAYLOAD_INSIDE" >/dev/null
 
-# Even with cwd inside the managed repo, an explicit outside target is negative
-# evidence. It must neither invoke the guard nor enter repository telemetry.
+# Explicit outside target remains negative evidence despite managed cwd.
 PAYLOAD_CONFLICT=$(python3 -c "import json; print(json.dumps({'session_id':'$GUARD_SESSION','cwd':'$MANAGED','tool_name':'Read','tool_input':{'file_path':'$HOME_DIR/unmanaged-folder/note.txt'}}))")
 dispatch guard "$PAYLOAD_CONFLICT" >/dev/null
 BEFORE_EVENTS=$(wc -l < "$MANAGED/.engineering-os/telemetry/events.jsonl")
@@ -111,13 +107,38 @@ python3 - "$HOME_DIR/.engineering-os/telemetry/unattributed.jsonl" <<'PY'
 import json
 import sys
 from pathlib import Path
-
 rows = [json.loads(line) for line in Path(sys.argv[1]).read_text().splitlines() if line.strip()]
 assert rows, rows
 serialized = json.dumps(rows)
 for forbidden in ("file_path", "unmanaged-folder", "note.txt"):
     assert forbidden not in serialized, (forbidden, serialized)
 PY
+
+# Cached repositories are revalidated on every later event. Removing the marker
+# immediately ends attribution, guard enforcement, recording, and lifecycle fanout.
+CACHE_SESSION="cache-revalidate-$$"
+PAYLOAD_CACHE_START=$(python3 -c "import json; print(json.dumps({'session_id':'$CACHE_SESSION','cwd':'$HOME_DIR'}))")
+dispatch session_start "$PAYLOAD_CACHE_START" >/dev/null
+PAYLOAD_CACHE_INSIDE=$(python3 -c "import json; print(json.dumps({'session_id':'$CACHE_SESSION','cwd':'$MANAGED','tool_name':'Read','tool_input':{'file_path':'$MANAGED/README.md'}}))")
+CACHE_BEFORE=$(wc -l < "$MANAGED/.engineering-os/telemetry/events.jsonl")
+mv "$MANAGED/.engineering-os/telemetry-policy.json" "$TMP/policy.saved"
+dispatch guard "$PAYLOAD_CACHE_INSIDE" >/dev/null
+dispatch post_tool_use "$PAYLOAD_CACHE_INSIDE" >/dev/null
+dispatch stop "$PAYLOAD_CACHE_START" >/dev/null
+CACHE_AFTER=$(wc -l < "$MANAGED/.engineering-os/telemetry/events.jsonl")
+[ "$CACHE_BEFORE" -eq "$CACHE_AFTER" ] || {
+  echo "ERROR_FOR_AGENT: cached repository remained active after opt-in marker removal" >&2
+  exit 1
+}
+python3 - "$HOME_DIR/.dispatch-cache" <<'PY'
+import json
+import sys
+from pathlib import Path
+cache_dir = Path(sys.argv[1])
+rows = [json.loads(path.read_text()) for path in cache_dir.glob("*.json")]
+assert any(row.get("repos") == [] for row in rows), rows
+PY
+mv "$TMP/policy.saved" "$MANAGED/.engineering-os/telemetry-policy.json"
 
 # Repeated SessionStart rotates to a distinct non-empty run id.
 ROTATE_SESSION="rotation-$$"
@@ -136,4 +157,4 @@ PAYLOAD_STOP=$(python3 -c "import json; print(json.dumps({'session_id':'empty','
 printf '%s' "$PAYLOAD_STOP" | HOME="$EMPTY_HOME" EOS_DISPATCH_HOME="$EMPTY_HOME" \
   EOS_DISPATCH_CACHE_DIR="$EMPTY_HOME/.dispatch-cache" bash "$DISPATCH" stop
 
-echo 'dispatch failure-mode tests passed: marker-only guard, invalid inputs, explicit-target conflict, rotation, and empty fan-out'
+echo 'dispatch failure-mode tests passed: marker validation, scoped guard, cache revalidation, rotation, and empty fan-out'
