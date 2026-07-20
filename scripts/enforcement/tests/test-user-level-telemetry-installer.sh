@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Covers Route Plan .claude/plans/remote-multirepo-telemetry-hooks.md, Test
-# Plan scenario C (user-level settings installer lifecycle).
+# User-level settings lifecycle: creation, exact verification, idempotent update,
+# preservation of user hooks, malformed JSON refusal, dry-run, uninstall, and
+# actionable runtime-path failure.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 INSTALLER="$ROOT/scripts/monitoring/install-user-level-telemetry-hooks.sh"
@@ -12,42 +13,77 @@ trap 'rm -rf "$TMP"' EXIT
 
 HOME_DIR="$TMP/home"
 mkdir -p "$HOME_DIR"
+SETTINGS="$HOME_DIR/.claude/settings.json"
 
 run_installer() {
   HOME="$HOME_DIR" ENGINEERING_OS_HOME="$ROOT" bash "$INSTALLER" "$@"
 }
 
-SETTINGS="$HOME_DIR/.claude/settings.json"
-
-# 1. No file exists -> installer creates valid JSON, no sudo involved.
-run_installer > "$TMP/out1.log"
+# 1. New user settings file is valid and uses only dispatcher-mode commands.
+run_installer > "$TMP/install.log"
 python3 -c "import json; json.load(open('$SETTINGS'))"
-grep -q "installed" "$TMP/out1.log"
-
-# Absolute path baked in, no leftover placeholder.
 grep -q "$ROOT/scripts/monitoring/eos-telemetry-dispatch.sh" "$SETTINGS"
-grep -q 'ENGINEERING_OS_HOME' "$SETTINGS" && { echo "ERROR_FOR_AGENT: placeholder leaked into user-level settings" >&2; exit 1; }
+if grep -q 'require-telemetry-session.sh' "$SETTINGS"; then
+  echo "ERROR_FOR_AGENT: user-level settings must route the guard through the dispatcher" >&2
+  exit 1
+fi
+if grep -q 'ENGINEERING_OS_HOME' "$SETTINGS"; then
+  echo "ERROR_FOR_AGENT: unresolved runtime placeholder leaked into user settings" >&2
+  exit 1
+fi
+python3 - "$SETTINGS" "$ROOT" <<'PY'
+import json
+import sys
+from pathlib import Path
 
-# 2. verify passes on a freshly installed file.
+settings = json.loads(Path(sys.argv[1]).read_text())
+root = sys.argv[2]
+commands = [
+    hook["command"]
+    for block in settings["hooks"]["PreToolUse"]
+    for hook in block.get("hooks", [])
+]
+expected_guard = f'bash "{root}/scripts/monitoring/eos-telemetry-dispatch.sh" guard'
+assert commands.count(expected_guard) == 1, commands
+assert sum(command.endswith(" pre_tool_use") for command in commands) == 1, commands
+PY
+
+# 2. Exact verification succeeds for a current install.
 run_installer --verify
 
-# 3. Re-running is a true no-op: no duplicate hooks, no backup file written.
-run_installer > "$TMP/out2.log"
-grep -q "no changes needed" "$TMP/out2.log"
-[ -z "$(find "$HOME_DIR/.claude" -maxdepth 1 -name '*.backup.*' 2>/dev/null)" ] || {
-  echo "ERROR_FOR_AGENT: re-running the installer with no drift must not create a backup" >&2
+# 3. Verification catches a stale absolute runtime path before reinstall fixes it.
+python3 - "$SETTINGS" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = json.loads(path.read_text())
+for block in data["hooks"]["PostToolUse"]:
+    for hook in block.get("hooks", []):
+        if "post_tool_use" in hook.get("command", ""):
+            hook["command"] = 'bash "/stale/Engineering-OS/scripts/monitoring/eos-telemetry-dispatch.sh" post_tool_use'
+path.write_text(json.dumps(data))
+PY
+if run_installer --verify >"$TMP/stale.out" 2>"$TMP/stale.err"; then
+  echo "ERROR_FOR_AGENT: --verify accepted a stale dispatcher path" >&2
+  exit 1
+fi
+grep -q 'stale owned hook' "$TMP/stale.err"
+run_installer > /dev/null
+run_installer --verify
+
+# 4. A current reinstall is a true no-op and creates no new backup.
+rm -f "$HOME_DIR/.claude"/*.backup.*
+run_installer > "$TMP/noop.log"
+grep -q 'no changes needed' "$TMP/noop.log"
+[ -z "$(find "$HOME_DIR/.claude" -maxdepth 1 -name '*.backup.*' -print -quit)" ] || {
+  echo "ERROR_FOR_AGENT: no-op reinstall created a backup" >&2
   exit 1
 }
-python3 -c "
-import json
-d = json.load(open('$SETTINGS'))
-pre = [h['command'] for h in d['hooks']['PreToolUse'][0]['hooks']]
-assert sum('require-telemetry-session.sh' in c for c in pre) == 1, pre
-assert sum('eos-telemetry-dispatch.sh' in c and 'pre_tool_use' in c for c in pre) == 1, pre
-"
 
-# 4. Existing user settings (unrelated keys, unrelated hooks) are preserved.
-cat > "$SETTINGS" <<JSON
+# 5. Existing unrelated settings and hooks survive installation.
+cat > "$SETTINGS" <<'JSON'
 {
   "model": "claude-opus",
   "hooks": {
@@ -56,71 +92,75 @@ cat > "$SETTINGS" <<JSON
 }
 JSON
 run_installer > /dev/null
-python3 -c "
+python3 - "$SETTINGS" <<'PY'
 import json
-d = json.load(open('$SETTINGS'))
-assert d['model'] == 'claude-opus'
-cmds = [h['command'] for h in d['hooks']['PreToolUse'][0]['hooks']]
-assert 'echo my-custom-hook' in cmds, cmds
-"
+import sys
+from pathlib import Path
 
-# 5. Version update: a stale/old command for an owned marker is replaced in
-#    place, never duplicated.
-python3 -c "
-import json
-d = json.load(open('$SETTINGS'))
-for h in d['hooks']['PreToolUse'][0]['hooks']:
-    if 'pre_tool_use' in h['command']:
-        h['command'] = 'bash \"/old/stale/path/eos-telemetry-dispatch.sh\" pre_tool_use'
-json.dump(d, open('$SETTINGS', 'w'))
-"
-run_installer > /dev/null
-python3 -c "
-import json
-d = json.load(open('$SETTINGS'))
-cmds = [h['command'] for h in d['hooks']['PreToolUse'][0]['hooks'] if 'pre_tool_use' in h['command']]
-assert len(cmds) == 1, cmds
-assert '/old/stale/path/' not in cmds[0], cmds
-assert 'echo my-custom-hook' in [h['command'] for h in d['hooks']['PreToolUse'][0]['hooks']]
-"
+data = json.loads(Path(sys.argv[1]).read_text())
+assert data["model"] == "claude-opus"
+commands = [
+    hook["command"]
+    for block in data["hooks"]["PreToolUse"]
+    for hook in block.get("hooks", [])
+]
+assert "echo my-custom-hook" in commands, commands
+PY
 
-# 6. Malformed existing JSON: refuse, do not overwrite silently, no partial
-#    write, leave a clear error.
+# 6. Malformed JSON is rejected without a partial overwrite.
 echo '{not valid json' > "$SETTINGS"
 cp "$SETTINGS" "$TMP/broken.orig"
-if run_installer 2>"$TMP/err.log"; then
-  echo "ERROR_FOR_AGENT: installer must refuse to patch malformed JSON" >&2
+if run_installer >"$TMP/broken.out" 2>"$TMP/broken.err"; then
+  echo "ERROR_FOR_AGENT: installer accepted malformed settings JSON" >&2
   exit 1
 fi
-grep -q "ERROR_FOR_AGENT" "$TMP/err.log"
-diff -q "$SETTINGS" "$TMP/broken.orig" > /dev/null
+grep -q 'ERROR_FOR_AGENT' "$TMP/broken.err"
+diff -q "$SETTINGS" "$TMP/broken.orig" >/dev/null
 
-# 7. Dry-run makes no changes to disk.
+# 7. Dry-run changes nothing.
 rm -f "$SETTINGS"
 run_installer > /dev/null
 cp "$SETTINGS" "$TMP/before-dry-run.json"
 python3 "$PATCHER" "$SETTINGS" --mode dispatcher --home "$ROOT" --uninstall --dry-run > "$TMP/dry.log"
-diff -q "$SETTINGS" "$TMP/before-dry-run.json" > /dev/null
-grep -q "dry-run" "$TMP/dry.log"
+diff -q "$SETTINGS" "$TMP/before-dry-run.json" >/dev/null
+grep -q 'dry-run' "$TMP/dry.log"
 
-# 8. Uninstall removes only Engineering-OS-owned entries, keeps user
-#    content, never deletes the file itself.
-python3 -c "
+# 8. Uninstall removes only Engineering-OS-owned entries and retains the file.
+python3 - "$SETTINGS" <<'PY'
 import json
-d = json.load(open('$SETTINGS'))
-d.setdefault('hooks', {}).setdefault('PostToolUse', []).append({'matcher': '.*', 'hooks': [{'type': 'command', 'command': 'echo unrelated-user-hook'}]})
-json.dump(d, open('$SETTINGS', 'w'))
-"
-run_installer > /dev/null  # re-sync after manual edit above
-run_installer --uninstall > "$TMP/uninstall.log"
-python3 -c "
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = json.loads(path.read_text())
+data.setdefault("hooks", {}).setdefault("PostToolUse", []).append({
+    "matcher": ".*",
+    "hooks": [{"type": "command", "command": "echo unrelated-user-hook"}],
+})
+path.write_text(json.dumps(data))
+PY
+run_installer > /dev/null
+run_installer --uninstall > /dev/null
+python3 - "$SETTINGS" <<'PY'
 import json
-d = json.load(open('$SETTINGS'))
-remaining = json.dumps(d)
-assert 'eos-telemetry-dispatch.sh' not in remaining, remaining
-assert 'require-telemetry-session.sh' not in remaining, remaining
-assert 'echo unrelated-user-hook' in remaining, remaining
-"
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text()
+data = json.loads(text)
+assert "eos-telemetry-dispatch.sh" not in text, text
+assert "require-telemetry-session.sh" not in text, text
+assert "echo unrelated-user-hook" in text, data
+PY
 [ -f "$SETTINGS" ]
 
-echo 'user-level telemetry installer lifecycle tests passed (no-file, idempotent re-run, user-settings preserved, version update in place, malformed-JSON refusal, dry-run, uninstall-preserves-user-hooks)'
+# 9. An invalid runtime path fails with the installer's actionable convention.
+if HOME="$HOME_DIR" ENGINEERING_OS_HOME="$TMP/missing-runtime" bash "$INSTALLER" \
+  >"$TMP/missing.out" 2>"$TMP/missing.err"; then
+  echo "ERROR_FOR_AGENT: missing Engineering OS checkout unexpectedly succeeded" >&2
+  exit 1
+fi
+grep -q 'ERROR_FOR_AGENT: Engineering OS checkout not found' "$TMP/missing.err"
+grep -q 'ACTION:' "$TMP/missing.err"
+
+echo 'user-level telemetry installer tests passed: exact dispatcher guard, stale-path detection, idempotency, preservation, refusal, dry-run, uninstall, and actionable path failure'
