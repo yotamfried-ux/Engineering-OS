@@ -2,7 +2,7 @@
 
 Tracking plan: `docs/operations/runtime-telemetry-archive-plan.md`
 
-Purpose: track execution of the runtime telemetry archive update. This checklist is not a readiness claim.
+Purpose: track implementation, first-run evidence, and later longitudinal learning as three separate layers. This checklist is not itself a readiness claim.
 
 ## Planning
 
@@ -42,8 +42,11 @@ Purpose: track execution of the runtime telemetry archive update. This checklist
 - [x] Upload the matched bundle as a separate Actions artifact.
 - [x] Add separate-workspace positive and stale/unrelated/tampered negative fixtures.
 - [x] Query live GitHub review threads and block every unresolved thread.
+- [x] Add a user-level dispatcher for parent-started multi-repository Remote sessions.
+- [x] Add managed-only discovery, strict attribution, per-repository isolation, and scoped guard fixtures.
+- [ ] Merge the current canonical URL parsing and trust-boundary hardening PR chain.
 
-These implementation items prove the transport and gates in fixtures. They do not prove that a new real Project 8 Claude session has produced, imported, and analyzed a non-empty bundle.
+The checked implementation items prove code paths and negative cases. They do not prove that a fresh real Remote session has produced and durably handed off a non-empty bundle.
 
 ## Preliminary Project 8 evidence
 
@@ -52,39 +55,59 @@ These implementation items prove the transport and gates in fixtures. They do no
 - [x] Confirm both completed runs lacked usable session telemetry in CI.
 - [x] Record that OWH, webhook lifecycle closure, and Project 8 product outcomes do not substitute for session telemetry.
 - [x] Merge the canonical installation/session/preflight fixes in Engineering OS PR #244.
+- [x] Merge durable remote-handoff infrastructure in Engineering OS.
+- [x] Merge the required telemetry policy into `project-8/main`.
+- [x] Merge the hardened telemetry runtime, exact selector, and preflight into `project-8/main`.
 - [x] Capture the durable-handoff root cause in `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md`.
+- [x] Detect that Project 8 contains stricter trust-boundary controls than the canonical installer.
+- [ ] Merge those reviewed Project 8 controls back into the canonical Engineering OS source.
 
-## Project 8 telemetry evidence
+Do not run a blind full installer sync into Project 8 while the final canonical hardening item is unchecked. The existing Project 8 runtime must not be replaced with a weaker copy.
 
-- [ ] Merge the Engineering OS durable-handoff implementation.
-- [ ] Install that exact Engineering OS version in Project 8.
-- [ ] Merge the updated `pr-policy.yml` and telemetry runtime into `project-8/main` before the real workload.
-- [ ] Enable required remote handoff in `.engineering-os/telemetry-policy.json`.
-- [ ] Start a fresh Claude session after installation.
+## First Project 8 telemetry run — blocks experiment readiness closure
+
+- [ ] Update the actual `ENGINEERING_OS_HOME` checkout to the merged experiment-ready head.
+- [ ] Verify the user-level telemetry installer against that exact checkout.
+- [ ] Start a genuinely fresh Claude session after installation.
 - [ ] Pass `require-telemetry-session.sh` with positive local events and positive remote handoff state.
+- [ ] Confirm unmanaged or unattributed work is not recorded or blocked.
 - [ ] Run one bounded Project 8 task with the current telemetry baseline.
-- [ ] Produce an exact PR/head-matched non-empty session telemetry artifact.
+- [ ] Produce an exact repository/branch/head/PR-matched non-empty session telemetry artifact.
 - [ ] Confirm Operational Work History reports non-zero telemetry events.
-- [ ] Import the Project 8 telemetry artifact into the archive.
+- [ ] Import the Project 8 telemetry artifact into the Engineering OS archive.
 - [ ] Analyze the imported run.
 - [ ] Write instrumented Project 8 findings.
-- [ ] Identify missing telemetry coverage.
-- [ ] Convert repeated missing coverage into follow-up work.
+- [ ] Identify missing telemetry coverage, false positives, friction, and decision-quality signals.
+- [ ] Convert concrete unresolved coverage into implementation work or registered gaps.
 
-## Longitudinal learning
+Completion of this section closes the first-run evidence decision. It does not claim longitudinal maturity from one run.
 
-- [ ] Import at least one later target-project run.
+## Longitudinal learning — does not block the first Project 8 experiment
+
+- [ ] Import at least one later valid target-project run.
 - [ ] Compare Project 8 with the later run.
-- [ ] Record recurring patterns.
+- [ ] Record recurring coverage, failure, friction, and decision-quality patterns.
 - [ ] Decide whether the local archive is sufficient.
-- [ ] Decide whether a later backend is needed.
-- [ ] Update readiness only from real run evidence.
+- [ ] Decide whether a later OpenTelemetry Collector or external backend is needed.
+- [ ] Update longitudinal readiness only from the multi-run evidence.
 
 ## Completion evidence
 
-- [ ] Durable-handoff PR merged.
-- [ ] Project 8 installation/configuration PR merged.
-- [ ] Project 8 non-empty archive run imported.
-- [ ] Instrumented Project 8 findings reviewed.
+### Implementation readiness
+
+- [x] Archive commands and deterministic tests exist.
+- [x] Durable-handoff infrastructure is merged.
+- [x] Project 8 installation and required policy are merged.
+- [ ] Canonical URL parsing and trust-boundary hardening are merged.
+
+### First-run readiness
+
+- [ ] Project 8 non-empty archive run is imported.
+- [ ] Instrumented Project 8 findings are reviewed.
+- [ ] `project-8-real-run-evidence` is closed from the actual run.
+- [ ] `monitoring-metrics-sufficiency` is closed from the imported and analyzed first run.
+
+### Longitudinal readiness
+
 - [ ] At least one comparison run exists.
-- [ ] Monitoring sufficiency decision is backed by real runs.
+- [ ] `monitoring-longitudinal-sufficiency` is backed by reviewed multi-run evidence.

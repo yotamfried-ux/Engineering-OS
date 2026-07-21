@@ -9,6 +9,7 @@ from typing import Any
 
 from telemetry_handoff import (
     HandoffError,
+    REQUIRED_BUNDLE_FILES,
     load_policy,
     stable_hash,
     validate_bundle,
@@ -98,7 +99,9 @@ def main() -> int:
     manifest, selected = max(candidates, key=lambda item: synced_sort_key(item[0]))
     if args.out.exists():
         shutil.rmtree(args.out)
-    shutil.copytree(selected, args.out)
+    args.out.mkdir(parents=True)
+    for name in REQUIRED_BUNDLE_FILES:
+        shutil.copy2(selected / name, args.out / name, follow_symlinks=False)
     binding = manifest["handoff"].get("pr_binding")
     print(f"selected telemetry bundle: {selected}")
     print(f"events: {manifest['event_count']}")

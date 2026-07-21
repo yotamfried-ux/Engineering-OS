@@ -49,7 +49,9 @@ Every matrix row names a Gate, Owner, and Evidence source. Every partial or miss
 | scaling-extension-enforcement | closed | P1 | Scaling extension enforcement. |
 | claude-operational-behavior-evidence | closed | P1 | Operational behavior evidence. |
 | registry-coverage-backfill | closed | P2 | Registry and manifest coverage. |
-| monitoring-metrics-sufficiency | open | P2 | Monitoring sufficiency requires real imported target telemetry. |
+| canonical-telemetry-hardening-drift | open | P1 | Canonical trusted-policy and bundle-boundary hardening is implemented in PR #253 but not yet merged. |
+| monitoring-metrics-sufficiency | open | P2 | First valid target run must be imported and analyzed. |
+| monitoring-longitudinal-sufficiency | open | P2 | At least two valid target runs are required for comparative learning. |
 | project-8-real-run-evidence | open | P1 | Project 8 requires a fresh instrumented run. |
 | operational-work-history-foundation | closed | P1 | CI-generated operational work history. |
 | dispatch-scope-double-record | mitigated | P1 | Native direct hooks versus parent-session dispatcher scope. |
@@ -94,7 +96,9 @@ Every matrix row names a Gate, Owner, and Evidence source. Every partial or miss
 | Operational work history evidence | Enforced | Gate: check-operational-work-history-evidence.sh through pr-policy. Owner: ops-readiness. Evidence: fixtures and real PRs #234/#235/#236. | Human interpretation remains reviewed. |
 | Scaling extension enforcement | Enforced | Gate: named scaling CI step. Owner: ops-readiness. Evidence: scaling fixtures and PR #229. | Deep roadmap quality is reviewed. |
 | Registry/manifest coverage | Enforced | Gate: scaling coverage checks. Owner: registry-governance. Evidence: active rows across all required manifests. | Registry content quality is reviewed. |
-| Monitoring metrics sufficiency | Missing enforcement | Gate: exporter, importer, analyzer, and privacy tests exist. Owner: ops-readiness. Evidence: telemetry archive tests and Project 8 OWH-only findings. | gap:monitoring-metrics-sufficiency — requires a valid non-empty target run export, import, analysis, and reviewed findings. |
+| Canonical telemetry trust boundaries | Partially enforced | Gate: telemetry-handoff-tests on PR #253. Owner: ops-readiness. Evidence: explicit-policy, environment-isolation, regular-file, selected-file allowlist, URL parsing, identity, checksum, privacy, and exact-match regressions. | gap:canonical-telemetry-hardening-drift — implementation exists on the PR branch but remains open until exact-head validation, review, and merge. |
+| Monitoring metrics first-run sufficiency | Missing enforcement | Gate: exporter, importer, analyzer, and privacy tests exist. Owner: ops-readiness. Evidence: telemetry archive tests and Project 8 OWH-only findings. | gap:monitoring-metrics-sufficiency — requires one valid non-empty target run export, import, analysis, and reviewed findings. |
+| Monitoring longitudinal sufficiency | Missing enforcement | Gate: archive analyzer can compare projects and recurring missing coverage. Owner: ops-readiness. Evidence: analyzer tests and archive plan. | gap:monitoring-longitudinal-sufficiency — requires at least two valid target runs; it does not block the first Project 8 experiment. |
 | Project 8 real-run evidence | Missing enforcement | Gate: mandatory telemetry preflight exists. Owner: ops-readiness. Evidence: Project 8 first-run findings and preflight runbook. | gap:project-8-real-run-evidence — requires a fresh instrumented Project 8 session and non-empty analyzed bundle. |
 | Remote multi-repository telemetry dispatch | Partially enforced | Gate: telemetry-handoff-tests exercises installer, managed-only discovery, attribution, scoped guard, isolation, policy, failures, and PR matching. Owner: ops-readiness. Evidence: PR #250 fixtures plus the real failed Remote attempt. | gap:dispatch-scope-double-record and gap:multirepo-remote-telemetry-validation — deterministic repairs exist, but fresh successful Remote closure evidence is still required. |
 | Engineering OS repository boundary hook synchronization | Missing enforcement | Gate: exact patcher verification exists, but the checked-in repository-local boundary commands have not been synchronized. Owner: install-governance. Evidence: patch-settings-telemetry.py and PR #250 finding. | gap:eos-repo-boundary-sync-drift — repair separately before enabling required or best-effort telemetry in this repository. |
@@ -110,29 +114,15 @@ A row is ready only when it is Enforced, Manual by design with a checklist, Waiv
 
 ## Highest-priority gaps by ROI
 
-1. Result Loop Contract gate wiring — closed through named CI and real positive/negative PR evidence.
-2. Scaling gate wiring — closed through the named real-PR CI step.
-3. Registry/manifest coverage backfill — closed across every required manifest.
-4. Operational Work History foundation — closed through real positive and blocking PR evidence.
-5. Project 8 real-run evidence — open; a fresh instrumented run is required.
-6. Remote multi-repository telemetry validation — open; PR #250 has real failure evidence but needs a fresh successful post-merge run.
-7. Monitoring metrics sufficiency — open until a valid target bundle is imported and analyzed.
-8. Coverage map hardening — closed and retained as a regression surface.
-9. RTK runtime hardening — closed and retained as a regression surface.
-10. Route Plan quality gate — closed and retained as a regression surface.
-11. Template/pattern rating lifecycle — closed and retained as a regression surface.
-12. Learning closure gate — closed and retained as a regression surface.
-13. Progress lifecycle — closed and retained as a regression surface.
-14. Graphify context graph — closed and retained as a regression surface.
-15. Connector correctness — closed and retained as a regression surface.
-16. Simulation completeness — closed and retained as a regression surface.
-17. Post-merge validation — closed and retained as a regression surface.
-18. Documentation hygiene — closed and retained as a regression surface.
-19. Semantic cleanup — closed and retained as a regression surface.
-20. Trace and test contracts — closed and retained as a regression surface.
-21. Governance evidence — closed and retained as a regression surface.
-22. Install downstream behavior — closed and retained as a regression surface.
+1. Canonical telemetry hardening drift — open until PR #253 passes exact-head review and merges after its #252 dependency.
+2. Project 8 real-run evidence — open; a fresh instrumented run is required after the canonical PR chain is merged.
+3. Remote multi-repository telemetry validation — open; the deterministic implementation needs one fresh successful post-merge session.
+4. Monitoring metrics first-run sufficiency — open until the same Project 8 bundle is imported and analyzed.
+5. Monitoring longitudinal sufficiency — open until a later valid run can be compared; this does not block the first experiment.
+6. Engineering OS repository boundary synchronization — open/P3 and unrelated to the Project 8 target run.
+7. Result Loop Contract, Scaling, registries, Operational Work History, governance evidence, and install behavior are closed and retained as regression surfaces.
+8. Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup.
 
 ## Current audit scope
 
-PR #250 adds the user-level multi-repository telemetry bootstrap and records a real Remote attempt that proved installation and dynamic loading while exposing two defects. The deterministic fixes are tracked as partially enforced until a fresh post-merge Remote session produces successful per-repository events, unmanaged exclusion, a non-empty bundle, and correct PR matching. The audit does not close `monitoring-metrics-sufficiency` or `project-8-real-run-evidence`, and it keeps the unrelated repository-local boundary-settings drift open for a focused repair.
+PR #250 added the user-level multi-repository bootstrap and recorded a real failed Remote attempt. PR #252 generalizes canonical Git remote parsing to the URL and scp-style forms documented by Git. PR #253 promotes Project 8's reviewed trusted-policy and bundle-boundary controls back into Engineering OS and adds focused negative regressions. PR #253 implements the deterministic repair but does not close its own gap before exact-head validation, review, and merge. The PR chain also does not close `project-8-real-run-evidence`, `multirepo-remote-telemetry-validation`, or `monitoring-metrics-sufficiency`: one genuinely fresh Project 8 Remote session must still produce a correctly attributed non-empty bundle, pass exact PR/head selection, and be imported and analyzed. Longitudinal sufficiency remains a separate later comparison requirement.

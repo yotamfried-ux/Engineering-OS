@@ -84,10 +84,19 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          trusted_policy=".engineering-os/trusted-policy-source/.engineering-os/telemetry-policy.json"
+          policy_args=()
+          if [ -e "$trusted_policy" ] || [ -L "$trusted_policy" ]; then
+            if [ ! -f "$trusted_policy" ] || [ -L "$trusted_policy" ]; then
+              echo "ERROR_FOR_AGENT: trusted base telemetry policy exists but is not a regular non-symlink file: $trusted_policy"
+              exit 1
+            fi
+            policy_args+=(--policy-file "$trusted_policy")
+          fi
           python3 scripts/monitoring/select-pr-telemetry.py \
             --root . \
             --handoff-root .engineering-os/remote-telemetry \
-            --policy-file .engineering-os/trusted-policy-source/.engineering-os/telemetry-policy.json \
+            "${policy_args[@]}" \
             --repo "$REPO" \
             --pr-number "$PR_NUMBER" \
             --head-ref "$PR_HEAD_REF" \

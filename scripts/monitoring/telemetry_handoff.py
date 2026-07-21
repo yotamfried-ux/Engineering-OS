@@ -24,6 +24,7 @@ BOUNDARY_EVENTS = {
     "eos.stop_failure",
     "eos.session_end",
 }
+REQUIRED_BUNDLE_FILES = ("manifest.json", "events.jsonl", "latest-summary.md")
 BANNED_KEYS = {
     "prompt", "user_prompt", "model_text", "user_text", "raw_model_text",
     "raw_user_text", "command", "raw_command", "raw_shell_command", "file_path",
@@ -129,12 +130,12 @@ def validate_ref_name(value: str) -> str:
 
 
 def load_policy(root: Path, explicit_path: Path | None = None) -> dict[str, Any]:
-    path = explicit_path or Path(
-        os.environ.get(
-            "EOS_TELEMETRY_POLICY_FILE",
-            str(root / ".engineering-os" / "telemetry-policy.json"),
-        )
-    )
+    env_policy = os.environ.get("EOS_TELEMETRY_POLICY_FILE", "").strip()
+    path = explicit_path or Path(env_policy or root / ".engineering-os" / "telemetry-policy.json")
+    trusted_explicit = explicit_path is not None or bool(env_policy)
+    if trusted_explicit and (path.is_symlink() or not path.is_file()):
+        raise HandoffError(f"trusted telemetry policy file is missing or not regular: {path}")
+
     raw: dict[str, Any] = {}
     if path.is_file():
         try:
@@ -152,8 +153,9 @@ def load_policy(root: Path, explicit_path: Path | None = None) -> dict[str, Any]
     if not isinstance(remote_cfg, dict):
         remote_cfg = {}
 
+    allow_env_overrides = not trusted_explicit
     mode = str(
-        os.environ.get("EOS_TELEMETRY_HANDOFF_MODE")
+        (os.environ.get("EOS_TELEMETRY_HANDOFF_MODE") if allow_env_overrides else "")
         or remote_cfg.get("mode")
         or "disabled"
     ).strip().lower()
@@ -163,7 +165,7 @@ def load_policy(root: Path, explicit_path: Path | None = None) -> dict[str, Any]
         )
 
     remote = str(
-        os.environ.get("EOS_TELEMETRY_HANDOFF_REMOTE")
+        (os.environ.get("EOS_TELEMETRY_HANDOFF_REMOTE") if allow_env_overrides else "")
         or remote_cfg.get("remote")
         or DEFAULT_REMOTE
     ).strip()
@@ -172,7 +174,7 @@ def load_policy(root: Path, explicit_path: Path | None = None) -> dict[str, Any]
 
     branch = validate_ref_name(
         str(
-            os.environ.get("EOS_TELEMETRY_HANDOFF_BRANCH")
+            (os.environ.get("EOS_TELEMETRY_HANDOFF_BRANCH") if allow_env_overrides else "")
             or remote_cfg.get("branch")
             or DEFAULT_BRANCH
         )
@@ -297,11 +299,15 @@ def validate_bundle(
     expected_head_sha: str = "",
     expected_run_id: str = "",
 ) -> dict[str, Any]:
-    manifest_path = bundle / "manifest.json"
-    events_path = bundle / "events.jsonl"
-    summary_path = bundle / "latest-summary.md"
-    if not (manifest_path.is_file() and events_path.is_file() and summary_path.is_file()):
-        raise HandoffError(f"incomplete telemetry bundle: {bundle}")
+    required_paths = {name: bundle / name for name in REQUIRED_BUNDLE_FILES}
+    for name, path in required_paths.items():
+        if path.is_symlink() or not path.is_file():
+            raise HandoffError(
+                f"telemetry bundle required file is missing or not regular: {name}: {bundle}"
+            )
+    manifest_path = required_paths["manifest.json"]
+    events_path = required_paths["events.jsonl"]
+    summary_path = required_paths["latest-summary.md"]
 
     manifest = load_json_object(manifest_path)
     if manifest.get("schema_version") != RUN_SCHEMA:
