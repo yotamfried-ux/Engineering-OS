@@ -21,6 +21,7 @@ from telemetry_handoff import (
     load_json_object,
     load_jsonl_strict,
     load_policy,
+    parse_repo_slug_from_remote,
     read_run_id,
     repo_root,
     stable_hash,
@@ -59,28 +60,14 @@ def git(root: Path, *args: str, required: bool = True) -> str:
         return ""
 
 
-def repo_slug_from_url(value: str) -> str:
-    value = str(value or "").strip()
-    if value.endswith(".git"):
-        value = value[:-4]
-    for marker in ("github.com/", "github.com:"):
-        if marker in value:
-            candidate = value.split(marker, 1)[1].strip("/")
-            try:
-                return validate_repo_slug(candidate)
-            except HandoffError:
-                return ""
-    return ""
-
-
 def detect_repo_slug(root: Path, explicit: str = "") -> str:
     if str(explicit or "").strip():
         return validate_repo_slug(explicit)
-    candidate = repo_slug_from_url(
+    candidate = parse_repo_slug_from_remote(
         git(root, "remote", "get-url", "origin", required=False)
     )
     if candidate:
-        return candidate
+        return validate_repo_slug(candidate)
     env_repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
     if env_repo:
         return validate_repo_slug(env_repo)
