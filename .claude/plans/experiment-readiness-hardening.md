@@ -72,7 +72,7 @@ Remove the remaining deterministic canonical-source risks before the first succe
 
 - `routing.task-router-read` — task routed as `engineering_os_governance` before implementation.
 - `workflow.workflow-read` — plan-first and experiment/fix/verify workflow applied.
-- `plan.route-plan-before-write` — this plan is committed before every implementation write on the rebuilt branch.
+- `plan.route-plan-before-write` — plan commit `dd3439312dc03fd7e81df6236226b6b006bc3b43` predates every implementation write on the rebuilt branch.
 - `source.github-repo-read` — Engineering OS #252/#253 and Project 8 #7/#9, files, commits, Actions, and reviews were inspected through GitHub.
 - `validation.policy-change-has-validator` — focused telemetry regressions and the PR-policy wiring contract cover every changed trust boundary.
 - `validation.actions-checked` — exact-head Actions are inspected after the clean branch rebuild.
@@ -93,9 +93,9 @@ Remove the remaining deterministic canonical-source risks before the first succe
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS` PRs #252/#253 and `yotamfried-ux/project-8` PRs #7/#9.
 - action: compared canonical and target helpers; inspected rejected sync evidence; created and updated PR #253; diagnosed exact CI failures; merged #252 after approval; rebuilt #253 cleanly on the squash commit.
-- result: the rebuilt branch preserves exactly the eleven intended files while removing duplicated #252 history.
-- decision: keep the proven hardening, preserve plan-first history, and rerun every gate against `main` before requesting the second merge approval.
-- target: canonical telemetry helpers, `pr-policy.yml`, the two focused test files, telemetry CI, and the four readiness documents listed in Target paths.
+- result: PR #253 implementation commit `95f3ad7809251690a6272f17e927fd62453a618b` preserves the exact eleven-file change set, including `scripts/monitoring/telemetry_handoff.py`, `.github/workflows/pr-policy.yml`, and `scripts/enforcement/tests/test-telemetry-trust-boundaries.py`.
+- decision: kept the proven hardening, preserved plan-first history, and blocked merge until every gate reruns against `main`.
+- target: `scripts/monitoring/telemetry_handoff.py`, `scripts/monitoring/select-pr-telemetry.py`, `.github/workflows/pr-policy.yml`, `scripts/enforcement/tests/test-pr-policy-workflow-wiring.sh`, and `scripts/enforcement/tests/test-telemetry-trust-boundaries.py`.
 
 ## Template/Pattern Rating Evidence
 
@@ -159,7 +159,7 @@ No product data or schema changes. Telemetry remains metadata-only. Existing eve
 - hypothesis: merge #252's Git parser, promote Project 8's reviewed trust controls upstream, and condition the trusted policy argument on actual base ownership without changing telemetry schema.
 - connectors: GitHub for repository, PR, CI, artifacts, and review truth; official vendor documentation was read directly.
 - steps: audit current state; compare Project 8 hardening; create plan-first branch; add regressions; promote policy/regular-file/allowlist behavior; wire CI; reconcile audit layers; define live gate; fix test-root; correct plan evidence; restore audit regression terms; fix absent-policy bootstrap; merge #252; rebuild #253 on the squash commit.
-- evidence: PR #253 clean branch diff, exact-head Actions, review threads, Project 8 #7/#9, Engineering OS #252, and official documentation above.
+- evidence: PR #253 clean branch diff, implementation commit `95f3ad7809251690a6272f17e927fd62453a618b`, review threads, Project 8 #7/#9, Engineering OS #252, and official documentation above.
 - rejected: blind sync; target-only fork; backend expansion; environment override of trusted policy; symlinked required files; whole-directory selector copy; unconditional missing policy argument; weakened required mode; duplicate stacked history; OWH-only success.
 - result: deterministic repairs are preserved on a clean plan-first branch; exact-head CI/review and live Project 8 evidence remain separate gates.
 
@@ -183,6 +183,6 @@ No product data or schema changes. Telemetry remains metadata-only. Existing eve
 
 ## Progress Lifecycle Evidence
 
-- start: this plan commit is the first commit on the clean branch rebuilt from `main` squash commit `5759cac6b0a1602ff225ba789cfaf2536de0a693`.
-- mid: implementation commit(s) follow this plan and preserve the previously validated eleven-file change set.
-- pre-merge: recorded only after exact-head CI and review complete on the rebuilt branch.
+- start: plan commit `dd3439312dc03fd7e81df6236226b6b006bc3b43` is the first commit above `main` squash commit `5759cac6b0a1602ff225ba789cfaf2536de0a693`.
+- mid: implementation commit `95f3ad7809251690a6272f17e927fd62453a618b` applied the exact eleven-file hardening set after the plan commit; telemetry-handoff-tests run 213 then passed on that code head.
+- pre-merge: pending exact-head CI and external review on the final evidence head.
