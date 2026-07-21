@@ -18,6 +18,7 @@ sys.path.insert(0, str(MONITORING))
 
 from telemetry_handoff import (  # noqa: E402
     HANDOFF_SCHEMA,
+    POLICY_SCHEMA,
     REQUIRED_BUNDLE_FILES,
     RUN_SCHEMA,
     HandoffError,
@@ -34,15 +35,29 @@ def digest(path: Path) -> str:
 
 
 def write_policy(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(
             {
-                "schema_version": "eos.telemetry.policy.v1",
+                "schema_version": POLICY_SCHEMA,
                 "remote_handoff": {
                     "mode": "required",
                     "remote": "origin",
                     "branch": "engineering-os-telemetry",
                 },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def write_disabled_policy(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": POLICY_SCHEMA,
+                "remote_handoff": {"mode": "disabled"},
             }
         ),
         encoding="utf-8",
@@ -93,6 +108,42 @@ def create_bundle(root: Path, *, run_id: str = "hardening-run") -> tuple[Path, s
     return bundle, repo, head_ref, pr_number
 
 
+def run_selector(
+    *,
+    handoff: Path,
+    policy: Path,
+    repo: str = "example/project",
+    head_ref: str = "chore/test",
+    pr_number: int = 7,
+    out: Path,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            sys.executable,
+            str(SELECTOR),
+            "--root",
+            str(ROOT),
+            "--handoff-root",
+            str(handoff),
+            "--policy-file",
+            str(policy),
+            "--repo",
+            repo,
+            "--pr-number",
+            str(pr_number),
+            "--head-ref",
+            head_ref,
+            "--head-sha",
+            "a" * 40,
+            "--out",
+            str(out),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
 class TelemetryTrustBoundaryTests(unittest.TestCase):
     def test_explicit_missing_policy_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -118,6 +169,23 @@ class TelemetryTrustBoundaryTests(unittest.TestCase):
             self.assertEqual(policy["remote"], "origin")
             self.assertEqual(policy["branch"], "engineering-os-telemetry")
 
+    def test_explicit_disabled_policy_ignores_pr_checkout_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            pr_root = tmp_path / "pr-checkout"
+            write_policy(pr_root / ".engineering-os" / "telemetry-policy.json")
+            trusted_policy = tmp_path / "trusted-base-policy.json"
+            write_disabled_policy(trusted_policy)
+            with patch.dict(
+                os.environ,
+                {"EOS_TELEMETRY_HANDOFF_MODE": "required"},
+                clear=False,
+            ):
+                policy = load_policy(pr_root, trusted_policy)
+            self.assertEqual(policy["mode"], "disabled")
+            self.assertEqual(policy["remote"], "origin")
+            self.assertEqual(policy["branch"], "engineering-os-telemetry")
+
     def test_required_bundle_file_symlink_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -129,6 +197,52 @@ class TelemetryTrustBoundaryTests(unittest.TestCase):
             summary.symlink_to(target)
             with self.assertRaises(HandoffError):
                 validate_bundle(bundle)
+
+    def test_selector_rejects_symlinked_run_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            outside_bundle, repo, head_ref, pr_number = create_bundle(tmp_path / "outside")
+            handoff = tmp_path / "handoff"
+            (handoff / "runs").mkdir(parents=True)
+            (handoff / "runs" / outside_bundle.name).symlink_to(
+                outside_bundle,
+                target_is_directory=True,
+            )
+            policy = tmp_path / "trusted-policy.json"
+            write_policy(policy)
+            result = run_selector(
+                handoff=handoff,
+                policy=policy,
+                repo=repo,
+                head_ref=head_ref,
+                pr_number=pr_number,
+                out=tmp_path / "selected",
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("symlink", result.stderr.lower())
+
+    def test_selector_rejects_symlinked_runs_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            _, repo, head_ref, pr_number = create_bundle(tmp_path / "outside")
+            handoff = tmp_path / "handoff"
+            handoff.mkdir()
+            (handoff / "runs").symlink_to(
+                tmp_path / "outside" / "runs",
+                target_is_directory=True,
+            )
+            policy = tmp_path / "trusted-policy.json"
+            write_policy(policy)
+            result = run_selector(
+                handoff=handoff,
+                policy=policy,
+                repo=repo,
+                head_ref=head_ref,
+                pr_number=pr_number,
+                out=tmp_path / "selected",
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("symlink", result.stderr.lower())
 
     def test_selector_copies_only_validated_allowlist(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -143,30 +257,13 @@ class TelemetryTrustBoundaryTests(unittest.TestCase):
             policy = tmp_path / "trusted-policy.json"
             write_policy(policy)
             out = tmp_path / "selected"
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SELECTOR),
-                    "--root",
-                    str(ROOT),
-                    "--handoff-root",
-                    str(handoff),
-                    "--policy-file",
-                    str(policy),
-                    "--repo",
-                    repo,
-                    "--pr-number",
-                    str(pr_number),
-                    "--head-ref",
-                    head_ref,
-                    "--head-sha",
-                    "a" * 40,
-                    "--out",
-                    str(out),
-                ],
-                text=True,
-                capture_output=True,
-                check=False,
+            result = run_selector(
+                handoff=handoff,
+                policy=policy,
+                repo=repo,
+                head_ref=head_ref,
+                pr_number=pr_number,
+                out=out,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual({path.name for path in out.iterdir()}, set(REQUIRED_BUNDLE_FILES))
