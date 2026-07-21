@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Any
 
 from telemetry_handoff import (
     HandoffError,
+    REQUIRED_BUNDLE_FILES,
     load_policy,
     stable_hash,
     validate_bundle,
@@ -38,6 +40,33 @@ def safe_observed_descriptor(manifest: dict[str, Any]) -> str:
     ])
 
 
+def validate_directory_boundary(path: Path, trusted_root: Path) -> None:
+    """Reject symlink traversal and require a directory to remain under its trusted root."""
+    root = Path(os.path.abspath(trusted_root))
+    candidate = Path(os.path.abspath(path))
+    try:
+        relative = candidate.relative_to(root)
+    except ValueError as exc:
+        raise HandoffError(f"telemetry directory escapes trusted handoff root: {path}") from exc
+
+    current = root
+    if current.is_symlink() or not current.is_dir():
+        raise HandoffError(f"trusted telemetry directory is missing, symlinked, or not a directory: {root}")
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise HandoffError(f"telemetry directory path contains a symlink: {current}")
+    if not candidate.is_dir():
+        raise HandoffError(f"telemetry directory is missing or not a directory: {candidate}")
+
+    try:
+        resolved_root = root.resolve(strict=True)
+        resolved_candidate = candidate.resolve(strict=True)
+        resolved_candidate.relative_to(resolved_root)
+    except (OSError, ValueError) as exc:
+        raise HandoffError(f"telemetry directory resolves outside trusted handoff root: {path}") from exc
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Select an exact PR/head-matched remote telemetry bundle.")
     parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -60,10 +89,18 @@ def main() -> int:
     candidates: list[tuple[dict[str, Any], Path]] = []
     observed: list[str] = []
     invalid: list[str] = []
-    if runs_root.is_dir():
+    scan_runs = False
+    if runs_root.exists() or runs_root.is_symlink():
+        try:
+            validate_directory_boundary(runs_root, args.handoff_root)
+            scan_runs = True
+        except HandoffError as exc:
+            invalid.append(str(exc))
+    if scan_runs:
         for manifest_path in sorted(runs_root.glob("*/manifest.json")):
             bundle = manifest_path.parent
             try:
+                validate_directory_boundary(bundle, runs_root)
                 manifest = validate_bundle(bundle)
             except Exception as exc:
                 invalid.append(str(exc))
@@ -89,6 +126,8 @@ def main() -> int:
         details = [f"expected[{expected}]", f"valid_bundles={len(observed)}", f"invalid_bundles={len(invalid)}"]
         if observed:
             details.append("observed[" + ";".join(observed[:5]) + "]")
+        if invalid:
+            details.append("invalid[" + ";".join(invalid[:5]) + "]")
         message = "no non-empty telemetry bundle matches exact branch/head metadata and compatible PR binding; " + "; ".join(details)
         if policy["mode"] == "required":
             fail(message)
@@ -98,7 +137,9 @@ def main() -> int:
     manifest, selected = max(candidates, key=lambda item: synced_sort_key(item[0]))
     if args.out.exists():
         shutil.rmtree(args.out)
-    shutil.copytree(selected, args.out)
+    args.out.mkdir(parents=True)
+    for name in REQUIRED_BUNDLE_FILES:
+        shutil.copy2(selected / name, args.out / name, follow_symlinks=False)
     binding = manifest["handoff"].get("pr_binding")
     print(f"selected telemetry bundle: {selected}")
     print(f"events: {manifest['event_count']}")
