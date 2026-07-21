@@ -34,14 +34,14 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def write_policy(path: Path) -> None:
+def write_policy(path: Path, *, mode: str = "required") -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(
             {
                 "schema_version": POLICY_SCHEMA,
                 "remote_handoff": {
-                    "mode": "required",
+                    "mode": mode,
                     "remote": "origin",
                     "branch": "engineering-os-telemetry",
                 },
@@ -242,6 +242,30 @@ class TelemetryTrustBoundaryTests(unittest.TestCase):
                 out=tmp_path / "selected",
             )
             self.assertEqual(result.returncode, 1)
+            self.assertIn("symlink", result.stderr.lower())
+
+    def test_best_effort_warns_for_symlinked_runs_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            _, repo, head_ref, pr_number = create_bundle(tmp_path / "outside")
+            handoff = tmp_path / "handoff"
+            handoff.mkdir()
+            (handoff / "runs").symlink_to(
+                tmp_path / "outside" / "runs",
+                target_is_directory=True,
+            )
+            policy = tmp_path / "trusted-policy.json"
+            write_policy(policy, mode="best_effort")
+            result = run_selector(
+                handoff=handoff,
+                policy=policy,
+                repo=repo,
+                head_ref=head_ref,
+                pr_number=pr_number,
+                out=tmp_path / "selected",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("WARNING_FOR_AGENT", result.stderr)
             self.assertIn("symlink", result.stderr.lower())
 
     def test_selector_copies_only_validated_allowlist(self) -> None:

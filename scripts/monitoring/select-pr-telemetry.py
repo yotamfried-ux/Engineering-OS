@@ -89,8 +89,14 @@ def main() -> int:
     candidates: list[tuple[dict[str, Any], Path]] = []
     observed: list[str] = []
     invalid: list[str] = []
+    scan_runs = False
     if runs_root.exists() or runs_root.is_symlink():
-        validate_directory_boundary(runs_root, args.handoff_root)
+        try:
+            validate_directory_boundary(runs_root, args.handoff_root)
+            scan_runs = True
+        except HandoffError as exc:
+            invalid.append(str(exc))
+    if scan_runs:
         for manifest_path in sorted(runs_root.glob("*/manifest.json")):
             bundle = manifest_path.parent
             try:
