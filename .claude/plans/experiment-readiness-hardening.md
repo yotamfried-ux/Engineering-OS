@@ -185,4 +185,4 @@ No product data or schema changes. Telemetry remains metadata-only. Existing eve
 
 - start: plan commit `dd3439312dc03fd7e81df6236226b6b006bc3b43` is the first commit above `main` squash commit `5759cac6b0a1602ff225ba789cfaf2536de0a693`.
 - mid: implementation commit `95f3ad7809251690a6272f17e927fd62453a618b` applied the exact eleven-file hardening set after the plan commit; telemetry-handoff-tests run 213 then passed on that code head.
-- pre-merge: pending exact-head CI and external review on the final evidence head.
+- pre-merge: after mid-evidence commit `f1d4cb634792f0779c76fc0720bfbb274f56478a`, connector-evidence-policy run 1097, plan-policy run 1098, documentation-asset-policy run 735, capability-evidence-policy run 979, semantic-cleanup-policy run 760, and import-cleanup-policy run 760 succeeded; the branch remained mergeable with exactly eleven changed files and zero unresolved review threads at this checkpoint.
