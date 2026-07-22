@@ -67,12 +67,12 @@ The same PR also adds a live claim for merged PR #255. `audit-live-state-verific
 | `core/workflow.md` | read | Plan-first result loops and exact evidence apply. |
 | `core/documentation-policy.md` | read | Durable ideas have one canonical owner; deterministic policy changes need regression coverage. |
 | `core/capability-registry.yaml` | checked | Runtime is enabled and scoped to `plan_level_write_gate`; `runtime planned` is stale. |
-| `CLAUDE.md` | checked | Capability row contradicts the registry and CodeRabbit wording assumes one reviewer path. |
-| `README.md` | checked | Multiple inventory rows contain volatile hand-maintained counts; the core count is already stale and the skills row count/list disagree. |
-| `core/coderabbit-policy.md` | checked | It requires waiting for CodeRabbit without the fallback already permitted by capability evidence. |
-| `scripts/enforcement/check-documentation-hygiene.sh` | checked | It validates ownership/path lifecycle but not runtime-state contradictions. |
-| `scripts/enforcement/tests/test-documentation-hygiene.sh` | checked | Existing fixtures do not cover stale runtime claims, inventory counts, or reviewer-availability claims. |
-| PR #255 | checked | Exact head passed all required PR gates; CodeRabbit findings were observed and resolved; merge commit is `0ee2dbee7a9ab58e86a11726021c30baca0faa22`. |
+| `CLAUDE.md` | reconciled | Capability navigation now says active plan-level write gate and routes review through live CodeRabbit status or fallback. |
+| `README.md` | reconciled | Volatile counts were removed; maintained categories link to canonical live inventories. |
+| `core/coderabbit-policy.md` | reconciled | Live observed review blocks when present; unavailable review uses structured fallback and cannot be fabricated. |
+| `scripts/enforcement/check-documentation-hygiene.sh` | extended | Canonical runtime status, inventory count, and review-availability invariants are deterministic. |
+| `scripts/enforcement/tests/test-documentation-hygiene.sh` | extended | Positive and negative fixtures cover every identified contradiction while retaining ownership lifecycle tests. |
+| PR #255 | claimed | Exact head passed all required PR gates; merge commit is `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; the new claim requires push evidence. |
 | `github/docs` content linter | read | GitHub registers custom deterministic documentation rules and includes a single-source rule against hard-coded data phrases. |
 | Anthropic Claude Code memory docs | read | Project `CLAUDE.md` is shared, automatically loaded instruction context, so stale active-state wording can misroute later sessions. |
 | CodeRabbit official docs | read | Review availability/configuration is external, configurable, and may be automatic or manually triggered; repository YAML is only one of several configuration sources. |
@@ -105,9 +105,9 @@ reason: this task changes established canonical governance files and an existing
 
 - `routing.task-router-read` — routed as `engineering_os_governance`.
 - `workflow.workflow-read` — plan-first result loops and post-merge proof apply.
-- `plan.route-plan-before-write` — this file is committed before any target documentation, checker, fixture, registry, or audit write.
+- `plan.route-plan-before-write` — commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7` preceded every target documentation, checker, fixture, registry, and audit write.
 - `source.github-repo-read` — exact main files, PR #255 state, and official repositories were inspected.
-- `validation.policy-change-has-validator` — planned policy/documentation changes include deterministic negative fixtures.
+- `validation.policy-change-has-validator` — policy/documentation changes include deterministic positive and negative fixtures.
 - `validation.actions-checked` — exact-head and live-state workflows remain completion gates.
 - `validation.coderabbit-policy` — observed CodeRabbit findings and fallback semantics are both reconciled rather than assumed.
 
@@ -120,13 +120,13 @@ reason: this task changes established canonical governance files and an existing
 
 | Connector | Evidence |
 |---|---|
-| GitHub | Read exact canonical files on merged main, verified PR #255 head/merge/review state, inspected official GitHub and Anthropic repositories, and will supply exact Actions/review evidence for this branch. |
+| GitHub | Read exact canonical files on merged main, verified PR #255 head/merge/review state, inspected official GitHub and Anthropic repositories, created the implementation commits, and will supply exact Actions/review evidence for this branch. |
 
 ## Connector Usage Evidence
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, `github/docs`, and `anthropics/claude-code`.
-- action: verified PR #255 and `main`; read canonical runtime/documentation/review sources; inspected official documentation-linter code; created this plan-first branch.
-- result: branch `fix/documentation-runtime-state-drift` starts at merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; exact target contradictions are listed in Source of Truth Checks.
+- action: verified PR #255 and `main`; read canonical runtime/documentation/review sources; inspected official documentation-linter code; implemented entrypoint, README, review policy, validator, fixtures, claim, registry, and audit changes.
+- result: commits `b6e86a3af264993fbc9cc8c142a5b555027d9e2a` through `1e4657050e308d2fab905424354e43b923012f47` implement all nine target paths on branch `fix/documentation-runtime-state-drift`.
 - decision: selected removal of volatile inventory counts, active runtime wording sourced from the registry, and a live CodeRabbit-or-fallback policy with deterministic regression checks.
 - target: `.claude/plans/documentation-runtime-state-drift.md`; `CLAUDE.md`; `README.md`; `core/coderabbit-policy.md`; `scripts/enforcement/check-documentation-hygiene.sh`; `scripts/enforcement/tests/test-documentation-hygiene.sh`; `docs/operations/live-state-claims.json`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`.
 
@@ -136,11 +136,11 @@ Documentation, validator code, fixtures, and metadata-only gap claims change. No
 
 ## Integration Impact
 
-- Always-loaded `CLAUDE.md` will describe the capability gate accurately.
-- Root README will stop presenting volatile inventory snapshots as durable truth.
+- Always-loaded `CLAUDE.md` describes the capability gate accurately.
+- Root README no longer presents volatile inventory snapshots as durable truth.
 - CodeRabbit remains the preferred observed external reviewer, but unavailable/skipped review is handled through the existing structured fallback instead of fabricated success or indefinite blocking.
-- Documentation hygiene will fail on reintroduced contradictions.
-- The canonical live-state path will reconcile PR #255 before closing its implementation gap.
+- Documentation hygiene fails on reintroduced contradictions.
+- The canonical live-state path reconciles PR #255 before accepting its closure.
 - Project 8 experiment remains blocked.
 
 ## Validation Plan
@@ -157,26 +157,26 @@ Documentation, validator code, fixtures, and metadata-only gap claims change. No
 - goal: prevent always-loaded and first-read documentation from contradicting executable runtime and external review state.
 - hypothesis: canonical-source assertions plus negative fixtures catch stale active-state wording while removing volatile inventory snapshots prevents recurring count drift.
 - connectors: GitHub; official Anthropic, GitHub Docs, and CodeRabbit sources.
-- steps: merge PR #255; verify main; inspect active entrypoints and executable owners; research official docs/repos; create plan-first branch.
-- evidence: PR #255 head `97d56e2f5743b019145da600cf0914f6d092cd0f`, merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`, canonical file SHAs, and official sources above.
+- steps: merge PR #255; verify main; inspect active entrypoints and executable owners; research official docs/repos; create plan-first branch; implement canonical fixes, validator, fixtures, claim, registry, and audit synchronization.
+- evidence: PR #255 head `97d56e2f5743b019145da600cf0914f6d092cd0f`, merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`, plan-first commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`, implementation commits through `1e4657050e308d2fab905424354e43b923012f47`, and official sources above.
 - rejected: replacing stale numbers with new numbers, assuming CodeRabbit permanently connected/disconnected, rewriting historical plans, and creating parallel state owners.
-- result: planning and source reconciliation are complete; implementation has not started.
+- result: implementation and canonical audit synchronization are complete; exact-head CI and review have not yet run.
 
 ## Definition of Done
 
-- [ ] CLAUDE capability runtime wording is derived from and consistent with the registry.
-- [ ] Root README contains no volatile numeric inventory counts for maintained directories.
-- [ ] CodeRabbit policy requires live observed review or a concrete structured fallback, never fabricated availability.
-- [ ] Documentation-hygiene validator enforces all three invariants and limits checks to canonical active surfaces.
-- [ ] Positive and negative fixtures cover runtime status, inventory counts, and reviewer availability.
-- [ ] PR #255 live-state claim passes and `audit-live-state-verification` closes with exact evidence.
-- [ ] Registry and audit record progress without prematurely closing this implementation gap.
+- [x] CLAUDE capability runtime wording is consistent with the registry.
+- [x] Root README contains no volatile numeric inventory counts for maintained directories.
+- [x] CodeRabbit policy requires live observed review or a concrete structured fallback, never fabricated availability.
+- [x] Documentation-hygiene validator enforces all three invariants and limits checks to canonical active surfaces.
+- [x] Positive and negative fixtures cover runtime status, inventory counts, and reviewer availability.
+- [ ] PR #255 live-state claim passes on this branch and `audit-live-state-verification` closure is accepted by live CI.
+- [x] Registry and audit record progress without prematurely closing the current implementation gap.
 - [ ] Focused and full test suites pass on the final exact head.
 - [ ] External review findings are reconciled and all threads are resolved.
 - [ ] Merge remains blocked until explicit owner approval; post-merge validation is required before closure.
 
 ## Progress Lifecycle Evidence
 
-- start: this plan is the first branch write and records exact scope, source hierarchy, alternatives, official documentation, official repository examples, and validation strategy before implementation.
-- mid: not reached; will record the implementation and focused fixture checkpoint after target writes.
-- pre-merge: not reached; will record exact-head CI, artifact, review, and self-review evidence before requesting owner approval.
+- start: commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7` recorded exact scope, source hierarchy, alternatives, official documentation, official repository examples, and validation strategy before implementation.
+- mid: commits `b6e86a3af264993fbc9cc8c142a5b555027d9e2a` through `f37563696447e1212d38e590e3c129b6e363d290` reconciled active documentation, added deterministic fixtures, registered the PR #255 claim, and synchronized the registry/audit.
+- pre-merge: commit `1e4657050e308d2fab905424354e43b923012f47` completed the scoped branch cleanup and preserved canonical navigation; no green-CI, review-clean, or merge-readiness claim is made before the external gates run.
