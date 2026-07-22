@@ -1,32 +1,50 @@
 #!/usr/bin/env bash
-# check-readiness-audit.sh — deterministic operational-readiness audit classification gate.
+# check-readiness-audit.sh — deterministic operational-readiness audit gate.
 #
-# Extracted from .github/workflows/enforcement-tests.yml so it is fixture-testable,
-# then strengthened: the audit can no longer hold an unclassified partial row.
+# Normal mode validates that an honestly incomplete audit is complete, classified,
+# self-contained, and synchronized with docs/operations/known-gaps.tsv.
 #
-# Rules (all previous workflow checks are preserved, none weakened):
-#   - required headings and readiness status definitions must exist;
-#   - matrix rows must use an allowed status; plain "Manual" is vocabulary-only and
-#     invalid inside the matrix (use "Manual by design" with a checklist);
-#   - every "Partially enforced" / "Missing enforcement" row must carry a
-#     gap:<gap_id> link to a non-closed row in docs/operations/known-gaps.tsv;
-#   - every "Manual by design" row must name an existing Checklist: doc;
-#   - matrix rows without a gap link must not contain deferred language
-#     (todo, tbd, pending, not yet, future loop);
-#   - every non-closed gap in known-gaps.tsv, including accepted-manual, must be
-#     referenced by at least one matrix row, so open gaps cannot hide outside the audit;
-#   - required coverage rows and ROI priority terms must remain present.
-#
-# Fixture knobs (tests only; CI uses defaults):
-#   EOS_READINESS_MIN_ROWS      minimum matrix rows (default 25)
-#   EOS_READINESS_REQUIRE_TERMS set to 0 to skip required/priority term checks
+# --assert-full-ready is intentionally stricter: it fails while any registered gap
+# is not closed or any matrix row is Missing enforcement / Partially enforced.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-AUDIT="${1:-$ROOT/docs/operations/operational-readiness-audit.md}"
-GAPS="${2:-$ROOT/docs/operations/known-gaps.tsv}"
+AUDIT=""
+GAPS=""
+ASSERT_FULL_READY=0
 
-python3 - "$AUDIT" "$GAPS" "$ROOT" <<'PY'
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --assert-full-ready)
+      ASSERT_FULL_READY=1
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "unknown argument: $1" >&2
+      exit 2
+      ;;
+    *)
+      if [ -z "$AUDIT" ]; then
+        AUDIT="$1"
+      elif [ -z "$GAPS" ]; then
+        GAPS="$1"
+      else
+        echo "unexpected positional argument: $1" >&2
+        exit 2
+      fi
+      shift
+      ;;
+  esac
+done
+
+AUDIT="${AUDIT:-$ROOT/docs/operations/operational-readiness-audit.md}"
+GAPS="${GAPS:-$ROOT/docs/operations/known-gaps.tsv}"
+
+python3 - "$AUDIT" "$GAPS" "$ROOT" "$ASSERT_FULL_READY" <<'PY'
 import os
 import re
 import sys
@@ -35,13 +53,16 @@ from pathlib import Path
 audit_path = Path(sys.argv[1])
 gaps_path = Path(sys.argv[2])
 root = Path(sys.argv[3])
+assert_full_ready = sys.argv[4] == "1"
 min_rows = int(os.environ.get('EOS_READINESS_MIN_ROWS', '25'))
 require_terms = os.environ.get('EOS_READINESS_REQUIRE_TERMS', '1') != '0'
 failures = []
 
+
 def require(condition, message):
     if not condition:
         failures.append(message)
+
 
 if not audit_path.exists():
     print(f'operational readiness audit failed: missing audit file {audit_path}', file=sys.stderr)
@@ -52,8 +73,10 @@ if not gaps_path.exists():
 
 text = audit_path.read_text(encoding='utf-8')
 
+
 def normalize(value):
     return re.sub(r'\s+', ' ', value).strip().lower()
+
 
 def section_between(start_heading):
     captured = []
@@ -68,14 +91,91 @@ def section_between(start_heading):
             captured.append(line)
     return '\n'.join(captured)
 
-for heading in [
+
+def field_value(section, field):
+    match = re.search(
+        rf'^\s*[-*]\s*(?:\*\*)?{re.escape(field)}\s*:(?:\*\*)?\s*(.+)$',
+        section,
+        re.I | re.M,
+    )
+    return match.group(1).strip() if match else ''
+
+
+required_headings = [
+    'Audit metadata',
+    'Purpose and audience',
+    'System and repository context',
+    'Non-negotiable decisions',
+    'How an LLM must use this audit',
+    'Source-of-truth hierarchy',
+    'Evidence and closure standard',
+    'Glossary',
     'Readiness statuses',
     'Coverage contract',
+    'Readiness-claim contract',
+    'Known gaps freshness ledger',
     'Current status matrix',
+    'Dependency-ordered closure plan',
     'Definition of full operational readiness',
+    'Mandatory end-to-end closure checklists',
     'Highest-priority gaps by ROI',
-]:
+    'Experiment start decision',
+    'Future Project 8 workload acceptance contract',
+    'Current audit scope',
+]
+for heading in required_headings:
     require(re.search(rf'^## {re.escape(heading)}$', text, re.MULTILINE), f'missing heading: {heading}')
+
+metadata = section_between('## Audit metadata')
+for field in [
+    'Audit owner',
+    'Canonical repository',
+    'Target repository',
+    'Canonical gap registry',
+    'Last verified',
+    'Intended readers',
+]:
+    value = field_value(metadata, field)
+    require(len(value) >= 3, f'audit metadata missing concrete {field}: value')
+
+purpose = section_between('## Purpose and audience').lower()
+require(
+    re.search(r'\b(?:without|must\s+not\s+need)\s+prior\s+(?:chat\s+)?context\b', purpose),
+    'Purpose and audience must state that prior chat context is not required',
+)
+
+llm_use = section_between('## How an LLM must use this audit').lower()
+for term in ['verify live state', 'do not guess', 'gap', 'checklist', 'pull request', 'tests', 'owner approval']:
+    require(term in llm_use, f'LLM usage procedure missing required concept: {term}')
+
+source_hierarchy = section_between('## Source-of-truth hierarchy').lower()
+for term in ['live github', 'repository code', 'known-gaps.tsv', 'operational-readiness-audit.md', 'runbooks', 'plans', 'chat']:
+    require(term in source_hierarchy, f'source-of-truth hierarchy missing: {term}')
+
+evidence_standard = section_between('## Evidence and closure standard').lower()
+for term in ['exact repository', 'commit sha', 'positive', 'negative', 'installed target', 'review', 'post-merge', 'secret']:
+    require(term in evidence_standard, f'evidence and closure standard missing: {term}')
+
+glossary = section_between('## Glossary').lower()
+for term in [
+    'engineering os',
+    'project 8',
+    'behavioral experiment',
+    'technical qualification session',
+    'operational work history',
+    'telemetry bundle',
+    'exact-head',
+    'hard hook',
+]:
+    require(term in glossary, f'glossary missing required term: {term}')
+require(
+    re.search(r'\b(?:full\s+operational\s+readiness|fully\s+operationally\s+ready)\b', glossary),
+    'glossary missing required full operational readiness term',
+)
+
+experiment_decision = section_between('## Experiment start decision').lower()
+for term in ['every registered gap', 'closed', '--assert-full-ready', 'technical qualification', 'behavioral experiment', 'owner approval']:
+    require(term in experiment_decision, f'experiment start decision missing required rule: {term}')
 
 defined_statuses = {
     'Enforced',
@@ -89,8 +189,6 @@ defined_statuses = {
 for status in defined_statuses:
     require(f'**{status}**' in text, f'missing readiness status definition: {status}')
 
-# Plain "Manual" stays in the vocabulary above but is not a terminal matrix state:
-# a manual row must be "Manual by design" with a checklist, or become a gap.
 matrix_statuses = {
     'Enforced',
     'Partially enforced',
@@ -161,6 +259,8 @@ if require_terms:
         'claude entrypoint',
         'canonical ownership',
         'enforcement coverage inventory',
+        'audit self-contained contract',
+        'documentation runtime state',
         'route plan',
         'dod completion',
         'progress validation',
@@ -168,6 +268,7 @@ if require_terms:
         'connector correctness',
         'template selection',
         'pattern usage',
+        'pattern evidence maturity',
         'skill selection',
         'skill runtime evidence',
         'rtk context optimization',
@@ -208,12 +309,25 @@ if require_terms:
     for term in priority_terms:
         require(term in priority_section, f'audit missing priority gap: {term}')
 
+if assert_full_ready:
+    not_closed = sorted(gap_id for gap_id, status in known_gaps.items() if status != 'closed')
+    require(not not_closed, f'full readiness blocked by non-closed gaps: {not_closed}')
+    blocking_rows = sorted(
+        area for area, status, _, _ in rows
+        if status in {'Missing enforcement', 'Partially enforced'}
+    )
+    require(not blocking_rows, f'full readiness blocked by matrix rows: {blocking_rows}')
+
 if failures:
-    print('❌ operational readiness audit coverage failed')
+    label = 'full operational readiness assertion failed' if assert_full_ready else 'operational readiness audit coverage failed'
+    print(f'❌ {label}')
     for failure in failures:
         print(f' - {failure}')
     raise SystemExit(1)
 
-print('✅ operational readiness audit coverage is complete')
+if assert_full_ready:
+    print('✅ full operational readiness assertion passed')
+else:
+    print('✅ operational readiness audit coverage is complete and self-contained')
 print(f'   readiness rows: {len(rows)}')
 PY
