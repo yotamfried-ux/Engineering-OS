@@ -141,10 +141,10 @@ CLAUDE, README, CodeRabbit policy, documentation hygiene, live claims, and audit
 - goal: prevent active documentation from contradicting runtime/reviewer state.
 - hypothesis: narrow owner-based assertions plus negative fixtures prevent recurrence.
 - connectors: GitHub and official Anthropic, GitHub Docs, and CodeRabbit sources.
-- steps: merge PR #255; inspect main; research; plan first; implement; synchronize audit; open PR #256; run evidence result loops.
-- evidence: PR #255 head/merge; plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; live-state runs 11/14; workflow-evidence run 1121; ordered mid/pre commits.
+- steps: merge PR #255; inspect main; research; plan first; implement; synchronize audit; open PR #256; run evidence result loops; fix six valid review findings with isolated regressions.
+- evidence: PR #255 head/merge; plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; live-state runs 11/14; workflow-evidence run 1121; checker commit `f302f0e8e28c7a8dc8982fcf33de0b8cc03964d8`; fixture commit `890e535da3c5a69951986ad92d436113f6fc0c08`.
 - rejected: refreshed counts, static reviewer assumptions, generated churn, historical rewrites, parallel owners.
-- result: implementation deliverables and live closure claim are complete; exact-head CI/review remain external gates.
+- result: implementation and review fixes are complete; exact-head CI and thread reconciliation are running.
 
 ## Definition of Done
 
@@ -164,4 +164,4 @@ PR #256 remains unmerged until the final exact head passes focused and full suit
 
 - start: commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7` recorded scope, sources, alternatives, and validation before implementation.
 - mid: commit `836f1538a9873cc109d159adc790891debc35c60` materially updated the implementation checkpoint after all nine target paths and the first CI diagnostic existed.
-- pre-merge: commit `f7e095d920cb44fc43fd506f65dc7e11d13dbd2f` recorded the ordered pre-merge checkpoint after the last code/config/test change and after the separate mid checkpoint; PR #256 remained unmerged and owner approval remained absent.
+- pre-merge: commit `890e535da3c5a69951986ad92d436113f6fc0c08` completed the six review-driven checker and fixture corrections after the last code/config/test change; PR #256 remained unmerged and owner approval remained absent.
