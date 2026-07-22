@@ -218,6 +218,7 @@ def _normalize_workflow_runs(runs: list[Any]) -> list[dict[str, Any]]:
                 "conclusion": raw.get("conclusion"),
                 "run_number": raw.get("run_number"),
                 "run_attempt": raw.get("run_attempt"),
+                "run_started_at": raw.get("run_started_at"),
                 "created_at": raw.get("created_at"),
                 "updated_at": raw.get("updated_at"),
                 "html_url": raw.get("html_url"),
@@ -249,7 +250,9 @@ def _normalize_check_runs(runs: list[Any], *, requested_sha: str) -> list[dict[s
     return result
 
 
-def build_snapshot(claims: list[dict[str, Any]], client: GitHubClient) -> dict[str, Any]:
+def build_snapshot(
+    claims: list[dict[str, Any]], client: GitHubClient
+) -> dict[str, Any]:
     entries: list[dict[str, Any]] = []
     for claim in claims:
         repository = claim["repository"]
@@ -337,9 +340,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument("--claims", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--api-url", default=os.environ.get("GITHUB_API_URL", DEFAULT_API_URL))
     parser.add_argument(
-        "--api-version", default=os.environ.get("EOS_GITHUB_API_VERSION", DEFAULT_API_VERSION)
+        "--api-url", default=os.environ.get("GITHUB_API_URL", DEFAULT_API_URL)
+    )
+    parser.add_argument(
+        "--api-version",
+        default=os.environ.get("EOS_GITHUB_API_VERSION", DEFAULT_API_VERSION),
     )
     parser.add_argument("--timeout", type=float, default=20.0)
     parser.add_argument("--retries", type=int, default=3)
