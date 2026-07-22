@@ -142,9 +142,9 @@ CLAUDE, README, CodeRabbit policy, documentation hygiene, live claims, and audit
 - hypothesis: narrow owner-based assertions plus negative fixtures prevent recurrence.
 - connectors: GitHub and official Anthropic, GitHub Docs, and CodeRabbit sources.
 - steps: merge PR #255; inspect main; research; plan first; implement; synchronize audit; open PR #256; inspect CI diagnostics.
-- evidence: PR #255 head/merge; plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; workflow-evidence run 1118 artifact `8530827195`; commit `836f1538a9873cc109d159adc790891debc35c60`.
+- evidence: PR #255 head/merge; plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; workflow-evidence run 1118 artifact `8530827195`; ordered mid commit `f7e095d920cb44fc43fd506f65dc7e11d13dbd2f`.
 - rejected: refreshed counts, static reviewer assumptions, generated churn, historical rewrites, parallel owners.
-- result: implementation is complete; evidence chronology is being corrected through ordered plan-only commits.
+- result: implementation and ordered lifecycle evidence are ready for the next exact-head CI cycle.
 
 ## Definition of Done
 
@@ -163,4 +163,4 @@ CLAUDE, README, CodeRabbit policy, documentation hygiene, live claims, and audit
 
 - start: commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7` recorded scope, sources, alternatives, and validation before implementation.
 - mid: commit `836f1538a9873cc109d159adc790891debc35c60` materially updated the implementation checkpoint after all nine target paths and the first CI diagnostic existed.
-- pre-merge: commit `1e4657050e308d2fab905424354e43b923012f47` completed the scoped branch cleanup and preserved canonical navigation; no green-CI, review-clean, or merge-readiness claim is made before the external gates run.
+- pre-merge: commit `f7e095d920cb44fc43fd506f65dc7e11d13dbd2f` recorded the ordered pre-merge checkpoint after the last code/config/test change and after the separate mid checkpoint; PR #256 remained unmerged and owner approval remained absent.
