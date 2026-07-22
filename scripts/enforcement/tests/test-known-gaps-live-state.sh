@@ -99,7 +99,9 @@ write_snapshot() {
           "status": "completed",
           "conclusion": "success",
           "run_number": 20,
-          "run_attempt": 1
+          "run_attempt": 1,
+          "run_started_at": "2026-07-22T03:30:00Z",
+          "updated_at": "2026-07-22T03:31:00Z"
         },
         {
           "id": 11,
@@ -109,7 +111,9 @@ write_snapshot() {
           "status": "completed",
           "conclusion": "failure",
           "run_number": 30,
-          "run_attempt": 1
+          "run_attempt": 1,
+          "run_started_at": "2026-07-22T03:35:00Z",
+          "updated_at": "2026-07-22T03:36:00Z"
         },
         {
           "id": 12,
@@ -119,7 +123,9 @@ write_snapshot() {
           "status": "completed",
           "conclusion": "success",
           "run_number": 31,
-          "run_attempt": 1
+          "run_attempt": 1,
+          "run_started_at": "2026-07-22T03:40:00Z",
+          "updated_at": "2026-07-22T03:41:00Z"
         }
       ],
       "push_workflow_runs": [
@@ -131,7 +137,9 @@ write_snapshot() {
           "status": "completed",
           "conclusion": "success",
           "run_number": 8,
-          "run_attempt": 1
+          "run_attempt": 1,
+          "run_started_at": "2026-07-22T03:45:00Z",
+          "updated_at": "2026-07-22T03:46:00Z"
         }
       ],
       "check_runs": [
@@ -205,11 +213,32 @@ data["claims"][0]["pull_request_workflow_runs"].append({
   "status": "completed",
   "conclusion": "failure",
   "run_number": 32,
-  "run_attempt": 1
+  "run_attempt": 1,
+  "run_started_at": "2026-07-22T03:50:00Z",
+  "updated_at": "2026-07-22T03:51:00Z"
 })
 json.dump(data, open(sys.argv[2],"w"))
 PY
 no newest_failed_workflow_fails run_check "$TMP/latest-failure.json"
+
+python3 - "$TMP/good-snapshot.json" "$TMP/rerun-late-failure.json" <<'PY'
+import json, sys
+data=json.load(open(sys.argv[1]))
+data["claims"][0]["pull_request_workflow_runs"].append({
+  "id": 16,
+  "name": "enforcement-tests",
+  "event": "pull_request",
+  "head_sha": "1"*40,
+  "status": "completed",
+  "conclusion": "failure",
+  "run_number": 30,
+  "run_attempt": 2,
+  "run_started_at": "2026-07-22T04:10:00Z",
+  "updated_at": "2026-07-22T04:11:00Z"
+})
+json.dump(data, open(sys.argv[2],"w"))
+PY
+no later_rerun_of_older_run_fails run_check "$TMP/rerun-late-failure.json"
 
 python3 - "$TMP/good-snapshot.json" "$TMP/skipped-push.json" <<'PY'
 import json, sys
@@ -312,6 +341,7 @@ class FakeClient:
                 "id":1,"name":"fixture","event":event,"head_sha":sha,
                 "status":"completed","conclusion":"success",
                 "run_number":1,"run_attempt":1,
+                "run_started_at":"2026-07-22T03:00:00Z",
                 "created_at":"2026-07-22T03:00:00Z",
                 "updated_at":"2026-07-22T03:01:00Z",
                 "html_url":"https://github.com/example/run/1"
