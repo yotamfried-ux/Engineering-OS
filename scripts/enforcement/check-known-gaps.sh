@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-EOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)" python3 - "$@" <<'PY'
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+EOS_ROOT="$ROOT" python3 - "$@" <<'PY'
 import os, re, sys
 from pathlib import Path
 root = Path(os.environ.get('ENGINEERING_OS_HOME') or os.environ.get('EOS_ROOT') or Path.cwd())
@@ -111,3 +112,13 @@ if failures:
     sys.exit(1)
 print(f'known gaps checks passed ({len(rows)} gaps)')
 PY
+
+LIVE_SNAPSHOT="${EOS_KNOWN_GAPS_LIVE_SNAPSHOT:-}"
+if [ -n "$LIVE_SNAPSHOT" ]; then
+  LIVE_CLAIMS="${EOS_KNOWN_GAPS_LIVE_CLAIMS:-$ROOT/docs/operations/live-state-claims.json}"
+  KNOWN_GAPS_PATH="${1:-$ROOT/docs/operations/known-gaps.tsv}"
+  python3 "$ROOT/scripts/enforcement/check-known-gaps-live-state.py" \
+    --claims "$LIVE_CLAIMS" \
+    --snapshot "$LIVE_SNAPSHOT" \
+    --known-gaps "$KNOWN_GAPS_PATH"
+fi
