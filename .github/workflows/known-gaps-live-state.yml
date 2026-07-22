@@ -1,0 +1,92 @@
+name: known-gaps-live-state
+
+on:
+  pull_request:
+    paths:
+      - "docs/operations/live-state-claims.json"
+      - "docs/operations/known-gaps.tsv"
+      - "docs/operations/operational-readiness-audit.md"
+      - "scripts/enforcement/check-known-gaps.sh"
+      - "scripts/enforcement/check-known-gaps-live-state.py"
+      - "scripts/enforcement/fetch-known-gaps-live-state.py"
+      - "scripts/enforcement/tests/test-known-gaps-live-state.sh"
+      - ".github/workflows/known-gaps-live-state.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/operations/live-state-claims.json"
+      - "docs/operations/known-gaps.tsv"
+      - "docs/operations/operational-readiness-audit.md"
+      - "scripts/enforcement/check-known-gaps.sh"
+      - "scripts/enforcement/check-known-gaps-live-state.py"
+      - "scripts/enforcement/fetch-known-gaps-live-state.py"
+      - "scripts/enforcement/tests/test-known-gaps-live-state.sh"
+      - ".github/workflows/known-gaps-live-state.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  verify-live-state:
+    name: Verify known-gaps live state
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact workflow ref
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Fetch normalized GitHub live-state snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .engineering-os/live-state
+          python3 scripts/enforcement/fetch-known-gaps-live-state.py \
+            --claims docs/operations/live-state-claims.json \
+            --output .engineering-os/live-state/latest.json \
+            --require-token
+
+      - name: Validate canonical registry, audit, and live state
+        env:
+          EOS_KNOWN_GAPS_LIVE_CLAIMS: docs/operations/live-state-claims.json
+          EOS_KNOWN_GAPS_LIVE_SNAPSHOT: .engineering-os/live-state/latest.json
+        run: |
+          set -euo pipefail
+          bash scripts/enforcement/check-known-gaps.sh
+
+      - name: Publish safe live-state summary
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -f .engineering-os/live-state/latest.json ]; then
+            python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          data = json.loads(Path('.engineering-os/live-state/latest.json').read_text(encoding='utf-8'))
+          print('## Known-gaps live-state snapshot')
+          print()
+          print(f"Generated: `{data.get('generated_at', 'unknown')}`")
+          print()
+          for claim in data.get('claims', []):
+              pull = claim.get('pull', {})
+              print(
+                  f"- `{claim.get('claim_id')}` — `{claim.get('repository')}#{claim.get('pull_number')}`; "
+                  f"head `{pull.get('head_sha')}`; merge `{pull.get('merge_commit_sha')}`"
+              )
+          PY
+          fi
+
+      - name: Upload metadata-only live-state artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: known-gaps-live-state-${{ github.run_id }}
+          path: .engineering-os/live-state
+          retention-days: 30
+          if-no-files-found: ignore
