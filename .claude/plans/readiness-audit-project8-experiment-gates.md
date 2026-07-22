@@ -53,14 +53,14 @@ None for this audit-only change. Merging remains subject to explicit owner appro
 - target: the two canonical audit files above.
 
 ## DoD
-- [ ] Every newly identified gap has one registry row and one audit matrix/checklist entry.
-- [ ] Every closure checklist requires code/config evidence, positive and negative tests, exact-head CI, review, merge, and post-merge validation where applicable.
-- [ ] Project 8 experiment blockers include prompt/guidance contamination, PR #9 convergence, fresh-session telemetry, exact bundle selection, provider asset preservation, Supabase/Vercel direction, and product E2E evidence.
-- [ ] Official documentation URLs and the decision derived from each are embedded in the audit.
+- [x] Every newly identified gap has one registry row and one audit matrix/checklist entry.
+- [x] Every closure checklist requires code/config evidence, positive and negative tests, exact-head CI, review, merge, and post-merge validation where applicable.
+- [x] Project 8 experiment blockers include prompt/guidance contamination, PR #9 convergence, fresh-session telemetry, exact bundle selection, provider asset preservation, Supabase/Vercel direction, and product E2E evidence.
+- [x] Official documentation URLs and the decision derived from each are embedded in the audit.
 - [ ] All deterministic audit and regression checks pass on the exact PR head.
 - [ ] Self-review finds no duplicate canonical owner, stale status, unsupported readiness claim, or product-scope change.
 
 ## Progress Lifecycle Evidence
-- start: this plan is committed before audit/registry edits.
-- middle: pending after the first synchronized audit/registry update.
+- start: commit `aad4519e27386c33d5d49f635776e9c78e8e8e04` created this plan before audit/registry edits.
+- middle: commits `27a0c5a5cf2bfc2d1f171101098d4e43620d2b42` and `1e5f49491b521b69cd0f79f4147ec7d5eef3c252` synchronized the registry and audit, closed the stale #253 implementation gap, registered seven current gaps, and added mandatory end-to-end closure checklists plus official vendor references.
 - pre-merge: pending after exact-head CI and review.
