@@ -28,6 +28,36 @@
       "required_check_runs": [
         "enforcement-tests"
       ]
+    },
+    {
+      "claim_id": "engineering-os-pr-255-audit-live-state",
+      "gap_id": "audit-live-state-verification",
+      "repository": "yotamfried-ux/Engineering-OS",
+      "pull_number": 255,
+      "base_branch": "main",
+      "expected_head_sha": "97d56e2f5743b019145da600cf0914f6d092cd0f",
+      "expected_merge_commit_sha": "0ee2dbee7a9ab58e86a11726021c30baca0faa22",
+      "required_pull_request_workflows": [
+        "pr-policy",
+        "enforcement-tests",
+        "workflow-evidence-policy",
+        "connector-evidence-policy",
+        "capability-evidence-policy",
+        "documentation-asset-policy",
+        "plan-policy",
+        "semantic-cleanup-policy",
+        "import-cleanup-policy",
+        "telemetry-handoff-tests",
+        "known-gaps-live-state"
+      ],
+      "required_push_workflows": [
+        "enforcement-tests",
+        "known-gaps-live-state",
+        "post-merge-validation"
+      ],
+      "required_check_runs": [
+        "enforcement-tests"
+      ]
     }
   ]
 }
