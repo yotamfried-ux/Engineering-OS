@@ -127,7 +127,7 @@ reason: this focused change extends an existing canonical governance validator a
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, `actions/github-script`, `octokit/rest.js`, and `github/rest-api-description`.
 - action: merged PR #254 with expected-head protection; implemented claims, fetcher, validator, fixtures, workflow, registry, and audit; inspected run 1 and artifact `8518500199`; read and fixed both review findings.
 - result: live run 1 validated PR #254 successfully; the artifact contained approved metadata only; commit `051c0e88613949840dc8aca32d2b14816b0181fc` added chronological rerun selection and the late-rerun regression fixture.
-- decision: preserve strict failure conclusions, use `run_started_at` with documented fallbacks, keep the P0 gap open, and require final exact-head plus owner-gated post-merge proof.
+- decision: implemented chronological GitHub workflow-attempt selection, kept strict failure conclusions, blocked premature P0 closure, and added exact owner-gated post-merge proof.
 - target: `.claude/plans/audit-live-state-verification.md`; `.github/workflows/known-gaps-live-state.yml`; `docs/operations/live-state-claims.json`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `scripts/enforcement/check-known-gaps-live-state.py`; `scripts/enforcement/fetch-known-gaps-live-state.py`; `scripts/enforcement/check-known-gaps.sh`; `scripts/enforcement/tests/test-known-gaps-live-state.sh`.
 
 ## Template/Pattern Rating Evidence
@@ -189,7 +189,7 @@ Adds one metadata-only claim and ephemeral snapshots. It changes no Project 8 co
 - [x] Versioned minimal claim schema tied to canonical closed gaps.
 - [x] Fail-closed paginated fetcher with minimal permissions and metadata-only output.
 - [x] Validator for exact PR, head, merge, base containment, chronological workflow attempts, checks, and non-self evidence.
-- [x] Offline fixtures for merged state, stale identifiers, base divergence, failed/skipped/neutral/missing evidence, open-gap/self-only claims, malformed snapshots, and later reruns of older run numbers.
+- [x] `scripts/enforcement/tests/test-known-gaps-live-state.sh` passed locally and covers merged state, stale identifiers, base divergence, failed/skipped/neutral/missing evidence, open-gap/self-only claims, malformed snapshots, and later reruns of older run numbers.
 - [x] Canonical checker integration remains optional and deterministic locally.
 - [x] Live run 1 succeeded and artifact `8518500199` was inspected as metadata-only.
 - [x] PR #254 reconciled and `audit-self-contained-contract` synchronized as closed.
