@@ -94,7 +94,7 @@ def section_between(start_heading):
 
 def field_value(section, field):
     match = re.search(
-        rf'^\s*[-*]\s*(?:\*\*)?{re.escape(field)}(?:\*\*)?\s*:\s*(.+)$',
+        rf'^\s*[-*]\s*(?:\*\*)?{re.escape(field)}\s*:(?:\*\*)?\s*(.+)$',
         section,
         re.I | re.M,
     )
