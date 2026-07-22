@@ -183,9 +183,9 @@ Governance documentation and validator fixtures only. No telemetry bundle, secre
 - hypothesis: explicit context, source precedence, evidence semantics, glossary, phases, and deterministic fixture coverage will let a capable LLM continue safely without hidden assumptions.
 - connectors: GitHub; official vendor documentation.
 - steps: inspect current audit and validator; compare entrypoint/runtime/docs/pattern state; apply owner decision; expand plan scope; update registry, audit, checker, and fixtures; inspect exact-head CI; correct evidence-contract and semantic-string failures; continue experiment-fix-verify until clean.
-- evidence: Engineering OS PR #254, commits `26d028f5609ac041aca7655a075669d7a3ee7ced` through `05ab4606e50edee74d8b34ee437dc96d860cd134`, enforcement-tests runs 1330-1333, policy runs, Project 8 exact files, and official references above.
+- evidence: Engineering OS PR #254, commits `26d028f5609ac041aca7655a075669d7a3ee7ced` through `20ac7b48bea3a4d0b6561d2b0bf472399e16e7cf`, enforcement-tests runs 1330-1334, policy runs, Project 8 exact files, and official references above.
 - rejected: conversation-dependent audit; prompt generation now; workload-before-experiment circularity; second audit owner; prose-only guard; weakening valid gates.
-- result: the context-free readiness suite now passes; aggregate exact-head validation and review remain separate external gates.
+- result: the context-free readiness suite passes and the ordered lifecycle evidence is recorded; merge stays owner-gated.
 
 ## Definition of Done
 
@@ -204,4 +204,4 @@ The task is not complete and this PR must not merge until all named exact-head c
 
 - start: `aad4519e27386c33d5d49f635776e9c78e8e8e04` created the original plan before audit and registry edits; commit `26d028f5609ac041aca7655a075669d7a3ee7ced` expanded the target scope before the new checker and fixture changes.
 - mid: commits `67a094f55c1f6d4eb6e3d2c6da57e023b28c1568`, `f186a5ae35d7c45930091d09e7d0275b7e64ae60`, `c40661d27f8ad37d71b8625bb4ac2531677601c2`, and `2318591b7f2ee5181c63a41b99758a34fd200160` implemented checker, fixtures, registry, and audit; semantic parser repairs landed through `05ab4606e50edee74d8b34ee437dc96d860cd134`, and enforcement-tests run 1333 passed the readiness suite.
-- pre-merge: pending aggregate exact-head validation, live review reconciliation, and the final evidence checkpoint.
+- pre-merge: commit `20ac7b48bea3a4d0b6561d2b0bf472399e16e7cf` introduced the ordered mid checkpoint after the last code change; exact-head plan-policy 1119, connector-evidence 1118, documentation-asset 756, capability-evidence 1000, telemetry-handoff 236, semantic-cleanup 781, and import-cleanup 781 succeeded, while workflow-evidence 1107 identified the absent concrete pre-merge checkpoint and enforcement-tests 1334 passed readiness plus enforcement groups A-L before aggregate execution. This commit records the separate pre-merge checkpoint and keeps merge blocked by owner approval.
