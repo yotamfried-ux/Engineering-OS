@@ -65,7 +65,7 @@
   כדי לבחור templates / patterns / external-skills / connectors לפי סוג המשימה. אין להסתמך
   על זיכרון או על "נראה לי שזה רלוונטי".
 - **לפני שינוי ב-Engineering OS עצמו** פעל לפי [`core/coderabbit-policy.md`](./core/coderabbit-policy.md):
-  branch ייעודי → PR → GitHub Actions → CodeRabbit review → תיקון הערות → אישור מפורש לפני merge ל-main.
+  branch ייעודי → PR → GitHub Actions → בדיקת review חיה (CodeRabbit כשזמין, fallback מובנה כשלא) → תיקון הערות → אישור מפורש לפני merge ל-main.
 - חפש פתרון קיים לפני כתיבה מחדש (ראה [`core/connector-policy.md`](./core/connector-policy.md) › `<information_sources>`).
 - טפל בשורש הבעיה, לא בסימפטום.
 - בנה את הפתרון המינימלי שעונה על הדרישה. אל תוסיף פיצ'רים, אבסטרקציות או גמישות
@@ -120,7 +120,7 @@
 | [`core/resource-management.md`](./core/resource-management.md) | ניהול משאבים, `.claudeignore`, מודל | `enforce-resource.sh` |
 | [`core/scoring-guide.md`](./core/scoring-guide.md) | ניקוד patterns/skills | NONE (maintenance) |
 | [`core/skill-orchestration-policy.md`](./core/skill-orchestration-policy.md) | אינטגרציית skills (SIP — 4 קבצים) | `enforce-skill.sh` |
-| [`core/capability-registry.yaml`](./core/capability-registry.yaml) | אוצר ה-capabilities לכל task class | `test-capability-registry.sh` (coverage), runtime planned |
+| [`core/capability-registry.yaml`](./core/capability-registry.yaml) | אוצר ה-capabilities לכל task class | `test-capability-registry.sh` (coverage), active plan-level write gate |
 
 ### טבלת בעלות מושגית — מי אחראי על מה
 
@@ -181,7 +181,7 @@
 4. **הוראה מפורשת ונוכחית של המשתמש** — גוברת על כל הנחיה כתובה שמתחתיה, בגבולות
    1–3. הצֵף את ההתנגשות במשפט אחד, ואז פעל לפי המשתמש. ("לחץ לסיים" אינו הוראה
    מפורשת — דרגה 2 עדיין גוברת.)
-5. `<core_principles>` → 6. קבצי `core/` → 7. `patterns/`/`templates/`/`docs/`
+5. `<core_principles>` → 6. קבצי `core/` → 7. `patterns/`/`templates`/`docs/`
    → 8. הנחות קודמות / ידע כללי.
 
 כשההתנגשות באותה דרגה או לא ברורה — **עצור, נסח אותה בקצרה למשתמש, והצע את האפשרות
