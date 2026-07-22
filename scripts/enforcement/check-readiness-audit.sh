@@ -166,9 +166,12 @@ for term in [
     'telemetry bundle',
     'exact-head',
     'hard hook',
-    'full operational readiness',
 ]:
     require(term in glossary, f'glossary missing required term: {term}')
+require(
+    re.search(r'\b(?:full\s+operational\s+readiness|fully\s+operationally\s+ready)\b', glossary),
+    'glossary missing required full operational readiness term',
+)
 
 experiment_decision = section_between('## Experiment start decision').lower()
 for term in ['every registered gap', 'closed', '--assert-full-ready', 'technical qualification', 'behavioral experiment', 'owner approval']:
