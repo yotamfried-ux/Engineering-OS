@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -200,12 +201,33 @@ def load_snapshot(path: Path) -> dict[str, dict[str, Any]]:
     return entries
 
 
-def _run_key(run: dict[str, Any]) -> tuple[int, int, int]:
+def _workflow_timestamp(run: dict[str, Any], label: str) -> tuple[datetime, str | None]:
+    raw = run.get("run_started_at") or run.get("updated_at") or run.get("created_at")
+    if not isinstance(raw, str) or not raw.strip():
+        return (
+            datetime.min.replace(tzinfo=timezone.utc),
+            f"{label} lacks a chronological workflow timestamp",
+        )
+    try:
+        value = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return (
+            datetime.min.replace(tzinfo=timezone.utc),
+            f"{label} has invalid workflow timestamp {raw!r}",
+        )
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc), None
+
+
+def _run_key(run: dict[str, Any], label: str) -> tuple[datetime, int, int]:
+    timestamp, _ = _workflow_timestamp(run, label)
+
     def number(name: str) -> int:
         value = run.get(name, 0)
         return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
-    return number("run_number"), number("run_attempt"), number("id")
+    return timestamp, number("run_attempt"), number("id")
 
 
 def _latest_workflow(
@@ -218,10 +240,13 @@ def _latest_workflow(
             failures.append(f"{label}[{index}] must be an object")
             continue
         if raw.get("name") == name and raw.get("event") == event and raw.get("head_sha") == head_sha:
+            _, timestamp_failure = _workflow_timestamp(raw, f"{label}[{index}]")
+            if timestamp_failure:
+                failures.append(timestamp_failure)
             candidates.append(raw)
     if not candidates:
         return None, failures
-    return max(candidates, key=_run_key), failures
+    return max(candidates, key=lambda run: _run_key(run, label)), failures
 
 
 def _check_key(run: dict[str, Any]) -> tuple[str, int]:
@@ -337,9 +362,7 @@ def validate_claim(claim: dict[str, Any], entry: dict[str, Any]) -> list[str]:
         if name.lower() != "pr-policy":
             successful_non_self = True
     if not successful_non_self:
-        failures.append(
-            f"{claim_id}: no successful required non-self pull_request workflow was proven"
-        )
+        failures.append(f"{claim_id}: no successful required non-self pull_request workflow was proven")
 
     for name in claim["required_push_workflows"]:
         run, shape_failures = _latest_workflow(
