@@ -9,10 +9,10 @@ without rewriting the rules each time.
 | Directory | Purpose |
 |---|---|
 | `CLAUDE.md` | **Entry point.** Loaded by Claude at the start of every session. Defines role, principles, skill activation, and navigation. |
-| `core/` | 14 policy files: workflow, quality gates, git policy, hooks, debugging, learning loop, skill orchestration, and more. |
-| `patterns/` | 22 code-pattern domains — auth, billing, API, database, UI, AI agents, observability, security, testing, integrations, and more. |
-| `external-skills/` | 9 external skill wrappers (superpowers, security-review, graphify, rtk, claude-mem, ui-ux-pro-max, gstack, claude-code-workflows). Each has a 4-file SIP contract. |
-| `external-systems/` | 47 third-party service guides — LLM providers, databases, auth, payments, observability, CRM, and more. |
+| `core/` | Canonical policy files for workflow, quality gates, git policy, hooks, debugging, learning, skill orchestration, and related governance. The live inventory is the directory itself and the navigation table in `CLAUDE.md`. |
+| `patterns/` | Code-pattern domains for auth, billing, API, database, UI, AI agents, observability, security, testing, integrations, and more. Lifecycle metadata is owned by `patterns/registry.yaml`. |
+| `external-skills/` | External skill wrappers such as superpowers, security-review, graphify, rtk, claude-mem, ui-ux-pro-max, gstack, and claude-code-workflows. The live inventory is `external-skills/README.md`; each installed wrapper follows its documented SIP contract. |
+| `external-systems/` | Third-party service and connector guides for LLM providers, databases, auth, payments, observability, CRM, and more. The live inventory is `external-systems/README.md`. |
 | `templates/` | Project scaffolds and reusable file templates (including `hooks/pre-commit`). |
 | `scripts/` | `use-in-project.sh` (apply OS to a new project), `skill-bootstrap.sh` (detect/install skills), `session-setup.sh` (SessionStart hook). |
 | `docs/` | Architecture guides, framework references, troubleshooting. |
