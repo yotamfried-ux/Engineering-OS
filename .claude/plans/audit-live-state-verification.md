@@ -189,7 +189,7 @@ Adds one metadata-only claim and ephemeral snapshots. It changes no Project 8 co
 - [x] Versioned minimal claim schema tied to canonical closed gaps.
 - [x] Fail-closed paginated fetcher with minimal permissions and metadata-only output.
 - [x] Validator for exact PR, head, merge, base containment, chronological workflow attempts, checks, and non-self evidence.
-- [x] `scripts/enforcement/tests/test-known-gaps-live-state.sh` passed locally and covers merged state, stale identifiers, base divergence, failed/skipped/neutral/missing evidence, open-gap/self-only claims, malformed snapshots, and later reruns of older run numbers.
+- [x] `scripts/enforcement/tests/test-known-gaps-live-state.sh` passed locally and covers merged state, stale identifiers, base divergence, failed/skipped/neutral/missing evidence, open-gap/self-only claims, malformed snapshots, and chronologically subsequent reruns of older run numbers.
 - [x] Canonical checker integration remains optional and deterministic locally.
 - [x] Live run 1 succeeded and artifact `8518500199` was inspected as metadata-only.
 - [x] PR #254 reconciled and `audit-self-contained-contract` synchronized as closed.
