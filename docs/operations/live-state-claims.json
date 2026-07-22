@@ -1,0 +1,33 @@
+{
+  "schema_version": "eos.known-gaps-live-claims.v1",
+  "claims": [
+    {
+      "claim_id": "engineering-os-pr-254-audit-self-contained",
+      "gap_id": "audit-self-contained-contract",
+      "repository": "yotamfried-ux/Engineering-OS",
+      "pull_number": 254,
+      "base_branch": "main",
+      "expected_head_sha": "f74a26d65f6cebf06f29df1d803c192c3efb9694",
+      "expected_merge_commit_sha": "c7d32a0b67a836811689d3a2bf80a63d727e1470",
+      "required_pull_request_workflows": [
+        "pr-policy",
+        "enforcement-tests",
+        "workflow-evidence-policy",
+        "connector-evidence-policy",
+        "capability-evidence-policy",
+        "documentation-asset-policy",
+        "plan-policy",
+        "semantic-cleanup-policy",
+        "import-cleanup-policy",
+        "telemetry-handoff-tests"
+      ],
+      "required_push_workflows": [
+        "enforcement-tests",
+        "post-merge-validation"
+      ],
+      "required_check_runs": [
+        "enforcement-tests"
+      ]
+    }
+  ]
+}
