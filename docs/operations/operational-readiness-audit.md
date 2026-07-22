@@ -452,7 +452,7 @@ Closed regression surfaces retained by the readiness gate: coverage map hardenin
 
 ## Experiment start decision
 
-The Project 8 behavioral experiment is **blocked**. It may begin only when every registered gap is exactly `closed`; no matrix row remains Missing or Partially enforced; required technical qualification is complete and separate from experiment evidence; live GitHub state is re-fetched; `--assert-full-ready` passes on canonical `main`; and Yotam explicitly approves preparation and delivery of the prompt.
+The Project 8 behavioral experiment is **blocked**. It may begin only when every registered gap is exactly `closed`; no matrix row remains Missing or Partially enforced; required technical qualification is complete and separate from experiment evidence; live GitHub state is re-fetched; `--assert-full-ready` passes on canonical `main`; and explicit owner approval from Yotam is recorded before preparation and delivery of the prompt.
 
 No prompt is required or authorized at the current stage. Do not draft, store, or send one as readiness-gap work.
 
