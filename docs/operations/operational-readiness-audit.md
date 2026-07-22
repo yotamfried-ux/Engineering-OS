@@ -10,7 +10,7 @@ This document is the canonical status map and closure contract for Engineering O
 - **Canonical gap registry:** `docs/operations/known-gaps.tsv`
 - **Last verified:** 2026-07-21 America/Panama / 2026-07-22 UTC
 - **Intended readers:** LLMs, maintainers, reviewers, and operators with no prior conversation context
-- **Snapshot only:** Engineering OS `main` was inspected at `c7d32a0b67a836811689d3a2bf80a63d727e1470`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.
+- **Snapshot only:** Engineering OS `main` was inspected at `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.
 
 ## Purpose and audience
 
@@ -175,7 +175,7 @@ A complete audit may honestly describe an unready system. Registering a risk is 
 | dispatch-scope-double-record | mitigated | P1 | Dispatch scope double record. |
 | multirepo-remote-telemetry-validation | open | P1 | Multirepo remote telemetry validation. |
 | eos-repo-boundary-sync-drift | open | P3 | Eos repo boundary sync drift. |
-| audit-live-state-verification | open | P0 | Audit live state verification. |
+| audit-live-state-verification | closed | P0 | Audit live state verification. |
 | hard-hook-fail-closed | open | P0 | Hard hook fail closed. |
 | bypass-approval-provenance | open | P1 | Bypass approval provenance. |
 | pattern-registry-canonical-drift | open | P1 | Pattern registry canonical drift. |
@@ -193,8 +193,8 @@ A complete audit may honestly describe an unready system. Registering a risk is 
 | Canonical ownership / no policy sprawl | Enforced | Gate: check-documentation-hygiene.sh. Owner: docs-governance. Evidence: hygiene fixtures. | Deep semantics are reviewed. |
 | Enforcement coverage inventory | Enforced | Gate: check-readiness-audit.sh. Owner: ops-readiness. Evidence: readiness fixtures. | Closure judgment is reviewed. |
 | Audit self-contained contract | Enforced | Gate: check-readiness-audit.sh and context-free fixtures. Owner: ops-readiness. Evidence: merged PR #254, exact head `f74a26d65f6cebf06f29df1d803c192c3efb9694`, merge `c7d32a0b67a836811689d3a2bf80a63d727e1470`, and `docs/operations/live-state-claims.json`. | Closed; the live claim must continue to pass. |
-| Audit registry freshness | Partially enforced | Gate: check-known-gaps.sh plus the new snapshot validator and `known-gaps-live-state` workflow. Owner: ops-readiness. Evidence: offline mismatch fixtures and PR #254 claim. | gap:audit-live-state-verification — this implementation still needs exact-head CI, merge, and push-to-main validation. |
-| Documentation runtime state consistency | Missing enforcement | Gate: documentation hygiene exists. Owner: docs-governance. Evidence: `CLAUDE.md`, `README.md`, `core/quality-gates.md`, and executable owners. | gap:documentation-runtime-state-drift — known contradictions remain. |
+| Audit registry freshness | Enforced | Gate: check-known-gaps.sh, deterministic snapshot validation, and `known-gaps-live-state`. Owner: ops-readiness. Evidence: PR #254 and PR #255 versioned claims; PR #255 head `97d56e2f5743b019145da600cf0914f6d092cd0f`, merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`. | Closed; both live claims must continue to pass. |
+| Documentation runtime state consistency | Partially enforced | Gate: extended `check-documentation-hygiene.sh`. Owner: docs-governance. Evidence: active capability, README inventory, CodeRabbit review-availability, and negative drift fixtures on `fix/documentation-runtime-state-drift`. | gap:documentation-runtime-state-drift — implementation still needs exact-head CI, review, owner-approved merge, and post-merge validation. |
 | Route Plan before writing | Enforced | Gate: workflow write guards and target-aware plan selection. Owner: workflow-governance. Evidence: active-plan fixtures. | Plan intent is reviewed. |
 | Route Plan quality | Enforced | Gate: check-workflow-evidence.sh. Owner: workflow-governance. Evidence: semantic-quality fixtures. | Deep source quality is reviewed. |
 | DoD completion | Enforced | Gate: plan-policy and check-workflow-evidence.sh. Owner: delivery-governance. Evidence: completion fixtures. | Meaning of completion is reviewed. |
@@ -250,14 +250,14 @@ Do not skip phases. Parallel work is permitted inside a phase only when files an
 ### Completed foundation
 
 - `gap:audit-self-contained-contract` closed through merged PR #254, exact reviewed head `f74a26d65f6cebf06f29df1d803c192c3efb9694`, merge `c7d32a0b67a836811689d3a2bf80a63d727e1470`, context-free fixtures, and the canonical live-state claim.
+- `gap:audit-live-state-verification` closed through merged PR #255, exact reviewed head `97d56e2f5743b019145da600cf0914f6d092cd0f`, merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`, chronological rerun fixtures, metadata-only live artifacts, and the canonical live-state claim.
 
 ### Phase 0 — make readiness truth trustworthy
 
-1. `gap:audit-live-state-verification`
-2. `gap:documentation-runtime-state-drift`
-3. `gap:full-readiness-claim-semantics`
+1. `gap:documentation-runtime-state-drift`
+2. `gap:full-readiness-claim-semantics`
 
-Exit: stale live claims fail, canonical descriptions agree with runtime, and strict readiness semantics remain valid on `main`.
+Exit: canonical descriptions agree with runtime and strict readiness semantics remain valid on `main`.
 
 ### Phase 1 — close deterministic enforcement defects
 
@@ -311,7 +311,7 @@ Official basis: <https://code.claude.com/docs/en/memory> and AWS Operational Exc
 - [x] Exact-head CI and seven review threads were reconciled on PR #254.
 - [x] PR #254 merged as `c7d32a0b67a836811689d3a2bf80a63d727e1470`; `docs/operations/live-state-claims.json` binds the reviewed head and post-merge workflows.
 
-### gap:audit-live-state-verification — P0
+### gap:audit-live-state-verification — P0 — closed
 
 Official basis: GitHub REST pull requests, check runs, workflow runs, compare commits, Actions security hardening, plus official `actions/github-script`, `octokit/rest.js`, and `github/rest-api-description` repositories.
 
@@ -321,19 +321,19 @@ Official basis: GitHub REST pull requests, check runs, workflow runs, compare co
 - [x] Implement one deterministic validator shared by offline fixtures and live CI snapshots.
 - [x] Reject unmerged, stale-head, stale-merge, diverged-base, older-green/newer-failure, skipped, neutral, missing-workflow, malformed, open-gap, and self-only evidence fixtures.
 - [x] Register PR #254 as the first real reconciliation target.
-- [ ] Pass the dedicated `known-gaps-live-state` workflow on the implementation PR exact head and inspect its metadata-only artifact.
-- [ ] Reconcile all review findings, merge only after owner approval, then pass the same workflow and post-merge validation on `main` before closing this gap.
+- [x] PR #255 exact head `97d56e2f5743b019145da600cf0914f6d092cd0f` passed `known-gaps-live-state` run 9; artifact `8518895489` was inspected as metadata-only, and all four valid review threads were resolved.
+- [x] PR #255 merged after owner approval as `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; the second canonical claim requires successful `enforcement-tests`, `known-gaps-live-state`, and `post-merge-validation` push workflows and fails closed if live GitHub state disagrees.
 
 ### gap:documentation-runtime-state-drift — P1
 
-Official basis: <https://code.claude.com/docs/en/memory>.
+Official basis: <https://code.claude.com/docs/en/memory>, GitHub README guidance and official `github/docs` content-linter code, plus CodeRabbit review/configuration documentation.
 
-- [ ] Reconcile CLAUDE capability runtime scope with `core/capability-registry.yaml`.
-- [ ] Remove README hard-coded policy counts or generate them.
-- [ ] Reconcile CodeRabbit availability statements with policy and observed review.
-- [ ] Search all canonical entrypoints for equivalent contradictions.
-- [ ] Add negative documentation-hygiene fixtures.
-- [ ] Complete exact-head review, merge, and post-merge validation.
+- [x] Reconcile CLAUDE capability runtime scope with `core/capability-registry.yaml`: `runtime_enabled: true` and `runtime_scope: plan_level_write_gate` are described as an active plan-level write gate.
+- [x] Remove volatile README numeric inventory snapshots and link each maintained category to its canonical live inventory.
+- [x] Reconcile CodeRabbit availability with observed live review: current review blocks when present or pending; unavailable review requires structured `Review Fallback Evidence`; fabricated success is prohibited.
+- [x] Search active canonical entrypoints and executable owners for equivalent contradictions while retaining historical plans as dated evidence only.
+- [x] Extend `check-documentation-hygiene.sh` and its fixture suite to reject stale runtime wording, numeric inventory snapshots, unconditional CodeRabbit waiting, missing fallback, and static availability assertions.
+- [ ] Complete exact-head focused/full CI, external review and thread reconciliation, owner-approved merge, and post-merge validation before closing this gap.
 
 ### gap:full-readiness-claim-semantics — P1
 
@@ -439,16 +439,16 @@ Official basis: Google SRE monitoring and OpenTelemetry instrumentation guidance
 
 ## Highest-priority gaps by ROI
 
-1. Live-state verification — P0; self-contained audit contract closed by PR #254.
+1. Documentation/runtime consistency — P1, current Phase 0 truth prerequisite.
 2. Hard-hook fail-closed — P0.
-3. Project 8 experiment blindness — P0.
-4. Documentation/runtime consistency and final full-readiness assertion — P1.
+3. Project 8 experiment blindness — P0, after deterministic Engineering OS defects.
+4. Final full-readiness assertion — P1, terminal only after all other gaps close.
 5. Bypass approval provenance and canonical pattern ownership — P1.
 6. Engineering OS boundary synchronization and fresh Remote qualification — P1/P3.
 7. Project 8 qualification and first-run monitoring sufficiency — P1/P2.
 8. Pattern evidence maturity and second-run repeatability — P2.
 
-Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup.
+Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup; live-state reconciliation.
 
 ## Experiment start decision
 
@@ -497,6 +497,8 @@ Official basis: Vercel environments/variables/Vite/Express/monorepos/domains; Su
 
 ## Current audit scope
 
-PR #254 is merged as `c7d32a0b67a836811689d3a2bf80a63d727e1470`; the self-contained audit contract is closed and represented by a versioned live-state claim. Branch `feat/audit-live-state-verification` implements claim schema, fail-closed GitHub REST acquisition, deterministic snapshot validation, offline regressions, and a dedicated read-only live workflow. That P0 gap remains open until its own PR is exact-head green, reviewed, owner-approved, merged, and validated on `main`.
+PR #254 is merged as `c7d32a0b67a836811689d3a2bf80a63d727e1470` and closes the self-contained audit contract. PR #255 is merged as `0ee2dbee7a9ab58e86a11726021c30baca0faa22` after exact head `97d56e2f5743b019145da600cf0914f6d092cd0f` passed the dedicated live workflow, full enforcement, review, and merge-readiness gates; `docs/operations/live-state-claims.json` now binds both closures and fails closed on live drift.
 
-The system is audit-complete but not fully operationally ready. Runtime, documentation, pattern, Project 8 boundary, and qualification gaps remain. The behavioral experiment and its prompt remain prohibited until every gap closes and the strict assertion passes on fresh canonical state.
+Branch `fix/documentation-runtime-state-drift` implements the next Phase 0 gap: active capability wording, count-free canonical inventory references, availability-aware CodeRabbit review policy, and deterministic negative documentation-hygiene fixtures. That P1 gap remains open until its own exact-head CI, review, owner-approved merge, and post-merge validation complete.
+
+The system is audit-complete but not fully operationally ready. Hook safety, bypass provenance, documentation, pattern, Project 8 boundary, and qualification gaps remain. The behavioral experiment and its prompt remain prohibited until every gap closes and the strict assertion passes on fresh canonical state.
