@@ -100,45 +100,84 @@ for md in root.rglob('*.md'):
         if value.startswith('status: deprecated') and 'replacement:' not in value:
             fail(f'{rel}:{idx}: deprecated status requires replacement')
 
-# Canonical runtime-state consistency. These checks intentionally cover only
-# active owner/entrypoint surfaces; historical plans and research may retain
-# dated observations without redefining current runtime truth.
+# Canonical runtime-state consistency. These assertions cover active owner and
+# entrypoint surfaces only; historical plans/research may retain dated findings.
 claude = read_optional('CLAUDE.md')
 readme = read_optional('README.md')
 capabilities = read_optional('core/capability-registry.yaml')
+coderabbit_path = root / 'core/coderabbit-policy.md'
 coderabbit = read_optional('core/coderabbit-policy.md')
 
 if claude and capabilities:
     runtime_enabled = yaml_scalar(capabilities, 'runtime_enabled')
     runtime_scope = yaml_scalar(capabilities, 'runtime_scope')
     claude_lower = claude.lower()
-    if runtime_enabled == 'true' and runtime_scope == 'plan_level_write_gate':
-        if 'active plan-level write gate' not in claude_lower:
-            fail('CLAUDE.md must describe the capability registry as an active plan-level write gate')
-        if re.search(r'\bruntime\s+planned\b', claude_lower):
-            fail('CLAUDE.md contains stale capability wording: runtime planned')
+    active_phrase = 'active plan-level write gate' in claude_lower
+    expected_active = runtime_enabled == 'true' and runtime_scope == 'plan_level_write_gate'
+
+    if expected_active and not active_phrase:
+        fail('CLAUDE.md must describe the capability registry as an active plan-level write gate')
+    if not expected_active and active_phrase:
+        fail(
+            'CLAUDE.md describes an active plan-level write gate but '
+            f'core/capability-registry.yaml reports runtime_enabled={runtime_enabled or "missing"} '
+            f'and runtime_scope={runtime_scope or "missing"}'
+        )
+    if re.search(r'\bruntime\s+planned\b', claude_lower):
+        fail('CLAUDE.md contains ambiguous stale capability wording: runtime planned')
 
 if readme:
-    inventory_paths = {'core/', 'patterns/', 'external-skills/', 'external-systems/'}
+    inventory_contract = {
+        'core/': (
+            'CLAUDE.md',
+            re.compile(r'\b\d+\s+(?:core\s+)?(?:policy\s+files?|policies|files?)\b', re.I),
+        ),
+        'patterns/': (
+            'patterns/registry.yaml',
+            re.compile(r'\b\d+\s+(?:(?:code[- ]?)?pattern\s+)?domains?\b', re.I),
+        ),
+        'external-skills/': (
+            'external-skills/README.md',
+            re.compile(r'\b\d+\s+(?:external\s+)?skill\s+wrappers?\b', re.I),
+        ),
+        'external-systems/': (
+            'external-systems/README.md',
+            re.compile(r'\b\d+\s+(?:third[- ]party\s+)?service\s+guides?\b', re.I),
+        ),
+    }
     for line_no, line in enumerate(readme.splitlines(), 1):
         match = re.match(r'^\s*\|\s*`([^`]+)`\s*\|\s*(.*?)\s*\|\s*$', line)
-        if not match or match.group(1) not in inventory_paths:
+        if not match or match.group(1) not in inventory_contract:
             continue
+        inventory_path = match.group(1)
         description = match.group(2)
-        if re.search(r'(?<![A-Za-z])\d+(?![A-Za-z])', description):
+        expected_reference, count_re = inventory_contract[inventory_path]
+        if count_re.search(description):
             fail(
                 f'README.md:{line_no}: volatile numeric inventory count for '
-                f'{match.group(1)}; link to the canonical inventory instead'
+                f'{inventory_path}; link to {expected_reference} instead'
+            )
+        if expected_reference.lower() not in description.lower():
+            fail(
+                f'README.md:{line_no}: {inventory_path} must reference canonical '
+                f'inventory {expected_reference}'
             )
 
 if claude:
     claude_lower = claude.lower()
     if 'coderabbit' not in claude_lower or 'fallback' not in claude_lower:
         fail('CLAUDE.md must route Engineering OS review through live CodeRabbit status or a fallback')
-    if re.search(r'coderabbit\s+(?:is\s+)?(?:not\s+connected|unavailable)\s*[.!]?$', claude, re.I | re.M):
+    static_availability = re.compile(
+        r'^.*coderabbit\s+(?:is\s+not\s+connected|isn[\'’]t\s+connected|'
+        r'is\s+disconnected|is\s+unavailable|not\s+connected|disconnected|unavailable)\s*[.!]?\s*$',
+        re.I | re.M,
+    )
+    if static_availability.search(claude):
         fail('CLAUDE.md must not make a static CodeRabbit availability claim')
 
-if coderabbit:
+if not coderabbit_path.is_file():
+    fail('core/coderabbit-policy.md is required for canonical review availability and fallback rules')
+else:
     lower = coderabbit.lower()
     if not re.search(r'live.{0,80}(availability|status|review state)', lower, re.S):
         fail('core/coderabbit-policy.md must require a live reviewer availability/status check')
