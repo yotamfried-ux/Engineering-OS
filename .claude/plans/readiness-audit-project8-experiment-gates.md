@@ -111,7 +111,7 @@ reason: this task hardens an existing governance audit and validator; no project
 - `plan.route-plan-before-write` — commit `26d028f5609ac041aca7655a075669d7a3ee7ced` expanded target paths before checker, test, registry, and audit hardening commits.
 - `source.github-repo-read` — GitHub supplied live repository, PR, commit, Actions, and review-thread evidence.
 - `validation.policy-change-has-validator` — the self-contained audit contract is enforced by `scripts/enforcement/check-readiness-audit.sh` and its fixture suite.
-- `validation.actions-checked` — exact-head run 29888507643 reached the new readiness suite and exposed a real failure; associated policy runs identified Route Plan evidence defects that are corrected here.
+- `validation.actions-checked` — enforcement-tests run 1333 passed the new readiness suite on exact head `05ab4606e50edee74d8b34ee437dc96d860cd134`.
 - `validation.coderabbit-policy` — all new live review findings remain merge gates.
 
 ## Skill Evidence
@@ -130,7 +130,7 @@ reason: this task hardens an existing governance audit and validator; no project
 
 - source: GitHub connector for Engineering OS PR #254, Project 8 main, and Project 8 PR #9.
 - action: inspected canonical audit, registry, validator, fixtures, entrypoint, capability registry, README, quality-gates policy, pattern lifecycle, pattern inventory, target guidance, exact files on PR #9, current PR state, and exact-head workflows.
-- result: `docs/operations/operational-readiness-audit.md`, `docs/operations/known-gaps.tsv`, `scripts/enforcement/check-readiness-audit.sh`, and `scripts/enforcement/tests/test-readiness-audit.sh` now implement the context-free contract; exact head `f670998462372742f2a1c7d5d3b46962e275b8f9` produced enforcement-tests run 1330 and policy runs 1103/1114/752, exposing readiness and Route Plan evidence defects without changing Product 8.
+- result: `docs/operations/operational-readiness-audit.md`, `docs/operations/known-gaps.tsv`, `scripts/enforcement/check-readiness-audit.sh`, and `scripts/enforcement/tests/test-readiness-audit.sh` implement the context-free contract; enforcement-tests run 1333 passed the readiness audit suite on head `05ab4606e50edee74d8b34ee437dc96d860cd134` without changing Product 8.
 - decision: updated the canonical audit and checker, added the missing gap rows, blocked the behavioral experiment until all gaps close, kept technical qualification separate, and moved Product 8 workload requirements out of the pre-start registry.
 - target: `.claude/plans/readiness-audit-project8-experiment-gates.md`, `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `scripts/enforcement/check-readiness-audit.sh`, and `scripts/enforcement/tests/test-readiness-audit.sh`.
 
@@ -182,10 +182,10 @@ Governance documentation and validator fixtures only. No telemetry bundle, secre
 - goal: make the canonical readiness audit complete, contradiction-free, and executable without conversation context.
 - hypothesis: explicit context, source precedence, evidence semantics, glossary, phases, and deterministic fixture coverage will let a capable LLM continue safely without hidden assumptions.
 - connectors: GitHub; official vendor documentation.
-- steps: inspect current audit and validator; compare entrypoint/runtime/docs/pattern state; apply owner decision; expand plan scope; update registry, audit, checker, and fixtures; inspect exact-head CI; correct evidence-contract failures; continue experiment-fix-verify until clean.
-- evidence: Engineering OS PR #254, commits `26d028f5609ac041aca7655a075669d7a3ee7ced` through `f670998462372742f2a1c7d5d3b46962e275b8f9`, enforcement-tests run 1330, workflow-evidence run 1103, connector-evidence run 1114, documentation-asset run 752, Project 8 exact files, and official references above.
-- rejected: conversation-dependent audit; prompt generation now; workload-before-experiment circularity; second audit owner; prose-only guard; weakening failing gates.
-- result: the context-free audit is implemented; the latest exact-head result loop exposed readiness and plan-evidence defects that are being corrected before any completion claim.
+- steps: inspect current audit and validator; compare entrypoint/runtime/docs/pattern state; apply owner decision; expand plan scope; update registry, audit, checker, and fixtures; inspect exact-head CI; correct evidence-contract and semantic-string failures; continue experiment-fix-verify until clean.
+- evidence: Engineering OS PR #254, commits `26d028f5609ac041aca7655a075669d7a3ee7ced` through `05ab4606e50edee74d8b34ee437dc96d860cd134`, enforcement-tests runs 1330-1333, policy runs, Project 8 exact files, and official references above.
+- rejected: conversation-dependent audit; prompt generation now; workload-before-experiment circularity; second audit owner; prose-only guard; weakening valid gates.
+- result: the context-free readiness suite now passes; aggregate exact-head validation and review remain separate external gates.
 
 ## Definition of Done
 
@@ -193,8 +193,8 @@ Governance documentation and validator fixtures only. No telemetry bundle, secre
 - [x] Audit metadata, system context, glossary, source hierarchy, LLM procedure, evidence standard, dependency phases, and future workload boundary are present.
 - [x] Missing self-containment, documentation-drift, and pattern-maturity gaps are registered in `docs/operations/known-gaps.tsv`.
 - [x] `scripts/enforcement/check-readiness-audit.sh` implements `--assert-full-ready` and validates the context-free contract.
-- [x] `scripts/enforcement/tests/test-readiness-audit.sh` names concrete positive and negative fixtures for context loss and non-closed gaps.
-- [x] Exact-head enforcement-tests run 1330 and policy runs 1103/1114/752 were inspected; their concrete failures were routed into this correction.
+- [x] `scripts/enforcement/tests/test-readiness-audit.sh` contains concrete positive and negative fixtures for context loss and non-closed gaps.
+- [x] Enforcement-tests run 1333 passed the readiness audit suite on exact head `05ab4606e50edee74d8b34ee437dc96d860cd134`.
 
 ## Live External Gates Before Merge
 
@@ -203,5 +203,5 @@ The task is not complete and this PR must not merge until all named exact-head c
 ## Progress Lifecycle Evidence
 
 - start: `aad4519e27386c33d5d49f635776e9c78e8e8e04` created the original plan before audit and registry edits; commit `26d028f5609ac041aca7655a075669d7a3ee7ced` expanded the target scope before the new checker and fixture changes.
-- middle: commits `67a094f55c1f6d4eb6e3d2c6da57e023b28c1568`, `f186a5ae35d7c45930091d09e7d0275b7e64ae60`, `c40661d27f8ad37d71b8625bb4ac2531677601c2`, and `2318591b7f2ee5181c63a41b99758a34fd200160` implemented checker, fixtures, registry, and audit; formatting repairs landed in `df09ac144acb2da20a2512ab8be4d6babf93ae7e` and `f670998462372742f2a1c7d5d3b46962e275b8f9`.
-- pre-merge: exact head `f670998462372742f2a1c7d5d3b46962e275b8f9` was evaluated by enforcement-tests run 1330 and policy runs 1103/1114/752; the failures were inspected and this plan now records concrete sources, documentation evidence, connector decision impact, ratings, verification signals, and lifecycle checkpoints. Merge remains blocked pending the next exact-head run and review.
+- mid: commits `67a094f55c1f6d4eb6e3d2c6da57e023b28c1568`, `f186a5ae35d7c45930091d09e7d0275b7e64ae60`, `c40661d27f8ad37d71b8625bb4ac2531677601c2`, and `2318591b7f2ee5181c63a41b99758a34fd200160` implemented checker, fixtures, registry, and audit; semantic parser repairs landed through `05ab4606e50edee74d8b34ee437dc96d860cd134`, and enforcement-tests run 1333 passed the readiness suite.
+- pre-merge: pending aggregate exact-head validation, live review reconciliation, and the final evidence checkpoint.
