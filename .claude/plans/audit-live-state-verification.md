@@ -91,7 +91,7 @@ PR #254 is the first real reconciliation target. Its claim supports closure of `
 ## Documentation Asset Evidence
 
 - internal: `core/task-router.md`, `core/workflow.md`, `core/quality-gates.md`, `core/git-policy.md`, `docs/operations/known-gaps.tsv`, `docs/operations/operational-readiness-audit.md`, `scripts/enforcement/check-known-gaps.sh`, `scripts/enforcement/tests/test-known-gaps.sh`, `.github/workflows/enforcement-tests.yml`, `.github/workflows/post-merge-validation.yml`.
-- context7: primary official GitHub documentation and official repositories were read directly; no third-party SDK is introduced.
+- context7: `https://docs.github.com/en/rest/pulls/pulls`, `https://docs.github.com/en/rest/checks/runs`, `https://docs.github.com/en/rest/actions/workflow-runs`, `https://docs.github.com/en/rest/commits/commits`, `https://github.com/actions/github-script`, `https://github.com/octokit/rest.js`, and `https://github.com/github/rest-api-description` were read directly; no third-party SDK is introduced.
 - decision: separate live acquisition from deterministic validation, bind exact identifiers, require base containment and newest successful non-self evidence, and store only normalized metadata.
 
 ## Template Gap Waiver
@@ -124,16 +124,32 @@ reason: this task extends an existing canonical governance validator and Actions
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, `actions/github-script`, `octokit/rest.js`, and `github/rest-api-description`.
 - action: verified and merged PR #254 with expected-head protection; inspected canonical enforcement; researched official contracts/examples; created claims, fetcher, validator, fixtures, workflow, and synchronized audit/registry updates.
-- result: the branch now detects live PR/head/merge/base/workflow/check drift while local tests remain offline and deterministic.
-- decision: retain the canonical TSV, metadata-only snapshot, read-only workflow, and open implementation status until this PR's own merge/post-merge proof.
-- target: all Route Plan target paths listed above.
+- result: `known-gaps-live-state` run 1 succeeded on exact head `3a4fbfc6fc065eefc64c56abb1ab59d19757001d`; artifact `known-gaps-live-state-29891819292` contained only normalized metadata; the first policy loop exposed Route Plan evidence-contract and audit wording defects.
+- decision: preserve the live implementation, repair evidence structure and canonical audit wording, retain `audit-live-state-verification` as open, and keep owner-gated merge/post-merge proof separate.
+- target: `.claude/plans/audit-live-state-verification.md`; `docs/operations/live-state-claims.json`; `scripts/enforcement/fetch-known-gaps-live-state.py`; `scripts/enforcement/check-known-gaps-live-state.py`; `scripts/enforcement/check-known-gaps.sh`; `scripts/enforcement/tests/test-known-gaps-live-state.sh`; `.github/workflows/known-gaps-live-state.yml`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`.
 
 ## Template/Pattern Rating Evidence
 
-- asset: `patterns/api/README.md`; rating: 5; confidence: high; outcome: explicit request/response contracts shaped snapshot normalization; decision: retain.
-- asset: `patterns/security/README.md`; rating: 5; confidence: high; outcome: least privilege, safe artifacts, and fail-closed failures shaped the workflow; decision: retain.
-- asset: `patterns/testing/README.md`; rating: 5; confidence: high; outcome: one validator serves offline mismatch fixtures and live snapshots; decision: retain.
-- asset: `patterns/observability/README.md`; rating: 4; confidence: high; outcome: exact identifiers provide diagnostic evidence without sensitive content; decision: retain.
+- asset: `patterns/api/README.md`
+- rating: 5
+- confidence: high
+- outcome: explicit request/response contracts shaped snapshot normalization.
+- decision: retain for GitHub REST boundaries.
+- asset: `patterns/security/README.md`
+- rating: 5
+- confidence: high
+- outcome: least privilege, safe artifacts, and fail-closed failures shaped the workflow.
+- decision: retain for token and artifact controls.
+- asset: `patterns/testing/README.md`
+- rating: 5
+- confidence: high
+- outcome: one validator serves offline mismatch fixtures and live snapshots.
+- decision: retain for deterministic result loops.
+- asset: `patterns/observability/README.md`
+- rating: 4
+- confidence: high
+- outcome: exact identifiers provide diagnostics without sensitive content.
+- decision: retain for metadata-only evidence.
 
 ## Data / State Impact
 
@@ -141,7 +157,7 @@ Adds one metadata-only claim file and ephemeral live snapshots. No application d
 
 ## Integration Impact
 
-- A new named read-only workflow fetches and validates live GitHub state.
+- A named read-only workflow fetches and validates live GitHub state.
 - `check-known-gaps.sh` stays deterministic unless an explicit snapshot is provided.
 - Closed-gap evidence cannot rely only on matching Markdown/TSV prose.
 - PR #254 is the first real claim.
@@ -160,26 +176,30 @@ Adds one metadata-only claim file and ephemeral live snapshots. No application d
 - goal: prevent a synchronized but stale readiness audit from asserting closure contrary to live GitHub truth.
 - hypothesis: normalized live metadata plus one deterministic validator catches stale PR/head/merge/workflow claims without network-bound local tests.
 - connectors: GitHub; official GitHub docs; official GitHub and Octokit repositories.
-- steps: merge PR #254; verify main; research official contracts; plan first; implement claims/fetcher/validator/workflow; run local fixtures; update audit and registry.
-- evidence: PR #254 head `f74a26d65f6cebf06f29df1d803c192c3efb9694`, merge `c7d32a0b67a836811689d3a2bf80a63d727e1470`, implementation commits, offline fixture output, and official sources above.
+- steps: merge PR #254; verify main; research official contracts; plan first; implement claims/fetcher/validator/workflow; run local fixtures; update audit/registry; run exact-head live validation; inspect artifact; diagnose policy failures.
+- evidence: PR #254 head `f74a26d65f6cebf06f29df1d803c192c3efb9694`, merge `c7d32a0b67a836811689d3a2bf80a63d727e1470`, `known-gaps-live-state` run 1, artifact ID `8518500199`, and official sources above.
 - rejected: chat tracking, prose parsing, network-bound local tests, historical-green selection, self-only evidence, secret snapshots, and premature closure.
-- result: implementation and local fixture validation are complete; exact-head live CI, external review, and owner-gated merge/post-merge proof remain separate gates.
+- result: implementation and live reconciliation succeeded; exact-head policy evidence is being corrected without weakening the live validator.
 
 ## Definition of Done
 
 - [x] Claim schema is versioned, minimal, and tied to canonical closed gap IDs.
 - [x] Fetcher paginates documented endpoints, fails closed, uses minimal read permissions, and emits metadata only.
 - [x] Validator checks repository, PR, merged state, head, merge, base containment, newest workflow attempts, checks, and successful non-self evidence.
-- [x] Offline fixtures cover every required positive and negative case.
-- [x] Canonical `check-known-gaps.sh` invokes the validator when a snapshot is explicitly supplied.
-- [ ] Dedicated exact-head live CI succeeds and its safe artifact is inspected.
-- [ ] PR #254 is reconciled against live metadata and push-to-main workflows.
+- [x] Offline fixtures cover required positive and negative cases.
+- [x] Canonical `check-known-gaps.sh` invokes the validator when a snapshot is supplied.
+- [x] Dedicated exact-head live CI succeeded and artifact ID `8518500199` was inspected as metadata-only.
+- [x] PR #254 reconciled against exact live metadata and push-to-main workflows.
 - [x] Registry and audit close `audit-self-contained-contract` through the exact PR #254 claim.
 - [x] `audit-live-state-verification` remains open pending its own merge/post-merge proof.
-- [ ] All named CI checks and review threads are reconciled and structured self-review is clean.
-- [x] No merge is attempted without a later explicit owner approval.
+- [x] Owner-gated merge state is explicit in PR #255 and no merge API call has been made for this branch.
+
+## Live External Gates Before Merge
+
+The implementation is not merge-ready until the final exact head passes all named non-self checks, every CodeRabbit/Codex finding is reconciled, all threads are resolved, structured self-review is clean, the PR body names the final expected head and exact run evidence, and Yotam gives separate explicit merge approval. After any authorized merge, `known-gaps-live-state` and `post-merge-validation` must pass on `main` before `audit-live-state-verification` can close.
 
 ## Progress Lifecycle Evidence
 
 - start: commit `f6a1dcb81ca6851a0bdaa62db90d034dd6e2bfd1` recorded exact scope, official research, and validation design before implementation.
-- mid: commits through `c2693b2940e8d9d6e8047fbeae6381f4fdc0a9d6` implemented the versioned claim, fail-closed fetcher, deterministic validator, offline fixtures, canonical checker integration, read-only live workflow, and synchronized registry/audit progress; all local positive and negative fixtures passed.
+- mid: commits through `c2693b2940e8d9d6e8047fbeae6381f4fdc0a9d6` implemented the claim, fetcher, validator, fixtures, canonical integration, read-only workflow, registry, and audit; local positive and negative fixtures passed.
+- pre-merge: exact-head `3a4fbfc6fc065eefc64c56abb1ab59d19757001d` completed live-state run 1 successfully; artifact ID `8518500199` was inspected and contained only approved metadata fields; the first policy cycle identified Route Plan structure and one audit experiment-approval wording defect for correction.
