@@ -85,9 +85,9 @@ Align active documentation with executable runtime truth. The capability registr
 
 ## Documentation Asset Evidence
 
-- internal: all target paths plus the capability registry and ownership manifest.
-- context7: official URLs and repository paths above were read directly; no SDK is introduced.
-- decision: use executable owners, remove snapshots, and enforce live reviewer-or-fallback semantics.
+- internal: `CLAUDE.md`, `README.md`, `core/capability-registry.yaml`, `core/coderabbit-policy.md`, `scripts/enforcement/check-documentation-hygiene.sh`, `scripts/enforcement/tests/test-documentation-hygiene.sh`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
+- context7: `https://code.claude.com/docs/en/memory`, `https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes`, `https://docs.coderabbit.ai/guides/code-review-overview`, and `https://github.com/github/docs` were read directly; no SDK is introduced.
+- decision: executable owners define active state, count snapshots are removed, and live reviewer-or-fallback semantics are enforced.
 
 ## Template Gap Waiver
 
@@ -112,15 +112,15 @@ reason: this is a focused extension of canonical governance files and the existi
 
 | Connector | Evidence |
 |---|---|
-| GitHub | Verified PR #255/main, read canonical and official repos, created branch/commits/PR #256, and supplies Actions/review state. |
+| GitHub | Verified PR #255/main, read canonical and official repos, created branch/commits/PR #256, and supplied Actions/review state. |
 
 ## Connector Usage Evidence
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, `github/docs`, and `anthropics/claude-code`.
-- action: merged PR #255; inspected owners; researched examples; implemented nine paths; opened PR #256; inspected run 1118 diagnostics.
-- result: PR #256 head advanced from `971cb8aec150d45aee4e1341d4eea879978552d0`; workflow-evidence artifact `8530827195` identified only source-label and lifecycle-order defects.
-- decision: kept strict enforcement and corrected evidence instead of weakening the checker.
-- target: the nine Route Plan paths.
+- action: merged PR #255; inspected owners; researched examples; implemented nine paths; opened PR #256; inspected workflow and live-state result loops.
+- result: `known-gaps-live-state` runs 11 and 14 accepted both live closure claims; workflow-evidence run 1121 succeeded on head `06d410eddb2d19c94e2eeab08edbf23298bd96a3`.
+- decision: kept strict enforcement and corrected evidence structure instead of weakening any checker.
+- target: `.claude/plans/documentation-runtime-state-drift.md`; `scripts/enforcement/check-documentation-hygiene.sh`; `scripts/enforcement/tests/test-documentation-hygiene.sh`; `docs/operations/live-state-claims.json`.
 
 ## Data / State Impact
 
@@ -141,10 +141,10 @@ CLAUDE, README, CodeRabbit policy, documentation hygiene, live claims, and audit
 - goal: prevent active documentation from contradicting runtime/reviewer state.
 - hypothesis: narrow owner-based assertions plus negative fixtures prevent recurrence.
 - connectors: GitHub and official Anthropic, GitHub Docs, and CodeRabbit sources.
-- steps: merge PR #255; inspect main; research; plan first; implement; synchronize audit; open PR #256; inspect CI diagnostics.
-- evidence: PR #255 head/merge; plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; workflow-evidence run 1118 artifact `8530827195`; ordered mid commit `f7e095d920cb44fc43fd506f65dc7e11d13dbd2f`.
+- steps: merge PR #255; inspect main; research; plan first; implement; synchronize audit; open PR #256; run evidence result loops.
+- evidence: PR #255 head/merge; plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; live-state runs 11/14; workflow-evidence run 1121; ordered mid/pre commits.
 - rejected: refreshed counts, static reviewer assumptions, generated churn, historical rewrites, parallel owners.
-- result: implementation and ordered lifecycle evidence are ready for the next exact-head CI cycle.
+- result: implementation deliverables and live closure claim are complete; exact-head CI/review remain external gates.
 
 ## Definition of Done
 
@@ -153,11 +153,12 @@ CLAUDE, README, CodeRabbit policy, documentation hygiene, live claims, and audit
 - [x] CodeRabbit policy requires current review or structured fallback.
 - [x] Checker covers all three active-surface invariants.
 - [x] Fixtures cover runtime, inventory, and reviewer drift.
-- [ ] PR #255 live claim passes on PR #256.
+- [x] PR #255 live claim passes on PR #256 through `known-gaps-live-state` runs 11 and 14.
 - [x] Registry/audit synchronized while current gap stays open.
-- [ ] Focused/full exact-head suites pass.
-- [ ] Review findings/threads reconciled.
-- [ ] Owner-approved merge and post-merge validation complete.
+
+## Live External Gates Before Merge
+
+PR #256 remains unmerged until the final exact head passes focused and full suites, all named non-self workflows, live artifact inspection, external review or structured fallback, thread reconciliation, exact-head self-review, updated Merge Readiness evidence, and a new explicit owner approval. After an authorized merge, post-merge validation on `main` is required before `documentation-runtime-state-drift` can close.
 
 ## Progress Lifecycle Evidence
 
