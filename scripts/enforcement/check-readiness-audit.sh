@@ -138,8 +138,11 @@ for field in [
     value = field_value(metadata, field)
     require(len(value) >= 3, f'audit metadata missing concrete {field}: value')
 
-purpose = section_between('## Purpose and audience')
-require('without prior chat context' in purpose.lower(), 'Purpose and audience must state that prior chat context is not required')
+purpose = section_between('## Purpose and audience').lower()
+require(
+    re.search(r'\b(?:without|must\s+not\s+need)\s+prior\s+(?:chat\s+)?context\b', purpose),
+    'Purpose and audience must state that prior chat context is not required',
+)
 
 llm_use = section_between('## How an LLM must use this audit').lower()
 for term in ['verify live state', 'do not guess', 'gap', 'checklist', 'pull request', 'tests', 'owner approval']:
