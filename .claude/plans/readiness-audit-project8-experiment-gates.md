@@ -15,7 +15,7 @@
 | Templates | waiver — no project scaffold owns a focused update to the existing canonical readiness audit and gap registry |
 | Architecture guides | `docs/operations/runtime-telemetry-archive-plan.md`; `docs/operations/remote-multirepo-telemetry-hooks.md`; `docs/operations/project8-telemetry-preflight.md` |
 | Patterns | `patterns/observability/README.md`; `patterns/security/README.md`; `patterns/testing/README.md` |
-| External systems/connectors | GitHub; official Anthropic, GitHub, Vercel, Supabase, Prisma, Playwright, and W3C documentation |
+| External systems/connectors | GitHub |
 | Skills | `security-review`; `verification-before-completion`; `writing-plans` |
 | Validation gates | enforcement-tests; pr-policy; plan-policy; workflow-evidence-policy; connector-evidence-policy; capability-evidence-policy; documentation-asset-policy; semantic-cleanup-policy; import-cleanup-policy; telemetry-handoff-tests |
 | Evidence to check | Engineering OS main and PR #253; Project 8 main and PRs #1/#4/#6/#7/#8/#9; exact-head Actions; review threads; canonical audit/registry; official vendor contracts |
@@ -57,8 +57,9 @@ Update the canonical operational-readiness audit and known-gaps registry with th
 | `core/pattern-lifecycle.md` and `patterns/registry.yaml` | compared | The policy contradicts the executable YAML registry ownership model. |
 | `yotamfried-ux/project-8/CLAUDE.md` | checked | Local target guidance prescribes Engineering OS behavior. |
 | `yotamfried-ux/project-8/docs/engineering-os/claude-project-8-prompt.md` | checked | It explicitly discloses that the work is part of an experiment and coaches exact behavior. |
-| Project 8 PR #9 | checked | It removes tracked Markdown guidance and preserves machine-readable telemetry; exact-head product/policy checks passed and review threads are resolved, but it remains unmerged. |
-| Project 8 merged PRs #4 and #6 | checked | Baseline functionality and an isolated Postgres foundation exist; active runtime cutover and Vercel deployment remain incomplete. |
+| `yotamfried-ux/project-8/scripts/enforcement/check-no-markdown.py@51970629f3c3af32cb73bea0aab676874478248d` | checked | The product-only boundary rejects tracked Markdown guidance after PR #9 merges. |
+| `yotamfried-ux/project-8/server/prisma/postgres/schema.prisma@main` | checked | An isolated Postgres foundation exists, but it does not prove active Supabase runtime cutover. |
+| `yotamfried-ux/project-8/.github/workflows/baseline-ci.yml@main` | checked | Baseline product checks exist; Vercel deployment and complete feature E2E remain separate requirements. |
 
 ## Official Documentation Evidence
 
@@ -115,8 +116,8 @@ reason: this task updates existing canonical governance records and does not cre
 
 - source: GitHub connector for Engineering OS main/PRs #247/#249/#253/#254 and Project 8 main/PRs #1/#4/#6/#7/#8/#9.
 - action: inspected canonical and target files, reconciled merged state, checked exact-head workflows and all review threads, closed superseded Engineering OS PR #247, and opened ready-for-review PR #254.
-- result: canonical telemetry hardening is merged; seven current gaps are now registered; Project 8 main still contains experiment-coaching Markdown; PR #9 is product/policy green with zero unresolved threads but unmerged; Supabase runtime cutover, Vercel deployment, and complete feature/UI evidence remain incomplete.
-- decision: block the next run on product-only convergence and fresh telemetry preflight, while keeping provider/product acceptance as the workload completion contract.
+- result: `docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md` now register the current gaps; Project 8 main still contains experiment-coaching Markdown; PR #9 head `51970629f3c3af32cb73bea0aab676874478248d` is product/policy green with zero unresolved threads but unmerged; Supabase runtime cutover, Vercel deployment, and complete feature/UI evidence remain incomplete.
+- decision: blocked the next run on product-only convergence and fresh telemetry preflight, while keeping provider/product acceptance as the workload completion contract.
 - target: `.claude/plans/readiness-audit-project8-experiment-gates.md`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`.
 
 ## Template/Pattern Rating Evidence
@@ -162,7 +163,7 @@ Documentation and governance registry only. No telemetry bundle, secret, Product
 - [x] Every closure checklist requires code/config evidence, positive and negative tests, exact-head CI, review, merge, and post-merge validation where applicable.
 - [x] Project 8 experiment blockers include prompt/guidance contamination, PR #9 convergence, fresh-session telemetry, exact bundle selection, provider asset preservation, Supabase/Vercel direction, and product E2E evidence.
 - [x] Official documentation URLs and the decision derived from each are embedded in the audit.
-- [x] The first exact-head CI result was inspected and its real plan/registry failures were routed into the next fix loop.
+- [x] The first two exact-head CI results were inspected and their real plan/registry/readiness failures were routed into the next fix loop.
 
 ## Live External Gates Before Merge
 
@@ -171,5 +172,5 @@ The task is not complete and this PR must not merge until all named exact-head c
 ## Progress Lifecycle Evidence
 
 - start: `aad4519e27386c33d5d49f635776e9c78e8e8e04` created the plan before audit/registry edits.
-- middle: `27a0c5a5cf2bfc2d1f171101098d4e43620d2b42` and `1e5f49491b521b69cd0f79f4147ec7d5eef3c252` synchronized the registry and audit; first-run CI on `a467f8f2906c236c29adc448547973882b9d3749` exposed missing Route Plan evidence and invalid registry artifact paths, which this result loop corrects.
+- middle: `27a0c5a5cf2bfc2d1f171101098d4e43620d2b42` and `1e5f49491b521b69cd0f79f4147ec7d5eef3c252` synchronized the registry and audit; CI on `a467f8f2906c236c29adc448547973882b9d3749` and `150103f78a2531d4bc8e0bdedfa8555ff81f9e02` exposed missing Route Plan evidence, invalid registry artifact paths, broad source labels, connector over-declaration, and retained readiness-checker contract requirements, which this result loop corrects.
 - pre-merge: pending after the final exact-head CI, review, and evidence-only checkpoint.
