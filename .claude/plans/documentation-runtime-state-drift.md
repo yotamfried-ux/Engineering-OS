@@ -18,7 +18,7 @@
 | External systems/connectors | GitHub |
 | Skills | `verification-before-completion`; `writing-plans` |
 | Validation gates | documentation-hygiene fixtures; known-gaps; readiness; enforcement-tests; documentation, plan, workflow, connector, capability, cleanup, telemetry, pr-policy, live-state, review-thread, and post-merge gates |
-| Evidence to check | `CLAUDE.md`; `README.md`; `core/capability-registry.yaml`; `scripts/enforcement/MANIFEST.tsv`; telemetry plan/analyzer/importer owners; merge-readiness checker/tests; PR #255 head `97d56e2f5743b019145da600cf0914f6d092cd0f`; merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; PR #256 live head must be fetched from GitHub after every update. Head `7babd728d44eb6520eb0ce8a06a9c6f2b81a35ac` is the last verified audit-definition checkpoint before this plan update and is historical after any later commit. |
+| Evidence to check | `CLAUDE.md`; `README.md`; `core/capability-registry.yaml`; `scripts/enforcement/MANIFEST.tsv`; telemetry plan/analyzer/importer owners; merge-readiness checker/tests; PR #255 head `97d56e2f5743b019145da600cf0914f6d092cd0f`; merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; PR #256 live head must be fetched from GitHub after every update. Head `0b72af909765f4dd1e6423184e20b79571e6efac` is the last verified plan-reconciliation checkpoint before this update and is historical after any later commit. |
 | User decisions required | keep Project 8 and its prompt blocked; do not merge PR #256 without new explicit approval |
 
 ## Goal
@@ -72,13 +72,20 @@ PR #255 remains registered as a closed live claim. PR #256 now contains both its
 | `core/documentation-policy.md` | read | One owner plus deterministic fixtures. |
 | `core/capability-registry.yaml` | checked | Active `plan_level_write_gate`; old planned wording was stale. |
 | `scripts/enforcement/MANIFEST.tsv` | checked | Still describes the active capability registry as non-runtime; retained as an explicit open documentation drift item. |
-| `.claude/settings.json` and runtime patchers | checked | Required hooks can differ across checked-in, direct-mode, dispatcher, and generated-target surfaces; wiring parity is distinct from failure semantics. |
-| `scripts/enforcement/lib/hook-gate.sh` and nested enforcers | checked | Hard paths can fail open or skip missing required validators; tracked by `hard-hook-fail-closed`. |
-| `scripts/enforcement/lib/evidence.sh` and bypass consumers | checked | A truthy environment variable is not approval provenance. |
-| `patterns/registry.yaml`, domain README, and `docs/operations/template-pattern-ratings.tsv` | checked | Lifecycle state has independent contradictory owners; maturity evidence is a separate concern. |
-| telemetry exporter, handoff validator, importer, analyzer, and runbooks | checked | Import does not independently enforce the full checksum/identity contract; first-run and longitudinal semantics are mixed in active wording. |
-| `scripts/enforcement/check-merge-readiness.sh`, its fixture suite, and merge checklist | checked | Checker does not require expected head or deterministically select latest attempts despite the checklist's exact-head claim. |
-| Project 8 PR #9 boundary files and workflow | checked | Exact product-only boundary is strong; current required Azure workflow failure and fresh-session proof remain blockers. |
+| `.claude/settings.json` | checked | Checked-in Engineering OS settings are one of four required wiring surfaces. |
+| `scripts/monitoring/patch-settings-runtime-evidence.sh` | checked | Direct-mode installation can add runtime-evidence hooks that are absent from checked-in settings. |
+| `scripts/enforcement/lib/hook-gate.sh` | checked | Wrapper infrastructure failures can return success on hard paths. |
+| `scripts/enforcement/pre-tool-use-runtime-evidence.sh` | checked | Required nested validation can be conditionally skipped when a validator is absent. |
+| `scripts/enforcement/lib/evidence.sh` | checked | A truthy environment variable is not approval provenance. |
+| `patterns/registry.yaml` | checked | Registry lifecycle state conflicts with an independent ratings view. |
+| `docs/operations/template-pattern-ratings.tsv` | checked | Ratings can report active usage not represented by the registry. |
+| `scripts/monitoring/export-telemetry-run.py` | checked | Export creates bundle checksums and identity metadata. |
+| `scripts/monitoring/telemetry_handoff.py` | checked | Shared handoff validation verifies checksums and run identity. |
+| `scripts/monitoring/import-telemetry-run.py` | checked | Direct import does not independently invoke the full shared integrity contract. |
+| `scripts/monitoring/analyze-telemetry-archive.py` | checked | Active wording mixes first-run usefulness with later comparison requirements. |
+| `scripts/enforcement/check-merge-readiness.sh` | checked | Checker does not require expected head or deterministically select latest attempts. |
+| `scripts/enforcement/tests/test-operational-readiness-gates.sh` | checked | Existing merge-readiness fixtures omit head, timestamps, and rerun ordering. |
+| `https://github.com/yotamfried-ux/project-8/pull/9` | checked | Exact product-only boundary is strong; required Azure workflow failure and fresh-session proof remain blockers. |
 | `CLAUDE.md` | checked | Runtime and live-review/fallback wording reconciled. |
 | `README.md` | checked | Count snapshots replaced by live inventory links. |
 | `core/coderabbit-policy.md` | checked | Observed review and fallback are explicit branches. |
@@ -140,9 +147,9 @@ reason: this is a focused extension of canonical governance files and the existi
 ## Connector Usage Evidence
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, `yotamfried-ux/project-8`, `github/docs`, and `anthropics/claude-code`.
-- action: inspected runtime, enforcement, telemetry, pattern, merge, and target-boundary owners; refined canonical gap contracts; ran CI loops; read the exact failed gate and current review thread.
-- result: known-gaps validation passed after correcting the merge-readiness fixture path; readiness validation exposed two renamed canonical row terms and was corrected; PR review exposed this stale plan checkpoint and it is now reconciled.
-- decision: preserve strict validators and update canonical evidence instead of weakening gates or claiming closure.
+- action: inspected runtime, enforcement, telemetry, pattern, merge, and target-boundary owners; refined canonical gap contracts; ran CI loops; read the exact failed gates and current review thread.
+- result: commits `b55b9e6685150e9204e0349b5a8c06b1f3d074c9` through `0b72af909765f4dd1e6423184e20b79571e6efac` updated `.claude/plans/documentation-runtime-state-drift.md`, `docs/operations/known-gaps.tsv`, and `docs/operations/operational-readiness-audit.md`; known-gaps-live-state run 23 passed while enforcement run 1359 identified the remaining readiness-row issue.
+- decision: updated canonical evidence and kept strict validators unchanged instead of weakening gates or claiming closure.
 - target: `.claude/plans/documentation-runtime-state-drift.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`.
 
 ## Data / State Impact
@@ -166,8 +173,8 @@ The audit and registry now distinguish documentation truth, hook wiring, hard fa
 - goal: prevent active documentation or broad gap definitions from contradicting executable runtime and evidence truth.
 - hypothesis: one owner and one closure class per gap, backed by deterministic registry/audit synchronization, prevents false partial closure.
 - connectors: GitHub and official Anthropic, GitHub Docs, GitHub REST, and CodeRabbit sources.
-- steps: merge PR #255; inspect main; research; plan first; implement original documentation fixes; read all audit-touched owners; refine gaps; add two missing gaps; synchronize audit; run CI; fix the invalid test path and canonical row-name regressions; reconcile the new plan-review finding.
-- evidence: PR #255 head/merge; original plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; original reviewed head `e8afab8b20f9fa21e6cc63f0dc5df32809c4b0e8`; registry/audit commits `b55b9e6685150e9204e0349b5a8c06b1f3d074c9`, `e784cae2a3ca42345a77e467d412578db6c70464`, `e7356cb129dc149bf315486472ae50d19bf489ea`, and `7babd728d44eb6520eb0ce8a06a9c6f2b81a35ac`; known-gaps-live-state run 21 success; enforcement 1357 reached readiness after known-gaps passed.
+- steps: merge PR #255; inspect main; research; plan first; implement original documentation fixes; read all audit-touched owners; refine gaps; add two missing gaps; synchronize audit; run CI; fix the invalid test path and canonical row-name regressions; reconcile the plan-review finding; correct concrete source, connector, and lifecycle evidence.
+- evidence: PR #255 head/merge; original plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; original reviewed head `e8afab8b20f9fa21e6cc63f0dc5df32809c4b0e8`; registry/audit commits `b55b9e6685150e9204e0349b5a8c06b1f3d074c9`, `e784cae2a3ca42345a77e467d412578db6c70464`, `e7356cb129dc149bf315486472ae50d19bf489ea`, `7babd728d44eb6520eb0ce8a06a9c6f2b81a35ac`, and `0b72af909765f4dd1e6423184e20b79571e6efac`; known-gaps-live-state runs 21 and 23 succeeded; enforcement runs 1357 and 1359 reached readiness after known-gaps passed.
 - rejected: copied state, static reviewer assumptions, broad overlapping gaps, import-integrity inference, wrong-head CI inference, historical rewrites, and validator weakening.
 - result: canonical gap contracts and audit coverage are updated; exact-head validation must restart after this plan commit; PR #256 remains unmerged and no newly registered gap is closed.
 
@@ -185,6 +192,7 @@ The audit and registry now distinguish documentation truth, hook wiring, hard fa
 - [x] Registry, ledger, matrix, phases, checklists, priorities, and current scope were synchronized.
 - [x] CI-discovered registry and matrix contract errors were corrected without weakening validators.
 - [x] The stale PR #256 plan checkpoint finding was reconciled without pretending a self-referential commit SHA can be embedded in the commit itself.
+- [x] Concrete source, connector result/decision, and lifecycle evidence satisfy the existing workflow contracts.
 
 ## Live External Gates Before Merge
 
@@ -195,4 +203,5 @@ PR #256 remains unmerged. After this plan update, its exact live head, all named
 - start: commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7` recorded the original documentation-reconciliation scope, sources, alternatives, and validation before implementation.
 - mid: commit `836f1538a9873cc109d159adc790891debc35c60` recorded the original implementation checkpoint after all nine target paths and first CI diagnostics existed.
 - pre-review checkpoint: commit `890e535da3c5a69951986ad92d436113f6fc0c08` completed the original six review-driven checker and fixture corrections.
-- audit-refinement checkpoint: commits `b55b9e6685150e9204e0349b5a8c06b1f3d074c9` through `7babd728d44eb6520eb0ce8a06a9c6f2b81a35ac` recorded the user-authorized expanded gap definitions, new gap registration, and two CI-driven contract corrections. This is not merge readiness; a new exact-head validation and review checkpoint is required.
+- audit-refinement checkpoint: commits `b55b9e6685150e9204e0349b5a8c06b1f3d074c9` through `7babd728d44eb6520eb0ce8a06a9c6f2b81a35ac` recorded the user-authorized expanded gap definitions, new gap registration, and two CI-driven contract corrections.
+- pre-merge: commit `0b72af909765f4dd1e6423184e20b79571e6efac` recorded the plan-scope reconciliation after the last original code/config/test change; the subsequent documentation-only evidence corrections preserve the blocked, unmerged state.
