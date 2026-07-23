@@ -82,17 +82,17 @@ Extend `scripts/enforcement/hook-criticality.tsv` as the single owner for event,
 13. wrong settings target blocks;
 14. dependency unavailable blocks;
 15. deny converter failure blocks;
-16. unexpected exit blocks;
-17. signal termination blocks;
-18. soft-wrapped hard command is rejected;
-19. advisory failure remains explicitly fail-open;
-20. recorder failure is observable and records no false policy evidence;
-21. source behavior passes;
-22. official clean installed-target behavior passes.
+16. unexpected exit code blocks;
+17. subprocess signal/termination blocks;
+18. hard hook wrapped in soft failure is rejected;
+19. advisory hook failure remains fail-open only with explicit classification;
+20. recorder failure is observable and does not masquerade as policy success;
+21. source repository behavior passes;
+22. clean installed-target behavior passes.
 
 ## Installed-Target Validation
 
-Create a fresh temporary git target, execute `scripts/install-policy-gates.sh` and the existing installer suites with the branch checkout as `ENGINEERING_OS_HOME`, validate the rendered settings against the canonical contract, and execute representative valid, malformed, missing-enforcer, missing-interpreter, nested, advisory, and recorder cases from the target directory.
+Create a fresh temporary git target, execute `scripts/install-policy-gates.sh` and the repository's existing installer suites with the branch checkout as `ENGINEERING_OS_HOME`, validate the rendered settings against the canonical contract, and execute representative valid, malformed, missing-enforcer, missing-interpreter, nested, advisory, and recorder cases from the target directory.
 
 ## Documentation Asset Evidence
 
@@ -138,6 +138,8 @@ Create a fresh temporary git target, execute `scripts/install-policy-gates.sh` a
 ## Progress Lifecycle Evidence
 
 - start: exact `main` `105ecd0d0dc72aa847d11b193190689dbda0dda8`, open PR #261, canonical audit rows, settings, registry, wrapper, installer, tests, and official Claude Code blocking semantics were verified before the first implementation change.
+
+- mid: implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` reproduced missing-enforcer, malformed-input, converter, nested-validator, settings-wiring, recorder, and installed-target failures; CodeRabbit P1 findings exposed wrapped telemetry-recorder detection and missing Notion progress wiring, and both root causes were corrected in the implementation tree.
 
 ## Definition of Done — Implementation Branch
 
