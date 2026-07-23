@@ -18,9 +18,9 @@ for a human, must capture before any merge to `main`.
      --expected-head-sha "$expected_head_sha"
    ```
 
-   The JSON must retain the provider fields used to identify and order each required
-   run: `name`, `head_sha`, `run_started_at`, `updated_at`, `created_at`, `run_attempt`,
-   `id`, `status`, and `conclusion`. Either a top-level array or an object containing a
+   Every required run must retain `name`, `head_sha`, `run_attempt`, `id`, `status`, and
+   `conclusion`, plus at least one non-empty provider timestamp among `run_started_at`,
+   `updated_at`, and `created_at`. Either a top-level array or an object containing a
    `workflow_runs` array is accepted.
 
    The checker does not trust API list order or the first matching workflow name. It:
