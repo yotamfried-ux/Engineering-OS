@@ -42,16 +42,19 @@ Reject stale, wrong-head, incomplete, failed, or pending required-workflow evide
 - Reproduction commit `54a30ddc6938284032fbd272908d564aa6b9e9b5` added old success followed by newer failure while the old checker still accepted the first occurrence.
 - Enforcement run 1365 failed in group M–R after all earlier suites passed, proving stale-success acceptance before implementation.
 - Checker commit `4123adb3c4a19dea6d2bd9d04d7f7f031ff1d03e` added exact-head, chronology, attempt, ID, terminal-state, and fail-closed metadata validation.
-- Fixture commit `1b95ac486ce5938010449228a3cc9501f04f8e51` added the registered positive, negative, malformed-input, tie-breaker, and deterministic-output matrix.
+- Fixture commit `1b95ac486ce5938010449228a3cc9501f04f8e51` added positive, negative, malformed-input, tie-breaker, and deterministic-output coverage.
 - Runbook commit `3f350b8d0432f9a068261b039d97b50653d4670f` documented exact invocation and merge boundaries.
 - Enforcement run 1370 failed in group A–F because `scripts/enforcement/tests/test-clean-install-and-usage.sh` still used legacy evidence and omitted the expected-head argument.
-- Consumer commit `ca737eaa56a7a5a9cde6daa9ddf7726957f23820` synchronized clean-install evidence and invocation.
-- Enforcement run 1373 passed A–F and G–L, then exposed a fixture defect in M–R: the uppercase-SHA test used digits only, so uppercasing did not change its value.
-- Fixture correction commit `7fc3d886824d1a5891491b45008ee4e11ae4a3e6` changed only the test SHAs to letter-containing lowercase values.
-- Enforcement run 1374 passed all dedicated suites, groups A–Z, the workflow loop over every `scripts/enforcement/tests/test-*.sh`, and all remaining contracts on `7fc3d886824d1a5891491b45008ee4e11ae4a3e6`.
-- Self-review found one documentation mismatch: the runbook listed all three timestamp fields as mandatory although the checker requires at least one according to precedence. Commit `14356ebd259e691f4b289c1041453c8285426d9c` aligned the prose without changing runtime behavior.
+- Consumer commit `ca737eaa56a7a5a9cde6daa9ddf7726957f23820` synchronized clean-install evidence and invocation after scope expansion commit `0510b39927f89812d805cd50d7eb3c4394079858`.
+- Enforcement run 1373 passed A–L, then exposed a fixture defect in M–R: the uppercase-SHA test used digits only, so uppercasing did not change its value.
+- Fixture correction commit `7fc3d886824d1a5891491b45008ee4e11ae4a3e6` changed only test SHA values; run 1374 then passed all dedicated suites, groups A–Z, every `scripts/enforcement/tests/test-*.sh`, and all remaining contracts.
+- Self-review found that the runbook listed all three timestamp fields as mandatory although runtime requires at least one by precedence. Commit `14356ebd259e691f4b289c1041453c8285426d9c` aligned the prose.
+- Mid-checkpoint commit `419060be0ce73ebaca09150060a97792e5a01dc5` started exact-head revalidation after the final documentation correction.
+- Enforcement run 1376 on `419060be0ce73ebaca09150060a97792e5a01dc5` passed every dedicated suite, groups A–Z, the loop over every enforcement test file, and all remaining contracts.
+- CodeRabbit review produced two actionable threads: the timestamp wording and the missing post-consumer pre-merge checkpoint. The timestamp finding is fixed by `14356ebd259e691f4b289c1041453c8285426d9c`; this commit records the required later pre-merge checkpoint. Both threads were outdated but still unresolved at the checkpoint start and must be replied to and explicitly resolved.
+- Latest pr-policy run 1661 on `419060be0ce73ebaca09150060a97792e5a01dc5` failed at live review-thread validation while those two CodeRabbit threads remained unresolved. This is not accepted as merge-ready evidence; a fresh exact-head run is required after explicit resolution.
 
-## Validation Plan
+## Validation Matrix
 
 - old success + new failure → fail;
 - old failure + new success → pass;
@@ -72,7 +75,7 @@ Reject stale, wrong-head, incomplete, failed, or pending required-workflow evide
 | `core/task-router.md` | read | Governance and infra/CI route selected. |
 | `core/workflow.md` | read | Plan-first Experiment → Fix → Experiment applies. |
 | `core/quality-gates.md` | read | Fresh focused, negative, wider, and installed-target evidence is mandatory. |
-| `core/git-policy.md` | read | Lines governing merge already require running and documenting this checker on the exact PR head before a merge API call; explicit owner approval remains separate. |
+| `core/git-policy.md` | read | Merge policy already requires running and documenting this checker on the exact PR head before a merge API call; explicit owner approval remains separate. |
 | `core/documentation-policy.md` | read | CLI and operator runbook update together. |
 | `core/hooks-policy.md` | read | Deterministic safety claims require executable validation. |
 | `core/connector-policy.md` | read | Repository owners and official provider sources precede changes. |
@@ -82,10 +85,10 @@ Reject stale, wrong-head, incomplete, failed, or pending required-workflow evide
 | `docs/operations/known-gaps.tsv` | checked | P0 closure requires exact head, latest attempt, fixtures, live wiring, CI, review, approved merge, and post-merge proof. |
 | `docs/operations/operational-readiness-audit.md` | checked | This is Phase 0 item 1. |
 | `scripts/enforcement/check-merge-readiness.sh` | checked | Old first-occurrence logic lacked head and chronology validation; the new implementation fails closed. |
-| `scripts/enforcement/tests/test-operational-readiness-gates.sh` | checked | Focused owner contains registered ordering, metadata, and determinism fixtures. |
+| `scripts/enforcement/tests/test-operational-readiness-gates.sh` | checked | Focused owner contains ordering, metadata, malformed-input, and determinism fixtures. |
 | `scripts/enforcement/tests/test-clean-install-and-usage.sh` | checked | Consumer supplies complete exact-head run objects and mandatory CLI argument. |
 | `scripts/enforcement/check-known-gaps-live-state.py` | checked | Canonical timestamp/attempt/ID precedence is reused. |
-| `.github/workflows/enforcement-tests.yml` | checked | Dedicated groups and a loop over every enforcement test file are live; no standalone `run-all-tests.sh` exists on the exact head. |
+| `.github/workflows/enforcement-tests.yml` | checked | Dedicated groups and the loop over every enforcement test file are live; no standalone `run-all-tests.sh` exists on the exact head. |
 | `docs/operations/main-required-checks.md` | checked | Checker remains required-workflow owner. |
 | `https://docs.github.com/en/rest/actions/workflow-runs` | read | Official run objects expose required identity, chronology, attempt, status, and conclusion fields. |
 | `https://github.com/actions/github-script/blob/main/README.md` | read | Official Octokit and pagination support are available. |
@@ -94,7 +97,7 @@ Reject stale, wrong-head, incomplete, failed, or pending required-workflow evide
 
 - internal: `docs/operations/merge-readiness-checklist.md`, `core/git-policy.md`, `docs/operations/main-required-checks.md`, `scripts/enforcement/check-known-gaps-live-state.py`, and the two fixture suites define operator, merge-decision, ordering, and consumer contracts.
 - context7: Context7 was not required because the trust boundary is GitHub REST metadata; official GitHub Actions REST and `actions/github-script` sources were checked directly.
-- decision: selected exact-head filtering plus timestamp, `run_attempt`, and run-ID ordering, and updated the runbook to state the precise “at least one timestamp” contract.
+- decision: selected exact-head filtering plus timestamp, `run_attempt`, and run-ID ordering, and updated the runbook to state the precise at-least-one timestamp contract.
 
 ## Template/Pattern Rating Evidence
 
@@ -114,10 +117,10 @@ Reject stale, wrong-head, incomplete, failed, or pending required-workflow evide
 
 ## Connector Usage Evidence
 
-- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PRs #256/#257, Actions runs 1363–1374, workflow artifact 8551390559, exact file diffs, and CodeRabbit status comments.
-- action: verified live state; read policies, checker, every known caller, workflows, audit, patterns, official sources, CI diagnostics, diff, comments, and review threads; implemented and corrected the result loop.
-- result: run 1374 passed the full enforcement workflow on `7fc3d886824d1a5891491b45008ee4e11ae4a3e6`; self-review then produced documentation-only commit `14356ebd259e691f4b289c1041453c8285426d9c`, whose exact-head validation and manual CodeRabbit review are now active.
-- decision: updated the actual consumers and documentation rather than weakening the checker, trusting list order, or adding a compatibility bypass.
+- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PRs #256/#257, Actions runs 1363–1376, exact file diffs, CodeRabbit comments, and two live review threads.
+- action: verified live state; read policies, checker, every known caller, workflows, audit, patterns, official sources, CI diagnostics, diff, comments, and review threads; implemented and corrected the full result loop.
+- result: enforcement run 1376 passed the complete workflow on `419060be0ce73ebaca09150060a97792e5a01dc5`; CodeRabbit findings map to documentation commit `14356ebd259e691f4b289c1041453c8285426d9c` and this chronological pre-merge checkpoint.
+- decision: updated the actual consumers, fixtures, runbook, and lifecycle evidence rather than weakening the checker, trusting list order, or adding a compatibility bypass.
 - target: `scripts/enforcement/check-merge-readiness.sh`; `scripts/enforcement/tests/test-operational-readiness-gates.sh`; `scripts/enforcement/tests/test-clean-install-and-usage.sh`; `docs/operations/merge-readiness-checklist.md`.
 
 ## Alternatives
@@ -127,7 +130,7 @@ Reject stale, wrong-head, incomplete, failed, or pending required-workflow evide
 - Trust PR-body SHA alone — rejected because it does not bind each workflow-run object.
 - Accept any exact-head success — rejected because later failure or pending state invalidates stale green.
 - Add another workflow registry or automate approval — rejected because canonical ownership and Manual-by-design approval remain required.
-- Add a new merge hook — rejected because `core/git-policy.md` already wires the checker into the human merge decision while merge authorization itself must remain human.
+- Add a new merge hook — rejected because `core/git-policy.md` already wires the checker into the human merge decision while authorization must remain human.
 
 ## Data / Integration Impact
 
@@ -145,7 +148,7 @@ PR #256 remains open and owner-gated. PR #257 is stacked from exact head `fa52f6
 - `source.github-repo-read` — live state, callers, runs, jobs, logs, artifacts, comments, diffs, and threads inspected.
 - `validation.policy-change-has-validator` — focused and clean-install fixtures own the behavior.
 - `validation.actions-checked` — exact-head Actions refreshed at every checkpoint.
-- `validation.coderabbit-policy` — auto-review skip was proven for the stacked base; a manual CodeRabbit review was triggered and remains pending rather than being replaced prematurely by fallback.
+- `validation.coderabbit-policy` — manual review was triggered after the stacked-base auto-review skip; both findings were verified against current code and mapped to concrete corrections before resolution.
 
 ## Skill Evidence
 
@@ -158,25 +161,25 @@ PR #256 remains open and owner-gated. PR #257 is stacked from exact head `fa52f6
 - goal: prevent stale or wrong-head workflow evidence from supporting a merge.
 - hypothesis: exact-head filtering and deterministic chronology/attempt/ID ordering reject stale green only when every caller supplies provider identity metadata.
 - connectors: GitHub and official GitHub sources.
-- steps: verify; plan; reproduce; implement; expand fixtures; run CI; correct clean-install consumer; rerun; correct fixture defect; run all enforcement; inspect diff; trigger manual CodeRabbit; align runbook wording; start final-head validation.
-- evidence: reproduction run 1365; consumer failure run 1370; fixture failure run 1373; full success run 1374; implementation/correction commits recorded above.
+- steps: verify; plan; reproduce; implement; expand fixtures; run CI; correct clean-install consumer; rerun; correct fixture defect; run all enforcement; inspect diff; trigger manual CodeRabbit; align runbook wording; revalidate exact head; record pre-merge evidence.
+- evidence: reproduction run 1365; consumer failure run 1370; fixture failure run 1373; full successes runs 1374 and 1376; review findings and implementation/correction commits recorded above.
 - rejected: implicit list order, optional expected head, compatibility fallback, duplicate registry, automated approval, merge-hook scope expansion, and validator weakening.
-- result: implementation, consumers, focused/wider regression evidence, and documentation are complete; final exact-head CI/review evidence remains active.
+- result: implementation, consumers, focused/wider regression evidence, documentation, and chronological pre-merge evidence are complete; thread resolution and a fresh final-head workflow set remain active.
 
-## Definition of Done — Final-Correction Validation Checkpoint
+## Definition of Done — Pre-Merge Evidence Checkpoint
 
 - [x] Live stale-success failure reproduced before implementation.
 - [x] Exact-head latest-attempt checker committed.
 - [x] Positive, negative, malformed-input, attempt, tie-breaker, and determinism fixtures committed.
 - [x] Clean-install consumer synchronized after a live failure.
 - [x] Operator runbook aligned with runtime metadata semantics.
-- [x] Dedicated suites, groups A–Z, and every enforcement test file passed on pre-documentation head `7fc3d886824d1a5891491b45008ee4e11ae4a3e6`.
-- [x] Manual CodeRabbit review triggered after auto-review skip was proven.
-- [x] A chronological mid checkpoint records the final documentation correction before final CI/review.
+- [x] Dedicated suites, groups A–Z, every enforcement test file, and all remaining contracts passed on exact head `419060be0ce73ebaca09150060a97792e5a01dc5` in run 1376.
+- [x] CodeRabbit findings verified and mapped to concrete fixes.
+- [x] A separate chronological pre-merge checkpoint was committed after the final code/test/documentation change.
 
 ## Current Completion State
 
-Implementation and known consumer synchronization are complete. Final exact-head CI after `14356ebd259e691f4b289c1041453c8285426d9c`, current-head external review, final PR-body/Operational Work History synchronization, owner approval, merge, post-merge validation, and canonical gap closure remain incomplete.
+Implementation and pre-merge evidence are complete. The two verified CodeRabbit threads still require explicit replies/resolution, and every required workflow must pass again on this new plan-only head. Explicit owner approval, merge, post-merge validation, and canonical gap closure remain incomplete.
 
 ## Live External Gates Before Closure
 
@@ -190,4 +193,5 @@ The gap remains `open`. Even a green ready-for-review PR cannot close it without
 - mid: commits `4123adb3c4a19dea6d2bd9d04d7f7f031ff1d03e`, `1b95ac486ce5938010449228a3cc9501f04f8e51`, and `3f350b8d0432f9a068261b039d97b50653d4670f` implemented the checker, focused fixtures, and runbook.
 - mid: run 1370 exposed clean-install consumer drift; plan commit `0510b39927f89812d805cd50d7eb3c4394079858` expanded scope before consumer commit `ca737eaa56a7a5a9cde6daa9ddf7726957f23820`.
 - mid: run 1373 exposed the case-insensitive fixture error; commit `7fc3d886824d1a5891491b45008ee4e11ae4a3e6` corrected only the fixture and run 1374 passed the full workflow.
-- mid: self-review produced documentation-only commit `14356ebd259e691f4b289c1041453c8285426d9c`; this checkpoint starts exact-head revalidation and preserves final `pre-merge` for a later separate commit after CI and review.
+- mid: self-review produced documentation-only commit `14356ebd259e691f4b289c1041453c8285426d9c`; commit `419060be0ce73ebaca09150060a97792e5a01dc5` started exact-head revalidation.
+- pre-merge: run 1376 passed the complete enforcement workflow on `419060be0ce73ebaca09150060a97792e5a01dc5`; CodeRabbit findings were verified against current code, and this separate plan commit records the post-change validation state without claiming approval, merge, post-merge proof, or gap closure.
