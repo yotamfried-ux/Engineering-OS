@@ -9,7 +9,7 @@
 | Domain tags | documentation-as-code, runtime truth, capabilities, review governance, telemetry integrity, merge evidence, testing, operational readiness |
 | Plan Scope | standard |
 | Planning Mode | user-authorized continuation after merged PR #255; implementation PR remains owner-gated |
-| Target paths | `.claude/plans/documentation-runtime-state-drift.md`; `CLAUDE.md`; `README.md`; `core/coderabbit-policy.md`; `scripts/enforcement/check-documentation-hygiene.sh`; `scripts/enforcement/tests/test-documentation-hygiene.sh`; `docs/operations/live-state-claims.json`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md` |
+| Target paths | `.claude/plans/documentation-runtime-state-drift.md`; `CLAUDE.md`; `README.md`; `core/coderabbit-policy.md`; `scripts/enforcement/MANIFEST.tsv`; `scripts/enforcement/check-documentation-hygiene.sh`; `scripts/enforcement/tests/test-documentation-hygiene.sh`; `docs/operations/documentation-ownership.tsv`; `docs/operations/live-state-claims.json`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md` |
 | Task-router evidence | `core/task-router.md` routes entrypoint, policy, validator, and readiness changes as `engineering_os_governance`. |
 | Workflow evidence | `core/workflow.md`, `core/quality-gates.md`, `core/git-policy.md`, `core/documentation-policy.md`, and `core/coderabbit-policy.md` require plan-first work, fixtures, exact-head review, owner approval, and post-merge proof. |
 | Templates | waiver — this extends existing canonical documentation and enforcement paths |
@@ -177,6 +177,7 @@ The audit and registry now distinguish documentation truth, hook wiring, hard fa
 - evidence: PR #255 head/merge; original plan commit `13d6e8456b6c75db03eb31a8393a505adc3e8ac7`; original reviewed head `e8afab8b20f9fa21e6cc63f0dc5df32809c4b0e8`; registry/audit commits `b55b9e6685150e9204e0349b5a8c06b1f3d074c9`, `e784cae2a3ca42345a77e467d412578db6c70464`, `e7356cb129dc149bf315486472ae50d19bf489ea`, `7babd728d44eb6520eb0ce8a06a9c6f2b81a35ac`, `0b72af909765f4dd1e6423184e20b79571e6efac`, `dfe82f93d9f039eb7aa2b8e2c3d4fb723c65c100`, and `9740ad810198d28e287872497a88dec9e7a2c95f`; known-gaps-live-state runs 21 and 23 succeeded; enforcement runs 1357 and 1359 reached readiness after known-gaps passed.
 - rejected: copied state, static reviewer assumptions, broad overlapping gaps, import-integrity inference, wrong-head CI inference, historical rewrites, and validator weakening.
 - result: canonical gap contracts and audit coverage are updated; exact-head validation must restart after this plan commit; PR #256 remains unmerged and no newly registered gap is closed.
+- follow-up: this session's continuation closes the remaining MANIFEST.tsv and telemetry-terminology checklist items (see "Continuation checkpoint" below) on branch `claude/operational-readiness-eos-c6ykfs`; exact-head CI, review, owner-approved merge, and post-merge validation remain before `documentation-runtime-state-drift` closes.
 
 ## Definition of Done
 
@@ -205,3 +206,42 @@ PR #256 remains unmerged. After this plan update, its exact live head, all named
 - pre-review checkpoint: commit `890e535da3c5a69951986ad92d436113f6fc0c08` completed the original six review-driven checker and fixture corrections.
 - audit-refinement checkpoint: commits `b55b9e6685150e9204e0349b5a8c06b1f3d074c9` through `7babd728d44eb6520eb0ce8a06a9c6f2b81a35ac` recorded the user-authorized expanded gap definitions, new gap registration, and two CI-driven contract corrections.
 - pre-merge: commit `0b72af909765f4dd1e6423184e20b79571e6efac` recorded the plan-scope reconciliation after the last original code/config/test change; the subsequent documentation-only evidence corrections preserve the blocked, unmerged state.
+- continuation-start: recorded this session's scope on branch `claude/operational-readiness-eos-c6ykfs` before any code/config/test change — MANIFEST.tsv reconciliation, telemetry-terminology guard, canonical ownership rows, and bidirectional fixtures for the remaining `documentation-runtime-state-drift` checklist items.
+
+## Continuation checkpoint — MANIFEST.tsv, telemetry terminology, ownership, fixtures (this session)
+
+PR #257/#259 closed `merge-readiness-exact-head-and-attempt-ordering` (verified live: `enforcement-tests` 1388, `known-gaps-live-state` 32, `post-merge-validation` 90 all `success` on merge commit `df01a8fea10df999572ab11466613e31a8c1a003`, which is current `main`). This continuation closes checklist items 4–7 of `documentation-runtime-state-drift` (bringing completion to 7 of 8) on branch `claude/operational-readiness-eos-c6ykfs`, based on that exact `main` commit.
+
+### Source of Truth Checks (this continuation)
+
+| Source | Status | Finding / decision |
+|---|---|---|
+| `scripts/enforcement/MANIFEST.tsv` row 23 | checked | Said `NONE ... non-runtime, no enforcer yet` for `core/capability-registry.yaml`, contradicting both the registry itself (`runtime_enabled: true`) and `CLAUDE.md`'s navigation table (`test-capability-registry.sh (coverage), active plan-level write gate`). |
+| `scripts/enforcement/tests/test-capability-registry.sh` | checked | Exists, validates registry content/coverage, but never reads `MANIFEST.tsv` — nothing previously caught the drift above. |
+| `docs/operations/project8-telemetry-preflight.md`, `runtime-telemetry-archive-plan.md`, `runtime-telemetry-archive-audit-checklist.md`, `scripts/monitoring/analyze-telemetry-archive.py` | checked | First-run vs longitudinal vocabulary is already consistent across all four; no existing contradiction found, but nothing enforced that it stay that way. |
+| `docs/operations/documentation-ownership.tsv` | checked | Had no row for `scripts/enforcement/MANIFEST.tsv` or telemetry terminology; added `enforcer-registry` (owner `hooks-governance`) and `telemetry-terminology` (owner `observability-governance`). |
+
+### Implementation
+
+1. `scripts/enforcement/MANIFEST.tsv` — row 23 now names `scripts/enforcement/tests/test-capability-registry.sh` and describes the active plan-level write gate, matching `CLAUDE.md` and the registry.
+2. `scripts/enforcement/check-documentation-hygiene.sh` — added a bidirectional MANIFEST↔registry check (fails if MANIFEST says NONE/non-runtime while the registry is active, or if MANIFEST claims an active enforcer while the registry is inactive), and a telemetry-terminology guard (fails a longitudinal-sufficiency claim without nearby multi-run evidence, or a first-run claim that wrongly demands a second run).
+3. `scripts/enforcement/tests/test-documentation-hygiene.sh` — added fixture files (MANIFEST.tsv + 4 telemetry docs) to the base `make_repo`, plus 4 new fixtures/assertions: `manifest_stale_rejects_non_runtime_wording`, `manifest_overclaim_rejects_active_enforcer`, `telemetry_longitudinal_unsupported_fails`, `telemetry_first_run_overreach_fails`.
+4. `docs/operations/documentation-ownership.tsv` — added `enforcer-registry` and `telemetry-terminology` rows.
+5. `docs/operations/operational-readiness-audit.md` — checked off checklist items 4–7 for `gap:documentation-runtime-state-drift` with concrete evidence; updated the matrix row and "Current audit scope" narrative; left checklist item 8 (exact-head CI/review/merge/post-merge) unchecked.
+6. `docs/operations/known-gaps.tsv` — updated row 44 notes to describe this branch's contribution; status remains `open`.
+
+No historical `.claude/plans/*.md` or past checkpoint evidence was rewritten.
+
+### Validation (local, this session)
+
+- `bash scripts/enforcement/check-documentation-hygiene.sh --root "$(pwd)" --manifest docs/operations/documentation-ownership.tsv` → passed (27 ownership rows).
+- `bash scripts/enforcement/tests/test-documentation-hygiene.sh` → all 24 fixtures passed, including the 4 new ones, both directions.
+- `bash scripts/enforcement/tests/test-capability-registry.sh` → passed, unaffected.
+- `bash scripts/enforcement/check-known-gaps.sh` → passed (48 gaps).
+- `bash scripts/enforcement/check-readiness-audit.sh` → passed (55 readiness rows).
+- `bash scripts/enforcement/tests/test-known-gaps.sh`, `test-readiness-audit.sh` → passed.
+- Full local loop over every `scripts/enforcement/tests/test-*.sh` → all green, no regressions.
+
+### Remaining before closure
+
+Exact-head CI on the pushed branch, CodeRabbit review (or documented structured fallback) with every thread resolved, explicit Yotam approval before merge, then post-merge validation of `enforcement-tests`/`known-gaps-live-state`/`post-merge-validation` on the new `main` commit — only then does `known-gaps.tsv` flip to `closed` and checklist item 8 gets checked, following the same two-step (implementation PR → closure PR) pattern already used for `merge-readiness-exact-head-and-attempt-ordering` (PR #257 → PR #259).
