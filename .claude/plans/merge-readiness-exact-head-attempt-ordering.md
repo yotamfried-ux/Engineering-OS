@@ -48,7 +48,7 @@ No Project 8, provider, secret, deployment, branch-protection, database, or raw 
 
 - Plan commit `404c5d8330619052eb362b9812dd8d8aa4584411` preceded all tests and code.
 - Reproduction commit `54a30ddc6938284032fbd272908d564aa6b9e9b5` adds old success followed by newer failure while the checker still accepts the first occurrence.
-- PR #257 Actions provide the real reproduction environment.
+- PR #257 Actions run 1365 failed in enforcement group M–R after groups A–L and all earlier dedicated suites passed, isolating the changed `test-operational-readiness-gates.sh` fixture before implementation.
 - The minimal fix adds mandatory exact-head metadata, deterministic latest selection, stable diagnostics, all registered fixtures, and runbook guidance.
 
 ## Validation Plan
@@ -86,26 +86,36 @@ No Project 8, provider, secret, deployment, branch-protection, database, or raw 
 | `.github/workflows/pr-policy.yml` | read | Live PR head and CI history are captured. |
 | `.github/workflows/enforcement-tests.yml` | read | Focused suite runs in group M-R and full suite. |
 | `docs/operations/main-required-checks.md` | checked | Checker owns the workflow set. |
-| `https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2026-03-10` | read | Official run objects expose required metadata. |
+| `https://docs.github.com/en/rest/actions/workflow-runs` | read | Official run objects expose required metadata. |
 | `https://github.com/actions/github-script/blob/main/README.md` | read | Official Octokit and pagination support are available. |
 
 ## Documentation Asset Evidence
 
 - internal: `docs/operations/merge-readiness-checklist.md`, `docs/operations/main-required-checks.md`, and `scripts/enforcement/check-known-gaps-live-state.py` define the operator contract, workflow owner, and ordering precedent.
-- context7: Context7 was not required because the boundary is GitHub REST metadata; official `https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2026-03-10` and `https://github.com/actions/github-script/blob/main/README.md` were checked directly.
+- context7: Context7 was not required because the boundary is GitHub REST metadata; official `https://docs.github.com/en/rest/actions/workflow-runs` and `https://github.com/actions/github-script/blob/main/README.md` were checked directly.
 - decision: The official fields and internal precedent selected exact-head filtering plus timestamp, `run_attempt`, and run-ID ordering instead of list order.
+
+## Template/Pattern Rating Evidence
+
+- asset: `patterns/testing/README.md`
+- asset: `patterns/security/README.md`
+- asset: `patterns/observability/README.md`
+- rating: useful for this task — the fixtures pattern, boundary validation guidance, and structured metadata/diagnostic guidance directly constrain implementation and tests.
+- outcome: adopted Arrange/Act/Assert-style isolated fixtures, fail-closed input validation, and deterministic structured diagnostics; no production observability backend is added.
+- decision: keep these three patterns as implementation guidance without promoting their maturity or inventing real-use evidence.
+- confidence: high for local applicability; no claim is made about pattern lifecycle maturity.
 
 ## Connector Evidence
 
 | Connector | Status | Evidence |
 |---|---|---|
-| GitHub | used | Live main, PR #256, PR #257, commits, Actions runs/jobs/logs, review threads, files, and official GitHub repositories were inspected. |
+| GitHub | used | Live main, PR #256, PR #257, commits, Actions runs/jobs/logs/artifacts, review threads, files, and official GitHub repositories were inspected. |
 
 ## Connector Usage Evidence
 
-- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #256, PR #257, Actions runs 1363/1364, and exact repository files.
-- action: verified state and read policies, checker, fixtures, workflows, audit, patterns, official sources, and CI findings.
-- result: PR #257 head `6904dbae62d037dee653dc00607033537497e6df` preserved the reproduction and reduced side failures to the lifecycle checkpoint contract in `.claude/plans/merge-readiness-exact-head-attempt-ordering.md`.
+- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #256, PR #257, Actions runs 1363–1365, workflow evidence artifact 8551390559, and exact repository files.
+- action: verified state and read policies, checker, fixtures, workflows, audit, patterns, official sources, CI steps, and uploaded diagnostics.
+- result: run 1365 at head `7e9895a5b0cfdea906351e0c05312110772725f2` failed only after reaching enforcement group M–R; artifact `workflow-evidence-log-29975946281` identified the remaining source URL and pattern-rating evidence defects in this Route Plan.
 - decision: selected canonical ordering and corrected evidence-only failures without weakening validators or starting implementation early.
 - target: `scripts/enforcement/check-merge-readiness.sh`; `scripts/enforcement/tests/test-operational-readiness-gates.sh`; `docs/operations/merge-readiness-checklist.md`.
 
@@ -131,7 +141,7 @@ PR #256 remains open and owner-gated. Per the user's direction to continue indep
 - `routing.task-router-read` — `engineering_os_governance` selected.
 - `workflow.workflow-read` — result loop and owner-gated merge applied.
 - `plan.route-plan-before-write` — commit `404c5d8330619052eb362b9812dd8d8aa4584411` preceded test changes.
-- `source.github-repo-read` — live state, files, runs, jobs, logs, and threads inspected.
+- `source.github-repo-read` — live state, files, runs, jobs, logs, artifacts, and threads inspected.
 - `validation.policy-change-has-validator` — isolated regression fixture precedes implementation.
 - `validation.actions-checked` — exact-head Actions refreshed after each update.
 - `validation.coderabbit-policy` — live review required; fallback only on proven unavailability.
@@ -147,10 +157,10 @@ PR #256 remains open and owner-gated. Per the user's direction to continue indep
 - goal: prevent stale or wrong-head workflow evidence from supporting a merge.
 - hypothesis: exact-head filtering plus deterministic chronology/attempt/ID ordering rejects stale green regardless of input order.
 - connectors: GitHub and official GitHub sources.
-- steps: verify; route; plan; add reproduction; open PR #257; diagnose and correct evidence-only gate findings; record ordered lifecycle checkpoints.
-- evidence: main `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; PR #256 head `fa52f62894c97bd4173830a0b5581705676352f9`; plan `404c5d8330619052eb362b9812dd8d8aa4584411`; reproduction `54a30ddc6938284032fbd272908d564aa6b9e9b5`; runs 1363/1364.
+- steps: verify; route; plan; add reproduction; open PR #257; diagnose evidence gates; capture the isolated group M–R failure; complete source and pattern evidence.
+- evidence: main `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; PR #256 head `fa52f62894c97bd4173830a0b5581705676352f9`; plan `404c5d8330619052eb362b9812dd8d8aa4584411`; reproduction `54a30ddc6938284032fbd272908d564aa6b9e9b5`; enforcement run 1365; workflow evidence artifact 8551390559.
 - rejected: implicit list order, prose-only binding, any-success acceptance, duplicate registry, automated approval, and validator weakening.
-- result: test-only reproduction and required evidence are ready for an exact Actions failure; implementation remains absent.
+- result: a live pre-fix failure is captured and plan evidence is complete; checker implementation remains absent.
 
 ## Definition of Done — Test-Only Reproduction Stage
 
@@ -160,7 +170,7 @@ PR #256 remains open and owner-gated. Per the user's direction to continue indep
 - [x] Route Plan committed before tests/code.
 - [x] Isolated test-only reproduction committed before implementation.
 - [x] Evidence-only policy findings corrected without validator changes.
-- [x] Focused reproduction stage includes a concrete verification signal in Actions run 1364.
+- [x] Focused reproduction failure isolated to enforcement group M-R in Actions run 1365.
 
 ## Current Completion State
 
@@ -173,5 +183,5 @@ The gap remains `open`. Green implementation is insufficient without explicit Yo
 ## Progress Lifecycle Evidence
 
 - start: commit `404c5d8330619052eb362b9812dd8d8aa4584411` recorded scope, sources, root cause, alternatives, validation, and branch boundary before tests or code.
-- mid: test-only commit `54a30ddc6938284032fbd272908d564aa6b9e9b5` introduced the isolated stale-success reproduction, and runs 1363/1364 exposed evidence-contract friction before implementation.
-- pre-merge: PR #257 test-only head contains the plan-first fixture, corrected source/connector evidence, and an explicit merge prohibition; this checkpoint records reproduction readiness only.
+- mid: test-only commit `54a30ddc6938284032fbd272908d564aa6b9e9b5` introduced the isolated stale-success reproduction, and runs 1363–1365 exposed evidence-contract friction before implementation.
+- pre-merge: PR #257 test-only stage contains the plan-first fixture, live isolated failure, corrected source/connector/pattern evidence, and explicit merge prohibition; this checkpoint records reproduction readiness only.
