@@ -15,7 +15,7 @@
 | Templates | Existing canonical hook wrapper, registry, settings, and installer patterns are sufficient; no new template is introduced. |
 | Architecture guides | `core/hooks-policy.md`; `docs/operations/operational-readiness-audit.md`; `docs/operations/known-gaps.tsv` |
 | Patterns | Existing wrapper/enforcer/registry architecture under `scripts/enforcement/`; no parallel policy registry. |
-| External systems/connectors | GitHub connector for exact repository, branch, PR, workflow, review, and compare evidence; official Claude Code documentation for hook input/output and blocking semantics. |
+| External systems/connectors | GitHub |
 | Skills | `writing-plans`; `verification-before-completion`; `security-review` |
 | Validation gates | focused wrapper tests; canonical classification/contract tests; nested-validator tests; settings/manifest tests; official clean-target installer tests; full enforcement suite; shell/Python checks; exact-head CI; current and outdated review-thread reconciliation |
 | Evidence to check | `main` SHA `105ecd0d0dc72aa847d11b193190689dbda0dda8`; PR #261 state; `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/install-policy-gates.sh`; `scripts/use-in-project.sh`; `https://code.claude.com/docs/en/hooks`; exact PR workflow and review state |
@@ -83,12 +83,12 @@ Extend `scripts/enforcement/hook-criticality.tsv` as the single owner for event,
 14. dependency unavailable blocks;
 15. deny converter failure blocks;
 16. unexpected exit code blocks;
-17. subprocess signal/termination blocks;
-18. hard hook wrapped in soft failure is rejected;
-19. advisory hook failure remains fail-open only with explicit classification;
-20. recorder failure is observable and does not masquerade as policy success;
-21. source repository behavior passes;
-22. clean installed-target behavior passes.
+17. signal termination blocks;
+18. soft-wrapped hard command is rejected;
+19. advisory failure remains explicitly fail-open;
+20. recorder failure is observable and records no false policy evidence;
+21. source behavior passes;
+22. official clean installed-target behavior passes.
 
 ## Installed-Target Validation
 
@@ -141,7 +141,7 @@ Create a fresh temporary git target, execute `scripts/install-policy-gates.sh` a
 
 - mid: implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` reproduced missing-enforcer, malformed-input, converter, nested-validator, settings-wiring, recorder, and installed-target failures; CodeRabbit P1 findings exposed wrapped telemetry-recorder detection and missing Notion progress wiring, and both root causes were corrected in the implementation tree.
 
-- pre-merge: final implementation tree `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` contains the wrapped-telemetry preflight and Notion recorder corrections, focused suites report 19/19, 10/10, and 15/15, the temporary diagnostic workflow is absent from the rebuilt compare, and provider exact-head CI plus live review reconciliation are external merge-readiness gates.
+- pre-merge: final implementation tree `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` contains the wrapped-telemetry preflight and Notion recorder corrections, focused suites report 19/19, 10/10, and 15/15, the temporary diagnostic workflow is absent from the rebuilt compare, the connector declaration is normalized to the actual GitHub connector, and provider exact-head CI plus live review reconciliation are external merge-readiness gates.
 
 ## Validation Results Before Provider Gates
 
@@ -149,6 +149,7 @@ Create a fresh temporary git target, execute `scripts/install-policy-gates.sh` a
 - `scripts/enforcement/tests/test-hook-classification.sh`: 10 passed, 0 failed.
 - `scripts/enforcement/tests/test-hard-hook-fail-closed.sh`: 15 passed, 0 failed, including installer-equivalent clean-target execution.
 - Initial provider runs reproduced a real clean-target telemetry preflight failure and two CodeRabbit P1 findings; implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` fixes all three root causes without weakening tests.
+- Connector policy identified an over-broad declaration that mixed the GitHub connector with vendor documentation; the final plan declares only `GitHub` as the external connector and keeps the official hook source under Documentation Asset Evidence.
 
 ## Definition of Done — Implementation Branch
 
