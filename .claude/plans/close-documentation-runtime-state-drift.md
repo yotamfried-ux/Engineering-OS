@@ -62,10 +62,13 @@ This closure branch changes canonical status and evidence metadata only. It does
 - [x] Added a PR #260 live-state claim with exact reviewed head, merge commit, required PR workflows, required push workflows, and required check run.
 - [x] Changed the registry row to `closed` with exact evidence.
 - [x] Synchronized audit ledger, matrix, dependency plan, checklist, ROI order, snapshot, and current scope.
-- [ ] Pass focused known-gaps, audit, documentation-hygiene, and live-state validation.
-- [ ] Pass full exact-head CI and independent review on PR #261.
-- [ ] Obtain new explicit owner approval before merging PR #261.
-- [ ] Verify PR #261 post-merge workflows before treating the status as durable.
+
+External gates remaining before durable closure:
+
+- focused known-gaps, audit, documentation-hygiene, and live-state validation on the exact PR #261 head;
+- full exact-head CI and independent review on PR #261;
+- a new explicit owner approval before merging PR #261;
+- PR #261 merge and post-merge workflow verification before the closure is treated as durable.
 
 ## Progress Lifecycle Evidence
 
