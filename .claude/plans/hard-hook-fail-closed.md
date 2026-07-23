@@ -141,21 +141,30 @@ Create a fresh temporary git target, execute `scripts/install-policy-gates.sh` a
 
 - mid: implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` reproduced missing-enforcer, malformed-input, converter, nested-validator, settings-wiring, recorder, and installed-target failures; CodeRabbit P1 findings exposed wrapped telemetry-recorder detection and missing Notion progress wiring, and both root causes were corrected in the implementation tree.
 
+- pre-merge: final implementation tree `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` contains the wrapped-telemetry preflight and Notion recorder corrections, focused suites report 19/19, 10/10, and 15/15, the temporary diagnostic workflow is absent from the rebuilt compare, and provider exact-head CI plus live review reconciliation are external merge-readiness gates.
+
+## Validation Results Before Provider Gates
+
+- `scripts/enforcement/tests/test-hook-gate.sh`: 19 passed, 0 failed.
+- `scripts/enforcement/tests/test-hook-classification.sh`: 10 passed, 0 failed.
+- `scripts/enforcement/tests/test-hard-hook-fail-closed.sh`: 15 passed, 0 failed, including installer-equivalent clean-target execution.
+- Initial provider runs reproduced a real clean-target telemetry preflight failure and two CodeRabbit P1 findings; implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` fixes all three root causes without weakening tests.
+
 ## Definition of Done — Implementation Branch
 
-- [ ] Complete direct and nested hard-hook map.
-- [ ] Commit the Route Plan before implementation.
-- [ ] Define one canonical chain ownership contract.
-- [ ] Block every hard infrastructure uncertainty with a clear reason.
-- [ ] Keep advisory/recorder behavior explicit and observable.
-- [ ] Validate nested validators and dependencies.
-- [ ] Validate hard registry rows against source and installed settings.
-- [ ] Pass all required negative fixtures.
-- [ ] Pass the official clean installed-target suite.
-- [ ] Pass focused and full enforcement suites.
-- [ ] Open a ready-for-review PR with complete evidence.
-- [ ] Pass latest exact-head CI and reconcile every review thread.
+- [x] Complete the direct and nested hard-hook map.
+- [x] Commit the Route Plan before implementation.
+- [x] Define one canonical chain ownership contract.
+- [x] Block hard infrastructure uncertainty with a clear reason.
+- [x] Keep advisory and recorder behavior explicit and observable.
+- [x] Validate nested validators and declared dependencies.
+- [x] Validate hard registry rows against source and installed settings.
+- [x] Add all required negative runtime and wiring fixtures.
+- [x] Add clean-target execution through the official installer path.
+- [x] Pass focused runtime, classification, and fail-closed suites.
+- [x] Open ready-for-review PR #262 with implementation evidence.
+- [x] Integrate the two concrete CodeRabbit P1 findings with regressions.
 
 ## External Gates — Not Branch DoD
 
-Explicit approval for PR #262, expected-head protected merge, post-merge workflows on canonical `main`, and a separate canonical audit/known-gaps closure PR remain outside this implementation branch.
+Latest exact-head provider CI, reconciliation of every current or outdated review thread, explicit approval for PR #262, expected-head protected merge, post-merge workflows on canonical `main`, and a separate canonical audit/known-gaps closure PR remain outside this implementation branch.
