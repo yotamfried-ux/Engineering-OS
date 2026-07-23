@@ -11,7 +11,7 @@
 | Planning Mode | post-merge evidence reconciliation; this branch does not alter runtime enforcement |
 | Task-router evidence | `core/task-router.md` routes canonical audit and gap closure work through Engineering OS governance and merge-governance owners. |
 | Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/quality-gates.md`, and the audit closure standard require verified implementation, exact-head CI, review, owner-approved merge, post-merge proof, then canonical status synchronization. |
-| Target paths | `.claude/plans/close-merge-readiness-exact-head-gap.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json` |
+| Target paths | `.claude/plans/close-merge-readiness-exact-head-gap.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json`; temporary `.github/workflows/temporary-audit-reconciliation.yml` used only to apply validated exact replacements and delete itself before the final diff |
 | Templates | waiver — this is a focused canonical-state reconciliation using existing registry and claim schemas |
 | Architecture guides | `docs/operations/operational-readiness-audit.md`; `docs/operations/merge-readiness-checklist.md`; `docs/operations/live-state-claims.json` |
 | Patterns | none — no implementation pattern is needed for a metadata-only closure claim |
@@ -27,7 +27,7 @@ Close `merge-readiness-exact-head-and-attempt-ordering` only if the canonical li
 
 ## Scope
 
-This branch changes status and evidence metadata only. It does not modify the checker, test fixtures, workflow registry, approval policy, or Project 8.
+The final branch diff changes status and evidence metadata only. It does not modify the checker, test fixtures, workflow registry, approval policy, or Project 8. A temporary branch-only workflow applies exact audited replacements to the large canonical audit, fails if any expected source text is absent or duplicated, deletes itself in the same generated commit, and therefore does not remain in the final diff.
 
 ## Source of Truth Checks
 
@@ -58,12 +58,12 @@ This branch changes status and evidence metadata only. It does not modify the ch
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #257, approval comment `5060947961`, reviewed head `fedf8d069a8634085c650ea6381c1c0dabfdc368`, and merge `efb36cca413602cde3cd20aa17d32b3379f9eb53`.
 - action: verified that the PR was mergeable before merge, the latest required attempt was green, both review threads were resolved, the owner approval was recorded, the merge used expected-head protection, and canonical `main` is identical to the merge commit.
 - result: the implementation and merge portions of the closure bar are evidenced by PR #257 and merge `efb36cca413602cde3cd20aa17d32b3379f9eb53`; the new live claim must independently verify required push workflows before closure is accepted.
-- decision: selected a separate closure PR and fail-closed live claim rather than editing `main` directly or declaring the gap closed from chat memory.
-- target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json`.
+- decision: selected a separate closure PR and fail-closed live claim rather than editing `main` directly or declaring the gap closed from chat memory; selected an exact-replacement self-deleting workflow rather than manually rewriting a 500-line canonical audit through a truncated connector response.
+- target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json`; temporary `.github/workflows/temporary-audit-reconciliation.yml`.
 
 ## Skill Evidence
 
-- `writing-plans` — this plan commit precedes all canonical status changes.
+- `writing-plans` — the original plan commit preceded all canonical status changes, and this scope update precedes the temporary workflow.
 - `verification-before-completion` — implementation, merge, post-merge proof, canonical claim validation, closure PR review, and closure PR merge remain separate assertions.
 
 ## Closure Mapping
@@ -75,11 +75,18 @@ This branch changes status and evidence metadata only. It does not modify the ch
 - Mandatory checklist: mark every verified item complete and name the exact PR, runs, approval, merge, and post-merge claim.
 - Live claims: add one versioned claim for PR #257 with the exact required pull-request and push workflows.
 
+## Progress Lifecycle Evidence
+
+- start: commit `a6f90b27916c84ac7e7462384c642946c0b20c37` recorded the closure scope before canonical state changes.
+- mid: commits `e4ea6e35f596430eb1503b2fd140a598b2cd3068` and `da7f17181ace1e65586764bab3772fc6da42b293` synchronized the registry row and added the fail-closed live-state claim; this plan update records the exact audit-reconciliation mechanism before its workflow is created.
+- pre-merge: to be introduced in a later plan-only commit after the audit replacement, final CI, review, and live-state artifact are inspected.
+
 ## Validation Plan
 
-1. Commit the Route Plan before status changes.
+1. Commit the Route Plan before status changes and before the temporary workflow.
 2. Update all four canonical representations together.
-3. Open a focused ready-for-review PR.
-4. Require registry, audit, live-state, and full enforcement CI on the exact closure-PR head.
-5. Inspect the generated live-state artifact and every review thread.
-6. Keep the gap effectively unclosed until this closure PR is reviewed, explicitly approved, merged, and post-merge validation confirms the synchronized canonical state.
+3. Require the temporary workflow to validate every exact source replacement, write the audit, delete itself, and push one branch-only commit.
+4. Open a focused ready-for-review PR whose final diff contains only the Route Plan and three canonical status/evidence files.
+5. Require registry, audit, live-state, and full enforcement CI on the exact closure-PR head.
+6. Inspect the generated live-state artifact and every review thread.
+7. Keep the gap effectively unclosed until this closure PR is reviewed, explicitly approved, merged, and post-merge validation confirms the synchronized canonical state.
