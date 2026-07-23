@@ -24,3 +24,5 @@ simulation-coverage	validation-governance	scripts/enforcement/simulation-coverag
 temporary-route-plans	workflow-governance	.claude/plans/*.md	temporary	Task evidence only; never canonical durable policy.
 lessons	learning-governance	lessons-learned/*.md	active	Learning records governed by core/learning-loop.md.
 failed-solutions	learning-governance	failed-solutions/*.md	active	Failed attempt records governed by core/learning-loop.md.
+enforcer-registry	hooks-governance	scripts/enforcement/MANIFEST.tsv	active	Canonical md↔enforcer wiring; wording for core/capability-registry.yaml must not contradict its runtime_enabled/runtime_scope, enforced by check-documentation-hygiene.sh.
+telemetry-terminology	observability-governance	docs/operations/runtime-telemetry-archive-plan.md	active	Canonical owner for first-run-usefulness vs longitudinal-sufficiency vocabulary across the telemetry plan, preflight, audit checklist, and analyzer.

@@ -40,7 +40,7 @@ expect_fail_contains() {
 
 make_repo() {
   local dir="$1"
-  mkdir -p "$dir/core" "$dir/docs/operations" "$dir/external-systems" "$dir/external-skills"
+  mkdir -p "$dir/core" "$dir/docs/operations" "$dir/external-systems" "$dir/external-skills" "$dir/scripts/enforcement" "$dir/scripts/monitoring"
   cat > "$dir/CLAUDE.md" <<'MD'
 # CLAUDE
 
@@ -68,6 +68,31 @@ version: 1
 runtime_enabled: true
 runtime_scope: plan_level_write_gate
 YAML
+  cat > "$dir/scripts/enforcement/MANIFEST.tsv" <<'TSV'
+core/capability-registry.yaml	scripts/enforcement/tests/test-capability-registry.sh	active plan-level write gate
+TSV
+  cat > "$dir/docs/operations/project8-telemetry-preflight.md" <<'MD'
+# Telemetry preflight
+
+The first-run monitoring usefulness decision is complete after one imported run.
+A later second valid run is required for longitudinal comparison, but it does not block the first experiment.
+MD
+  cat > "$dir/docs/operations/runtime-telemetry-archive-plan.md" <<'MD'
+# Runtime telemetry archive plan
+
+Monitoring longitudinally sufficient means at least two valid runs were compared reproducibly.
+MD
+  cat > "$dir/docs/operations/runtime-telemetry-archive-audit-checklist.md" <<'MD'
+# Runtime telemetry archive audit checklist
+
+Track implementation, first-run evidence, and later longitudinal learning as three separate layers.
+- [ ] `monitoring-metrics-sufficiency` is closed from the imported and analyzed first run.
+- [ ] `monitoring-longitudinal-sufficiency` is backed by reviewed multi-run evidence.
+MD
+  cat > "$dir/scripts/monitoring/analyze-telemetry-archive.py" <<'PY'
+"""Telemetry archive analyzer."""
+# longitudinal comparison: pending at least two runs
+PY
   cat > "$dir/core/coderabbit-policy.md" <<'MD'
 # CodeRabbit policy
 
@@ -117,6 +142,52 @@ sed -i 's/runtime_enabled: true/runtime_enabled: false/' "$DISABLED_RUNTIME/core
 
 CHANGED_SCOPE="$TMP/changed-scope"; cp -R "$GOOD" "$CHANGED_SCOPE"
 sed -i 's/runtime_scope: plan_level_write_gate/runtime_scope: report_only/' "$CHANGED_SCOPE/core/capability-registry.yaml"
+
+MANIFEST_STALE="$TMP/manifest-stale"; cp -R "$GOOD" "$MANIFEST_STALE"
+cat > "$MANIFEST_STALE/scripts/enforcement/MANIFEST.tsv" <<'TSV'
+core/capability-registry.yaml	NONE	skeleton capability vocabulary — non-runtime, no enforcer yet
+TSV
+
+MANIFEST_OVERCLAIM="$TMP/manifest-overclaim"; cp -R "$GOOD" "$MANIFEST_OVERCLAIM"
+sed -i 's/runtime_enabled: true/runtime_enabled: false/' "$MANIFEST_OVERCLAIM/core/capability-registry.yaml"
+
+MANIFEST_MISSING_ROW="$TMP/manifest-missing-row"; cp -R "$GOOD" "$MANIFEST_MISSING_ROW"
+: > "$MANIFEST_MISSING_ROW/scripts/enforcement/MANIFEST.tsv"
+
+TELEMETRY_LONGITUDINAL_UNSUPPORTED="$TMP/telemetry-longitudinal-unsupported"; cp -R "$GOOD" "$TELEMETRY_LONGITUDINAL_UNSUPPORTED"
+cat > "$TELEMETRY_LONGITUDINAL_UNSUPPORTED/docs/operations/runtime-telemetry-archive-plan.md" <<'MD'
+# Runtime telemetry archive plan
+
+The import of one qualification run makes monitoring longitudinally sufficient.
+MD
+
+TELEMETRY_LONGITUDINAL_ID_UNSUPPORTED="$TMP/telemetry-longitudinal-id-unsupported"; cp -R "$GOOD" "$TELEMETRY_LONGITUDINAL_ID_UNSUPPORTED"
+cat > "$TELEMETRY_LONGITUDINAL_ID_UNSUPPORTED/docs/operations/runtime-telemetry-archive-audit-checklist.md" <<'MD'
+# Runtime telemetry archive audit checklist
+
+- [x] `monitoring-longitudinal-sufficiency` is closed from the imported first run.
+MD
+
+TELEMETRY_FIRST_RUN_OVERREACH="$TMP/telemetry-first-run-overreach"; cp -R "$GOOD" "$TELEMETRY_FIRST_RUN_OVERREACH"
+cat > "$TELEMETRY_FIRST_RUN_OVERREACH/docs/operations/project8-telemetry-preflight.md" <<'MD'
+# Telemetry preflight
+
+The first-run monitoring usefulness decision requires a second run before it is complete.
+MD
+
+TELEMETRY_METRICS_ID_OVERREACH="$TMP/telemetry-metrics-id-overreach"; cp -R "$GOOD" "$TELEMETRY_METRICS_ID_OVERREACH"
+cat > "$TELEMETRY_METRICS_ID_OVERREACH/docs/operations/runtime-telemetry-archive-plan.md" <<'MD'
+# Runtime telemetry archive plan
+
+Closing `monitoring-metrics-sufficiency` requires a second run before it counts.
+MD
+
+TELEMETRY_SEPARATE_CLAUSES_PASS="$TMP/telemetry-separate-clauses-pass"; cp -R "$GOOD" "$TELEMETRY_SEPARATE_CLAUSES_PASS"
+cat > "$TELEMETRY_SEPARATE_CLAUSES_PASS/docs/operations/project8-telemetry-preflight.md" <<'MD'
+# Telemetry preflight
+
+First-run monitoring usefulness is complete. Longitudinal sufficiency requires a second run.
+MD
 
 CORE_COUNT="$TMP/core-count"; cp -R "$GOOD" "$CORE_COUNT"
 python3 - "$CORE_COUNT/README.md" <<'PY'
@@ -183,6 +254,14 @@ expect_pass explicit_waiver_passes bash "$CHECK" --root "$WAIVER" --manifest "$W
 expect_fail_contains stale_runtime_scope_fails 'runtime planned' bash "$CHECK" --root "$STALE_RUNTIME" --manifest "$STALE_RUNTIME/docs/operations/documentation-ownership.tsv"
 expect_fail_contains disabled_runtime_rejects_active_wording 'describes an active plan-level write gate' bash "$CHECK" --root "$DISABLED_RUNTIME" --manifest "$DISABLED_RUNTIME/docs/operations/documentation-ownership.tsv"
 expect_fail_contains changed_scope_rejects_active_wording 'describes an active plan-level write gate' bash "$CHECK" --root "$CHANGED_SCOPE" --manifest "$CHANGED_SCOPE/docs/operations/documentation-ownership.tsv"
+expect_fail_contains manifest_stale_rejects_non_runtime_wording 'NONE/non-runtime' bash "$CHECK" --root "$MANIFEST_STALE" --manifest "$MANIFEST_STALE/docs/operations/documentation-ownership.tsv"
+expect_fail_contains manifest_overclaim_rejects_active_enforcer 'claims an active enforcer' bash "$CHECK" --root "$MANIFEST_OVERCLAIM" --manifest "$MANIFEST_OVERCLAIM/docs/operations/documentation-ownership.tsv"
+expect_fail_contains manifest_missing_row_fails 'must declare core/capability-registry.yaml' bash "$CHECK" --root "$MANIFEST_MISSING_ROW" --manifest "$MANIFEST_MISSING_ROW/docs/operations/documentation-ownership.tsv"
+expect_fail_contains telemetry_longitudinal_unsupported_fails 'not backed by an explicit multi-run requirement' bash "$CHECK" --root "$TELEMETRY_LONGITUDINAL_UNSUPPORTED" --manifest "$TELEMETRY_LONGITUDINAL_UNSUPPORTED/docs/operations/documentation-ownership.tsv"
+expect_fail_contains telemetry_longitudinal_id_unsupported_fails 'not backed by an explicit multi-run requirement' bash "$CHECK" --root "$TELEMETRY_LONGITUDINAL_ID_UNSUPPORTED" --manifest "$TELEMETRY_LONGITUDINAL_ID_UNSUPPORTED/docs/operations/documentation-ownership.tsv"
+expect_fail_contains telemetry_first_run_overreach_fails 'incorrectly demands a second run' bash "$CHECK" --root "$TELEMETRY_FIRST_RUN_OVERREACH" --manifest "$TELEMETRY_FIRST_RUN_OVERREACH/docs/operations/documentation-ownership.tsv"
+expect_fail_contains telemetry_metrics_id_overreach_fails 'incorrectly demands a second run' bash "$CHECK" --root "$TELEMETRY_METRICS_ID_OVERREACH" --manifest "$TELEMETRY_METRICS_ID_OVERREACH/docs/operations/documentation-ownership.tsv"
+expect_pass telemetry_separate_clauses_pass bash "$CHECK" --root "$TELEMETRY_SEPARATE_CLAUSES_PASS" --manifest "$TELEMETRY_SEPARATE_CLAUSES_PASS/docs/operations/documentation-ownership.tsv"
 expect_fail_contains core_inventory_count_fails 'volatile numeric inventory count' bash "$CHECK" --root "$CORE_COUNT" --manifest "$CORE_COUNT/docs/operations/documentation-ownership.tsv"
 expect_fail_contains system_inventory_count_fails 'volatile numeric inventory count' bash "$CHECK" --root "$SYSTEM_COUNT" --manifest "$SYSTEM_COUNT/docs/operations/documentation-ownership.tsv"
 expect_pass version_numeral_is_not_inventory_count bash "$CHECK" --root "$VERSION_NUMERAL" --manifest "$VERSION_NUMERAL/docs/operations/documentation-ownership.tsv"

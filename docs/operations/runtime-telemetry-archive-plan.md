@@ -382,7 +382,7 @@ workspace will not resolve from the other):**
 
 - Update `docs/operations/runtime-telemetry-archive-audit-checklist.md`'s "Project 8 evidence" and "Longitudinal learning" checkboxes only from the actual import/analysis results, one at a time, the same way `check-known-gaps.sh` already requires known-gaps status to match reality.
 - If the analyzer's recurring-coverage section fires (≥2 runs affected), open a known-gap row in `docs/operations/known-gaps.tsv` describing the specific missing-coverage pattern, rather than silently accepting it or fixing it ad hoc.
-- Update `docs/operations/operational-readiness-audit.md`'s Monitoring metrics sufficiency row from the real findings, not from expectation — only close `monitoring-metrics-sufficiency` once real Project 8 evidence plus at least one later comparison run both exist, per that gap's own closure text.
+- Update `docs/operations/operational-readiness-audit.md`'s Monitoring metrics sufficiency row from the real findings, not from expectation — close `monitoring-metrics-sufficiency` once real Project 8 evidence shows the imported first run is useful for analysis, per that gap's own closure text; this first-run gate closes from that one run alone. Closing the separate `monitoring-longitudinal-sufficiency` gap instead requires a second run for reproducible comparison.
 - If a recurring pattern reveals an actual bug or a repeatedly-wrong assumption (not just missing coverage), route it through `core/learning-loop.md` as a lesson (`lessons-learned/bugs/` or `failed-solutions/`) — do not invent a new free-text findings field; `findings.md` plus the existing learning-loop schema are the two surfaces this already routes through.
 
 ## Validation checklist
