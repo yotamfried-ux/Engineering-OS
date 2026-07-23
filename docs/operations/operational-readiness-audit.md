@@ -10,7 +10,7 @@ This document is the canonical status map and closure contract for Engineering O
 - **Canonical gap registry:** `docs/operations/known-gaps.tsv`
 - **Last verified:** 2026-07-23 America/Panama / 2026-07-23 UTC
 - **Intended readers:** LLMs, maintainers, reviewers, and operators with no prior conversation context
-- **Snapshot only:** Engineering OS `main` was inspected at `efb36cca413602cde3cd20aa17d32b3379f9eb53`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.
+- **Snapshot only:** Engineering OS `main` was inspected at `105ecd0d0dc72aa847d11b193190689dbda0dda8`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.
 
 ## Purpose and audience
 
@@ -190,7 +190,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | bypass-approval-provenance | open | P1 | Bypass authorization and consumption provenance. |
 | pattern-registry-canonical-drift | open | P1 | Pattern lifecycle canonical ownership. |
 | pattern-evidence-maturity | open | P2 | Real multi-context pattern outcomes. |
-| documentation-runtime-state-drift | open | P1 | Active documentation and executable-owner consistency. |
+| documentation-runtime-state-drift | closed | P1 | Active documentation and executable-owner consistency. |
 | audit-self-contained-contract | closed | P0 | Audit self contained contract. |
 | full-readiness-claim-semantics | open | P1 | Canonical state vocabulary and final assertion. |
 | project8-experiment-blindness | open | P0 | Project8 experiment blindness. |
@@ -206,7 +206,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | Enforcement coverage inventory | Enforced | Gate: check-readiness-audit.sh. Owner: ops-readiness. Evidence: readiness fixtures. | Closure judgment is reviewed. |
 | Audit self-contained contract | Enforced | Gate: check-readiness-audit.sh and context-free fixtures. Owner: ops-readiness. Evidence: merged PR #254, exact head `f74a26d65f6cebf06f29df1d803c192c3efb9694`, merge `c7d32a0b67a836811689d3a2bf80a63d727e1470`, and `docs/operations/live-state-claims.json`. | Closed; the live claim must continue to pass. |
 | Audit registry freshness | Enforced | Gate: check-known-gaps.sh, deterministic snapshot validation, and `known-gaps-live-state`. Owner: ops-readiness. Evidence: PR #254 and PR #255 versioned claims; PR #255 head `97d56e2f5743b019145da600cf0914f6d092cd0f`, merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`. | Closed; both live claims must continue to pass. |
-| Documentation runtime state and readiness consistency | Partially enforced | Gate: extended `check-documentation-hygiene.sh`. Owner: docs-governance. Evidence: capability, inventory, reviewer, manifest, telemetry-plan/analyzer, and terminology comparison. | gap:documentation-runtime-state-drift — PR #256 covered wording/inventory/reviewer reconciliation; this branch (`claude/operational-readiness-eos-c6ykfs`) closes the remaining MANIFEST.tsv and telemetry-terminology checklist items with bidirectional fixtures; exact-head CI, review, owner-approved merge, and post-merge validation remain before closure. |
+| Documentation runtime state and readiness consistency | Enforced | Gate: extended `check-documentation-hygiene.sh`. Owner: docs-governance. Evidence: PR #256 plus PR #260 exact head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79`, 27 documentation-hygiene fixtures, seven resolved review threads, owner approval comment `5063627361`, expected-head merge `105ecd0d0dc72aa847d11b193190689dbda0dda8`, and `docs/operations/live-state-claims.json`. | Closed; the live-state claim must continue to verify exact pull-request and post-merge push evidence. |
 | Route Plan before writing | Enforced | Gate: workflow write guards and target-aware plan selection. Owner: workflow-governance. Evidence: active-plan fixtures. | Plan intent is reviewed. |
 | Route Plan quality | Enforced | Gate: check-workflow-evidence.sh. Owner: workflow-governance. Evidence: semantic-quality fixtures. | Deep source quality is reviewed. |
 | DoD completion | Enforced | Gate: plan-policy and check-workflow-evidence.sh. Owner: delivery-governance. Evidence: completion fixtures. | Meaning of completion is reviewed. |
@@ -266,12 +266,13 @@ Do not skip phases. Parallel work is permitted inside a phase only when files an
 - `gap:audit-self-contained-contract` closed through merged PR #254, exact reviewed head `f74a26d65f6cebf06f29df1d803c192c3efb9694`, merge `c7d32a0b67a836811689d3a2bf80a63d727e1470`, context-free fixtures, and the canonical live-state claim.
 - `gap:audit-live-state-verification` closed through merged PR #255, exact reviewed head `97d56e2f5743b019145da600cf0914f6d092cd0f`, merge `0ee2dbee7a9ab58e86a11726021c30baca0faa22`, chronological rerun fixtures, metadata-only live artifacts, and the canonical live-state claim.
 - `gap:merge-readiness-exact-head-and-attempt-ordering` closed through PR #257, exact reviewed head `fedf8d069a8634085c650ea6381c1c0dabfdc368`, deterministic latest-attempt fixtures, enforcement run 1384, latest `pr-policy` run 1679, two resolved review threads, owner approval comment `5060947961`, expected-head protected merge `efb36cca413602cde3cd20aa17d32b3379f9eb53`, and the canonical live-state claim.
+- `gap:documentation-runtime-state-drift` closed through PR #256 and PR #260, exact reviewed head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79`, 27 documentation-hygiene fixtures, latest exact-head CI including `pr-policy` 1692 and `enforcement-tests` 1391, seven resolved review threads, owner approval comment `5063627361`, expected-head protected merge `105ecd0d0dc72aa847d11b193190689dbda0dda8`, and the canonical live-state claim.
 
-### Phase 0 — make future merge and readiness evidence trustworthy
+### Phase 0 — complete
 
-1. `gap:documentation-runtime-state-drift`
+All Phase 0 gaps are closed. Merge decisions use exact-head latest-attempt evidence and active canonical descriptions agree with executable owners.
 
-Exit: merge decisions use exact-head latest-attempt evidence and active canonical descriptions agree with executable owners.
+Exit: satisfied; proceed to Phase 1 in dependency order.
 
 ### Phase 1 — close deterministic enforcement and integrity defects
 
@@ -353,7 +354,7 @@ Official basis: GitHub REST workflow-run metadata, GitHub workflow-attempt metad
 - [x] `core/git-policy.md` requires the checker before the merge API while preserving explicit owner approval; PR #257 recorded approval comment `5060947961` and merged with expected-head protection.
 - [x] PR #257 exact head `fedf8d069a8634085c650ea6381c1c0dabfdc368` passed enforcement run 1384, latest `pr-policy` run 1679, every named non-self policy workflow, and review reconciliation; it merged as `efb36cca413602cde3cd20aa17d32b3379f9eb53`, canonical `main` compared identical, and `docs/operations/live-state-claims.json` requires successful post-merge push workflows.
 
-### gap:documentation-runtime-state-drift — P1
+### gap:documentation-runtime-state-drift — P1 — closed
 
 Official basis: <https://code.claude.com/docs/en/memory>, GitHub README guidance and official `github/docs` content-linter code, plus CodeRabbit review/configuration documentation.
 
@@ -364,7 +365,7 @@ Official basis: <https://code.claude.com/docs/en/memory>, GitHub README guidance
 - [x] Reconcile telemetry plan, preflight, checklist, and analyzer terminology so first-run sufficiency and longitudinal sufficiency remain separate: verified `project8-telemetry-preflight.md`, `runtime-telemetry-archive-plan.md`, `runtime-telemetry-archive-audit-checklist.md`, and `analyze-telemetry-archive.py` already keep the two terms distinct, and added a regression that fails a longitudinal-sufficiency claim lacking multi-run context or a first-run claim that wrongly demands a second run.
 - [x] Assign one owner for every active runtime, inventory, review, lifecycle, and readiness claim; derived documents must reference rather than duplicate volatile state: added `enforcer-registry` (owner `hooks-governance`, `scripts/enforcement/MANIFEST.tsv`) and `telemetry-terminology` (owner `observability-governance`, `docs/operations/runtime-telemetry-archive-plan.md`) rows to `docs/operations/documentation-ownership.tsv`.
 - [x] Extend bidirectional hygiene fixtures to reject every identified contradiction without rewriting historical plans: `test-documentation-hygiene.sh` gained `manifest_stale_rejects_non_runtime_wording`, `manifest_overclaim_rejects_active_enforcer`, `telemetry_longitudinal_unsupported_fails`, and `telemetry_first_run_overreach_fails`; no historical plan or checkpoint evidence was altered.
-- [ ] Complete exact-head focused/full CI, external review and thread reconciliation, owner-approved merge, and post-merge validation before closing this gap.
+- [x] PR #260 exact head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79` passed focused/full exact-head CI including latest `pr-policy` 1692 and `enforcement-tests` 1391; all seven CodeRabbit/Codex threads were resolved; owner approval comment `5063627361` authorized an expected-head protected merge; PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; canonical `main` compares identical; and `docs/operations/live-state-claims.json` requires successful post-merge `enforcement-tests`, `known-gaps-live-state`, and `post-merge-validation`.
 
 ### gap:hard-hook-fail-closed — P0
 
@@ -491,14 +492,13 @@ Official basis: Google SRE monitoring and OpenTelemetry instrumentation guidance
 
 ## Highest-priority gaps by ROI
 
-1. Documentation/runtime consistency — P1; PR #256 closed part of the expanded contract, while MANIFEST and telemetry semantics remain.
-2. Hard-hook fail-closed — P0.
-3. Bypass approval provenance and required-hook settings parity — P1.
-4. Telemetry archive import integrity and canonical pattern ownership — P1.
-5. Project 8 experiment blindness — P0 after deterministic Engineering OS defects.
-6. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.
-7. Pattern evidence maturity and second-run reproducibility — P2.
-8. Final full-readiness semantics and assertion — terminal P1.
+1. Hard-hook fail-closed — P0.
+2. Bypass approval provenance and required-hook settings parity — P1.
+3. Telemetry archive import integrity and canonical pattern ownership — P1.
+4. Project 8 experiment blindness — P0 after deterministic Engineering OS defects.
+5. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.
+6. Pattern evidence maturity and second-run reproducibility — P2.
+7. Final full-readiness semantics and assertion — terminal P1.
 
 Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup; live-state reconciliation.
 
@@ -551,6 +551,6 @@ Official basis: Vercel environments/variables/Vite/Express/monorepos/domains; Su
 
 PR #254 is merged as `c7d32a0b67a836811689d3a2bf80a63d727e1470` and closes the self-contained audit contract. PR #255 is merged as `0ee2dbee7a9ab58e86a11726021c30baca0faa22` after exact head `97d56e2f5743b019145da600cf0914f6d092cd0f` passed the dedicated live workflow, full enforcement, review, and merge-readiness gates. PR #257 is merged as `efb36cca413602cde3cd20aa17d32b3379f9eb53` after exact head `fedf8d069a8634085c650ea6381c1c0dabfdc368` passed deterministic latest-attempt enforcement, full exact-head CI, review reconciliation, and owner-approved expected-head protection. PR #259 is merged as `df01a8fea10df999572ab11466613e31a8c1a003`, synchronizing the registry/audit/live-claim closure metadata for that same gap; post-merge, `enforcement-tests` run 1388, `known-gaps-live-state` run 32, and `post-merge-validation` run 90 all succeeded on that exact commit. `docs/operations/live-state-claims.json` binds all three underlying closures and fails closed on live drift.
 
-PR #256 is merged as `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d`. It reconciled capability wording, README inventory references, and CodeRabbit review policy, but the expanded audit still identified documentation/runtime contradictions in `scripts/enforcement/MANIFEST.tsv` and telemetry readiness semantics. That audit refinement also registered `telemetry-archive-import-integrity`; registration alone does not close it. Branch `claude/operational-readiness-eos-c6ykfs` (based on `main` at `df01a8fea1...`) closes the remaining `documentation-runtime-state-drift` checklist items: it reconciles `scripts/enforcement/MANIFEST.tsv` wording with the active capability registry, verifies and guards first-run-vs-longitudinal telemetry terminology, assigns canonical owners for both surfaces in `docs/operations/documentation-ownership.tsv`, and adds bidirectional regression fixtures — all local focused and full enforcement suites pass. It has not yet gone through exact-head CI, review, owner approval, merge, or post-merge validation, so the gap remains `open` until that evidence exists.
+PR #256 is merged as `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d` and reconciled capability wording, README inventory references, and CodeRabbit review policy. PR #260 exact head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79` completed the remaining `documentation-runtime-state-drift` contract by reconciling `scripts/enforcement/MANIFEST.tsv` with the active capability registry, enforcing first-run-versus-longitudinal telemetry terminology, assigning canonical ownership rows, and adding bidirectional fixtures. The exact head passed the latest required PR workflows including `pr-policy` 1692 and `enforcement-tests` 1391; all seven review threads were resolved; owner approval comment `5063627361` authorized the expected-head protected merge; PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; canonical `main` compares identical; and the canonical live-state claim requires successful post-merge workflows. The separate `telemetry-archive-import-integrity` gap remains open.
 
-The system is audit-complete but not fully operationally ready. Exact-head merge evidence is closed; hook safety, bypass provenance, settings parity, documentation, pattern ownership/evidence, telemetry import integrity, Project 8 boundary, and qualification gaps remain. The behavioral experiment and its prompt remain prohibited until every gap closes and the strict assertion passes on fresh canonical state.
+The system is audit-complete but not fully operationally ready. Exact-head merge evidence and documentation/runtime consistency are closed; hook safety, bypass provenance, settings parity, pattern ownership/evidence, telemetry import integrity, Project 8 boundary, and qualification gaps remain. The behavioral experiment and its prompt remain prohibited until every gap closes and the strict assertion passes on fresh canonical state.
