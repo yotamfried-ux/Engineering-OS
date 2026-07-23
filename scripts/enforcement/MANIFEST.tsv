@@ -20,4 +20,4 @@ core/mcp-servers.md	NONE	reference table
 CLAUDE.md	NONE	entry/navigation — principles, judgment-based
 core/task-router.md	NONE	routing matrix — judgment-based selection, not deterministically enforceable
 core/coderabbit-policy.md	NONE	OS-change PR process — branch/PR/review/merge, judgment-based
-core/capability-registry.yaml	NONE	skeleton capability vocabulary — non-runtime, no enforcer yet
+core/capability-registry.yaml	scripts/enforcement/tests/test-capability-registry.sh	active plan-level write gate — coverage validated by test-capability-registry.sh; MANIFEST/CLAUDE wording parity enforced by check-documentation-hygiene.sh

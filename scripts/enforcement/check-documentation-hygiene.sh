@@ -126,6 +126,82 @@ if claude and capabilities:
     if re.search(r'\bruntime\s+planned\b', claude_lower):
         fail('CLAUDE.md contains ambiguous stale capability wording: runtime planned')
 
+    enforcer_manifest = read_optional('scripts/enforcement/MANIFEST.tsv')
+    manifest_row = next(
+        (line for line in enforcer_manifest.splitlines() if line.startswith('core/capability-registry.yaml\t')),
+        None,
+    )
+    if manifest_row is None:
+        fail('scripts/enforcement/MANIFEST.tsv must declare core/capability-registry.yaml')
+    else:
+        manifest_fields = manifest_row.split('\t')
+        manifest_enforcer = manifest_fields[1].strip() if len(manifest_fields) > 1 else ''
+        manifest_row_lower = manifest_row.lower()
+        if expected_active and (manifest_enforcer.upper() == 'NONE' or 'non-runtime' in manifest_row_lower):
+            fail(
+                'scripts/enforcement/MANIFEST.tsv describes core/capability-registry.yaml as '
+                'NONE/non-runtime while core/capability-registry.yaml reports '
+                f'runtime_enabled={runtime_enabled or "missing"} and runtime_scope={runtime_scope or "missing"}'
+            )
+        if not expected_active and manifest_enforcer.upper() != 'NONE':
+            fail(
+                'scripts/enforcement/MANIFEST.tsv claims an active enforcer for '
+                'core/capability-registry.yaml while the registry itself is not an active runtime gate'
+            )
+
+# Telemetry terminology consistency. First-run monitoring usefulness
+# (`monitoring-metrics-sufficiency`) and longitudinal multi-run sufficiency
+# (`monitoring-longitudinal-sufficiency`) are distinct closure states; a claim
+# of one must not silently imply or require the other. Checked sentence-by-
+# sentence so an unrelated neighboring claim cannot cause a false positive or
+# false negative.
+telemetry_docs = {
+    'docs/operations/project8-telemetry-preflight.md': read_optional('docs/operations/project8-telemetry-preflight.md'),
+    'docs/operations/runtime-telemetry-archive-plan.md': read_optional('docs/operations/runtime-telemetry-archive-plan.md'),
+    'docs/operations/runtime-telemetry-archive-audit-checklist.md': read_optional('docs/operations/runtime-telemetry-archive-audit-checklist.md'),
+    'scripts/monitoring/analyze-telemetry-archive.py': read_optional('scripts/monitoring/analyze-telemetry-archive.py'),
+}
+longitudinal_claim_re = re.compile(
+    r'monitoring-longitudinal-sufficiency|longitudinal(?:ly)?[\s-]+(?:learning\s+)?sufficien\w*',
+    re.I,
+)
+first_run_claim_re = re.compile(
+    r'monitoring-metrics-sufficiency|first-run\s+(?:monitoring\s+)?(?:usefulness|sufficien\w*)',
+    re.I,
+)
+multi_run_evidence_re = re.compile(
+    r'(at least two|two\s+(?:valid\s+)?runs|second\s+(?:valid\s+)?run|multi-run|multiple runs|compared reproducibly)',
+    re.I,
+)
+single_run_overreach_re = re.compile(
+    r'(requires?\s+(?:a\s+|the\s+)?second run|needs?\s+(?:a\s+|the\s+)?second run|two runs?\s+(?:are\s+)?required)',
+    re.I,
+)
+
+
+def doc_clauses(text):
+    for line in text.splitlines():
+        for clause in re.split(r'(?<=[.!?])\s+', line):
+            clause = clause.strip()
+            if clause:
+                yield clause
+
+
+for doc_rel, doc_text in telemetry_docs.items():
+    if not doc_text:
+        continue
+    for clause in doc_clauses(doc_text):
+        if longitudinal_claim_re.search(clause) and not multi_run_evidence_re.search(clause):
+            fail(
+                f'{doc_rel}: longitudinal-sufficiency claim is not backed by an explicit '
+                f'multi-run requirement in the same clause: "{clause[:160]}"'
+            )
+        if first_run_claim_re.search(clause) and single_run_overreach_re.search(clause):
+            fail(
+                f'{doc_rel}: first-run sufficiency claim incorrectly demands a second run '
+                f'in the same clause: "{clause[:160]}"'
+            )
+
 if readme:
     inventory_contract = {
         'core/': (
