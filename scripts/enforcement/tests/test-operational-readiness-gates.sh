@@ -8,8 +8,8 @@ chmod +x "$MERGE_CHECK" "$JSON_GUARD"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-HEAD_SHA="1111111111111111111111111111111111111111"
-OTHER_SHA="2222222222222222222222222222222222222222"
+HEAD_SHA="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+OTHER_SHA="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 
 expect_pass() {
   local name="$1"; shift
