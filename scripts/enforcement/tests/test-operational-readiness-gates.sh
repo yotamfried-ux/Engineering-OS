@@ -66,10 +66,20 @@ cat > "$TMP/runs-missing-cleanup.json" <<'JSON'
 }
 JSON
 
+cat > "$TMP/runs-old-success-new-failure.json" <<'JSON'
+{
+  "workflow_runs": [
+    {"id":101,"name":"enforcement-tests","head_sha":"1111111111111111111111111111111111111111","run_started_at":"2026-07-22T10:00:00Z","run_attempt":1,"status":"completed","conclusion":"success"},
+    {"id":102,"name":"enforcement-tests","head_sha":"1111111111111111111111111111111111111111","run_started_at":"2026-07-22T11:00:00Z","run_attempt":1,"status":"completed","conclusion":"failure"}
+  ]
+}
+JSON
+
 expect_pass "merge readiness accepts all-success required workflows" "$MERGE_CHECK" --runs-json "$TMP/runs-good.json"
 expect_fail "merge readiness blocks PR107-style failed evidence workflows" "$MERGE_CHECK" --runs-json "$TMP/runs-pr107-bad.json"
 expect_fail "merge readiness blocks missing required workflows" "$MERGE_CHECK" --runs-json "$TMP/runs-missing.json"
 expect_fail "merge readiness blocks missing cleanup policy workflows" "$MERGE_CHECK" --runs-json "$TMP/runs-missing-cleanup.json"
+expect_fail "merge readiness rejects a newer failure hidden behind an older success" "$MERGE_CHECK" --runs-json "$TMP/runs-old-success-new-failure.json" --required "enforcement-tests"
 
 run_guard_raw() { printf '%s' "$1" | "$JSON_GUARD"; }
 expect_fail "JSON guard blocks malformed PreToolUse JSON" run_guard_raw '{"tool_name":"Write","tool_input":'
