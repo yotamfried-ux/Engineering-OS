@@ -58,6 +58,34 @@
       "required_check_runs": [
         "enforcement-tests"
       ]
+    },
+    {
+      "claim_id": "engineering-os-pr-257-merge-readiness-exact-head",
+      "gap_id": "merge-readiness-exact-head-and-attempt-ordering",
+      "repository": "yotamfried-ux/Engineering-OS",
+      "pull_number": 257,
+      "base_branch": "main",
+      "expected_head_sha": "fedf8d069a8634085c650ea6381c1c0dabfdc368",
+      "expected_merge_commit_sha": "efb36cca413602cde3cd20aa17d32b3379f9eb53",
+      "required_pull_request_workflows": [
+        "pr-policy",
+        "enforcement-tests",
+        "workflow-evidence-policy",
+        "connector-evidence-policy",
+        "capability-evidence-policy",
+        "documentation-asset-policy",
+        "plan-policy",
+        "semantic-cleanup-policy",
+        "import-cleanup-policy",
+        "telemetry-handoff-tests"
+      ],
+      "required_push_workflows": [
+        "enforcement-tests",
+        "post-merge-validation"
+      ],
+      "required_check_runs": [
+        "enforcement-tests"
+      ]
     }
   ]
 }
