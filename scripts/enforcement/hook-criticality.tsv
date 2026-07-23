@@ -1,30 +1,50 @@
-# event	matcher	unit	class	failure_semantics
-# class values:
-# - hard: blocks unsafe/tool-changing action; must not be wrapped in `|| true`.
-# - advisory: injects guidance/reminders only; may fail soft without granting permission.
-# - recorder: records evidence for later gates; malformed input must record no evidence.
-# - lifecycle: setup/cleanup/reporting; failure behavior is command-specific.
-PreToolUse	Bash	pre-tool-use-json-guard.sh	hard	fail_closed
-PreToolUse	Bash	enforce-bash-entry.sh	hard	fail_closed
-PreToolUse	Bash	enforce-workflow.sh	hard	fail_closed
-PreToolUse	Bash	enforce-debugging.sh	hard	fail_closed
-PreToolUse	Bash	enforce-git.sh	hard	fail_closed
-PreToolUse	Bash	inline-graphify-grep-reminder	advisory	soft_guidance_only
-PreToolUse	Bash	rtk hook claude	advisory	soft_guidance_only
-PreToolUse	Bash	inline-one-branch-policy	hard	fail_closed
-PreToolUse	Bash	inline-context7-reminder	advisory	soft_guidance_only
-PreToolUse	Read|Glob	inline-graphify-read-reminder	advisory	soft_guidance_only
-PreToolUse	Write|Edit|MultiEdit|NotebookEdit	pre-tool-use-json-guard.sh	hard	fail_closed
-PreToolUse	Write|Edit|MultiEdit|NotebookEdit	enforce-workflow.sh	hard	fail_closed
-PreToolUse	Write|Edit|MultiEdit|NotebookEdit	pre-tool-use-learning-reuse.sh	hard	fail_closed
-PreToolUse	Write|Edit|MultiEdit|NotebookEdit	inline-supabase-reminder	advisory	soft_guidance_only
-PreToolUse	Agent	pre-tool-use-json-guard.sh	hard	fail_closed
-PreToolUse	Agent	enforce-workflow.sh	hard	fail_closed
-PostToolUse	mcp__Context7__.*	inline-context7-recorder	recorder	false_evidence_safe
-PostToolUse	Bash	post-tool-use-bash.sh	recorder	false_evidence_safe
-PostToolUse	Read	inline-read-recorder	recorder	false_evidence_safe
-PostToolUse	Read	post-tool-use-read-evidence.sh	recorder	false_evidence_safe
-PostToolUse	mcp__.*	post-tool-use-mcp.sh	recorder	false_evidence_safe
-PostToolUse	mcp__Notion__.*	inline-notion-recorder	recorder	false_evidence_safe
-SessionStart	*	session-setup.sh	lifecycle	soft_setup
-Stop	*	post-stop-hook.sh	hard	fail_closed
+# event	matcher	unit	class	failure_semantics	wiring	parent	surface	requires	deny_mode
+# surface: both|source|installed. wiring: direct|nested|inline.
+# Hard direct units are invoked through scripts/enforcement/lib/hook-gate.sh.
+PreToolUse	Bash	scripts/enforcement/pre-tool-use-json-guard.sh	hard	fail_closed	direct	-	both	-	pretool_json
+PreToolUse	Bash	scripts/enforcement/enforce-bash-entry.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	Bash	scripts/enforcement/enforce-workflow.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	Bash	scripts/enforcement/enforce-debugging.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	Bash	scripts/enforcement/enforce-git.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	Bash	inline-graphify-grep-reminder	advisory	soft_guidance_only	inline	-	both	-	none
+PreToolUse	Bash	rtk hook claude	advisory	soft_guidance_only	inline	-	both	-	none
+PreToolUse	Read|Glob	inline-graphify-read-reminder	advisory	soft_guidance_only	inline	-	both	-	none
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/pre-tool-use-json-guard.sh	hard	fail_closed	direct	-	both	-	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/enforce-workflow.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/check-plan-scope.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/pre-tool-use-runtime-evidence.sh	hard	fail_closed	direct	-	installed	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/validate-capability-evidence.sh	hard	fail_closed	nested	scripts/enforcement/pre-tool-use-runtime-evidence.sh	installed	-	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/check-required-skills.sh	hard	fail_closed	nested	scripts/enforcement/pre-tool-use-runtime-evidence.sh	installed	-	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/check-required-patterns.sh	hard	fail_closed	nested	scripts/enforcement/pre-tool-use-runtime-evidence.sh	installed	patterns/registry.yaml	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/pre-tool-use-connector-selection.sh	hard	fail_closed	direct	-	installed	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/check-required-connectors.sh	hard	fail_closed	nested	scripts/enforcement/pre-tool-use-connector-selection.sh	installed	-	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/pre-tool-use-template-selection.sh	hard	fail_closed	direct	-	installed	scripts/enforcement/pre-tool-use-template-selection.py	pretool_json
+PreToolUse	Write|Edit|MultiEdit|NotebookEdit	scripts/enforcement/pre-tool-use-template-selection.py	hard	fail_closed	nested	scripts/enforcement/pre-tool-use-template-selection.sh	installed	scripts/enforcement/check-required-templates.py	pretool_json
+PreToolUse	Agent	scripts/enforcement/pre-tool-use-json-guard.sh	hard	fail_closed	direct	-	both	-	pretool_json
+PreToolUse	Agent	scripts/enforcement/enforce-workflow.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
+PreToolUse	.*	scripts/enforcement/pre-tool-use-json-guard.sh	hard	fail_closed	direct	-	both	-	pretool_json
+PreToolUse	.*	scripts/monitoring/require-telemetry-session.sh	hard	fail_closed	direct	-	both	scripts/monitoring/telemetry_handoff.py	pretool_json
+PreToolUse	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+PostToolUse	mcp__Context7__.*	inline-context7-recorder	recorder	false_evidence_safe	inline	-	both	-	none
+PostToolUse	Bash	scripts/enforcement/post-tool-use-bash.sh	recorder	false_evidence_safe	direct	-	both	scripts/enforcement/lib/evidence.sh	none
+PostToolUse	Read	inline-read-recorder	recorder	false_evidence_safe	inline	-	both	-	none
+PostToolUse	Read	scripts/enforcement/post-tool-use-read-evidence.sh	recorder	false_evidence_safe	direct	-	both	scripts/enforcement/lib/evidence.sh	none
+PostToolUse	mcp__.*	scripts/enforcement/post-tool-use-mcp.sh	recorder	false_evidence_safe	direct	-	both	scripts/enforcement/lib/evidence.sh	none
+PostToolUse	mcp__Notion__.*	inline-notion-recorder	recorder	false_evidence_safe	inline	-	both	-	none
+PostToolUse	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+PostToolUseFailure	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+PermissionDenied	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+SessionStart	*	scripts/monitoring/eos-telemetry-session-start.sh	lifecycle	soft_setup	direct	-	both	-	none
+SessionStart	*	scripts/session-setup.sh	lifecycle	soft_setup	direct	-	both	-	none
+UserPromptSubmit	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+InstructionsLoaded	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+SubagentStart	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+SubagentStop	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+TaskCreated	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+TaskCompleted	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+PostCompact	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+Stop	*	scripts/enforcement/post-stop-hook.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	stop_json
+Stop	*	scripts/enforcement/check-runtime-evidence.sh	hard	fail_closed	nested	scripts/enforcement/post-stop-hook.sh	both	scripts/enforcement/lib/evidence.sh	stop_json
+Stop	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+StopFailure	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+SessionEnd	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none

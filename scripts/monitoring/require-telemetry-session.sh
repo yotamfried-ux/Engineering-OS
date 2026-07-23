@@ -119,7 +119,10 @@ if hook_mode == "direct":
             pretool_commands,
             lambda command: (
                 "eos-telemetry-event.sh" in command
-                and command.rstrip().endswith(" pre_tool_use")
+                and (
+                    command.rstrip().endswith(" pre_tool_use")
+                    or "-- pre_tool_use" in command
+                )
             ),
         ),
     )
