@@ -47,9 +47,11 @@ No Project 8, provider, secret, deployment, branch-protection, database, or raw 
 ## Experiment and Implementation
 
 - Plan commit `404c5d8330619052eb362b9812dd8d8aa4584411` preceded all tests and code.
-- Reproduction commit `54a30ddc6938284032fbd272908d564aa6b9e9b5` adds old success followed by newer failure while the checker still accepts the first occurrence.
-- PR #257 Actions run 1365 failed in enforcement group M–R after groups A–L and all earlier dedicated suites passed, isolating the changed `test-operational-readiness-gates.sh` fixture before implementation.
-- The minimal fix adds mandatory exact-head metadata, deterministic latest selection, stable diagnostics, all registered fixtures, and runbook guidance.
+- Reproduction commit `54a30ddc6938284032fbd272908d564aa6b9e9b5` added old success followed by newer failure while the checker still accepted the first occurrence.
+- PR #257 Actions run 1365 failed in enforcement group M–R after groups A–L and all earlier dedicated suites passed, isolating the changed fixture before implementation.
+- Checker commit `4123adb3c4a19dea6d2bd9d04d7f7f031ff1d03e` added mandatory full lowercase head identity, fail-closed input validation, canonical timestamp/attempt/ID selection, and stable selected-run diagnostics.
+- Fixture commit `1b95ac486ce5938010449228a3cc9501f04f8e51` added success, failure, wrong-head, missing metadata, rerun, pending, tie-breaker, malformed input, and input-order determinism coverage.
+- Runbook commit `3f350b8d0432f9a068261b039d97b50653d4670f` documented the exact invocation, provider fields, selection rules, expected-head merge protection, and post-merge boundary.
 
 ## Validation Plan
 
@@ -80,12 +82,12 @@ No Project 8, provider, secret, deployment, branch-protection, database, or raw 
 | `core/learning-loop.md` | read | Root cause and regression proof precede closure. |
 | `docs/operations/known-gaps.tsv` | checked | P0 closure requires exact head, latest attempt, fixtures, CI, review, merge, and post-merge proof. |
 | `docs/operations/operational-readiness-audit.md` | checked | This is Phase 0 item 1. |
-| `scripts/enforcement/check-merge-readiness.sh` | checked | Current first-occurrence logic has no head/chronology validation. |
-| `scripts/enforcement/tests/test-operational-readiness-gates.sh` | checked | Existing suite lacked ordering metadata fixtures. |
-| `scripts/enforcement/check-known-gaps-live-state.py` | checked | Canonical timestamp/attempt/ID precedence exists. |
+| `scripts/enforcement/check-merge-readiness.sh` | checked | The old first-occurrence logic lacked head and chronology validation. |
+| `scripts/enforcement/tests/test-operational-readiness-gates.sh` | checked | The focused owner now contains the registered positive, negative, and deterministic fixtures. |
+| `scripts/enforcement/check-known-gaps-live-state.py` | checked | Canonical timestamp/attempt/ID precedence is reused. |
 | `.github/workflows/pr-policy.yml` | read | Live PR head and CI history are captured. |
-| `.github/workflows/enforcement-tests.yml` | read | Focused suite runs in group M-R and full suite. |
-| `docs/operations/main-required-checks.md` | checked | Checker owns the workflow set. |
+| `.github/workflows/enforcement-tests.yml` | read | Focused suite runs in group M-R and the full suite. |
+| `docs/operations/main-required-checks.md` | checked | Checker remains the required-workflow owner. |
 | `https://docs.github.com/en/rest/actions/workflow-runs` | read | Official run objects expose required metadata. |
 | `https://github.com/actions/github-script/blob/main/README.md` | read | Official Octokit and pagination support are available. |
 
@@ -100,8 +102,8 @@ No Project 8, provider, secret, deployment, branch-protection, database, or raw 
 - asset: `patterns/testing/README.md`
 - asset: `patterns/security/README.md`
 - asset: `patterns/observability/README.md`
-- rating: useful for this task — the fixtures pattern, boundary validation guidance, and structured metadata/diagnostic guidance directly constrain implementation and tests.
-- outcome: adopted Arrange/Act/Assert-style isolated fixtures, fail-closed input validation, and deterministic structured diagnostics; no production observability backend is added.
+- rating: useful for this task — fixture isolation, boundary validation, and structured metadata/diagnostic guidance directly constrained the implementation and tests.
+- outcome: adopted isolated fixtures, fail-closed input validation, and deterministic selected-run diagnostics; no production observability backend was added.
 - decision: keep these three patterns as implementation guidance without promoting their maturity or inventing real-use evidence.
 - confidence: high for local applicability; no claim is made about pattern lifecycle maturity.
 
@@ -113,18 +115,18 @@ No Project 8, provider, secret, deployment, branch-protection, database, or raw 
 
 ## Connector Usage Evidence
 
-- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #256, PR #257, Actions runs 1363–1365, workflow evidence artifact 8551390559, and exact repository files.
-- action: verified state and read policies, checker, fixtures, workflows, audit, patterns, official sources, CI steps, and uploaded diagnostics.
-- result: run 1365 at head `7e9895a5b0cfdea906351e0c05312110772725f2` failed only after reaching enforcement group M–R; artifact `workflow-evidence-log-29975946281` identified the remaining source URL and pattern-rating evidence defects in this Route Plan.
-- decision: selected canonical ordering and corrected evidence-only failures without weakening validators or starting implementation early.
+- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #256, PR #257, Actions runs 1363–1366, workflow evidence artifact 8551390559, and exact repository files.
+- action: verified state and read policies, checker, fixtures, workflows, audit, patterns, official sources, CI steps, and uploaded diagnostics; then wrote the minimal checker, test matrix, and runbook.
+- result: commits `4123adb3c4a19dea6d2bd9d04d7f7f031ff1d03e`, `1b95ac486ce5938010449228a3cc9501f04f8e51`, and `3f350b8d0432f9a068261b039d97b50653d4670f` implement the three declared target surfaces while preserving the open gap and manual approval boundary.
+- decision: selected canonical ordering, complete fail-closed fixtures, and exact-head operator guidance without adding another registry or weakening validators.
 - target: `scripts/enforcement/check-merge-readiness.sh`; `scripts/enforcement/tests/test-operational-readiness-gates.sh`; `docs/operations/merge-readiness-checklist.md`.
 
 ## Alternatives
 
-- First API occurrence — rejected because reruns/pagination make order unsafe.
+- First API occurrence — rejected because reruns and pagination make order unsafe.
 - PR-body SHA only — rejected because it does not bind each run.
 - `run_number` only — rejected because reruns require attempt and chronology.
-- Any exact-head success — rejected because later failure/pending invalidates stale green.
+- Any exact-head success — rejected because later failure or pending state invalidates stale green.
 - Second workflow registry — rejected because the checker owns the set.
 - Automated approval — rejected because approval is Manual by design.
 
@@ -140,41 +142,39 @@ PR #256 remains open and owner-gated. Per the user's direction to continue indep
 
 - `routing.task-router-read` — `engineering_os_governance` selected.
 - `workflow.workflow-read` — result loop and owner-gated merge applied.
-- `plan.route-plan-before-write` — commit `404c5d8330619052eb362b9812dd8d8aa4584411` preceded test changes.
+- `plan.route-plan-before-write` — commit `404c5d8330619052eb362b9812dd8d8aa4584411` preceded test and implementation changes.
 - `source.github-repo-read` — live state, files, runs, jobs, logs, artifacts, and threads inspected.
-- `validation.policy-change-has-validator` — isolated regression fixture precedes implementation.
-- `validation.actions-checked` — exact-head Actions refreshed after each update.
+- `validation.policy-change-has-validator` — isolated reproduction preceded the checker and expanded regression matrix.
+- `validation.actions-checked` — exact-head Actions are refreshed after each implementation checkpoint.
 - `validation.coderabbit-policy` — live review required; fallback only on proven unavailability.
 
 ## Skill Evidence
 
-- `writing-plans` — scope, sources, alternatives, validation, and boundaries recorded before code.
+- `writing-plans` — scope, sources, alternatives, validation, and boundaries were recorded before code.
 - `verification-before-completion` — reproduction, implementation, CI, review, merge, and closure remain separate.
-- `security-review` — untrusted JSON, fail-closed metadata, deterministic output, and no-secret boundary included.
+- `security-review` — untrusted JSON, fail-closed metadata, deterministic output, and no-secret boundary shaped the implementation.
 
 ## Claude Run Trace
 
 - goal: prevent stale or wrong-head workflow evidence from supporting a merge.
 - hypothesis: exact-head filtering plus deterministic chronology/attempt/ID ordering rejects stale green regardless of input order.
 - connectors: GitHub and official GitHub sources.
-- steps: verify; route; plan; add reproduction; open PR #257; diagnose evidence gates; capture the isolated group M–R failure; complete source and pattern evidence.
-- evidence: main `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; PR #256 head `fa52f62894c97bd4173830a0b5581705676352f9`; plan `404c5d8330619052eb362b9812dd8d8aa4584411`; reproduction `54a30ddc6938284032fbd272908d564aa6b9e9b5`; enforcement run 1365; workflow evidence artifact 8551390559.
+- steps: verify; route; plan; reproduce; isolate CI failure; implement checker; expand fixtures; update runbook; begin exact-head validation.
+- evidence: main `0ee2dbee7a9ab58e86a11726021c30baca0faa22`; PR #256 head `fa52f62894c97bd4173830a0b5581705676352f9`; reproduction run 1365; implementation commits `4123adb3c4a19dea6d2bd9d04d7f7f031ff1d03e`, `1b95ac486ce5938010449228a3cc9501f04f8e51`, and `3f350b8d0432f9a068261b039d97b50653d4670f`.
 - rejected: implicit list order, prose-only binding, any-success acceptance, duplicate registry, automated approval, and validator weakening.
-- result: a live pre-fix failure is captured and plan evidence is complete; checker implementation remains absent.
+- result: implementation and regression coverage are committed; exact-head CI and review evidence are being evaluated separately from completion and closure.
 
-## Definition of Done — Test-Only Reproduction Stage
+## Definition of Done — Implementation Checkpoint
 
-- [x] Live main, PR #256, workflows/attempts, and review threads re-fetched.
-- [x] Audit, policies, checker, tests, workflows, patterns, and official sources read.
-- [x] Root cause and canonical ordering identified.
-- [x] Route Plan committed before tests/code.
-- [x] Isolated test-only reproduction committed before implementation.
-- [x] Evidence-only policy findings corrected without validator changes.
-- [x] Focused reproduction failure isolated to enforcement group M-R in Actions run 1365.
+- [x] Live pre-fix failure isolated in enforcement group M-R.
+- [x] Exact-head and latest-attempt checker implementation committed.
+- [x] Positive, negative, malformed-input, tie-breaker, and determinism fixtures committed.
+- [x] Merge-readiness runbook updated with the exact invocation and provider metadata contract.
+- [x] Implementation checkpoint recorded after the final code/test change.
 
 ## Current Completion State
 
-Checker implementation, full fixtures, focused/wider green CI, current-head review, owner approval, merge, post-merge validation, and gap closure remain incomplete.
+Implementation is complete. Exact-head focused and wider CI, current-head external review, PR-body and Operational Work History synchronization, owner approval, merge, post-merge validation, and canonical gap closure remain incomplete.
 
 ## Live External Gates Before Closure
 
@@ -183,5 +183,6 @@ The gap remains `open`. Green implementation is insufficient without explicit Yo
 ## Progress Lifecycle Evidence
 
 - start: commit `404c5d8330619052eb362b9812dd8d8aa4584411` recorded scope, sources, root cause, alternatives, validation, and branch boundary before tests or code.
-- mid: test-only commit `54a30ddc6938284032fbd272908d564aa6b9e9b5` introduced the isolated stale-success reproduction, and runs 1363–1365 exposed evidence-contract friction before implementation.
-- pre-merge: PR #257 test-only stage contains the plan-first fixture, live isolated failure, corrected source/connector/pattern evidence, and explicit merge prohibition; this checkpoint records reproduction readiness only.
+- mid: test-only commit `54a30ddc6938284032fbd272908d564aa6b9e9b5` introduced the stale-success reproduction, and runs 1363–1365 exposed evidence-contract friction before implementation.
+- pre-merge: PR #257 test-only stage contained the plan-first fixture, live isolated failure, corrected source/connector/pattern evidence, and explicit merge prohibition; this checkpoint recorded reproduction readiness only.
+- mid: commits `4123adb3c4a19dea6d2bd9d04d7f7f031ff1d03e`, `1b95ac486ce5938010449228a3cc9501f04f8e51`, and `3f350b8d0432f9a068261b039d97b50653d4670f` implemented exact-head selection, complete fixtures, and operator guidance after the reproduced failure.
