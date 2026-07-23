@@ -12,6 +12,7 @@ chmod +x "$USE_IN_PROJECT" "$PRECHECK" "$READ_RECORDER" "$MERGE_CHECK" "$JSON_GU
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 TARGET="$TMP/target-app"
+EXPECTED_HEAD_SHA="1111111111111111111111111111111111111111"
 mkdir -p "$TARGET"
 
 git init "$TARGET" >/dev/null
@@ -82,15 +83,24 @@ make_runs_json() {
   {
     printf '{"workflow_runs":[\n'
     local first=1
+    local run_id=1000
     while IFS= read -r wf; do
       [ -n "$wf" ] || continue
       [ "$first" -eq 1 ] || printf ',\n'
       first=0
       if [ "$wf" = "enforcement-tests" ]; then
-        printf ' {"name":"%s","status":"%s","conclusion":"%s"}' "$wf" "$enforcement_status" "$enforcement_conclusion"
+        if [ "$enforcement_conclusion" = "null" ]; then
+          printf ' {"id":%d,"name":"%s","head_sha":"%s","run_started_at":"2026-07-22T10:00:00Z","run_attempt":1,"status":"%s","conclusion":null}' \
+            "$run_id" "$wf" "$EXPECTED_HEAD_SHA" "$enforcement_status"
+        else
+          printf ' {"id":%d,"name":"%s","head_sha":"%s","run_started_at":"2026-07-22T10:00:00Z","run_attempt":1,"status":"%s","conclusion":"%s"}' \
+            "$run_id" "$wf" "$EXPECTED_HEAD_SHA" "$enforcement_status" "$enforcement_conclusion"
+        fi
       else
-        printf ' {"name":"%s","status":"completed","conclusion":"success"}' "$wf"
+        printf ' {"id":%d,"name":"%s","head_sha":"%s","run_started_at":"2026-07-22T10:00:00Z","run_attempt":1,"status":"completed","conclusion":"success"}' \
+          "$run_id" "$wf" "$EXPECTED_HEAD_SHA"
       fi
+      run_id=$((run_id + 1))
     done < <(required_workflows)
     printf '\n]}\n'
   } > "$file"
@@ -201,9 +211,11 @@ record_read core/workflow.md
 expect_pass "write allowed after plan plus router/workflow evidence" run_precheck src/app.ts
 
 make_runs_json "$TMP/pending.json" in_progress null
-expect_fail "merge readiness blocks pending workflow" "$MERGE_CHECK" --runs-json "$TMP/pending.json"
+expect_fail "merge readiness blocks pending workflow" \
+  "$MERGE_CHECK" --runs-json "$TMP/pending.json" --expected-head-sha "$EXPECTED_HEAD_SHA"
 make_runs_json "$TMP/green.json" completed success
-expect_pass "merge readiness allows all green workflows" "$MERGE_CHECK" --runs-json "$TMP/green.json"
+expect_pass "merge readiness allows all green workflows" \
+  "$MERGE_CHECK" --runs-json "$TMP/green.json" --expected-head-sha "$EXPECTED_HEAD_SHA"
 
 echo "Experiment 3: RTK/graphify PATH-absence fallback"
 extract_hook_cmds() {
