@@ -146,7 +146,7 @@ PR #257 targets `main` at `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d`. The branch
 - hypothesis: exact-head filtering and deterministic chronology, attempt, and ID ordering reject stale green only when every caller supplies provider identity metadata.
 - connectors: GitHub and official GitHub sources.
 - steps: verify; plan; reproduce; implement; expand fixtures; correct the clean-install caller; rerun; correct the fixture; review; merge PR #256 with approval; retarget PR #257; rebuild plan-first clean history; compare the exact diff; refresh current-base gates.
-- evidence: enforcement runs 1365, 1370, 1373, 1374, 1376, and 1377; PRs #256–#258; commits `33ddb11b25960a633031c6f4144d49bb6a5d8198` and `97c19316bb3a4285f04901ca95e49695b51ce86e`; official GitHub sources above.
+- evidence: enforcement runs 1365, 1370, 1373, 1374, 1376, and 1377; PRs #256–#258; commits `33ddb11b25960a633031c6f4144d49bb6a5d8198`, `97c19316bb3a4285f04901ca95e49695b51ce86e`, and `176fee0ce5c092c3589e958e383856affae82524`; official GitHub sources above.
 - rejected: implicit order, optional expected head, compatibility fallback, stale-base CI reuse, automated approval, validator weakening, and noisy inherited history.
 - result: the implementation and clean-history reconciliation are complete; final exact-head workflow, review, approval, merge, and post-merge evidence remain separate external gates.
 
@@ -172,3 +172,4 @@ The gap remains `open`. A green PR does not authorize merge. Closure requires ex
 - start: commit `33ddb11b25960a633031c6f4144d49bb6a5d8198` added this Route Plan on current `main` before any reconciled code, config, or test change.
 - mid: commit `97c19316bb3a4285f04901ca95e49695b51ce86e` applied the reviewed checker, fixtures, clean-install caller, and runbook as exactly five changed paths after the clean Route Plan commit.
 - pre-merge: historical enforcement run 1377 and resolved review findings establish the implementation baseline; a distinct current-head checkpoint follows the clean-history mid checkpoint.
+- pre-merge: commit `176fee0ce5c092c3589e958e383856affae82524` completed the clean-history mid evidence and truthful external-gate separation after the final code and test commit; this distinct checkpoint records the five-path state before exact-head CI.
