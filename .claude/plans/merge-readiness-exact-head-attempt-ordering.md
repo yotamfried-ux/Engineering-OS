@@ -80,7 +80,7 @@ Reject stale, wrong-head, incomplete, failed, or pending required-workflow evide
 ## Documentation Asset Evidence
 
 - internal: `docs/operations/merge-readiness-checklist.md`, `docs/operations/main-required-checks.md`, `core/git-policy.md`, and the two test suites define the operator, registry, decision, and installed-consumer contracts.
-- official: GitHub REST workflow-run and workflow-attempt documentation plus `actions/github-script` and `octokit/rest.js` repositories were used directly.
+- context7: Context7 retrieval was unnecessary because this change uses GitHub provider metadata directly; the concrete external sources checked were `https://docs.github.com/en/rest/actions/workflow-runs`, `https://docs.github.com/en/rest/actions/workflow-jobs`, `https://github.com/actions/github-script`, and `https://github.com/octokit/rest.js`.
 - decision: reuse GitHub provider identity and the repository's existing ordering precedent instead of inventing a parallel run model.
 
 ## Template/Pattern Rating Evidence
@@ -146,7 +146,7 @@ PR #257 targets `main` at `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d`. The branch
 - hypothesis: exact-head filtering and deterministic chronology, attempt, and ID ordering reject stale green only when every caller supplies provider identity metadata.
 - connectors: GitHub and official GitHub sources.
 - steps: verify; plan; reproduce; implement; expand fixtures; correct the clean-install caller; rerun; correct the fixture; review; merge PR #256 with approval; retarget PR #257; rebuild plan-first clean history; compare the exact diff; refresh current-base gates.
-- evidence: enforcement runs 1365, 1370, 1373, 1374, 1376, and 1377; PRs #256–#258; commits `33ddb11b25960a633031c6f4144d49bb6a5d8198`, `97c19316bb3a4285f04901ca95e49695b51ce86e`, and `176fee0ce5c092c3589e958e383856affae82524`; official GitHub sources above.
+- evidence: enforcement runs 1365, 1370, 1373, 1374, 1376, and 1377; PRs #256–#258; commits `33ddb11b25960a633031c6f4144d49bb6a5d8198`, `97c19316bb3a4285f04901ca95e49695b51ce86e`, `176fee0ce5c092c3589e958e383856affae82524`, and `e81058eac3ea0404d2f9745599f13c2345b8336b`; official GitHub sources above.
 - rejected: implicit order, optional expected head, compatibility fallback, stale-base CI reuse, automated approval, validator weakening, and noisy inherited history.
 - result: the implementation and clean-history reconciliation are complete; final exact-head workflow, review, approval, merge, and post-merge evidence remain separate external gates.
 
