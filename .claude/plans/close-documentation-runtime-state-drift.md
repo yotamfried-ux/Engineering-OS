@@ -48,12 +48,18 @@ This closure branch changes canonical status and evidence metadata only. It does
 - `validation.policy-change-has-validator` — the existing known-gaps, audit, documentation-hygiene, live-state, and full enforcement validators own this metadata-only closure.
 - `validation.coderabbit-policy` — the implementation PR reconciled seven live review threads; PR #261 retains independent review as a blocking gate.
 
+## Connector Evidence
+
+| Connector | Status | Evidence |
+|---|---|---|
+| GitHub | used | Re-fetched PR #260 exact head, latest workflow attempts, seven resolved review threads, approval comment `5063627361`, merge commit `105ecd0d0dc72aa847d11b193190689dbda0dda8`, canonical `main`, PR #261, and the clean four-file compare. |
+
 ## Connector Usage Evidence
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #260, exact head, workflows, review threads, approval record, merge result, repository files, canonical `main`, PR #261, and the clean four-file compare.
 - action: re-fetched live merge-readiness evidence, merged with expected-head protection, verified `main`, created a fail-closed live claim, synchronized canonical status, and removed every temporary reconciliation file.
-- result: PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; PR #261 final compare contains only the plan, registry, audit, and live claim; closure remains contingent on exact-head CI, live-state validation, review, new owner approval, closure merge, and closure post-merge proof.
-- decision: use a separate closure PR and existing live-state validator rather than treating PR prose or chat memory as canonical closure.
+- result: GitHub PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; PR #261 final compare contains only the plan, registry, audit, and live claim; closure remains contingent on exact-head CI, live-state validation, review, new owner approval, closure merge, and closure post-merge proof.
+- decision: selected a separate closure PR and the existing GitHub-backed live-state validator rather than treating PR prose or chat memory as canonical closure.
 - target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json`.
 
 ## Definition of Done — Closure Candidate
