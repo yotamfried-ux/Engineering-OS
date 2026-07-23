@@ -37,7 +37,7 @@ This closure branch changes canonical status and evidence metadata only. It does
 | `docs/operations/operational-readiness-audit.md` | synchronized | Ledger, matrix, dependency plan, checklist, ROI order, snapshot, and current scope agree with the registry. |
 | `docs/operations/live-state-claims.json` | synchronized | A versioned claim binds PR #260 exact head and merge to named PR workflows, push workflows, and the required check run. |
 | `scripts/enforcement/check-known-gaps-live-state.py` | read | The validator fails closed when required PR or push workflows are missing, stale, unsuccessful, or associated with the wrong head/merge. |
-| PR #260 live state | validated | Exact reviewed head merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; `main` compares identical; the closure PR now delegates post-merge proof to the live-state workflow. |
+| `core/git-policy.md` and `docs/operations/merge-readiness-checklist.md` | validated | The exact-head, explicit-approval, expected-head merge, and post-merge lifecycle was applied to PR #260; supporting GitHub evidence is head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79`, approval comment `5063627361`, and merge `105ecd0d0dc72aa847d11b193190689dbda0dda8`. |
 
 ## Capability Evidence
 
@@ -47,6 +47,11 @@ This closure branch changes canonical status and evidence metadata only. It does
 - `source.github-repo-read` — PR #260 metadata, workflows, threads, merge result, repository files, and `main` identity were read from GitHub.
 - `validation.policy-change-has-validator` — the existing known-gaps, audit, documentation-hygiene, live-state, and full enforcement validators own this metadata-only closure.
 - `validation.coderabbit-policy` — the implementation PR reconciled seven live review threads; PR #261 retains independent review as a blocking gate.
+
+## Skill Evidence
+
+- `writing-plans` — the focused closure plan was committed before every registry, claim, audit, and temporary-reconciliation write; the plan was then updated at mid and pre-merge checkpoints as evidence changed.
+- `verification-before-completion` — implementation completion, exact-head CI, review, owner approval, expected-head merge, canonical-main identity, live post-merge validation, closure metadata, closure review, closure merge, and closure post-merge proof remain separate assertions.
 
 ## Connector Evidence
 
