@@ -11,7 +11,7 @@
 | Planning Mode | post-merge evidence reconciliation; no runtime implementation changes |
 | Task-router evidence | `core/task-router.md` routes canonical audit and known-gap closure through Engineering OS governance and the relevant docs-governance owner. |
 | Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/quality-gates.md`, and the audit closure standard require implementation, exact-head CI, review, explicit approval, expected-head merge, post-merge proof, then canonical synchronization. |
-| Target paths | `.claude/plans/close-documentation-runtime-state-drift.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json`; temporary self-deleting audit reconciliation workflow if needed for exact large-file replacements |
+| Target paths | `.claude/plans/close-documentation-runtime-state-drift.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json`; temporary self-deleting audit reconciliation files used only to apply validated exact replacements and absent from the final diff |
 | Templates | waiver — focused canonical-state reconciliation using existing registry, audit, and live-claim schemas |
 | Architecture guides | `docs/operations/operational-readiness-audit.md`; `docs/operations/known-gaps.tsv`; `docs/operations/live-state-claims.json`; `docs/operations/merge-readiness-checklist.md` |
 | Patterns | none — no implementation pattern is needed for metadata-only closure |
@@ -19,7 +19,7 @@
 | Skills | `writing-plans`; `verification-before-completion` |
 | Validation gates | known-gaps registry; readiness audit; live-state claim; documentation hygiene; full enforcement; PR policy; exact-head CI; review reconciliation |
 | Evidence to check | PR #260 reviewed head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79`; latest exact-head workflows including `pr-policy` 1692 and `enforcement-tests` 1391; 7 resolved review threads; owner approval record comment `5063627361`; expected-head squash merge `105ecd0d0dc72aa847d11b193190689dbda0dda8`; canonical `main` identity; post-merge push workflows |
-| User decisions required | no merge of the closure PR without a new explicit owner approval for that PR |
+| User decisions required | no merge of the closure PR without a new explicit owner approval for PR #261 |
 
 ## Goal
 
@@ -27,55 +27,57 @@ Close `documentation-runtime-state-drift` only if live GitHub evidence proves th
 
 ## Scope
 
-This closure branch changes canonical status and evidence metadata only. It does not alter the documentation-hygiene implementation, MANIFEST contract, telemetry terminology guard, ownership registry, Project 8, or runtime hooks.
+This closure branch changes canonical status and evidence metadata only. It does not alter the documentation-hygiene implementation, MANIFEST contract, telemetry terminology guard, ownership registry, Project 8, or runtime hooks. Temporary reconciliation files applied exact single-match replacements and deleted themselves; the final compare contains only the four declared canonical paths.
 
 ## Source of Truth Checks
 
 | Source | Status | Finding / decision |
 |---|---|---|
-| `docs/operations/known-gaps.tsv` | checked | The gap is still `open` and its evidence text predates the PR #260 merge. |
-| `docs/operations/operational-readiness-audit.md` | checked | Seven implementation items are checked; the final exact-head/review/merge/post-merge item remains open. |
-| `docs/operations/live-state-claims.json` | checked | A new versioned claim is required to bind PR #260 exact head and merge evidence. |
+| `docs/operations/known-gaps.tsv` | synchronized | The gap is `closed` with exact PR #260 head, approval, merge, and live-claim evidence. |
+| `docs/operations/operational-readiness-audit.md` | synchronized | Ledger, matrix, dependency plan, checklist, ROI order, snapshot, and current scope agree with the registry. |
+| `docs/operations/live-state-claims.json` | synchronized | A versioned claim binds PR #260 exact head and merge to named PR workflows, push workflows, and the required check run. |
 | `scripts/enforcement/check-known-gaps-live-state.py` | read | The validator fails closed when required PR or push workflows are missing, stale, unsuccessful, or associated with the wrong head/merge. |
-| PR #260 live state | validated | Exact reviewed head merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; `main` compares identical. |
+| PR #260 live state | validated | Exact reviewed head merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; `main` compares identical; the closure PR now delegates post-merge proof to the live-state workflow. |
 
 ## Capability Evidence
 
 - `routing.task-router-read` — the audit dependency order selected canonical gap closure work.
 - `workflow.workflow-read` — implementation, merge, post-merge proof, canonical closure, review, and closure merge remain separate lifecycle states.
-- `plan.route-plan-before-write` — this plan commit precedes registry, claim, audit, and temporary-workflow writes.
+- `plan.route-plan-before-write` — commit `132c6b85f55ab71c350e9016bbf9ed9df9e5fd20` preceded registry, claim, audit, and temporary-workflow writes.
 - `source.github-repo-read` — PR #260 metadata, workflows, threads, merge result, repository files, and `main` identity were read from GitHub.
 - `validation.policy-change-has-validator` — the existing known-gaps, audit, documentation-hygiene, live-state, and full enforcement validators own this metadata-only closure.
-- `validation.coderabbit-policy` — the implementation PR reconciled seven live review threads; the closure PR retains independent review as a blocking gate.
+- `validation.coderabbit-policy` — the implementation PR reconciled seven live review threads; PR #261 retains independent review as a blocking gate.
 
 ## Connector Usage Evidence
 
-- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #260, exact head, workflows, review threads, approval record, merge result, repository files, and canonical `main` comparison.
-- action: re-fetched live merge-readiness evidence, merged with expected-head protection, verified `main`, and prepared a fail-closed live claim and canonical audit synchronization.
-- result: PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; canonical `main` is identical; closure remains contingent on the live-state validator proving the required post-merge workflows.
+- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #260, exact head, workflows, review threads, approval record, merge result, repository files, canonical `main`, PR #261, and the clean four-file compare.
+- action: re-fetched live merge-readiness evidence, merged with expected-head protection, verified `main`, created a fail-closed live claim, synchronized canonical status, and removed every temporary reconciliation file.
+- result: PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; PR #261 final compare contains only the plan, registry, audit, and live claim; closure remains contingent on exact-head CI, live-state validation, review, new owner approval, closure merge, and closure post-merge proof.
 - decision: use a separate closure PR and existing live-state validator rather than treating PR prose or chat memory as canonical closure.
 - target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json`.
 
 ## Definition of Done — Closure Candidate
 
 - [x] Route Plan committed before canonical writes.
-- [ ] Add a PR #260 live-state claim with exact reviewed head, merge commit, required PR workflows, required push workflows, and required check run.
-- [ ] Change the registry row to `closed` with exact evidence.
-- [ ] Synchronize audit ledger, matrix, dependency plan, checklist, ROI order, and current scope.
+- [x] Added a PR #260 live-state claim with exact reviewed head, merge commit, required PR workflows, required push workflows, and required check run.
+- [x] Changed the registry row to `closed` with exact evidence.
+- [x] Synchronized audit ledger, matrix, dependency plan, checklist, ROI order, snapshot, and current scope.
 - [ ] Pass focused known-gaps, audit, documentation-hygiene, and live-state validation.
-- [ ] Pass full exact-head CI and independent review on the closure PR.
-- [ ] Obtain new explicit owner approval before merging the closure PR.
-- [ ] Verify closure-PR post-merge workflows before treating the status as durable.
+- [ ] Pass full exact-head CI and independent review on PR #261.
+- [ ] Obtain new explicit owner approval before merging PR #261.
+- [ ] Verify PR #261 post-merge workflows before treating the status as durable.
 
 ## Progress Lifecycle Evidence
 
-- start: this plan is the first closure-branch commit and records scope, evidence, and external gates before any canonical state changes.
+- start: commit `132c6b85f55ab71c350e9016bbf9ed9df9e5fd20` recorded scope, evidence, and external gates before canonical state changes.
+- mid: temporary exact-replacement automation was documented before creation; run `30046422911` completed successfully and produced commit `a4b14e210f427e529a2d960aedbcd59f7dafeb8a`, which synchronized the three canonical closure files and removed every temporary workflow/script.
+- pre-merge: the compare against `main` at `105ecd0d0dc72aa847d11b193190689dbda0dda8` contains exactly four paths and no temporary files; this checkpoint triggers clean exact-head CI and live review for PR #261.
 
 ## Validation Plan
 
-1. Add the versioned live claim and exact source-matched canonical replacements.
-2. Let `known-gaps-live-state` independently verify PR #260 pull-request and post-merge push evidence.
-3. Run focused and full exact-head CI on the closure PR.
-4. Reconcile all live review threads.
-5. Do not merge without a new explicit approval for the closure PR.
+1. Require focused and full exact-head CI on the clean PR #261 head.
+2. Require `known-gaps-live-state` to independently verify PR #260 pull-request and post-merge push evidence.
+3. Inspect the fresh Operational Work History artifact and every live review thread.
+4. Reconcile valid findings and document any rejected finding with exact source evidence.
+5. Do not merge without a new explicit approval for PR #261.
 6. After merge, verify canonical `main` and post-merge workflows before claiming durable closure.
