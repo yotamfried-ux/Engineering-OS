@@ -1,0 +1,28 @@
+name: tmp-hard-hook-mr-debug
+
+on:
+  pull_request:
+
+jobs:
+  debug-m-r:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reproduce enforcement group M-R with concise output
+        env:
+          HEAD_BRANCH: fix/hard-hook-fail-closed
+        run: |
+          set -euo pipefail
+          git clone --quiet --depth 1 --branch "$HEAD_BRANCH" https://github.com/yotamfried-ux/Engineering-OS.git repo
+          cd repo
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[m-r]*.sh; do
+            if ! bash "$t" >test.out 2>&1; then
+              echo "FAILED_TEST=$t"
+              tail -n 160 test.out
+              exit 1
+            fi
+          done
+          echo "GROUP_M_R_PASSED"
