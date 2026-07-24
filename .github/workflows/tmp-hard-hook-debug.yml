@@ -17,31 +17,32 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
       - name: Apply Notion false-evidence fix
+        run: python3 .github/scripts/tmp_apply_notion_false_evidence.py
+      - name: Validate focused and installed behavior
         run: |
           set +e
-          python3 .github/scripts/tmp_apply_notion_false_evidence.py > /tmp/notion-patch.log 2>&1
+          {
+            set -x
+            git diff --check
+            bash -n scripts/enforcement/post-tool-use-notion-progress.sh
+            bash -n scripts/enforcement/patch-settings-runtime-evidence.sh
+            bash scripts/enforcement/tests/test-hook-classification.sh
+            bash scripts/enforcement/tests/test-required-connectors.sh
+            bash scripts/enforcement/tests/test-hard-hook-fail-closed.sh
+          } > /tmp/notion-validation.log 2>&1
           status=$?
-          cat /tmp/notion-patch.log
-          echo "$status" > /tmp/notion-patch.status
+          cat /tmp/notion-validation.log
+          echo "$status" > /tmp/notion-validation.status
           exit "$status"
-      - name: Upload patch diagnostics
+      - name: Upload validation diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: notion-patch-${{ github.run_id }}
+          name: notion-validation-${{ github.run_id }}
           path: |
-            /tmp/notion-patch.log
-            /tmp/notion-patch.status
+            /tmp/notion-validation.log
+            /tmp/notion-validation.status
           retention-days: 2
-      - name: Validate focused and installed behavior
-        run: |
-          set -euo pipefail
-          git diff --check
-          bash -n scripts/enforcement/post-tool-use-notion-progress.sh
-          bash -n scripts/enforcement/patch-settings-runtime-evidence.sh
-          bash scripts/enforcement/tests/test-hook-classification.sh
-          bash scripts/enforcement/tests/test-required-connectors.sh
-          bash scripts/enforcement/tests/test-hard-hook-fail-closed.sh
       - name: Commit canonical changes and remove temporary files
         run: |
           set -euo pipefail
