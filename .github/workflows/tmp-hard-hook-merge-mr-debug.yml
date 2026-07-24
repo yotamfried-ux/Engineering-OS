@@ -34,14 +34,30 @@ jobs:
           PY
       - name: Validate operational learning and M-R suites
         run: |
-          set -euo pipefail
-          git diff --check
-          bash scripts/enforcement/tests/test-operational-learning-skills.sh
-          shopt -s nullglob
-          for t in scripts/enforcement/tests/test-[m-r]*.sh; do
-            echo "──────── $t ────────"
-            bash "$t"
-          done
+          set +e
+          {
+            set -x
+            git diff --check
+            bash scripts/enforcement/tests/test-operational-learning-skills.sh
+            shopt -s nullglob
+            for t in scripts/enforcement/tests/test-[m-r]*.sh; do
+              echo "──────── $t ────────"
+              bash "$t"
+            done
+          } > /tmp/fixture-validation.log 2>&1
+          status=$?
+          cat /tmp/fixture-validation.log
+          echo "$status" > /tmp/fixture-validation.status
+          exit "$status"
+      - name: Upload installed fixture diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fixture-validation-${{ github.run_id }}
+          path: |
+            /tmp/fixture-validation.log
+            /tmp/fixture-validation.status
+          retention-days: 2
       - name: Commit fixture correction and remove temporary workflow
         run: |
           set -euo pipefail
