@@ -16,20 +16,29 @@ jobs:
           git config --global user.email "ci@engineering-os.local"
           git config --global user.name "engineering-os-ci"
           git config --global init.defaultBranch main
-      - name: Reproduce operational learning suite
+      - name: Reproduce M-R suites
         run: |
           set +e
-          bash scripts/enforcement/tests/test-operational-learning-skills.sh > /tmp/harness.log 2>&1
-          status=$?
-          cat /tmp/harness.log
-          echo "$status" > /tmp/harness.status
+          shopt -s nullglob
+          status=0
+          for t in scripts/enforcement/tests/test-[m-r]*.sh; do
+            if ! bash "$t" > /tmp/mr-test.log 2>&1; then
+              echo "FAILED_TEST=$t" > /tmp/mr-summary.log
+              cat /tmp/mr-test.log >> /tmp/mr-summary.log
+              status=1
+              break
+            fi
+          done
+          if [ "$status" -eq 0 ]; then echo "GROUP_M_R_PASSED" > /tmp/mr-summary.log; fi
+          cat /tmp/mr-summary.log
+          echo "$status" > /tmp/mr-status
           exit "$status"
-      - name: Upload harness diagnostics
+      - name: Upload M-R diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: harness-${{ github.run_id }}
+          name: current-mr-${{ github.run_id }}
           path: |
-            /tmp/harness.log
-            /tmp/harness.status
+            /tmp/mr-summary.log
+            /tmp/mr-status
           retention-days: 2
