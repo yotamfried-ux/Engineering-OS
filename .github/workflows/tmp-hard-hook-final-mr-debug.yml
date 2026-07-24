@@ -1,0 +1,29 @@
+name: tmp-hard-hook-final-mr-debug
+
+on:
+  pull_request:
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          persist-credentials: false
+      - name: Prepare test environment
+        run: |
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+      - name: Reproduce group M-R with concise output
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for t in scripts/enforcement/tests/test-[m-r]*.sh; do
+            if ! bash "$t" > /tmp/mr-test.log 2>&1; then
+              echo "FAILED_TEST=$t"
+              cat /tmp/mr-test.log
+              exit 1
+            fi
+          done
+          echo "GROUP_M_R_PASSED"
