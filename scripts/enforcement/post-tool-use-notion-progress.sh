@@ -7,6 +7,8 @@ ROOT="${ENGINEERING_OS_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 EVIDENCE_LIB="$ROOT/scripts/enforcement/lib/evidence.sh"
 INPUT="$(cat 2>/dev/null)" || { echo "Notion progress recorder could not read hook input." >&2; exit 1; }
 
+# Nonzero exits are intentional: soft-hook-gate records the failure and returns
+# fail-open without allowing this recorder to write false policy evidence.
 if ! printf '%s' "$INPUT" | python3 -c 'import json,sys; d=json.load(sys.stdin); name=d.get("tool_name") or d.get("tool") or ""; response=d.get("tool_response"); assert name.startswith("mcp__Notion__") and isinstance(response,dict)' >/dev/null 2>&1; then
   echo "Notion progress recorder received malformed input and recorded no evidence." >&2
   exit 1
