@@ -125,12 +125,15 @@ try:
 except ValueError:
     raise SystemExit(f"hard-hook unit argument escapes ENGINEERING_OS_HOME: {unit_arg_raw}")
 unit_arg = trusted_path(str(unit_rel))
+unit_lexical = Path(os.path.abspath(unit_arg_raw))
 
 matches = [r for r in rows if r["event"] == event and r["matcher"] == matcher and
-           r["wiring"] == "direct" and trusted_path(r["unit"]) == unit_arg]
+           r["wiring"] == "direct" and Path(os.path.abspath(root / r["unit"])) == unit_lexical]
 if len(matches) != 1:
     raise SystemExit(f"expected exactly one direct registry row for {event}/{matcher}/{unit_arg}, found {len(matches)}")
 row = matches[0]
+if trusted_path(row["unit"]) != unit_arg:
+    raise SystemExit(f"requested hard-hook unit does not match its canonical registry path: {row['unit']}")
 if row["class"] != "hard" or row["semantics"] != "fail_closed":
     raise SystemExit(f"hook-gate may run only a canonical hard/fail_closed unit, got {row['class']}/{row['semantics']}")
 expected_mode = "pretool_json" if event == "PreToolUse" else "stop_json" if event == "Stop" else "exit2"

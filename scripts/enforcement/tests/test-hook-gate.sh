@@ -181,5 +181,12 @@ printf '#!/usr/bin/env bash\necho "runtime evidence missing" >&2\nexit 1\n' > "$
 run_gate "$root" Stop '*' "$stop_event"
 if [ "$RUN_CODE" -eq 0 ] && [ "$(printf '%s' "$RUN_OUT" | json_field decision)" = block ] && printf '%s' "$RUN_OUT" | grep -q 'runtime evidence missing'; then ok "Stop hard failure uses decision=block"; else bad "Stop failure should block (code=$RUN_CODE out=$RUN_OUT err=$RUN_ERR)"; fi
 
+# 20. A missing sibling sharing event/matcher must not contaminate the requested unit.
+root="$(make_root sibling-isolation)"
+printf '#!/usr/bin/env bash\ncat >/dev/null\nexit 0\n' > "$root/scripts/enforcement/unit.sh"
+printf 'PreToolUse\tBash\tscripts/enforcement/missing-sibling.sh\thard\tfail_closed\tdirect\t-\tboth\t-\tpretool_json\n' >> "$root/scripts/enforcement/hook-criticality.tsv"
+run_gate "$root" PreToolUse Bash "$pre_event"
+if [ "$RUN_CODE" -eq 0 ] && [ -z "$RUN_OUT" ]; then ok "missing sibling does not block a healthy requested unit"; else bad "missing sibling contaminated healthy unit (code=$RUN_CODE out=$RUN_OUT err=$RUN_ERR)"; fi
+
 printf '\nhook-gate: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]
