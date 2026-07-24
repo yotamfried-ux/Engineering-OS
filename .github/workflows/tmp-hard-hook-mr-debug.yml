@@ -17,7 +17,22 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
       - name: Apply review follow-ups
-        run: python3 .github/scripts/tmp_apply_hard_hook_review_followups.py
+        run: |
+          set +e
+          python3 .github/scripts/tmp_apply_hard_hook_review_followups.py > /tmp/review-followups.log 2>&1
+          status=$?
+          cat /tmp/review-followups.log
+          echo "$status" > /tmp/review-followups.status
+          exit "$status"
+      - name: Upload patch diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: hard-hook-followups-${{ github.run_id }}
+          path: |
+            /tmp/review-followups.log
+            /tmp/review-followups.status
+          retention-days: 2
       - name: Validate focused and full affected groups
         run: |
           set -euo pipefail
