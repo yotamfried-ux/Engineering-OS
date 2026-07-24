@@ -116,12 +116,21 @@ def commands_for(settings: dict, event: str, matcher: str) -> list[tuple[int, st
 
 
 def path_ok(root: Path, rel: str) -> bool:
-    candidate = (root / rel).resolve()
+    root_resolved = root.resolve()
+    rel_path = Path(rel)
+    if rel_path.is_absolute() or ".." in rel_path.parts:
+        return False
+    unresolved = root_resolved
+    for part in rel_path.parts:
+        unresolved /= part
+        if unresolved.is_symlink():
+            return False
+    candidate = unresolved.resolve()
     try:
-        candidate.relative_to(root.resolve())
+        candidate.relative_to(root_resolved)
     except ValueError:
         return False
-    return candidate.is_file() and not candidate.is_symlink() and os.access(candidate, os.R_OK)
+    return candidate.is_file() and os.access(candidate, os.R_OK)
 
 
 def expected_mode(event: str) -> str:
@@ -137,10 +146,10 @@ def validate_paths(root: Path, rows: Iterable[Row], surface: str) -> None:
     by_unit = {row.unit for row in applicable if row.wiring in {"direct", "nested"}}
     for row in applicable:
         if row.wiring in {"direct", "nested"} and not path_ok(root, row.unit):
-            fail(f"row {row.line}: required unit is missing or unreadable: {row.unit}")
+            fail(f"row {row.line}: required unit is missing, unreadable, or traverses a symlink: {row.unit}")
         for requirement in row.requires:
             if not path_ok(root, requirement):
-                fail(f"row {row.line}: required dependency is missing or unreadable: {requirement}")
+                fail(f"row {row.line}: required dependency is missing, unreadable, or traverses a symlink: {requirement}")
         if row.wiring == "nested" and row.parent not in by_unit:
             fail(f"row {row.line}: nested parent is absent from the applicable contract: {row.parent}")
 
