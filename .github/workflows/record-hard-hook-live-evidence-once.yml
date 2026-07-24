@@ -1,0 +1,76 @@
+name: record-hard-hook-live-evidence-once
+
+on:
+  push:
+    branches:
+      - docs/close-hard-hook-fail-closed
+    paths:
+      - .github/workflows/record-hard-hook-live-evidence-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  record-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout closure branch
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: docs/close-hard-hook-fail-closed
+          fetch-depth: 0
+
+      - name: Record observed live evidence and remove workflow
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('docs/operations/operational-readiness-audit.md')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(old: str, new: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected one source match, found {count}: {old[:120]!r}')
+              text = text.replace(old, new, 1)
+
+          pr_runs = '`pr-policy` 1770 / `30115981865`; `enforcement-tests` 1463 / `30115055846`; `workflow-evidence-policy` 1230 / `30115055765`; `connector-evidence-policy` 1241 / `30115055853`; `capability-evidence-policy` 1123 / `30115056044`; `documentation-asset-policy` 879 / `30115055789`; `plan-policy` 1242 / `30115055798`; `semantic-cleanup-policy` 903 / `30115055848`; `import-cleanup-policy` 903 / `30115056039`; and `telemetry-handoff-tests` 365 / `30115055914`'
+          push_runs = '`post-merge-validation` 93 / `30128189835` and `enforcement-tests` 1464 / `30128189839`, both `completed/success` on merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`'
+          live = '`known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`)'
+
+          replace_once(
+              '| hard-hook-fail-closed | closed | P0 | Hard hook infrastructure failure semantics. |',
+              f'| hard-hook-fail-closed | closed | P0 | Hard hook infrastructure failure semantics; observed PR, push, and artifact evidence was reconciled by {live}. |',
+          )
+
+          replace_once(
+              '| Hard-hook blocking semantics | Enforced | Gate: hook classification, canonical hard/soft wrappers, static contract validation, installed-target regressions, exact-head CI, and live-state reconciliation. Owner: hooks-governance. Evidence: PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`, ten successful exact-head workflows, 11 resolved review threads, approval comment `5074786377`, merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, and `docs/operations/live-state-claims.json`. | Closed; the live claim must continue to verify required pull-request and post-merge push evidence. |',
+              f'| Hard-hook blocking semantics | Enforced | Gate: hook classification, canonical hard/soft wrappers, static contract validation, installed-target regressions, exact-head CI, and live-state reconciliation. Owner: hooks-governance. Evidence: PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`; PR workflows {pr_runs}; 11 resolved review threads; approval comment `5074786377`; merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; push workflows {push_runs}; reconciliation {live}. | Closed; queued or `in_progress` required runs and completed non-success conclusions fail closed in the live validator. |',
+          )
+
+          replace_once(
+              '- `gap:hard-hook-fail-closed` closed through PR #262, exact reviewed head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`, source and installed-target negative regressions, ten successful exact-head workflows including `pr-policy` 1770 and `enforcement-tests` 1463, 11 resolved review threads, owner approval comment `5074786377`, expected-head protected merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, and the canonical live-state claim.',
+              f'- `gap:hard-hook-fail-closed` closed through PR #262, exact reviewed head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`, source and installed-target negative regressions, PR workflows {pr_runs}, 11 resolved review threads, owner approval comment `5074786377`, expected-head protected merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, push workflows {push_runs}, and reconciliation {live}.',
+          )
+
+          replace_once(
+              '- [x] PR #262 passed all ten required exact-head workflows, reconciled 11 review threads, recorded owner approval comment `5074786377`, merged with expected-head protection as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, and the live claim requires successful `enforcement-tests` and `post-merge-validation` push workflows.',
+              f'- [x] PR #262 passed all ten required exact-head workflows: {pr_runs}; reconciled 11 review threads; recorded owner approval comment `5074786377`; and merged with expected-head protection as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`.\n- [x] Observed post-merge evidence: {push_runs}; {live} fetched the metadata-only snapshot and validated the registry, audit, exact PR identity, latest workflow attempts, check run, base containment, and artifact. Queued, `in_progress`, skipped, cancelled, or completed non-success required runs block closure.',
+          )
+
+          replace_once(
+              'PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3` implemented the canonical hard-hook registry, event-specific fail-closed wrapper, explicit observable soft wrapper, source/installed contract validation, and negative regressions for missing infrastructure, nested dependencies, symlinks, malformed input/output, signals, false evidence, token boundaries, and sibling isolation. All ten required exact-head workflows succeeded, including `pr-policy` 1770 / ID `30115981865` and `enforcement-tests` 1463 / ID `30115055846`; all 11 review threads were resolved; owner approval comment `5074786377` authorized the expected-head protected merge; PR #262 merged as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; canonical `main` compares identical; and the canonical live-state claim requires successful post-merge `enforcement-tests` and `post-merge-validation`.',
+              f'PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3` implemented the canonical hard-hook registry, event-specific fail-closed wrapper, explicit observable soft wrapper, source/installed contract validation, and negative regressions for missing infrastructure, nested dependencies, symlinks, malformed input/output, signals, false evidence, token boundaries, and sibling isolation. Observed PR evidence: {pr_runs}, all `completed/success`; all 11 review threads were resolved; owner approval comment `5074786377` authorized the expected-head protected merge; PR #262 merged as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; canonical `main` compares identical. Observed post-merge evidence: {push_runs}; reconciliation {live} completed successfully and preserves the exact metadata-only snapshot.',
+          )
+
+          path.write_text(text, encoding='utf-8')
+          PY
+          rm .github/workflows/record-hard-hook-live-evidence-once.yml
+          git config user.name engineering-os-ci
+          git config user.email ci@engineering-os.local
+          git add -A
+          git diff --cached --check
+          git commit -m "docs: record observed hard-hook closure evidence"
+          git push origin HEAD:docs/close-hard-hook-fail-closed
