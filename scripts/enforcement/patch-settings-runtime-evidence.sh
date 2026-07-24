@@ -80,10 +80,8 @@ ensure_hook("PostToolUse", "Read", "post-tool-use-read-evidence.sh", soft_comman
 ensure_hook(
     "PostToolUse",
     "mcp__Notion__.*",
-    "notion-progress-evidence",
-    f'bash -c \'. "{base}/scripts/enforcement/lib/evidence.sh" 2>/dev/null && '
-    'evidence_record connector_used notion && evidence_record notion_progress_validated\' '
-    '2>/dev/null || { echo "WARNING_FOR_AGENT: Notion progress evidence recorder failed open." >&2; exit 0; }',
+    "post-tool-use-notion-progress.sh",
+    soft_command("PostToolUse", "scripts/enforcement/post-tool-use-notion-progress.sh"),
     index=0,
 )
 

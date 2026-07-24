@@ -31,6 +31,7 @@ PostToolUse	Read	inline-read-recorder	recorder	false_evidence_safe	inline	-	both
 PostToolUse	Read	scripts/enforcement/post-tool-use-read-evidence.sh	recorder	false_evidence_safe	direct	-	both	scripts/enforcement/lib/evidence.sh	none
 PostToolUse	mcp__.*	scripts/enforcement/post-tool-use-mcp.sh	recorder	false_evidence_safe	direct	-	both	scripts/enforcement/lib/evidence.sh	none
 PostToolUse	mcp__Notion__.*	inline-notion-recorder	recorder	false_evidence_safe	inline	-	both	-	none
+PostToolUse	mcp__Notion__.*	scripts/enforcement/post-tool-use-notion-progress.sh	recorder	false_evidence_safe	direct	-	installed	scripts/enforcement/lib/evidence.sh	none
 PostToolUse	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
 PostToolUseFailure	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
 PermissionDenied	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
