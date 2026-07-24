@@ -81,7 +81,7 @@ from pathlib import Path
 root = Path(sys.argv[1]).resolve()
 registry = Path(sys.argv[2])
 event, matcher = sys.argv[3:5]
-unit_arg = Path(sys.argv[5]).resolve()
+unit_arg_raw = Path(sys.argv[5])
 columns = 10
 rows = []
 for number, raw in enumerate(registry.read_text(encoding="utf-8").splitlines(), 1):
@@ -100,8 +100,32 @@ for number, raw in enumerate(registry.read_text(encoding="utf-8").splitlines(), 
                  "surface": surface, "requires": requires, "deny_mode": deny_mode,
                  "line": number})
 
+def trusted_path(rel):
+    rel_path = Path(rel)
+    if rel_path.is_absolute() or ".." in rel_path.parts:
+        raise SystemExit(f"required hard-hook path escapes ENGINEERING_OS_HOME: {rel}")
+    unresolved = root
+    for part in rel_path.parts:
+        unresolved = unresolved / part
+        if unresolved.is_symlink():
+            raise SystemExit(f"required hard-hook path traverses a symlink: {rel}")
+    path = unresolved.resolve()
+    try:
+        path.relative_to(root)
+    except ValueError:
+        raise SystemExit(f"required hard-hook path escapes ENGINEERING_OS_HOME: {rel}")
+    if not path.is_file() or not os.access(path, os.R_OK):
+        raise SystemExit(f"required hard-hook path is missing or unreadable: {rel}")
+    return path
+
+try:
+    unit_rel = unit_arg_raw.relative_to(root)
+except ValueError:
+    raise SystemExit(f"hard-hook unit argument escapes ENGINEERING_OS_HOME: {unit_arg_raw}")
+unit_arg = trusted_path(str(unit_rel))
+
 matches = [r for r in rows if r["event"] == event and r["matcher"] == matcher and
-           r["wiring"] == "direct" and (root / r["unit"]).resolve() == unit_arg]
+           r["wiring"] == "direct" and trusted_path(r["unit"]) == unit_arg]
 if len(matches) != 1:
     raise SystemExit(f"expected exactly one direct registry row for {event}/{matcher}/{unit_arg}, found {len(matches)}")
 row = matches[0]
@@ -136,13 +160,7 @@ def add_requirements(item):
 add_requirements(row)
 
 for rel in sorted(required):
-    path = (root / rel).resolve()
-    try:
-        path.relative_to(root)
-    except ValueError:
-        raise SystemExit(f"required hard-hook path escapes ENGINEERING_OS_HOME: {rel}")
-    if not path.is_file() or path.is_symlink() or not os.access(path, os.R_OK):
-        raise SystemExit(f"required hard-hook path is missing or unreadable: {rel}")
+    trusted_path(rel)
 print(json.dumps({"unit": row["unit"], "deny_mode": row["deny_mode"], "required": sorted(required)}))
 PY
 then
