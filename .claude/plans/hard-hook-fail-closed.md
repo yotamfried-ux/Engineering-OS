@@ -49,7 +49,7 @@ This task owns hard-hook failure semantics and the minimum settings validation r
 | `scripts/enforcement/hook-criticality.tsv` | validated | Owns class, semantics, wiring, parent, surface, dependencies, and deny mode. |
 | `scripts/enforcement/lib/hook-gate.sh` | validated | Converts untrusted hard-hook outcomes into blocking behavior and validates only the requested direct row before its required chain. |
 | `scripts/enforcement/post-tool-use-notion-progress.sh` | validated | Records installed Notion progress only after a valid Notion event and object response. |
-| `scripts/monitoring/require-telemetry-session.sh` | validated | Accepts direct and soft-wrapped `pre_tool_use` recorders only with an actual event-token boundary. |
+| `scripts/monitoring/require-telemetry-session.sh` | validated | Accepts direct and soft-wrapped `pre_tool_use` recorders only with a complete shell token boundary, including a valid command terminator but excluding prefix collisions. |
 | `https://code.claude.com/docs/en/hooks` | read | Exit `2` is the blocking fallback; `PreToolUse` and `Stop` use different structured denial schemas. |
 
 ## Canonical Ownership Decision
@@ -98,7 +98,8 @@ Extend `scripts/enforcement/hook-criticality.tsv` as the single owner of event, 
 28. valid installed Notion response records `notion_progress_validated`;
 29. a missing sibling hard unit does not block the healthy requested unit;
 30. `-- pre_tool_use_extra` does not satisfy telemetry recorder completeness;
-31. grep-count zero fallback produces one integer line and passes the static anti-pattern scan.
+31. a valid `-- pre_tool_use;` shell token satisfies installed recorder completeness;
+32. grep-count zero fallback produces one integer line and passes the static anti-pattern scan.
 
 ## Installed-Target Validation
 
@@ -152,7 +153,8 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - review correction: CodeRabbit/Codex findings identified wrapped telemetry-recorder detection, missing `notion_progress_validated` wiring, an unregistered task-class phrase, post-resolution symlink checking, eager sibling validation, and a missing right-hand telemetry token boundary. Each finding received a regression-backed code or plan correction.
 - full-suite correction: diagnostic run `30067314701`, job `89400713667`, identified `test-hook-classification.sh` false evidence for a malformed Notion response. Dedicated installed recorder validation and source validation corrections passed `test-hook-classification.sh`, `test-required-connectors.sh`, and `test-hard-hook-fail-closed.sh` in run `30067753511`, job `89401937648`.
 - M–R correction: enforcement-tests run `1422` / ID `30067844734`, job `89402198469`, reached group M–R and failed `test-no-grep-c-echo.sh`; concise run `30068000890`, job `89402640376`, proved the exact `.claude/settings.json` grep-count anti-pattern. The fallback was moved inside command substitution. Run `30068314520`, job `89403559390`, then passed `test-hook-gate.sh`, `test-project8-telemetry-readiness.sh`, `test-no-grep-c-echo.sh`, and every M–R suite before creating commit `9c92544e29427df29a59a94a244bfb77e43c57e9` and removing all temporary files.
-- pre-merge: 11 review threads are resolved, including outdated threads; commit `9c92544e29427df29a59a94a244bfb77e43c57e9` contains the sibling-isolation, telemetry-boundary, and grep-count fixes. This normal connector commit creates provider-visible exact-head runs on the canonical diff; merge, post-merge proof, and closure remain external gates.
+- merge-ref correction: enforcement-tests run `1430` / ID `30068511235`, job `89404140702`, failed `Verify Project 8 telemetry readiness suite` on the PR merge ref. Diagnostic run `30068649859`, job `89404550355`, artifact `8587143140`, isolated `preflight_detects_soft_wrapped_recorder`: the valid installed command rendered `-- pre_tool_use;`, so the whitespace/end-only boundary rejected a legitimate shell terminator. The matcher now accepts complete shell terminators while `pre_tool_use_extra` remains blocked. Validation run `30068730740`, job `89404793738`, passed the Project 8 telemetry and hook-gate suites and created canonical commit `ad2b1bacf7031a2410abc23bb0e847f420fc719f` without the temporary workflow.
+- pre-merge: normal connector head `c1850102232baf6c082ca15dd9f95d95afa01971` created all ten provider runs. Workflow-evidence run `1203` / ID `30068904138`, artifact `8587233031`, correctly required this checkpoint to be materially updated after the final code/comment change. Eleven review threads remain resolved, including outdated threads. This plan-only connector commit is the new exact head for full CI; PR #261 remains open, so base synchronization, approval, merge, post-merge proof, and closure remain external gates.
 
 ## Definition of Done — Implementation Branch
 
