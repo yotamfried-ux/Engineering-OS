@@ -211,7 +211,44 @@ cat > .claude/settings.json <<'EOF'
 EOF
 bash "$PATCH" .claude/settings.json
 pass install_patch_wires_connector_selection grep -q 'pre-tool-use-connector-selection.sh' .claude/settings.json
-pass install_patch_wires_notion_progress grep -q 'notion_progress_validated' .claude/settings.json
-pass install_patch_surfaces_notion_errors grep -q '2>&1' .claude/settings.json
+pass install_patch_wires_notion_progress bash -c "grep -q 'post-tool-use-notion-progress.sh' .claude/settings.json && grep -q 'notion_progress_validated' '$ROOT/scripts/enforcement/post-tool-use-notion-progress.sh'"
+
+notion_progress_cmd="$(python3 - .claude/settings.json <<'PY_CMD'
+import json, sys
+data = json.load(open(sys.argv[1], encoding='utf-8'))
+for block in data.get('hooks', {}).get('PostToolUse', []):
+    if block.get('matcher') != 'mcp__Notion__.*':
+        continue
+    for hook in block.get('hooks', []):
+        command = hook.get('command', '') if isinstance(hook, dict) else ''
+        if 'post-tool-use-notion-progress.sh' in command:
+            print(command)
+            raise SystemExit(0)
+raise SystemExit(1)
+PY_CMD
+)"
+. "$ROOT/scripts/enforcement/lib/evidence.sh"
+evidence_reset
+set +e
+printf '%s' '{"tool_name":"mcp__Notion__create-a-page","tool_response":"not-an-object"}' | ENGINEERING_OS_HOME="$ROOT" bash -c "$notion_progress_cmd" >"$TMP/notion-malformed.out" 2>"$TMP/notion-malformed.err"
+notion_code=$?
+set -e
+if [ "$notion_code" -eq 0 ] && grep -q 'failed open as explicitly classified' "$TMP/notion-malformed.err"; then
+  echo "ok: install_patch_surfaces_notion_errors"
+else
+  echo "fail: install_patch_surfaces_notion_errors"
+  cat "$TMP/notion-malformed.out" "$TMP/notion-malformed.err"
+  exit 1
+fi
+if [ ! -s .claude/.evidence/ledger ]; then
+  echo "ok: install_patch_malformed_notion_response_records_no_evidence"
+else
+  echo "fail: install_patch_malformed_notion_response_records_no_evidence"
+  cat .claude/.evidence/ledger
+  exit 1
+fi
+evidence_reset
+printf '%s' '{"tool_name":"mcp__Notion__create-a-page","tool_response":{"id":"page-1"}}' | ENGINEERING_OS_HOME="$ROOT" bash -c "$notion_progress_cmd" >/dev/null 2>&1
+pass install_patch_valid_notion_response_records_progress grep -q 'notion_progress_validated' .claude/.evidence/ledger
 
 echo "required connector simulations passed"

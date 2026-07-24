@@ -53,7 +53,47 @@ printf '%s' '{"session_id":"first-session","hook_event_name":"SessionStart","sou
   EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" EOS_TELEMETRY_SUMMARY_FILE="$SUMMARY" \
   bash "$SESSION_START")
 first_run="$(cat "$RUN_ID")"
-pass preflight_passes_after_session bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
+pass preflight_detects_soft_wrapped_recorder bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$TARGET/.claude/settings.json' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
+
+DIRECT_SETTINGS="$TMP/direct-settings.json"
+python3 - "$TARGET/.claude/settings.json" "$DIRECT_SETTINGS" "$RECORDER" <<'PY_DIRECT'
+import json, sys
+src, dst, recorder = sys.argv[1:]
+data = json.load(open(src, encoding='utf-8'))
+replaced = False
+for block in data.get('hooks', {}).get('PreToolUse', []):
+    if block.get('matcher') not in (None, '.*'):
+        continue
+    for hook in block.get('hooks', []):
+        command = hook.get('command', '') if isinstance(hook, dict) else ''
+        if 'eos-telemetry-event.sh' in command and 'pre_tool_use' in command:
+            hook['command'] = f'bash "{recorder}" pre_tool_use'
+            replaced = True
+if not replaced:
+    raise SystemExit('soft-wrapped pre_tool_use recorder was not found')
+json.dump(data, open(dst, 'w', encoding='utf-8'), indent=2)
+PY_DIRECT
+pass preflight_detects_direct_recorder bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$DIRECT_SETTINGS' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
+
+PREFIX_SETTINGS="$TMP/prefix-settings.json"
+python3 - "$TARGET/.claude/settings.json" "$PREFIX_SETTINGS" <<'PY_PREFIX'
+import json, sys
+src, dst = sys.argv[1:]
+data = json.load(open(src, encoding='utf-8'))
+replaced = False
+for block in data.get('hooks', {}).get('PreToolUse', []):
+    if block.get('matcher') not in (None, '.*'):
+        continue
+    for hook in block.get('hooks', []):
+        command = hook.get('command', '') if isinstance(hook, dict) else ''
+        if 'eos-telemetry-event.sh' in command and '-- pre_tool_use' in command:
+            hook['command'] = command.replace('-- pre_tool_use', '-- pre_tool_use_extra', 1)
+            replaced = True
+if not replaced:
+    raise SystemExit('soft-wrapped pre_tool_use recorder was not found')
+json.dump(data, open(dst, 'w', encoding='utf-8'), indent=2)
+PY_PREFIX
+blockcase preflight_rejects_recorder_prefix_collision bash -c "cd '$TARGET' && EOS_CLAUDE_SETTINGS_FILE='$PREFIX_SETTINGS' EOS_TELEMETRY_FILE='$EVENTS' EOS_TELEMETRY_RUN_ID_FILE='$RUN_ID' bash '$REQUIRE'"
 
 printf '%s' '{"session_id":"first-session","tool_name":"Bash","tool_input":{"command":"npm test"}}' | \
   (cd "$TARGET" && EOS_TELEMETRY_RUN_ID="$SEED" EOS_TELEMETRY_FILE="$EVENTS" EOS_TELEMETRY_RUN_ID_FILE="$RUN_ID" bash "$RECORDER" post_tool_use)
