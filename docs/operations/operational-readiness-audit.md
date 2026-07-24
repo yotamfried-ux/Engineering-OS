@@ -8,7 +8,7 @@ This document is the canonical status map and closure contract for Engineering O
 - **Canonical repository:** `yotamfried-ux/Engineering-OS`
 - **Target repository:** `yotamfried-ux/project-8`
 - **Canonical gap registry:** `docs/operations/known-gaps.tsv`
-- **Last verified:** 2026-07-24 Asia/Jerusalem / 2026-07-24 UTC
+- **Last verified:** 2026-07-25 Asia/Jerusalem / 2026-07-24 UTC
 - **Intended readers:** LLMs, maintainers, reviewers, and operators with no prior conversation context
 - **Snapshot only:** Engineering OS `main` was inspected at `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.
 
