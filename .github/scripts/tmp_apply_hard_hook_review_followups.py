@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 from pathlib import Path
 
 
@@ -68,11 +69,26 @@ replace_once(
 
 # Use the canonical grep-count form. `grep -c` already emits zero on no match;
 # placing the fallback inside command substitution avoids duplicate output.
-replace_once(
-    ".claude/settings.json",
-    '''TOTAL=$(grep -cE '^\\- \\[(x| )\\]' \"$F\" 2>/dev/null) || TOTAL=0;''',
-    '''TOTAL=$(grep -cE '^\\- \\[(x| )\\]' \"$F\" 2>/dev/null || true);''',
-)
+settings_path = Path(".claude/settings.json")
+settings = json.loads(settings_path.read_text(encoding="utf-8"))
+updated = 0
+for block in settings.get("hooks", {}).get("PostToolUse", []):
+    if not isinstance(block, dict) or block.get("matcher") != "Read":
+        continue
+    for hook in block.get("hooks", []):
+        if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
+            continue
+        command = hook["command"]
+        if "TOTAL=$(grep -cE" in command and " 2>/dev/null) || TOTAL=0;" in command:
+            hook["command"] = command.replace(
+                " 2>/dev/null) || TOTAL=0;",
+                " 2>/dev/null || true);",
+                1,
+            )
+            updated += 1
+if updated != 1:
+    raise SystemExit(f"expected one grep-count command in settings, updated {updated}")
+settings_path.write_text(json.dumps(settings, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 # Runtime regression: a missing sibling hard unit must not block a healthy unit.
 replace_once(
