@@ -86,6 +86,36 @@
       "required_check_runs": [
         "enforcement-tests"
       ]
+    },
+    {
+      "claim_id": "engineering-os-pr-260-documentation-runtime-state-drift",
+      "gap_id": "documentation-runtime-state-drift",
+      "repository": "yotamfried-ux/Engineering-OS",
+      "pull_number": 260,
+      "base_branch": "main",
+      "expected_head_sha": "e63a27babb09da4a7c4589cbe3e37c112f6b6e79",
+      "expected_merge_commit_sha": "105ecd0d0dc72aa847d11b193190689dbda0dda8",
+      "required_pull_request_workflows": [
+        "pr-policy",
+        "enforcement-tests",
+        "workflow-evidence-policy",
+        "connector-evidence-policy",
+        "capability-evidence-policy",
+        "documentation-asset-policy",
+        "plan-policy",
+        "semantic-cleanup-policy",
+        "import-cleanup-policy",
+        "telemetry-handoff-tests",
+        "known-gaps-live-state"
+      ],
+      "required_push_workflows": [
+        "enforcement-tests",
+        "known-gaps-live-state",
+        "post-merge-validation"
+      ],
+      "required_check_runs": [
+        "enforcement-tests"
+      ]
     }
   ]
 }
