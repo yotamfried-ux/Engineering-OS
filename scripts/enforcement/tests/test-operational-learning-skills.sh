@@ -194,10 +194,23 @@ for block in settings.get("hooks", {}).get("PreToolUse", []):
         cmd = hook.get("command", "")
         if not cmd:
             continue
-        proc = subprocess.run(cmd, input=payload, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=os.environ.copy())
+        proc = subprocess.run(cmd, input=payload, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy())
         if proc.returncode != 0:
-            print(proc.stdout)
+            print(proc.stdout, end="")
+            print(proc.stderr, end="")
             sys.exit(proc.returncode)
+        for line in proc.stdout.splitlines():
+            try:
+                decision = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            specific = decision.get("hookSpecificOutput") if isinstance(decision, dict) else None
+            if isinstance(specific, dict) and specific.get("permissionDecision") == "deny":
+                print(line)
+                sys.exit(2)
+            if isinstance(decision, dict) and decision.get("decision") == "block":
+                print(line)
+                sys.exit(2)
 print("installed write hooks passed")
 PY
 }
