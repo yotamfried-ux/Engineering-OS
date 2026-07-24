@@ -9,7 +9,7 @@
 | Domain tags | hooks, governance, security, shell, JSON, installer, testing, operational readiness |
 | Plan Scope | standard |
 | Planning Mode | implementation authorized; merge and canonical closure remain external owner gates |
-| Target paths | `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/lib/soft-hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/enforcement/post-tool-use-notion-progress.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-fail-closed.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-hook-classification.sh`; `scripts/enforcement/tests/test-hook-gate.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `scripts/enforcement/tests/test-required-connectors.sh`; `.claude/plans/hard-hook-fail-closed.md` |
+| Target paths | `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/lib/soft-hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/enforcement/post-tool-use-notion-progress.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-fail-closed.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-hook-classification.sh`; `scripts/enforcement/tests/test-hook-gate.sh`; `scripts/enforcement/tests/test-operational-learning-skills.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `scripts/enforcement/tests/test-required-connectors.sh`; `.claude/plans/hard-hook-fail-closed.md` |
 | Task-router evidence | `core/task-router.md` routes hook, settings, enforcement, test, and governance changes through `engineering_os_governance`; protected-action failure behavior also requires security-sensitive review. |
 | Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/quality-gates.md`, and `core/hooks-policy.md` require plan-first work, Experiment → Failure analysis → Fix → Experiment, dedicated PR isolation, exact-head CI, review reconciliation, and separate merge approval. |
 | Templates | Existing canonical hook wrapper, registry, settings, and installer patterns are sufficient; no new template is introduced. |
@@ -50,6 +50,7 @@ This task owns hard-hook failure semantics and the minimum settings validation r
 | `scripts/enforcement/lib/hook-gate.sh` | validated | Converts untrusted hard-hook outcomes into blocking behavior and validates only the requested direct row before its required chain. |
 | `scripts/enforcement/post-tool-use-notion-progress.sh` | validated | Records installed Notion progress only after a valid Notion event and object response. |
 | `scripts/monitoring/require-telemetry-session.sh` | validated | Accepts direct and soft-wrapped `pre_tool_use` recorders only with a complete shell token boundary, including a valid command terminator but excluding prefix collisions. |
+| `scripts/enforcement/tests/test-operational-learning-skills.sh` | validated | Installed-hook fixtures send complete Claude Code `PreToolUse` event identity before asserting policy allow/deny behavior. |
 | `https://code.claude.com/docs/en/hooks` | read | Exit `2` is the blocking fallback; `PreToolUse` and `Stop` use different structured denial schemas. |
 
 ## Canonical Ownership Decision
@@ -99,11 +100,12 @@ Extend `scripts/enforcement/hook-criticality.tsv` as the single owner of event, 
 29. a missing sibling hard unit does not block the healthy requested unit;
 30. `-- pre_tool_use_extra` does not satisfy telemetry recorder completeness;
 31. a valid `-- pre_tool_use;` shell token satisfies installed recorder completeness;
-32. Read recorder zero-count fallback produces one integer and no `grep -c ... || echo` static match.
+32. Read recorder zero-count fallback produces one integer and no `grep -c ... || echo` static match;
+33. installed learning/skill hook fixtures use valid `PreToolUse` JSON and preserve allow/deny assertions.
 
 ## Installed-Target Validation
 
-Create a fresh temporary git target, run the official Engineering OS installer with the branch checkout as `ENGINEERING_OS_HOME`, validate rendered settings against the canonical installed surface, and execute representative valid, malformed-input, missing-enforcer, missing-interpreter, advisory, recorder, Notion, telemetry-token, and symlink/path-integrity cases from the target directory. No proof may rely on a file present only in the source repository unless it is an intentional installed-surface dependency declared by the registry.
+Create a fresh temporary git target, run the official Engineering OS installer with the branch checkout as `ENGINEERING_OS_HOME`, validate rendered settings against the canonical installed surface, and execute representative valid, malformed-input, missing-enforcer, missing-interpreter, advisory, recorder, Notion, telemetry-token, operational-learning, and symlink/path-integrity cases from the target directory. No proof may rely on a file present only in the source repository unless it is an intentional installed-surface dependency declared by the registry.
 
 ## Documentation Asset Evidence
 
@@ -123,7 +125,7 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - `workflow.workflow-read` — workflow, git, quality, and hook policies established the result loop and lifecycle gates.
 - `plan.route-plan-before-write` — the initial Route Plan commit precedes implementation changes.
 - `source.github-repo-read` — exact base, settings, registry, wrapper, installer, validators, audit, and tests were read through GitHub.
-- `validation.policy-change-has-validator` — focused, negative, static, nested, symlink, Notion, telemetry-token, sibling-isolation, and installed-target validators are required outputs.
+- `validation.policy-change-has-validator` — focused, negative, static, nested, symlink, Notion, telemetry-token, sibling-isolation, installed-fixture, and installed-target validators are required outputs.
 - `validation.coderabbit-policy` — external review is reconciled live; self-review remains supplemental only.
 
 ## Skill Evidence
@@ -144,7 +146,7 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - action: verified the live base, selected existing canonical owners, isolated plan-first implementation, analyzed exact failing jobs and review findings, and applied regression-backed fixes.
 - result: base `105ecd0d0dc72aa847d11b193190689dbda0dda8`; plan-first branch `fix/hard-hook-fail-closed`; implementation PR #262; CodeRabbit findings and full-suite failures were reproduced and corrected without touching PR #261.
 - decision: selected the existing criticality registry plus runtime/static validation and official installer path rather than a parallel registry or legacy-enforcer rewrite.
-- target: `.claude/settings.json`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/enforcement/post-tool-use-notion-progress.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-hook-gate.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `scripts/enforcement/tests/test-required-connectors.sh`.
+- target: `.claude/settings.json`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/enforcement/post-tool-use-notion-progress.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-hook-gate.sh`; `scripts/enforcement/tests/test-operational-learning-skills.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `scripts/enforcement/tests/test-required-connectors.sh`.
 
 ## Progress Lifecycle Evidence
 
@@ -154,7 +156,8 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - full-suite correction: diagnostic run `30067314701`, job `89400713667`, identified `test-hook-classification.sh` false evidence for a malformed Notion response. Dedicated installed recorder validation and source validation corrections passed `test-hook-classification.sh`, `test-required-connectors.sh`, and `test-hard-hook-fail-closed.sh` in run `30067753511`, job `89401937648`.
 - M–R correction: enforcement-tests run `1422` / ID `30067844734`, job `89402198469`, reached group M–R and failed `test-no-grep-c-echo.sh`; concise run `30068000890`, job `89402640376`, proved the initial `.claude/settings.json` grep-count anti-pattern. A later exact-head M–R failure was isolated by run `30069316223`, artifact `8587388095`: `grep -c ... || true` still spanned to a later `|| echo` in the same serialized command. The Read recorder now uses `TOTAL=$(grep -cE ... ) || TOTAL=0` and an `if` warning branch. Validation run `30069461978`, job `89407030984`, passed `test-no-grep-c-echo.sh` and every M–R suite before creating canonical commit `e21a4476fcd05b764e6dfdf653a96e695aede825` and removing the temporary workflow.
 - merge-ref correction: enforcement-tests run `1430` / ID `30068511235`, job `89404140702`, failed `Verify Project 8 telemetry readiness suite` on the PR merge ref. Diagnostic run `30068649859`, job `89404550355`, artifact `8587143140`, isolated `preflight_detects_soft_wrapped_recorder`: the valid installed command rendered `-- pre_tool_use;`, so the whitespace/end-only boundary rejected a legitimate shell terminator. The matcher now accepts complete shell terminators while `pre_tool_use_extra` remains blocked. Validation run `30068730740`, job `89404793738`, passed the Project 8 telemetry and hook-gate suites and created canonical commit `ad2b1bacf7031a2410abc23bb0e847f420fc719f` without the temporary workflow.
-- pre-merge: implementation head `e21a4476fcd05b764e6dfdf653a96e695aede825` contains the terminal Read recorder fix and no temporary helper or workflow files. Review reconciliation recorded 11 total threads and 0 unresolved. The immediately preceding policy runs on parent `65d22ae097184dc0788250d6443c5db3a64d9bcd` passed workflow-evidence run `1205` / ID `30069192335`, connector run `1216` / ID `30069192357`, plan run `1217` / ID `30069192331`, capability run `1098` / ID `30069192323`, documentation run `854` / ID `30069192340`, semantic run `878` / ID `30069192297`, import run `878` / ID `30069192364`, and telemetry run `339` / ID `30069192301`; enforcement run `1437` / ID `30069192354` failed only on the superseded Read recorder command shape.
+- installed-fixture correction: enforcement-tests run `1443` / ID `30069573045`, job `89407390392`, passed every pre-suite plus A–F and G–L, then failed M–R. Merge-ref diagnostic run `30069657208`, job `89407689015`, artifact `8587517437`, isolated `test-operational-learning-skills.sh`: the installed allow fixture omitted `hook_event_name`, so the hard wrapper correctly rejected untrusted JSON before policy evaluation. The shell and Python payload builders now send `hook_event_name=PreToolUse`. Validation run `30069788262`, job `89408070943`, passed `test-operational-learning-skills.sh` and every M–R suite and created canonical commit `ce02595d35e8085c855c680f48f20c30712f6ca3` with the temporary workflow removed.
+- pre-merge: implementation head `ce02595d35e8085c855c680f48f20c30712f6ca3` contains the terminal installed-fixture correction and no temporary helper or workflow files. Review reconciliation before this correction recorded 11 total threads and 0 unresolved; the live count must be re-read on this exact ancestry. This plan checkpoint follows the final code/test change and is the provider-visible head for full exact-head validation. PR #261 remains open, so base synchronization, approval, merge, post-merge proof, and closure remain external gates.
 
 ## Definition of Done — Implementation Branch
 
@@ -170,6 +173,7 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - [x] Add static and runtime symlink traversal regressions.
 - [x] Add source and installed Notion false-evidence regressions.
 - [x] Add sibling-isolation and telemetry-token-boundary regressions.
+- [x] Add valid installed `PreToolUse` identity fixtures.
 - [x] Open ready-for-review PR #262 with implementation evidence.
 - [x] Integrate concrete CodeRabbit findings with regression coverage.
 
