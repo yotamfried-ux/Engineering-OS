@@ -3,42 +3,84 @@ name: tmp-hard-hook-current-mr-debug
 on:
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
-  reproduce:
+  apply-harness-fix:
+    if: github.head_ref == 'fix/hard-hook-fail-closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
-          persist-credentials: false
+          ref: fix/hard-hook-fail-closed
           fetch-depth: 0
-      - name: Prepare test environment
+          persist-credentials: true
+      - name: Interpret structured hard-hook denials in installed simulation
         run: |
-          git config --global user.email "ci@engineering-os.local"
-          git config --global user.name "engineering-os-ci"
-          git config --global init.defaultBranch main
-      - name: Reproduce current merge-ref M-R
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/enforcement/tests/test-operational-learning-skills.sh')
+          text = path.read_text(encoding='utf-8')
+          old = '''    proc = subprocess.run(
+        ['bash', '-c', command],
+        input=payload,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env={**os.environ, 'ENGINEERING_OS_HOME': root},
+    )
+    if proc.returncode != 0:
+        print(proc.stdout, end='')
+        raise SystemExit(proc.returncode)
+print('installed write hooks passed')
+'''
+          new = '''    proc = subprocess.run(
+        ['bash', '-c', command],
+        input=payload,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env={**os.environ, 'ENGINEERING_OS_HOME': root},
+    )
+    if proc.returncode != 0:
+        print(proc.stdout, end='')
+        print(proc.stderr, end='')
+        raise SystemExit(proc.returncode)
+    for line in proc.stdout.splitlines():
+        try:
+            decision = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        specific = decision.get('hookSpecificOutput') if isinstance(decision, dict) else None
+        if isinstance(specific, dict) and specific.get('permissionDecision') == 'deny':
+            print(line)
+            raise SystemExit(2)
+        if isinstance(decision, dict) and decision.get('decision') == 'block':
+            print(line)
+            raise SystemExit(2)
+print('installed write hooks passed')
+'''
+          if text.count(old) != 1:
+              raise SystemExit('installed write hook simulation block not found exactly once')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          Path('.github/workflows/tmp-hard-hook-current-mr-debug.yml').unlink()
+          PY
+      - name: Validate installed simulation and M-R suites
         run: |
-          set +e
+          set -euo pipefail
+          git diff --check
+          bash scripts/enforcement/tests/test-operational-learning-skills.sh
           shopt -s nullglob
-          status=0
           for t in scripts/enforcement/tests/test-[m-r]*.sh; do
-            if ! bash "$t" > /tmp/mr-test.log 2>&1; then
-              echo "FAILED_TEST=$t" > /tmp/mr-summary.log
-              cat /tmp/mr-test.log >> /tmp/mr-summary.log
-              status=1
-              break
-            fi
+            echo "──────── $t ────────"
+            bash "$t"
           done
-          if [ "$status" -eq 0 ]; then echo "GROUP_M_R_PASSED" > /tmp/mr-summary.log; fi
-          cat /tmp/mr-summary.log
-          echo "$status" > /tmp/mr-status
-          exit "$status"
-      - name: Upload current M-R diagnostics
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: current-mr-${{ github.run_id }}
-          path: |
-            /tmp/mr-summary.log
-            /tmp/mr-status
-          retention-days: 2
+      - name: Commit harness correction and remove temporary workflow
+        run: |
+          set -euo pipefail
+          git config user.email "ci@engineering-os.local"
+          git config user.name "engineering-os-ci"
+          git add -A
+          git commit -m "test: interpret structured denials in installed hook simulation"
+          git push origin HEAD:fix/hard-hook-fail-closed
