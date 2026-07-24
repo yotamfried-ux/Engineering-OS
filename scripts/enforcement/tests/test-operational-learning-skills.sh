@@ -164,7 +164,7 @@ seed_all_evidence() {
 
 write_payload() {
   local file="$1"
-  printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$file"
+  printf '{"hook_event_name":"PreToolUse","tool_name":"Write","tool_input":{"file_path":"%s"}}' "$file"
 }
 
 run_workflow_write() {
@@ -185,7 +185,7 @@ import os
 import subprocess
 import sys
 file_path = sys.argv[1]
-payload = json.dumps({"tool_name": "Write", "tool_input": {"file_path": file_path}})
+payload = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": file_path}})
 settings = json.load(open(".claude/settings.json", encoding="utf-8"))
 for block in settings.get("hooks", {}).get("PreToolUse", []):
     if block.get("matcher") != "Write|Edit|MultiEdit|NotebookEdit":
