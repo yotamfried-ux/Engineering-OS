@@ -9,7 +9,7 @@
 | Domain tags | hooks, governance, security, shell, JSON, installer, testing, operational readiness |
 | Plan Scope | standard |
 | Planning Mode | implementation authorized; merge and canonical closure remain external owner gates |
-| Target paths | `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/lib/soft-hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-fail-closed.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-hook-classification.sh`; `scripts/enforcement/tests/test-hook-gate.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `.claude/plans/hard-hook-fail-closed.md` |
+| Target paths | `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/lib/soft-hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/enforcement/post-tool-use-notion-progress.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-fail-closed.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-hook-classification.sh`; `scripts/enforcement/tests/test-hook-gate.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `scripts/enforcement/tests/test-required-connectors.sh`; `.claude/plans/hard-hook-fail-closed.md` |
 | Task-router evidence | `core/task-router.md` routes hook, settings, enforcement, test, and governance changes through `engineering_os_governance`; protected-action failure behavior also requires security-sensitive review. |
 | Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/quality-gates.md`, and `core/hooks-policy.md` require plan-first work, Experiment → Failure analysis → Fix → Experiment, dedicated PR isolation, exact-head CI, review reconciliation, and separate merge approval. |
 | Templates | Existing canonical hook wrapper, registry, settings, and installer patterns are sufficient; no new template is introduced. |
@@ -45,9 +45,10 @@ This task owns hard-hook failure semantics and the minimum settings validation r
 | `core/workflow.md` | read | Requires plan-first result loops, evidence checkpoints, exact-head CI, and review reconciliation. |
 | `docs/operations/known-gaps.tsv` | checked | `hard-hook-fail-closed` is open, P0, owner `hooks-governance`; merge and post-merge proof remain closure requirements. |
 | `docs/operations/operational-readiness-audit.md` | checked | Requires infrastructure uncertainty, malformed input, nested validation, settings wiring, converter/interpreter failures, source/installed proof, CI, and review evidence. |
-| `.claude/settings.json` | validated | Hard commands use the shared hard gate and advisory/recorder commands remain explicitly soft. |
+| `.claude/settings.json` | validated | Hard commands use the shared hard gate and advisory/recorder commands reject malformed responses before recording evidence. |
 | `scripts/enforcement/hook-criticality.tsv` | validated | Owns class, semantics, wiring, parent, surface, dependencies, and deny mode. |
 | `scripts/enforcement/lib/hook-gate.sh` | validated | Converts untrusted hard-hook outcomes and infrastructure failures into deterministic blocking behavior. |
+| `scripts/enforcement/post-tool-use-notion-progress.sh` | validated | Records installed Notion progress only after a valid Notion event and object response. |
 | `https://code.claude.com/docs/en/hooks` | read | Exit `2` is the blocking fallback; `PreToolUse` and `Stop` use different structured denial schemas. |
 
 ## Canonical Ownership Decision
@@ -90,11 +91,14 @@ Extend `scripts/enforcement/hook-criticality.tsv` as the single owner of event, 
 22. official clean installed-target behavior passes;
 23. symlinked hard unit blocks in static and runtime validation;
 24. symlinked required dependency blocks in static and runtime validation;
-25. symlinked directory component blocks in static and runtime validation.
+25. symlinked directory component blocks in static and runtime validation;
+26. malformed source Notion response records no evidence;
+27. malformed installed Notion response records no evidence;
+28. valid installed Notion response records `notion_progress_validated`.
 
 ## Installed-Target Validation
 
-Create a fresh temporary git target, run the official Engineering OS installer with the branch checkout as `ENGINEERING_OS_HOME`, validate rendered settings against the canonical installed surface, and execute representative valid, malformed-input, missing-enforcer, missing-interpreter, advisory, recorder, and symlink/path-integrity cases from the target directory. No proof may rely on a file present only in the source repository unless it is an intentional installed-surface dependency declared by the registry.
+Create a fresh temporary git target, run the official Engineering OS installer with the branch checkout as `ENGINEERING_OS_HOME`, validate rendered settings against the canonical installed surface, and execute representative valid, malformed-input, missing-enforcer, missing-interpreter, advisory, recorder, Notion, and symlink/path-integrity cases from the target directory. No proof may rely on a file present only in the source repository unless it is an intentional installed-surface dependency declared by the registry.
 
 ## Documentation Asset Evidence
 
@@ -114,14 +118,14 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - `workflow.workflow-read` — workflow, git, quality, and hook policies established the result loop and lifecycle gates.
 - `plan.route-plan-before-write` — the initial Route Plan commit precedes implementation changes.
 - `source.github-repo-read` — exact base, settings, registry, wrapper, installer, validators, audit, and tests were read through GitHub.
-- `validation.policy-change-has-validator` — focused, negative, static, nested, symlink, and installed-target validators are required outputs.
+- `validation.policy-change-has-validator` — focused, negative, static, nested, symlink, Notion, and installed-target validators are required outputs.
 - `validation.coderabbit-policy` — external review is reconciled live; self-review remains supplemental only.
 
 ## Skill Evidence
 
 - `writing-plans` — separated canonical ownership, runtime changes, installed proof, negative tests, review, and external gates before implementation.
 - `verification-before-completion` — keeps implementation, installed proof, exact-head CI, review, approval, merge, post-merge proof, and gap closure as separate claims.
-- `security-review` — focuses on fail-open branches, input/output handling, path containment, pre-resolution symlink rejection, dependency trust, stdout contamination, and exit/signal conversion.
+- `security-review` — focuses on fail-open branches, false evidence, input/output handling, path containment, pre-resolution symlink rejection, dependency trust, stdout contamination, and exit/signal conversion.
 
 ## Connector Evidence
 
@@ -133,17 +137,17 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, canonical `main`, PR #261, PR #262, repository files, workflows, reviews, and compare state.
 - action: verified the live base, selected existing canonical owners, isolated plan-first implementation, analyzed exact failing jobs and review findings, and applied regression-backed fixes.
-- result: base `105ecd0d0dc72aa847d11b193190689dbda0dda8`; plan-first branch `fix/hard-hook-fail-closed`; implementation PR #262; CodeRabbit findings reproduced and corrected without touching PR #261.
+- result: base `105ecd0d0dc72aa847d11b193190689dbda0dda8`; plan-first branch `fix/hard-hook-fail-closed`; implementation PR #262; CodeRabbit findings and full-suite failures were reproduced and corrected without touching PR #261.
 - decision: selected the existing criticality registry plus runtime/static validation and official installer path rather than a parallel registry or legacy-enforcer rewrite.
-- target: `.claude/settings.json`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`.
+- target: `.claude/settings.json`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/enforcement/post-tool-use-notion-progress.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `scripts/enforcement/tests/test-required-connectors.sh`.
 
 ## Progress Lifecycle Evidence
 
 - start: exact `main` `105ecd0d0dc72aa847d11b193190689dbda0dda8`, open PR #261, canonical audit rows, settings, registry, wrapper, installer, tests, and official Claude Code semantics were verified before implementation.
 - mid: implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` and review-fix head `78532bc88f83316b3c38c54469c9233f9635d647` produced connector-evidence-policy run `1185` / ID `30055497133`, workflow-evidence-policy run `1174` / ID `30055497134`, pr-policy run `1710` / ID `30055497123`, and enforcement-tests run `1406` / ID `30055497151` failures. Focused results were `test-hook-gate.sh` 19/19, `test-hook-classification.sh` 10/10, and `test-hard-hook-fail-closed.sh` 15/15. Concise reproduction run `30066756835`, job `89399127583`, isolated `test-hard-hook-symlinks.sh` at 5/6 and identified the generic runtime symlink diagnostic as the failing assertion.
 - review correction: CodeRabbit/Codex findings identified wrapped telemetry-recorder detection, missing `notion_progress_validated` wiring, an unregistered task-class phrase, and post-resolution symlink checking. Each finding received a regression-backed code or plan correction.
-- rerun trigger: workflow-generated commit `42ed4f13e8cb0be978ab507d83ef9ad3a8a175e4` passed `test-hard-hook-symlinks.sh` and `test-project8-telemetry-readiness.sh`, removed the temporary diagnostic workflow, and normal connector commit `51676f153c412d02ec3d93405c29692057ca92f8` created provider-visible runs.
-- pre-merge: head `51676f153c412d02ec3d93405c29692057ca92f8` recorded seven successful policy workflows, workflow-evidence run `1179` / ID `30066999169` schema diagnostics, pr-policy run `1716` / ID `30066999143` blocked only by live threads, and enforcement-tests run `1411` / ID `30066999208` reached G–L after Project 8 telemetry success. Review reconciliation reached 9 total threads and 0 unresolved.
+- full-suite correction: diagnostic run `30067314701`, job `89400713667`, identified `test-hook-classification.sh` false evidence for a malformed Notion response. Dedicated installed recorder validation and source validation corrections passed `test-hook-classification.sh`, `test-required-connectors.sh`, and `test-hard-hook-fail-closed.sh` in run `30067753511`, job `89401937648`.
+- pre-merge: workflow-generated commit `d4b179f5aa04e293578cd46ea595ed1181aceee6` contains the Notion false-evidence fix, the new source/installed regressions, 9 total resolved review threads, and no temporary helper or workflow files. This normal connector commit creates provider-visible exact-head runs for the canonical diff.
 
 ## Definition of Done — Implementation Branch
 
@@ -157,6 +161,7 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - [x] Add required negative runtime and wiring fixtures.
 - [x] Add official clean-target installation execution.
 - [x] Add static and runtime symlink traversal regressions.
+- [x] Add source and installed Notion false-evidence regressions.
 - [x] Open ready-for-review PR #262 with implementation evidence.
 - [x] Integrate concrete CodeRabbit findings with regression coverage.
 
