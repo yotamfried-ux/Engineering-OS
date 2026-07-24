@@ -20,149 +20,15 @@ jobs:
           ref: docs/close-hard-hook-fail-closed
           fetch-depth: 0
 
-      - name: Apply exact canonical closure replacements
+      - name: Apply and remove one-time reconciliation
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          def replace_once(path: str, old: str, new: str) -> None:
-              target = Path(path)
-              text = target.read_text(encoding="utf-8")
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f"{path}: expected exactly one source match, found {count}: {old[:120]!r}")
-              target.write_text(text.replace(old, new, 1), encoding="utf-8")
-
-          gaps_path = "docs/operations/known-gaps.tsv"
-          old_gap = "hard-hook-fail-closed\thooks-governance\topen\tP0\tA protected hard-hook path can allow the operation when its wrapper, interpreter, manifest, settings, required nested validator, dependency, deny conversion, or subprocess fails or cannot produce a trustworthy policy decision.\tTreat infrastructure uncertainty as deny for every hard unit, require all nested validators, cross-check every hard manifest row against settings, and reserve fail-open behavior only for explicitly advisory or recorder units.\tscripts/enforcement/tests/test-hook-classification.sh\tOpen until positive, policy-denial, malformed-input, missing-enforcer, missing-nested-validator, missing-wiring, interpreter/converter failure, and unexpected-exit fixtures pass in the source and an installed target, followed by exact-head CI, review, merge, and post-merge proof.\tscripts/enforcement/lib/hook-gate.sh\tThis gap owns failure semantics after a hard hook is required; settings parity is tracked separately."
-          new_gap = "hard-hook-fail-closed\thooks-governance\tclosed\tP0\tA protected hard-hook path can allow the operation when its wrapper, interpreter, manifest, settings, required nested validator, dependency, deny conversion, or subprocess fails or cannot produce a trustworthy policy decision.\tTreat infrastructure uncertainty as deny for every hard unit, require all nested validators, cross-check every hard manifest row against settings, and reserve fail-open behavior only for explicitly advisory or recorder units.\tscripts/enforcement/tests/test-hook-classification.sh\tClosed after PR #262 exact head 5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3 passed all 10 required exact-head workflows including pr-policy 1770 and enforcement-tests 1463, all 11 review threads were resolved, owner approval comment 5074786377 authorized an expected-head protected merge, and main became identical to merge commit e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6; the canonical live-state claim requires successful post-merge push workflows.\tdocs/operations/live-state-claims.json\tThe implementation owns failure semantics after a hard hook is required; settings parity remains tracked separately by eos-repo-boundary-sync-drift."
-          replace_once(gaps_path, old_gap, new_gap)
-
-          claims_path = Path("docs/operations/live-state-claims.json")
-          claims = json.loads(claims_path.read_text(encoding="utf-8"))
-          claim_id = "engineering-os-pr-262-hard-hook-fail-closed"
-          if any(item.get("claim_id") == claim_id for item in claims.get("claims", [])):
-              raise SystemExit(f"duplicate claim_id: {claim_id}")
-          claims["claims"].append(
-              {
-                  "claim_id": claim_id,
-                  "gap_id": "hard-hook-fail-closed",
-                  "repository": "yotamfried-ux/Engineering-OS",
-                  "pull_number": 262,
-                  "base_branch": "main",
-                  "expected_head_sha": "5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3",
-                  "expected_merge_commit_sha": "e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6",
-                  "required_pull_request_workflows": [
-                      "pr-policy",
-                      "enforcement-tests",
-                      "workflow-evidence-policy",
-                      "connector-evidence-policy",
-                      "capability-evidence-policy",
-                      "documentation-asset-policy",
-                      "plan-policy",
-                      "semantic-cleanup-policy",
-                      "import-cleanup-policy",
-                      "telemetry-handoff-tests"
-                  ],
-                  "required_push_workflows": [
-                      "enforcement-tests",
-                      "post-merge-validation"
-                  ],
-                  "required_check_runs": [
-                      "enforcement-tests"
-                  ]
-              }
-          )
-          claims_path.write_text(json.dumps(claims, indent=2) + "\n", encoding="utf-8")
-
-          audit = "docs/operations/operational-readiness-audit.md"
-          replace_once(
-              audit,
-              "- **Last verified:** 2026-07-23 America/Panama / 2026-07-23 UTC",
-              "- **Last verified:** 2026-07-24 Asia/Jerusalem / 2026-07-24 UTC",
-          )
-          replace_once(
-              audit,
-              "- **Snapshot only:** Engineering OS `main` was inspected at `105ecd0d0dc72aa847d11b193190689dbda0dda8`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.",
-              "- **Snapshot only:** Engineering OS `main` was inspected at `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.",
-          )
-          replace_once(
-              audit,
-              "| hard-hook-fail-closed | open | P0 | Hard hook infrastructure failure semantics. |",
-              "| hard-hook-fail-closed | closed | P0 | Hard hook infrastructure failure semantics. |",
-          )
-          replace_once(
-              audit,
-              "| Skill runtime evidence | Enforced | Gate: pre-tool-use-runtime-evidence.sh. Owner: skill-governance. Evidence: runtime fixtures. | Required nested dependency behavior is tracked by hard-hook fail-closed. |",
-              "| Skill runtime evidence | Enforced | Gate: pre-tool-use-runtime-evidence.sh. Owner: skill-governance. Evidence: runtime fixtures. | Required nested dependency behavior is enforced by the closed hard-hook contract. |",
-          )
-          replace_once(
-              audit,
-              "| Cleanup debug leftovers | Enforced | Gate: enforce-quality.sh. Owner: cleanup-governance. Evidence: cleanup fixtures. | Missing required nested enforcement is tracked by hard-hook fail-closed. |",
-              "| Cleanup debug leftovers | Enforced | Gate: enforce-quality.sh. Owner: cleanup-governance. Evidence: cleanup fixtures. | Required nested enforcement failure is covered by the closed hard-hook contract. |",
-          )
-          replace_once(
-              audit,
-              "| Hard-hook blocking semantics | Missing enforcement | Gate: hook classification and wrapper tests. Owner: hooks-governance. Evidence: `hook-criticality.tsv`, wrappers, nested validators, and Claude Code hook semantics. | gap:hard-hook-fail-closed — infrastructure uncertainty can still allow a protected action. |",
-              "| Hard-hook blocking semantics | Enforced | Gate: hook classification, canonical hard/soft wrappers, static contract validation, installed-target regressions, exact-head CI, and live-state reconciliation. Owner: hooks-governance. Evidence: PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`, ten successful exact-head workflows, 11 resolved review threads, approval comment `5074786377`, merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, and `docs/operations/live-state-claims.json`. | Closed; the live claim must continue to verify required pull-request and post-merge push evidence. |",
-          )
-          foundation_old = "- `gap:documentation-runtime-state-drift` closed through PR #256 and PR #260, exact reviewed head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79`, 27 documentation-hygiene fixtures, latest exact-head CI including `pr-policy` 1692 and `enforcement-tests` 1391, seven resolved review threads, owner approval comment `5063627361`, expected-head protected merge `105ecd0d0dc72aa847d11b193190689dbda0dda8`, and the canonical live-state claim."
-          foundation_new = foundation_old + "\n- `gap:hard-hook-fail-closed` closed through PR #262, exact reviewed head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`, source and installed-target negative regressions, ten successful exact-head workflows including `pr-policy` 1770 and `enforcement-tests` 1463, 11 resolved review threads, owner approval comment `5074786377`, expected-head protected merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, and the canonical live-state claim."
-          replace_once(audit, foundation_old, foundation_new)
-          replace_once(
-              audit,
-              "1. `gap:hard-hook-fail-closed`\n2. `gap:bypass-approval-provenance`\n3. `gap:eos-repo-boundary-sync-drift`\n4. `gap:pattern-registry-canonical-drift`\n5. `gap:telemetry-archive-import-integrity`",
-              "1. `gap:bypass-approval-provenance`\n2. `gap:eos-repo-boundary-sync-drift`\n3. `gap:pattern-registry-canonical-drift`\n4. `gap:telemetry-archive-import-integrity`",
-          )
-          checklist_old = """### gap:hard-hook-fail-closed — P0
-
-Official basis: <https://code.claude.com/docs/en/hooks>.
-
-- [ ] Missing hard enforcer, wrapper, interpreter, required manifest, settings input, nested validator, or dependency blocks instead of returning success or silently skipping.
-- [ ] Deny-conversion, malformed JSON, unexpected subprocess status, and runtime failure block with Claude Code's documented deny semantics and a reason.
-- [ ] Fail-open remains only for explicitly advisory or recorder units.
-- [ ] Every hard manifest row maps to one checked-in and installed settings command; every hard PreToolUse path runs the JSON guard and is not soft-wrapped.
-- [ ] Remove conditional `if file exists` skips for required validators or convert them into explicit deny paths.
-- [ ] Positive, policy-denial, malformed-input, missing-enforcer, missing-nested-validator, missing-wiring, converter/interpreter failure, unexpected-exit, and success fixtures pass.
-- [ ] Installed-target copy, exact-head CI/review, owner-approved merge, and post-merge behavior are verified."""
-          checklist_new = """### gap:hard-hook-fail-closed — P0 — closed
-
-Official basis: <https://code.claude.com/docs/en/hooks>.
-
-- [x] Missing hard enforcer, wrapper, interpreter, required registry/settings input, nested validator, or dependency blocks instead of returning success or silently skipping; `test-hard-hook-fail-closed.sh`, `test-hook-gate.sh`, `test-hook-classification.sh`, and installed-target fixtures cover the required chain.
-- [x] Deny-conversion, malformed JSON, unexpected subprocess status, signal termination, and runtime failure block with Claude Code's documented event-specific deny semantics and an exit-2 fallback reason.
-- [x] Fail-open remains only for explicitly advisory or recorder units through `soft-hook-gate.sh`, with observable warnings and no fabricated evidence.
-- [x] Every hard registry row maps to one checked-in and installed settings command; source and clean installed settings share `check-hard-hook-contract.py`, and hard PreToolUse paths are not soft-wrapped.
-- [x] Required validators and dependencies are fail-closed; missing, unreadable, symlinked, untrusted, wrong-target, sibling-contaminated, or unavailable infrastructure has dedicated negative coverage.
-- [x] Positive, policy-denial, malformed-input, missing-enforcer, missing-nested-validator, missing-wiring, converter/interpreter failure, unexpected-exit, Notion false-evidence, telemetry token-boundary, and success fixtures passed in full enforcement run 1463 / ID `30115055846` on exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`.
-- [x] PR #262 passed all ten required exact-head workflows, reconciled 11 review threads, recorded owner approval comment `5074786377`, merged with expected-head protection as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, and `docs/operations/live-state-claims.json` requires successful `enforcement-tests` and `post-merge-validation` push workflows before the closure candidate can validate."""
-          replace_once(audit, checklist_old, checklist_new)
-          replace_once(
-              audit,
-              "1. Hard-hook fail-closed — P0.\n2. Bypass approval provenance and required-hook settings parity — P1.\n3. Telemetry archive import integrity and canonical pattern ownership — P1.\n4. Project 8 experiment blindness — P0 after deterministic Engineering OS defects.\n5. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.\n6. Pattern evidence maturity and second-run reproducibility — P2.\n7. Final full-readiness semantics and assertion — terminal P1.",
-              "1. Bypass approval provenance and required-hook settings parity — P1.\n2. Telemetry archive import integrity and canonical pattern ownership — P1.\n3. Project 8 experiment blindness — P0 after deterministic Engineering OS defects.\n4. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.\n5. Pattern evidence maturity and second-run reproducibility — P2.\n6. Final full-readiness semantics and assertion — terminal P1.",
-          )
-          replace_once(
-              audit,
-              "Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup; live-state reconciliation.",
-              "Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup; hard-hook fail-closed; live-state reconciliation.",
-          )
-          scope_anchor = "PR #256 is merged as `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d` and reconciled capability wording, README inventory references, and CodeRabbit review policy. PR #260 exact head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79` completed the remaining `documentation-runtime-state-drift` contract by reconciling `scripts/enforcement/MANIFEST.tsv` with the active capability registry, enforcing first-run-versus-longitudinal telemetry terminology, assigning canonical ownership rows, and adding bidirectional fixtures. The exact head passed the latest required PR workflows including `pr-policy` 1692 and `enforcement-tests` 1391; all seven review threads were resolved; owner approval comment `5063627361` authorized the expected-head protected merge; PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; canonical `main` compares identical; and the canonical live-state claim requires successful post-merge workflows. The separate `telemetry-archive-import-integrity` gap remains open."
-          scope_new = scope_anchor + "\n\nPR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3` implemented the canonical hard-hook registry, event-specific fail-closed wrapper, explicit observable soft wrapper, source/installed contract validation, and negative regressions for missing infrastructure, nested dependencies, symlinks, malformed input/output, signals, false evidence, token boundaries, and sibling isolation. All ten required exact-head workflows succeeded, including `pr-policy` 1770 / ID `30115981865` and `enforcement-tests` 1463 / ID `30115055846`; all 11 review threads were resolved; owner approval comment `5074786377` authorized the expected-head protected merge; PR #262 merged as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; canonical `main` compares identical; and the canonical live-state claim requires successful post-merge `enforcement-tests` and `post-merge-validation`."
-          replace_once(audit, scope_anchor, scope_new)
-          replace_once(
-              audit,
-              "The system is audit-complete but not fully operationally ready. Exact-head merge evidence and documentation/runtime consistency are closed; hook safety, bypass provenance, settings parity, pattern ownership/evidence, telemetry import integrity, Project 8 boundary, and qualification gaps remain. The behavioral experiment and its prompt remain prohibited until every gap closes and the strict assertion passes on fresh canonical state.",
-              "The system is audit-complete but not fully operationally ready. Exact-head merge evidence, documentation/runtime consistency, and hard-hook safety are closed; bypass provenance, settings parity, pattern ownership/evidence, telemetry import integrity, Project 8 boundary, and qualification gaps remain. The behavioral experiment and its prompt remain prohibited until every gap closes and the strict assertion passes on fresh canonical state.",
-          )
-          PY
-
+          python3 scripts/enforcement/close-hard-hook-fail-closed-once.py
+          rm scripts/enforcement/close-hard-hook-fail-closed-once.py
           rm .github/workflows/close-hard-hook-fail-closed-once.yml
           git config user.name engineering-os-ci
           git config user.email ci@engineering-os.local
-          git add .claude/plans/close-hard-hook-fail-closed.md docs/operations/known-gaps.tsv docs/operations/operational-readiness-audit.md docs/operations/live-state-claims.json .github/workflows/close-hard-hook-fail-closed-once.yml
+          git add -A
           git diff --cached --check
           git commit -m "docs: reconcile hard-hook fail-closed closure"
           git push origin HEAD:docs/close-hard-hook-fail-closed
