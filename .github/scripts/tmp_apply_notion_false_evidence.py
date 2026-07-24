@@ -47,7 +47,7 @@ evidence_record notion_progress_validated || exit 1
 patcher = Path("scripts/enforcement/patch-settings-runtime-evidence.sh")
 text = patcher.read_text(encoding="utf-8")
 pattern = re.compile(
-    r'ensure_hook\(\n\s+"PostToolUse",\n\s+"mcp__Notion__\.\*",\n\s+"notion-progress-evidence",.*?\n\s+index=0,\n\s+\)',
+    r'ensure_hook\(\n\s+"PostToolUse",\n\s+"mcp__Notion__\.\*",\n\s+"notion-progress-evidence",.*?\n\s+index=0,\n\s*\)',
     re.S,
 )
 replacement = '''ensure_hook(
