@@ -47,7 +47,7 @@ This closure branch changes canonical status and evidence metadata only. It does
 |---|---|---|
 | PR #262 and merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6` | verified | The implementation PR is merged and closed; `main` compares identical to the merge commit. |
 | `docs/operations/known-gaps.tsv` | synchronized | The candidate row is `closed` and names exact PR #262 head, workflow, review, approval, merge, and live-claim evidence. |
-| `docs/operations/operational-readiness-audit.md` | synchronized | Ledger, matrix, completed foundation, Phase 1 order, checklist, ROI order, snapshot, and current scope agree with the registry. |
+| `docs/operations/operational-readiness-audit.md` | synchronized | Ledger, matrix, completed foundation, Phase 1 order, checklist, ROI order, snapshot, current scope, and Jerusalem/UTC verification dates agree with the registry and provider timeline. |
 | `docs/operations/live-state-claims.json` | synchronized | The versioned claim binds PR #262 exact head and merge to ten PR workflows, two push workflows, and the required check run. |
 | `scripts/enforcement/check-known-gaps-live-state.py` | read | The validator requires the referenced gap to be `closed`, selects the latest exact-head PR and push runs, and fails closed on missing, stale, unsuccessful, or wrong-identity evidence. |
 | `.github/workflows/known-gaps-live-state.yml` | read | PR #263 touches canonical state and therefore triggers a read-only GitHub fetch and deterministic reconciliation. |
@@ -60,7 +60,7 @@ This closure branch changes canonical status and evidence metadata only. It does
 - `plan.route-plan-before-write` — commit `447d5950b4cdcf890d6ecd13c660c195e8c930f7` preceded registry, claim, audit, workflow, and helper writes.
 - `source.github-repo-read` — PR #262 metadata, workflows, threads, approval record, merge result, repository files, validator, workflow, and `main` identity were read from GitHub.
 - `validation.policy-change-has-validator` — the existing known-gaps, audit, documentation-hygiene, live-state, and full enforcement validators own this metadata-only closure.
-- `validation.coderabbit-policy` — the implementation PR reconciled 11 live review threads; PR #263 requires independent review as a blocking gate.
+- `validation.coderabbit-policy` — the implementation PR reconciled 11 live review threads; PR #263 review findings were corrected or dispositioned with exact commit evidence and resolved.
 
 ## Skill Evidence
 
@@ -72,13 +72,13 @@ This closure branch changes canonical status and evidence metadata only. It does
 
 | Connector | Status | Evidence |
 |---|---|---|
-| GitHub | used | Re-fetched PR #262 exact head, exact-head workflow records, 11 resolved review threads, owner approval record `5074786377`, merge commit `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, canonical `main`, closure schemas, PR #263, and the clean four-file compare. |
+| GitHub | used | Re-fetched PR #262 exact head, exact-head workflow records, 11 resolved review threads, owner approval record `5074786377`, merge commit `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`, canonical `main`, closure schemas, PR #263, live-state run 45, review findings, and the clean four-file compare. |
 
 ## Connector Usage Evidence
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #262, PR #263, exact heads, workflows, review threads, approval record, merge result, repository files, canonical `main`, live-state workflow, and validator.
-- action: verified the merge lifecycle, recorded durable approval provenance, created the plan-first closure branch, applied exact canonical replacements, removed one-time reconciliation files, and prepared a fail-closed live claim rather than inferring push success.
-- result: PR #262 merged as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; reconciliation commit `95795c73756a3e14fc530943757adb2e1063e3ae` produced a clean PR #263 compare with exactly the plan, registry, audit, and live claim; closure remains contingent on exact-head CI, live-state validation, review, new owner approval, closure merge, and closure post-merge proof.
+- action: verified the merge lifecycle, recorded durable approval provenance, created the plan-first closure branch, applied exact canonical replacements, removed one-time reconciliation files, corrected the Jerusalem date finding, and used the fail-closed live claim rather than inferring push success.
+- result: PR #262 merged as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; reconciliation commit `95795c73756a3e14fc530943757adb2e1063e3ae` produced a clean four-file compare; review correction commit `144cb0e61a5cbf1ac59b3e51503b5ff4fadda92b` fixed the local date and removed its temporary workflow; `known-gaps-live-state` run 45 / ID `30129807146` independently validated the exact PR and push evidence. Closure remains contingent on final exact-head CI, review, new owner approval, closure merge, and closure post-merge proof.
 - decision: selected a separate closure PR and the existing GitHub-backed live-state validator rather than treating PR prose, absence of a repair issue, or chat memory as canonical closure.
 - target: `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/live-state-claims.json`.
 
@@ -87,7 +87,7 @@ This closure branch changes canonical status and evidence metadata only. It does
 - [x] Route Plan committed before canonical writes.
 - [x] Added a PR #262 live-state claim with exact reviewed head, merge commit, required PR workflows, required push workflows, and required check run.
 - [x] Changed the registry row to `closed` with exact evidence.
-- [x] Synchronized audit ledger, matrix, dependency plan, checklist, ROI order, snapshot, and current scope.
+- [x] Synchronized audit ledger, matrix, dependency plan, checklist, ROI order, snapshot, current scope, and verification dates.
 - [x] Removed every temporary reconciliation file from the final compare.
 
 External gates remaining before durable closure:
@@ -101,7 +101,8 @@ External gates remaining before durable closure:
 
 - start: commit `447d5950b4cdcf890d6ecd13c660c195e8c930f7` recorded scope, exact implementation evidence, canonical sources, and external gates before every closure-state write.
 - mid: the one-time exact-source reconciliation generated commit `95795c73756a3e14fc530943757adb2e1063e3ae`, synchronized the three canonical closure files, and removed both temporary files.
-- pre-merge: the compare against `main` at `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6` contains exactly four paths and no temporary workflow or helper; this plan-only checkpoint triggers clean exact-head CI and live review for PR #263.
+- review correction: CodeRabbit/Codex found an invalid Jerusalem local date and a malformed superseded one-time workflow. The workflow was replaced by a valid short runner before reconciliation, both temporary files were deleted, and commit `144cb0e61a5cbf1ac59b3e51503b5ff4fadda92b` corrected the audit date to `2026-07-25 Asia/Jerusalem / 2026-07-24 UTC`; both threads were dispositioned and resolved.
+- pre-merge: the compare against `main` at `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6` contains exactly four paths and no temporary workflow or helper; this connector-authored checkpoint triggers clean exact-head CI and live review for PR #263.
 
 ## Validation Plan
 
