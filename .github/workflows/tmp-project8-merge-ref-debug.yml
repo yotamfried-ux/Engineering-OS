@@ -15,5 +15,20 @@ jobs:
           git config --global user.email "ci@engineering-os.local"
           git config --global user.name "engineering-os-ci"
           git config --global init.defaultBranch main
-      - name: Run Project 8 telemetry readiness with concise output
-        run: bash scripts/enforcement/tests/test-project8-telemetry-readiness.sh
+      - name: Run Project 8 telemetry readiness
+        run: |
+          set +e
+          bash scripts/enforcement/tests/test-project8-telemetry-readiness.sh > /tmp/project8-debug.log 2>&1
+          status=$?
+          cat /tmp/project8-debug.log
+          echo "$status" > /tmp/project8-debug.status
+          exit "$status"
+      - name: Upload Project 8 diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: project8-debug-${{ github.run_id }}
+          path: |
+            /tmp/project8-debug.log
+            /tmp/project8-debug.status
+          retention-days: 2
