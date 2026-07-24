@@ -18,8 +18,8 @@
 | External systems/connectors | GitHub |
 | Skills | `writing-plans`; `verification-before-completion`; `security-review` |
 | Validation gates | focused wrapper tests; canonical classification/contract tests; nested validator tests; settings/manifest tests; official clean-target installer tests; full enforcement suite; shell/Python checks; exact-head CI; live review reconciliation |
-| Evidence to check | canonical `main`; PR #261 live state; audit and known-gap rows; checked-in settings; criticality registry; wrappers; installer/patcher; official Claude Code hook semantics; exact PR workflow and review state |
-| User decisions required | explicit approval for this exact PR before merge; separate post-merge closure reconciliation before any `closed` status or live-state claim |
+| Evidence to check | canonical `main` at `936c440a77766c222ac8b349b46a67b118d8a536`; merged PR #261; canonical audit and known-gap rows; checked-in settings; criticality registry; wrappers; installer/patcher; official Claude Code hook semantics; exact PR #262 workflow and review state |
+| User decisions required | explicit approval for the final exact head of PR #262 before merge; separate post-merge closure reconciliation before any `closed` status or live-state claim |
 
 ## Goal
 
@@ -31,9 +31,9 @@ This task owns hard-hook failure semantics and the minimum settings validation r
 
 ## Non-goals
 
-- No merge to `main`.
-- No canonical gap closure or live-state claim.
-- No modification or merge of PR #261.
+- No merge of PR #262 in this execution thread.
+- No canonical `hard-hook-fail-closed` gap closure or live-state claim.
+- No modification of the canonical closure state merged by PR #261; the branch only adopts that state from `main`.
 - No adjacent-gap implementation.
 - No Project 8 preparation or readiness claim.
 
@@ -43,8 +43,9 @@ This task owns hard-hook failure semantics and the minimum settings validation r
 |---|---|---|
 | `core/task-router.md` | read | Routes the task through `engineering_os_governance` and security-sensitive controls. |
 | `core/workflow.md` | read | Requires plan-first result loops, evidence checkpoints, exact-head CI, and review reconciliation. |
-| `docs/operations/known-gaps.tsv` | checked | `hard-hook-fail-closed` is open, P0, owner `hooks-governance`; merge and post-merge proof remain closure requirements. |
-| `docs/operations/operational-readiness-audit.md` | checked | Requires infrastructure uncertainty, malformed input, nested validation, settings wiring, converter/interpreter failures, source/installed proof, CI, and review evidence. |
+| `docs/operations/known-gaps.tsv` | checked | `documentation-runtime-state-drift` is canonically closed after PR #261; `hard-hook-fail-closed` remains open, P0, owner `hooks-governance`. |
+| `docs/operations/operational-readiness-audit.md` | checked | Phase 0 closure is inherited from `main`; this PR owns the next hard-hook implementation phase only. |
+| `docs/operations/live-state-claims.json` | validated | PR #261 closure evidence remains identical to canonical `main`; `known-gaps-live-state` run 43 validated it on the synchronized PR #262 head. |
 | `.claude/settings.json` | validated | Hard commands use the shared hard gate; advisory/recorder commands reject malformed responses before recording evidence; Read recorder count fallback and warning control flow remain single-valued and statically valid. |
 | `scripts/enforcement/hook-criticality.tsv` | validated | Owns class, semantics, wiring, parent, surface, dependencies, and deny mode. |
 | `scripts/enforcement/lib/hook-gate.sh` | validated | Converts untrusted hard-hook outcomes into blocking behavior and validates only the requested direct row before its required chain. |
@@ -118,7 +119,7 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 
 ## Claude Run Trace
 
-- trace_source: GitHub connector reads/writes, exact commit history, workflow runs, review threads, and focused test outputs.
+- trace_source: GitHub connector reads/writes, exact commit history, workflow runs, review threads, compare data, and focused test outputs.
 - exact_token_usage_available: no.
 - trace_boundary: no independent Claude Code session trace is claimed; repository and provider evidence are the auditable surrogate.
 
@@ -127,13 +128,13 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - `routing.task-router-read` — `core/task-router.md` selected `engineering_os_governance`.
 - `workflow.workflow-read` — workflow, git, quality, and hook policies established the result loop and lifecycle gates.
 - `plan.route-plan-before-write` — the initial Route Plan commit precedes implementation changes.
-- `source.github-repo-read` — exact base, settings, registry, wrapper, installer, validators, audit, and tests were read through GitHub.
+- `source.github-repo-read` — exact bases, PR #261 merge, settings, registry, wrapper, installer, validators, audit, and tests were read through GitHub.
 - `validation.policy-change-has-validator` — focused, negative, static, nested, symlink, Notion, telemetry-token, sibling-isolation, installed-fixture, structured-deny, and installed-target validators are required outputs.
 - `validation.coderabbit-policy` — external review is reconciled live; self-review remains supplemental only.
 
 ## Skill Evidence
 
-- `writing-plans` — separated canonical ownership, runtime changes, installed proof, negative tests, review, and external gates before implementation.
+- `writing-plans` — separated canonical ownership, runtime changes, installed proof, negative tests, review, base synchronization, and external gates before completion.
 - `verification-before-completion` — keeps implementation, installed proof, exact-head CI, review, approval, merge, post-merge proof, and gap closure as separate claims.
 - `security-review` — focuses on fail-open branches, false evidence, input/output handling, path containment, pre-resolution symlink rejection, dependency trust, sibling isolation, stdout contamination, and exit/signal conversion.
 
@@ -141,14 +142,14 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 
 | Connector | Status | Evidence |
 |---|---|---|
-| GitHub | used | Read canonical base and owners, verified PR #261 remained open, created `fix/hard-hook-fail-closed`, opened PR #262, and inspected exact-head workflows and review threads. |
+| GitHub | used | Verified and merged PR #261 at expected head `28144667331c2c7dcda13bba8460a1c956e970ae`; verified merge `936c440a77766c222ac8b349b46a67b118d8a536`; synchronized PR #262 through merge commit `fac4769fdd27b2c2d1e2f274843715f4d70c9449`; inspected exact-head workflows, compare data, and review threads. |
 
 ## Connector Usage Evidence
 
-- source: GitHub connector for `yotamfried-ux/Engineering-OS`, canonical `main`, PR #261, PR #262, repository files, workflows, reviews, and compare state.
-- action: verified the live base, selected existing canonical owners, isolated plan-first implementation, analyzed exact failing jobs and review findings, and applied regression-backed fixes.
-- result: base `105ecd0d0dc72aa847d11b193190689dbda0dda8`; plan-first branch `fix/hard-hook-fail-closed`; implementation PR #262; CodeRabbit findings and full-suite failures were reproduced and corrected without touching PR #261.
-- decision: selected the existing criticality registry plus runtime/static validation and official installer path rather than a parallel registry or legacy-enforcer rewrite.
+- source: GitHub connector for `yotamfried-ux/Engineering-OS`, canonical `main`, PR #261, PR #262, repository files, workflows, reviews, refs, commits, trees, and compare state.
+- action: verified PR #261 exact-head readiness, merged it with expected-head protection, built a two-parent synchronization commit, moved `fix/hard-hook-fail-closed`, refreshed the PR base, and re-read exact-head CI and review evidence.
+- result: PR #261 merged as `936c440a77766c222ac8b349b46a67b118d8a536`; PR #262 synchronization commit `fac4769fdd27b2c2d1e2f274843715f4d70c9449` is 63 commits ahead and 0 behind; compare contains exactly 16 scoped files with +1646/-459; `known-gaps-live-state` run 43 / ID `30114606716` succeeded; 11 review threads were resolved before the synchronized rerun.
+- decision: preserved the existing hard-hook tree and adopted only the four canonical PR #261 closure blobs from `main`, instead of rebasing by text copy or reopening the closed documentation gap.
 - target: `.claude/settings.json`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/enforcement/post-tool-use-notion-progress.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-hook-gate.sh`; `scripts/enforcement/tests/test-operational-learning-skills.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `scripts/enforcement/tests/test-required-connectors.sh`.
 
 ## Progress Lifecycle Evidence
@@ -157,12 +158,12 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - mid: implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` and review-fix head `78532bc88f83316b3c38c54469c9233f9635d647` produced connector-evidence-policy run `1185` / ID `30055497133`, workflow-evidence-policy run `1174` / ID `30055497134`, pr-policy run `1710` / ID `30055497123`, and enforcement-tests run `1406` / ID `30055497151` failures. Focused results were `test-hook-gate.sh` 19/19, `test-hook-classification.sh` 10/10, and `test-hard-hook-fail-closed.sh` 15/15. Concise reproduction run `30066756835`, job `89399127583`, isolated `test-hard-hook-symlinks.sh` at 5/6 and identified the generic runtime symlink diagnostic as the failing assertion.
 - review correction: CodeRabbit/Codex findings identified wrapped telemetry-recorder detection, missing `notion_progress_validated` wiring, an unregistered task-class phrase, post-resolution symlink checking, eager sibling validation, and a missing right-hand telemetry token boundary. Each finding received a regression-backed code or plan correction.
 - full-suite correction: diagnostic run `30067314701`, job `89400713667`, identified `test-hook-classification.sh` false evidence for a malformed Notion response. Dedicated installed recorder validation and source validation corrections passed `test-hook-classification.sh`, `test-required-connectors.sh`, and `test-hard-hook-fail-closed.sh` in run `30067753511`, job `89401937648`.
-- M–R correction: enforcement-tests run `1422` / ID `30067844734`, job `89402198469`, reached group M–R and failed `test-no-grep-c-echo.sh`; concise run `30068000890`, job `89402640376`, proved the initial `.claude/settings.json` grep-count anti-pattern. A later exact-head M–R failure was isolated by run `30069316223`, artifact `8587388095`: `grep -c ... || true` still spanned to a later `|| echo` in the same serialized command. The Read recorder now uses `TOTAL=$(grep -cE ... ) || TOTAL=0` and an `if` warning branch. Validation run `30069461978`, job `89407030984`, passed `test-no-grep-c-echo.sh` and every M–R suite before creating canonical commit `e21a4476fcd05b764e6dfdf653a96e695aede825` and removing the temporary workflow.
-- merge-ref correction: enforcement-tests run `1430` / ID `30068511235`, job `89404140702`, failed `Verify Project 8 telemetry readiness suite` on the PR merge ref. Diagnostic run `30068649859`, job `89404550355`, artifact `8587143140`, isolated `preflight_detects_soft_wrapped_recorder`: the valid installed command rendered `-- pre_tool_use;`, so the whitespace/end-only boundary rejected a legitimate shell terminator. The matcher now accepts complete shell terminators while `pre_tool_use_extra` remains blocked. Validation run `30068730740`, job `89404793738`, passed the Project 8 telemetry and hook-gate suites and created canonical commit `ad2b1bacf7031a2410abc23bb0e847f420fc719f` without the temporary workflow.
-- installed-fixture correction: enforcement-tests run `1443` / ID `30069573045`, job `89407390392`, passed every pre-suite plus A–F and G–L, then failed M–R. Merge-ref diagnostic run `30069657208`, job `89407689015`, artifact `8587517437`, isolated `test-operational-learning-skills.sh`: the installed allow fixture omitted `hook_event_name`, so the hard wrapper correctly rejected untrusted JSON before policy evaluation. The shell and Python payload builders now send `hook_event_name=PreToolUse`. Validation run `30069788262`, job `89408070943`, completed successfully; `test-operational-learning-skills.sh` and every M–R suite passed, commit `ce02595d35e8085c855c680f48f20c30712f6ca3` was created, and `.github/workflows/tmp-hard-hook-merge-mr-debug.yml` was removed before push.
-- structured-deny correction: merge-ref diagnostic run `30070153259`, job `89409148182`, artifact `8587697506`, showed that an installed hard wrapper returned valid deny JSON with exit `0`, while the simulator treated exit `0` as allow. Commit `31a95c99f1f5760d6ac595107af93eaa267c5b1a` parses structured output and treats `permissionDecision=deny` or `decision=block` as a block; temporary workflow removal commit `2a4211011024b2d552ef053681abdda691171b69` restored a canonical diff.
-- observable-recorder correction: M–R diagnostic run `30070608917`, job `89410484738`, artifact `8587867448`, isolated the stale `install_patch_surfaces_notion_errors` string assertion. Commit `46ecf89686a1f3c7d3c8ae1d1fcf8f56c84658cb` replaced it with runtime proof that malformed Notion input exits fail-open, emits the `soft-hook-gate.sh` warning, and records no evidence; temporary workflow removal commit `cde69e3e6da727b4d79abac5eb3c1072e1ad9aae` restored a canonical diff.
-- pre-merge: enforcement-tests run `1458` / ID `30070850082` / job `89411204247` concluded success on canonical head `cde69e3e6da727b4d79abac5eb3c1072e1ad9aae`. Every pre-suite, A–F, G–L, M–R, S–Z, the repeated all-suite pass, router, CLAUDE entrypoint, project template, capability report, readiness audit, result-loop, scaling, and clean use-in-project contract step passed. Review reconciliation recorded 11 total threads and 0 unresolved. PR #261 was open and unmerged when this terminal checkpoint was recorded.
+- M–R correction: enforcement-tests run `1422` / ID `30067844734`, job `89402198469`, reached group M–R and failed `test-no-grep-c-echo.sh`; concise run `30068000890`, job `89402640376`, proved the initial `.claude/settings.json` grep-count anti-pattern. A later exact-head M–R failure was isolated by run `30069316223`, artifact `8587388095`; validation run `30069461978`, job `89407030984`, passed `test-no-grep-c-echo.sh` and every M–R suite before canonical commit `e21a4476fcd05b764e6dfdf653a96e695aede825`.
+- merge-ref correction: enforcement-tests run `1430` / ID `30068511235`, job `89404140702`, failed the Project 8 telemetry readiness suite. Diagnostic run `30068649859`, job `89404550355`, artifact `8587143140`, isolated the valid `-- pre_tool_use;` terminator; validation run `30068730740`, job `89404793738`, passed the telemetry and hook-gate suites before canonical commit `ad2b1bacf7031a2410abc23bb0e847f420fc719f`.
+- installed-fixture correction: enforcement-tests run `1443` / ID `30069573045`, job `89407390392`, failed M–R. Diagnostic run `30069657208`, job `89407689015`, artifact `8587517437`, isolated missing `hook_event_name`; validation run `30069788262`, job `89408070943`, passed the operational-learning and M–R suites before canonical commit `ce02595d35e8085c855c680f48f20c30712f6ca3`.
+- structured-deny correction: diagnostic run `30070153259`, job `89409148182`, artifact `8587697506`, showed that valid deny JSON with exit `0` was treated as allow by the simulator. Commit `31a95c99f1f5760d6ac595107af93eaa267c5b1a` added structured-deny interpretation; commit `2a4211011024b2d552ef053681abdda691171b69` removed the temporary workflow.
+- observable-recorder correction: diagnostic run `30070608917`, job `89410484738`, artifact `8587867448`, isolated a stale string assertion. Commit `46ecf89686a1f3c7d3c8ae1d1fcf8f56c84658cb` replaced it with runtime warning/no-evidence proof; commit `cde69e3e6da727b4d79abac5eb3c1072e1ad9aae` removed the temporary workflow.
+- pre-merge: enforcement-tests run `1458` / ID `30070850082` / job `89411204247` concluded success on canonical head `cde69e3e6da727b4d79abac5eb3c1072e1ad9aae`; every pre-suite, A–Z group, repeated all-suite run, router, installer, readiness, result-loop, scaling, and use-in-project contract step passed. PR #261 exact head `28144667331c2c7dcda13bba8460a1c956e970ae` was then approved and squash-merged as `936c440a77766c222ac8b349b46a67b118d8a536`. Synchronization commit `fac4769fdd27b2c2d1e2f274843715f4d70c9449` adopted canonical main with a 16-file, +1646/-459, behind-0 compare; `known-gaps-live-state` run 43 / ID `30114606716` succeeded and review reconciliation remained 11 total / 0 unresolved.
 
 ## Definition of Done — Implementation Branch
 
@@ -182,7 +183,8 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - [x] Add structured-deny and observable-recorder regression coverage.
 - [x] Open ready-for-review PR #262 with implementation evidence.
 - [x] Integrate concrete CodeRabbit findings with regression coverage.
+- [x] Synchronize the implementation branch with canonical `main` after PR #261.
 
 ## External Gates — Not Branch DoD
 
-Fresh exact-head provider CI, reconciliation and resolution of every current or outdated review thread, explicit approval for PR #262, expected-head protected merge, post-merge workflows on canonical `main`, and a separate canonical audit/known-gaps closure PR remain outside this implementation branch. The gap stays open and no live-state claim is added here.
+Fresh exact-head provider CI after this plan update, reconciliation and resolution of every current or outdated review thread, explicit approval for PR #262, expected-head protected merge, post-merge workflows on canonical `main`, and a separate canonical audit/known-gaps closure PR remain outside this implementation branch. The gap stays open and no live-state claim is added here.
