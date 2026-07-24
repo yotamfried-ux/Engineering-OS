@@ -1,10 +1,10 @@
 name: tmp-hard-hook-debug
 
-permissions:
-  contents: write
-
 on:
   pull_request:
+
+permissions:
+  contents: write
 
 jobs:
   apply-notion-fix:
@@ -16,96 +16,22 @@ jobs:
           ref: fix/hard-hook-fail-closed
           fetch-depth: 0
           persist-credentials: true
-      - name: Fix false evidence, validate, and remove this workflow
+      - name: Apply Notion false-evidence fix
+        run: python3 .github/scripts/tmp_apply_notion_false_evidence.py
+      - name: Validate focused and installed behavior
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          settings = Path('.claude/settings.json')
-          text = settings.read_text(encoding='utf-8')
-          old = "r=d.get('tool_response','') or {}; assert name.startswith('mcp__Notion__'); print((r.get('id','') or r.get('page_id','') or '') if isinstance(r,dict) else '')"
-          new = "r=d.get('tool_response'); assert name.startswith('mcp__Notion__') and isinstance(r,dict); print(r.get('id','') or r.get('page_id','') or '')"
-          if old not in text:
-              raise SystemExit('source Notion recorder validation expression not found')
-          settings.write_text(text.replace(old, new, 1), encoding='utf-8')
-
-          patcher = Path('scripts/enforcement/patch-settings-runtime-evidence.sh')
-          text = patcher.read_text(encoding='utf-8')
-          pattern = re.compile(
-              r'ensure_hook\(\n\s+"PostToolUse",\n\s+"mcp__Notion__\.\*",\n\s+"notion-progress-evidence",.*?\n\s+index=0,\n\s+\)',
-              re.S,
-          )
-          replacement = '''notion_progress_command = (
-              'INPUT=$(cat 2>/dev/null || true); '
-              'if printf \'%s\' "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); '
-              "name=d.get('tool_name') or d.get('tool') or ''; response=d.get('tool_response'); "
-              "assert name.startswith('mcp__Notion__') and isinstance(response,dict)\" "
-              '>/dev/null 2>&1; then '
-              f'. "{base}/scripts/enforcement/lib/evidence.sh" 2>/dev/null && '
-              'evidence_record connector_used notion && evidence_record notion_progress_validated '
-              '|| echo "WARNING_FOR_AGENT: Notion progress evidence recorder failed open." >&2; '
-              'else echo "WARNING_FOR_AGENT: Notion progress recorder received malformed input and recorded no evidence." >&2; fi; '
-              'exit 0'
-          )
-          ensure_hook(
-              "PostToolUse",
-              "mcp__Notion__.*",
-              "notion-progress-evidence",
-              notion_progress_command,
-              index=0,
-          )'''
-          text, count = pattern.subn(replacement, text, count=1)
-          if count != 1:
-              raise SystemExit(f'expected one Notion patcher block, replaced {count}')
-          patcher.write_text(text, encoding='utf-8')
-
-          test = Path('scripts/enforcement/tests/test-required-connectors.sh')
-          text = test.read_text(encoding='utf-8')
-          marker = '\n\necho "required connector simulations passed"\n'
-          if marker not in text:
-              raise SystemExit('required-connectors final marker not found')
-          addition = r'''
-
-notion_progress_cmd="$(python3 - .claude/settings.json <<'PY_CMD'
-import json, sys
-data = json.load(open(sys.argv[1], encoding='utf-8'))
-for block in data.get('hooks', {}).get('PostToolUse', []):
-    if block.get('matcher') != 'mcp__Notion__.*':
-        continue
-    for hook in block.get('hooks', []):
-        command = hook.get('command', '') if isinstance(hook, dict) else ''
-        if 'notion_progress_validated' in command:
-            print(command)
-            raise SystemExit(0)
-raise SystemExit(1)
-PY_CMD
-)"
-. "$ROOT/scripts/enforcement/lib/evidence.sh"
-evidence_reset
-printf '%s' '{"tool_name":"mcp__Notion__create-a-page","tool_response":"not-an-object"}' | ENGINEERING_OS_HOME="$ROOT" bash -c "$notion_progress_cmd" >/dev/null 2>&1
-if [ ! -s .claude/.evidence/ledger ]; then
-  echo "ok: install_patch_malformed_notion_response_records_no_evidence"
-else
-  echo "fail: install_patch_malformed_notion_response_records_no_evidence"
-  cat .claude/.evidence/ledger
-  exit 1
-fi
-evidence_reset
-printf '%s' '{"tool_name":"mcp__Notion__create-a-page","tool_response":{"id":"page-1"}}' | ENGINEERING_OS_HOME="$ROOT" bash -c "$notion_progress_cmd" >/dev/null 2>&1
-pass install_patch_valid_notion_response_records_progress grep -q 'notion_progress_validated' .claude/.evidence/ledger
-'''
-          test.write_text(text.replace(marker, addition + marker, 1), encoding='utf-8')
-
-          Path('.github/workflows/tmp-hard-hook-debug.yml').unlink()
-          PY
-
           git diff --check
+          bash -n scripts/enforcement/post-tool-use-notion-progress.sh
           bash -n scripts/enforcement/patch-settings-runtime-evidence.sh
           bash scripts/enforcement/tests/test-hook-classification.sh
           bash scripts/enforcement/tests/test-required-connectors.sh
           bash scripts/enforcement/tests/test-hard-hook-fail-closed.sh
+      - name: Commit canonical changes and remove temporary files
+        run: |
+          set -euo pipefail
+          rm .github/scripts/tmp_apply_notion_false_evidence.py
+          rm .github/workflows/tmp-hard-hook-debug.yml
           git config user.email "ci@engineering-os.local"
           git config user.name "engineering-os-ci"
           git add -A
