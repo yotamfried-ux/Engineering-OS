@@ -1,0 +1,35 @@
+name: tmp-installed-hook-harness-debug
+
+on:
+  pull_request:
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Prepare test environment
+        run: |
+          git config --global user.email "ci@engineering-os.local"
+          git config --global user.name "engineering-os-ci"
+          git config --global init.defaultBranch main
+      - name: Reproduce operational learning suite
+        run: |
+          set +e
+          bash scripts/enforcement/tests/test-operational-learning-skills.sh > /tmp/harness.log 2>&1
+          status=$?
+          cat /tmp/harness.log
+          echo "$status" > /tmp/harness.status
+          exit "$status"
+      - name: Upload harness diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: harness-${{ github.run_id }}
+          path: |
+            /tmp/harness.log
+            /tmp/harness.status
+          retention-days: 2
