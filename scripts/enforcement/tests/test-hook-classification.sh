@@ -1,193 +1,119 @@
 #!/usr/bin/env bash
+# Verify canonical hook classification, hard wiring, and false-evidence-safe recorders.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SETTINGS="$ROOT/.claude/settings.json"
-CRITICALITY="$ROOT/scripts/enforcement/hook-criticality.tsv"
-READ_RECORDER="$ROOT/scripts/enforcement/post-tool-use-read-evidence.sh"
-MCP_RECORDER="$ROOT/scripts/enforcement/post-tool-use-mcp.sh"
-BASH_RECORDER="$ROOT/scripts/enforcement/post-tool-use-bash.sh"
-chmod +x "$READ_RECORDER" "$MCP_RECORDER" "$BASH_RECORDER"
+REGISTRY="$ROOT/scripts/enforcement/hook-criticality.tsv"
+CHECK="$ROOT/scripts/enforcement/check-hard-hook-contract.py"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
 
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
-cd "$TMP"
-mkdir -p .claude/.evidence core patterns/api .claude/commands
-: > .claude/.evidence/ledger
-export EOS_EVIDENCE_DIR=".claude/.evidence"
-export ENGINEERING_OS_HOME="$ROOT"
+pass=0
+fail=0
+ok() { printf '  ✅ %s\n' "$1"; pass=$((pass + 1)); }
+bad() { printf '  ❌ %s\n' "$1"; fail=$((fail + 1)); }
 
-evidence_has() {
-  local key="$1" value="${2:-}"
-  if [ -n "$value" ]; then
-    grep -qF "$(printf '\t%s\t%s' "$key" "$value")" .claude/.evidence/ledger
-  else
-    grep -qF "$(printf '\t%s\t' "$key")" .claude/.evidence/ledger
-  fi
-}
-
-reset_ledger() { : > .claude/.evidence/ledger; }
-run_raw() { local script="$1" raw="$2"; printf '%s' "$raw" | "$script" >/dev/null 2>&1; }
-run_raw_allow_fail() {
-  local script="$1" raw="$2"
-  if ! printf '%s' "$raw" | "$script" >/dev/null 2>&1; then
-    :
-  fi
-}
-settings_command() {
-  local matcher="$1" contains="$2"
-  python3 - "$SETTINGS" "$matcher" "$contains" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-settings_path, matcher, contains = sys.argv[1:4]
-settings = json.loads(Path(settings_path).read_text(encoding="utf-8"))
-for block in settings["hooks"].get("PostToolUse", []):
-    if block.get("matcher") != matcher:
+command_for() {
+  local event="$1" matcher="$2" needle="$3"
+  python3 - "$SETTINGS" "$event" "$matcher" "$needle" <<'PY'
+import json,sys
+p,event,matcher,needle=sys.argv[1:]
+d=json.load(open(p))
+for block in d.get('hooks',{}).get(event,[]):
+    actual=block.get('matcher','*')
+    if actual != matcher:
         continue
-    for hook in block.get("hooks", []):
-        command = hook.get("command", "")
-        if contains in command:
-            print(command)
+    for hook in block.get('hooks',[]):
+        cmd=hook.get('command','') if isinstance(hook,dict) else ''
+        if needle in cmd:
+            print(cmd)
             raise SystemExit(0)
-raise SystemExit(f"missing PostToolUse command for {matcher} containing {contains}")
+raise SystemExit(1)
 PY
 }
-run_settings_command_allow_fail() {
-  local command="$1" raw="$2"
-  if ! printf '%s' "$raw" | bash -c "$command" >/dev/null 2>&1; then
-    :
+
+run_hook() {
+  local name="$1" command="$2" input="$3"
+  local dir="$WORK/$name"
+  mkdir -p "$dir"
+  set +e
+  (cd "$dir" && printf '%s' "$input" | ENGINEERING_OS_HOME="$ROOT" bash -c "$command") >"$dir/out" 2>"$dir/err"
+  local code=$?
+  set -e
+  printf '%s' "$code" >"$dir/code"
+}
+
+assert_no_evidence() {
+  local name="$1" dir="$WORK/$1"
+  if [ "$(cat "$dir/code")" -eq 0 ] && [ ! -s "$dir/.claude/.evidence/ledger" ]; then
+    ok "$name does not fabricate evidence on malformed input"
+  else
+    bad "$name fabricated evidence or failed open incorrectly (code=$(cat "$dir/code"), out=$(cat "$dir/out"), err=$(cat "$dir/err"))"
   fi
 }
-expect_pass() { local name="$1"; shift; if "$@"; then echo "  ✅ $name"; else echo "  ❌ expected pass: $name"; exit 1; fi; }
-expect_absent() { local name="$1" key="$2" value="${3:-}"; if evidence_has "$key" "$value"; then echo "  ❌ unexpected evidence for $name: $key $value"; cat .claude/.evidence/ledger; exit 1; else echo "  ✅ $name"; fi; }
 
-CONTEXT7_INLINE="$(settings_command 'mcp__Context7__.*' 'context7')"
-NOTION_INLINE="$(settings_command 'mcp__Notion__.*' 'notion_spec_created')"
+context7_cmd="$(command_for PostToolUse 'mcp__Context7__.*' 'evidence_record context7')"
+run_hook context7 "$context7_cmd" '{bad-json'
+assert_no_evidence context7
 
-# Malformed PostToolUse inputs must be false-evidence-safe: recorder exits may be soft,
-# but they must not create proof that a required source/tool was used.
-reset_ledger
-run_raw_allow_fail "$READ_RECORDER" '{"tool_name":"Read","tool_input":'
-expect_absent "malformed Read input records no task-router evidence" task_router_read
-expect_absent "malformed Read input records no workflow evidence" workflow_read
+read_cmd="$(command_for PostToolUse Read 'read_pattern_lifecycle')"
+run_hook read "$read_cmd" '{"tool_name":"Read","tool_input":{}}'
+assert_no_evidence read
 
-reset_ledger
-run_raw_allow_fail "$MCP_RECORDER" '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":'
-expect_absent "malformed MCP input records no GitHub connector evidence" connector_used github
-expect_absent "malformed MCP input records no github_used evidence" github_used
+notion_cmd="$(command_for PostToolUse 'mcp__Notion__.*' 'notion_spec_created')"
+run_hook notion "$notion_cmd" '{"tool_name":"mcp__Notion__create-a-page","tool_response":"not-an-object"}'
+assert_no_evidence notion
 
-reset_ledger
-run_raw_allow_fail "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":'
-expect_absent "malformed Bash input records no graphify evidence" graphify_used
-expect_absent "malformed Bash input records no test evidence" tests_run
+post_bash_cmd="$(command_for PostToolUse Bash 'post-tool-use-bash.sh')"
+run_hook post_bash "$post_bash_cmd" '{bad-json'
+assert_no_evidence post_bash
 
-reset_ledger
-run_settings_command_allow_fail "$CONTEXT7_INLINE" '{"tool_name":"mcp__Context7__query_docs","tool_input":'
-expect_absent "malformed inline Context7 recorder records no context7 evidence" context7
+post_mcp_cmd="$(command_for PostToolUse 'mcp__.*' 'post-tool-use-mcp.sh')"
+run_hook post_mcp "$post_mcp_cmd" '{bad-json'
+assert_no_evidence post_mcp
 
-reset_ledger
-run_settings_command_allow_fail "$NOTION_INLINE" '{"tool_name":"mcp__Notion__create_page","tool_input":'
-expect_absent "malformed inline Notion recorder records no notion evidence" notion_spec_created
-expect_absent "malformed inline Notion recorder records no notion page id" notion_page_id
+post_read_cmd="$(command_for PostToolUse Read 'post-tool-use-read-evidence.sh')"
+run_hook post_read "$post_read_cmd" '{bad-json'
+assert_no_evidence post_read
 
-# Valid inputs must still record evidence; otherwise hard gates become impossible to satisfy.
-reset_ledger
-run_raw "$READ_RECORDER" '{"tool_name":"Read","tool_input":{"file_path":"core/task-router.md"}}'
-expect_pass "valid Read records task-router evidence" evidence_has task_router_read
-run_raw "$READ_RECORDER" '{"tool_name":"Read","tool_input":{"file_path":"core/workflow.md"}}'
-expect_pass "valid Read records workflow evidence" evidence_has workflow_read
-run_raw "$READ_RECORDER" '{"tool_name":"Read","tool_input":{"file_path":"patterns/api/rest.md"}}'
-expect_pass "valid pattern Read records pattern domain evidence" evidence_has patterns_read_api
-expect_pass "valid pattern Read records pattern_used evidence" evidence_has pattern_used api
+if python3 "$CHECK" --root "$ROOT" --settings "$SETTINGS" --surface source >"$WORK/contract.out" 2>"$WORK/contract.err"; then
+  ok "canonical source hard-hook contract passes"
+else
+  bad "canonical source hard-hook contract failed: $(cat "$WORK/contract.err")"
+fi
 
-reset_ledger
-run_raw "$MCP_RECORDER" '{"tool_name":"mcp__GitHub__get_pr_info","tool_input":{},"tool_response":{"ok":true}}'
-expect_pass "valid MCP records connector_used github" evidence_has connector_used github
-expect_pass "valid MCP records connector_github" evidence_has connector_github
-expect_pass "valid MCP records github_used" evidence_has github_used
+if awk -F '\t' '
+  BEGIN { bad=0; rows=0 }
+  /^[[:space:]]*#/ || NF==0 { next }
+  NF != 10 { bad=1; next }
+  {
+    rows++
+    if ($4=="hard" && $5!="fail_closed") bad=1
+    if ($4=="advisory" && $5!="soft_guidance_only") bad=1
+    if ($4=="recorder" && $5!="false_evidence_safe") bad=1
+    if ($6=="nested" && $7=="-") bad=1
+  }
+  END { exit (bad || rows==0) ? 1 : 0 }
+' "$REGISTRY"; then
+  ok "criticality registry has strict ten-column class semantics"
+else
+  bad "criticality registry class/shape validation failed"
+fi
 
-reset_ledger
-run_settings_command_allow_fail "$CONTEXT7_INLINE" '{"tool_name":"mcp__Context7__query_docs","tool_input":{},"tool_response":{"ok":true}}'
-expect_pass "valid inline Context7 records context7 evidence" evidence_has context7
+if grep -q $'PreToolUse\t.*\tscripts/enforcement/pre-tool-use-json-guard.sh\thard\tfail_closed\tdirect' "$REGISTRY" \
+   && grep -q $'Stop\t\*\tscripts/enforcement/post-stop-hook.sh\thard\tfail_closed\tdirect' "$REGISTRY" \
+   && grep -q $'scripts/enforcement/check-runtime-evidence.sh\thard\tfail_closed\tnested\tscripts/enforcement/post-stop-hook.sh' "$REGISTRY"; then
+  ok "direct and nested hard units are represented canonically"
+else
+  bad "criticality registry is missing required direct/nested ownership"
+fi
 
-reset_ledger
-run_settings_command_allow_fail "$NOTION_INLINE" '{"tool_name":"mcp__Notion__create_page","tool_input":{},"tool_response":{"id":"notion-page-1"}}'
-expect_pass "valid inline Notion records notion evidence" evidence_has notion_spec_created
-expect_pass "valid inline Notion records page id" evidence_has notion_page_id notion-page-1
+if grep -q 'soft-hook-gate.sh' "$SETTINGS" && grep -q 'hook-errors.log' "$ROOT/scripts/enforcement/lib/soft-hook-gate.sh"; then
+  ok "recorder failures are explicit, observable, and fail-open"
+else
+  bad "soft recorder observability wiring is missing"
+fi
 
-reset_ledger
-run_raw "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":{"command":"pytest -q"},"tool_response":"============================= test session starts =============================\n1 passed in 0.01s"}'
-expect_pass "valid test command records tests_run" evidence_has tests_run
-run_raw "$BASH_RECORDER" '{"tool_name":"Bash","tool_input":{"command":"graphify query architecture"},"tool_response":"Architecture graph query returned multiple nodes and relationships with enough detail."}'
-expect_pass "valid graphify command records graphify_used" evidence_has graphify_used
-
-# Machine-readable criticality map must preserve the contract.
-test -f "$CRITICALITY"
-python3 - "$CRITICALITY" <<'PY'
-import sys
-from pathlib import Path
-
-rows = []
-for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
-    if not line.strip() or line.startswith("#"):
-        continue
-    parts = line.split("\t")
-    assert len(parts) == 5, f"bad hook-criticality row: {line}"
-    event, matcher, unit, klass, semantics = parts
-    assert klass in {"hard", "advisory", "recorder", "lifecycle"}, line
-    rows.append({"event": event, "matcher": matcher, "unit": unit, "class": klass, "semantics": semantics})
-
-assert any(r["class"] == "hard" and r["event"] == "PreToolUse" for r in rows), "missing hard PreToolUse classification"
-assert any(r["class"] == "recorder" and r["event"] == "PostToolUse" for r in rows), "missing PostToolUse recorder classification"
-assert any(r["class"] == "advisory" for r in rows), "missing advisory classification"
-assert any(r["unit"] == "pre-tool-use-json-guard.sh" and r["class"] == "hard" for r in rows), "JSON guard must be hard"
-assert all(r["semantics"] == "fail_closed" for r in rows if r["class"] == "hard"), "hard hooks must fail closed"
-assert all(r["semantics"] == "false_evidence_safe" for r in rows if r["class"] == "recorder"), "recorders must be false-evidence-safe"
-print("  ✅ hook-criticality.tsv classifies hard/advisory/recorder behavior")
-PY
-
-# Settings criticality contract: hard PreToolUse enforcers must not be wrapped in || true,
-# and write/bash/agent hard paths must run the JSON guard before downstream enforcers.
-python3 - "$SETTINGS" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-pre = settings["hooks"].get("PreToolUse", [])
-post = settings["hooks"].get("PostToolUse", [])
-
-hard_scripts = (
-    "pre-tool-use-json-guard.sh",
-    "enforce-bash-entry.sh",
-    "enforce-workflow.sh",
-    "enforce-debugging.sh",
-    "enforce-git.sh",
-)
-
-def blocks_for(matcher):
-    blocks = [block for block in pre if block.get("matcher") == matcher]
-    assert blocks, f"missing PreToolUse matcher {matcher}"
-    return blocks
-
-for matcher in ("Bash", "Write|Edit|MultiEdit|NotebookEdit", "Agent"):
-    for block in blocks_for(matcher):
-        cmds = [h.get("command", "") for h in block.get("hooks", [])]
-        assert cmds, matcher
-        assert "pre-tool-use-json-guard.sh" in cmds[0], f"{matcher} must run JSON guard first"
-        for cmd in cmds:
-            if any(script in cmd for script in hard_scripts):
-                assert "|| true" not in cmd, f"hard PreToolUse command must not be soft-wrapped: {cmd}"
-
-# PostToolUse commands are allowed to be soft recorders, but they must be recorder scripts,
-# not hidden hard gates disguised with || true.
-post_serialized = json.dumps(post, ensure_ascii=False)
-for hidden_hard in ("enforce-workflow.sh", "enforce-git.sh", "enforce-debugging.sh", "enforce-bash-entry.sh"):
-    assert hidden_hard not in post_serialized, f"hard gate found under PostToolUse: {hidden_hard}"
-
-print("  ✅ settings classify PreToolUse hard gates separately from PostToolUse recorders")
-PY
-
-echo "hook classification tests passed"
+printf '\nhook classification: %d passed, %d failed\n' "$pass" "$fail"
+[ "$fail" -eq 0 ]

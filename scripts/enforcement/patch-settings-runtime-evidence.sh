@@ -5,65 +5,87 @@ settings="${1:-.claude/settings.json}"
 [ -f "$settings" ] || { echo "settings file not found" >&2; exit 1; }
 
 python3 - "$settings" <<'PY'
-import json, sys
+import json
+import sys
 from pathlib import Path
 
 p = Path(sys.argv[1])
-d = json.loads(p.read_text())
-hooks = d.setdefault('hooks', {})
+d = json.loads(p.read_text(encoding="utf-8"))
+hooks = d.setdefault("hooks", {})
+base = "${ENGINEERING_OS_HOME:-$(pwd)}"
 
 
-def hook_command_present(block, script_name):
-    return any(
-        isinstance(hook, dict) and script_name in hook.get('command', '')
-        for hook in block.get('hooks', [])
+def hard_command(event: str, matcher: str, unit: str, *args: str) -> str:
+    suffix = "" if not args else " -- " + " ".join(args)
+    return (
+        f'GATE="{base}/scripts/enforcement/lib/hook-gate.sh"; '
+        f'[ -r "$GATE" ] || {{ echo "ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing: $GATE" >&2; exit 2; }}; '
+        f'bash "$GATE" --event {event} --matcher \'{matcher}\' --unit "{base}/{unit}"{suffix}'
     )
 
 
-def ensure_hook(event, matcher, script_name, command, index=0):
-    seq = hooks.setdefault(event, [])
-    first_match = None
-    for block in seq:
-        if not isinstance(block, dict) or block.get('matcher') != matcher:
-            continue
-        if hook_command_present(block, script_name):
-            return
-        if first_match is None:
-            first_match = block
-    if first_match is not None:
-        first_match.setdefault('hooks', []).append({'type': 'command', 'command': command})
-        return
-    entry = {'hooks': [{'type': 'command', 'command': command}]}
-    if matcher is not None:
-        entry['matcher'] = matcher
-    seq.insert(index, entry)
+def soft_command(event: str, unit: str, *args: str) -> str:
+    suffix = "" if not args else " -- " + " ".join(args)
+    return (
+        f'SOFT="{base}/scripts/enforcement/lib/soft-hook-gate.sh"; '
+        f'if [ -r "$SOFT" ]; then bash "$SOFT" --event {event} --unit "{base}/{unit}"{suffix}; '
+        f'else echo "WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT" >&2; exit 0; fi'
+    )
 
 
-ensure_hook('PreToolUse','Write|Edit|MultiEdit|NotebookEdit','pre-tool-use-runtime-evidence.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-runtime-evidence.sh" 2>&1',index=0)
-ensure_hook('PreToolUse','Write|Edit|MultiEdit|NotebookEdit','pre-tool-use-connector-selection.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-connector-selection.sh" 2>&1',index=0)
-ensure_hook('PreToolUse','Write|Edit|MultiEdit|NotebookEdit','pre-tool-use-template-selection.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/pre-tool-use-template-selection.sh" 2>&1',index=0)
-ensure_hook('PreToolUse','Write|Edit|MultiEdit|NotebookEdit','check-plan-scope.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/check-plan-scope.sh" 2>&1',index=0)
-ensure_hook('PostToolUse','mcp__.*','post-tool-use-mcp.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-mcp.sh" 2>/dev/null || true',index=0)
-ensure_hook('PostToolUse','Read','post-tool-use-read-evidence.sh','bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-read-evidence.sh" 2>/dev/null || true',index=1)
-ensure_hook('PostToolUse','mcp__Notion__.*','notion-progress-evidence','bash -c \'. "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh" && evidence_record connector_used notion && evidence_record notion_progress_validated\' 2>&1',index=0)
+def matching_blocks(event: str, matcher: str | None):
+    for block in hooks.setdefault(event, []):
+        if isinstance(block, dict) and block.get("matcher") == matcher:
+            yield block
 
-stop_event = 'S' + 'top'
-stop_script = ''.join(chr(x) for x in [112, 111, 115, 116, 45, 115, 116, 111, 112, 45, 104, 111, 111, 107, 46, 115, 104])
-stop_command = 'bash "${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/' + stop_script + '" 2>&1'
-ensure_hook(stop_event, None, stop_script, stop_command, index=0)
 
-stop = hooks.setdefault(stop_event, [])
-for block in stop:
-    if not isinstance(block, dict):
-        continue
-    for hook in block.get('hooks', []):
-        if isinstance(hook, dict):
-            command = hook.get('command', '')
-            if stop_script in command:
-                command = command.replace(' 2>/dev/null || true', ' 2>&1')
-                command = command.replace(' 2>/dev/null', ' 2>&1')
-                command = command.replace(' || true', '')
-                hook['command'] = command
+def ensure_hook(event: str, matcher: str | None, script_name: str, command: str, index: int = 0) -> None:
+    blocks = list(matching_blocks(event, matcher))
+    block = blocks[0] if blocks else None
+    if block is None:
+        block = {"hooks": []}
+        if matcher is not None:
+            block["matcher"] = matcher
+        hooks[event].insert(index, block)
+    entries = block.setdefault("hooks", [])
+    found = None
+    for entry in entries:
+        if isinstance(entry, dict) and script_name in entry.get("command", ""):
+            found = entry
+            break
+    if found is None:
+        found = {"type": "command", "command": command}
+        entries.insert(index, found)
+    else:
+        found["type"] = "command"
+        found["command"] = command
+        if index == 0:
+            entries.remove(found)
+            entries.insert(0, found)
 
-p.write_text(json.dumps(d, ensure_ascii=False, indent=2) + '\n')
+
+write = "Write|Edit|MultiEdit|NotebookEdit"
+ensure_hook("PreToolUse", write, "pre-tool-use-json-guard.sh", hard_command("PreToolUse", write, "scripts/enforcement/pre-tool-use-json-guard.sh"), index=0)
+ensure_hook("PreToolUse", write, "pre-tool-use-runtime-evidence.sh", hard_command("PreToolUse", write, "scripts/enforcement/pre-tool-use-runtime-evidence.sh"), index=1)
+ensure_hook("PreToolUse", write, "pre-tool-use-connector-selection.sh", hard_command("PreToolUse", write, "scripts/enforcement/pre-tool-use-connector-selection.sh"), index=2)
+ensure_hook("PreToolUse", write, "pre-tool-use-template-selection.sh", hard_command("PreToolUse", write, "scripts/enforcement/pre-tool-use-template-selection.sh"), index=3)
+ensure_hook("PreToolUse", write, "check-plan-scope.sh", hard_command("PreToolUse", write, "scripts/enforcement/check-plan-scope.sh"), index=4)
+
+ensure_hook("PreToolUse", ".*", "pre-tool-use-json-guard.sh", hard_command("PreToolUse", ".*", "scripts/enforcement/pre-tool-use-json-guard.sh"), index=0)
+ensure_hook("PreToolUse", ".*", "require-telemetry-session.sh", hard_command("PreToolUse", ".*", "scripts/monitoring/require-telemetry-session.sh"), index=1)
+ensure_hook("PreToolUse", ".*", "eos-telemetry-event.sh", soft_command("PreToolUse", "scripts/monitoring/eos-telemetry-event.sh", "pre_tool_use"), index=2)
+
+ensure_hook("PostToolUse", "mcp__.*", "post-tool-use-mcp.sh", soft_command("PostToolUse", "scripts/enforcement/post-tool-use-mcp.sh"), index=0)
+ensure_hook("PostToolUse", "Read", "post-tool-use-read-evidence.sh", soft_command("PostToolUse", "scripts/enforcement/post-tool-use-read-evidence.sh"), index=1)
+ensure_hook(
+    "PostToolUse",
+    "mcp__Notion__.*",
+    "post-tool-use-notion-progress.sh",
+    soft_command("PostToolUse", "scripts/enforcement/post-tool-use-notion-progress.sh"),
+    index=0,
+)
+
+ensure_hook("Stop", None, "post-stop-hook.sh", hard_command("Stop", "*", "scripts/enforcement/post-stop-hook.sh"), index=0)
+
+p.write_text(json.dumps(d, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 PY

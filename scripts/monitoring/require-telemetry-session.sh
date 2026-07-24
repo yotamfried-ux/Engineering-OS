@@ -61,6 +61,7 @@ if ! python3 - "$EVENTS" "$RUN_ID_FILE" "$SETTINGS" "$HOOK_MODE" <<'PY'
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -119,7 +120,10 @@ if hook_mode == "direct":
             pretool_commands,
             lambda command: (
                 "eos-telemetry-event.sh" in command
-                and command.rstrip().endswith(" pre_tool_use")
+                and (
+                    command.rstrip().endswith(" pre_tool_use")
+                    or re.search(r"--\s+pre_tool_use(?:\s|[;&|)]|$)", command)
+                )
             ),
         ),
     )
