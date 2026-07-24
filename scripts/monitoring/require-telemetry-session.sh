@@ -122,7 +122,7 @@ if hook_mode == "direct":
                 "eos-telemetry-event.sh" in command
                 and (
                     command.rstrip().endswith(" pre_tool_use")
-                    or re.search(r"--\s+pre_tool_use(?:\s|$)", command)
+                    or re.search(r"--\s+pre_tool_use(?:\s|[;&|)]|$)", command)
                 )
             ),
         ),
