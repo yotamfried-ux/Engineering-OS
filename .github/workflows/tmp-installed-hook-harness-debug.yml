@@ -3,42 +3,83 @@ name: tmp-installed-hook-harness-debug
 on:
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
-  reproduce:
+  apply-functional-regression:
+    if: github.head_ref == 'fix/hard-hook-fail-closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
-          persist-credentials: false
+          ref: fix/hard-hook-fail-closed
           fetch-depth: 0
-      - name: Prepare test environment
+          persist-credentials: true
+      - name: Replace stale Notion string assertion with runtime proof
         run: |
-          git config --global user.email "ci@engineering-os.local"
-          git config --global user.name "engineering-os-ci"
-          git config --global init.defaultBranch main
-      - name: Reproduce M-R suites
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/enforcement/tests/test-required-connectors.sh')
+          text = path.read_text(encoding='utf-8')
+          old = '''pass install_patch_wires_notion_progress bash -c "grep -q 'post-tool-use-notion-progress.sh' .claude/settings.json && grep -q 'notion_progress_validated' '$ROOT/scripts/enforcement/post-tool-use-notion-progress.sh'"
+pass install_patch_surfaces_notion_errors grep -q '2>&1' .claude/settings.json
+'''
+          new = '''pass install_patch_wires_notion_progress bash -c "grep -q 'post-tool-use-notion-progress.sh' .claude/settings.json && grep -q 'notion_progress_validated' '$ROOT/scripts/enforcement/post-tool-use-notion-progress.sh'"
+'''
+          if text.count(old) != 1:
+              raise SystemExit('stale Notion string assertion not found exactly once')
+          text = text.replace(old, new, 1)
+          old_runtime = '''evidence_reset
+printf '%s' '{"tool_name":"mcp__Notion__create-a-page","tool_response":"not-an-object"}' | ENGINEERING_OS_HOME="$ROOT" bash -c "$notion_progress_cmd" >/dev/null 2>&1
+if [ ! -s .claude/.evidence/ledger ]; then
+  echo "ok: install_patch_malformed_notion_response_records_no_evidence"
+else
+  echo "fail: install_patch_malformed_notion_response_records_no_evidence"
+  cat .claude/.evidence/ledger
+  exit 1
+fi
+'''
+          new_runtime = '''evidence_reset
+set +e
+printf '%s' '{"tool_name":"mcp__Notion__create-a-page","tool_response":"not-an-object"}' | ENGINEERING_OS_HOME="$ROOT" bash -c "$notion_progress_cmd" >"$TMP/notion-malformed.out" 2>"$TMP/notion-malformed.err"
+notion_code=$?
+set -e
+if [ "$notion_code" -eq 0 ] && grep -q 'failed open as explicitly classified' "$TMP/notion-malformed.err"; then
+  echo "ok: install_patch_surfaces_notion_errors"
+else
+  echo "fail: install_patch_surfaces_notion_errors"
+  cat "$TMP/notion-malformed.out" "$TMP/notion-malformed.err"
+  exit 1
+fi
+if [ ! -s .claude/.evidence/ledger ]; then
+  echo "ok: install_patch_malformed_notion_response_records_no_evidence"
+else
+  echo "fail: install_patch_malformed_notion_response_records_no_evidence"
+  cat .claude/.evidence/ledger
+  exit 1
+fi
+'''
+          if text.count(old_runtime) != 1:
+              raise SystemExit('Notion malformed runtime block not found exactly once')
+          path.write_text(text.replace(old_runtime, new_runtime, 1), encoding='utf-8')
+          Path('.github/workflows/tmp-installed-hook-harness-debug.yml').unlink()
+          PY
+      - name: Validate functional warning and all M-R suites
         run: |
-          set +e
+          set -euo pipefail
+          git diff --check
+          bash scripts/enforcement/tests/test-required-connectors.sh
           shopt -s nullglob
-          status=0
           for t in scripts/enforcement/tests/test-[m-r]*.sh; do
-            if ! bash "$t" > /tmp/mr-test.log 2>&1; then
-              echo "FAILED_TEST=$t" > /tmp/mr-summary.log
-              cat /tmp/mr-test.log >> /tmp/mr-summary.log
-              status=1
-              break
-            fi
+            echo "──────── $t ────────"
+            bash "$t"
           done
-          if [ "$status" -eq 0 ]; then echo "GROUP_M_R_PASSED" > /tmp/mr-summary.log; fi
-          cat /tmp/mr-summary.log
-          echo "$status" > /tmp/mr-status
-          exit "$status"
-      - name: Upload M-R diagnostics
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: current-mr-${{ github.run_id }}
-          path: |
-            /tmp/mr-summary.log
-            /tmp/mr-status
-          retention-days: 2
+      - name: Commit canonical regression and remove temporary workflow
+        run: |
+          set -euo pipefail
+          git config user.email "ci@engineering-os.local"
+          git config user.name "engineering-os-ci"
+          git add -A
+          git commit -m "test: verify observable Notion recorder failure"
+          git push origin HEAD:fix/hard-hook-fail-closed
