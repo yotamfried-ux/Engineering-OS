@@ -17,7 +17,22 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
       - name: Apply Notion false-evidence fix
-        run: python3 .github/scripts/tmp_apply_notion_false_evidence.py
+        run: |
+          set +e
+          python3 .github/scripts/tmp_apply_notion_false_evidence.py > /tmp/notion-patch.log 2>&1
+          status=$?
+          cat /tmp/notion-patch.log
+          echo "$status" > /tmp/notion-patch.status
+          exit "$status"
+      - name: Upload patch diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: notion-patch-${{ github.run_id }}
+          path: |
+            /tmp/notion-patch.log
+            /tmp/notion-patch.status
+          retention-days: 2
       - name: Validate focused and installed behavior
         run: |
           set -euo pipefail
