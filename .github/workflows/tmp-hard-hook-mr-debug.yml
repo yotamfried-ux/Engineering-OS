@@ -3,26 +3,42 @@ name: tmp-hard-hook-mr-debug
 on:
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
-  debug-m-r:
+  apply-review-followups:
+    if: github.head_ref == 'fix/hard-hook-fail-closed'
     runs-on: ubuntu-latest
     steps:
-      - name: Reproduce enforcement group M-R with concise output
-        env:
-          HEAD_BRANCH: fix/hard-hook-fail-closed
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: fix/hard-hook-fail-closed
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Apply review follow-ups
+        run: python3 .github/scripts/tmp_apply_hard_hook_review_followups.py
+      - name: Validate focused and full affected groups
         run: |
           set -euo pipefail
-          git clone --quiet --depth 1 --branch "$HEAD_BRANCH" https://github.com/yotamfried-ux/Engineering-OS.git repo
-          cd repo
-          git config --global user.email "ci@engineering-os.local"
-          git config --global user.name "engineering-os-ci"
-          git config --global init.defaultBranch main
+          git diff --check
+          bash -n scripts/enforcement/lib/hook-gate.sh
+          bash -n scripts/monitoring/require-telemetry-session.sh
+          bash scripts/enforcement/tests/test-hook-gate.sh
+          bash scripts/enforcement/tests/test-project8-telemetry-readiness.sh
+          bash scripts/enforcement/tests/test-no-grep-c-echo.sh
           shopt -s nullglob
           for t in scripts/enforcement/tests/test-[m-r]*.sh; do
-            if ! bash "$t" >test.out 2>&1; then
-              echo "FAILED_TEST=$t"
-              tail -n 160 test.out
-              exit 1
-            fi
+            echo "──────── $t ────────"
+            bash "$t"
           done
-          echo "GROUP_M_R_PASSED"
+      - name: Commit canonical changes and remove temporary files
+        run: |
+          set -euo pipefail
+          rm .github/scripts/tmp_apply_hard_hook_review_followups.py
+          rm .github/workflows/tmp-hard-hook-mr-debug.yml
+          git config user.email "ci@engineering-os.local"
+          git config user.name "engineering-os-ci"
+          git add -A
+          git commit -m "fix: isolate hard-hook validation and recorder matching"
+          git push origin HEAD:fix/hard-hook-fail-closed
