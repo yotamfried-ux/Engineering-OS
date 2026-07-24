@@ -39,15 +39,16 @@ This task owns hard-hook failure semantics and the minimum settings validation r
 
 ## Source of Truth Checks
 
-| Source | Finding / decision |
-|---|---|
-| canonical `main` | Base verified as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; PR #261 remained open and untouched when the branch was created. |
-| `docs/operations/known-gaps.tsv` | `hard-hook-fail-closed` is open, P0, owner `hooks-governance`; merge and post-merge proof remain closure requirements. |
-| `docs/operations/operational-readiness-audit.md` | Requires infrastructure uncertainty, malformed input, nested validation, settings wiring, converter/interpreter failures, source/installed proof, CI, and review evidence. |
-| `.claude/settings.json` | Hard-looking commands previously mixed direct and wrapper behavior; advisory and recorder commands intentionally remain soft. |
-| `scripts/enforcement/hook-criticality.tsv` | Existing registry declared hard units fail-closed but did not own complete direct/nested source/install chains. |
-| `scripts/enforcement/lib/hook-gate.sh` | Previous wrapper returned success when its enforcer or converter infrastructure was unavailable. |
-| official Claude Code hooks documentation | Exit `2` is the deterministic blocking fallback; `PreToolUse` and `Stop` require different structured blocking schemas; most other non-zero statuses are errors but not reliable blocks. |
+| Source | Status | Finding / decision |
+|---|---|---|
+| `core/task-router.md` | read | Routes the task through `engineering_os_governance` and security-sensitive controls. |
+| `core/workflow.md` | read | Requires plan-first result loops, evidence checkpoints, exact-head CI, and review reconciliation. |
+| `docs/operations/known-gaps.tsv` | checked | `hard-hook-fail-closed` is open, P0, owner `hooks-governance`; merge and post-merge proof remain closure requirements. |
+| `docs/operations/operational-readiness-audit.md` | checked | Requires infrastructure uncertainty, malformed input, nested validation, settings wiring, converter/interpreter failures, source/installed proof, CI, and review evidence. |
+| `.claude/settings.json` | validated | Hard commands use the shared hard gate and advisory/recorder commands remain explicitly soft. |
+| `scripts/enforcement/hook-criticality.tsv` | validated | Owns class, semantics, wiring, parent, surface, dependencies, and deny mode. |
+| `scripts/enforcement/lib/hook-gate.sh` | validated | Converts untrusted hard-hook outcomes and infrastructure failures into deterministic blocking behavior. |
+| `https://code.claude.com/docs/en/hooks` | read | Exit `2` is the blocking fallback; `PreToolUse` and `Stop` use different structured denial schemas. |
 
 ## Canonical Ownership Decision
 
@@ -103,7 +104,7 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 
 ## Claude Run Trace
 
-- trace_source: GitHub connector reads/writes, exact commit history, workflow runs, review threads, and local focused test outputs.
+- trace_source: GitHub connector reads/writes, exact commit history, workflow runs, review threads, and focused test outputs.
 - exact_token_usage_available: no.
 - trace_boundary: no independent Claude Code session trace is claimed; repository and provider evidence are the auditable surrogate.
 
@@ -139,10 +140,10 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 ## Progress Lifecycle Evidence
 
 - start: exact `main` `105ecd0d0dc72aa847d11b193190689dbda0dda8`, open PR #261, canonical audit rows, settings, registry, wrapper, installer, tests, and official Claude Code semantics were verified before implementation.
-- midpoint: implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` and review-fix head `78532bc88f83316b3c38c54469c9233f9635d647` produced exact-head failures in connector-evidence-policy run `1185` / ID `30055497133`, workflow-evidence-policy run `1174` / ID `30055497134`, pr-policy run `1710` / ID `30055497123`, and enforcement-tests run `1406` / ID `30055497151` (job `89366179889`). Focused identifiers were `test-hook-gate.sh` = 19/19, `test-hook-classification.sh` = 10/10, and `test-hard-hook-fail-closed.sh` = 15/15. Concise reproduction run `30066756835`, job `89399127583`, isolated `test-hard-hook-symlinks.sh` at 5/6: the runtime hard unit returned exit `2` but emitted a generic missing/unreadable diagnostic instead of the required symlink reason. CodeRabbit/Codex findings also identified wrapped telemetry-recorder detection and missing `notion_progress_validated` wiring; both were fixed with explicit regressions.
-- review correction: CodeRabbit identified that resolving a path before `is_symlink()` erased symlink evidence. Static and runtime validators now inspect every unresolved path component first, reject absolute/parent traversal and symlinked units/dependencies/directories, then resolve and enforce root containment.
-- rerun trigger: workflow-generated commit `42ed4f13e8cb0be978ab507d83ef9ad3a8a175e4` passed `test-hard-hook-symlinks.sh` and `test-project8-telemetry-readiness.sh`, removed the temporary diagnostic workflow, and was followed by this normal GitHub connector commit so all required workflows run on a provider-visible exact head.
-- pre-merge: focused runtime and static symlink suites pass; the branch remains subject to fresh exact-head full enforcement CI, complete live-thread reconciliation, PR #261 merge and base synchronization, and a second exact-head CI cycle.
+- mid: implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` and review-fix head `78532bc88f83316b3c38c54469c9233f9635d647` produced connector-evidence-policy run `1185` / ID `30055497133`, workflow-evidence-policy run `1174` / ID `30055497134`, pr-policy run `1710` / ID `30055497123`, and enforcement-tests run `1406` / ID `30055497151` failures. Focused results were `test-hook-gate.sh` 19/19, `test-hook-classification.sh` 10/10, and `test-hard-hook-fail-closed.sh` 15/15. Concise reproduction run `30066756835`, job `89399127583`, isolated `test-hard-hook-symlinks.sh` at 5/6 and identified the generic runtime symlink diagnostic as the failing assertion.
+- review correction: CodeRabbit/Codex findings identified wrapped telemetry-recorder detection, missing `notion_progress_validated` wiring, an unregistered task-class phrase, and post-resolution symlink checking. Each finding received a regression-backed code or plan correction.
+- rerun trigger: workflow-generated commit `42ed4f13e8cb0be978ab507d83ef9ad3a8a175e4` passed `test-hard-hook-symlinks.sh` and `test-project8-telemetry-readiness.sh`, removed the temporary diagnostic workflow, and normal connector commit `51676f153c412d02ec3d93405c29692057ca92f8` created provider-visible runs.
+- pre-merge: head `51676f153c412d02ec3d93405c29692057ca92f8` recorded seven successful policy workflows, workflow-evidence run `1179` / ID `30066999169` schema diagnostics, pr-policy run `1716` / ID `30066999143` blocked only by live threads, and enforcement-tests run `1411` / ID `30066999208` reached G–L after Project 8 telemetry success. Review reconciliation reached 9 total threads and 0 unresolved.
 
 ## Definition of Done — Implementation Branch
 
