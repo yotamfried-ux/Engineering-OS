@@ -3,42 +3,50 @@ name: tmp-hard-hook-merge-mr-debug
 on:
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
-  reproduce:
+  apply-fixture-fix:
+    if: github.head_ref == 'fix/hard-hook-fail-closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
-          persist-credentials: false
+          ref: fix/hard-hook-fail-closed
           fetch-depth: 0
-      - name: Prepare test environment
+          persist-credentials: true
+      - name: Add required hook event identity to fixture payloads
         run: |
-          git config --global user.email "ci@engineering-os.local"
-          git config --global user.name "engineering-os-ci"
-          git config --global init.defaultBranch main
-      - name: Reproduce merge-ref group M-R
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/enforcement/tests/test-operational-learning-skills.sh')
+          text = path.read_text(encoding='utf-8')
+          old_shell = 'printf \'{"tool_name":"Write","tool_input":{"file_path":"%s"}}\' "$file"'
+          new_shell = 'printf \'{"hook_event_name":"PreToolUse","tool_name":"Write","tool_input":{"file_path":"%s"}}\' "$file"'
+          old_py = 'payload = json.dumps({"tool_name": "Write", "tool_input": {"file_path": file_path}})'
+          new_py = 'payload = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": file_path}})'
+          if text.count(old_shell) != 1 or text.count(old_py) != 1:
+              raise SystemExit('expected operational learning payload builders not found exactly once')
+          text = text.replace(old_shell, new_shell, 1).replace(old_py, new_py, 1)
+          path.write_text(text, encoding='utf-8')
+          Path('.github/workflows/tmp-hard-hook-merge-mr-debug.yml').unlink()
+          PY
+      - name: Validate operational learning and M-R suites
         run: |
-          set +e
+          set -euo pipefail
+          git diff --check
+          bash scripts/enforcement/tests/test-operational-learning-skills.sh
           shopt -s nullglob
-          status=0
           for t in scripts/enforcement/tests/test-[m-r]*.sh; do
-            if ! bash "$t" > /tmp/mr-test.log 2>&1; then
-              echo "FAILED_TEST=$t" > /tmp/mr-summary.log
-              cat /tmp/mr-test.log >> /tmp/mr-summary.log
-              status=1
-              break
-            fi
+            echo "──────── $t ────────"
+            bash "$t"
           done
-          if [ "$status" -eq 0 ]; then echo "GROUP_M_R_PASSED" > /tmp/mr-summary.log; fi
-          cat /tmp/mr-summary.log
-          echo "$status" > /tmp/mr-status
-          exit "$status"
-      - name: Upload merge-ref M-R diagnostics
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: merge-mr-${{ github.run_id }}
-          path: |
-            /tmp/mr-summary.log
-            /tmp/mr-status
-          retention-days: 2
+      - name: Commit fixture correction and remove temporary workflow
+        run: |
+          set -euo pipefail
+          git config user.email "ci@engineering-os.local"
+          git config user.name "engineering-os-ci"
+          git add -A
+          git commit -m "test: send valid PreToolUse identity in installed hook fixtures"
+          git push origin HEAD:fix/hard-hook-fail-closed
