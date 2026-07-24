@@ -34,8 +34,10 @@ PYTHON="${EOS_HOOK_GATE_PYTHON:-python3}"
 CONVERTER="${EOS_HOOK_GATE_CONVERTER:-$PYTHON}"
 
 command -v "$PYTHON" >/dev/null 2>&1 || fail_blocking "required hard-hook interpreter is unavailable: $PYTHON"
-[ -f "$REGISTRY" ] && [ ! -L "$REGISTRY" ] && [ -r "$REGISTRY" ] || fail_blocking "hard-hook criticality registry is missing or unreadable: $REGISTRY"
-[ -f "$UNIT" ] && [ ! -L "$UNIT" ] && [ -r "$UNIT" ] || fail_blocking "hard-hook enforcer is missing or unreadable: $UNIT"
+[ ! -L "$REGISTRY" ] || fail_blocking "hard-hook criticality registry path is a symlink: $REGISTRY"
+[ -f "$REGISTRY" ] && [ -r "$REGISTRY" ] || fail_blocking "hard-hook criticality registry is missing or unreadable: $REGISTRY"
+[ ! -L "$UNIT" ] || fail_blocking "hard-hook enforcer path is a symlink: $UNIT"
+[ -f "$UNIT" ] && [ -r "$UNIT" ] || fail_blocking "hard-hook enforcer is missing or unreadable: $UNIT"
 
 TMP="$(mktemp -d 2>/dev/null)" || fail_blocking "hook-gate cannot create a private temporary directory."
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM

@@ -9,7 +9,7 @@
 | Domain tags | hooks, governance, security, shell, JSON, installer, testing, operational readiness |
 | Plan Scope | standard |
 | Planning Mode | implementation authorized; merge and canonical closure remain external owner gates |
-| Target paths | `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/lib/soft-hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/monitoring/require-telemetry-session.sh`; focused tests under `scripts/enforcement/tests/`; this Route Plan |
+| Target paths | `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/lib/soft-hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-fail-closed.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-hook-classification.sh`; `scripts/enforcement/tests/test-hook-gate.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`; `.claude/plans/hard-hook-fail-closed.md` |
 | Task-router evidence | `core/task-router.md` routes hook, settings, enforcement, test, and governance changes through `engineering_os_governance`; protected-action failure behavior also requires security-sensitive review. |
 | Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/quality-gates.md`, and `core/hooks-policy.md` require plan-first work, Experiment → Failure analysis → Fix → Experiment, dedicated PR isolation, exact-head CI, review reconciliation, and separate merge approval. |
 | Templates | Existing canonical hook wrapper, registry, settings, and installer patterns are sufficient; no new template is introduced. |
@@ -37,7 +37,7 @@ This task owns hard-hook failure semantics and the minimum settings validation r
 - No adjacent-gap implementation.
 - No Project 8 preparation or readiness claim.
 
-## Source-of-Truth Checks
+## Source of Truth Checks
 
 | Source | Finding / decision |
 |---|---|
@@ -134,12 +134,12 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - action: verified the live base, selected existing canonical owners, isolated plan-first implementation, analyzed exact failing jobs and review findings, and applied regression-backed fixes.
 - result: base `105ecd0d0dc72aa847d11b193190689dbda0dda8`; plan-first branch `fix/hard-hook-fail-closed`; implementation PR #262; CodeRabbit findings reproduced and corrected without touching PR #261.
 - decision: selected the existing criticality registry plus runtime/static validation and official installer path rather than a parallel registry or legacy-enforcer rewrite.
-- target: checked-in and installed settings; hard/soft runners; contract validator; installer patcher; telemetry preflight; focused, symlink, and clean-target tests.
+- target: `.claude/settings.json`; `scripts/enforcement/lib/hook-gate.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/patch-settings-runtime-evidence.sh`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-hard-hook-symlinks.sh`; `scripts/enforcement/tests/test-project8-telemetry-readiness.sh`.
 
 ## Progress Lifecycle Evidence
 
 - start: exact `main` `105ecd0d0dc72aa847d11b193190689dbda0dda8`, open PR #261, canonical audit rows, settings, registry, wrapper, installer, tests, and official Claude Code semantics were verified before implementation.
-- midpoint: initial exact-head CI reproduced the official clean-target telemetry preflight failure; CodeRabbit identified wrapped recorder detection and missing Notion progress wiring; both root causes were fixed with regressions.
+- midpoint: implementation commit `20271e7bf8ce6a23dc99387c3838f8ccd0849cec` and review-fix head `78532bc88f83316b3c38c54469c9233f9635d647` produced exact-head failures in connector-evidence-policy run `1185` / ID `30055497133`, workflow-evidence-policy run `1174` / ID `30055497134`, pr-policy run `1710` / ID `30055497123`, and enforcement-tests run `1406` / ID `30055497151` (job `89366179889`). Focused identifiers were `test-hook-gate.sh` = 19/19, `test-hook-classification.sh` = 10/10, and `test-hard-hook-fail-closed.sh` = 15/15. Concise reproduction run `30066756835`, job `89399127583`, isolated `test-hard-hook-symlinks.sh` at 5/6: the runtime hard unit returned exit `2` but emitted a generic missing/unreadable diagnostic instead of the required symlink reason. CodeRabbit/Codex findings also identified wrapped telemetry-recorder detection and missing `notion_progress_validated` wiring; both were fixed with explicit regressions.
 - review correction: CodeRabbit identified that resolving a path before `is_symlink()` erased symlink evidence. Static and runtime validators now inspect every unresolved path component first, reject absolute/parent traversal and symlinked units/dependencies/directories, then resolve and enforce root containment.
 - pre-merge: focused runtime and static symlink suites pass locally; the branch remains subject to fresh exact-head full enforcement CI and complete live-thread reconciliation.
 
