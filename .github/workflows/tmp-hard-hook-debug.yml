@@ -7,19 +7,22 @@ jobs:
   debug-g-l:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-        with:
-          persist-credentials: false
-      - name: Prepare test environment
+      - name: Reproduce enforcement group G-L with concise output
+        env:
+          HEAD_BRANCH: fix/hard-hook-fail-closed
         run: |
+          set -euo pipefail
+          git clone --quiet --depth 1 --branch "$HEAD_BRANCH" https://github.com/yotamfried-ux/Engineering-OS.git repo
+          cd repo
           git config --global user.email "ci@engineering-os.local"
           git config --global user.name "engineering-os-ci"
           git config --global init.defaultBranch main
-      - name: Reproduce enforcement group G-L
-        run: |
-          set -euo pipefail
           shopt -s nullglob
           for t in scripts/enforcement/tests/test-[g-l]*.sh; do
-            echo "──────── $t ────────"
-            bash "$t"
+            if ! bash "$t" >test.out 2>&1; then
+              echo "FAILED_TEST=$t"
+              tail -n 80 test.out
+              exit 1
+            fi
           done
+          echo "GROUP_G_L_PASSED"
