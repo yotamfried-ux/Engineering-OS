@@ -50,7 +50,8 @@ This task owns hard-hook failure semantics and the minimum settings validation r
 | `scripts/enforcement/lib/hook-gate.sh` | validated | Converts untrusted hard-hook outcomes into blocking behavior and validates only the requested direct row before its required chain. |
 | `scripts/enforcement/post-tool-use-notion-progress.sh` | validated | Records installed Notion progress only after a valid Notion event and object response. |
 | `scripts/monitoring/require-telemetry-session.sh` | validated | Accepts direct and soft-wrapped `pre_tool_use` recorders only with a complete shell token boundary, including a valid command terminator but excluding prefix collisions. |
-| `scripts/enforcement/tests/test-operational-learning-skills.sh` | validated | Installed-hook fixtures send complete Claude Code `PreToolUse` event identity before asserting policy allow/deny behavior. |
+| `scripts/enforcement/tests/test-operational-learning-skills.sh` | validated | Installed-hook fixtures send complete Claude Code `PreToolUse` identity and interpret structured deny JSON as a block even when the wrapper exits `0`. |
+| `scripts/enforcement/tests/test-required-connectors.sh` | validated | Installed Notion recorder failures are proven observable through stderr while remaining fail-open and recording no evidence. |
 | `https://code.claude.com/docs/en/hooks` | read | Exit `2` is the blocking fallback; `PreToolUse` and `Stop` use different structured denial schemas. |
 
 ## Canonical Ownership Decision
@@ -101,7 +102,9 @@ Extend `scripts/enforcement/hook-criticality.tsv` as the single owner of event, 
 30. `-- pre_tool_use_extra` does not satisfy telemetry recorder completeness;
 31. a valid `-- pre_tool_use;` shell token satisfies installed recorder completeness;
 32. Read recorder zero-count fallback produces one integer and no `grep -c ... || echo` static match;
-33. installed learning/skill hook fixtures use valid `PreToolUse` JSON and preserve allow/deny assertions.
+33. installed learning/skill hook fixtures use valid `PreToolUse` JSON and preserve allow/deny assertions;
+34. installed simulations interpret `permissionDecision=deny` and `decision=block` as blocking outcomes even with exit `0`;
+35. malformed installed Notion input returns fail-open, emits an observable warning, and leaves the evidence ledger empty.
 
 ## Installed-Target Validation
 
@@ -125,7 +128,7 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - `workflow.workflow-read` — workflow, git, quality, and hook policies established the result loop and lifecycle gates.
 - `plan.route-plan-before-write` — the initial Route Plan commit precedes implementation changes.
 - `source.github-repo-read` — exact base, settings, registry, wrapper, installer, validators, audit, and tests were read through GitHub.
-- `validation.policy-change-has-validator` — focused, negative, static, nested, symlink, Notion, telemetry-token, sibling-isolation, installed-fixture, and installed-target validators are required outputs.
+- `validation.policy-change-has-validator` — focused, negative, static, nested, symlink, Notion, telemetry-token, sibling-isolation, installed-fixture, structured-deny, and installed-target validators are required outputs.
 - `validation.coderabbit-policy` — external review is reconciled live; self-review remains supplemental only.
 
 ## Skill Evidence
@@ -157,7 +160,9 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - M–R correction: enforcement-tests run `1422` / ID `30067844734`, job `89402198469`, reached group M–R and failed `test-no-grep-c-echo.sh`; concise run `30068000890`, job `89402640376`, proved the initial `.claude/settings.json` grep-count anti-pattern. A later exact-head M–R failure was isolated by run `30069316223`, artifact `8587388095`: `grep -c ... || true` still spanned to a later `|| echo` in the same serialized command. The Read recorder now uses `TOTAL=$(grep -cE ... ) || TOTAL=0` and an `if` warning branch. Validation run `30069461978`, job `89407030984`, passed `test-no-grep-c-echo.sh` and every M–R suite before creating canonical commit `e21a4476fcd05b764e6dfdf653a96e695aede825` and removing the temporary workflow.
 - merge-ref correction: enforcement-tests run `1430` / ID `30068511235`, job `89404140702`, failed `Verify Project 8 telemetry readiness suite` on the PR merge ref. Diagnostic run `30068649859`, job `89404550355`, artifact `8587143140`, isolated `preflight_detects_soft_wrapped_recorder`: the valid installed command rendered `-- pre_tool_use;`, so the whitespace/end-only boundary rejected a legitimate shell terminator. The matcher now accepts complete shell terminators while `pre_tool_use_extra` remains blocked. Validation run `30068730740`, job `89404793738`, passed the Project 8 telemetry and hook-gate suites and created canonical commit `ad2b1bacf7031a2410abc23bb0e847f420fc719f` without the temporary workflow.
 - installed-fixture correction: enforcement-tests run `1443` / ID `30069573045`, job `89407390392`, passed every pre-suite plus A–F and G–L, then failed M–R. Merge-ref diagnostic run `30069657208`, job `89407689015`, artifact `8587517437`, isolated `test-operational-learning-skills.sh`: the installed allow fixture omitted `hook_event_name`, so the hard wrapper correctly rejected untrusted JSON before policy evaluation. The shell and Python payload builders now send `hook_event_name=PreToolUse`. Validation run `30069788262`, job `89408070943`, completed successfully; `test-operational-learning-skills.sh` and every M–R suite passed, commit `ce02595d35e8085c855c680f48f20c30712f6ca3` was created, and `.github/workflows/tmp-hard-hook-merge-mr-debug.yml` was removed before push.
-- pre-merge: validation run `30069788262` / job `89408070943` concluded success on the installed-fixture correction; canonical implementation commit `ce02595d35e8085c855c680f48f20c30712f6ca3` contains the validated test change and no temporary workflow. Review reconciliation recorded 11 total threads and 0 unresolved. PR #261 was open and unmerged when this terminal checkpoint was recorded.
+- structured-deny correction: merge-ref diagnostic run `30070153259`, job `89409148182`, artifact `8587697506`, showed that an installed hard wrapper returned valid deny JSON with exit `0`, while the simulator treated exit `0` as allow. Commit `31a95c99f1f5760d6ac595107af93eaa267c5b1a` parses structured output and treats `permissionDecision=deny` or `decision=block` as a block; temporary workflow removal commit `2a4211011024b2d552ef053681abdda691171b69` restored a canonical diff.
+- observable-recorder correction: M–R diagnostic run `30070608917`, job `89410484738`, artifact `8587867448`, isolated the stale `install_patch_surfaces_notion_errors` string assertion. Commit `46ecf89686a1f3c7d3c8ae1d1fcf8f56c84658cb` replaced it with runtime proof that malformed Notion input exits fail-open, emits the `soft-hook-gate.sh` warning, and records no evidence; temporary workflow removal commit `cde69e3e6da727b4d79abac5eb3c1072e1ad9aae` restored a canonical diff.
+- pre-merge: enforcement-tests run `1458` / ID `30070850082` / job `89411204247` concluded success on canonical head `cde69e3e6da727b4d79abac5eb3c1072e1ad9aae`. Every pre-suite, A–F, G–L, M–R, S–Z, the repeated all-suite pass, router, CLAUDE entrypoint, project template, capability report, readiness audit, result-loop, scaling, and clean use-in-project contract step passed. Review reconciliation recorded 11 total threads and 0 unresolved. PR #261 was open and unmerged when this terminal checkpoint was recorded.
 
 ## Definition of Done — Implementation Branch
 
@@ -174,6 +179,7 @@ Create a fresh temporary git target, run the official Engineering OS installer w
 - [x] Add source and installed Notion false-evidence regressions.
 - [x] Add sibling-isolation and telemetry-token-boundary regressions.
 - [x] Add valid installed `PreToolUse` identity fixtures.
+- [x] Add structured-deny and observable-recorder regression coverage.
 - [x] Open ready-for-review PR #262 with implementation evidence.
 - [x] Integrate concrete CodeRabbit findings with regression coverage.
 
