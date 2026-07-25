@@ -116,6 +116,34 @@
       "required_check_runs": [
         "enforcement-tests"
       ]
+    },
+    {
+      "claim_id": "engineering-os-pr-262-hard-hook-fail-closed",
+      "gap_id": "hard-hook-fail-closed",
+      "repository": "yotamfried-ux/Engineering-OS",
+      "pull_number": 262,
+      "base_branch": "main",
+      "expected_head_sha": "5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3",
+      "expected_merge_commit_sha": "e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6",
+      "required_pull_request_workflows": [
+        "pr-policy",
+        "enforcement-tests",
+        "workflow-evidence-policy",
+        "connector-evidence-policy",
+        "capability-evidence-policy",
+        "documentation-asset-policy",
+        "plan-policy",
+        "semantic-cleanup-policy",
+        "import-cleanup-policy",
+        "telemetry-handoff-tests"
+      ],
+      "required_push_workflows": [
+        "enforcement-tests",
+        "post-merge-validation"
+      ],
+      "required_check_runs": [
+        "enforcement-tests"
+      ]
     }
   ]
 }
