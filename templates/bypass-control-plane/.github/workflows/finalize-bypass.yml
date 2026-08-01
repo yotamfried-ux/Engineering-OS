@@ -1,0 +1,26 @@
+name: finalize-bypass
+
+on:
+  workflow_run:
+    workflows:
+      - consume-bypass
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  finalize:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.run_attempt == 1 &&
+      github.event.workflow_run.event == 'workflow_dispatch' &&
+      github.event.workflow_run.head_branch == github.event.repository.default_branch
+    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-finalizer-reusable.yml@d45a8bbf56702f00cea091bf38814b2bdb44b66a
+    with:
+      consumer_run_id: ${{ github.event.workflow_run.id }}
+    secrets:
+      protected_repository_read_token: ${{ secrets.PROTECTED_REPOSITORY_READ_TOKEN }}

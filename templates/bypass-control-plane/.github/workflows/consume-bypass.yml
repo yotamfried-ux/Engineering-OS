@@ -1,0 +1,53 @@
+name: consume-bypass
+
+on:
+  workflow_dispatch:
+    inputs:
+      protected_repository:
+        required: true
+        type: string
+      bypass:
+        required: true
+        type: string
+      gate:
+        required: true
+        type: string
+      action:
+        required: true
+        type: string
+      surface:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
+      target_fingerprint:
+        required: true
+        type: string
+      target_commit:
+        required: true
+        type: string
+      approval_comment_id:
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  consume:
+    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-consumer-reusable.yml@d45a8bbf56702f00cea091bf38814b2bdb44b66a
+    with:
+      protected_repository: ${{ inputs.protected_repository }}
+      bypass: ${{ inputs.bypass }}
+      gate: ${{ inputs.gate }}
+      action: ${{ inputs.action }}
+      surface: ${{ inputs.surface }}
+      target: ${{ inputs.target }}
+      target_fingerprint: ${{ inputs.target_fingerprint }}
+      target_commit: ${{ inputs.target_commit }}
+      approval_comment_id: ${{ inputs.approval_comment_id }}
+    secrets:
+      protected_repository_read_token: ${{ secrets.PROTECTED_REPOSITORY_READ_TOKEN }}
