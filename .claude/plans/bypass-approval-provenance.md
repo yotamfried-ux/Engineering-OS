@@ -81,7 +81,7 @@ Runtime may read metadata/dispatch only; consumer `GITHUB_TOKEN` is `contents: r
 
 ## Capability Evidence
 
-`routing.task-router-read`; `workflow.workflow-read`; `plan.route-plan-before-write`; `source.github-repo-read`; `skill.security-review`; `validation.security-gate-checked`; `validation.policy-change-has-validator`; `validation.coderabbit-policy`.
+`routing.task-router-read`; `workflow.workflow-read`; `plan.route-plan-before-write`; `source.github-repo-read`; `skill.security-review`; `validation.security-gate-checked`; `validation.actions-checked`; `validation.policy-change-has-validator`; `validation.coderabbit-policy`; `template.project-template-checked`.
 
 ## Skill Evidence
 
