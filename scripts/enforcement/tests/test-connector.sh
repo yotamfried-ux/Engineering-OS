@@ -39,7 +39,7 @@ expect ".env.local blocked"           1 "$(stage_run .env.local 'X=1')"
 expect "config/.env blocked"          1 "$(stage_run config/.env 'X=1')"
 expect ".env.example allowed"         0 "$(stage_run .env.example 'X=dummy')"
 expect "normal app.js allowed"        0 "$(stage_run app.js 'const x = 1')"
-expect "EOS_BYPASS_ENVFILE skips C1"  0 "$(EOS_BYPASS_ENVFILE=1 stage_run .env 'S=1')"
+expect "EOS_BYPASS_ENVFILE env-only request does not skip C1"  1 "$(EOS_BYPASS_ENVFILE=1 stage_run .env 'S=1')"
 
 echo "── C2: block high-confidence secret values ──"
 expect "AWS AKIA key blocked"         1 "$(stage_run leak.js "const k = \"$akia\"")"
@@ -49,10 +49,10 @@ expect "GitHub fine-grained PAT blocked" 1 "$(stage_run pat.js "token = \"$ghpat
 expect "OpenAI project key blocked"   1 "$(stage_run ai.js "key = \"$skproj\"")"
 expect "env-var reference allowed"    0 "$(stage_run clean.js 'const k = process.env.API_KEY')"
 expect "keyword-only mention allowed" 0 "$(stage_run doc.md 'set your api_key and secret in .env')"
-expect "EOS_BYPASS_SECRETS skips C2"  0 "$(EOS_BYPASS_SECRETS=1 stage_run leak.js "const k = \"$akia\"")"
+expect "EOS_BYPASS_SECRETS env-only request does not skip C2"  1 "$(EOS_BYPASS_SECRETS=1 stage_run leak.js "const k = \"$akia\"")"
 
 echo "── general ──"
-expect "EOS_BYPASS_CONNECTOR (master) skips all" 0 "$(EOS_BYPASS_CONNECTOR=1 stage_run .env 'S=1')"
+expect "EOS_BYPASS_CONNECTOR master request is denied" 2 "$(EOS_BYPASS_CONNECTOR=1 stage_run .env 'S=1')"
 expect "no staged files → pass"       0 "$(bash "$ENFORCER" >/dev/null 2>&1; echo $?)"
 
 echo

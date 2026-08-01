@@ -20,15 +20,9 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
-if ! declare -f bypass_active >/dev/null 2>&1; then
-  bypass_active() {
-    local name="${1:-}"; [ -z "$name" ] && return 1
-    case "${!name:-}" in 1|true|TRUE|yes|YES) return 0 ;; *) return 1 ;; esac
-  }
-fi
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
-bypass_active EOS_BYPASS_LEARNING && exit 0
+bypass_reject_disabled_master_requests EOS_BYPASS_LEARNING || exit 2
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 
 staged="$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)"
@@ -66,7 +60,7 @@ while IFS= read -r f; do
       is_excluded "$f" && continue
       miss="$(missing_sections "$f" "$LESSON_SECTIONS")"
       if [ -n "$miss" ]; then
-        if ! bypass_active EOS_BYPASS_LESSON; then
+        if ! bypass_staged_tree_request EOS_BYPASS_LESSON; then
           echo "❌ COMMIT BLOCKED — learning-loop.md: lesson '$f' is missing required schema sections:"
           printf '%s' "$miss" | sed 's/^/    ## /'
           echo "  Use lessons-learned/bugs/_TEMPLATE.md as the structure. BYPASS: EOS_BYPASS_LESSON=1 (or EOS_BYPASS_LEARNING=1)."
@@ -78,7 +72,7 @@ while IFS= read -r f; do
       is_excluded "$f" && continue
       miss="$(missing_sections "$f" "$FAILSOL_SECTIONS")"
       if [ -n "$miss" ]; then
-        if ! bypass_active EOS_BYPASS_FAILSOL; then
+        if ! bypass_staged_tree_request EOS_BYPASS_FAILSOL; then
           echo "❌ COMMIT BLOCKED — learning-loop.md: failed-solution '$f' is missing required sections:"
           printf '%s' "$miss" | sed 's/^/    ## /'
           echo "  Use failed-solutions/_TEMPLATE.md as the structure. BYPASS: EOS_BYPASS_FAILSOL=1 (or EOS_BYPASS_LEARNING=1)."

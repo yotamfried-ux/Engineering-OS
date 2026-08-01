@@ -22,15 +22,9 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
-if ! declare -f bypass_active >/dev/null 2>&1; then
-  bypass_active() {
-    local name="${1:-}"; [ -z "$name" ] && return 1
-    case "${!name:-}" in 1|true|TRUE|yes|YES) return 0 ;; *) return 1 ;; esac
-  }
-fi
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
-bypass_active EOS_BYPASS_GIT && exit 0
+bypass_reject_disabled_master_requests EOS_BYPASS_GIT || exit 2
 
 do_pretooluse() {
   local INPUT CMD
@@ -138,28 +132,28 @@ print(verdict)
 
   case "$VERDICT" in
     G1)
-      bypass_active EOS_BYPASS_FORCEPUSH && exit 0
+      bypass_git_ref_request EOS_BYPASS_FORCEPUSH "$CMD" && exit 0
       echo "ERROR_FOR_AGENT: git-policy.md <safety> — 'git push --force' can overwrite others' history and needs explicit human approval."
       echo "ACTION: prefer 'git push --force-with-lease' (refuses to clobber unseen upstream commits), which is allowed."
       echo "BYPASS: EOS_BYPASS_FORCEPUSH=1 (or EOS_BYPASS_GIT=1) — only with the owner's explicit go-ahead."
       exit 1
       ;;
     G2)
-      bypass_active EOS_BYPASS_DRAFTPR && exit 0
+      bypass_command_request EOS_BYPASS_DRAFTPR "$CMD" && exit 0
       echo "ERROR_FOR_AGENT: git-policy.md <pull_requests> — PRs must be opened ready-for-review, not as drafts. CodeRabbit and other auto-reviewers skip draft PRs."
       echo "ACTION: run 'gh pr create' without --draft (and without -d). If CI must gate review, use a 'wip' label instead."
       echo "BYPASS: EOS_BYPASS_DRAFTPR=1 (or EOS_BYPASS_GIT=1)."
       exit 1
       ;;
     G3)
-      bypass_active EOS_BYPASS_MAINPUSH && exit 0
+      bypass_git_ref_request EOS_BYPASS_MAINPUSH "$CMD" && exit 0
       echo "ERROR_FOR_AGENT: git-policy.md <safety> — direct push to main/master is blocked."
       echo "ACTION: push a feature branch and open a PR; merge only after CI, review, and explicit user approval."
       echo "BYPASS: EOS_BYPASS_MAINPUSH=1 (or EOS_BYPASS_GIT=1) — only for emergency owner-approved repairs."
       exit 1
       ;;
     G4)
-      bypass_active EOS_BYPASS_CONTENTS_API && exit 0
+      bypass_command_request EOS_BYPASS_CONTENTS_API "$CMD" && exit 0
       echo "ERROR_FOR_AGENT: git-policy.md <safety> — GitHub Contents API write to the default branch is blocked."
       echo "ACTION: include -f branch=<feature-branch> or use normal branch/PR workflow."
       echo "BYPASS: EOS_BYPASS_CONTENTS_API=1 (or EOS_BYPASS_GIT=1) — only with explicit owner approval."

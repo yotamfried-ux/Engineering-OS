@@ -165,20 +165,330 @@ raise SystemExit(1)
 PY
 }
 
-# bypass_active <ENV_VAR_NAME> — exit 0 if that env var is set to a truthy value.
-# Side effect: logs to evidence ledger + stderr when bypass is active (audit trail).
-bypass_active() {
-  local name="${1:-}"
-  [ -z "$name" ] && return 1
-  local val="${!name:-}"
-  case "$val" in
-    1|true|TRUE|yes|YES)
-      evidence_record "bypass_used" "$name=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)"
-      printf '⚠️  BYPASS ACTIVE: %s — enforcement disabled. If unintended, unset the variable.\n' "$name" >&2
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
+# eos_truthy <value> — canonical boolean normalization used by bypass request handling.
+# This helper is intentionally defined before any master-request rejection code.
+eos_truthy() {
+  case "${1:-}" in
+    1|true|TRUE|yes|YES) return 0 ;;
+    *) return 1 ;;
   esac
+}
+
+# Pinned bypass trust-boundary paths. These are derived from this library's own
+# location and are never selected through ordinary environment variables.
+_eos_bypass_enforcement_root() {
+  local lib_dir
+  lib_dir="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)" || return 1
+  printf '%s\n' "$(dirname -- "$lib_dir")"
+}
+_eos_bypass_policy_path() { printf '%s/bypass-policy.tsv\n' "$(_eos_bypass_enforcement_root)"; }
+_eos_bypass_control_path() { printf '%s/bypass-control-plane.json\n' "$(_eos_bypass_enforcement_root)"; }
+_eos_bypass_validator_path() { printf '%s/validate-bypass-approval.py\n' "$(_eos_bypass_enforcement_root)"; }
+
+# bypass_sha256_text <text> — canonical lowercase SHA-256 for explicit context.
+bypass_sha256_text() {
+  command -v python3 >/dev/null 2>&1 || return 1
+  printf '%s' "${1:-}" | python3 -c 'import hashlib,sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'
+}
+
+# bypass_current_repository — print owner/name from the origin remote.
+bypass_current_repository() {
+  local url
+  command -v git >/dev/null 2>&1 || return 1
+  url="$(git remote get-url origin 2>/dev/null)" || return 1
+  python3 - "$url" <<'PY_REPO'
+import re, sys
+value = sys.argv[1].strip()
+patterns = (
+    r"^(?:https?://|ssh://git@)github\.com[/:]([^/]+/[^/]+?)(?:\.git)?$",
+    r"^git@github\.com:([^/]+/[^/]+?)(?:\.git)?$",
+)
+for pattern in patterns:
+    match = re.match(pattern, value)
+    if match:
+        print(match.group(1))
+        raise SystemExit(0)
+raise SystemExit(1)
+PY_REPO
+}
+
+# bypass_target_commit — bind requests to the exact checked-out commit.
+bypass_target_commit() {
+  command -v git >/dev/null 2>&1 || return 1
+  git rev-parse --verify HEAD 2>/dev/null
+}
+
+# bypass_staged_tree_fingerprint — stable digest of the staged tree identity.
+bypass_staged_tree_fingerprint() {
+  local tree
+  command -v git >/dev/null 2>&1 || return 1
+  tree="$(git write-tree 2>/dev/null)" || return 1
+  bypass_sha256_text "staged-tree:${tree}"
+}
+
+# bypass_repository_tree_fingerprint — stable digest of the working repository tree.
+bypass_repository_tree_fingerprint() {
+  local tree
+  command -v git >/dev/null 2>&1 || return 1
+  tree="$(git rev-parse 'HEAD^{tree}' 2>/dev/null)" || return 1
+  bypass_sha256_text "repository-tree:${tree}"
+}
+
+_bypass_reject() {
+  local name="${1:-unknown}" reason="${2:-denied}"
+  evidence_record "bypass_rejected" "${name}:${reason}" >/dev/null 2>&1 || true
+  printf 'BYPASS DENIED: %s — %s\n' "$name" "$reason" >&2
+  return 1
+}
+
+_bypass_forbidden_path_override_present() {
+  local name
+  for name in \
+    EOS_BYPASS_VALIDATOR_PATH EOS_BYPASS_POLICY_PATH EOS_BYPASS_CONTROL_PLANE_PATH \
+    EOS_BYPASS_PROVIDER_PATH EOS_VALIDATOR_PATH EOS_POLICY_PATH EOS_CONTROL_PLANE_PATH \
+    EOS_PROVIDER_PATH; do
+    [ -z "${!name:-}" ] || return 0
+  done
+  return 1
+}
+
+# bypass_reject_disabled_master_requests <request-name> [<request-name> ...]
+# Master bypasses are permanent deny surfaces. A truthy master request must stop
+# the caller before any action-specific authorization path can run.
+bypass_reject_disabled_master_requests() {
+  local name request_value
+  declare -f eos_truthy >/dev/null 2>&1 || {
+    printf 'BYPASS DENIED: canonical truthy helper is unavailable\n' >&2
+    return 1
+  }
+  declare -f _bypass_reject >/dev/null 2>&1 || {
+    printf 'BYPASS DENIED: canonical rejection helper is unavailable\n' >&2
+    return 1
+  }
+  for name in "$@"; do
+    [ -n "$name" ] || continue
+    request_value="${!name:-}"
+    if eos_truthy "$request_value"; then
+      _bypass_reject "$name" "master bypass authorization is disabled"
+      return 1
+    fi
+  done
+  return 0
+}
+
+_bypass_policy_fields() {
+  local name="${1:-}" policy_path
+  policy_path="$(_eos_bypass_policy_path)" || return 1
+  [ -r "$policy_path" ] || return 1
+  awk -F '\t' -v request="$name" '
+    NR>1 && $1==request {print $2 "\t" $3 "\t" $4 "\t" $5 "\t" $6 "\t" $8; found=1; exit}
+    END {if(!found) exit 1}
+  ' "$policy_path"
+}
+
+# bypass_request_authorized <request-name> <target> <fingerprint>
+# Derives policy-owned gate/action/surface plus repository and exact HEAD locally.
+# Approval references do not use the EOS_BYPASS_* prefix: those names are request
+# surfaces only. EOS_APPROVAL_COMMENT_ID is a provider object reference.
+bypass_request_authorized() {
+  local name="${1:-}" target="${2:-}" fingerprint="${3:-}"
+  local fields gate action surface target_type fingerprint_contract classification
+  local repository target_commit approval_ref
+  [ -n "$name" ] || return 1
+  eos_truthy "${!name:-}" || return 1
+  fields="$(_bypass_policy_fields "$name")" \
+    || { _bypass_reject "$name" "request is absent from canonical policy"; return 1; }
+  IFS=$'\t' read -r gate action surface target_type fingerprint_contract classification <<<"$fields"
+  [ "$classification" = "action-specific" ] \
+    || { _bypass_reject "$name" "master or invalid bypass surface cannot authorize"; return 1; }
+  approval_ref="${EOS_APPROVAL_COMMENT_ID:-}"
+  case "$approval_ref" in *[!0-9]*|'') _bypass_reject "$name" "missing or invalid approval comment reference"; return 1 ;; esac
+  repository="$(bypass_current_repository)" \
+    || { _bypass_reject "$name" "repository identity is unavailable"; return 1; }
+  target_commit="$(bypass_target_commit)" \
+    || { _bypass_reject "$name" "target commit is unavailable"; return 1; }
+  bypass_active "$name" "$gate" "$action" "$surface" "$repository" \
+    "$target" "$fingerprint" "$target_commit" "$approval_ref"
+}
+
+_bypass_staged_tree_identity() {
+  command -v git >/dev/null 2>&1 || return 1
+  git write-tree 2>/dev/null
+}
+
+bypass_staged_tree_request() {
+  local name="${1:-}" tree fingerprint
+  eos_truthy "${!name:-}" || return 1
+  tree="$(_bypass_staged_tree_identity)" \
+    || { _bypass_reject "$name" "staged tree identity is unavailable"; return 1; }
+  fingerprint="$(bypass_sha256_text "staged-tree:${tree}")" \
+    || { _bypass_reject "$name" "staged tree fingerprint failed"; return 1; }
+  bypass_request_authorized "$name" "staged-tree:${tree}" "$fingerprint"
+}
+
+bypass_repository_tree_request() {
+  local name="${1:-}" tree fingerprint
+  eos_truthy "${!name:-}" || return 1
+  tree="$(git rev-parse 'HEAD^{tree}' 2>/dev/null)" \
+    || { _bypass_reject "$name" "repository tree identity is unavailable"; return 1; }
+  fingerprint="$(bypass_sha256_text "repository-tree:${tree}")" \
+    || { _bypass_reject "$name" "repository tree fingerprint failed"; return 1; }
+  bypass_request_authorized "$name" "repository-tree:${tree}" "$fingerprint"
+}
+
+bypass_command_request() {
+  local name="${1:-}" command_text="${2:-}" fingerprint
+  eos_truthy "${!name:-}" || return 1
+  [ -n "$command_text" ] || { _bypass_reject "$name" "command context is empty"; return 1; }
+  fingerprint="$(bypass_sha256_text "canonical-command:${command_text}")" \
+    || { _bypass_reject "$name" "command fingerprint failed"; return 1; }
+  bypass_request_authorized "$name" "command:${command_text}" "$fingerprint"
+}
+
+bypass_hook_input_request() {
+  local name="${1:-}" input="${2:-}" target="${3:-hook-input}" fingerprint
+  eos_truthy "${!name:-}" || return 1
+  [ -n "$input" ] || { _bypass_reject "$name" "hook input context is empty"; return 1; }
+  fingerprint="$(bypass_sha256_text "canonical-hook-input:${input}")" \
+    || { _bypass_reject "$name" "hook input fingerprint failed"; return 1; }
+  bypass_request_authorized "$name" "$target" "$fingerprint"
+}
+
+bypass_commit_message_request() {
+  local name="${1:-}" message="${2:-}" fingerprint
+  eos_truthy "${!name:-}" || return 1
+  fingerprint="$(bypass_sha256_text "commit-message:${message}")" \
+    || { _bypass_reject "$name" "commit-message fingerprint failed"; return 1; }
+  bypass_request_authorized "$name" "commit-message" "$fingerprint"
+}
+
+bypass_commit_message_staged_tree_request() {
+  local name="${1:-}" message="${2:-}" tree fingerprint
+  eos_truthy "${!name:-}" || return 1
+  tree="$(_bypass_staged_tree_identity)" \
+    || { _bypass_reject "$name" "staged tree identity is unavailable"; return 1; }
+  fingerprint="$(bypass_sha256_text "commit-message-and-staged-tree:${message}\n${tree}")" \
+    || { _bypass_reject "$name" "commit-message/staged-tree fingerprint failed"; return 1; }
+  bypass_request_authorized "$name" "commit-message-and-staged-tree:${tree}" "$fingerprint"
+}
+
+# Force/main push approvals bind the exact command, destination ref, and the live
+# remote head observed immediately before authorization. Ambiguous push syntax or
+# provider/network failure denies the request.
+bypass_git_ref_request() {
+  local name="${1:-}" command_text="${2:-}" parsed remote ref remote_head fingerprint
+  eos_truthy "${!name:-}" || return 1
+  command -v python3 >/dev/null 2>&1 || { _bypass_reject "$name" "python3 is unavailable"; return 1; }
+  parsed="$(printf '%s' "$command_text" | python3 -c '''
+import shlex,sys,subprocess
+try: toks=shlex.split(sys.stdin.read())
+except Exception: raise SystemExit(1)
+try: i=toks.index("git")
+except ValueError: raise SystemExit(1)
+if i+1>=len(toks) or toks[i+1] != "push": raise SystemExit(1)
+args=toks[i+2:]
+value_opts={"--repo","--receive-pack","--exec"}
+position=[]; skip=False
+for tok in args:
+    if skip: skip=False; continue
+    if tok in value_opts: skip=True; continue
+    if tok.startswith("-"): continue
+    position.append(tok)
+remote=position[0] if position else "origin"
+refspec=position[1] if len(position)>1 else ""
+if len(position)>2: raise SystemExit(1)
+if not refspec:
+    refspec=subprocess.check_output(["git","symbolic-ref","--quiet","--short","HEAD"],text=True).strip()
+refspec=refspec.lstrip("+")
+dst=refspec.rsplit(":",1)[-1]
+if dst in {"HEAD",""}: raise SystemExit(1)
+if not dst.startswith("refs/"): dst="refs/heads/"+dst
+print(remote+"\t"+dst)
+''' 2>/dev/null)" \
+    || { _bypass_reject "$name" "git push destination is ambiguous"; return 1; }
+  IFS=$'\t' read -r remote ref <<<"$parsed"
+  remote_head="$(timeout 10s git ls-remote "$remote" "$ref" 2>/dev/null | awk 'NR==1 {print $1}')" \
+    || { _bypass_reject "$name" "live remote head lookup failed"; return 1; }
+  [ -n "$remote_head" ] || remote_head="absent"
+  fingerprint="$(bypass_sha256_text "command-ref-and-remote-head:${command_text}\n${remote}\n${ref}\n${remote_head}")" \
+    || { _bypass_reject "$name" "git-ref fingerprint failed"; return 1; }
+  bypass_request_authorized "$name" "git-ref:${remote}:${ref}:${remote_head}" "$fingerprint"
+}
+
+# bypass_active <request-name> <gate> <action> <surface> <repository>
+#               <target> <fingerprint> <target-commit> <approval-comment-id>
+#
+# A truthy EOS_BYPASS_* value is a request only. Authorization is returned only
+# after the pinned validator verifies a live-qualified provider contract and one
+# durable claim/marker pair. The local ledger is audit-only.
+bypass_active() {
+  local name="${1:-}" gate="${2:-}" action="${3:-}" surface="${4:-}"
+  local repository="${5:-}" target="${6:-}" fingerprint="${7:-}"
+  local target_commit="${8:-}" approval_ref="${9:-}"
+  local request_value policy_path control_path validator_path classification
+  local output err_file authorized
+
+  [ -n "$name" ] || return 1
+  request_value="${!name:-}"
+  eos_truthy "$request_value" || return 1
+
+  # Reject incomplete legacy call sites rather than silently treating the env as auth.
+  if [ "$#" -ne 9 ] || [ -z "$gate" ] || [ -z "$action" ] || [ -z "$surface" ] \
+    || [ -z "$repository" ] || [ -z "$target" ] || [ -z "$fingerprint" ] \
+    || [ -z "$target_commit" ] || [ -z "$approval_ref" ]; then
+    _bypass_reject "$name" "incomplete canonical bypass context"
+    return 1
+  fi
+  case "$approval_ref" in *[!0-9]*|'') _bypass_reject "$name" "invalid approval comment reference"; return 1 ;; esac
+  case "$fingerprint" in [0-9a-f][0-9a-f]*) [ "${#fingerprint}" -eq 64 ] || { _bypass_reject "$name" "invalid target fingerprint"; return 1; } ;; *) _bypass_reject "$name" "invalid target fingerprint"; return 1 ;; esac
+  case "$target_commit" in [0-9a-f][0-9a-f]*) [ "${#target_commit}" -eq 40 ] || { _bypass_reject "$name" "invalid target commit"; return 1; } ;; *) _bypass_reject "$name" "invalid target commit"; return 1 ;; esac
+
+  if _bypass_forbidden_path_override_present; then
+    _bypass_reject "$name" "validator/policy/control-plane path overrides are forbidden"
+    return 1
+  fi
+
+  policy_path="$(_eos_bypass_policy_path)" || { _bypass_reject "$name" "canonical helper path resolution failed"; return 1; }
+  control_path="$(_eos_bypass_control_path)" || { _bypass_reject "$name" "canonical helper path resolution failed"; return 1; }
+  validator_path="$(_eos_bypass_validator_path)" || { _bypass_reject "$name" "canonical helper path resolution failed"; return 1; }
+  [ -r "$policy_path" ] || { _bypass_reject "$name" "canonical bypass policy is missing"; return 1; }
+  [ -r "$control_path" ] || { _bypass_reject "$name" "canonical control-plane configuration is missing"; return 1; }
+  [ -r "$validator_path" ] || { _bypass_reject "$name" "canonical validator is missing"; return 1; }
+  command -v python3 >/dev/null 2>&1 || { _bypass_reject "$name" "python3 is unavailable"; return 1; }
+
+  classification="$(awk -F '\t' -v request="$name" 'NR>1 && $1==request {print $8; found=1} END {if(!found) exit 1}' "$policy_path" 2>/dev/null)" \
+    || { _bypass_reject "$name" "request is absent from canonical policy"; return 1; }
+  if [ "$classification" = "master-disabled" ]; then
+    _bypass_reject "$name" "master bypass authorization is disabled"
+    return 1
+  fi
+  [ "$classification" = "action-specific" ] || { _bypass_reject "$name" "invalid policy classification"; return 1; }
+
+  err_file="$(mktemp "${TMPDIR:-/tmp}/eos-bypass.XXXXXX")" \
+    || { _bypass_reject "$name" "cannot allocate validator error channel"; return 1; }
+  if ! output="$(python3 "$validator_path" \
+      --stage consumed \
+      --bypass "$name" \
+      --gate "$gate" \
+      --action "$action" \
+      --surface "$surface" \
+      --repository "$repository" \
+      --target "$target" \
+      --target-fingerprint "$fingerprint" \
+      --target-commit "$target_commit" \
+      --approval-comment-id "$approval_ref" 2>"$err_file")"; then
+    rm -f "$err_file"
+    _bypass_reject "$name" "provider verification failed closed"
+    return 1
+  fi
+  rm -f "$err_file"
+
+  authorized="$(printf '%s' "$output" | python3 -c 'import json,sys; value=json.load(sys.stdin); print("true" if value.get("authorized") is True else "false")' 2>/dev/null)" \
+    || { _bypass_reject "$name" "validator returned malformed JSON"; return 1; }
+  [ "$authorized" = "true" ] || { _bypass_reject "$name" "validator did not grant authorization"; return 1; }
+
+  evidence_record "bypass_authorized" "${name}:${approval_ref}:${fingerprint}:${target_commit}" \
+    || { _bypass_reject "$name" "authorization audit evidence could not be written"; return 1; }
+  printf 'BYPASS AUTHORIZED: %s — provider-verified one-shot approval %s\n' "$name" "$approval_ref" >&2
+  return 0
 }

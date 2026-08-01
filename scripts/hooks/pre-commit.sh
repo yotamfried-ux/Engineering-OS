@@ -98,8 +98,8 @@ enforcer enforce-tests.sh || [ ! -f "$EOS_HOME/scripts/enforcement/enforce-tests
 REPO_ROOT_G10="$REPO_ROOT"
 EOS_LIB_G10="$EOS_HOME/scripts/enforcement/lib/evidence.sh"
 # shellcheck source=../enforcement/lib/evidence.sh
-. "$EOS_LIB_G10" 2>/dev/null || true
-if ! bypass_active EOS_BYPASS_DOD 2>/dev/null; then
+. "$EOS_LIB_G10" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
+if ! bypass_staged_tree_request EOS_BYPASS_DOD 2>/dev/null; then
   G10_PLAN="$(ls -t "$REPO_ROOT_G10/.claude/plans/"*.md 2>/dev/null | head -1 || true)"
   G10_CODE="$(git diff --cached --name-only 2>/dev/null \
     | grep -cE '\.(ts|tsx|js|jsx|py|go|rs|sh)$' 2>/dev/null)" || G10_CODE=0
@@ -122,7 +122,7 @@ fi
 # ── G11: Verification gate ─────────────────────────────────────────────────────
 # Blocks large commits (>2 code files) when neither /superpowers-verify nor tests ran.
 # Governing policy: core/workflow.md step 6. Bypass: EOS_BYPASS_VERIFY=1.
-if ! bypass_active EOS_BYPASS_VERIFY 2>/dev/null; then
+if ! bypass_staged_tree_request EOS_BYPASS_VERIFY 2>/dev/null; then
   G11_CODE="$(git diff --cached --name-only 2>/dev/null \
     | grep -cE '\.(ts|tsx|js|jsx|py|go|rs)$' 2>/dev/null)" || G11_CODE=0
   if [ "${G11_CODE:-0}" -gt 2 ]; then

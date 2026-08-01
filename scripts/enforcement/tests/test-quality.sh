@@ -101,8 +101,8 @@ out="$(bash "$ENFORCER" 2>&1)"; code=$?
 
 echo "── bypasses ──"
 git reset -q 2>/dev/null; printf '%s\n' "debugger;" > b.js; git add b.js 2>/dev/null
-EOS_BYPASS_CLEANUP=1 bash "$ENFORCER" >/dev/null 2>&1; expect "EOS_BYPASS_CLEANUP skips gate" 0 $?
-EOS_BYPASS_QUALITY=1 bash "$ENFORCER" >/dev/null 2>&1; expect "EOS_BYPASS_QUALITY (master) skips gate" 0 $?
+EOS_BYPASS_CLEANUP=1 bash "$ENFORCER" >/dev/null 2>&1; expect "EOS_BYPASS_CLEANUP env-only request does not skip gate" 1 $?
+EOS_BYPASS_QUALITY=1 bash "$ENFORCER" >/dev/null 2>&1; expect "EOS_BYPASS_QUALITY master request is denied" 2 $?
 
 echo "── only added lines count ──"
 git reset -q 2>/dev/null

@@ -15,12 +15,11 @@ set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
 log() { printf 'INFO_FOR_AGENT: enforce-bash-entry: %s\n' "$*" >&2; }
 
-bypass_active EOS_BYPASS_ENTRY && { log "bypassed via EOS_BYPASS_ENTRY"; exit 0; }
-bypass_active EOS_BYPASS_WORKFLOW && { log "bypassed via EOS_BYPASS_WORKFLOW"; exit 0; }
+bypass_reject_disabled_master_requests EOS_BYPASS_WORKFLOW || exit 2
 
 INPUT="$(cat 2>/dev/null || true)"
 CMD="$(printf '%s' "$INPUT" | python3 -c '
@@ -32,6 +31,7 @@ try:
 except Exception:
     print("")
 ' 2>/dev/null || true)"
+bypass_command_request EOS_BYPASS_ENTRY "$CMD" && { log "bypassed via provider-verified EOS_BYPASS_ENTRY"; exit 0; }
 
 [ -z "$CMD" ] && { log "no bash command found in hook payload; allowing"; exit 0; }
 

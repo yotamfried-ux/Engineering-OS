@@ -1,0 +1,92 @@
+name: bypass-consumer-reusable
+
+on:
+  workflow_call:
+    inputs:
+      protected_repository:
+        required: true
+        type: string
+      bypass:
+        required: true
+        type: string
+      gate:
+        required: true
+        type: string
+      action:
+        required: true
+        type: string
+      surface:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
+      target_fingerprint:
+        required: true
+        type: string
+      target_commit:
+        required: true
+        type: string
+      approval_comment_id:
+        required: true
+        type: number
+    secrets:
+      protected_repository_read_token:
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  consume:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: bypass-consumer-${{ inputs.approval_comment_id }}-${{ inputs.target_fingerprint }}
+      cancel-in-progress: false
+    steps:
+      - name: Enforce trusted first-attempt context
+        env:
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          test "$RUN_ATTEMPT" = "1"
+          test "$EVENT_NAME" = "workflow_dispatch"
+          test "$HEAD_REF" = "refs/heads/$DEFAULT_BRANCH"
+
+      - name: Checkout exact trusted consumer head
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Create provider-verified claim
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN_READ_ONLY: ${{ secrets.protected_repository_read_token }}
+        run: |
+          set -euo pipefail
+          python3 scripts/enforcement/consume-bypass-approval.py \
+            --repository '${{ inputs.protected_repository }}' \
+            --bypass '${{ inputs.bypass }}' \
+            --gate '${{ inputs.gate }}' \
+            --action '${{ inputs.action }}' \
+            --surface '${{ inputs.surface }}' \
+            --target '${{ inputs.target }}' \
+            --target-fingerprint '${{ inputs.target_fingerprint }}' \
+            --target-commit '${{ inputs.target_commit }}' \
+            --approval-comment-id '${{ inputs.approval_comment_id }}' \
+            --consumer-default-branch-sha '${{ github.sha }}' \
+            --run-id '${{ github.run_id }}' \
+            --run-attempt '${{ github.run_attempt }}' \
+            --actor '${{ github.actor }}' \
+            --triggering-actor '${{ github.triggering_actor }}' \
+            --event '${{ github.event_name }}'

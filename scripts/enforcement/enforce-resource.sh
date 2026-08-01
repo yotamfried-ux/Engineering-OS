@@ -20,15 +20,9 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
-if ! declare -f bypass_active >/dev/null 2>&1; then
-  bypass_active() {
-    local name="${1:-}"; [ -z "$name" ] && return 1
-    case "${!name:-}" in 1|true|TRUE|yes|YES) return 0 ;; *) return 1 ;; esac
-  }
-fi
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
-bypass_active EOS_BYPASS_RESOURCE && exit 0
+bypass_reject_disabled_master_requests EOS_BYPASS_RESOURCE || exit 2
 
 # Narrow model-ID pattern: hyphenated, lowercase tier + a digit. Matches
 # claude-opus-4-8 / claude-sonnet-4-6 / claude-haiku-4-5-20251001 / claude-fable-5,
@@ -40,7 +34,7 @@ do_precommit() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
   local root; root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
   [ -f "$root/.claudeignore" ] && exit 0
-  bypass_active EOS_BYPASS_CLAUDEIGNORE && exit 0
+  bypass_repository_tree_request EOS_BYPASS_CLAUDEIGNORE && exit 0
   echo "❌ COMMIT BLOCKED — resource-management.md <claudeignore>: this project has no .claudeignore."
   echo "   Every project must define what Claude does not read (node_modules, .env, lock files, build outputs...)."
   echo "   Create .claudeignore at the repo root (baseline: Engineering OS /.claudeignore), then commit."
@@ -55,7 +49,7 @@ do_commit_msg() {
     exit 0
   fi
   grep -qiE "$MODEL_ID_RE" "$msg_file" || exit 0
-  bypass_active EOS_BYPASS_MODELID && exit 0
+  bypass_commit_message_request EOS_BYPASS_MODELID "$(cat -- "$msg_file" 2>/dev/null || true)" && exit 0
   echo "❌ COMMIT BLOCKED — resource-management.md <model-selection>: commit message contains a model identifier."
   echo "   Never put model IDs (claude-<tier>-N) in commit messages, PR bodies, or code comments."
   echo "   Offending line(s):"

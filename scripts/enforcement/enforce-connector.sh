@@ -19,15 +19,9 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
-if ! declare -f bypass_active >/dev/null 2>&1; then
-  bypass_active() {
-    local name="${1:-}"; [ -z "$name" ] && return 1
-    case "${!name:-}" in 1|true|TRUE|yes|YES) return 0 ;; *) return 1 ;; esac
-  }
-fi
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
-bypass_active EOS_BYPASS_CONNECTOR && exit 0
+bypass_reject_disabled_master_requests EOS_BYPASS_CONNECTOR || exit 2
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 
 staged="$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)"
@@ -38,7 +32,7 @@ env_hits="$(printf '%s\n' "$staged" \
   | grep -E '(^|/)\.env($|\.)' \
   | grep -vE '\.env\.(example|sample|template|dist)$' || true)"
 if [ -n "$env_hits" ]; then
-  if ! bypass_active EOS_BYPASS_ENVFILE; then
+  if ! bypass_staged_tree_request EOS_BYPASS_ENVFILE; then
     echo "❌ COMMIT BLOCKED — connector-policy.md <environment>: a .env file is staged. Secrets must never enter git."
     echo "  Staged:"; printf '%s\n' "$env_hits" | sed 's/^/    /'
     echo "  Add it to .gitignore and run 'git rm --cached <file>'. Commit only .env.example (names + dummy values)."
@@ -62,7 +56,7 @@ if [ -n "$added" ]; then
     -e '-----BEGIN [A-Z ]*PRIVATE KEY-----|(AKIA|ASIA)[0-9A-Z]{16}|(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{40,}' \
     || true)"
   if [ -n "$secret_hits" ]; then
-    if ! bypass_active EOS_BYPASS_SECRETS; then
+    if ! bypass_staged_tree_request EOS_BYPASS_SECRETS; then
       echo "❌ COMMIT BLOCKED — connector-policy.md <environment>: a hardcoded secret appears in the staged diff."
       echo "  Matches (PEM key / AWS / GitHub / Slack / OpenAI token):"
       printf '%s\n' "$secret_hits" | sed 's/^/    /'

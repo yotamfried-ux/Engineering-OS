@@ -107,18 +107,18 @@ expect "missing ## ראיה blocked"          1 "$(stage_run lessons-learned/bug
 expect "missing Prevented counter blocked" 1 "$(stage_run lessons-learned/bugs/x.md "$LESSON_NO_PREVENTED")"
 expect "README.md skipped"                0 "$(stage_run lessons-learned/bugs/README.md '# index')"
 expect "_TEMPLATE.md skipped"             0 "$(stage_run lessons-learned/bugs/_TEMPLATE.md '# tpl')"
-expect "EOS_BYPASS_LESSON skips L1"       0 "$(EOS_BYPASS_LESSON=1 stage_run lessons-learned/bugs/x.md "$LESSON_NO_EVIDENCE")"
+expect "EOS_BYPASS_LESSON env-only request does not skip L1" 1 "$(EOS_BYPASS_LESSON=1 stage_run lessons-learned/bugs/x.md "$LESSON_NO_EVIDENCE")"
 
 echo "── L2: failed-solutions schema ──"
 expect "conformant failed-solution allowed" 0 "$(stage_run failed-solutions/x.md "$FAILSOL_OK")"
 expect "missing 'מה לבדוק במקום' blocked"   1 "$(stage_run failed-solutions/x.md "$FAILSOL_NO_ALT")"
-expect "EOS_BYPASS_FAILSOL skips L2"        0 "$(EOS_BYPASS_FAILSOL=1 stage_run failed-solutions/x.md "$FAILSOL_NO_ALT")"
+expect "EOS_BYPASS_FAILSOL env-only request does not skip L2" 1 "$(EOS_BYPASS_FAILSOL=1 stage_run failed-solutions/x.md "$FAILSOL_NO_ALT")"
 
 echo "── excluded paths & general ──"
 expect "prevention-strategies/ skipped"   0 "$(stage_run lessons-learned/prevention-strategies/p.md '# strat')"
 expect "postmortems/ skipped"             0 "$(stage_run lessons-learned/postmortems/p.md '# pm')"
 expect "file outside lesson dirs skipped" 0 "$(stage_run src/x.md '# code doc')"
-expect "EOS_BYPASS_LEARNING (master)"     0 "$(EOS_BYPASS_LEARNING=1 stage_run lessons-learned/bugs/x.md "$LESSON_NO_EVIDENCE")"
+expect "EOS_BYPASS_LEARNING master request is denied" 2 "$(EOS_BYPASS_LEARNING=1 stage_run lessons-learned/bugs/x.md "$LESSON_NO_EVIDENCE")"
 expect "_-prefixed non-template still enforced" 1 "$(stage_run lessons-learned/bugs/_draft.md "$LESSON_NO_EVIDENCE")"
 
 # index-vs-working-tree: stage valid content, then corrupt the working tree without

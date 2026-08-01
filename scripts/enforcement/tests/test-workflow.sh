@@ -60,7 +60,7 @@ run_enforcer Write "src/app.ts"; expect "code write blocked when plan missing Do
 
 run_enforcer Write "notes.md"; expect "non-critical .md write allowed" 0 $?
 
-EOS_BYPASS_WORKFLOW=1 run_enforcer Write "src/app.ts"; expect "EOS_BYPASS_WORKFLOW skips write gate" 0 $?
+EOS_BYPASS_WORKFLOW=1 run_enforcer Write "src/app.ts"; expect "EOS_BYPASS_WORKFLOW master request is denied" 2 $?
 
 echo "── workflow enforcer: Context7-before-install gate ──"
 rm -rf .claude/.evidence
@@ -70,7 +70,7 @@ mkdir -p .claude/.evidence
 printf '%s\tcontext7\t\n' "$(date +%s)" > .claude/.evidence/ledger
 run_enforcer Bash "npm install react"; expect "install allowed after Context7 evidence" 0 $?
 rm -rf .claude/.evidence
-EOS_BYPASS_CONTEXT7=1 run_enforcer Bash "npm install react"; expect "EOS_BYPASS_CONTEXT7 skips install gate" 0 $?
+EOS_BYPASS_CONTEXT7=1 run_enforcer Bash "npm install react"; expect "EOS_BYPASS_CONTEXT7 env-only request does not skip install gate" 1 $?
 
 echo "── workflow enforcer: Agent/tasks.json gate ──"
 rm -f .claude/tasks.json
@@ -106,7 +106,7 @@ run_enforcer Agent ""; expect "agent allowed with multiple valid tasks" 0 $?
 
 EOS_BYPASS_TASKSJSON=1 rm -f .claude/tasks.json 2>/dev/null; true
 printf '{"tool_name":"Agent","tool_input":{}}' | EOS_BYPASS_TASKSJSON=1 bash "$ENFORCER" >/dev/null 2>&1
-expect "EOS_BYPASS_TASKSJSON skips schema gate" 0 $?
+expect "EOS_BYPASS_TASKSJSON env-only request does not skip schema gate" 1 $?
 
 echo "── workflow enforcer: G1 — .github/ critical path ──"
 rm -rf .claude/plans
@@ -176,11 +176,13 @@ done
 ## חלופות
 alts
 EOF
-EOS_BYPASS_WORKFLOW=1 run_enforcer Write ".github/workflows/ci.yml"
-if grep -q "bypass_used.*EOS_BYPASS_WORKFLOW" .claude/.evidence/ledger 2>/dev/null; then
-  ok "G4: bypass activation recorded to evidence ledger"
+EOS_BYPASS_WORKFLOW=1 run_enforcer Write ".github/workflows/ci.yml"; expect "G4: master env request is denied" 2 $?
+if grep -q $'\tbypass_authorized\t' .claude/.evidence/ledger 2>/dev/null; then
+  bad "G4: rejected master request recorded authorization success"
+elif grep -q $'\tbypass_rejected\tEOS_BYPASS_WORKFLOW:' .claude/.evidence/ledger 2>/dev/null; then
+  ok "G4: rejected master request recorded rejection only"
 else
-  bad "G4: bypass activation NOT recorded in ledger"
+  bad "G4: rejected master request missing rejection evidence"
 fi
 rm -rf .claude/.evidence .claude/plans
 
@@ -208,7 +210,7 @@ git add core/made-up.md 2>/dev/null
 bash "$SYNC" >/dev/null 2>&1; expect "md not in MANIFEST blocked" 1 $?
 git reset -q 2>/dev/null
 echo "w2" > core/made-up.md; git add core/made-up.md 2>/dev/null
-EOS_BYPASS_MDSYNC=1 bash "$SYNC" >/dev/null 2>&1; expect "EOS_BYPASS_MDSYNC skips sync gate" 0 $?
+EOS_BYPASS_MDSYNC=1 bash "$SYNC" >/dev/null 2>&1; expect "EOS_BYPASS_MDSYNC env-only request does not skip sync gate" 1 $?
 
 echo "── workflow enforcer: G7 — graphify gate ──"
 cd "$WORK" || exit 1
@@ -235,7 +237,7 @@ printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
 run_enforcer Write "src/app.ts"; expect "G7: code write allowed after graphify_used evidence" 0 $?
 rm -rf .claude/.evidence graphify-out
 mkdir -p graphify-out && echo '{}' > graphify-out/graph.json
-EOS_BYPASS_GRAPHIFY=1 run_enforcer Write "src/app.ts"; expect "G7: EOS_BYPASS_GRAPHIFY skips gate" 0 $?
+EOS_BYPASS_GRAPHIFY=1 run_enforcer Write "src/app.ts"; expect "G7: EOS_BYPASS_GRAPHIFY env-only request does not skip gate" 1 $?
 rm -f graphify-out/graph.json .claude/plans/g7.md
 
 echo "── workflow enforcer: G8 — domain patterns gate ──"
@@ -272,7 +274,7 @@ mkdir -p patterns/auth
 rm -rf .claude/.evidence
 mkdir -p .claude/.evidence
 printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
-EOS_BYPASS_PATTERNS=1 run_enforcer Write "src/auth/service.ts"; expect "G8: EOS_BYPASS_PATTERNS skips gate" 0 $?
+EOS_BYPASS_PATTERNS=1 run_enforcer Write "src/auth/service.ts"; expect "G8: EOS_BYPASS_PATTERNS env-only request does not skip gate" 1 $?
 rm -rf .claude/.evidence patterns graphify-out .claude/plans/g8.md
 
 echo "── workflow enforcer: G9a — DoD integrity gate ──"
@@ -313,7 +315,7 @@ python3 -c "
 import json, sys
 print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/plans/task.md','new_string':sys.argv[1]}}))
 " "$NEW_CONTENT_BAD" | EOS_BYPASS_DOD=1 bash "$ENFORCER" >/dev/null 2>&1
-expect "G9a: EOS_BYPASS_DOD skips integrity gate" 0 $?
+expect "G9a: EOS_BYPASS_DOD env-only request does not skip integrity gate" 1 $?
 rm -rf .claude/.evidence .claude/plans/task.md
 
 echo "── workflow enforcer: G9b — DoD completion gate ──"
@@ -374,7 +376,7 @@ python3 -c "
 import json, sys
 print(json.dumps({'tool_name':'Write','tool_input':{'file_path':'.claude/tasks.json','new_string':sys.argv[1]}}))
 " "$TASKS_COMPLETE" | EOS_BYPASS_DOD=1 bash "$ENFORCER" >/dev/null 2>&1
-expect "G9b: EOS_BYPASS_DOD skips completion gate" 0 $?
+expect "G9b: EOS_BYPASS_DOD env-only request does not skip completion gate" 1 $?
 rm -rf .claude/.evidence .claude/plans
 
 echo "── workflow enforcer: G12 — generic file patterns advisory ──"
@@ -418,12 +420,12 @@ OUT4=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/auth/login.ts
   | bash "$ENFORCER" 2>&1)
 printf '%s' "$OUT4" | grep -q "WARNING_FOR_AGENT.*G12" && bad "G12: should not warn for domain-matched file" \
   || ok "G12: domain files handled by G8, not G12"
-# EOS_BYPASS_PATTERNS suppresses warning
+# EOS_BYPASS_PATTERNS is request-only; env alone must not suppress warning
 printf '%s\tgraphify_used\t\n' "$(date +%s)" > .claude/.evidence/ledger
 OUT5=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/helpers.ts"}}' \
   | EOS_BYPASS_PATTERNS=1 bash "$ENFORCER" 2>&1)
-printf '%s' "$OUT5" | grep -q "WARNING_FOR_AGENT" && bad "G12: EOS_BYPASS_PATTERNS should suppress warning" \
-  || ok "G12: EOS_BYPASS_PATTERNS suppresses advisory"
+printf '%s' "$OUT5" | grep -q "WARNING_FOR_AGENT" && ok "G12: env-only EOS_BYPASS_PATTERNS does not suppress advisory" \
+  || bad "G12: env-only EOS_BYPASS_PATTERNS unexpectedly suppressed advisory"
 rm -rf .claude/.evidence .claude/plans patterns src
 
 echo "── workflow enforcer: planning contract (Plan Scope) ──"

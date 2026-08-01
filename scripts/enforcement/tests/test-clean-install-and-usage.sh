@@ -300,6 +300,8 @@ tests: manually verified.
 EOF
 expect_fail "installed commit-msg hook blocks a fix commit with no regression test" \
   bash -c "cd '$TARGET' && '$TARGET/.git/hooks/commit-msg' '$FIX_MSG_NO_TEST'"
+expect_fail "installed commit-msg hook rejects env-only EOS_BYPASS_FIXTEST request" \
+  env EOS_BYPASS_FIXTEST=1 bash -c "cd '$TARGET' && '$TARGET/.git/hooks/commit-msg' '$FIX_MSG_NO_TEST'"
 git -C "$TARGET" reset -q fix.py
 rm -f "$TARGET/fix.py"
 

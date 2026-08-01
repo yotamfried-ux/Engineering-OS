@@ -1,0 +1,57 @@
+{
+  "consumer": {
+    "reusable_workflow_path": ".github/workflows/bypass-consumer-reusable.yml",
+    "workflow_id": 0,
+    "workflow_path": ".github/workflows/consume-bypass.yml",
+    "writer_login": "github-actions[bot]"
+  },
+  "contracts": {
+    "approval_schema": "eos-bypass-approval/v1",
+    "claim_schema": "eos-bypass-consumption/v1",
+    "claim_uniqueness": "exactly-one",
+    "digest": "sha256-canonical-json",
+    "marker_schema": "eos-bypass-marker/v1",
+    "marker_uniqueness": "exactly-one",
+    "run_attempt": 1
+  },
+  "control_repository": {
+    "default_branch": "main",
+    "full_name": "",
+    "id": 0,
+    "private_required": true
+  },
+  "finalizer": {
+    "reusable_workflow_path": ".github/workflows/bypass-finalizer-reusable.yml",
+    "workflow_id": 0,
+    "workflow_path": ".github/workflows/finalize-bypass.yml",
+    "writer_login": "github-actions[bot]"
+  },
+  "forbidden": {
+    "environment_path_overrides": true,
+    "git_tag_consumption": true,
+    "master_authorization": true,
+    "runtime_marker_write": true
+  },
+  "issues": {
+    "approval": 0,
+    "consumption": 0
+  },
+  "protected_repository": {
+    "full_name": "yotamfried-ux/Engineering-OS",
+    "id": 1268851602
+  },
+  "provider": {
+    "accepted_issuer_roles": [
+      "maintain",
+      "admin"
+    ],
+    "api_base": "https://api.github.com",
+    "canonical_time_field": "created_at",
+    "fail_closed": true
+  },
+  "qualification": {
+    "live_control_repository_qualification": false,
+    "status": "unqualified"
+  },
+  "schema": "eos-bypass-control-plane/v1"
+}

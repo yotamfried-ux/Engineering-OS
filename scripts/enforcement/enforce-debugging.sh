@@ -23,18 +23,11 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
-# Fallback if the lib failed to source — keep the enforcer self-contained.
-if ! declare -f bypass_active >/dev/null 2>&1; then
-  bypass_active() {
-    local name="${1:-}"; [ -z "$name" ] && return 1
-    case "${!name:-}" in 1|true|TRUE|yes|YES) return 0 ;; *) return 1 ;; esac
-  }
-fi
 
 # Master bypass — disables the whole debugging enforcer.
-bypass_active EOS_BYPASS_DEBUG && exit 0
+bypass_reject_disabled_master_requests EOS_BYPASS_DEBUG || exit 2
 
 # ─────────────────────────────────────────────────────────────────────────────
 # D1 + D3 — PreToolUse (Bash): inspect the command about to run.
@@ -82,7 +75,7 @@ print("\n".join(out))
   if printf '%s' "$CMD" | grep -qE '\bgit[[:space:]]+commit\b'; then
     if printf '%s\n' "$flag_toks" | grep -qE '^--no-verify$' \
        || printf '%s\n' "$flag_toks" | grep -qE '^-[A-Za-z]*n[A-Za-z]*$'; then
-      bypass_active EOS_BYPASS_NOVERIFY && exit 0
+      bypass_command_request EOS_BYPASS_NOVERIFY "$CMD" && exit 0
       echo "ERROR_FOR_AGENT: debugging-policy.md — '--no-verify'/'-n' bypasses the commit hooks (lint/tests/format). This is forbidden as a debugging shortcut."
       echo "ACTION: fix the underlying failure the hook reports; do not skip verification. See core/debugging-policy.md <debug_loop> (lines 82-84)."
       echo "BYPASS: EOS_BYPASS_NOVERIFY=1 (or EOS_BYPASS_DEBUG=1) — only for a genuinely justified case."
@@ -92,7 +85,7 @@ print("\n".join(out))
   # git push: only --no-verify skips hooks (-n here means --dry-run; allowed).
   if printf '%s' "$CMD" | grep -qE '\bgit[[:space:]]+push\b'; then
     if printf '%s\n' "$flag_toks" | grep -qE '^--no-verify$'; then
-      bypass_active EOS_BYPASS_NOVERIFY && exit 0
+      bypass_command_request EOS_BYPASS_NOVERIFY "$CMD" && exit 0
       echo "ERROR_FOR_AGENT: debugging-policy.md — 'git push --no-verify' bypasses pre-push verification. Forbidden as a shortcut."
       echo "ACTION: resolve the failing check instead of skipping it. See core/debugging-policy.md <debug_loop>."
       echo "BYPASS: EOS_BYPASS_NOVERIFY=1 (or EOS_BYPASS_DEBUG=1)."
@@ -119,7 +112,7 @@ do_commit_msg() {
   # Only conventional-commit fix subjects (fix:, fix(scope):, fix!:).
   printf '%s' "$subject" | grep -qE '^fix(\([^)]*\))?!?:' || exit 0
 
-  bypass_active EOS_BYPASS_FIXTEST && exit 0
+  bypass_commit_message_staged_tree_request EOS_BYPASS_FIXTEST "$(cat -- "$msg_file" 2>/dev/null || true)" && exit 0
 
   # Outside a git repo there is nothing to check (commit-msg always runs inside one).
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0

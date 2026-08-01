@@ -64,8 +64,10 @@ fi
 # quality-gates.md — block a large code commit when the project has ZERO test files.
 # Lives here (not pre-commit) so the commit TYPE from the message drives exemptions;
 # pre-commit doesn't have the commit message yet, so it read the PREVIOUS commit's type.
-# Bypass: EOS_BYPASS_TESTFILES=1.
-case "${EOS_BYPASS_TESTFILES:-}" in 1|true|TRUE|yes|YES) exit 0 ;; esac
+# Bypass: EOS_BYPASS_TESTFILES=1 is request-only and needs provider approval.
+EOS_ENFORCEMENT_LIB="$EOS_HOME/scripts/enforcement/lib/evidence.sh"
+. "$EOS_ENFORCEMENT_LIB" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
+bypass_commit_message_staged_tree_request EOS_BYPASS_TESTFILES "$MSG" && exit 0
 TESTFILE_TYPE=$(printf '%s' "$MSG" | head -1 | grep -oE '^[a-z]+' || true)
 case "$TESTFILE_TYPE" in chore|docs|style|ci|build) exit 0 ;; esac
 
