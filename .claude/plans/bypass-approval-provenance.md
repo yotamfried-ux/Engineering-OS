@@ -100,6 +100,7 @@ Runtime may read metadata/dispatch only; consumer `GITHUB_TOKEN` is `contents: r
 ## Progress Lifecycle Evidence
 
 - start: this clean-history Route Plan is the first PR commit above canonical `main` `6a589971c59561b88cb4abaa0752235b9bb4d5df` and precedes every implementation replay commit owned by this rebuilt history.
+- mid: remote foundation `d45a8bbf56702f00cea091bf38814b2bdb44b66a` replayed 51 verified paths; bypass contract is 42/42 (11 master-disabled, 31 action-specific), fail-closed/provider/approval tests pass, hard-hook is 15/15, hook classification 10/10, and clean installed-target passes including env-only `EOS_BYPASS_FIXTEST` denial.
 
 ## Claude Run Trace
 
