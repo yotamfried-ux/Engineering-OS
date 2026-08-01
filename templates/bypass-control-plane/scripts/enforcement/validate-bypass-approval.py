@@ -73,6 +73,11 @@ def iter_schema_comments(comments: list[Any], schema: str, label: str):
         yield parse_json_comment(body, schema, label), comment
 
 
+def require_test_overrides(args: argparse.Namespace) -> None:
+    if (getattr(args, "provider_fixture", None) or getattr(args, "now", None)) and os.environ.get("ENGINEERING_OS_BYPASS_TEST_MODE") != "1":
+        raise ContractError("test-only provider/time overrides are disabled outside explicit test mode")
+
+
 def make_provider(args: argparse.Namespace, config: Mapping[str, Any]):
     if args.provider_fixture:
         return FixtureProvider.from_path(args.provider_fixture)
@@ -382,6 +387,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def load_runtime(args: argparse.Namespace):
+    require_test_overrides(args)
     config = load_json(BASE / "bypass-control-plane.json")
     validate_control_config(config)
     policy = load_policy(BASE / "bypass-policy.tsv")

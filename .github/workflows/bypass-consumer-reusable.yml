@@ -72,21 +72,36 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_TOKEN_READ_ONLY: ${{ secrets.protected_repository_read_token }}
+          PROTECTED_REPOSITORY: ${{ inputs.protected_repository }}
+          BYPASS: ${{ inputs.bypass }}
+          GATE: ${{ inputs.gate }}
+          ACTION: ${{ inputs.action }}
+          SURFACE: ${{ inputs.surface }}
+          TARGET: ${{ inputs.target }}
+          TARGET_FINGERPRINT: ${{ inputs.target_fingerprint }}
+          TARGET_COMMIT: ${{ inputs.target_commit }}
+          APPROVAL_COMMENT_ID: ${{ inputs.approval_comment_id }}
+          CONSUMER_DEFAULT_BRANCH_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           python3 scripts/enforcement/consume-bypass-approval.py \
-            --repository '${{ inputs.protected_repository }}' \
-            --bypass '${{ inputs.bypass }}' \
-            --gate '${{ inputs.gate }}' \
-            --action '${{ inputs.action }}' \
-            --surface '${{ inputs.surface }}' \
-            --target '${{ inputs.target }}' \
-            --target-fingerprint '${{ inputs.target_fingerprint }}' \
-            --target-commit '${{ inputs.target_commit }}' \
-            --approval-comment-id '${{ inputs.approval_comment_id }}' \
-            --consumer-default-branch-sha '${{ github.sha }}' \
-            --run-id '${{ github.run_id }}' \
-            --run-attempt '${{ github.run_attempt }}' \
-            --actor '${{ github.actor }}' \
-            --triggering-actor '${{ github.triggering_actor }}' \
-            --event '${{ github.event_name }}'
+            --repository "$PROTECTED_REPOSITORY" \
+            --bypass "$BYPASS" \
+            --gate "$GATE" \
+            --action "$ACTION" \
+            --surface "$SURFACE" \
+            --target "$TARGET" \
+            --target-fingerprint "$TARGET_FINGERPRINT" \
+            --target-commit "$TARGET_COMMIT" \
+            --approval-comment-id "$APPROVAL_COMMENT_ID" \
+            --consumer-default-branch-sha "$CONSUMER_DEFAULT_BRANCH_SHA" \
+            --run-id "$RUN_ID" \
+            --run-attempt "$RUN_ATTEMPT" \
+            --actor "$ACTOR" \
+            --triggering-actor "$TRIGGERING_ACTOR" \
+            --event "$EVENT_NAME"

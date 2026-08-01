@@ -22,11 +22,16 @@ def canonical_digest(value: dict) -> str:
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
-def command(repo: Path, script: str, fixture: dict, extra: list[str], *, expect: int = 0):
+def command(repo: Path, script: str, fixture: dict, extra: list[str], *, expect: int = 0, test_mode: bool = True):
     fixture_path = repo / "fixture.json"
     fixture_path.write_text(json.dumps(fixture), encoding="utf-8")
     cmd = ["python3", str(repo / "scripts/enforcement" / script), *extra, "--provider-fixture", str(fixture_path), "--now", "2026-07-26T20:30:00Z"]
-    completed = subprocess.run(cmd, cwd=repo, text=True, capture_output=True, timeout=30)
+    env = os.environ.copy()
+    if test_mode:
+        env["ENGINEERING_OS_BYPASS_TEST_MODE"] = "1"
+    else:
+        env.pop("ENGINEERING_OS_BYPASS_TEST_MODE", None)
+    completed = subprocess.run(cmd, cwd=repo, text=True, capture_output=True, timeout=30, env=env)
     if completed.returncode != expect:
         raise AssertionError(f"{script} expected {expect}, got {completed.returncode}\nstdout={completed.stdout}\nstderr={completed.stderr}")
     return completed
@@ -215,6 +220,10 @@ def main():
         repo = Path(td) / "repo"
         shutil.copytree(ROOT, repo, ignore=shutil.ignore_patterns(".git", "__pycache__", ".claude/.evidence"))
         fixture = build(repo)
+
+        blocked = command(repo, "validate-bypass-approval.py", fixture, common_args("approval"), expect=1, test_mode=False)
+        if "test-only provider/time overrides are disabled" not in blocked.stderr:
+            raise AssertionError(f"production fixture/time override did not fail for the intended reason: {blocked.stderr}")
 
         command(repo, "validate-bypass-approval.py", fixture, common_args("approval"))
         command(repo, "validate-bypass-approval.py", fixture, common_args("claimed"))

@@ -40,6 +40,15 @@ for path in paths:
         raise SystemExit(f'{path}: permissions {permissions!r} != {expected!r}')
     if 'write-all' in path.read_text():
         raise SystemExit(f'{path}: write-all is forbidden')
+    if path in paths[:2]:
+        jobs = parsed.get('jobs', {})
+        if not isinstance(jobs, dict):
+            raise SystemExit(f'{path}: jobs must be a mapping')
+        for job in jobs.values():
+            for step in job.get('steps', []) if isinstance(job, dict) else []:
+                run = step.get('run') if isinstance(step, dict) else None
+                if isinstance(run, str) and re.search(r'\$\{\{\s*(?:inputs|github)\.', run):
+                    raise SystemExit(f'{path}: run block directly interpolates GitHub context/input')
 
 consume = (paths[2]).read_text()
 finalize = (paths[3]).read_text()

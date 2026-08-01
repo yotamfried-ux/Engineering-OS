@@ -50,6 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     try:
+        validator.require_test_overrides(args)
         config = load_json(BASE / "bypass-control-plane.json")
         validate_control_config(config)
         policy = load_policy(BASE / "bypass-policy.tsv")

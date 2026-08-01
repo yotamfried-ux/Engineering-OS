@@ -48,13 +48,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_TOKEN_READ_ONLY: ${{ secrets.protected_repository_read_token }}
+          CONSUMER_RUN_ID: ${{ inputs.consumer_run_id }}
+          FINALIZER_DEFAULT_BRANCH_SHA: ${{ github.sha }}
+          FINALIZER_RUN_ID: ${{ github.run_id }}
+          FINALIZER_RUN_ATTEMPT: ${{ github.run_attempt }}
+          FINALIZER_ACTOR: ${{ github.actor }}
+          FINALIZER_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          FINALIZER_EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
           python3 scripts/enforcement/finalize-bypass-consumption.py \
-            --consumer-run-id '${{ inputs.consumer_run_id }}' \
-            --finalizer-default-branch-sha '${{ github.sha }}' \
-            --finalizer-run-id '${{ github.run_id }}' \
-            --finalizer-run-attempt '${{ github.run_attempt }}' \
-            --finalizer-actor '${{ github.actor }}' \
-            --finalizer-triggering-actor '${{ github.triggering_actor }}' \
-            --finalizer-event '${{ github.event_name }}'
+            --consumer-run-id "$CONSUMER_RUN_ID" \
+            --finalizer-default-branch-sha "$FINALIZER_DEFAULT_BRANCH_SHA" \
+            --finalizer-run-id "$FINALIZER_RUN_ID" \
+            --finalizer-run-attempt "$FINALIZER_RUN_ATTEMPT" \
+            --finalizer-actor "$FINALIZER_ACTOR" \
+            --finalizer-triggering-actor "$FINALIZER_TRIGGERING_ACTOR" \
+            --finalizer-event "$FINALIZER_EVENT"

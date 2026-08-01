@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 import socket
 import urllib.error
 import urllib.parse
@@ -170,6 +171,8 @@ class FixtureProvider:
 
     @classmethod
     def from_path(cls, path: str) -> "FixtureProvider":
+        if os.environ.get("ENGINEERING_OS_BYPASS_TEST_MODE") != "1":
+            raise ProviderError("fixture provider is disabled outside explicit test mode")
         try:
             with open(path, encoding="utf-8") as handle:
                 value = json.load(handle)
