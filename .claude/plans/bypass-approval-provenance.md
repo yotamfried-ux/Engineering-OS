@@ -93,7 +93,7 @@ Runtime may read metadata/dispatch only; consumer `GITHUB_TOKEN` is `contents: r
 
 - Plan-first ordering: verified; the rebuilt Route Plan is the first PR commit above canonical `main`.
 - Implementation replay: verified against the prior candidate, with deliberate immutable-pin updates and no transfer/export artifacts in the candidate tree.
-- Local validation on the last code tree: verified — 110/110 `test-*.sh` passed, 0 failed, 0 timed out, summed/wall duration 890s; provider suite passed in 22s; clean installed-target passed in 23s; strict contract, shell/Python/YAML, hard-hook and hook-classification checks passed.
+- Local validation: the earlier 110/110 final run on `e8abb45f29b00d096318efe2cb8900dd038f571f` is superseded by a subsequent security correction and is retained only as prior evidence. On the exact content now published through `923bda7b5723f141580af4711b7d6a382f8f01d3`, focused hardening, strict 42/42 contract, approval/fail-closed tests, provider validation (20s), clean installed-target validation (22s), and workflow 65/65 passed. A fresh all-`test-*.sh` final rerun is required after this plan-only checkpoint.
 - Exact-head CI/review: external gate; must be green/reconciled before owner approval.
 - Live control-plane qualification: external gate; must be proven before owner approval.
 - Merge/post-merge/closure: prohibited until explicit owner approval and subsequent durable evidence.
@@ -102,7 +102,9 @@ Runtime may read metadata/dispatch only; consumer `GITHUB_TOKEN` is `contents: r
 
 - start: this clean-history Route Plan is the first PR commit above canonical `main` `6a589971c59561b88cb4abaa0752235b9bb4d5df` and precedes every implementation replay commit owned by this rebuilt history.
 - mid: remote foundation `d45a8bbf56702f00cea091bf38814b2bdb44b66a` replayed 51 verified paths; bypass contract is 42/42 (11 master-disabled, 31 action-specific), fail-closed/provider/approval tests pass, hard-hook is 15/15, hook classification 10/10, and clean installed-target passes including env-only `EOS_BYPASS_FIXTEST` denial.
-- pre-merge: remote last-code commit `3a52f79bba82b8e0c8d340acaf7da13aedf3e86c` has exact tree `52a15765dba3a053b6a1c2e55b024ea02e7bbf66`; fresh validation on that exact tree completed 110/110 `test-*.sh` PASS, 0 FAIL, 0 TIMEOUT in 890s, provider validation PASS in 22s, clean installed-target PASS in 23s, and no transfer/export artifact is present in the candidate tree.
+- superseded pre-merge: `e8abb45f29b00d096318efe2cb8900dd038f571f` reached green exact-head CI and 110/110 local tests, but a subsequent security review found direct `${{ inputs.* }}` / `${{ github.* }}` interpolation inside reusable-workflow shell and ungated hidden fixture/time overrides. That evidence is not final.
+- review correction: remote security commit `9bc3ce72c7f6f15018e4fc8bce19266de9df582b` / tree `1dc2d93f8c5de1e806693e5a74c152babf0f66f0` moves GitHub expressions into step environment values consumed as quoted shell variables, rejects direct GitHub-context interpolation in reusable-workflow `run:` blocks, and gates fixture/time overrides behind explicit `ENGINEERING_OS_BYPASS_TEST_MODE=1`. Focused strict, approval, fail-closed, hard-hook, classification, provider, and clean installed-target checks passed before publication.
+- pre-merge: remote last code/config commit `923bda7b5723f141580af4711b7d6a382f8f01d3` / tree `e5aa9a4d23a6f7dd7b9a368a69927d3f8290f886` repins the control-plane template to the hardened reusable-workflow commit. On byte-identical local content, control-plane hardening, strict 42/42 contract, provider validation (20s), clean installed-target validation (22s), and workflow 65/65 passed. No implementation/config change follows this checkpoint; a fresh full final suite must run after this plan-only evidence commit.
 
 ## Claude Run Trace
 
