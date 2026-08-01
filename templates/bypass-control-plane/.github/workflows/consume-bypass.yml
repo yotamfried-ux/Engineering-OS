@@ -38,7 +38,7 @@ permissions:
 
 jobs:
   consume:
-    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-consumer-reusable.yml@d45a8bbf56702f00cea091bf38814b2bdb44b66a
+    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-consumer-reusable.yml@9bc3ce72c7f6f15018e4fc8bce19266de9df582b
     with:
       protected_repository: ${{ inputs.protected_repository }}
       bypass: ${{ inputs.bypass }}

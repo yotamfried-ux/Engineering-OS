@@ -10,7 +10,7 @@ Three credentials have separate jobs and must not be interchangeable:
 2. **Consumer `GITHUB_TOKEN`** — is scoped in the trusted control repository to exactly `contents: read`, `actions: read`, and `issues: write`. It creates claim/marker evidence; it is not a protected-repository administration credential.
 3. **Protected-repository verifier credential** — is supplied as `PROTECTED_REPOSITORY_READ_TOKEN` and is used only to verify protected-repository identity and collaborator permission. Runtime/control credentials are never reused as its fallback.
 
-The control workflows run only from the trusted default branch and call the Engineering OS reusable workflows at the immutable commit `d45a8bbf56702f00cea091bf38814b2bdb44b66a`. Approval and consumption records use separate pinned issues. Provider `created_at` is canonical, edited approvals/claims/markers are rejected, duplicate or conflicting evidence fails closed, and a consumed approval cannot be replayed. Git tags are not approval or consumption records. Master bypass variables are permanently disabled authorization requests.
+The control workflows run only from the trusted default branch and call the Engineering OS reusable workflows at the immutable commit `9bc3ce72c7f6f15018e4fc8bce19266de9df582b`. Approval and consumption records use separate pinned issues. Provider `created_at` is canonical, edited approvals/claims/markers are rejected, duplicate or conflicting evidence fails closed, and a consumed approval cannot be replayed. Git tags are not approval or consumption records. Master bypass variables are permanently disabled authorization requests.
 
 ## Qualification
 

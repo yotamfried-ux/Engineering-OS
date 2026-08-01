@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-PIN="d45a8bbf56702f00cea091bf38814b2bdb44b66a"
+PIN="9bc3ce72c7f6f15018e4fc8bce19266de9df582b"
 TEMPLATE="$ROOT/templates/bypass-control-plane"
 
 for rel in \
