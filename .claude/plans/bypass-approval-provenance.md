@@ -13,6 +13,7 @@
 | Task-router evidence | `core/task-router.md` routes enforcement/governance changes through the governance workflow and security review. |
 | Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/quality-gates.md`, `core/hooks-policy.md` require plan-first work, ordered evidence, exact-head CI/review, explicit owner approval and protected merge. |
 | Templates | not required as input; existing enforcement conventions are reused and the bypass-control-plane template is an output |
+| Architecture guides | `core/hooks-policy.md`; `core/git-policy.md`; `docs/operations/merge-readiness-checklist.md`; `docs/operations/bypass-control-plane-runbook.md` |
 | Patterns | shared enforcement library, canonical registry, fail-closed provider adapter, reusable workflow |
 | External systems/connectors | GitHub |
 | Skills | `writing-plans`; `verification-before-completion`; `security-review` |
@@ -90,17 +91,18 @@ Runtime may read metadata/dispatch only; consumer `GITHUB_TOKEN` is `contents: r
 
 ## Definition of Done
 
-- [ ] Plan commit precedes every rebuilt implementation code/config/test commit.
-- [ ] Replay matches the verified candidate except deliberate immutable-pin updates and has no transfer/export artifacts.
-- [ ] Static/provider/installed gates and every current `test-*.sh` pass with timeout/duration accounting.
-- [ ] Final exact head has green CI, accurate PR body, zero unresolved threads and fresh review.
-- [ ] Private control repository proves credential denial and one-shot live consumption before owner approval.
-- [ ] Merge/post-merge/closure occur only after explicit owner approval and durable evidence.
+- Plan-first ordering: verified; the rebuilt Route Plan is the first PR commit above canonical `main`.
+- Implementation replay: verified against the prior candidate, with deliberate immutable-pin updates and no transfer/export artifacts in the candidate tree.
+- Local validation on the last code tree: verified — 110/110 `test-*.sh` passed, 0 failed, 0 timed out, summed/wall duration 890s; provider suite passed in 22s; clean installed-target passed in 23s; strict contract, shell/Python/YAML, hard-hook and hook-classification checks passed.
+- Exact-head CI/review: external gate; must be green/reconciled before owner approval.
+- Live control-plane qualification: external gate; must be proven before owner approval.
+- Merge/post-merge/closure: prohibited until explicit owner approval and subsequent durable evidence.
 
 ## Progress Lifecycle Evidence
 
 - start: this clean-history Route Plan is the first PR commit above canonical `main` `6a589971c59561b88cb4abaa0752235b9bb4d5df` and precedes every implementation replay commit owned by this rebuilt history.
 - mid: remote foundation `d45a8bbf56702f00cea091bf38814b2bdb44b66a` replayed 51 verified paths; bypass contract is 42/42 (11 master-disabled, 31 action-specific), fail-closed/provider/approval tests pass, hard-hook is 15/15, hook classification 10/10, and clean installed-target passes including env-only `EOS_BYPASS_FIXTEST` denial.
+- pre-merge: remote last-code commit `3a52f79bba82b8e0c8d340acaf7da13aedf3e86c` has exact tree `52a15765dba3a053b6a1c2e55b024ea02e7bbf66`; fresh validation on that exact tree completed 110/110 `test-*.sh` PASS, 0 FAIL, 0 TIMEOUT in 890s, provider validation PASS in 22s, clean installed-target PASS in 23s, and no transfer/export artifact is present in the candidate tree.
 
 ## Claude Run Trace
 
