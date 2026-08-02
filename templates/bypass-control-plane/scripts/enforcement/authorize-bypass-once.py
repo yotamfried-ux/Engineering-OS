@@ -172,10 +172,11 @@ def _trusted_terminal_status(
     return candidates[0]
 
 
-def _verify_successful_consumer_run(
+def _consumer_run_state(
     provider: Any, *, config: Mapping[str, Any], approval: Mapping[str, Any],
     deployment: Mapping[str, Any], run_id: int, run_attempt: int,
-) -> None:
+) -> str:
+    """Return pending/success; every terminal non-success or binding mismatch denies."""
     if run_attempt != 1:
         raise ContractError("authorization consumer run must be first attempt")
     run = provider.workflow_run(config["control_repository"]["full_name"], run_id)
@@ -187,8 +188,6 @@ def _verify_successful_consumer_run(
         "head_sha": approval["control_default_branch_sha"],
         "head_branch": config["control_repository"]["default_branch"],
         "event": "deployment",
-        "status": "completed",
-        "conclusion": "success",
         "workflow_id": config["consumer"]["workflow_id"],
         "path": config["consumer"]["workflow_path"],
         "repository.id": config["control_repository"]["id"],
@@ -198,6 +197,15 @@ def _verify_successful_consumer_run(
             raise ContractError(f"authorization consumer run binding mismatch for {key}")
     if creator_login and validator._nested(run, "actor.login") != creator_login:
         raise ContractError("authorization consumer run actor does not match deployment creator")
+    status = run.get("status")
+    conclusion = run.get("conclusion")
+    if status != "completed":
+        if conclusion not in (None, ""):
+            raise ContractError("non-terminal authorization consumer run exposed a conclusion")
+        return "pending"
+    if conclusion != "success":
+        raise ContractError("authorization consumer run did not complete successfully")
+    return "success"
 
 
 def authorize_once(
@@ -250,7 +258,7 @@ def authorize_once(
             result, run_id, run_attempt, status_id = status
             if result != "success":
                 raise ContractError("trusted consumer denied the one-shot authorization attempt")
-            _verify_successful_consumer_run(
+            run_state = _consumer_run_state(
                 provider,
                 config=config,
                 approval=approval,
@@ -258,24 +266,25 @@ def authorize_once(
                 run_id=run_id,
                 run_attempt=run_attempt,
             )
-            claims = validator.matching_claims(provider, config, policy, approval)
-            if len(claims) != 1:
-                raise ContractError(f"expected exactly one durable claim, found {len(claims)}")
-            claim, claim_comment = claims[0]
-            if claim["run_id"] != run_id or claim["run_attempt"] != run_attempt:
-                raise ContractError("durable claim is not bound to this fresh authorization attempt")
-            return {
-                "authorized": True,
-                "approval_comment_id": approval["approval_comment_id"],
-                "approval_digest": digest_json(dict(approval)),
-                "deployment_id": deployment_id,
-                "authorization_status_id": status_id,
-                "consumer_run_id": run_id,
-                "claim_comment_id": claim_comment.get("id"),
-                "claim_digest": digest_json(claim),
-            }
+            if run_state == "success":
+                claims = validator.matching_claims(provider, config, policy, approval)
+                if len(claims) != 1:
+                    raise ContractError(f"expected exactly one durable claim, found {len(claims)}")
+                claim, claim_comment = claims[0]
+                if claim["run_id"] != run_id or claim["run_attempt"] != run_attempt:
+                    raise ContractError("durable claim is not bound to this fresh authorization attempt")
+                return {
+                    "authorized": True,
+                    "approval_comment_id": approval["approval_comment_id"],
+                    "approval_digest": digest_json(dict(approval)),
+                    "deployment_id": deployment_id,
+                    "authorization_status_id": status_id,
+                    "consumer_run_id": run_id,
+                    "claim_comment_id": claim_comment.get("id"),
+                    "claim_digest": digest_json(claim),
+                }
         if time.monotonic() >= deadline:
-            raise ContractError("authorization attempt timed out without one trusted terminal status")
+            raise ContractError("authorization attempt timed out before trusted consumer terminal success")
         time.sleep(poll_interval)
 
 
