@@ -1,0 +1,34 @@
+name: workspace-export
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.event.pull_request.number == 264
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact verification target
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: 7795c967c1be5ecadd7e31c68da3159067316368
+          persist-credentials: false
+
+      - name: Verify and archive exact target
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "7795c967c1be5ecadd7e31c68da3159067316368"
+          tar --exclude=.git --exclude=eos-workspace.tar.gz -czf eos-workspace.tar.gz .
+
+      - name: Upload exact workspace
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: eos-workspace-7795c967c1be5ecadd7e31c68da3159067316368
+          path: eos-workspace.tar.gz
+          if-no-files-found: error
+          retention-days: 1
