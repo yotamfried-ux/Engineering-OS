@@ -11,21 +11,66 @@ This runbook qualifies the provider-backed bypass trust boundary. Template insta
 - Record the control repository name and immutable repository ID, issue numbers, consumer/finalizer workflow IDs and paths, and the exact trusted default-branch SHA.
 - Configure `scripts/enforcement/bypass-control-plane.json` with those exact provider identities before changing `qualification.status`.
 
+## One-shot authorization model
+
+An `EOS_BYPASS_*` environment value is a request only. `validate-bypass-approval.py --stage consumed` never grants authorization by re-reading an old claim or marker. Every invocation delegates to `authorize-bypass-once.py`, which must create a **fresh GitHub deployment object** in the private control repository.
+
+The deployment is an attempt identity, not consumption state. It is bound to the exact approval digest, protected repository, bypass, gate, action, surface, target, target fingerprint, target commit, policy SHA, and trusted control-repository default-branch SHA.
+
+The deployment triggers the trusted `consume-bypass` workflow. That workflow serializes the same approval comment plus target fingerprint, validates the human approval again against provider state, and creates the authoritative durable **claim** before it publishes a trusted deployment status for that fresh attempt. A second consumer invocation for the same approval is denied if the durable claim already exists. The finalizer creates the durable marker only after the trusted consumer run succeeds.
+
+The runtime may authorize only when all of these are true for its **own fresh deployment ID**:
+
+1. the deployment resolved to the configured trusted default-branch SHA;
+2. exactly one canonical authorization status exists for that deployment;
+3. the status was written by the pinned `github-actions[bot]` immutable user ID;
+4. the referenced consumer run is the configured workflow/path/repository, `event=deployment`, `run_attempt=1`, and the exact trusted SHA;
+5. that exact run reaches terminal `success` within the bounded poll timeout;
+6. exactly one durable claim exists and is bound to that same run.
+
+A status that becomes visible before the run is terminal is not authorization; the authorizer polls the exact bound run until terminal success or timeout. Provider timeout, ambiguous status, cancellation, terminal non-success, wrong identity, or wrong binding fails closed.
+
+### Consumption point
+
+A successful durable claim reserves the approval permanently for one authorization attempt. This is intentionally security-biased: if the protected operation fails **after** authorization was issued, the approval is still consumed and cannot be retried. A new human approval is required. Local process/session restart does not reset provider state.
+
+The marker is durable post-consumer evidence. It is not the replay lock; the claim is. Therefore deleting or recreating a deployment/status cannot make an already-claimed approval usable again.
+
 ## Credential contract
 
 ### Runtime credential
 
-Allowed capabilities are limited to the metadata reads needed by the validator and Actions workflow dispatch. Prove that the credential cannot write issues, create/edit/delete marker comments, write repository contents, mutate workflows, or change repository settings.
+The runtime credential is a GitHub App installation token scoped to the dedicated control repository with only the provider capabilities needed by the request path:
+
+- repository metadata read;
+- Issues read for approval/ledger evidence;
+- Actions read for exact workflow/run verification;
+- Deployments write so it can create a fresh authorization-attempt deployment and read its statuses.
+
+It does **not** receive Actions write. Therefore it cannot dispatch/enable/disable workflows through the Actions API. It must also be denied Issues write, Contents write, Administration write, and every repository-settings mutation permission.
+
+`Deployments: write` can mutate deployment objects/statuses. That does not grant authorization because runtime-authored statuses have the GitHub App identity rather than the pinned Actions-bot identity, and deployment objects/statuses are not authoritative consumption state. Qualification must also prove that deleting a runtime-created deployment cannot erase the durable claim/marker ledger.
 
 ### Consumer `GITHUB_TOKEN`
 
-The trusted consumer/finalizer workflows declare only:
+The trusted consumer declares only:
+
+- `contents: read`
+- `actions: read`
+- `deployments: write`
+- `issues: write`
+
+`deployments: write` is used only to attest the fresh deployment attempt after the claim is created. Do not use `write-all`.
+
+### Finalizer `GITHUB_TOKEN`
+
+The trusted finalizer declares only:
 
 - `contents: read`
 - `actions: read`
 - `issues: write`
 
-Do not use `write-all`. This token is the claim/marker writer in the control repository.
+It does not need deployment write. It writes the durable marker after the successful first-attempt consumer run.
 
 ### Protected-repository verifier credential
 
@@ -35,37 +80,43 @@ Do not print credential values during qualification.
 
 ## Approval payload
 
-An approval must be created by an eligible human `User`; the runtime requesting authorization must not create its own approval. The approval body uses the canonical schema and binds repository ID/name, gate, bypass, action, surface, target, target fingerprint, target commit, policy SHA, expiry, and a concrete reason.
+An approval must be created by an eligible human `User`; the runtime requesting authorization must not create its own approval. The approval body uses the canonical schema and binds repository ID/name, gate, bypass, action, surface, target, target fingerprint, target commit, policy SHA, expiry, consumer/finalizer identities, and the trusted control-repository default-branch SHA.
 
-The authored body must **not** contain `approval_comment_id` or `approval_created_at`. GitHub assigns both only when the comment is published, and edited approvals are rejected, so a body restating them could never be produced by a human. The validator binds them from the provider envelope, which keeps provider `created_at` the authoritative issuance time. `expires_at` is written as an absolute time and is checked against provider `created_at`, so the approval must be published within its own validity window and may not exceed four hours.
+The authored body must **not** contain `approval_comment_id` or `approval_created_at`. GitHub assigns both only when the comment is published, and edited approvals are rejected. The validator binds them from the provider envelope, which keeps provider `created_at` authoritative. `expires_at` is an absolute time checked against provider `created_at` and may not exceed four hours.
 
-Before the live approval step, construct the exact payload from the pending request and have the repository owner publish it manually in the Approval Registry. Record the provider comment ID and provider `created_at` for the request that consumes it. Edited approval comments are invalid.
+Before the live approval step, construct the exact payload from the pending request and have the repository owner publish it manually in the Approval Registry. Record the provider comment ID and provider `created_at`. Edited approval comments are invalid.
 
-Approvals are the only content of the Approval Registry. Claims and markers are consumption evidence and are written to the Consumption Ledger; a claim found outside the Consumption Ledger is not durable consumption evidence.
+Approvals are the only canonical approval objects in the Approval Registry. Claims and markers are consumption evidence and are written to the Consumption Ledger; a claim found outside the Consumption Ledger is not durable consumption evidence.
 
-## Residual limits
+## One-shot invariants
 
-These are properties of using a GitHub issue as the durable ledger. They are recorded here rather than hidden behind the validator.
-
-- **Authorization is bounded, not execution-consuming.** The runtime credential is denied issue writes (`forbidden.runtime_marker_write`), so it structurally cannot mark consumption at execution time. Authorization is instead bound to one exact `(target, target_fingerprint, target_commit)` tuple with a bounded expiry: re-validation inside that window re-authorizes the identical operation against the identical protected head, and nothing else. Master-classified requests can never authorize, and for commit-producing gates the protected head moves once the operation lands, which invalidates the approval.
-- **One-shot is enforced by uniqueness, not by compare-and-set.** GitHub offers no conditional comment creation. Concurrency is serialized by the consumer workflow's `concurrency` group and duplicates then fail closed: two claims or two markers make validation deny both rather than select one.
-- **Ledger deletion requires control-repository write.** Deleting a claim alone does not re-enable replay, because a matching marker also denies a second consumption. Erasing both requires `issues: write` on the private control repository, which only the pinned Actions identity holds. Restricting control-repository collaborators is therefore part of the trust boundary, not an implementation detail.
+- **Fresh attempt required.** Every runtime authorization call creates a new provider deployment ID. Old marker/status evidence cannot be read again to authorize.
+- **One durable reservation.** The first successful consumer creates one claim. Any later same-approval consumer sees the claim and denies before creating another usable authorization status.
+- **Concurrency is defense-in-depth, not the replay state.** GitHub Actions concurrency serializes same approval/fingerprint consumers. The durable claim remains the authoritative one-shot state across process restarts and future sessions.
+- **Runtime cannot reset consumption.** The runtime has no Issues write permission. Deleting or modifying deployment objects/statuses cannot remove the claim/marker ledger.
+- **Ambiguity burns safe.** If a claim may have been created but the status/API response is ambiguous, the caller receives DENY. The approval may be unusable afterward; this is preferred to a second authorization.
+- **Master bypasses remain disabled.** Master-classified environment variables can never become authorization surfaces.
 
 ## Live qualification matrix
 
 Run the matrix only against the exact configured provider identities and trusted default-branch SHA.
 
-1. **Bounded success** — one exact request consumes one valid approval and produces one verified claim followed by one verified marker after the consumer run succeeds.
-2. **Replay denial** — the same request and approval cannot authorize a second time.
-3. **Concurrent same-digest requests** — launch concurrent requests with the same approval/fingerprint; exactly one may create the usable consumption chain.
-4. **Malformed request/evidence** — malformed approval, claim, or marker bodies fail closed.
-5. **Duplicate/conflicting evidence** — duplicate or conflicting claims/markers fail closed rather than selecting one.
-6. **Wrong binding** — wrong workflow, workflow ID/path, default-branch SHA, actor, repository, target commit, target fingerprint, or policy SHA fails closed.
-7. **Rerun denial** — `run_attempt != 1` fails closed for consumer and finalizer evidence.
-8. **Issuer/role denial** — Bot issuers, non-`User` issuers, and users below the configured maintain/admin threshold fail closed.
-9. **Edited evidence denial** — edited approval, claim, or marker comments fail closed.
-10. **Provider ambiguity/failure** — missing provider objects, ambiguous values, pagination ambiguity, timeout, cancellation, or failed runs fail closed.
-11. **Marker mutation denial** — prove with the runtime credential that marker creation/edit/delete operations are denied. Separately prove the protected-repository verifier cannot mutate the protected repository.
+1. **Bounded one-shot success** — one exact request creates a fresh deployment, one verified claim, a successful exact consumer run, and then the finalizer marker; the runtime receives one authorization success only.
+2. **Immediate replay denial** — invoke the exact same approval/request again before expiry; the fresh second attempt must deny.
+3. **Restart replay denial** — repeat from a new process/session; the provider claim still denies.
+4. **Different invocation replay denial** — same approval and exact request from another runtime invocation must deny.
+5. **Post-expiry replay denial** — the consumed approval remains unusable after expiry.
+6. **Concurrent same-request attempts** — launch at least two identical requests concurrently; exactly one may authorize and every other attempt must fail closed. Verify one internally consistent durable claim/marker chain.
+7. **Malformed request/evidence denial** — malformed approval, claim, marker, attempt payload, or canonical deployment status fails closed.
+8. **Duplicate/conflicting evidence denial** — duplicate or conflicting claims/markers/statuses fail closed rather than selecting one.
+9. **Wrong binding denial** — wrong repository/name/ID, issue, workflow ID/path, trusted SHA, run ID, actor, triggering actor, action, gate, surface, target, target commit, target fingerprint, or policy SHA fails closed.
+10. **Rerun denial** — `run_attempt != 1` fails closed for consumer and finalizer evidence.
+11. **Issuer/role denial** — Bot issuers, non-`User` issuers, and users below maintain/admin fail closed.
+12. **Edited evidence denial** — edited approval, claim, marker, or trusted authorization status fails closed.
+13. **Provider failure/ambiguity denial** — missing provider objects, malformed values, pagination ambiguity, timeout, cancellation, or terminal failed runs fail closed.
+14. **Credential-substitution denial** — missing/separated verifier credentials fail closed; runtime credentials cannot substitute for the protected-repository verifier.
+15. **Runtime mutation denial** — prove the runtime cannot create/edit/delete issue comments, write contents, mutate workflows, or change repository settings. Prove runtime-authored deployment statuses cannot authorize. Prove deployment deletion does not reset a durable claim.
+16. **Trusted-SHA mismatch denial** — a deployment or workflow run not resolved to the configured trusted default-branch SHA fails closed.
 
 ## Evidence to retain
 
@@ -75,10 +126,13 @@ Retain provider-backed evidence without secrets:
 - approval and consumption issue numbers;
 - consumer/finalizer workflow IDs and paths;
 - trusted default-branch SHA;
+- runtime GitHub App identity and tested permission allow/deny matrix;
 - approval comment ID, immutable issuer ID/type/role, provider `created_at`, and edit state;
+- fresh deployment IDs and trusted status IDs;
 - claim and marker comment IDs and their verified run bindings;
-- the exact request digest, policy SHA, target commit, target fingerprint, and expiry;
+- exact consumer/finalizer run IDs and attempts;
+- exact request digest, policy SHA, target commit, target fingerprint, and expiry;
 - allow/deny result for every qualification case above;
 - exact Engineering OS implementation SHA and exact-head CI status.
 
-Only after every required case is proven may `qualification.status` become `qualified`. A local fixture, a copied template, a PR description, or chat approval is never a substitute for live provider evidence.
+Only after every required case is proven may `qualification.status` become `qualified`. A local fixture, copied template, PR description, or chat approval is never a substitute for live provider evidence.
