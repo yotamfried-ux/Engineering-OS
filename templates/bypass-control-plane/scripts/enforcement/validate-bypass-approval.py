@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate bounded, provider-backed, one-shot bypass approval provenance."""
+"""Validate bounded provider evidence; consumed authorization uses a fresh attempt."""
 from __future__ import annotations
 
 import argparse
@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 from typing import Any, Mapping
 
@@ -63,14 +64,6 @@ def parse_json_comment(body: Any, schema: str, label: str) -> dict[str, Any]:
 
 
 def iter_schema_comments(comments: list[Any], schema: str, label: str):
-    """Yield records of `schema`, deciding relevance from the parsed object.
-
-    A textual hint only decides whether a comment *intends* to be a schema
-    record, so ordinary human issue comments are skipped. The authoritative
-    `schema` key then decides which record it actually is: a value that sorts
-    before `schema` (such as an attacker-chosen `target`) can no longer
-    misattribute a record and hide a durable claim or marker.
-    """
     for comment in comments:
         if not isinstance(comment, dict):
             raise ContractError(f"ambiguous provider result in {label} comments")
@@ -80,9 +73,6 @@ def iter_schema_comments(comments: list[Any], schema: str, label: str):
         try:
             parsed = json.loads(body)
         except json.JSONDecodeError as exc:
-            # Ordinary human issue comments are not JSON and are simply chatter.
-            # A body that textually intends to be a record but will not parse is
-            # malformed evidence and fails closed.
             if SCHEMA_TEXT_HINT in body:
                 raise ContractError(f"{label} candidate contains malformed JSON") from exc
             continue
@@ -107,7 +97,7 @@ def make_provider(args: argparse.Namespace, config: Mapping[str, Any]):
     if args.provider_fixture:
         return FixtureProvider.from_path(args.provider_fixture)
     runtime_token = os.environ.get("EOS_BYPASS_PROVIDER_TOKEN", "")
-    control_token = os.environ.get("GITHUB_TOKEN", "") or runtime_token
+    control_token = runtime_token or os.environ.get("GITHUB_TOKEN", "")
     protected_token = os.environ.get("GITHUB_TOKEN_READ_ONLY", "")
     return GitHubProvider(
         control_token,
@@ -194,10 +184,6 @@ def verify_approval(
     created_at = comment.get("created_at")
     if comment.get("updated_at") != created_at:
         raise ContractError("edited approval comments are forbidden")
-    # The authored body must omit the provider-assigned comment ID and created_at:
-    # GitHub assigns both only on publication and edits are rejected, so an owner
-    # could never author a body that restated them. They are bound from the
-    # provider envelope instead, which keeps provider created_at authoritative.
     authored = parse_json_comment(comment.get("body"), APPROVAL_SCHEMA, "approval comment")
     validate_approval_shape(authored, policy, authored=True)
     approval = bind_provider_approval(authored, approval_comment_id, created_at)
@@ -212,6 +198,9 @@ def verify_approval(
         raise ContractError("approval consumer workflow binding mismatch")
     if approval["finalizer_workflow_id"] != config["finalizer"]["workflow_id"] or approval["finalizer_workflow_path"] != config["finalizer"]["workflow_path"]:
         raise ContractError("approval finalizer workflow binding mismatch")
+    trusted_sha = config["control_repository"].get("trusted_default_branch_sha")
+    if trusted_sha and approval["control_default_branch_sha"] != trusted_sha:
+        raise ContractError("approval trusted default-branch SHA binding mismatch")
     user = comment.get("user")
     if not isinstance(user, dict):
         raise ContractError("provider comment has no issuer object")
@@ -245,7 +234,7 @@ def verify_approval(
 
 def _verify_machine_comment(
     comment: Mapping[str, Any], *, config: Mapping[str, Any], issue_number: int,
-    writer_login: str, label: str,
+    writer_login: str, writer_user_id: int, label: str,
 ) -> str:
     if issue_number_from_url(comment.get("issue_url")) != issue_number:
         raise ContractError(f"{label} belongs to wrong issue")
@@ -255,7 +244,9 @@ def _verify_machine_comment(
     if not isinstance(created_at, str) or comment.get("updated_at") != created_at:
         raise ContractError(f"edited or malformed {label}")
     user = comment.get("user")
-    if not isinstance(user, dict) or user.get("login") != writer_login or user.get("type") != "Bot":
+    if not isinstance(user, dict) or (
+        user.get("login"), user.get("id"), user.get("type")
+    ) != (writer_login, writer_user_id, "Bot"):
         raise ContractError(f"{label} was not written by the pinned GitHub Actions identity")
     parse_timestamp(created_at, f"{label}.created_at")
     return created_at
@@ -291,6 +282,7 @@ def verify_claim(
         config=config,
         issue_number=config["issues"]["consumption"],
         writer_login=config["consumer"]["writer_login"],
+        writer_user_id=config["consumer"]["writer_user_id"],
         label="claim comment",
     )
     if parse_timestamp(created_at, "claim.created_at") >= parse_timestamp(approval["expires_at"], "expires_at"):
@@ -356,6 +348,7 @@ def verify_marker(
         config=config,
         issue_number=config["issues"]["consumption"],
         writer_login=config["finalizer"]["writer_login"],
+        writer_user_id=config["finalizer"]["writer_user_id"],
         label="marker comment",
     )
     if parse_timestamp(created_at, "marker.created_at") >= parse_timestamp(approval["expires_at"], "expires_at"):
@@ -431,6 +424,8 @@ def load_runtime(args: argparse.Namespace):
 
 
 def validate_from_args(args: argparse.Namespace) -> dict[str, Any]:
+    if args.stage == "consumed":
+        raise ContractError("consumed authorization requires a fresh provider attempt")
     config, policy, provider, now, expected = load_runtime(args)
     approval = verify_approval(
         provider, config, policy,
@@ -451,24 +446,54 @@ def validate_from_args(args: argparse.Namespace) -> dict[str, Any]:
         raise ContractError(f"expected exactly one durable claim, found {len(claims)}")
     claim, claim_comment = claims[0]
     result.update({"claim_digest": digest_json(claim), "claim_comment_id": claim_comment.get("id")})
-    if args.stage == "claimed":
-        return result
-    markers = matching_markers(provider, config, policy, approval, claim, claim_comment)
-    if len(markers) != 1:
-        raise ContractError(f"expected exactly one durable marker, found {len(markers)}")
-    marker, marker_comment = markers[0]
-    result.update({
-        "authorized": True,
-        "marker_digest": digest_json(marker),
-        "marker_comment_id": marker_comment.get("id"),
-        "consumer_run_id": claim["run_id"],
-        "finalizer_run_id": marker["finalizer_run_id"],
-    })
     return result
+
+
+def _delegate_consumed(args: argparse.Namespace) -> int:
+    require_test_overrides(args)
+    command = [
+        sys.executable,
+        str(BASE / "authorize-bypass-once.py"),
+        "--bypass", args.bypass,
+        "--gate", args.gate,
+        "--action", args.action,
+        "--surface", args.surface,
+        "--repository", args.repository,
+        "--target", args.target,
+        "--target-fingerprint", args.target_fingerprint,
+        "--target-commit", args.target_commit,
+        "--approval-comment-id", str(args.approval_comment_id),
+        "--timeout", str(args.timeout),
+    ]
+    if args.provider_fixture:
+        command.extend(["--provider-fixture", args.provider_fixture])
+    if args.now:
+        command.extend(["--now", args.now])
+    try:
+        completed = subprocess.run(command, text=True, capture_output=True, timeout=640)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(json.dumps({"authorized": False, "error": f"fresh authorization attempt failed closed: {exc}"}, sort_keys=True), file=sys.stderr)
+        return 1
+    if completed.returncode != 0:
+        if completed.stderr:
+            sys.stderr.write(completed.stderr)
+        else:
+            print(json.dumps({"authorized": False, "error": "fresh authorization attempt denied"}, sort_keys=True), file=sys.stderr)
+        return 1
+    if completed.stderr:
+        sys.stderr.write(completed.stderr)
+    sys.stdout.write(completed.stdout)
+    return 0
 
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.stage == "consumed":
+        try:
+            return _delegate_consumed(args)
+        except (ContractError, ProviderError, OSError, KeyError, TypeError, ValueError) as exc:
+            print(json.dumps({"authorized": False, "error": str(exc)}, sort_keys=True), file=sys.stderr)
+            return 1
     try:
         result = validate_from_args(args)
     except (ContractError, ProviderError, OSError, KeyError, TypeError, ValueError) as exc:
