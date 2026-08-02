@@ -27,6 +27,10 @@ with tempfile.TemporaryDirectory() as td:
     repo = Path(td) / "repo"
     shutil.copytree(root, repo, ignore=shutil.ignore_patterns(".git", "__pycache__", ".claude/.evidence"))
 
+    # build() writes the qualified fixture config used by the direct authorizer
+    # unit path, so initialize it before reading that config.
+    base_fixture = helper.build(repo)
+
     authorizer_path = repo / "scripts/enforcement/authorize-bypass-once.py"
     authorizer_spec = importlib.util.spec_from_file_location("one_shot_authorizer", authorizer_path)
     if authorizer_spec is None or authorizer_spec.loader is None:
@@ -64,7 +68,7 @@ with tempfile.TemporaryDirectory() as td:
     # GitHub can expose the trusted deployment status before its workflow run
     # flips to completed. That ordering is not a denial: poll the exact bound
     # run to terminal success, still bounded by the outer timeout.
-    delayed_provider = DelayedCompletionProvider(helper.build(repo))
+    delayed_provider = DelayedCompletionProvider(deepcopy(base_fixture))
     delayed = authorizer.authorize_once(
         delayed_provider,
         config=config,
@@ -78,7 +82,7 @@ with tempfile.TemporaryDirectory() as td:
     if delayed.get("authorized") is not True or delayed_provider.consumer_run_reads < 2:
         raise AssertionError("authorizer did not tolerate provider status/run completion ordering")
 
-    fixture = helper.build(repo)
+    fixture = deepcopy(base_fixture)
     second = deepcopy(fixture["deployment_responses"][0])
     second["id"] = 802
     fixture["deployment_responses"].append(second)
