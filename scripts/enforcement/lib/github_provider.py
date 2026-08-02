@@ -47,6 +47,7 @@ class Response:
 
 class GitHubProvider:
     MAX_COMMENT_PAGES = 50
+    MAX_DEPLOYMENT_STATUS_PAGES = 10
 
     def __init__(
         self,
@@ -166,13 +167,7 @@ class GitHubProvider:
         return self.object_body(self._request("GET", path, token=self._token_for(full_name)), "workflow run")
 
     def issue_comments(self, full_name: str, issue_number: int) -> list[Any]:
-        """Return every comment on the issue, traversing all pages.
-
-        Both ledgers grow without bound during ordinary durable use, so treating
-        normal pagination as ambiguous would permanently disable validation once
-        an issue passed 100 comments. Pages are walked to exhaustion instead, with
-        a hard bound so a misbehaving provider still fails closed.
-        """
+        """Return every comment on the issue, traversing all pages."""
         owner, repo = self._split_repo(full_name)
         number = _path_id(issue_number, "issue_number")
         base = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/issues/{number}/comments"
@@ -196,6 +191,84 @@ class GitHubProvider:
             "created issue comment",
         )
 
+    def create_deployment(
+        self,
+        full_name: str,
+        *,
+        ref: str,
+        task: str,
+        environment: str,
+        payload: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Create one immutable provider attempt object in the control repository."""
+        if full_name != self.control_repository:
+            raise ProviderError("deployment write attempted outside the control repository")
+        owner, repo = self._split_repo(full_name)
+        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/deployments"
+        body = {
+            "ref": ref,
+            "task": task,
+            "auto_merge": False,
+            "required_contexts": [],
+            "payload": dict(payload),
+            "environment": environment,
+            "description": "Engineering OS one-shot bypass authorization attempt",
+            "transient_environment": True,
+            "production_environment": False,
+        }
+        return self.object_body(
+            self._request("POST", path, token=self.control_token, expected_status=(201,), payload=body),
+            "created deployment",
+        )
+
+    def deployment_statuses(self, full_name: str, deployment_id: int) -> list[Any]:
+        owner, repo = self._split_repo(full_name)
+        deployment = _path_id(deployment_id, "deployment_id")
+        base = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/deployments/{deployment}/statuses"
+        token = self._token_for(full_name)
+        collected: list[Any] = []
+        for page in range(1, self.MAX_DEPLOYMENT_STATUS_PAGES + 1):
+            response = self._request("GET", f"{base}?per_page=100&page={page}", token=token)
+            batch = self.list_body(response, "deployment statuses")
+            collected.extend(batch)
+            if 'rel="next"' not in response.headers.get("link", ""):
+                return collected
+        raise ProviderError("deployment-status pagination exceeded the supported bound")
+
+    def create_deployment_status(
+        self,
+        full_name: str,
+        deployment_id: int,
+        *,
+        state: str,
+        description: str,
+        environment: str,
+    ) -> dict[str, Any]:
+        if full_name != self.control_repository:
+            raise ProviderError("deployment-status write attempted outside the control repository")
+        if state not in {"success", "failure", "error"}:
+            raise ProviderError("unsupported terminal deployment status")
+        if not description or len(description) > 140:
+            raise ProviderError("deployment-status description must be 1..140 characters")
+        owner, repo = self._split_repo(full_name)
+        deployment = _path_id(deployment_id, "deployment_id")
+        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/deployments/{deployment}/statuses"
+        return self.object_body(
+            self._request(
+                "POST",
+                path,
+                token=self.control_token,
+                expected_status=(201,),
+                payload={
+                    "state": state,
+                    "description": description,
+                    "environment": environment,
+                    "auto_inactive": False,
+                },
+            ),
+            "created deployment status",
+        )
+
 
 class FixtureProvider:
     """Deterministic provider used only when a test passes --provider-fixture."""
@@ -205,6 +278,8 @@ class FixtureProvider:
             raise ProviderError("provider fixture must be one JSON object")
         self.fixture = fixture
         self.created_comments: list[dict[str, Any]] = []
+        self.created_deployments: list[dict[str, Any]] = []
+        self.created_deployment_statuses: list[dict[str, Any]] = []
 
     @classmethod
     def from_path(cls, path: str) -> "FixtureProvider":
@@ -277,4 +352,60 @@ class FixtureProvider:
             "user": user,
         }
         self.created_comments.append(created)
+        return json.loads(json.dumps(created))
+
+    def create_deployment(
+        self,
+        full_name: str,
+        *,
+        ref: str,
+        task: str,
+        environment: str,
+        payload: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        responses = self.fixture.get("deployment_responses")
+        index = len(self.created_deployments)
+        if not isinstance(responses, list) or index >= len(responses) or not isinstance(responses[index], dict):
+            raise ProviderError("fixture deployment response missing")
+        self.created_deployments.append({
+            "repository": full_name,
+            "ref": ref,
+            "task": task,
+            "environment": environment,
+            "payload": json.loads(json.dumps(dict(payload))),
+        })
+        return json.loads(json.dumps(responses[index]))
+
+    def deployment_statuses(self, full_name: str, deployment_id: int) -> list[Any]:
+        statuses = self.fixture.get("deployment_statuses")
+        key = f"{full_name}:{deployment_id}"
+        value = statuses.get(key) if isinstance(statuses, dict) else None
+        if not isinstance(value, list):
+            raise ProviderError(f"fixture deployment statuses missing: {key}")
+        return json.loads(json.dumps(value))
+
+    def create_deployment_status(
+        self,
+        full_name: str,
+        deployment_id: int,
+        *,
+        state: str,
+        description: str,
+        environment: str,
+    ) -> dict[str, Any]:
+        user = self.fixture.get("created_deployment_status_user", {"login": "github-actions[bot]", "id": 41898282, "type": "Bot"})
+        next_id = int(self.fixture.get("next_deployment_status_id", 910000 + len(self.created_deployment_statuses)))
+        created_at = str(self.fixture.get("created_deployment_status_at", "2026-07-26T20:06:00Z"))
+        created = {
+            "id": next_id,
+            "state": state,
+            "description": description,
+            "environment": environment,
+            "created_at": created_at,
+            "updated_at": created_at,
+            "deployment_url": f"https://api.github.com/repos/{full_name}/deployments/{deployment_id}",
+            "repository_url": f"https://api.github.com/repos/{full_name}",
+            "creator": user,
+        }
+        self.created_deployment_statuses.append(created)
         return json.loads(json.dumps(created))
