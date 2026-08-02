@@ -15,6 +15,7 @@ APPROVAL_SCHEMA = "eos-bypass-approval/v1"
 CLAIM_SCHEMA = "eos-bypass-consumption/v1"
 MARKER_SCHEMA = "eos-bypass-marker/v1"
 CONTROL_SCHEMA = "eos-bypass-control-plane/v1"
+GITHUB_ACTIONS_BOT_ID = 41898282
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 LOGIN_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
@@ -35,9 +36,6 @@ APPROVAL_FIELDS = (
     "control_default_branch_sha",
 )
 
-# GitHub assigns the comment ID and created_at only after the approval comment is
-# published, and edited approvals are rejected. A human-authored approval body
-# therefore must not restate them: they are bound from the provider envelope.
 PROVIDER_BOUND_APPROVAL_FIELDS = ("approval_comment_id", "approval_created_at")
 AUTHORED_APPROVAL_FIELDS = tuple(
     field for field in APPROVAL_FIELDS if field not in PROVIDER_BOUND_APPROVAL_FIELDS
@@ -189,7 +187,7 @@ def load_policy(path: Path) -> dict[str, PolicyEntry]:
 
 def _validate_workflow(value: Any, label: str, *, qualified: bool) -> dict[str, Any]:
     obj = require_object(value, label)
-    expected = {"workflow_id", "workflow_path", "reusable_workflow_path", "writer_login"}
+    expected = {"workflow_id", "workflow_path", "reusable_workflow_path", "writer_login", "writer_user_id"}
     if set(obj) != expected:
         raise ContractError(f"{label} fields mismatch")
     if qualified:
@@ -200,8 +198,8 @@ def _validate_workflow(value: Any, label: str, *, qualified: bool) -> dict[str, 
         path = nonempty_string(obj[key], f"{label}.{key}")
         if not path.startswith(".github/workflows/") or ".." in Path(path).parts:
             raise ContractError(f"{label}.{key} is not a pinned workflow path")
-    if obj["writer_login"] != "github-actions[bot]":
-        raise ContractError(f"{label}.writer_login must be github-actions[bot]")
+    if obj["writer_login"] != "github-actions[bot]" or obj["writer_user_id"] != GITHUB_ACTIONS_BOT_ID:
+        raise ContractError(f"{label} writer identity must be the pinned GitHub Actions bot")
     return obj
 
 
@@ -228,17 +226,23 @@ def validate_control_config(config: Mapping[str, Any], *, require_qualified: boo
     positive_int(protected["id"], "protected_repository.id")
 
     control = require_object(config["control_repository"], "control_repository")
-    if set(control) != {"full_name", "id", "private_required", "default_branch"}:
+    if set(control) != {"full_name", "id", "private_required", "default_branch", "trusted_default_branch_sha"}:
         raise ContractError("control_repository fields mismatch")
     if control["private_required"] is not True:
         raise ContractError("control repository must be private")
     nonempty_string(control["default_branch"], "control_repository.default_branch")
+    trusted_sha = control["trusted_default_branch_sha"]
     if qualified:
         nonempty_string(control["full_name"], "control_repository.full_name")
         positive_int(control["id"], "control_repository.id")
+        validate_sha(trusted_sha, "control_repository.trusted_default_branch_sha")
     else:
         if not isinstance(control["full_name"], str) or not isinstance(control["id"], int) or control["id"] < 0:
             raise ContractError("unqualified control repository placeholders are invalid")
+        if not isinstance(trusted_sha, str):
+            raise ContractError("unqualified trusted default-branch SHA placeholder is invalid")
+        if trusted_sha:
+            validate_sha(trusted_sha, "control_repository.trusted_default_branch_sha")
 
     issues = require_object(config["issues"], "issues")
     if set(issues) != {"approval", "consumption"}:
@@ -295,9 +299,6 @@ def _validate_common_binding(value: Mapping[str, Any], policy: Mapping[str, Poli
     for field in ("gate", "action", "surface"):
         if value[field] != getattr(entry, field):
             raise ContractError(f"{field} does not match canonical policy")
-    # The declared policy contract columns constrain the evidence, not just the
-    # gate triple. Derivation itself is enforced at the request site, which is the
-    # only place that holds the fingerprint preimage.
     target = nonempty_string(value["target"], "target")
     if target != entry.target_type and not target.startswith(f"{entry.target_type}:"):
         raise ContractError("target does not match the canonical policy target_type")
@@ -317,7 +318,6 @@ def _validate_common_binding(value: Mapping[str, Any], policy: Mapping[str, Poli
 def bind_provider_approval(
     authored: Mapping[str, Any], comment_id: Any, created_at: Any
 ) -> dict[str, Any]:
-    """Bind provider-assigned identity/time onto a human-authored approval body."""
     positive_int(comment_id, "approval_comment_id")
     parse_timestamp(created_at, "approval_created_at")
     bound = dict(authored)
@@ -375,8 +375,8 @@ def validate_claim_shape(value: Mapping[str, Any], policy: Mapping[str, PolicyEn
     validate_sha(value["consumer_default_branch_sha"], "consumer_default_branch_sha")
     if value["run_attempt"] != 1:
         raise ContractError("claim run_attempt must equal 1")
-    if value["event"] != "workflow_dispatch":
-        raise ContractError("claim event must be workflow_dispatch")
+    if value["event"] != "deployment":
+        raise ContractError("claim event must be deployment")
     for field in ("actor", "triggering_actor", "consumer_workflow_path"):
         nonempty_string(value[field], field)
     _validate_common_binding(value, policy)
@@ -415,7 +415,7 @@ def claim_from_approval(
     consumer_default_branch_sha: str, run_id: int, run_attempt: int,
     actor: str, triggering_actor: str, event: str,
 ) -> dict[str, Any]:
-    claim = {
+    return {
         "schema": CLAIM_SCHEMA,
         "approval_digest": digest_json(dict(approval)),
         "protected_repository": approval["protected_repository"],
@@ -436,7 +436,6 @@ def claim_from_approval(
         "run_id": run_id, "run_attempt": run_attempt,
         "actor": actor, "triggering_actor": triggering_actor, "event": event,
     }
-    return claim
 
 
 def marker_from_claim(
@@ -445,7 +444,7 @@ def marker_from_claim(
     finalizer_run_id: int, finalizer_run_attempt: int,
     finalizer_actor: str, finalizer_triggering_actor: str, finalizer_event: str,
 ) -> dict[str, Any]:
-    marker = {
+    return {
         "schema": MARKER_SCHEMA,
         "approval_digest": digest_json(dict(approval)),
         "claim_digest": digest_json(dict(claim)),
@@ -476,4 +475,3 @@ def marker_from_claim(
         "finalizer_triggering_actor": finalizer_triggering_actor,
         "finalizer_event": finalizer_event,
     }
-    return marker
