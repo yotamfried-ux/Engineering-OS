@@ -19,7 +19,7 @@ jobs:
       github.event.workflow_run.run_attempt == 1 &&
       github.event.workflow_run.event == 'deployment' &&
       github.event.workflow_run.head_branch == github.event.repository.default_branch
-    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-finalizer-reusable.yml@9bc3ce72c7f6f15018e4fc8bce19266de9df582b
+    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-finalizer-reusable.yml@72709cd3be89204d46b92ee81239829c71d5cd1b
     with:
       consumer_run_id: ${{ github.event.workflow_run.id }}
     secrets:
