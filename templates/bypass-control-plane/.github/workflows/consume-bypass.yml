@@ -1,53 +1,31 @@
 name: consume-bypass
 
 on:
-  workflow_dispatch:
-    inputs:
-      protected_repository:
-        required: true
-        type: string
-      bypass:
-        required: true
-        type: string
-      gate:
-        required: true
-        type: string
-      action:
-        required: true
-        type: string
-      surface:
-        required: true
-        type: string
-      target:
-        required: true
-        type: string
-      target_fingerprint:
-        required: true
-        type: string
-      target_commit:
-        required: true
-        type: string
-      approval_comment_id:
-        required: true
-        type: number
+  deployment:
 
 permissions:
   contents: read
   actions: read
+  deployments: write
   issues: write
 
 jobs:
   consume:
-    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-consumer-reusable.yml@9bc3ce72c7f6f15018e4fc8bce19266de9df582b
+    if: >-
+      github.event.deployment.task == 'engineering-os:bypass-authorization' &&
+      github.event.deployment.environment == 'engineering-os-bypass' &&
+      github.event.deployment.payload.schema == 'eos-bypass-authorization-attempt/v1'
+    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-consumer-reusable.yml@72709cd3be89204d46b92ee81239829c71d5cd1b
     with:
-      protected_repository: ${{ inputs.protected_repository }}
-      bypass: ${{ inputs.bypass }}
-      gate: ${{ inputs.gate }}
-      action: ${{ inputs.action }}
-      surface: ${{ inputs.surface }}
-      target: ${{ inputs.target }}
-      target_fingerprint: ${{ inputs.target_fingerprint }}
-      target_commit: ${{ inputs.target_commit }}
-      approval_comment_id: ${{ inputs.approval_comment_id }}
+      protected_repository: ${{ github.event.deployment.payload.protected_repository }}
+      bypass: ${{ github.event.deployment.payload.bypass }}
+      gate: ${{ github.event.deployment.payload.gate }}
+      action: ${{ github.event.deployment.payload.action }}
+      surface: ${{ github.event.deployment.payload.surface }}
+      target: ${{ github.event.deployment.payload.target }}
+      target_fingerprint: ${{ github.event.deployment.payload.target_fingerprint }}
+      target_commit: ${{ github.event.deployment.payload.target_commit }}
+      approval_comment_id: ${{ github.event.deployment.payload.approval_comment_id }}
+      authorization_deployment_id: ${{ github.event.deployment.id }}
     secrets:
       protected_repository_read_token: ${{ secrets.PROTECTED_REPOSITORY_READ_TOKEN }}
