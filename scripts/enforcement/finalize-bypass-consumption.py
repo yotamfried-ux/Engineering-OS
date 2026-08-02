@@ -58,7 +58,7 @@ def main() -> int:
         now = parse_timestamp(args.now, "now") if args.now else datetime.now(timezone.utc)
 
         candidates = []
-        comments = provider.issue_comments(config["control_repository"]["full_name"], config["issues"]["approval"])
+        comments = provider.issue_comments(config["control_repository"]["full_name"], config["issues"]["consumption"])
         for claim, comment in validator.iter_schema_comments(comments, CLAIM_SCHEMA, "claim"):
             if claim.get("run_id") == args.consumer_run_id:
                 candidates.append((claim, comment))

@@ -80,7 +80,7 @@ def main() -> int:
         body = json.dumps(claim, sort_keys=True, separators=(",", ":"))
         created = provider.create_issue_comment(
             config["control_repository"]["full_name"],
-            config["issues"]["approval"],
+            config["issues"]["consumption"],
             body,
         )
         if not isinstance(created, dict) or not isinstance(created.get("id"), int):

@@ -177,7 +177,7 @@ done
 alts
 EOF
 EOS_BYPASS_WORKFLOW=1 run_enforcer Write ".github/workflows/ci.yml"; expect "G4: master env request is denied" 2 $?
-if grep -q $'\tbypass_authorized\t' .claude/.evidence/ledger 2>/dev/null; then
+if grep -q $'\tbypass_authorized\tEOS_BYPASS_WORKFLOW:' .claude/.evidence/ledger 2>/dev/null; then
   bad "G4: rejected master request recorded authorization success"
 elif grep -q $'\tbypass_rejected\tEOS_BYPASS_WORKFLOW:' .claude/.evidence/ledger 2>/dev/null; then
   ok "G4: rejected master request recorded rejection only"

@@ -170,7 +170,7 @@ def build(repo: Path):
         "body": json.dumps(claim, sort_keys=True, separators=(",", ":")),
         "created_at": "2026-07-26T20:05:00Z",
         "updated_at": "2026-07-26T20:05:00Z",
-        "issue_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control/issues/41",
+        "issue_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control/issues/42",
         "repository_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control",
         "user": {"login": "github-actions[bot]", "id": 41898282, "type": "Bot"},
     }
@@ -211,8 +211,8 @@ def build(repo: Path):
             },
         },
         "issue_comments": {
-            "yotamfried-ux/eos-bypass-control:41": [approval_comment, claim_comment],
-            "yotamfried-ux/eos-bypass-control:42": [marker_comment],
+            "yotamfried-ux/eos-bypass-control:41": [approval_comment],
+            "yotamfried-ux/eos-bypass-control:42": [marker_comment, claim_comment],
         },
         "created_comment_user": {"login": "github-actions[bot]", "id": 41898282, "type": "Bot"},
         "created_comment_at": "2026-07-26T20:06:00Z",
@@ -239,7 +239,6 @@ def main():
         command(repo, "validate-bypass-approval.py", fixture, common_args("consumed"))
 
         no_claim = deepcopy(fixture)
-        no_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:41"] = [no_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:41"][0]]
         no_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = []
         command(repo, "consume-bypass-approval.py", no_claim, [
             *common_args("approval"),
@@ -257,7 +256,7 @@ def main():
         ], expect=1)
 
         no_marker = deepcopy(fixture)
-        no_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = []
+        no_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = [no_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]]
         command(repo, "finalize-bypass-consumption.py", no_marker, [
             "--consumer-run-id", "601", "--finalizer-default-branch-sha", "4" * 40,
             "--finalizer-run-id", "602", "--finalizer-run-attempt", "1",
@@ -276,19 +275,19 @@ def main():
         # Core fail-closed mutations.
         mutations = []
         duplicate_claim = deepcopy(fixture)
-        duplicate_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:41"].append(deepcopy(duplicate_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:41"][1]))
+        duplicate_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"].append(deepcopy(duplicate_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]))
         mutations.append(duplicate_claim)
         duplicate_marker = deepcopy(fixture)
         duplicate_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"].append(deepcopy(duplicate_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]))
         mutations.append(duplicate_marker)
-        missing_claim = deepcopy(fixture); missing_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:41"] = [missing_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:41"][0]]; mutations.append(missing_claim)
-        missing_marker = deepcopy(fixture); missing_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = []; mutations.append(missing_marker)
+        missing_claim = deepcopy(fixture); missing_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = [missing_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]]; mutations.append(missing_claim)
+        missing_marker = deepcopy(fixture); missing_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = [missing_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]]; mutations.append(missing_marker)
         edited_approval = deepcopy(fixture); edited_approval["comments"]["501"]["updated_at"] = "2026-07-26T20:01:00Z"; mutations.append(edited_approval)
-        edited_claim = deepcopy(fixture); edited_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:41"][1]["updated_at"] = "2026-07-26T20:06:00Z"; mutations.append(edited_claim)
+        edited_claim = deepcopy(fixture); edited_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]["updated_at"] = "2026-07-26T20:06:00Z"; mutations.append(edited_claim)
         edited_marker = deepcopy(fixture); edited_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["updated_at"] = "2026-07-26T20:11:00Z"; mutations.append(edited_marker)
         bot = deepcopy(fixture); bot["comments"]["501"]["user"]["type"] = "Bot"; mutations.append(bot)
         write_role = deepcopy(fixture); write_role["permissions"]["yotamfried-ux/Engineering-OS:maintainer-user"] = {"role_name": "write"}; mutations.append(write_role)
-        wrong_writer = deepcopy(fixture); wrong_writer["issue_comments"]["yotamfried-ux/eos-bypass-control:41"][1]["user"]["login"] = "maintainer-user"; mutations.append(wrong_writer)
+        wrong_writer = deepcopy(fixture); wrong_writer["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]["user"]["login"] = "maintainer-user"; mutations.append(wrong_writer)
         rerun = deepcopy(fixture); rerun["runs"]["yotamfried-ux/eos-bypass-control:601"]["run_attempt"] = 2; mutations.append(rerun)
         failed = deepcopy(fixture); failed["runs"]["yotamfried-ux/eos-bypass-control:601"]["conclusion"] = "failure"; mutations.append(failed)
         cancelled = deepcopy(fixture); cancelled["runs"]["yotamfried-ux/eos-bypass-control:602"]["conclusion"] = "cancelled"; mutations.append(cancelled)
@@ -300,12 +299,12 @@ def main():
         wrong_workflow = deepcopy(fixture); wrong_workflow["workflows"]["yotamfried-ux/eos-bypass-control:101"]["path"] = ".github/workflows/other.yml"; mutations.append(wrong_workflow)
         provider_error = deepcopy(fixture); del provider_error["runs"]["yotamfried-ux/eos-bypass-control:601"]; mutations.append(provider_error)
         malformed = deepcopy(fixture); malformed["comments"]["501"]["body"] = '{"schema":"eos-bypass-approval/v1"'; mutations.append(malformed)
-        malformed_claim = deepcopy(fixture); malformed_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:41"][1]["body"] = '{"schema":"eos-bypass-consumption/v1"'; mutations.append(malformed_claim)
+        malformed_claim = deepcopy(fixture); malformed_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]["body"] = '{"schema":"eos-bypass-consumption/v1"'; mutations.append(malformed_claim)
         malformed_marker = deepcopy(fixture); malformed_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["body"] = '{"schema":"eos-bypass-marker/v1"'; mutations.append(malformed_marker)
         conflicting_marker = deepcopy(fixture)
         conflict_body = json.loads(conflicting_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["body"]); conflict_body["claim_digest"] = "f" * 64
         conflicting_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["body"] = json.dumps(conflict_body, sort_keys=True, separators=(",", ":")); mutations.append(conflicting_marker)
-        ambiguous_comment = deepcopy(fixture); ambiguous_comment["issue_comments"]["yotamfried-ux/eos-bypass-control:41"].append("ambiguous-provider-value"); mutations.append(ambiguous_comment)
+        ambiguous_comment = deepcopy(fixture); ambiguous_comment["issue_comments"]["yotamfried-ux/eos-bypass-control:42"].append("ambiguous-provider-value"); mutations.append(ambiguous_comment)
         wrong_marker_writer = deepcopy(fixture); wrong_marker_writer["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["user"]["login"] = "maintainer-user"; mutations.append(wrong_marker_writer)
         finalizer_rerun = deepcopy(fixture); finalizer_rerun["runs"]["yotamfried-ux/eos-bypass-control:602"]["run_attempt"] = 2; mutations.append(finalizer_rerun)
         generic_reason = deepcopy(fixture)
@@ -420,11 +419,24 @@ def main():
         # claims, and would let the consumer write a second claim for the same
         # approval. Full authorization must still succeed here.
         escaped_key = deepcopy(fixture)
-        claim_ref = escaped_key["issue_comments"]["yotamfried-ux/eos-bypass-control:41"][1]
+        claim_ref = escaped_key["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]
         claim_ref["body"] = claim_ref["body"].replace('"schema":', '"\\u0073chema":', 1)
         if '"schema":"eos-bypass-consumption/v1"' in claim_ref["body"]:
             raise AssertionError("escaped-key fixture still contains a literal claim schema key")
         command(repo, "validate-bypass-approval.py", escaped_key, common_args())
+
+        # The two-issue contract is real: approvals live in the Approval Registry
+        # and consumption evidence lives in the Consumption Ledger. A claim posted
+        # to the approval issue is not durable consumption evidence.
+        claim_in_approval_issue = deepcopy(fixture)
+        ledger = claim_in_approval_issue["issue_comments"]
+        stray_claim = deepcopy(ledger["yotamfried-ux/eos-bypass-control:42"][1])
+        stray_claim["issue_url"] = "https://api.github.com/repos/yotamfried-ux/eos-bypass-control/issues/41"
+        ledger["yotamfried-ux/eos-bypass-control:42"] = [ledger["yotamfried-ux/eos-bypass-control:42"][0]]
+        ledger["yotamfried-ux/eos-bypass-control:41"].append(stray_claim)
+        misplaced = command(repo, "validate-bypass-approval.py", claim_in_approval_issue, common_args(), expect=1)
+        if "found 0" not in misplaced.stderr:
+            raise AssertionError(f"claim outside the consumption ledger was still accepted: {misplaced.stderr}")
 
     print("test-bypass-provider-validation: PASS")
 

@@ -37,7 +37,19 @@ Do not print credential values during qualification.
 
 An approval must be created by an eligible human `User`; the runtime requesting authorization must not create its own approval. The approval body uses the canonical schema and binds repository ID/name, gate, bypass, action, surface, target, target fingerprint, target commit, policy SHA, expiry, and a concrete reason.
 
-Before the live approval step, construct the exact payload from the pending request and have the repository owner publish it manually in the Approval Registry. Record the provider comment ID and provider `created_at`. Edited approval comments are invalid.
+The authored body must **not** contain `approval_comment_id` or `approval_created_at`. GitHub assigns both only when the comment is published, and edited approvals are rejected, so a body restating them could never be produced by a human. The validator binds them from the provider envelope, which keeps provider `created_at` the authoritative issuance time. `expires_at` is written as an absolute time and is checked against provider `created_at`, so the approval must be published within its own validity window and may not exceed four hours.
+
+Before the live approval step, construct the exact payload from the pending request and have the repository owner publish it manually in the Approval Registry. Record the provider comment ID and provider `created_at` for the request that consumes it. Edited approval comments are invalid.
+
+Approvals are the only content of the Approval Registry. Claims and markers are consumption evidence and are written to the Consumption Ledger; a claim found outside the Consumption Ledger is not durable consumption evidence.
+
+## Residual limits
+
+These are properties of using a GitHub issue as the durable ledger. They are recorded here rather than hidden behind the validator.
+
+- **Authorization is bounded, not execution-consuming.** The runtime credential is denied issue writes (`forbidden.runtime_marker_write`), so it structurally cannot mark consumption at execution time. Authorization is instead bound to one exact `(target, target_fingerprint, target_commit)` tuple with a bounded expiry: re-validation inside that window re-authorizes the identical operation against the identical protected head, and nothing else. Master-classified requests can never authorize, and for commit-producing gates the protected head moves once the operation lands, which invalidates the approval.
+- **One-shot is enforced by uniqueness, not by compare-and-set.** GitHub offers no conditional comment creation. Concurrency is serialized by the consumer workflow's `concurrency` group and duplicates then fail closed: two claims or two markers make validation deny both rather than select one.
+- **Ledger deletion requires control-repository write.** Deleting a claim alone does not re-enable replay, because a matching marker also denies a second consumption. Erasing both requires `issues: write` on the private control repository, which only the pinned Actions identity holds. Restricting control-repository collaborators is therefore part of the trust boundary, not an implementation detail.
 
 ## Live qualification matrix
 

@@ -289,7 +289,7 @@ def verify_claim(
     created_at = _verify_machine_comment(
         comment,
         config=config,
-        issue_number=config["issues"]["approval"],
+        issue_number=config["issues"]["consumption"],
         writer_login=config["consumer"]["writer_login"],
         label="claim comment",
     )
@@ -311,7 +311,7 @@ def verify_claim(
 
 def matching_claims(provider: Any, config: Mapping[str, Any], policy: Mapping[str, Any], approval: Mapping[str, Any]):
     matches = []
-    comments = provider.issue_comments(config["control_repository"]["full_name"], config["issues"]["approval"])
+    comments = provider.issue_comments(config["control_repository"]["full_name"], config["issues"]["consumption"])
     for claim, comment in iter_schema_comments(comments, CLAIM_SCHEMA, "claim"):
         validate_claim_shape(claim, policy)
         if claim["approval_digest"] != digest_json(dict(approval)):

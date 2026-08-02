@@ -394,15 +394,14 @@ try: toks=shlex.split(sys.stdin.read())
 except Exception: raise SystemExit(1)
 try: i=toks.index("git")
 except ValueError: raise SystemExit(1)
+# Skip git global options using exactly the rule enforce-git.sh applies in
+# skip_git_globals, so a command the detector routes here ("git -c k=v push ...")
+# is not denied by the parser before provider validation.
+gval={"-c","-C","--git-dir","--work-tree","--namespace","--config-env","--exec-path","--super-prefix"}
 j=i+1
-# Skip the same global options the detector accepts, so an approved request for
-# "git -c key=value push ..." is not denied before provider validation.
-value_globals={"-c","--git-dir","--work-tree","--namespace","--exec-path","--config-env"}
 while j<len(toks):
-    tok=toks[j]
-    if tok in value_globals: j+=2; continue
-    if tok.startswith("--git-dir=") or tok.startswith("--work-tree=") or tok.startswith("--namespace=") or tok.startswith("--exec-path=") or tok.startswith("--config-env="): j+=1; continue
-    if tok in {"--no-pager","--paginate","--bare","--literal-pathspecs","--no-replace-objects"}: j+=1; continue
+    if toks[j] in gval: j+=2; continue
+    if toks[j].startswith("-"): j+=1; continue
     break
 if j>=len(toks) or toks[j] != "push": raise SystemExit(1)
 args=toks[j+1:]
