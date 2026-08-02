@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import datetime
 import argparse
-import importlib.util
-import os
 import hashlib
+import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import socket
@@ -16,6 +15,9 @@ import tempfile
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
+CONTROL = "yotamfried-ux/eos-bypass-control"
+PROTECTED = "yotamfried-ux/Engineering-OS"
+TRUSTED_SHA = "3" * 40
 
 
 def canonical_digest(value: dict) -> str:
@@ -40,7 +42,7 @@ def command(repo: Path, script: str, fixture: dict, extra: list[str], *, expect:
 def common_args(stage: str = "consumed") -> list[str]:
     return [
         "--stage", stage,
-        "--repository", "yotamfried-ux/Engineering-OS",
+        "--repository", PROTECTED,
         "--bypass", "EOS_BYPASS_ENTRY",
         "--gate", "workflow",
         "--action", "allow-work-command-before-plan",
@@ -56,7 +58,7 @@ def build(repo: Path):
     config_path = repo / "scripts/enforcement/bypass-control-plane.json"
     config = json.loads(config_path.read_text())
     config["qualification"] = {"status": "qualified", "live_control_repository_qualification": True}
-    config["control_repository"].update({"full_name": "yotamfried-ux/eos-bypass-control", "id": 777})
+    config["control_repository"].update({"full_name": CONTROL, "id": 777, "trusted_default_branch_sha": TRUSTED_SHA})
     config["issues"] = {"approval": 41, "consumption": 42}
     config["consumer"]["workflow_id"] = 101
     config["finalizer"]["workflow_id"] = 102
@@ -64,9 +66,9 @@ def build(repo: Path):
     policy_digest = hashlib.sha256((repo / "scripts/enforcement/bypass-policy.tsv").read_bytes()).hexdigest()
     approval = {
         "schema": "eos-bypass-approval/v1",
-        "protected_repository": "yotamfried-ux/Engineering-OS",
+        "protected_repository": PROTECTED,
         "protected_repository_id": 1268851602,
-        "control_repository": "yotamfried-ux/eos-bypass-control",
+        "control_repository": CONTROL,
         "control_repository_id": 777,
         "approval_issue_id": 41,
         "approval_comment_id": 501,
@@ -90,15 +92,15 @@ def build(repo: Path):
         "consumer_workflow_path": ".github/workflows/consume-bypass.yml",
         "finalizer_workflow_id": 102,
         "finalizer_workflow_path": ".github/workflows/finalize-bypass.yml",
-        "control_default_branch_sha": "3" * 40,
+        "control_default_branch_sha": TRUSTED_SHA,
     }
     claim = {
         "schema": "eos-bypass-consumption/v1",
         "approval_digest": canonical_digest(approval),
-        "protected_repository": approval["protected_repository"],
-        "protected_repository_id": approval["protected_repository_id"],
-        "control_repository": approval["control_repository"],
-        "control_repository_id": approval["control_repository_id"],
+        "protected_repository": PROTECTED,
+        "protected_repository_id": 1268851602,
+        "control_repository": CONTROL,
+        "control_repository_id": 777,
         "approval_issue_id": 41,
         "approval_comment_id": 501,
         "consumption_issue_id": 42,
@@ -109,12 +111,10 @@ def build(repo: Path):
         "policy_sha256": approval["policy_sha256"],
         "consumer_workflow_id": 101,
         "consumer_workflow_path": approval["consumer_workflow_path"],
-        "consumer_default_branch_sha": "3" * 40,
-        "run_id": 601,
-        "run_attempt": 1,
-        "actor": "maintainer-user",
-        "triggering_actor": "maintainer-user",
-        "event": "workflow_dispatch",
+        "consumer_default_branch_sha": TRUSTED_SHA,
+        "run_id": 601, "run_attempt": 1,
+        "actor": "runtime-app[bot]", "triggering_actor": "runtime-app[bot]",
+        "event": "deployment",
     }
     marker = {
         "schema": "eos-bypass-marker/v1",
@@ -122,10 +122,10 @@ def build(repo: Path):
         "claim_digest": canonical_digest(claim),
         "claim_comment_id": 701,
         "claim_created_at": "2026-07-26T20:05:00Z",
-        "protected_repository": approval["protected_repository"],
-        "protected_repository_id": approval["protected_repository_id"],
-        "control_repository": approval["control_repository"],
-        "control_repository_id": approval["control_repository_id"],
+        "protected_repository": PROTECTED,
+        "protected_repository_id": 1268851602,
+        "control_repository": CONTROL,
+        "control_repository_id": 777,
         "approval_issue_id": 41,
         "approval_comment_id": 501,
         "consumption_issue_id": 42,
@@ -136,7 +136,7 @@ def build(repo: Path):
         "policy_sha256": approval["policy_sha256"],
         "consumer_workflow_id": 101,
         "consumer_workflow_path": approval["consumer_workflow_path"],
-        "consumer_default_branch_sha": "3" * 40,
+        "consumer_default_branch_sha": TRUSTED_SHA,
         "consumer_run_id": 601,
         "finalizer_workflow_id": 102,
         "finalizer_workflow_path": approval["finalizer_workflow_path"],
@@ -144,84 +144,101 @@ def build(repo: Path):
         "finalizer_run_id": 602,
         "finalizer_run_attempt": 1,
         "finalizer_actor": "github-actions[bot]",
-        "finalizer_triggering_actor": "maintainer-user",
+        "finalizer_triggering_actor": "runtime-app[bot]",
         "finalizer_event": "workflow_run",
     }
-    # A human-authored approval cannot restate the provider-assigned comment ID or
-    # created_at: GitHub assigns both only on publication and edits are rejected.
-    # The published body therefore omits them; the validator binds them from the
-    # provider envelope, which is what `approval` above represents.
-    authored_approval = {
-        key: value
-        for key, value in approval.items()
-        if key not in ("approval_comment_id", "approval_created_at")
-    }
+    authored_approval = {k: v for k, v in approval.items() if k not in ("approval_comment_id", "approval_created_at")}
     approval_comment = {
-        "id": 501,
-        "body": json.dumps(authored_approval, sort_keys=True, separators=(",", ":")),
-        "created_at": approval["approval_created_at"],
-        "updated_at": approval["approval_created_at"],
-        "issue_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control/issues/41",
-        "repository_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control",
+        "id": 501, "body": json.dumps(authored_approval, sort_keys=True, separators=(",", ":")),
+        "created_at": approval["approval_created_at"], "updated_at": approval["approval_created_at"],
+        "issue_url": f"https://api.github.com/repos/{CONTROL}/issues/41",
+        "repository_url": f"https://api.github.com/repos/{CONTROL}",
         "user": {"login": "maintainer-user", "id": 88, "type": "User"},
     }
     claim_comment = {
-        "id": 701,
-        "body": json.dumps(claim, sort_keys=True, separators=(",", ":")),
-        "created_at": "2026-07-26T20:05:00Z",
-        "updated_at": "2026-07-26T20:05:00Z",
-        "issue_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control/issues/42",
-        "repository_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control",
+        "id": 701, "body": json.dumps(claim, sort_keys=True, separators=(",", ":")),
+        "created_at": "2026-07-26T20:05:00Z", "updated_at": "2026-07-26T20:05:00Z",
+        "issue_url": f"https://api.github.com/repos/{CONTROL}/issues/42",
+        "repository_url": f"https://api.github.com/repos/{CONTROL}",
         "user": {"login": "github-actions[bot]", "id": 41898282, "type": "Bot"},
     }
     marker_comment = {
-        "id": 702,
-        "body": json.dumps(marker, sort_keys=True, separators=(",", ":")),
-        "created_at": "2026-07-26T20:10:00Z",
-        "updated_at": "2026-07-26T20:10:00Z",
-        "issue_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control/issues/42",
-        "repository_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control",
+        "id": 702, "body": json.dumps(marker, sort_keys=True, separators=(",", ":")),
+        "created_at": "2026-07-26T20:10:00Z", "updated_at": "2026-07-26T20:10:00Z",
+        "issue_url": f"https://api.github.com/repos/{CONTROL}/issues/42",
+        "repository_url": f"https://api.github.com/repos/{CONTROL}",
         "user": {"login": "github-actions[bot]", "id": 41898282, "type": "Bot"},
     }
-    fixture = {
+    attempt_payload = {
+        "schema": "eos-bypass-authorization-attempt/v1",
+        "approval_comment_id": 501,
+        "approval_digest": canonical_digest(approval),
+        "protected_repository": PROTECTED,
+        "bypass": approval["bypass"], "gate": approval["gate"],
+        "action": approval["action"], "surface": approval["surface"],
+        "target": approval["target"], "target_fingerprint": approval["target_fingerprint"],
+        "target_commit": approval["target_commit"], "policy_sha256": policy_digest,
+    }
+    deployment = {
+        "id": 801, "task": "engineering-os:bypass-authorization", "environment": "engineering-os-bypass",
+        "payload": attempt_payload, "sha": TRUSTED_SHA,
+        "repository": {"id": 777, "full_name": CONTROL},
+        "creator": {"login": "runtime-app[bot]", "id": 99001, "type": "Bot"},
+    }
+    status = {
+        "id": 811, "state": "success", "description": "eos-bypass-auth/v1 success run=601 attempt=1",
+        "environment": "engineering-os-bypass",
+        "created_at": "2026-07-26T20:06:00Z", "updated_at": "2026-07-26T20:06:00Z",
+        "deployment_url": f"https://api.github.com/repos/{CONTROL}/deployments/801",
+        "repository_url": f"https://api.github.com/repos/{CONTROL}",
+        "creator": {"login": "github-actions[bot]", "id": 41898282, "type": "Bot"},
+    }
+    return {
         "repositories": {
-            "yotamfried-ux/Engineering-OS": {"id": 1268851602, "full_name": "yotamfried-ux/Engineering-OS", "private": False},
-            "yotamfried-ux/eos-bypass-control": {"id": 777, "full_name": "yotamfried-ux/eos-bypass-control", "private": True},
+            PROTECTED: {"id": 1268851602, "full_name": PROTECTED, "private": False},
+            CONTROL: {"id": 777, "full_name": CONTROL, "private": True},
         },
         "comments": {"501": approval_comment},
-        "permissions": {"yotamfried-ux/Engineering-OS:maintainer-user": {"role_name": "maintain"}},
+        "permissions": {f"{PROTECTED}:maintainer-user": {"role_name": "maintain"}},
         "workflows": {
-            "yotamfried-ux/eos-bypass-control:101": {"id": 101, "path": ".github/workflows/consume-bypass.yml"},
-            "yotamfried-ux/eos-bypass-control:102": {"id": 102, "path": ".github/workflows/finalize-bypass.yml"},
+            f"{CONTROL}:101": {"id": 101, "path": ".github/workflows/consume-bypass.yml"},
+            f"{CONTROL}:102": {"id": 102, "path": ".github/workflows/finalize-bypass.yml"},
         },
         "runs": {
-            "yotamfried-ux/eos-bypass-control:601": {
-                "id": 601, "run_attempt": 1, "head_sha": "3" * 40, "head_branch": "main",
-                "event": "workflow_dispatch", "status": "completed", "conclusion": "success",
+            f"{CONTROL}:601": {
+                "id": 601, "run_attempt": 1, "head_sha": TRUSTED_SHA, "head_branch": "main",
+                "event": "deployment", "status": "completed", "conclusion": "success",
                 "workflow_id": 101, "path": ".github/workflows/consume-bypass.yml",
-                "actor": {"login": "maintainer-user"}, "triggering_actor": {"login": "maintainer-user"},
+                "actor": {"login": "runtime-app[bot]"}, "triggering_actor": {"login": "runtime-app[bot]"},
                 "repository": {"id": 777},
             },
-            "yotamfried-ux/eos-bypass-control:602": {
+            f"{CONTROL}:602": {
                 "id": 602, "run_attempt": 1, "head_sha": "4" * 40, "head_branch": "main",
                 "event": "workflow_run", "status": "completed", "conclusion": "success",
                 "workflow_id": 102, "path": ".github/workflows/finalize-bypass.yml",
-                "actor": {"login": "github-actions[bot]"}, "triggering_actor": {"login": "maintainer-user"},
+                "actor": {"login": "github-actions[bot]"}, "triggering_actor": {"login": "runtime-app[bot]"},
                 "repository": {"id": 777},
             },
         },
         "issue_comments": {
-            "yotamfried-ux/eos-bypass-control:41": [approval_comment],
-            "yotamfried-ux/eos-bypass-control:42": [marker_comment, claim_comment],
+            f"{CONTROL}:41": [approval_comment],
+            f"{CONTROL}:42": [marker_comment, claim_comment],
         },
+        "deployment_responses": [deployment],
+        "deployment_statuses": {f"{CONTROL}:801": [status]},
         "created_comment_user": {"login": "github-actions[bot]", "id": 41898282, "type": "Bot"},
         "created_comment_at": "2026-07-26T20:06:00Z",
+        "created_deployment_status_user": {"login": "github-actions[bot]", "id": 41898282, "type": "Bot"},
+        "created_deployment_status_at": "2026-07-26T20:06:00Z",
     }
-    return fixture
 
 
-def expect_validation_failure(repo: Path, fixture: dict):
-    command(repo, "validate-bypass-approval.py", fixture, common_args(), expect=1)
+def expect_claim_failure(repo: Path, fixture: dict):
+    command(repo, "validate-bypass-approval.py", fixture, common_args("claimed"), expect=1)
+
+
+def consumed_failure(repo: Path, fixture: dict):
+    return command(repo, "validate-bypass-approval.py", fixture, common_args("consumed"), expect=1)
 
 
 def main():
@@ -231,212 +248,132 @@ def main():
         fixture = build(repo)
 
         blocked = command(repo, "validate-bypass-approval.py", fixture, common_args("approval"), expect=1, test_mode=False)
-        if "test-only provider/time overrides are disabled" not in blocked.stderr:
-            raise AssertionError(f"production fixture/time override did not fail for the intended reason: {blocked.stderr}")
+        assert "test-only provider/time overrides are disabled" in blocked.stderr
 
         command(repo, "validate-bypass-approval.py", fixture, common_args("approval"))
         command(repo, "validate-bypass-approval.py", fixture, common_args("claimed"))
-        command(repo, "validate-bypass-approval.py", fixture, common_args("consumed"))
+        authorized = command(repo, "validate-bypass-approval.py", fixture, common_args("consumed"))
+        assert json.loads(authorized.stdout)["deployment_id"] == 801
 
         no_claim = deepcopy(fixture)
-        no_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = []
+        no_claim["issue_comments"][f"{CONTROL}:42"] = []
         command(repo, "consume-bypass-approval.py", no_claim, [
             *common_args("approval"),
-            "--consumer-default-branch-sha", "3" * 40,
+            "--consumer-default-branch-sha", TRUSTED_SHA,
             "--run-id", "601", "--run-attempt", "1",
-            "--actor", "maintainer-user", "--triggering-actor", "maintainer-user",
-            "--event", "workflow_dispatch",
+            "--actor", "runtime-app[bot]", "--triggering-actor", "runtime-app[bot]",
+            "--event", "deployment", "--authorization-deployment-id", "801",
         ])
         command(repo, "consume-bypass-approval.py", fixture, [
             *common_args("approval"),
-            "--consumer-default-branch-sha", "3" * 40,
+            "--consumer-default-branch-sha", TRUSTED_SHA,
             "--run-id", "601", "--run-attempt", "1",
-            "--actor", "maintainer-user", "--triggering-actor", "maintainer-user",
-            "--event", "workflow_dispatch",
+            "--actor", "runtime-app[bot]", "--triggering-actor", "runtime-app[bot]",
+            "--event", "deployment", "--authorization-deployment-id", "801",
         ], expect=1)
 
         no_marker = deepcopy(fixture)
-        no_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = [no_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]]
-        command(repo, "finalize-bypass-consumption.py", no_marker, [
+        no_marker["issue_comments"][f"{CONTROL}:42"] = [no_marker["issue_comments"][f"{CONTROL}:42"][1]]
+        finalize_args = [
             "--consumer-run-id", "601", "--finalizer-default-branch-sha", "4" * 40,
             "--finalizer-run-id", "602", "--finalizer-run-attempt", "1",
             "--finalizer-actor", "github-actions[bot]",
-            "--finalizer-triggering-actor", "maintainer-user",
-            "--finalizer-event", "workflow_run",
-        ])
-        command(repo, "finalize-bypass-consumption.py", fixture, [
-            "--consumer-run-id", "601", "--finalizer-default-branch-sha", "4" * 40,
-            "--finalizer-run-id", "602", "--finalizer-run-attempt", "1",
-            "--finalizer-actor", "github-actions[bot]",
-            "--finalizer-triggering-actor", "maintainer-user",
-            "--finalizer-event", "workflow_run",
-        ], expect=1)
+            "--finalizer-triggering-actor", "runtime-app[bot]", "--finalizer-event", "workflow_run",
+        ]
+        command(repo, "finalize-bypass-consumption.py", no_marker, finalize_args)
+        command(repo, "finalize-bypass-consumption.py", fixture, finalize_args, expect=1)
 
-        # Core fail-closed mutations.
         mutations = []
-        duplicate_claim = deepcopy(fixture)
-        duplicate_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"].append(deepcopy(duplicate_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]))
-        mutations.append(duplicate_claim)
-        duplicate_marker = deepcopy(fixture)
-        duplicate_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"].append(deepcopy(duplicate_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]))
-        mutations.append(duplicate_marker)
-        missing_claim = deepcopy(fixture); missing_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = [missing_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]]; mutations.append(missing_claim)
-        missing_marker = deepcopy(fixture); missing_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"] = [missing_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]]; mutations.append(missing_marker)
+        duplicate_claim = deepcopy(fixture); duplicate_claim["issue_comments"][f"{CONTROL}:42"].append(deepcopy(duplicate_claim["issue_comments"][f"{CONTROL}:42"][1])); mutations.append(duplicate_claim)
+        missing_claim = deepcopy(fixture); missing_claim["issue_comments"][f"{CONTROL}:42"] = [missing_claim["issue_comments"][f"{CONTROL}:42"][0]]; mutations.append(missing_claim)
         edited_approval = deepcopy(fixture); edited_approval["comments"]["501"]["updated_at"] = "2026-07-26T20:01:00Z"; mutations.append(edited_approval)
-        edited_claim = deepcopy(fixture); edited_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]["updated_at"] = "2026-07-26T20:06:00Z"; mutations.append(edited_claim)
-        edited_marker = deepcopy(fixture); edited_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["updated_at"] = "2026-07-26T20:11:00Z"; mutations.append(edited_marker)
+        edited_claim = deepcopy(fixture); edited_claim["issue_comments"][f"{CONTROL}:42"][1]["updated_at"] = "2026-07-26T20:06:00Z"; mutations.append(edited_claim)
         bot = deepcopy(fixture); bot["comments"]["501"]["user"]["type"] = "Bot"; mutations.append(bot)
-        write_role = deepcopy(fixture); write_role["permissions"]["yotamfried-ux/Engineering-OS:maintainer-user"] = {"role_name": "write"}; mutations.append(write_role)
-        wrong_writer = deepcopy(fixture); wrong_writer["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]["user"]["login"] = "maintainer-user"; mutations.append(wrong_writer)
-        rerun = deepcopy(fixture); rerun["runs"]["yotamfried-ux/eos-bypass-control:601"]["run_attempt"] = 2; mutations.append(rerun)
-        failed = deepcopy(fixture); failed["runs"]["yotamfried-ux/eos-bypass-control:601"]["conclusion"] = "failure"; mutations.append(failed)
-        cancelled = deepcopy(fixture); cancelled["runs"]["yotamfried-ux/eos-bypass-control:602"]["conclusion"] = "cancelled"; mutations.append(cancelled)
-        wrong_event = deepcopy(fixture); wrong_event["runs"]["yotamfried-ux/eos-bypass-control:602"]["event"] = "push"; mutations.append(wrong_event)
-        wrong_sha = deepcopy(fixture); wrong_sha["runs"]["yotamfried-ux/eos-bypass-control:601"]["head_sha"] = "5" * 40; mutations.append(wrong_sha)
-        wrong_actor = deepcopy(fixture); wrong_actor["runs"]["yotamfried-ux/eos-bypass-control:601"]["actor"]["login"] = "other"; mutations.append(wrong_actor)
-        wrong_trigger = deepcopy(fixture); wrong_trigger["runs"]["yotamfried-ux/eos-bypass-control:601"]["triggering_actor"]["login"] = "other"; mutations.append(wrong_trigger)
-        wrong_repo_id = deepcopy(fixture); wrong_repo_id["repositories"]["yotamfried-ux/eos-bypass-control"]["id"] = 778; mutations.append(wrong_repo_id)
-        wrong_workflow = deepcopy(fixture); wrong_workflow["workflows"]["yotamfried-ux/eos-bypass-control:101"]["path"] = ".github/workflows/other.yml"; mutations.append(wrong_workflow)
-        provider_error = deepcopy(fixture); del provider_error["runs"]["yotamfried-ux/eos-bypass-control:601"]; mutations.append(provider_error)
+        write_role = deepcopy(fixture); write_role["permissions"][f"{PROTECTED}:maintainer-user"] = {"role_name": "write"}; mutations.append(write_role)
+        wrong_writer = deepcopy(fixture); wrong_writer["issue_comments"][f"{CONTROL}:42"][1]["user"]["id"] = 999; mutations.append(wrong_writer)
+        rerun = deepcopy(fixture); rerun["runs"][f"{CONTROL}:601"]["run_attempt"] = 2; mutations.append(rerun)
+        failed = deepcopy(fixture); failed["runs"][f"{CONTROL}:601"]["conclusion"] = "failure"; mutations.append(failed)
+        wrong_sha = deepcopy(fixture); wrong_sha["runs"][f"{CONTROL}:601"]["head_sha"] = "5" * 40; mutations.append(wrong_sha)
+        wrong_actor = deepcopy(fixture); wrong_actor["runs"][f"{CONTROL}:601"]["actor"]["login"] = "other"; mutations.append(wrong_actor)
+        wrong_repo_id = deepcopy(fixture); wrong_repo_id["repositories"][CONTROL]["id"] = 778; mutations.append(wrong_repo_id)
+        wrong_workflow = deepcopy(fixture); wrong_workflow["workflows"][f"{CONTROL}:101"]["path"] = ".github/workflows/other.yml"; mutations.append(wrong_workflow)
+        provider_error = deepcopy(fixture); del provider_error["runs"][f"{CONTROL}:601"]; mutations.append(provider_error)
         malformed = deepcopy(fixture); malformed["comments"]["501"]["body"] = '{"schema":"eos-bypass-approval/v1"'; mutations.append(malformed)
-        malformed_claim = deepcopy(fixture); malformed_claim["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]["body"] = '{"schema":"eos-bypass-consumption/v1"'; mutations.append(malformed_claim)
-        malformed_marker = deepcopy(fixture); malformed_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["body"] = '{"schema":"eos-bypass-marker/v1"'; mutations.append(malformed_marker)
-        conflicting_marker = deepcopy(fixture)
-        conflict_body = json.loads(conflicting_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["body"]); conflict_body["claim_digest"] = "f" * 64
-        conflicting_marker["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["body"] = json.dumps(conflict_body, sort_keys=True, separators=(",", ":")); mutations.append(conflicting_marker)
-        ambiguous_comment = deepcopy(fixture); ambiguous_comment["issue_comments"]["yotamfried-ux/eos-bypass-control:42"].append("ambiguous-provider-value"); mutations.append(ambiguous_comment)
-        wrong_marker_writer = deepcopy(fixture); wrong_marker_writer["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][0]["user"]["login"] = "maintainer-user"; mutations.append(wrong_marker_writer)
-        finalizer_rerun = deepcopy(fixture); finalizer_rerun["runs"]["yotamfried-ux/eos-bypass-control:602"]["run_attempt"] = 2; mutations.append(finalizer_rerun)
-        generic_reason = deepcopy(fixture)
-        body = json.loads(generic_reason["comments"]["501"]["body"]); body["reason"] = "approved"; generic_reason["comments"]["501"]["body"] = json.dumps(body, sort_keys=True, separators=(",", ":")); mutations.append(generic_reason)
+        malformed_claim = deepcopy(fixture); malformed_claim["issue_comments"][f"{CONTROL}:42"][1]["body"] = '{"schema":"eos-bypass-consumption/v1"'; mutations.append(malformed_claim)
+        ambiguous_comment = deepcopy(fixture); ambiguous_comment["issue_comments"][f"{CONTROL}:42"].append("ambiguous-provider-value"); mutations.append(ambiguous_comment)
+        generic_reason = deepcopy(fixture); body = json.loads(generic_reason["comments"]["501"]["body"]); body["reason"] = "approved"; generic_reason["comments"]["501"]["body"] = json.dumps(body, sort_keys=True, separators=(",", ":")); mutations.append(generic_reason)
         for item in mutations:
-            expect_validation_failure(repo, item)
+            expect_claim_failure(repo, item)
 
-        # Runtime/control and protected-repository credentials are intentionally distinct.
+        # Fresh-attempt provider binding: every canonical status must be trusted,
+        # unambiguous, immutable, and bound to a successful first-attempt run.
+        wrong_status_writer = deepcopy(fixture); wrong_status_writer["deployment_statuses"][f"{CONTROL}:801"][0]["creator"]["id"] = 99001; consumed_failure(repo, wrong_status_writer)
+        failure_status = deepcopy(fixture); failure_status["deployment_statuses"][f"{CONTROL}:801"][0].update({"state": "failure", "description": "eos-bypass-auth/v1 failure run=601 attempt=1"}); consumed_failure(repo, failure_status)
+        malformed_status = deepcopy(fixture); malformed_status["deployment_statuses"][f"{CONTROL}:801"][0]["description"] = "eos-bypass-auth/v1 ???"; consumed_failure(repo, malformed_status)
+        edited_status = deepcopy(fixture); edited_status["deployment_statuses"][f"{CONTROL}:801"][0]["updated_at"] = "2026-07-26T20:07:00Z"; consumed_failure(repo, edited_status)
+        duplicate_status = deepcopy(fixture); duplicate_status["deployment_statuses"][f"{CONTROL}:801"].append(deepcopy(duplicate_status["deployment_statuses"][f"{CONTROL}:801"][0])); consumed_failure(repo, duplicate_status)
+        bad_deployment_sha = deepcopy(fixture); bad_deployment_sha["deployment_responses"][0]["sha"] = "5" * 40; consumed_failure(repo, bad_deployment_sha)
+        bad_event = deepcopy(fixture); bad_event["runs"][f"{CONTROL}:601"]["event"] = "workflow_dispatch"; consumed_failure(repo, bad_event)
+        bad_attempt = deepcopy(fixture); bad_attempt["deployment_statuses"][f"{CONTROL}:801"][0]["description"] = "eos-bypass-auth/v1 success run=601 attempt=2"; consumed_failure(repo, bad_attempt)
+
         validator_path = repo / "scripts/enforcement/validate-bypass-approval.py"
         spec = importlib.util.spec_from_file_location("credential_test_validator", validator_path)
-        if spec is None or spec.loader is None:
-            raise AssertionError("cannot load validator for credential test")
-        validator_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(validator_module)
+        assert spec is not None and spec.loader is not None
+        validator_module = importlib.util.module_from_spec(spec); spec.loader.exec_module(validator_module)
         config = json.loads((repo / "scripts/enforcement/bypass-control-plane.json").read_text())
         args = argparse.Namespace(provider_fixture=None, timeout=10.0)
         with mock.patch.dict(os.environ, {"EOS_BYPASS_PROVIDER_TOKEN": "runtime-only"}, clear=True):
             try:
-                validator_module.make_provider(args, config)
-                raise AssertionError("runtime token was reused as protected-repository verifier credential")
+                validator_module.make_provider(args, config); raise AssertionError("runtime token was reused as protected verifier")
             except validator_module.ProviderError:
                 pass
         with mock.patch.dict(os.environ, {"EOS_BYPASS_PROVIDER_TOKEN": "runtime-control", "GITHUB_TOKEN_READ_ONLY": "protected-read"}, clear=True):
             separated = validator_module.make_provider(args, config)
-            if separated.control_token != "runtime-control" or separated.protected_token != "protected-read":
-                raise AssertionError("runtime/protected credential separation was not preserved")
+            assert separated.control_token == "runtime-control" and separated.protected_token == "protected-read"
 
-        # Lowercase Link pagination and timeout are fail-closed.
-        sys_path = str(repo / "scripts/enforcement/lib")
         import sys
-        sys.path.insert(0, sys_path)
+        sys.path.insert(0, str(repo / "scripts/enforcement/lib"))
         from github_provider import GitHubProvider, ProviderError, Response
         provider = GitHubProvider("c", "p", control_repository="o/c", protected_repository="o/p")
-
-        # Ordinary pagination is traversed, not treated as ambiguous: both ledgers
-        # grow without bound, so rejecting rel="next" permanently disabled the
-        # control plane once an issue passed 100 comments.
-        pages = [
-            Response(200, {"link": '<x>; rel="next"'}, [{"id": 1}]),
-            Response(200, {}, [{"id": 2}]),
-        ]
+        pages = [Response(200, {"link": '<x>; rel="next"'}, [{"id": 1}]), Response(200, {}, [{"id": 2}])]
         with mock.patch.object(provider, "_request", side_effect=pages):
-            collected = provider.issue_comments("o/c", 1)
-        if [item["id"] for item in collected] != [1, 2]:
-            raise AssertionError("paginated issue comments were not fully traversed")
-
-        # A provider that never stops paginating still fails closed.
+            assert [x["id"] for x in provider.issue_comments("o/c", 1)] == [1, 2]
         with mock.patch.object(provider, "_request", return_value=Response(200, {"link": '<x>; rel="next"'}, [])):
             try:
-                provider.issue_comments("o/c", 1)
-                raise AssertionError("unbounded pagination was not rejected")
+                provider.issue_comments("o/c", 1); raise AssertionError("unbounded pagination accepted")
             except ProviderError:
                 pass
-
-        # Non-integer path IDs cannot reach the request path.
         for bad in ("1%2F..%2F..", 1.0, True, 0, -1):
             try:
-                provider.issue_comment("o/c", bad)
-                raise AssertionError(f"non-integer path ID was accepted: {bad!r}")
+                provider.issue_comment("o/c", bad); raise AssertionError(f"bad path id accepted: {bad!r}")
             except ProviderError:
                 pass
-
         with mock.patch("urllib.request.OpenerDirector.open", side_effect=socket.timeout("timeout")):
             try:
-                provider.repository("o/c")
-                raise AssertionError("provider timeout was not rejected")
+                provider.repository("o/c"); raise AssertionError("timeout accepted")
             except ProviderError:
                 pass
-
-        # Redirects must never replay the Authorization header at another host.
         from github_provider import _NoRedirect
         try:
-            _NoRedirect().redirect_request(None, None, 302, "Found", {}, "https://evil.example/x")
-            raise AssertionError("HTTP redirect was not refused")
+            _NoRedirect().redirect_request(None, None, 302, "Found", {}, "https://evil.example/x"); raise AssertionError("redirect accepted")
         except ProviderError:
             pass
 
-        # An approval body that restates the provider-assigned comment ID or
-        # created_at is rejected: those are bound from the provider envelope, and
-        # accepting them in the authored body is the shape no human could publish.
         for field, value in (("approval_comment_id", 501), ("approval_created_at", "2026-07-26T20:00:00Z")):
-            self_referential = deepcopy(fixture)
-            comment = self_referential["comments"]["501"]
-            body = json.loads(comment["body"])
-            body[field] = value
-            comment["body"] = json.dumps(body, sort_keys=True, separators=(",", ":"))
-            failed = command(repo, "validate-bypass-approval.py", self_referential, common_args(), expect=1)
-            if "authored approval" not in failed.stderr:
-                raise AssertionError(f"self-referential {field} was rejected for the wrong reason: {failed.stderr}")
+            self_ref = deepcopy(fixture); body = json.loads(self_ref["comments"]["501"]["body"]); body[field] = value; self_ref["comments"]["501"]["body"] = json.dumps(body, sort_keys=True, separators=(",", ":"))
+            failed_cmd = command(repo, "validate-bypass-approval.py", self_ref, common_args("approval"), expect=1)
+            assert "authored approval" in failed_cmd.stderr
 
-        # The declared policy target contract constrains the evidence: an approval
-        # whose target does not carry the policy target_type is denied even though
-        # every other binding matches the request.
-        wrong_target = deepcopy(fixture)
-        wrong_target["comments"]["501"]["body"] = json.dumps(
-            {**json.loads(wrong_target["comments"]["501"]["body"]), "target": "staged-tree:deadbeef"},
-            sort_keys=True, separators=(",", ":"),
-        )
-        wrong_target_failure = command(
-            repo, "validate-bypass-approval.py", wrong_target,
-            [*common_args("approval")[:-2], "--target", "staged-tree:deadbeef",
-             "--approval-comment-id", "501"],
-            expect=1,
-        )
-        if "target_type" not in wrong_target_failure.stderr:
-            raise AssertionError(f"policy target_type was not the denial reason: {wrong_target_failure.stderr}")
+        wrong_target = deepcopy(fixture); body = json.loads(wrong_target["comments"]["501"]["body"]); body["target"] = "staged-tree:deadbeef"; wrong_target["comments"]["501"]["body"] = json.dumps(body, sort_keys=True, separators=(",", ":"))
+        fail_target = command(repo, "validate-bypass-approval.py", wrong_target, [*common_args("approval")[:-2], "--target", "staged-tree:deadbeef", "--approval-comment-id", "501"], expect=1)
+        assert "target_type" in fail_target.stderr
 
-        # Schema relevance is decided from the parsed object, never from a textual
-        # scan of the raw body. A durable claim whose `schema` key is written with
-        # an equivalent JSON escape parses identically but contains no literal
-        # `"schema"` text, so a prefilter-based reader skips it, reports zero
-        # claims, and would let the consumer write a second claim for the same
-        # approval. Full authorization must still succeed here.
-        escaped_key = deepcopy(fixture)
-        claim_ref = escaped_key["issue_comments"]["yotamfried-ux/eos-bypass-control:42"][1]
-        claim_ref["body"] = claim_ref["body"].replace('"schema":', '"\\u0073chema":', 1)
-        if '"schema":"eos-bypass-consumption/v1"' in claim_ref["body"]:
-            raise AssertionError("escaped-key fixture still contains a literal claim schema key")
-        command(repo, "validate-bypass-approval.py", escaped_key, common_args())
+        escaped_key = deepcopy(fixture); claim_ref = escaped_key["issue_comments"][f"{CONTROL}:42"][1]; claim_ref["body"] = claim_ref["body"].replace('"schema":', '"\\u0073chema":', 1)
+        command(repo, "validate-bypass-approval.py", escaped_key, common_args("claimed"))
 
-        # The two-issue contract is real: approvals live in the Approval Registry
-        # and consumption evidence lives in the Consumption Ledger. A claim posted
-        # to the approval issue is not durable consumption evidence.
-        claim_in_approval_issue = deepcopy(fixture)
-        ledger = claim_in_approval_issue["issue_comments"]
-        stray_claim = deepcopy(ledger["yotamfried-ux/eos-bypass-control:42"][1])
-        stray_claim["issue_url"] = "https://api.github.com/repos/yotamfried-ux/eos-bypass-control/issues/41"
-        ledger["yotamfried-ux/eos-bypass-control:42"] = [ledger["yotamfried-ux/eos-bypass-control:42"][0]]
-        ledger["yotamfried-ux/eos-bypass-control:41"].append(stray_claim)
-        misplaced = command(repo, "validate-bypass-approval.py", claim_in_approval_issue, common_args(), expect=1)
-        if "found 0" not in misplaced.stderr:
-            raise AssertionError(f"claim outside the consumption ledger was still accepted: {misplaced.stderr}")
+        misplaced = deepcopy(fixture); ledger = misplaced["issue_comments"]; stray = deepcopy(ledger[f"{CONTROL}:42"][1]); stray["issue_url"] = f"https://api.github.com/repos/{CONTROL}/issues/41"; ledger[f"{CONTROL}:42"] = [ledger[f"{CONTROL}:42"][0]]; ledger[f"{CONTROL}:41"].append(stray)
+        wrong_ledger = command(repo, "validate-bypass-approval.py", misplaced, common_args("claimed"), expect=1)
+        assert "found 0" in wrong_ledger.stderr
 
     print("test-bypass-provider-validation: PASS")
 
