@@ -147,9 +147,18 @@ def build(repo: Path):
         "finalizer_triggering_actor": "maintainer-user",
         "finalizer_event": "workflow_run",
     }
+    # A human-authored approval cannot restate the provider-assigned comment ID or
+    # created_at: GitHub assigns both only on publication and edits are rejected.
+    # The published body therefore omits them; the validator binds them from the
+    # provider envelope, which is what `approval` above represents.
+    authored_approval = {
+        key: value
+        for key, value in approval.items()
+        if key not in ("approval_comment_id", "approval_created_at")
+    }
     approval_comment = {
         "id": 501,
-        "body": json.dumps(approval, sort_keys=True, separators=(",", ":")),
+        "body": json.dumps(authored_approval, sort_keys=True, separators=(",", ":")),
         "created_at": approval["approval_created_at"],
         "updated_at": approval["approval_created_at"],
         "issue_url": "https://api.github.com/repos/yotamfried-ux/eos-bypass-control/issues/41",
@@ -330,18 +339,92 @@ def main():
         sys.path.insert(0, sys_path)
         from github_provider import GitHubProvider, ProviderError, Response
         provider = GitHubProvider("c", "p", control_repository="o/c", protected_repository="o/p")
+
+        # Ordinary pagination is traversed, not treated as ambiguous: both ledgers
+        # grow without bound, so rejecting rel="next" permanently disabled the
+        # control plane once an issue passed 100 comments.
+        pages = [
+            Response(200, {"link": '<x>; rel="next"'}, [{"id": 1}]),
+            Response(200, {}, [{"id": 2}]),
+        ]
+        with mock.patch.object(provider, "_request", side_effect=pages):
+            collected = provider.issue_comments("o/c", 1)
+        if [item["id"] for item in collected] != [1, 2]:
+            raise AssertionError("paginated issue comments were not fully traversed")
+
+        # A provider that never stops paginating still fails closed.
         with mock.patch.object(provider, "_request", return_value=Response(200, {"link": '<x>; rel="next"'}, [])):
             try:
                 provider.issue_comments("o/c", 1)
-                raise AssertionError("lowercase Link pagination was not rejected")
+                raise AssertionError("unbounded pagination was not rejected")
             except ProviderError:
                 pass
-        with mock.patch("urllib.request.urlopen", side_effect=socket.timeout("timeout")):
+
+        # Non-integer path IDs cannot reach the request path.
+        for bad in ("1%2F..%2F..", 1.0, True, 0, -1):
+            try:
+                provider.issue_comment("o/c", bad)
+                raise AssertionError(f"non-integer path ID was accepted: {bad!r}")
+            except ProviderError:
+                pass
+
+        with mock.patch("urllib.request.OpenerDirector.open", side_effect=socket.timeout("timeout")):
             try:
                 provider.repository("o/c")
                 raise AssertionError("provider timeout was not rejected")
             except ProviderError:
                 pass
+
+        # Redirects must never replay the Authorization header at another host.
+        from github_provider import _NoRedirect
+        try:
+            _NoRedirect().redirect_request(None, None, 302, "Found", {}, "https://evil.example/x")
+            raise AssertionError("HTTP redirect was not refused")
+        except ProviderError:
+            pass
+
+        # An approval body that restates the provider-assigned comment ID or
+        # created_at is rejected: those are bound from the provider envelope, and
+        # accepting them in the authored body is the shape no human could publish.
+        for field, value in (("approval_comment_id", 501), ("approval_created_at", "2026-07-26T20:00:00Z")):
+            self_referential = deepcopy(fixture)
+            comment = self_referential["comments"]["501"]
+            body = json.loads(comment["body"])
+            body[field] = value
+            comment["body"] = json.dumps(body, sort_keys=True, separators=(",", ":"))
+            failed = command(repo, "validate-bypass-approval.py", self_referential, common_args(), expect=1)
+            if "authored approval" not in failed.stderr:
+                raise AssertionError(f"self-referential {field} was rejected for the wrong reason: {failed.stderr}")
+
+        # The declared policy target contract constrains the evidence: an approval
+        # whose target does not carry the policy target_type is denied even though
+        # every other binding matches the request.
+        wrong_target = deepcopy(fixture)
+        wrong_target["comments"]["501"]["body"] = json.dumps(
+            {**json.loads(wrong_target["comments"]["501"]["body"]), "target": "staged-tree:deadbeef"},
+            sort_keys=True, separators=(",", ":"),
+        )
+        wrong_target_failure = command(
+            repo, "validate-bypass-approval.py", wrong_target,
+            [*common_args("approval")[:-2], "--target", "staged-tree:deadbeef",
+             "--approval-comment-id", "501"],
+            expect=1,
+        )
+        if "target_type" not in wrong_target_failure.stderr:
+            raise AssertionError(f"policy target_type was not the denial reason: {wrong_target_failure.stderr}")
+
+        # Schema relevance is decided from the parsed object, never from a textual
+        # scan of the raw body. A durable claim whose `schema` key is written with
+        # an equivalent JSON escape parses identically but contains no literal
+        # `"schema"` text, so a prefilter-based reader skips it, reports zero
+        # claims, and would let the consumer write a second claim for the same
+        # approval. Full authorization must still succeed here.
+        escaped_key = deepcopy(fixture)
+        claim_ref = escaped_key["issue_comments"]["yotamfried-ux/eos-bypass-control:41"][1]
+        claim_ref["body"] = claim_ref["body"].replace('"schema":', '"\\u0073chema":', 1)
+        if '"schema":"eos-bypass-consumption/v1"' in claim_ref["body"]:
+            raise AssertionError("escaped-key fixture still contains a literal claim schema key")
+        command(repo, "validate-bypass-approval.py", escaped_key, common_args())
 
     print("test-bypass-provider-validation: PASS")
 

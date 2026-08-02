@@ -16,6 +16,28 @@ class ProviderError(RuntimeError):
     pass
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Reject every redirect.
+
+    urllib's default handler replays the request — including the
+    ``Authorization`` header — at the redirect target. The ``api_base`` check
+    only constrains the first hop, so following a redirect could hand the
+    control or protected token to another host. Redirects fail closed instead.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D102
+        raise ProviderError(f"GitHub provider refused an HTTP {code} redirect")
+
+
+def _path_id(value: Any, label: str) -> int:
+    """Coerce a GitHub path ID to int so no caller can inject path segments."""
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ProviderError(f"{label} must be an integer path ID")
+    if value <= 0:
+        raise ProviderError(f"{label} must be a positive path ID")
+    return value
+
+
 @dataclass(frozen=True)
 class Response:
     status: int
@@ -24,6 +46,8 @@ class Response:
 
 
 class GitHubProvider:
+    MAX_COMMENT_PAGES = 50
+
     def __init__(
         self,
         control_token: str,
@@ -88,8 +112,9 @@ class GitHubProvider:
                 "Content-Type": "application/json",
             },
         )
+        opener = urllib.request.build_opener(_NoRedirect)
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with opener.open(request, timeout=self.timeout) as response:
                 raw = response.read()
                 status = response.status
                 headers = {str(k).lower(): str(v) for k, v in response.headers.items()}
@@ -122,7 +147,7 @@ class GitHubProvider:
 
     def issue_comment(self, full_name: str, comment_id: int) -> dict[str, Any]:
         owner, repo = self._split_repo(full_name)
-        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/issues/comments/{comment_id}"
+        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/issues/comments/{_path_id(comment_id, 'comment_id')}"
         return self.object_body(self._request("GET", path, token=self._token_for(full_name)), "issue comment")
 
     def collaborator_permission(self, full_name: str, login: str) -> dict[str, Any]:
@@ -132,28 +157,40 @@ class GitHubProvider:
 
     def workflow(self, full_name: str, workflow_id: int) -> dict[str, Any]:
         owner, repo = self._split_repo(full_name)
-        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/actions/workflows/{workflow_id}"
+        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/actions/workflows/{_path_id(workflow_id, 'workflow_id')}"
         return self.object_body(self._request("GET", path, token=self._token_for(full_name)), "workflow")
 
     def workflow_run(self, full_name: str, run_id: int) -> dict[str, Any]:
         owner, repo = self._split_repo(full_name)
-        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/actions/runs/{run_id}"
+        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/actions/runs/{_path_id(run_id, 'run_id')}"
         return self.object_body(self._request("GET", path, token=self._token_for(full_name)), "workflow run")
 
     def issue_comments(self, full_name: str, issue_number: int) -> list[Any]:
+        """Return every comment on the issue, traversing all pages.
+
+        Both ledgers grow without bound during ordinary durable use, so treating
+        normal pagination as ambiguous would permanently disable validation once
+        an issue passed 100 comments. Pages are walked to exhaustion instead, with
+        a hard bound so a misbehaving provider still fails closed.
+        """
         owner, repo = self._split_repo(full_name)
-        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/issues/{issue_number}/comments?per_page=100"
-        response = self._request("GET", path, token=self._token_for(full_name))
-        link = response.headers.get("link", "")
-        if 'rel="next"' in link:
-            raise ProviderError("ambiguous paginated issue comment response")
-        return self.list_body(response, "issue comments")
+        number = _path_id(issue_number, "issue_number")
+        base = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/issues/{number}/comments"
+        token = self._token_for(full_name)
+        collected: list[Any] = []
+        for page in range(1, self.MAX_COMMENT_PAGES + 1):
+            response = self._request("GET", f"{base}?per_page=100&page={page}", token=token)
+            batch = self.list_body(response, "issue comments")
+            collected.extend(batch)
+            if 'rel="next"' not in response.headers.get("link", ""):
+                return collected
+        raise ProviderError("issue comment pagination exceeded the supported bound")
 
     def create_issue_comment(self, full_name: str, issue_number: int, body: str) -> dict[str, Any]:
         if full_name != self.control_repository:
             raise ProviderError("write attempted outside the control repository")
         owner, repo = self._split_repo(full_name)
-        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/issues/{issue_number}/comments"
+        path = f"/repos/{urllib.parse.quote(owner, safe='')}/{urllib.parse.quote(repo, safe='')}/issues/{_path_id(issue_number, 'issue_number')}/comments"
         return self.object_body(
             self._request("POST", path, token=self.control_token, expected_status=(201,), payload={"body": body}),
             "created issue comment",

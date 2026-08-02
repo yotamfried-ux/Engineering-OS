@@ -291,7 +291,7 @@ _bypass_policy_fields() {
 # Approval references do not use the EOS_BYPASS_* prefix: those names are request
 # surfaces only. EOS_APPROVAL_COMMENT_ID is a provider object reference.
 bypass_request_authorized() {
-  local name="${1:-}" target="${2:-}" fingerprint="${3:-}"
+  local name="${1:-}" target="${2:-}" fingerprint="${3:-}" preimage_prefix="${4:-}"
   local fields gate action surface target_type fingerprint_contract classification
   local repository target_commit approval_ref
   [ -n "$name" ] || return 1
@@ -301,6 +301,15 @@ bypass_request_authorized() {
   IFS=$'\t' read -r gate action surface target_type fingerprint_contract classification <<<"$fields"
   [ "$classification" = "action-specific" ] \
     || { _bypass_reject "$name" "master or invalid bypass surface cannot authorize"; return 1; }
+  # The canonical policy declares the target form and the fingerprint preimage
+  # contract for each request. Enforce both here: this is the only layer that
+  # holds the preimage, so it is the only layer that can prove derivation.
+  case "$target" in
+    "$target_type"|"$target_type":*) : ;;
+    *) _bypass_reject "$name" "target does not match the canonical policy target_type"; return 1 ;;
+  esac
+  [ -n "$preimage_prefix" ] && [ "sha256:${preimage_prefix}" = "$fingerprint_contract" ] \
+    || { _bypass_reject "$name" "fingerprint was not derived from the canonical policy contract"; return 1; }
   approval_ref="${EOS_APPROVAL_COMMENT_ID:-}"
   case "$approval_ref" in *[!0-9]*|'') _bypass_reject "$name" "missing or invalid approval comment reference"; return 1 ;; esac
   repository="$(bypass_current_repository)" \
@@ -323,7 +332,7 @@ bypass_staged_tree_request() {
     || { _bypass_reject "$name" "staged tree identity is unavailable"; return 1; }
   fingerprint="$(bypass_sha256_text "staged-tree:${tree}")" \
     || { _bypass_reject "$name" "staged tree fingerprint failed"; return 1; }
-  bypass_request_authorized "$name" "staged-tree:${tree}" "$fingerprint"
+  bypass_request_authorized "$name" "staged-tree:${tree}" "$fingerprint" "staged-tree"
 }
 
 bypass_repository_tree_request() {
@@ -333,7 +342,7 @@ bypass_repository_tree_request() {
     || { _bypass_reject "$name" "repository tree identity is unavailable"; return 1; }
   fingerprint="$(bypass_sha256_text "repository-tree:${tree}")" \
     || { _bypass_reject "$name" "repository tree fingerprint failed"; return 1; }
-  bypass_request_authorized "$name" "repository-tree:${tree}" "$fingerprint"
+  bypass_request_authorized "$name" "repository-tree:${tree}" "$fingerprint" "repository-tree"
 }
 
 bypass_command_request() {
@@ -342,7 +351,7 @@ bypass_command_request() {
   [ -n "$command_text" ] || { _bypass_reject "$name" "command context is empty"; return 1; }
   fingerprint="$(bypass_sha256_text "canonical-command:${command_text}")" \
     || { _bypass_reject "$name" "command fingerprint failed"; return 1; }
-  bypass_request_authorized "$name" "command:${command_text}" "$fingerprint"
+  bypass_request_authorized "$name" "command:${command_text}" "$fingerprint" "canonical-command"
 }
 
 bypass_hook_input_request() {
@@ -351,7 +360,7 @@ bypass_hook_input_request() {
   [ -n "$input" ] || { _bypass_reject "$name" "hook input context is empty"; return 1; }
   fingerprint="$(bypass_sha256_text "canonical-hook-input:${input}")" \
     || { _bypass_reject "$name" "hook input fingerprint failed"; return 1; }
-  bypass_request_authorized "$name" "$target" "$fingerprint"
+  bypass_request_authorized "$name" "$target" "$fingerprint" "canonical-hook-input"
 }
 
 bypass_commit_message_request() {
@@ -359,7 +368,7 @@ bypass_commit_message_request() {
   eos_truthy "${!name:-}" || return 1
   fingerprint="$(bypass_sha256_text "commit-message:${message}")" \
     || { _bypass_reject "$name" "commit-message fingerprint failed"; return 1; }
-  bypass_request_authorized "$name" "commit-message" "$fingerprint"
+  bypass_request_authorized "$name" "commit-message" "$fingerprint" "commit-message"
 }
 
 bypass_commit_message_staged_tree_request() {
@@ -369,7 +378,7 @@ bypass_commit_message_staged_tree_request() {
     || { _bypass_reject "$name" "staged tree identity is unavailable"; return 1; }
   fingerprint="$(bypass_sha256_text "commit-message-and-staged-tree:${message}\n${tree}")" \
     || { _bypass_reject "$name" "commit-message/staged-tree fingerprint failed"; return 1; }
-  bypass_request_authorized "$name" "commit-message-and-staged-tree:${tree}" "$fingerprint"
+  bypass_request_authorized "$name" "commit-message-and-staged-tree:${tree}" "$fingerprint" "commit-message-and-staged-tree"
 }
 
 # Force/main push approvals bind the exact command, destination ref, and the live
@@ -385,8 +394,18 @@ try: toks=shlex.split(sys.stdin.read())
 except Exception: raise SystemExit(1)
 try: i=toks.index("git")
 except ValueError: raise SystemExit(1)
-if i+1>=len(toks) or toks[i+1] != "push": raise SystemExit(1)
-args=toks[i+2:]
+j=i+1
+# Skip the same global options the detector accepts, so an approved request for
+# "git -c key=value push ..." is not denied before provider validation.
+value_globals={"-c","--git-dir","--work-tree","--namespace","--exec-path","--config-env"}
+while j<len(toks):
+    tok=toks[j]
+    if tok in value_globals: j+=2; continue
+    if tok.startswith("--git-dir=") or tok.startswith("--work-tree=") or tok.startswith("--namespace=") or tok.startswith("--exec-path=") or tok.startswith("--config-env="): j+=1; continue
+    if tok in {"--no-pager","--paginate","--bare","--literal-pathspecs","--no-replace-objects"}: j+=1; continue
+    break
+if j>=len(toks) or toks[j] != "push": raise SystemExit(1)
+args=toks[j+1:]
 value_opts={"--repo","--receive-pack","--exec"}
 position=[]; skip=False
 for tok in args:
@@ -407,12 +426,19 @@ print(remote+"\t"+dst)
 ''' 2>/dev/null)" \
     || { _bypass_reject "$name" "git push destination is ambiguous"; return 1; }
   IFS=$'\t' read -r remote ref <<<"$parsed"
-  remote_head="$(timeout 10s git ls-remote "$remote" "$ref" 2>/dev/null | awk 'NR==1 {print $1}')" \
+  # The exit status of a pipeline is the status of its last command, so piping
+  # straight into awk would mask a timeout, auth failure, or network error and
+  # bind the fingerprint to "absent". Capture first, check status, then reduce.
+  local lookup_output lookup_status=0
+  lookup_output="$(timeout 10s git ls-remote "$remote" "$ref" 2>/dev/null)" || lookup_status=$?
+  [ "$lookup_status" -eq 0 ] \
+    || { _bypass_reject "$name" "live remote head lookup failed"; return 1; }
+  remote_head="$(printf '%s\n' "$lookup_output" | awk 'NR==1 {print $1}')" \
     || { _bypass_reject "$name" "live remote head lookup failed"; return 1; }
   [ -n "$remote_head" ] || remote_head="absent"
   fingerprint="$(bypass_sha256_text "command-ref-and-remote-head:${command_text}\n${remote}\n${ref}\n${remote_head}")" \
     || { _bypass_reject "$name" "git-ref fingerprint failed"; return 1; }
-  bypass_request_authorized "$name" "git-ref:${remote}:${ref}:${remote_head}" "$fingerprint"
+  bypass_request_authorized "$name" "git-ref:${remote}:${ref}:${remote_head}" "$fingerprint" "command-ref-and-remote-head"
 }
 
 # bypass_active <request-name> <gate> <action> <surface> <repository>

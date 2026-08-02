@@ -35,6 +35,14 @@ APPROVAL_FIELDS = (
     "control_default_branch_sha",
 )
 
+# GitHub assigns the comment ID and created_at only after the approval comment is
+# published, and edited approvals are rejected. A human-authored approval body
+# therefore must not restate them: they are bound from the provider envelope.
+PROVIDER_BOUND_APPROVAL_FIELDS = ("approval_comment_id", "approval_created_at")
+AUTHORED_APPROVAL_FIELDS = tuple(
+    field for field in APPROVAL_FIELDS if field not in PROVIDER_BOUND_APPROVAL_FIELDS
+)
+
 CLAIM_FIELDS = (
     "schema", "approval_digest", "protected_repository", "protected_repository_id",
     "control_repository", "control_repository_id", "approval_issue_id",
@@ -287,7 +295,16 @@ def _validate_common_binding(value: Mapping[str, Any], policy: Mapping[str, Poli
     for field in ("gate", "action", "surface"):
         if value[field] != getattr(entry, field):
             raise ContractError(f"{field} does not match canonical policy")
-    nonempty_string(value["target"], "target")
+    # The declared policy contract columns constrain the evidence, not just the
+    # gate triple. Derivation itself is enforced at the request site, which is the
+    # only place that holds the fingerprint preimage.
+    target = nonempty_string(value["target"], "target")
+    if target != entry.target_type and not target.startswith(f"{entry.target_type}:"):
+        raise ContractError("target does not match the canonical policy target_type")
+    if not entry.fingerprint_contract.startswith("sha256:") or entry.fingerprint_contract == "sha256:":
+        raise ContractError("canonical policy declares an unsupported fingerprint_contract")
+    if entry.target_commit_contract != "exact-protected-head":
+        raise ContractError("canonical policy declares an unsupported target_commit_contract")
     validate_digest(value["target_fingerprint"], "target_fingerprint")
     validate_sha(value["target_commit"], "target_commit")
     nonce = nonempty_string(value["nonce"], "nonce")
@@ -297,14 +314,33 @@ def _validate_common_binding(value: Mapping[str, Any], policy: Mapping[str, Poli
     return entry
 
 
-def validate_approval_shape(value: Mapping[str, Any], policy: Mapping[str, PolicyEntry]) -> None:
-    require_exact_fields(value, APPROVAL_FIELDS, "approval")
+def bind_provider_approval(
+    authored: Mapping[str, Any], comment_id: Any, created_at: Any
+) -> dict[str, Any]:
+    """Bind provider-assigned identity/time onto a human-authored approval body."""
+    positive_int(comment_id, "approval_comment_id")
+    parse_timestamp(created_at, "approval_created_at")
+    bound = dict(authored)
+    bound["approval_comment_id"] = comment_id
+    bound["approval_created_at"] = created_at
+    return bound
+
+
+def validate_approval_shape(
+    value: Mapping[str, Any], policy: Mapping[str, PolicyEntry], *, authored: bool = False
+) -> None:
+    require_exact_fields(
+        value,
+        AUTHORED_APPROVAL_FIELDS if authored else APPROVAL_FIELDS,
+        "authored approval" if authored else "approval",
+    )
     if value["schema"] != APPROVAL_SCHEMA:
         raise ContractError("unsupported approval schema")
     positive_int(value["protected_repository_id"], "protected_repository_id")
     positive_int(value["control_repository_id"], "control_repository_id")
     positive_int(value["approval_issue_id"], "approval_issue_id")
-    positive_int(value["approval_comment_id"], "approval_comment_id")
+    if not authored:
+        positive_int(value["approval_comment_id"], "approval_comment_id")
     positive_int(value["issuer_user_id"], "issuer_user_id")
     positive_int(value["consumer_workflow_id"], "consumer_workflow_id")
     positive_int(value["finalizer_workflow_id"], "finalizer_workflow_id")
@@ -320,10 +356,11 @@ def validate_approval_shape(value: Mapping[str, Any], policy: Mapping[str, Polic
     reason = nonempty_string(value["reason"], "reason")
     if len(reason) < 20 or reason.casefold() in GENERIC_REASONS:
         raise ContractError("approval reason is blank, generic, or too short")
-    created = parse_timestamp(value["approval_created_at"], "approval_created_at")
     expires = parse_timestamp(value["expires_at"], "expires_at")
-    if expires <= created or expires - created > MAX_APPROVAL_LIFETIME:
-        raise ContractError("approval expiry must be after provider created_at and within four hours")
+    if not authored:
+        created = parse_timestamp(value["approval_created_at"], "approval_created_at")
+        if expires <= created or expires - created > MAX_APPROVAL_LIFETIME:
+            raise ContractError("approval expiry must be after provider created_at and within four hours")
     validate_sha(value["control_default_branch_sha"], "control_default_branch_sha")
     _validate_common_binding(value, policy)
 

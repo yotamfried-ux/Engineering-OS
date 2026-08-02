@@ -20,6 +20,7 @@ from bypass_contract import (  # noqa: E402
     CLAIM_SCHEMA,
     MARKER_SCHEMA,
     ContractError,
+    bind_provider_approval,
     digest_json,
     load_json,
     load_policy,
@@ -31,7 +32,8 @@ from bypass_contract import (  # noqa: E402
 )
 from github_provider import FixtureProvider, GitHubProvider, ProviderError  # noqa: E402
 
-SCHEMA_HINT_RE = re.compile(r'"schema"\s*:\s*"(eos-bypass-(?:approval|consumption|marker)/v1)"')
+KNOWN_SCHEMAS = frozenset({APPROVAL_SCHEMA, CLAIM_SCHEMA, MARKER_SCHEMA})
+SCHEMA_TEXT_HINT = "eos-bypass-"
 
 
 def issue_number_from_url(value: Any) -> int | None:
@@ -61,14 +63,37 @@ def parse_json_comment(body: Any, schema: str, label: str) -> dict[str, Any]:
 
 
 def iter_schema_comments(comments: list[Any], schema: str, label: str):
+    """Yield records of `schema`, deciding relevance from the parsed object.
+
+    A textual hint only decides whether a comment *intends* to be a schema
+    record, so ordinary human issue comments are skipped. The authoritative
+    `schema` key then decides which record it actually is: a value that sorts
+    before `schema` (such as an attacker-chosen `target`) can no longer
+    misattribute a record and hide a durable claim or marker.
+    """
     for comment in comments:
         if not isinstance(comment, dict):
             raise ContractError(f"ambiguous provider result in {label} comments")
         body = comment.get("body")
-        hint = SCHEMA_HINT_RE.search(body) if isinstance(body, str) else None
-        if hint is None:
+        if not isinstance(body, str):
             continue
-        if hint.group(1) != schema:
+        try:
+            parsed = json.loads(body)
+        except json.JSONDecodeError as exc:
+            # Ordinary human issue comments are not JSON and are simply chatter.
+            # A body that textually intends to be a record but will not parse is
+            # malformed evidence and fails closed.
+            if SCHEMA_TEXT_HINT in body:
+                raise ContractError(f"{label} candidate contains malformed JSON") from exc
+            continue
+        if not isinstance(parsed, dict):
+            continue
+        declared = parsed.get("schema")
+        if declared is None:
+            continue
+        if declared not in KNOWN_SCHEMAS:
+            raise ContractError(f"{label} candidate declares an unknown schema")
+        if declared != schema:
             continue
         yield parse_json_comment(body, schema, label), comment
 
@@ -169,12 +194,14 @@ def verify_approval(
     created_at = comment.get("created_at")
     if comment.get("updated_at") != created_at:
         raise ContractError("edited approval comments are forbidden")
-    approval = parse_json_comment(comment.get("body"), APPROVAL_SCHEMA, "approval comment")
+    # The authored body must omit the provider-assigned comment ID and created_at:
+    # GitHub assigns both only on publication and edits are rejected, so an owner
+    # could never author a body that restated them. They are bound from the
+    # provider envelope instead, which keeps provider created_at authoritative.
+    authored = parse_json_comment(comment.get("body"), APPROVAL_SCHEMA, "approval comment")
+    validate_approval_shape(authored, policy, authored=True)
+    approval = bind_provider_approval(authored, approval_comment_id, created_at)
     validate_approval_shape(approval, policy)
-    if approval["approval_comment_id"] != approval_comment_id:
-        raise ContractError("approval payload comment ID mismatch")
-    if approval["approval_created_at"] != created_at:
-        raise ContractError("approval time must equal provider created_at")
     if approval["approval_issue_id"] != config["issues"]["approval"]:
         raise ContractError("approval payload issue mismatch")
     if approval["protected_repository"] != protected_name or approval["control_repository"] != control_name:

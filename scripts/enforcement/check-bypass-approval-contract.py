@@ -16,7 +16,7 @@ BYPASS_RE = re.compile(r"\bEOS_BYPASS_[A-Z0-9_]+\b")
 FALLBACK_RE = re.compile(r"(?:function\s+)?bypass_active\s*(?:\(\s*\))?\s*\{")
 DIRECT_TRUTHY_RE = re.compile(
     r"(?:case\s+[^\n]*|\[\[?[^\n]*|\btest\s+[^\n]*)"
-    r"\$\{?EOS_BYPASS_[A-Z0-9_]+(?:[^\n}]*)?"
+    r"\$\{?(EOS_BYPASS_[A-Z0-9_]+)(?:[^\n}]*)?"
 )
 OVERRIDE_RE = re.compile(r"EOS_(?:BYPASS_)?(?:VALIDATOR|POLICY|CONTROL_PLANE|PROVIDER)_PATH")
 TAG_RE = re.compile(r"(?:git\s+tag|refs/tags|git\s+push[^\n]*--tags|git\s+update-ref\s+refs/tags)", re.I)
@@ -74,7 +74,13 @@ def main() -> int:
         if args.strict_runtime:
             if path.name != "evidence.sh" and FALLBACK_RE.search(text):
                 errors.append(f"{rel}: local bypass_active fallback is forbidden")
-            if DIRECT_TRUTHY_RE.search(text):
+            # Internal plumbing names (provider token, validator/policy paths) are
+            # configuration, not authorization switches. Guarding on them must not
+            # be reported as direct environment authorization.
+            if any(
+                match not in INTERNAL_BYPASS_ENV
+                for match in DIRECT_TRUTHY_RE.findall(text)
+            ):
                 errors.append(f"{rel}: direct environment authorization is forbidden")
             if path.name != "evidence.sh" and OVERRIDE_RE.search(text):
                 errors.append(f"{rel}: validator/policy/control-plane path override is forbidden")
