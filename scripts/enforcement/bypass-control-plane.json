@@ -3,7 +3,8 @@
     "reusable_workflow_path": ".github/workflows/bypass-consumer-reusable.yml",
     "workflow_id": 0,
     "workflow_path": ".github/workflows/consume-bypass.yml",
-    "writer_login": "github-actions[bot]"
+    "writer_login": "github-actions[bot]",
+    "writer_user_id": 41898282
   },
   "contracts": {
     "approval_schema": "eos-bypass-approval/v1",
@@ -18,13 +19,15 @@
     "default_branch": "main",
     "full_name": "",
     "id": 0,
-    "private_required": true
+    "private_required": true,
+    "trusted_default_branch_sha": ""
   },
   "finalizer": {
     "reusable_workflow_path": ".github/workflows/bypass-finalizer-reusable.yml",
     "workflow_id": 0,
     "workflow_path": ".github/workflows/finalize-bypass.yml",
-    "writer_login": "github-actions[bot]"
+    "writer_login": "github-actions[bot]",
+    "writer_user_id": 41898282
   },
   "forbidden": {
     "environment_path_overrides": true,
