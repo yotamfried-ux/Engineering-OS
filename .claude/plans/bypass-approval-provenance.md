@@ -127,7 +127,8 @@ The one-shot correction is required by the audit's explicit reused-approval deni
 - superseded pre-merge: `6855c7d66c08edba02ff9ab9adbcb79c19cc4d1f` had green CI but was later proven to permit repeat authorization from the same approval; that evidence is historical only.
 - one-shot regression: `4100a29a4f6a9f65ab0659247531059dd2a90d35` added a regression that failed on the repeat-authorization defect.
 - corrected implementation: exact code/docs target `7795c967c1be5ecadd7e31c68da3159067316368` passed 111/111 `test-*.sh`, 0 failures, 0 real timeouts; 192 shell files passed `bash -n`, 42 Python files compiled, 19 YAML files parsed, provider validation/clean install/installed target/one-shot hardening passed. Temporary export workflow was removed in `554ae5b14ec08ddf455325647ab37a3c29eb9333`.
-- scope correction: live bootstrap work after `554ae5b14ec08ddf455325647ab37a3c29eb9333` was compared to the canonical audit and removed from the PR branch; final CI/review evidence must now be regenerated on the corrected exact head.
+- scope correction: live bootstrap work after `554ae5b14ec08ddf455325647ab37a3c29eb9333` was compared to the canonical audit and removed from the PR branch. `166ef92f057fe27c77e430479360f77389406831` realigned this plan, `bb32365c8f5b6352c815ad4e6d8ef0b3694fb0ca` made provider enablement explicitly optional, and `6019f0e0a03901c2b476c279bce427a4faaa30c9` removed GitHub App provisioning from the merge contract. No bypass implementation/config/test behavior changed in those three commits.
+- pre-merge scope checkpoint: the corrected branch now contains only the audit-required implementation plus optional reference deployment material; exact-head CI and fresh review must be regenerated before owner approval.
 
 ## Claude Run Trace
 
@@ -139,7 +140,7 @@ The one-shot correction is required by the audit's explicit reused-approval deni
 ## Validation Plan
 
 1. Reconcile the PR diff against the canonical audit/registry — complete.
-2. Remove bootstrap/qualification-only commits and update scope evidence — complete/in progress for documentation.
+2. Remove bootstrap/qualification-only commits and update scope evidence — complete.
 3. Re-run focused bypass/provider/one-shot/fail-closed checks and full exact-head CI.
 4. Reconcile fresh CodeRabbit/Codex review on the corrected exact head.
 5. Stop for explicit owner approval of that exact head.
