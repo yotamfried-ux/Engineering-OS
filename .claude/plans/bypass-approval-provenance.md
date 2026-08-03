@@ -46,7 +46,7 @@ No additional live-control-plane readiness claim is part of this gap.
 
 ## Root Cause and Architecture
 
-Before this PR, local truthy environment variables could directly activate bypass paths. The implementation replaces that behavior with one canonical policy and validator. Approval identity/scope/freshness are checked against provider evidence; durable claim/marker evidence is written by a separate trusted execution path; repeated or conflicting evidence denies; master bypass requests remain permanently disabled.
+Before this PR, local truthy environment variables could directly activate bypass paths. The implementation replaces that behavior with one canonical policy and validator. Approval identity/scope/freshness are checked against provider evidence; durable claim/marker evidence is written by a separate trusted execution path; repeated or conflicting evidence denies; master requests remain permanently disabled.
 
 The one-shot correction is required by the audit's explicit reused-approval denial. `validate-bypass-approval.py --stage consumed` therefore cannot re-authorize by simply re-reading an old marker; a fresh provider-backed attempt must be tied to the unique durable reservation. This security property remains in scope. The later bootstrap-SHA/live-qualification work was operationalization scope and has been removed from this branch.
 
@@ -69,7 +69,7 @@ The one-shot correction is required by the audit's explicit reused-approval deni
 ## Documentation Asset Evidence
 
 - internal: `CLAUDE.md`; `core/workflow.md`; `core/hooks-policy.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/merge-readiness-checklist.md`.
-- context7: not required; this correction is governed by the repository's canonical audit and already-reviewed GitHub provider contract rather than a new vendor integration decision.
+- context7: not required for this scope-correction change because it does not alter a vendor/API contract or implementation behavior; it only reconciles PR merge criteria with the repository-owned canonical audit and gap registry, while the GitHub provider semantics used by the retained implementation were already reviewed and unchanged.
 - decision: narrowed the PR back to the audit-defined anti-forgery/one-shot enforcement contract and removed live bootstrap/qualification as a merge requirement.
 
 ## Source of Truth Checks
@@ -128,7 +128,7 @@ The one-shot correction is required by the audit's explicit reused-approval deni
 - one-shot regression: `4100a29a4f6a9f65ab0659247531059dd2a90d35` added a regression that failed on the repeat-authorization defect.
 - corrected implementation: exact code/docs target `7795c967c1be5ecadd7e31c68da3159067316368` passed 111/111 `test-*.sh`, 0 failures, 0 real timeouts; 192 shell files passed `bash -n`, 42 Python files compiled, 19 YAML files parsed, provider validation/clean install/installed target/one-shot hardening passed. Temporary export workflow was removed in `554ae5b14ec08ddf455325647ab37a3c29eb9333`.
 - scope correction: live bootstrap work after `554ae5b14ec08ddf455325647ab37a3c29eb9333` was compared to the canonical audit and removed from the PR branch. `166ef92f057fe27c77e430479360f77389406831` realigned this plan, `bb32365c8f5b6352c815ad4e6d8ef0b3694fb0ca` made provider enablement explicitly optional, and `6019f0e0a03901c2b476c279bce427a4faaa30c9` removed GitHub App provisioning from the merge contract. No bypass implementation/config/test behavior changed in those three commits.
-- pre-merge scope checkpoint: the corrected branch now contains only the audit-required implementation plus optional reference deployment material; exact-head CI and fresh review must be regenerated before owner approval.
+- pre-merge: after the last code/config/test target `7795c967c1be5ecadd7e31c68da3159067316368` passed 111/111 local test suites plus provider validation, clean install, installed-target, static shell/Python/YAML checks and one-shot/fail-closed regressions, the temporary export workflow was removed in `554ae5b14ec08ddf455325647ab37a3c29eb9333`. The later audit-scope correction removed 11 unrelated bootstrap/qualification commits and changed only plan/runbook/template documentation; therefore the concrete implementation checkpoint remains the verified `7795c967...` behavior, while final exact-head CI is regenerated for the documentation-corrected branch before owner approval.
 
 ## Claude Run Trace
 
