@@ -8,9 +8,9 @@ This document is the canonical status map and closure contract for Engineering O
 - **Canonical repository:** `yotamfried-ux/Engineering-OS`
 - **Target repository:** `yotamfried-ux/project-8`
 - **Canonical gap registry:** `docs/operations/known-gaps.tsv`
-- **Last verified:** 2026-07-25 Asia/Jerusalem / 2026-07-24 UTC
+- **Last verified:** 2026-08-03 UTC
 - **Intended readers:** LLMs, maintainers, reviewers, and operators with no prior conversation context
-- **Snapshot only:** Engineering OS `main` was inspected at `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.
+- **Snapshot only:** Engineering OS `main` was inspected at `f9449e708f9cfaff89458419baea2b96a3af8210`; Project 8 `main` at `3ca98089045df7256755bacd4a9a1b8500624874`; merged Project 8 PR #9 reviewed head at `8591d2569fb7fcd2481670fe814c5ec46becb8aa`. Mutable state must always be re-fetched before a decision.
 
 ## Purpose and audience
 
@@ -187,13 +187,13 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | eos-repo-boundary-sync-drift | open | P1 | Required-hook parity across settings surfaces. |
 | audit-live-state-verification | closed | P0 | Audit live state verification. |
 | hard-hook-fail-closed | closed | P0 | Hard hook infrastructure failure semantics; observed PR, push, and artifact evidence was reconciled by `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`). |
-| bypass-approval-provenance | open | P1 | Bypass authorization and consumption provenance. |
+| bypass-approval-provenance | closed | P1 | Technical bypass authorization and one-shot consumption are closed; behavioral effectiveness is observed in the experiment. |
 | pattern-registry-canonical-drift | open | P1 | Pattern lifecycle canonical ownership. |
 | pattern-evidence-maturity | open | P2 | Real multi-context pattern outcomes. |
 | documentation-runtime-state-drift | closed | P1 | Active documentation and executable-owner consistency. |
 | audit-self-contained-contract | closed | P0 | Audit self contained contract. |
 | full-readiness-claim-semantics | open | P1 | Canonical state vocabulary and final assertion. |
-| project8-experiment-blindness | open | P0 | Project8 experiment blindness. |
+| project8-experiment-blindness | closed | P0 | Project 8 product-only blindness boundary is technically closed; behavioral effectiveness is observed in the experiment. |
 | telemetry-archive-import-integrity | open | P1 | Import-time bundle integrity and identity. |
 | merge-readiness-exact-head-and-attempt-ordering | closed | P0 | Exact-head latest-attempt merge evidence. |
 
@@ -237,7 +237,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | Project install contract | Enforced | Gate: install-policy-gates and generated-target tests. Owner: install-governance. Evidence: downstream behavior fixtures. | Cross-boundary hook parity remains open. |
 | Required-hook settings parity | Missing enforcement | Gate: installer patchers and verify modes. Owner: install-governance. Evidence: checked-in, direct-mode, user-dispatcher, and generated-target settings. | gap:eos-repo-boundary-sync-drift — required hooks can differ across four runtime surfaces. |
 | Hard-hook blocking semantics | Enforced | Gate: hook classification, canonical hard/soft wrappers, static contract validation, installed-target regressions, exact-head CI, and live-state reconciliation. Owner: hooks-governance. Evidence: PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`; PR workflows `pr-policy` 1770 / `30115981865`; `enforcement-tests` 1463 / `30115055846`; `workflow-evidence-policy` 1230 / `30115055765`; `connector-evidence-policy` 1241 / `30115055853`; `capability-evidence-policy` 1123 / `30115056044`; `documentation-asset-policy` 879 / `30115055789`; `plan-policy` 1242 / `30115055798`; `semantic-cleanup-policy` 903 / `30115055848`; `import-cleanup-policy` 903 / `30115056039`; and `telemetry-handoff-tests` 365 / `30115055914`; 11 resolved review threads; approval comment `5074786377`; merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; push workflows `post-merge-validation` 93 / `30128189835` and `enforcement-tests` 1464 / `30128189839`, both `completed/success` on merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; reconciliation `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`). | Closed; queued or `in_progress` required runs and completed non-success conclusions fail closed in the live validator. |
-| Enforcement bypass provenance | Missing enforcement | Gate: evidence ledger records bypass names. Owner: hooks-governance. Evidence: `bypass_active()`. | gap:bypass-approval-provenance — env-only requests are not durable human authorization. |
+| Enforcement bypass provenance | Enforced | Gate: canonical provider-backed bypass validator and one-shot consumption path. Owner: hooks-governance. Evidence: PR #264 reviewed head `335bd0ba1b92c60e02f0a18a6197587b4c940c0a`, 111/111 local enforcement suites, installed-target validation, exact-head CI, 46 resolved review threads, and merge `f9449e708f9cfaff89458419baea2b96a3af8210` identical to `main`. | Technical implementation closed. Behavioral effectiveness remains an experiment observation, not a pre-experiment blocker. |
 | Result Loop Contract enforcement | Enforced | Gate: named result-loop CI plus Operational Work History. Owner: ops-readiness. Evidence: fixtures and real positive/negative PRs. | Contract semantics are reviewed. |
 | Operational work history evidence | Enforced | Gate: check-operational-work-history-evidence.sh through pr-policy. Owner: ops-readiness. Evidence: fixtures and real PRs. | Human interpretation remains reviewed. |
 | Scaling extension enforcement | Enforced | Gate: named scaling CI step. Owner: ops-readiness. Evidence: scaling fixtures and merged evidence. | Deep roadmap quality is reviewed. |
@@ -249,7 +249,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | Project 8 technical qualification evidence | Missing enforcement | Gate: mandatory telemetry preflight exists. Owner: ops-readiness. Evidence: Project 8 preflight and findings runbook. | gap:project-8-real-run-evidence — fresh transport, identity, counts, and boundary evidence are missing. |
 | Remote multi-repository telemetry dispatch | Partially enforced | Gate: dispatcher fixtures cover attribution, isolation, policy, failures, and PR matching. Owner: ops-readiness. Evidence: deterministic tests plus failed live attempt. | gap:dispatch-scope-double-record and gap:multirepo-remote-telemetry-validation — a fresh successful qualification session is required. |
 | Full-readiness claim semantics | Partially enforced | Gate: merged `--assert-full-ready` and positive/negative fixtures. Owner: ops-readiness. Evidence: canonical checker/test on `main`. | gap:full-readiness-claim-semantics — canonical state vocabulary and terminal live proof remain required. |
-| Project 8 behavioral blindness | Missing enforcement | Gate: Project 8 PR #9 adds a product-only Markdown boundary. Owner: ops-readiness. Evidence: current target main and exact PR head. | gap:project8-experiment-blindness — target guidance still coaches and discloses the experiment until merge and fresh-session proof. |
+| Project 8 behavioral blindness | Enforced | Gate: Project 8 product-only boundary and telemetry-only runtime configuration. Owner: ops-readiness. Evidence: PR #9 head `8591d2569fb7fcd2481670fe814c5ec46becb8aa`, all exact-head checks green, 12 resolved review threads, owner-approved merge `3ca98089045df7256755bacd4a9a1b8500624874`, `main` identical, local coaching removed, and telemetry hooks retained. | Technical implementation closed. Behavioral effectiveness remains an experiment observation, not a pre-experiment blocker. |
 | Git/branch policy | Enforced | Gate: pr-policy. Owner: merge-governance. Evidence: merge readiness artifact. | Machine verification of run recency is tracked separately. |
 | PR review / external review | Enforced | Gate: check-pr-review-evidence.sh through pr-policy. Owner: review-governance. Evidence: review fixtures. | Review depth is human. |
 | Merge safety exact-head and latest-attempt evidence | Enforced | Gate: `check-merge-readiness.sh` plus exact-head merge procedure. Owner: merge-governance. Evidence: PR #257 reviewed head `fedf8d069a8634085c650ea6381c1c0dabfdc368`, enforcement run 1384, latest `pr-policy` run 1679, owner approval comment `5060947961`, expected-head protected merge `efb36cca413602cde3cd20aa17d32b3379f9eb53`, and `docs/operations/live-state-claims.json`. | Closed; the live claim must continue to verify pull-request and post-merge push workflows. |
@@ -275,23 +275,19 @@ All Phase 0 gaps are closed. Merge decisions use exact-head latest-attempt evide
 
 Exit: satisfied; proceed to Phase 1 in dependency order.
 
-### Phase 1 — close deterministic enforcement and integrity defects
+### Phase 1 — close remaining deterministic enforcement and integrity defects
 
-1. `gap:bypass-approval-provenance`
-2. `gap:eos-repo-boundary-sync-drift`
-3. `gap:pattern-registry-canonical-drift`
-4. `gap:telemetry-archive-import-integrity`
+`gap:bypass-approval-provenance` is technically closed through PR #264; experiment behavior remains an observation rather than a blocker. Remaining work:
+
+1. `gap:eos-repo-boundary-sync-drift`
+2. `gap:pattern-registry-canonical-drift`
+3. `gap:telemetry-archive-import-integrity`
 
 Exit: protected actions fail safely, bypasses require durable approval, required hooks are wired consistently, pattern state has one owner, and archive import validates integrity before mutation.
 
-### Phase 2 — remove target coaching
+### Phase 2 — target coaching boundary technically complete
 
-1. Re-verify Project 8 PR #9 exact head, diff, required checks, latest attempts, and all threads.
-2. Obtain owner approval and merge with expected-head protection.
-3. Run post-merge product-boundary checks.
-4. Open a fresh session and prove removed guidance was not loaded.
-5. Prove one natural routed action without supplying the future workload prompt.
-6. Close `gap:project8-experiment-blindness`.
+Project 8 PR #9 was reviewed, owner-approved, and squash-merged as `3ca98089045df7256755bacd4a9a1b8500624874`. `project-8/main` is product-only with telemetry/runtime configuration retained and model-visible Engineering OS coaching removed. `gap:project8-experiment-blindness` is technically closed. Whether the model behaves blindly in practice is an experiment observation, not a pre-experiment blocker.
 
 ### Phase 3 — technical qualification, not behavioral experiment
 
@@ -380,14 +376,16 @@ Official basis: <https://code.claude.com/docs/en/hooks>.
 - [x] PR #262 passed all ten required exact-head workflows: `pr-policy` 1770 / `30115981865`; `enforcement-tests` 1463 / `30115055846`; `workflow-evidence-policy` 1230 / `30115055765`; `connector-evidence-policy` 1241 / `30115055853`; `capability-evidence-policy` 1123 / `30115056044`; `documentation-asset-policy` 879 / `30115055789`; `plan-policy` 1242 / `30115055798`; `semantic-cleanup-policy` 903 / `30115055848`; `import-cleanup-policy` 903 / `30115056039`; and `telemetry-handoff-tests` 365 / `30115055914`; reconciled 11 review threads; recorded owner approval comment `5074786377`; and merged with expected-head protection as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`.
 - [x] Observed post-merge evidence: `post-merge-validation` 93 / `30128189835` and `enforcement-tests` 1464 / `30128189839`, both `completed/success` on merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`) fetched the metadata-only snapshot and validated the registry, audit, exact PR identity, latest workflow attempts, check run, base containment, and artifact. Queued, `in_progress`, skipped, cancelled, or completed non-success required runs block closure.
 
-### gap:bypass-approval-provenance — P1
+### gap:bypass-approval-provenance — P1 — closed
 
-- [ ] Define one canonical waiver record with approval reference, approver, approval time, reason, exact gate, target/action scope, creation, expiry or one-shot semantics, and consumption state.
-- [ ] Treat environment variables only as bypass requests; reject truthy variables without a complete matching approval from a source the executing process cannot fabricate in the same operation.
-- [ ] Reject blank/generic reason, wrong bypass/gate/target/action, stale or expired scope, reused approval, missing issuer, forged record, and master substitution.
-- [ ] Remove weaker local fallback `bypass_active()` implementations so every gate uses the same validator.
-- [ ] Record accepted approval and consumption metadata without secrets or conversation content and surface it in Stop/PR evidence.
-- [ ] Run positive/negative/install/full suites, exact-head review, owner-approved merge, and post-merge validation.
+- [x] Canonical approval contract binds approval reference, human issuer, provider time, reason, exact gate/action/surface/target/fingerprint/commit/policy scope, expiry, and durable one-shot consumption.
+- [x] `EOS_BYPASS_*` values are requests only; env-only, missing provider, malformed/ambiguous provider state, and master substitution fail closed.
+- [x] Blank/generic, wrong-scope, expired, forged, unauthorized, edited, reused, rerun, duplicate/conflicting, and replay cases are covered by negative regressions.
+- [x] Weaker local authorization fallbacks were removed and installed targets use the canonical validator.
+- [x] Metadata-only accepted/rejected evidence is recorded without secrets or conversation content.
+- [x] PR #264 exact reviewed head `335bd0ba1b92c60e02f0a18a6197587b4c940c0a` passed 111/111 local suites, installed-target validation and exact-head CI; all 46 review threads were resolved; owner-approved expected-head merge produced `f9449e708f9cfaff89458419baea2b96a3af8210`; canonical `main` is identical.
+
+Owner decision: **Technical implementation: closed. Behavioral effectiveness remains an experiment observation, not a pre-experiment blocker.**
 
 ### gap:eos-repo-boundary-sync-drift — P1
 
@@ -429,17 +427,17 @@ Official basis: AWS Operational Excellence feedback-loop guidance.
 - [ ] Add promotion/demotion fixtures rejecting missing or contradictory evidence; no bulk promotion or fixture-only closure.
 - [ ] Close only after at least one readiness-relevant pattern satisfies the real evidence threshold and all other pattern states remain honest.
 
-### gap:project8-experiment-blindness — P0
+### gap:project8-experiment-blindness — P0 — closed
 
 Official basis: <https://code.claude.com/docs/en/memory>.
 
-- [ ] Re-fetch Project 8 PR #9 and verify expected head, exact product-boundary diff, all required latest workflow attempts, and every current/outdated review thread.
-- [ ] Classify the legacy Azure failure honestly; never treat it as Vercel success or ignore a required failing workflow.
-- [ ] Obtain owner approval and merge with expected-head protection.
-- [ ] Verify `project-8/main` contains no tracked local prompt, audit, plan, README, or Engineering OS coaching and blocks reintroduction.
-- [ ] Verify machine-readable settings contain no experiment or task-routing prose.
-- [ ] Close old sessions, open a fresh session, and prove removed guidance was not loaded.
-- [ ] Record one natural routed action without revealing the experiment or supplying the future workload prompt.
+- [x] Project 8 PR #9 exact head `8591d2569fb7fcd2481670fe814c5ec46becb8aa` was re-verified with the product-only boundary diff, all relevant exact-head checks green, and 12/12 review threads resolved.
+- [x] The legacy Azure workflow was classified as non-required legacy product infrastructure and was green on the final reviewed head; it was not treated as Vercel evidence.
+- [x] Owner approval authorized expected-head squash merge; PR #9 merged as `3ca98089045df7256755bacd4a9a1b8500624874`, and Project 8 `main` became identical to that commit.
+- [x] Project 8 `main` no longer contains `CLAUDE.md`, local Route Plans, Engineering OS audit/prompt/reference Markdown, or other tracked model-visible coaching; `check-product-boundary.py` blocks reintroduction.
+- [x] Machine-readable `.claude/settings.json` retains telemetry/runtime hooks without experiment or task-routing prose.
+
+Owner decision: **Technical implementation: closed. Behavioral effectiveness remains an experiment observation, not a pre-experiment blocker.** Fresh-session blindness and natural uncoached behavior should be measured during the experiment rather than required to authorize its start.
 
 ### gap:dispatch-scope-double-record and gap:multirepo-remote-telemetry-validation — P1
 
@@ -493,12 +491,11 @@ Official basis: Google SRE monitoring and OpenTelemetry instrumentation guidance
 
 ## Highest-priority gaps by ROI
 
-1. Bypass approval provenance and required-hook settings parity — P1.
+1. Required-hook settings parity — P1.
 2. Telemetry archive import integrity and canonical pattern ownership — P1.
-3. Project 8 experiment blindness — P0 after deterministic Engineering OS defects.
-4. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.
-5. Pattern evidence maturity and second-run reproducibility — P2.
-6. Final full-readiness semantics and assertion — terminal P1.
+3. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.
+4. Pattern evidence maturity and second-run reproducibility — P2.
+5. Final full-readiness semantics and assertion — terminal P1.
 
 Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup; hard-hook fail-closed; live-state reconciliation.
 
@@ -555,4 +552,4 @@ PR #256 is merged as `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d` and reconciled c
 
 PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3` implemented the canonical hard-hook registry, event-specific fail-closed wrapper, explicit observable soft wrapper, source/installed contract validation, and negative regressions for missing infrastructure, nested dependencies, symlinks, malformed input/output, signals, false evidence, token boundaries, and sibling isolation. Observed PR evidence: `pr-policy` 1770 / `30115981865`; `enforcement-tests` 1463 / `30115055846`; `workflow-evidence-policy` 1230 / `30115055765`; `connector-evidence-policy` 1241 / `30115055853`; `capability-evidence-policy` 1123 / `30115056044`; `documentation-asset-policy` 879 / `30115055789`; `plan-policy` 1242 / `30115055798`; `semantic-cleanup-policy` 903 / `30115055848`; `import-cleanup-policy` 903 / `30115056039`; and `telemetry-handoff-tests` 365 / `30115055914`, all `completed/success`; all 11 review threads were resolved; owner approval comment `5074786377` authorized the expected-head protected merge; PR #262 merged as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; canonical `main` compares identical. Observed post-merge evidence: `post-merge-validation` 93 / `30128189835` and `enforcement-tests` 1464 / `30128189839`, both `completed/success` on merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; reconciliation `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`) completed successfully and preserves the exact metadata-only snapshot.
 
-The system is audit-complete but not fully operationally ready. Exact-head merge evidence, documentation/runtime consistency, and hard-hook safety are closed; bypass provenance, settings parity, pattern ownership/evidence, telemetry import integrity, Project 8 boundary, and qualification gaps remain. The behavioral experiment and its prompt remain prohibited until every gap closes and the strict assertion passes on fresh canonical state.
+The system is audit-complete but not fully operationally ready. Exact-head merge evidence, documentation/runtime consistency, hard-hook safety, bypass provenance, and the Project 8 product-only blindness boundary are technically closed. Settings parity, telemetry import integrity, qualification/first-run monitoring usefulness, pattern ownership/evidence, longitudinal sufficiency, and full-readiness semantics remain open. Behavioral effectiveness of bypass resistance and Project 8 blindness is an experiment observation and does not reopen those technically closed gaps. Under the current canonical Experiment start decision, every remaining open gap still blocks the behavioral experiment; changing that authorization rule around trustworthy telemetry is separate follow-up work and is not claimed by this closure PR.
