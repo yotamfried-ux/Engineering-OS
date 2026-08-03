@@ -68,7 +68,7 @@ No reusable project template applies to this focused canonical-state reconciliat
 - source: GitHub connector for `yotamfried-ux/Engineering-OS` PR #264 and `yotamfried-ux/project-8` PR #9 plus their exact merged files and canonical branches.
 - action: re-fetched merge state, exact reviewed heads, compare state, CI/review evidence, `scripts/enforcement/lib/evidence.sh`, Project 8 `scripts/enforcement/check-product-boundary.py`, Project 8 `.claude/settings.json`, and current canonical gap/audit wording before changing status.
 - result: Engineering OS PR #264 merge `f9449e708f9cfaff89458419baea2b96a3af8210` is canonical `main` and owns `scripts/enforcement/lib/evidence.sh`; Project 8 PR #9 merge `3ca98089045df7256755bacd4a9a1b8500624874` is canonical Project 8 `main` and owns `scripts/enforcement/check-product-boundary.py` plus telemetry-only `.claude/settings.json`. These exact identifiers show the two previously missing technical implementations now exist on canonical branches.
-- decision: because those exact merged paths satisfy the technical closure contracts, set only `gap:bypass-approval-provenance` and `gap:project8-experiment-blindness` to `closed`; move behavioral effectiveness to experiment observation and deliberately leave telemetry integrity, hook parity, real-run, monitoring sufficiency, pattern, longitudinal, and full-readiness gaps unchanged.
+- decision: updated only `gap:bypass-approval-provenance` and `gap:project8-experiment-blindness` to `closed` because those exact merged paths satisfy the technical closure contracts; kept behavioral effectiveness as experiment observation and kept telemetry integrity, hook parity, real-run, monitoring sufficiency, pattern, longitudinal, and full-readiness gaps unchanged.
 - target: `docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md`.
 
 ## Capability Evidence
@@ -107,7 +107,7 @@ This decision does not claim full operational readiness and does not close telem
 
 - start: plan-only commit `89567827de51041cc0ee84dccbe1b76b307ba47e` recorded scope and the owner decision before canonical audit writes.
 - mid: the canonical patch updated exactly two registry rows and the corresponding audit ledger, matrix, dependency, checklist, ROI, and current-scope statements; a temporary branch-only sync workflow was used only to apply the large-file patch and was removed before PR scope.
-- pre-review: commit `4b2c715c4181d6f1c4484257ec3b2c83a976aee7` proved `known-gaps-live-state` and `plan-policy` green while exposing only concrete-source, template-waiver, connector-identifier/decision-impact, and CodeRabbit capability evidence omissions. This correction addresses those exact findings without changing either gap decision.
+- pre-review: commit `457b44986cf6832fa6818e02a1146cc31d576bf0` proved every non-self evidence gate except the connector decision-impact keyword, while `enforcement-tests` and the latest `pr-policy` were still running. This correction changes only the connector decision verb required by the deterministic checker.
 
 ## Definition of Done
 
