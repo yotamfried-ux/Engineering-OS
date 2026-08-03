@@ -144,6 +144,52 @@
       "required_check_runs": [
         "enforcement-tests"
       ]
+    },
+    {
+      "claim_id": "engineering-os-pr-264-bypass-approval-provenance",
+      "gap_id": "bypass-approval-provenance",
+      "repository": "yotamfried-ux/Engineering-OS",
+      "pull_number": 264,
+      "base_branch": "main",
+      "expected_head_sha": "335bd0ba1b92c60e02f0a18a6197587b4c940c0a",
+      "expected_merge_commit_sha": "f9449e708f9cfaff89458419baea2b96a3af8210",
+      "required_pull_request_workflows": [
+        "pr-policy",
+        "enforcement-tests",
+        "workflow-evidence-policy",
+        "connector-evidence-policy",
+        "capability-evidence-policy",
+        "documentation-asset-policy",
+        "plan-policy",
+        "semantic-cleanup-policy",
+        "import-cleanup-policy",
+        "telemetry-handoff-tests"
+      ],
+      "required_push_workflows": [
+        "enforcement-tests"
+      ],
+      "required_check_runs": []
+    },
+    {
+      "claim_id": "project-8-pr-9-experiment-blindness",
+      "gap_id": "project8-experiment-blindness",
+      "repository": "yotamfried-ux/project-8",
+      "pull_number": 9,
+      "base_branch": "main",
+      "expected_head_sha": "8591d2569fb7fcd2481670fe814c5ec46becb8aa",
+      "expected_merge_commit_sha": "3ca98089045df7256755bacd4a9a1b8500624874",
+      "required_pull_request_workflows": [
+        "pr-policy",
+        "product-repository-boundary",
+        "runtime-telemetry-preflight",
+        "baseline-ci",
+        "semantic-cleanup-policy",
+        "import-cleanup-policy"
+      ],
+      "required_push_workflows": [
+        "product-repository-boundary"
+      ],
+      "required_check_runs": []
     }
   ]
 }
