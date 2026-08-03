@@ -33,20 +33,27 @@ Reconcile the canonical readiness registry and audit with the owner decision tha
 
 No runtime implementation, Project 8 product code, telemetry implementation, pattern implementation, provider state, future workload prompt, or permanent workflow changes.
 
+## Template Gap Waiver
+
+No reusable project template applies to this focused canonical-state reconciliation. The change reuses the existing `docs/operations/known-gaps.tsv` registry schema and `docs/operations/operational-readiness-audit.md` readiness schema; introducing or modifying a template would create unrelated reusable-asset scope.
+
 ## Source of Truth Checks
 
 | Source | Status | Finding / decision |
 |---|---|---|
 | `core/task-router.md` | read | This is `engineering_os_governance`; the canonical governance evidence contract applies. |
-| `core/workflow.md` and `docs/operations/merge-readiness-checklist.md` | read | Plan-first work, exact-head validation/review, explicit owner approval, merge, and later lifecycle claims remain distinct. |
-| `docs/operations/known-gaps.tsv` on canonical `main` | read | Both target gaps were still `open` because their prior closure text included behavioral/live observation that the owner has now reclassified as experiment observation. |
-| `docs/operations/operational-readiness-audit.md` on canonical `main` | read | Ledger, matrix, phase ordering, checklists, ROI order, and current-scope wording all required synchronized updates for the two status changes. |
-| Engineering OS PR #264 and merge `f9449e708f9cfaff89458419baea2b96a3af8210` | checked | The bypass implementation is merged on canonical `main`; reviewed head `335bd0ba1b92c60e02f0a18a6197587b4c940c0a` carried one-shot/fail-closed/install/full-suite evidence and 46 resolved review threads. |
-| Project 8 PR #9 and merge `3ca98089045df7256755bacd4a9a1b8500624874` | checked | The product-only blindness boundary is merged on Project 8 `main`; reviewed head `8591d2569fb7fcd2481670fe814c5ec46becb8aa` removed model-visible coaching while retaining telemetry-only runtime configuration. |
+| `core/workflow.md` | read | Plan-first work, exact-head validation/review, explicit owner approval, merge, and later lifecycle claims remain distinct. |
+| `docs/operations/merge-readiness-checklist.md` | read | Canonical status changes still require exact-head CI/review and a separate owner merge decision. |
+| `docs/operations/known-gaps.tsv` | read | Both target rows were still `open` because their prior closure text included behavioral/live observation that the owner has now reclassified as experiment observation. |
+| `docs/operations/operational-readiness-audit.md` | read | Ledger, matrix, phase ordering, checklists, ROI order, and current-scope wording all required synchronized updates for the two status changes. |
+| `scripts/enforcement/lib/evidence.sh` | checked | Engineering OS `main` includes the canonical request-only bypass path merged by PR #264; reviewed head `335bd0ba1b92c60e02f0a18a6197587b4c940c0a` and merge `f9449e708f9cfaff89458419baea2b96a3af8210` supply the exact implementation identity. |
+| `scripts/enforcement/validate-bypass-approval.py` | checked | Provider-backed approval validation and exact-scope/fail-closed semantics from PR #264 are present on canonical Engineering OS `main`. |
+| `scripts/enforcement/check-product-boundary.py` in `yotamfried-ux/project-8` | checked | Project 8 `main` includes the deterministic product-only boundary merged by PR #9; reviewed head `8591d2569fb7fcd2481670fe814c5ec46becb8aa` and merge `3ca98089045df7256755bacd4a9a1b8500624874` supply the exact implementation identity. |
+| `.claude/settings.json` in `yotamfried-ux/project-8` | checked | The merged target settings retain machine-readable telemetry/runtime hooks while model-visible Engineering OS coaching was removed. |
 
 ## Documentation Asset Evidence
 
-- internal: `core/task-router.md`; `core/workflow.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/merge-readiness-checklist.md`; merged PR #264 and Project 8 PR #9 evidence.
+- internal: `core/task-router.md`; `core/workflow.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/merge-readiness-checklist.md`; `scripts/enforcement/lib/evidence.sh`; Project 8 `scripts/enforcement/check-product-boundary.py`; Project 8 `.claude/settings.json`.
 - context7: not required — this PR changes repository-owned readiness classification only and does not alter a vendor/API/runtime contract.
 - decision: reuse the canonical registry/audit and distinguish technical closure from later behavioral observation instead of creating a second status registry.
 
@@ -54,14 +61,14 @@ No runtime implementation, Project 8 product code, telemetry implementation, pat
 
 | Connector | Status | Evidence |
 |---|---|---|
-| GitHub | used | Re-fetched Engineering OS PR #264/merge/main and Project 8 PR #9/merge/main, then checked current canonical registry/audit before changing status. |
+| GitHub | used | Re-fetched Engineering OS PR #264, merge `f9449e708f9cfaff89458419baea2b96a3af8210`, `scripts/enforcement/lib/evidence.sh`, and canonical `main`; re-fetched Project 8 PR #9, merge `3ca98089045df7256755bacd4a9a1b8500624874`, `scripts/enforcement/check-product-boundary.py`, `.claude/settings.json`, and Project 8 `main`; then checked the canonical registry/audit before changing status. |
 
 ## Connector Usage Evidence
 
-- source: GitHub connector for `yotamfried-ux/Engineering-OS` PR #264, canonical `main`, registry/audit files, and `yotamfried-ux/project-8` PR #9/main.
-- action: re-fetched merge state, exact reviewed heads, compare state, CI/review evidence, and current canonical gap/audit wording before changing status.
-- result: both technical implementations are present on their canonical `main` branches; the remaining question for those two controls is behavioral effectiveness during the experiment, not missing implementation.
-- decision: close only these two technical implementation gaps; leave telemetry integrity, hook parity, real-run, monitoring sufficiency, pattern, longitudinal, and full-readiness gaps unchanged.
+- source: GitHub connector for `yotamfried-ux/Engineering-OS` PR #264 and `yotamfried-ux/project-8` PR #9 plus their exact merged files and canonical branches.
+- action: re-fetched merge state, exact reviewed heads, compare state, CI/review evidence, `scripts/enforcement/lib/evidence.sh`, Project 8 `scripts/enforcement/check-product-boundary.py`, Project 8 `.claude/settings.json`, and current canonical gap/audit wording before changing status.
+- result: Engineering OS PR #264 merge `f9449e708f9cfaff89458419baea2b96a3af8210` is canonical `main` and owns `scripts/enforcement/lib/evidence.sh`; Project 8 PR #9 merge `3ca98089045df7256755bacd4a9a1b8500624874` is canonical Project 8 `main` and owns `scripts/enforcement/check-product-boundary.py` plus telemetry-only `.claude/settings.json`. These exact identifiers show the two previously missing technical implementations now exist on canonical branches.
+- decision: because those exact merged paths satisfy the technical closure contracts, set only `gap:bypass-approval-provenance` and `gap:project8-experiment-blindness` to `closed`; move behavioral effectiveness to experiment observation and deliberately leave telemetry integrity, hook parity, real-run, monitoring sufficiency, pattern, longitudinal, and full-readiness gaps unchanged.
 - target: `docs/operations/known-gaps.tsv` and `docs/operations/operational-readiness-audit.md`.
 
 ## Capability Evidence
@@ -69,9 +76,10 @@ No runtime implementation, Project 8 product code, telemetry implementation, pat
 - `routing.task-router-read` — `core/task-router.md` was read before this canonical reconciliation.
 - `workflow.workflow-read` — governance lifecycle and evidence separation were checked before writes.
 - `plan.route-plan-before-write` — plan-only commit `89567827de51041cc0ee84dccbe1b76b307ba47e` preceded canonical registry/audit writes.
-- `source.github-repo-read` — exact PR, merge, compare, workflow, review, registry, and audit state was read from GitHub.
+- `source.github-repo-read` — exact PR, merge, compare, workflow, review, registry, audit, and implementation-file state was read from GitHub.
 - `validation.policy-change-has-validator` — existing known-gaps, readiness-audit, documentation, workflow, connector, capability, and full enforcement validators own this focused metadata change.
 - `validation.actions-checked` — exact-head workflows are required and re-run after every head change.
+- `validation.coderabbit-policy` — CodeRabbit/Codex findings and live review threads must be reconciled on the final exact head before merge approval.
 
 ## Skill Evidence
 
@@ -99,7 +107,7 @@ This decision does not claim full operational readiness and does not close telem
 
 - start: plan-only commit `89567827de51041cc0ee84dccbe1b76b307ba47e` recorded scope and the owner decision before canonical audit writes.
 - mid: the canonical patch updated exactly two registry rows and the corresponding audit ledger, matrix, dependency, checklist, ROI, and current-scope statements; a temporary branch-only sync workflow was used only to apply the large-file patch and was removed before PR scope.
-- pre-review: commit `6eaf09c57d7fd017ea6237a18c48098a0b02f42a` recorded the first post-write checkpoint; its CI proved registry/live-state synchronization but exposed only missing Route Plan evidence fields. This correction addresses those schema findings without changing either gap decision.
+- pre-review: commit `4b2c715c4181d6f1c4484257ec3b2c83a976aee7` proved `known-gaps-live-state` and `plan-policy` green while exposing only concrete-source, template-waiver, connector-identifier/decision-impact, and CodeRabbit capability evidence omissions. This correction addresses those exact findings without changing either gap decision.
 
 ## Definition of Done
 
