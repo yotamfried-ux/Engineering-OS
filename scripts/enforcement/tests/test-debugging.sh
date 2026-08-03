@@ -39,8 +39,8 @@ run_pre "git push -n";                       expect "push -n (dry-run) allowed" 
 run_pre "git push origin main";              expect "normal push allowed" 0 $?
 
 echo "── D1: bypasses ──"
-EOS_BYPASS_NOVERIFY=1 run_pre "git commit --no-verify -m x"; expect "EOS_BYPASS_NOVERIFY skips D1" 0 $?
-EOS_BYPASS_DEBUG=1    run_pre "git commit --no-verify -m x"; expect "EOS_BYPASS_DEBUG (master) skips D1" 0 $?
+EOS_BYPASS_NOVERIFY=1 run_pre "git commit --no-verify -m x"; expect "EOS_BYPASS_NOVERIFY env-only request does not skip D1" 1 $?
+EOS_BYPASS_DEBUG=1    run_pre "git commit --no-verify -m x"; expect "EOS_BYPASS_DEBUG master request is denied for D1" 2 $?
 run_pre "ls -la";                                            expect "non-git command allowed" 0 $?
 
 echo "── D3: rollback reminder (non-blocking) ──"
@@ -80,8 +80,8 @@ printf '%s\n' "fix(api): bad status code" > "$MSG"
 echo "code3" > app3.py; git add app3.py 2>/dev/null
 bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "fix(scope): without test blocked" 1 $?
 
-EOS_BYPASS_FIXTEST=1 bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "EOS_BYPASS_FIXTEST skips D2" 0 $?
-EOS_BYPASS_DEBUG=1   bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "EOS_BYPASS_DEBUG (master) skips D2" 0 $?
+EOS_BYPASS_FIXTEST=1 bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "EOS_BYPASS_FIXTEST env-only request does not skip D2" 1 $?
+EOS_BYPASS_DEBUG=1   bash "$ENFORCER" commit-msg "$MSG" >/dev/null 2>&1; expect "EOS_BYPASS_DEBUG master request is denied for D2" 2 $?
 
 # Deleting a test file must NOT satisfy D2 (--diff-filter excludes deletions).
 git reset -q 2>/dev/null

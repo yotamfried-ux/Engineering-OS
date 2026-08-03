@@ -1,0 +1,31 @@
+name: consume-bypass
+
+on:
+  deployment:
+
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+  issues: write
+
+jobs:
+  consume:
+    if: >-
+      github.event.deployment.task == 'engineering-os:bypass-authorization' &&
+      github.event.deployment.environment == 'engineering-os-bypass' &&
+      github.event.deployment.payload.schema == 'eos-bypass-authorization-attempt/v1'
+    uses: yotamfried-ux/Engineering-OS/.github/workflows/bypass-consumer-reusable.yml@72709cd3be89204d46b92ee81239829c71d5cd1b
+    with:
+      protected_repository: ${{ github.event.deployment.payload.protected_repository }}
+      bypass: ${{ github.event.deployment.payload.bypass }}
+      gate: ${{ github.event.deployment.payload.gate }}
+      action: ${{ github.event.deployment.payload.action }}
+      surface: ${{ github.event.deployment.payload.surface }}
+      target: ${{ github.event.deployment.payload.target }}
+      target_fingerprint: ${{ github.event.deployment.payload.target_fingerprint }}
+      target_commit: ${{ github.event.deployment.payload.target_commit }}
+      approval_comment_id: ${{ github.event.deployment.payload.approval_comment_id }}
+      authorization_deployment_id: ${{ github.event.deployment.id }}
+    secrets:
+      protected_repository_read_token: ${{ secrets.PROTECTED_REPOSITORY_READ_TOKEN }}

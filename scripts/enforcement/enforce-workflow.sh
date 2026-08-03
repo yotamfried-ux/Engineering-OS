@@ -15,10 +15,10 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/evidence.sh
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
 # Master bypass — disables the whole workflow enforcer.
-bypass_active EOS_BYPASS_WORKFLOW && exit 0
+bypass_reject_disabled_master_requests EOS_BYPASS_WORKFLOW || exit 2
 
 # ── Parse PreToolUse stdin: tool name, file_path, command ────────────────────
 INPUT="$(cat 2>/dev/null || true)"
@@ -122,7 +122,7 @@ gate_plan_integrity() {
     .claude/plans/*.md|*/.claude/plans/*.md) ;;
     *) return 0 ;;
   esac
-  bypass_active EOS_BYPASS_DOD && return 0
+  bypass_hook_input_request EOS_BYPASS_DOD "$INPUT" "route-plan-or-task:$file" && return 0
 
   local fname; fname="$(basename "$file" .md)"
   local initial; initial="$(evidence_get "dod_initial_${fname}" 2>/dev/null || printf '0')"
@@ -149,7 +149,7 @@ gate_tasks_completion() {
     .claude/tasks.json|*/.claude/tasks.json) ;;
     *) return 0 ;;
   esac
-  bypass_active EOS_BYPASS_DOD && return 0
+  bypass_hook_input_request EOS_BYPASS_DOD "$INPUT" "route-plan-or-task:$file" && return 0
 
   local new_content; new_content="$(read_field content)"
   [ -z "$new_content" ] && return 0
@@ -298,7 +298,7 @@ gate_write() {
   # Evidence is recorded by PostToolUse Bash hook only for graphify query/explain/path/update
   # with non-trivial output (filters out echo graphify, failed runs, --help flags).
   if [ -f "graphify-out/graph.json" ]; then
-    bypass_active EOS_BYPASS_GRAPHIFY || evidence_has graphify_used || {
+    bypass_hook_input_request EOS_BYPASS_GRAPHIFY "$INPUT" "write-target:$FILE" || evidence_has graphify_used || {
       echo "ERROR_FOR_AGENT: graphify gate (G7) — graphify-out/graph.json exists but graphify was not queried this session."
       echo "ACTION: run graphify query \"<question>\" (or graphify explain/path) to orient before writing code."
       echo "BYPASS: EOS_BYPASS_GRAPHIFY=1 — only with explicit user authorization in the current conversation."
@@ -316,7 +316,7 @@ gate_write() {
       *"/${_dom}/"*|*"/${_dom}."*|*"_${_dom}."*|*"${_dom}_"*)
         _g8_matched=1
         if [ -d "patterns/${_dom}" ]; then
-          bypass_active EOS_BYPASS_PATTERNS || evidence_has "patterns_read_${_dom}" || {
+          bypass_hook_input_request EOS_BYPASS_PATTERNS "$INPUT" "write-target:$FILE" || evidence_has "patterns_read_${_dom}" || {
             echo "ERROR_FOR_AGENT: patterns gate (G8) — writing to '${_dom}' domain but no patterns/${_dom}/ file was read this session."
             echo "ACTION: read at least one file from patterns/${_dom}/ before writing ${_dom} code."
             echo "BYPASS: EOS_BYPASS_PATTERNS=1 — only with explicit user authorization in the current conversation."
@@ -330,7 +330,7 @@ gate_write() {
   # G12: advisory warning for new generic files with no patterns read at all this session.
   # Does NOT exit 1 — generic files are legitimate, this is a nudge, not a gate.
   if [ "$_g8_matched" -eq 0 ] && [ ! -f "$FILE" ] && [ -d "patterns" ]; then
-    bypass_active EOS_BYPASS_PATTERNS 2>/dev/null || {
+    bypass_hook_input_request EOS_BYPASS_PATTERNS "$INPUT" "write-target:$FILE" 2>/dev/null || {
       # Check if ANY patterns_read_* evidence exists this session
       local _any_pattern
       _any_pattern="$(grep -F $'\tpatterns_read_' "$(_evidence_file)" 2>/dev/null | head -1 || true)"
@@ -367,7 +367,7 @@ gate_bash() {
     *"npm install "[a-zA-Z@]*|*"npm i "[a-zA-Z@]*|*"yarn add "[a-zA-Z@]*|*"pnpm add "[a-zA-Z@]*|*"pip install "[a-zA-Z]*|*"pip3 install "[a-zA-Z]*|*"uv add "[a-zA-Z]*|*"uv pip install "[a-zA-Z]*) ;;
     *) exit 0 ;;
   esac
-  bypass_active EOS_BYPASS_CONTEXT7 && exit 0
+  bypass_command_request EOS_BYPASS_CONTEXT7 "$CMD" && exit 0
   if evidence_has context7; then
     exit 0
   fi
@@ -381,7 +381,7 @@ gate_bash() {
 # Gate 3 — Agent: tasks.json before spawning agents (workflow.md <agent_loop>)
 # ═════════════════════════════════════════════════════════════════════════════
 gate_agent() {
-  bypass_active EOS_BYPASS_TASKSJSON && exit 0
+  bypass_hook_input_request EOS_BYPASS_TASKSJSON "$INPUT" "agent-request" && exit 0
 
   if [ ! -f .claude/tasks.json ]; then
     echo "ERROR_FOR_AGENT: workflow.md <agent_loop> — .claude/tasks.json must exist before spawning agents."

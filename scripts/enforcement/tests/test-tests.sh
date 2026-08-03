@@ -104,7 +104,7 @@ echo "── general ──"
 reset_case
 echo 'const a=1' > app.js; printf '{"scripts":{"test":"y"}}\n' > package.json
 git add app.js package.json 2>/dev/null; mkstub npm
-expect "EOS_BYPASS_TESTS skips all checks when set" 0 "$(EOS_BYPASS_TESTS=1 STUB_NPM=1 runE)"
+expect "EOS_BYPASS_TESTS master request is denied" 2 "$(EOS_BYPASS_TESTS=1 STUB_NPM=1 runE)"
 reset_case
 echo readme > notes.txt; git add notes.txt 2>/dev/null
 expect "no relevant stack staged → pass" 0 "$(runE)"

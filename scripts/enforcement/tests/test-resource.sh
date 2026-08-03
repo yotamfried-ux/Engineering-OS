@@ -23,8 +23,8 @@ bash "$ENFORCER" precommit >/dev/null 2>&1; expect "missing .claudeignore blocke
 touch .claudeignore
 bash "$ENFORCER" precommit >/dev/null 2>&1; expect "present .claudeignore allowed" 0 $?
 rm -f .claudeignore
-EOS_BYPASS_CLAUDEIGNORE=1 bash "$ENFORCER" precommit >/dev/null 2>&1; expect "EOS_BYPASS_CLAUDEIGNORE skips R1" 0 $?
-EOS_BYPASS_RESOURCE=1    bash "$ENFORCER" precommit >/dev/null 2>&1; expect "EOS_BYPASS_RESOURCE (master) skips R1" 0 $?
+EOS_BYPASS_CLAUDEIGNORE=1 bash "$ENFORCER" precommit >/dev/null 2>&1; expect "EOS_BYPASS_CLAUDEIGNORE env-only request does not skip R1" 1 $?
+EOS_BYPASS_RESOURCE=1    bash "$ENFORCER" precommit >/dev/null 2>&1; expect "EOS_BYPASS_RESOURCE master request is denied for R1" 2 $?
 
 echo "── R2: no model identifier in commit message (commit-msg) ──"
 printf 'fix: bump to claude-opus-4-8\n'        > "$M"; bash "$ENFORCER" commit-msg "$M" >/dev/null 2>&1; expect "opus model id blocked"   1 $?
@@ -33,8 +33,8 @@ printf 'feat: add new endpoint\n'              > "$M"; bash "$ENFORCER" commit-m
 printf 'feat: x\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n' > "$M"
 bash "$ENFORCER" commit-msg "$M" >/dev/null 2>&1; expect "standard Co-Authored-By trailer allowed" 0 $?
 printf 'fix: bump to claude-opus-4-8\n' > "$M"
-EOS_BYPASS_MODELID=1  bash "$ENFORCER" commit-msg "$M" >/dev/null 2>&1; expect "EOS_BYPASS_MODELID skips R2" 0 $?
-EOS_BYPASS_RESOURCE=1 bash "$ENFORCER" commit-msg "$M" >/dev/null 2>&1; expect "EOS_BYPASS_RESOURCE (master) skips R2" 0 $?
+EOS_BYPASS_MODELID=1  bash "$ENFORCER" commit-msg "$M" >/dev/null 2>&1; expect "EOS_BYPASS_MODELID env-only request does not skip R2" 1 $?
+EOS_BYPASS_RESOURCE=1 bash "$ENFORCER" commit-msg "$M" >/dev/null 2>&1; expect "EOS_BYPASS_RESOURCE master request is denied for R2" 2 $?
 
 echo
 echo "════════ $PASS passed, $FAIL failed ════════"

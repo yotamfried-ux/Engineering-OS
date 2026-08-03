@@ -32,7 +32,7 @@ expect "external-systems/<svc> without README blocked" 1 "$(run)"; reset_idx; rm
 mkdir -p patterns; echo x > patterns/README.md; git add patterns/README.md
 expect "patterns/ top-level README allowed" 0 "$(run)"; reset_idx; rm -rf patterns
 mkdir -p patterns/db; echo y > patterns/db/p.md; git add patterns/db/p.md
-expect "EOS_BYPASS_DOCREADME skips D1" 0 "$(EOS_BYPASS_DOCREADME=1 run)"; reset_idx; rm -rf patterns
+expect "EOS_BYPASS_DOCREADME env-only request does not skip D1" 1 "$(EOS_BYPASS_DOCREADME=1 run)"; reset_idx; rm -rf patterns
 
 echo "── D3: no standalone placeholders in .md ──"
 printf 'TBD\n' > doc.md; git add doc.md
@@ -54,7 +54,7 @@ expect "inline ??? prose allowed"          0 "$(run)"; reset_idx; rm -f doc.md
 printf 'TBD\n' > note.txt; git add note.txt
 expect "non-.md TBD allowed"               0 "$(run)"; reset_idx; rm -f note.txt
 printf 'TBD\n' > doc.md; git add doc.md
-expect "EOS_BYPASS_TBD skips D3"           0 "$(EOS_BYPASS_TBD=1 run)"; reset_idx; rm -f doc.md
+expect "EOS_BYPASS_TBD env-only request does not skip D3" 1 "$(EOS_BYPASS_TBD=1 run)"; reset_idx; rm -f doc.md
 
 echo "── general ──"
 echo x > src.txt; git add src.txt
@@ -67,8 +67,8 @@ cd "$REPO2" || exit 1
 git init -q 2>/dev/null; git config user.email t@t.t; git config user.name t
 echo x > foo.txt; git add foo.txt
 expect "missing root README blocked"       1 "$(run)"
-expect "EOS_BYPASS_ROOTREADME skips D2"    0 "$(EOS_BYPASS_ROOTREADME=1 run)"
-expect "EOS_BYPASS_DOC (master) skips all" 0 "$(EOS_BYPASS_DOC=1 run)"
+expect "EOS_BYPASS_ROOTREADME env-only request does not skip D2" 1 "$(EOS_BYPASS_ROOTREADME=1 run)"
+expect "EOS_BYPASS_DOC master request is denied" 2 "$(EOS_BYPASS_DOC=1 run)"
 echo '# r' > README.md; git add README.md
 expect "root README present allowed"       0 "$(run)"
 

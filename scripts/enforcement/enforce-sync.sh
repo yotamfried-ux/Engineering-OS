@@ -9,9 +9,9 @@
 # Bypass: EOS_BYPASS_MDSYNC=1
 # Governing policy: core/hooks-policy.md <hooks> (md ↔ enforcer sync rule)
 
-case "${EOS_BYPASS_MDSYNC:-}" in 1|true|TRUE|yes|YES) exit 0 ;; esac
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
+bypass_staged_tree_request EOS_BYPASS_MDSYNC && exit 0
 MANIFEST="$SCRIPT_DIR/MANIFEST.tsv"
 [ -f "$MANIFEST" ] || exit 0
 

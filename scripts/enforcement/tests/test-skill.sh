@@ -45,12 +45,12 @@ echo "── S1: four contract files ──"
 expect "complete + registered skill allowed" 0 "$(mkskill goodskill $ALL4)"
 expect "missing policy.md blocked"            1 "$(mkskill nopolicy README.md integration.md activation.md)"
 expect "missing activation.md blocked"        1 "$(mkskill noact README.md integration.md policy.md)"
-expect "EOS_BYPASS_SKILLDOC skips S1"         0 "$(EOS_BYPASS_SKILLDOC=1 mkskill nopolicy README.md integration.md activation.md)"
+expect "EOS_BYPASS_SKILLDOC env-only request does not skip S1" 1 "$(EOS_BYPASS_SKILLDOC=1 mkskill nopolicy README.md integration.md activation.md)"
 
 echo "── S2: registry registration ──"
 expect "unregistered skill blocked"           1 "$(mkskill ghostskill $ALL4)"
 expect "partial-name (substring of registered) blocked" 1 "$(mkskill good $ALL4)"
-expect "EOS_BYPASS_SKILLREG skips S2"         0 "$(EOS_BYPASS_SKILLREG=1 mkskill ghostskill $ALL4)"
+expect "EOS_BYPASS_SKILLREG env-only request does not skip S2" 1 "$(EOS_BYPASS_SKILLREG=1 mkskill ghostskill $ALL4)"
 
 echo "── excluded paths & general ──"
 # Editing the top-level registry itself is not a skill dir → pass.
@@ -58,7 +58,7 @@ printf '\n- extra\n' >> external-skills/README.md; git add external-skills/READM
 expect "editing registry README allowed"      0 "$(bash "$ENFORCER" >/dev/null 2>&1; echo $?)"
 git reset -q; git checkout -q -- external-skills/README.md
 expect "file outside external-skills allowed" 0 "$(mkdir -p src; echo x > src/x.md; git add src/x.md; bash "$ENFORCER" >/dev/null 2>&1; rc=$?; git reset -q; rm -rf src; echo $rc)"
-expect "EOS_BYPASS_SKILL (master) skips all"  0 "$(EOS_BYPASS_SKILL=1 mkskill ghostskill README.md)"
+expect "EOS_BYPASS_SKILL master request is denied" 2 "$(EOS_BYPASS_SKILL=1 mkskill ghostskill README.md)"
 expect "no staged files → pass"               0 "$(bash "$ENFORCER" >/dev/null 2>&1; echo $?)"
 
 echo

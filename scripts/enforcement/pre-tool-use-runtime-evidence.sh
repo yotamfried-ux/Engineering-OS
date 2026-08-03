@@ -2,9 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
-bypass_active EOS_BYPASS_RUNTIME_EVIDENCE && exit 0
+bypass_reject_disabled_master_requests EOS_BYPASS_RUNTIME_EVIDENCE || exit 2
 
 INPUT="$(cat 2>/dev/null || true)"
 

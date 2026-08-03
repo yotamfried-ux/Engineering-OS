@@ -3,16 +3,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
-if ! declare -f bypass_active >/dev/null 2>&1; then
-  bypass_active() {
-    local name="${1:-}"; [ -z "$name" ] && return 1
-    case "${!name:-}" in 1|true|TRUE|yes|YES) return 0 ;; *) return 1 ;; esac
-  }
-fi
+. "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 
-bypass_active EOS_BYPASS_QUALITY && exit 0
-bypass_active EOS_BYPASS_CLEANUP && exit 0
+bypass_reject_disabled_master_requests EOS_BYPASS_QUALITY || exit 2
+bypass_staged_tree_request EOS_BYPASS_CLEANUP && exit 0
 
 added="$(git diff --cached --diff-filter=ACMR -U0 -- \
   '*.js' '*.jsx' '*.ts' '*.tsx' '*.py' '*.rb' \
@@ -44,7 +38,7 @@ if [ -n "$added" ]; then
   fi
 fi
 
-if ! bypass_active EOS_BYPASS_SEMANTIC_CLEANUP; then
+if ! bypass_staged_tree_request EOS_BYPASS_SEMANTIC_CLEANUP; then
   if [ -f "$SCRIPT_DIR/check-semantic-cleanup.sh" ]; then
     bash "$SCRIPT_DIR/check-semantic-cleanup.sh"
   fi

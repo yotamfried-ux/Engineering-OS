@@ -30,3 +30,4 @@ hooks	exempt	NONE	hook assets consumed by installs, not a standalone project sca
 settings	exempt	NONE	settings assets consumed by installs, not a standalone project scaffold
 connectors	exempt	NONE	connector guide assets consumed by installs, not a standalone project scaffold
 github-actions	exempt	NONE	reusable CI workflow assets included by other templates, not a standalone project scaffold
+bypass-control-plane	exempt	NONE	provider-backed bypass control-plane deployment assets, not a standalone project scaffold
