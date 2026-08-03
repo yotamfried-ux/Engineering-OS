@@ -8,9 +8,9 @@ This document is the canonical status map and closure contract for Engineering O
 - **Canonical repository:** `yotamfried-ux/Engineering-OS`
 - **Target repository:** `yotamfried-ux/project-8`
 - **Canonical gap registry:** `docs/operations/known-gaps.tsv`
-- **Last verified:** 2026-07-25 Asia/Jerusalem / 2026-07-24 UTC
+- **Last verified:** 2026-08-03 UTC
 - **Intended readers:** LLMs, maintainers, reviewers, and operators with no prior conversation context
-- **Snapshot only:** Engineering OS `main` was inspected at `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; Project 8 `main` at `f282f5e9889d956e54fc0803938915fd86a58158`; Project 8 PR #9 at `51970629f3c3af32cb73bea0aab676874478248d`. Mutable state must always be re-fetched before a decision.
+- **Snapshot only:** Engineering OS `main` was inspected at `f9449e708f9cfaff89458419baea2b96a3af8210`; Project 8 `main` at `3ca98089045df7256755bacd4a9a1b8500624874`; merged Project 8 PR #9 reviewed head at `8591d2569fb7fcd2481670fe814c5ec46becb8aa`. Mutable state must always be re-fetched before a decision.
 
 ## Purpose and audience
 
@@ -492,11 +492,10 @@ Official basis: Google SRE monitoring and OpenTelemetry instrumentation guidance
 ## Highest-priority gaps by ROI
 
 1. Required-hook settings parity — P1.
-2. Telemetry archive import integrity — P1.
+2. Telemetry archive import integrity and canonical pattern ownership — P1.
 3. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.
-4. Canonical pattern ownership — P1, but not required for the first behavioral experiment if telemetry readiness is otherwise satisfied.
-5. Pattern evidence maturity and second-run reproducibility — P2, post-start/full-readiness work.
-6. Final full-readiness semantics and assertion — terminal full-readiness work, separate from first-experiment authorization.
+4. Pattern evidence maturity and second-run reproducibility — P2.
+5. Final full-readiness semantics and assertion — terminal P1.
 
 Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup; hard-hook fail-closed; live-state reconciliation.
 
@@ -553,4 +552,4 @@ PR #256 is merged as `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d` and reconciled c
 
 PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3` implemented the canonical hard-hook registry, event-specific fail-closed wrapper, explicit observable soft wrapper, source/installed contract validation, and negative regressions for missing infrastructure, nested dependencies, symlinks, malformed input/output, signals, false evidence, token boundaries, and sibling isolation. Observed PR evidence: `pr-policy` 1770 / `30115981865`; `enforcement-tests` 1463 / `30115055846`; `workflow-evidence-policy` 1230 / `30115055765`; `connector-evidence-policy` 1241 / `30115055853`; `capability-evidence-policy` 1123 / `30115056044`; `documentation-asset-policy` 879 / `30115055789`; `plan-policy` 1242 / `30115055798`; `semantic-cleanup-policy` 903 / `30115055848`; `import-cleanup-policy` 903 / `30115056039`; and `telemetry-handoff-tests` 365 / `30115055914`, all `completed/success`; all 11 review threads were resolved; owner approval comment `5074786377` authorized the expected-head protected merge; PR #262 merged as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; canonical `main` compares identical. Observed post-merge evidence: `post-merge-validation` 93 / `30128189835` and `enforcement-tests` 1464 / `30128189839`, both `completed/success` on merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; reconciliation `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`) completed successfully and preserves the exact metadata-only snapshot.
 
-The system is audit-complete but not fully operationally ready. Exact-head merge evidence, documentation/runtime consistency, hard-hook safety, bypass provenance, and the Project 8 product-only blindness boundary are technically closed. Settings parity, telemetry import integrity, qualification/first-run monitoring usefulness, and separate full-readiness improvements remain. Behavioral effectiveness of bypass resistance and Project 8 blindness is an experiment observation, not a pre-experiment blocker. Experiment authorization criteria will be reconciled separately around trustworthy telemetry rather than full operational readiness.
+The system is audit-complete but not fully operationally ready. Exact-head merge evidence, documentation/runtime consistency, hard-hook safety, bypass provenance, and the Project 8 product-only blindness boundary are technically closed. Settings parity, telemetry import integrity, qualification/first-run monitoring usefulness, pattern ownership/evidence, longitudinal sufficiency, and full-readiness semantics remain open. Behavioral effectiveness of bypass resistance and Project 8 blindness is an experiment observation and does not reopen those technically closed gaps. Under the current canonical Experiment start decision, every remaining open gap still blocks the behavioral experiment; changing that authorization rule around trustworthy telemetry is separate follow-up work and is not claimed by this closure PR.
