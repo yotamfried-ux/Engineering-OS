@@ -103,28 +103,41 @@ def commands_for(event: str, *, catch_all_only: bool = False) -> list[str]:
 
 session_commands = commands_for("SessionStart")
 pretool_commands = commands_for("PreToolUse", catch_all_only=True)
+
+
+def invokes(command: str, unit: str, argument: str | None = None) -> bool:
+    """Match a wired unit whether it is invoked bare or through a hook gate.
+
+    Gate-wrapped commands carry the argument after "--" and continue with shell text,
+    so a trailing-suffix test alone would miss every gated hook.
+    """
+
+    if unit not in command:
+        return False
+    if argument is None:
+        return True
+    return bool(
+        command.rstrip().endswith(f" {argument}")
+        or re.search(rf"--\s+{re.escape(argument)}(?:\s|[;&|)]|$)", command)
+    )
+
+
 if hook_mode == "direct":
     requirements: tuple[tuple[str, list[str], Any], ...] = (
         (
             "SessionStart",
             session_commands,
-            lambda command: "eos-telemetry-session-start.sh" in command,
+            lambda command: invokes(command, "eos-telemetry-session-start.sh"),
         ),
         (
             "catch-all PreToolUse guard",
             pretool_commands,
-            lambda command: "require-telemetry-session.sh" in command,
+            lambda command: invokes(command, "require-telemetry-session.sh"),
         ),
         (
             "catch-all PreToolUse event recorder",
             pretool_commands,
-            lambda command: (
-                "eos-telemetry-event.sh" in command
-                and (
-                    command.rstrip().endswith(" pre_tool_use")
-                    or re.search(r"--\s+pre_tool_use(?:\s|[;&|)]|$)", command)
-                )
-            ),
+            lambda command: invokes(command, "eos-telemetry-event.sh", "pre_tool_use"),
         ),
     )
 else:
@@ -132,26 +145,17 @@ else:
         (
             "dispatcher SessionStart",
             session_commands,
-            lambda command: (
-                "eos-telemetry-dispatch.sh" in command
-                and command.rstrip().endswith(" session_start")
-            ),
+            lambda command: invokes(command, "eos-telemetry-dispatch.sh", "session_start"),
         ),
         (
             "dispatcher catch-all PreToolUse guard",
             pretool_commands,
-            lambda command: (
-                "eos-telemetry-dispatch.sh" in command
-                and command.rstrip().endswith(" guard")
-            ),
+            lambda command: invokes(command, "eos-telemetry-dispatch.sh", "guard"),
         ),
         (
             "dispatcher catch-all PreToolUse event recorder",
             pretool_commands,
-            lambda command: (
-                "eos-telemetry-dispatch.sh" in command
-                and command.rstrip().endswith(" pre_tool_use")
-            ),
+            lambda command: invokes(command, "eos-telemetry-dispatch.sh", "pre_tool_use"),
         ),
     )
 
@@ -194,6 +198,7 @@ fi
 
 BOUNDARY_READY="$(python3 - "$SETTINGS" "$HOOK_MODE" <<'PY'
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -219,20 +224,29 @@ expected = {
     "StopFailure": "stop_failure",
     "SessionEnd": "session_end",
 }
-ready = True
-for event, suffix in expected.items():
-    commands = commands_by_event.get(event, [])
-    if hook_mode == "direct":
-        present = any(
-            "record-and-sync-telemetry.sh" in command and command.rstrip().endswith(f" {suffix}")
-            for command in commands
-        )
-    else:
-        present = any(
-            "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(f" {suffix}")
-            for command in commands
-        )
-    ready = ready and present
+unit = "record-and-sync-telemetry.sh" if hook_mode == "direct" else "eos-telemetry-dispatch.sh"
+
+
+def invokes(command: str, argument: str) -> bool:
+    """Match the boundary unit whether it is invoked bare or through a hook gate.
+
+    A gate-wrapped command carries the argument after "--" and continues with shell
+    text, so a trailing-suffix test alone would report every gated boundary as missing.
+    Under a "required" policy that misreport blocks the session outright.
+    """
+
+    if unit not in command:
+        return False
+    return bool(
+        command.rstrip().endswith(f" {argument}")
+        or re.search(rf"--\s+{re.escape(argument)}(?:\s|[;&|)]|$)", command)
+    )
+
+
+ready = all(
+    any(invokes(command, argument) for command in commands_by_event.get(event, []))
+    for event, argument in expected.items()
+)
 print("1" if ready else "0")
 PY
 )"

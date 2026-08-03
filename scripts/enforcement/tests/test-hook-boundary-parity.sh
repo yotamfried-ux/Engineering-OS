@@ -196,7 +196,38 @@ else
   bad "patcher failed for the wrong reason: $(head -1 "$WORK/noreg.err")"
 fi
 
-# 12. Every telemetry unit the registry declares is actually reachable on disk.
+# 12. The session guard must recognise gate-wrapped boundary hooks as present on both
+#     surfaces. Under a "required" telemetry policy a false "missing boundary" verdict
+#     blocks the session outright, so this is a hard prerequisite for any real run.
+boundary_ready() {
+  python3 - "$1" "$2" "$ROOT/scripts/monitoring/require-telemetry-session.sh" <<'PY'
+import json, re, subprocess, sys
+from pathlib import Path
+
+settings, hook_mode, guard = sys.argv[1], sys.argv[2], sys.argv[3]
+# Reuse the guard's own boundary block rather than restating its rule here.
+source = Path(guard).read_text()
+start = source.index('BOUNDARY_READY="$(python3 - "$SETTINGS" "$HOOK_MODE" <<\'PY\'')
+block = source[source.index("\n", start) + 1:source.index("\nPY\n", start)]
+proc = subprocess.run(
+    [sys.executable, "-c", block, settings, hook_mode], capture_output=True, text=True
+)
+assert proc.returncode == 0, proc.stderr
+print(proc.stdout.strip())
+PY
+}
+
+for mode in direct dispatcher; do
+  probe="$WORK/boundary-$mode.json"
+  python3 "$PATCHER" "$probe" --mode "$mode" --home "$ROOT" --no-backup >/dev/null
+  if [ "$(boundary_ready "$probe" "$mode")" = "1" ]; then
+    ok "session guard sees gate-wrapped boundary hooks on the $mode surface"
+  else
+    bad "session guard reports a missing boundary on the $mode surface"
+  fi
+done
+
+# 13. Every telemetry unit the registry declares is actually reachable on disk.
 if python3 - "$REGISTRY" "$ROOT" <<'PY'
 import sys
 from pathlib import Path
