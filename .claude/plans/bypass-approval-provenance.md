@@ -6,78 +6,96 @@
 |---|---|
 | Task type | security-sensitive Engineering OS authorization hardening |
 | Task class | `engineering_os_governance` |
-| Domain tags | hooks, authorization, GitHub Actions, shell, Python, installer, tests |
+| Domain tags | hooks, authorization, GitHub provider evidence, shell, Python, installer, tests |
 | Plan Scope | standard |
-| Planning Mode | rebuild from canonical `main`; commit this plan before replaying the verified candidate; old PR commits remain evidence sources only |
+| Planning Mode | align PR #264 strictly to the canonical audit gap `bypass-approval-provenance`; remove live-control-plane bootstrap/qualification work that is not part of the gap closure contract |
 | Target paths | `.claude/plans/bypass-approval-provenance.md`; `.github/workflows/bypass-*-reusable.yml`; `docs/operations/bypass-control-plane-runbook.md`; `scripts/enforcement/`; `scripts/hooks/`; `templates/bypass-control-plane/` |
 | Task-router evidence | `core/task-router.md` routes enforcement/governance changes through the governance workflow and security review. |
-| Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/quality-gates.md`, `core/hooks-policy.md` require plan-first work, ordered evidence, exact-head CI/review, explicit owner approval and protected merge. |
-| Templates | not required as input; existing enforcement conventions are reused and the bypass-control-plane template is an output |
-| Architecture guides | `core/hooks-policy.md`; `core/git-policy.md`; `docs/operations/merge-readiness-checklist.md`; `docs/operations/bypass-control-plane-runbook.md` |
-| Patterns | shared enforcement library, canonical registry, fail-closed provider adapter, reusable workflow |
+| Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/quality-gates.md`, and `core/hooks-policy.md` require plan-first work, exact-head CI/review, explicit owner approval, protected merge, and post-merge validation. |
+| Templates | the control-plane template remains supporting implementation material for future operational enablement; installing or live-qualifying it is not a PR #264 merge prerequisite |
+| Architecture guides | `core/hooks-policy.md`; `core/git-policy.md`; `docs/operations/merge-readiness-checklist.md`; canonical audit `docs/operations/operational-readiness-audit.md` |
+| Patterns | shared enforcement library, canonical bypass registry, provider-verified approval, fail-closed validation, durable one-shot consumption |
 | External systems/connectors | GitHub |
 | Skills | `writing-plans`; `verification-before-completion`; `security-review` |
-| Validation gates | bypass/provider/fail-closed tests; source/template parity; installed target; all `test-*.sh`; exact-head CI; review; live qualification |
-| Evidence to check | canonical `main`; PR #264 head/tree/CI; bypass policy/config/consumers/tests; official GitHub and Claude hook docs |
-| User decisions required | manual human approval during live qualification and explicit owner approval before merge |
+| Validation gates | audit-required bypass positive/negative tests; replay/forgery/fail-closed tests; installed target; full `test-*.sh`; exact-head CI; review reconciliation |
+| Evidence to check | canonical audit and `known-gaps.tsv`; current `main`; PR #264 exact head/diff/CI/reviews; bypass policy/config/validator/consumption code and tests |
+| User decisions required | explicit owner approval for the final exact head before merge |
 
 ## Goal
 
-Make every `EOS_BYPASS_*` request-only. Authorization requires provider-verified human approval with exact scope/target binding, freshness, issuer authority and unique durable one-shot consumption.
+Close only the canonical `bypass-approval-provenance` implementation gap: a truthy `EOS_BYPASS_*` value is a request, never authorization. A bypass can succeed only with a complete externally verifiable approval bound to the exact gate/action/target and with durable one-shot consumption evidence that the executing process cannot fabricate in the same operation.
 
 ## Scope
 
-Own bypass registry/config, provider validation/consumption, shared enforcement migration, workflows, tests, installed target, control-plane template/runbook and PR evidence. Project 8, merge and closure are excluded.
+Implement and verify the audit contract in Engineering OS itself: canonical bypass policy/configuration, provider-backed approval and consumption validation, removal of weaker local fallbacks, enforcement call-site migration, durable metadata-only evidence, focused/full/install tests, exact-head CI and review evidence. Project 8 is unchanged.
 
-## Rebuild Evidence Boundary
+A live production deployment of the optional control repository, GitHub App provisioning, credential qualification, manual live approval publication, and a production qualification matrix are **not** prerequisites for merging this implementation. Until an operator later configures such provider infrastructure, the shipped runtime remains fail-closed and bypass authorization is unavailable rather than forgeable.
 
-Old PR history is an evidence source, not claimed as current-lifecycle-compliant. Base `6a589971c59561b88cb4abaa0752235b9bb4d5df`; candidate `9a2eb7b6c900da43654b716a5203aed45d723344` / tree `039753e82e72a02d1264ccd9c20cf7f1aaf7e3b7`; `enforcement-tests` run `30715280921` succeeded. Export run `30720627257` / artifact `8824733672` reproduced that head/tree and checksum locally. Final evidence is regenerated after rebuild.
+## Canonical Audit Contract
+
+The source of truth is `docs/operations/known-gaps.tsv` plus the matching checklist in `docs/operations/operational-readiness-audit.md`:
+
+- define one canonical waiver record with approver, approval time, reason, exact gate/target/action scope, expiry or one-shot semantics, and consumption state;
+- environment variables may request a bypass but cannot authorize one;
+- reject blank/generic, expired, reused, wrong-gate, wrong-target, wrong-scope, missing-issuer, forged, and master-substitution evidence;
+- remove weaker local `bypass_active()` fallbacks so every protected gate uses the same validator;
+- record accepted approval/consumption metadata without secrets or conversation content;
+- run positive/negative/install/full suites, exact-head review, owner-approved merge, and post-merge validation.
+
+No additional live-control-plane readiness claim is part of this gap.
 
 ## Root Cause and Architecture
 
-Environment/local evidence previously authorized bypasses and fallback consumers could fail open. Canonical policy + contract + GitHub provider + shared `lib/evidence.sh` now own authorization; a private control repository writes durable claim/marker evidence and master requests are disabled.
+Before this PR, local truthy environment variables could directly activate bypass paths. The implementation replaces that behavior with one canonical policy and validator. Approval identity/scope/freshness are checked against provider evidence; durable claim/marker evidence is written by a separate trusted execution path; repeated or conflicting evidence denies; master bypass requests remain permanently disabled.
+
+The one-shot correction is required by the audit's explicit reused-approval denial. `validate-bypass-approval.py --stage consumed` therefore cannot re-authorize by simply re-reading an old marker; a fresh provider-backed attempt must be tied to the unique durable reservation. This security property remains in scope. The later bootstrap-SHA/live-qualification work was operationalization scope and has been removed from this branch.
 
 ## Trust Boundary
 
-Runtime may read metadata/dispatch only; consumer `GITHUB_TOKEN` is `contents: read`, `actions: read`, `issues: write`; `PROTECTED_REPOSITORY_READ_TOKEN` is separate read-only identity/permission verification. Missing verifier, invalid issuer/binding, edited/malformed/replay/duplicate/conflict/rerun/ambiguous or Git-tag evidence fails closed.
+- `EOS_BYPASS_*` values are untrusted requests.
+- Local ledger evidence is audit-only and never authorizes.
+- Provider approval must bind immutable issuer identity, exact protected repository, gate, action, surface, target, fingerprint, target commit, policy digest, creation time and expiry.
+- Durable claim/marker evidence is authoritative only when it comes from the pinned trusted writer path; the requesting runtime cannot create that authoritative Issues evidence.
+- Missing configuration, missing credentials, provider failure, malformed/ambiguous evidence, replay, wrong binding, rerun, edited evidence, or master substitution fails closed.
+- Operational credentials needed to enable legitimate bypasses later are deployment concerns, not a reason to delay merging the anti-forgery enforcement.
 
 ## Official Documentation Evidence
 
-- GitHub reusable workflows: `https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations` — permissions cannot be elevated; use immutable SHA pins.
-- GitHub token/auth: `https://docs.github.com/en/actions/tutorials/authenticate-with-github_token` — least privilege and separate credentials.
-- GitHub collaborator API: `https://docs.github.com/en/rest/collaborators/collaborators` — provider-readable effective role.
-- Claude hooks: `https://code.claude.com/docs/en/hooks` — `PreToolUse` exit 2 blocks; enforcement uncertainty must become blocking denial.
+- GitHub reusable workflows and least-privilege `GITHUB_TOKEN` semantics support a separate trusted writer path.
+- GitHub issue-comment/provider APIs expose immutable provider identity, timestamps and repository bindings needed by the validator.
+- GitHub workflow/run metadata supports binding durable consumption evidence to an exact trusted execution.
+- Claude hook blocking semantics require enforcement uncertainty to deny rather than silently allow.
 
 ## Documentation Asset Evidence
 
-- internal: `CLAUDE.md`; `core/workflow.md`; `core/hooks-policy.md`; `docs/operations/known-gaps.tsv`; `docs/operations/merge-readiness-checklist.md`.
-- context7: the official GitHub Actions/API and Claude hooks URLs above were checked directly because current vendor semantics define this authorization boundary.
-- decision: selected immutable workflow pins, least-privilege separated credentials, provider role verification and blocking fail-closed behavior; mutable refs, shared credentials and payload role claims are rejected.
+- internal: `CLAUDE.md`; `core/workflow.md`; `core/hooks-policy.md`; `docs/operations/known-gaps.tsv`; `docs/operations/operational-readiness-audit.md`; `docs/operations/merge-readiness-checklist.md`.
+- context7: not required; this correction is governed by the repository's canonical audit and already-reviewed GitHub provider contract rather than a new vendor integration decision.
+- decision: narrowed the PR back to the audit-defined anti-forgery/one-shot enforcement contract and removed live bootstrap/qualification as a merge requirement.
 
 ## Source of Truth Checks
 
 | Source | Status | Finding |
 |---|---|---|
-| `core/task-router.md` | read | governance/security route confirmed |
-| `core/workflow.md` | read | ordered plan/result/review lifecycle confirmed |
-| `core/hooks-policy.md` | checked | hard enforcement blocking semantics confirmed |
-| `scripts/enforcement/bypass-policy.tsv` | checked | candidate has 42 explicit bypass mappings |
-| `scripts/enforcement/tests/test-bypass-provider-validation.py` | checked | provider/replay/ambiguity fixtures exist |
-| `scripts/enforcement/tests/test-bypass-request-fail-closed.sh` | checked | env-only/missing-dependency denial exists |
+| `docs/operations/known-gaps.tsv` | read | `bypass-approval-provenance` requires request-only env vars, complete approval provenance, durable non-local consumption, reused/forged/wrong-scope denial, one valid bounded approval, no weaker local fallback, install/full CI and post-merge validation |
+| `docs/operations/operational-readiness-audit.md` | read | checklist matches the registry and does not require GitHub App creation or a live production qualification matrix before merge |
+| `scripts/enforcement/lib/evidence.sh` | checked | all bypass requests route to one canonical validator instead of env-only authorization |
+| `scripts/enforcement/bypass-policy.tsv` | checked | action-specific requests are explicitly registered and master bypasses are disabled |
+| `scripts/enforcement/tests/test-bypass-provider-validation.py` | checked | issuer, binding, expiry, malformed/forged/provider cases are fixture-tested |
+| `scripts/enforcement/tests/test-bypass-execution-one-shot.sh` | checked | the regression requires one authorization only and rejects replay |
 
 ## Connector Evidence
 
 | Connector | Status | Evidence |
 |---|---|---|
-| GitHub | used | Re-read PR #264, canonical `main`, candidate head/tree/CI and exact export artifact before rebuilding. |
+| GitHub | used | Re-read canonical audit/registry, PR #264 exact head and diff, then force-reset the branch from `eb94bdf4cb52ce9199d2e5a27e67710216e41b51` to clean checkpoint `554ae5b14ec08ddf455325647ab37a3c29eb9333`, removing 11 bootstrap/qualification commits. |
 
 ## Connector Usage Evidence
 
-- source: GitHub connector for `yotamfried-ux/Engineering-OS`, PR #264, commits, workflows and repository files.
-- action: verified `main` `6a589971c59561b88cb4abaa0752235b9bb4d5df`, candidate `9a2eb7b6c900da43654b716a5203aed45d723344`, exported run `30720627257`, then restored the PR branch.
-- result: artifact `8824733672` embeds head `9a2eb7b6c900da43654b716a5203aed45d723344` and tree `039753e82e72a02d1264ccd9c20cf7f1aaf7e3b7`; checksum matched locally.
-- decision: selected a clean-history rebuild and blocked lifecycle backfill or policy weakening.
-- target: `.claude/plans/bypass-approval-provenance.md`; `scripts/enforcement/`; `.github/workflows/bypass-*-reusable.yml`; `templates/bypass-control-plane/`.
+- source: GitHub connector for `yotamfried-ux/Engineering-OS`, `docs/operations/operational-readiness-audit.md`, `docs/operations/known-gaps.tsv`, and PR #264.
+- action: compared the canonical gap closure contract to the live PR diff and commit history.
+- result: the audit requires anti-forgery, exact scope, durable one-shot consumption, fallback removal, tests/CI/review/merge/post-merge; it does not require live control-repository provisioning or GitHub App qualification before merge. The branch was reset by 11 commits to remove that over-scope.
+- decision: retained the one-shot/provider trust implementation because reused and forged approval denial are canonical requirements; removed live bootstrap/qualification work and reclassified optional provider deployment as post-merge operational enablement.
+- target: PR #264 bypass enforcement implementation and its evidence.
 
 ## Capability Evidence
 
@@ -85,50 +103,48 @@ Runtime may read metadata/dispatch only; consumer `GITHUB_TOKEN` is `contents: r
 
 ## Skill Evidence
 
-- `writing-plans` — plan precedes replay.
-- `verification-before-completion` — validation, CI, review, qualification, merge and closure remain separate.
-- `security-review` — credentials, issuer, provenance, replay and fail-closed denial are explicit.
+- `verification-before-completion` — distinguishes implementation/CI evidence from optional live operational enablement and from post-merge gap closure.
+- `security-review` — preserves the actual security properties: request-only env values, exact provider provenance, durable non-local consumption and replay denial.
+- `writing-plans` — records the scope correction before the final evidence cycle.
 
 ## Definition of Done
 
-- Plan-first ordering: verified; the rebuilt Route Plan is the first PR commit above canonical `main`.
-- Implementation replay: verified against the prior candidate, with deliberate immutable-pin updates and no transfer/export artifacts in the candidate tree.
-- Local validation: every earlier run is superseded by the exact-head review reconciliation. On the last code/config/test commit `5a3f5bc4eed501d2be4fd3d7488e7b019020a2e0`, a full rerun of all 110 current `test-*.sh` files passed 110/110 with 0 failures and 0 timeouts in 204 seconds, alongside strict 42/42 bypass contract, provider validation, `bash -n`, `py_compile`, and `git diff --check`. The preceding commit `b383e9b4a3df5751f3e2eddae7dc1c410e900917` independently passed 110/110 in 191 seconds.
-- Exact-head CI/review: external gate; must be green/reconciled before owner approval.
-- Live control-plane qualification: external gate; must be proven before owner approval.
-- Merge/post-merge/closure: prohibited until explicit owner approval and subsequent durable evidence.
+- The audit-defined bypass contract is implemented without env-only or local fallback authorization.
+- Blank/generic/expired/reused/wrong-gate/wrong-target/wrong-scope/missing-issuer/forged/master-substitution cases deny in deterministic tests.
+- One valid bounded approval path passes in the provider-backed test contract.
+- Durable one-shot consumption remains required; replay cannot authorize again.
+- Accepted authorization records metadata-only evidence without secret/conversation content.
+- Installed-target behavior and the full test suite pass.
+- Final exact-head required CI is green and review threads are reconciled.
+- Explicit owner approval is obtained for the final exact head before merge.
+- Post-merge validation and canonical gap closure are separate follow-up lifecycle steps.
+- Live control-repository/App provisioning is not a merge requirement; when absent, bypasses fail closed.
 
 ## Progress Lifecycle Evidence
 
-- start: this clean-history Route Plan is the first PR commit above canonical `main` `6a589971c59561b88cb4abaa0752235b9bb4d5df` and precedes every implementation replay commit owned by this rebuilt history.
-- mid: remote foundation `d45a8bbf56702f00cea091bf38814b2bdb44b66a` replayed 51 verified paths; bypass contract is 42/42 (11 master-disabled, 31 action-specific), fail-closed/provider/approval tests pass, hard-hook is 15/15, hook classification 10/10, and clean installed-target passes including env-only `EOS_BYPASS_FIXTEST` denial.
-- superseded pre-merge: `e8abb45f29b00d096318efe2cb8900dd038f571f` reached green exact-head CI and 110/110 local tests, but a subsequent security review found direct `${{ inputs.* }}` / `${{ github.* }}` interpolation inside reusable-workflow shell and ungated hidden fixture/time overrides. That evidence is not final.
-- review correction: remote security commit `9bc3ce72c7f6f15018e4fc8bce19266de9df582b` / tree `1dc2d93f8c5de1e806693e5a74c152babf0f66f0` moves GitHub expressions into step environment values consumed as quoted shell variables, rejects direct GitHub-context interpolation in reusable-workflow `run:` blocks, and gates fixture/time overrides behind explicit `ENGINEERING_OS_BYPASS_TEST_MODE=1`. Focused strict, approval, fail-closed, hard-hook, classification, provider, and clean installed-target checks passed before publication.
-- superseded pre-merge: `923bda7b5723f141580af4711b7d6a382f8f01d3` repinned the control-plane template to the hardened reusable-workflow commit, but the subsequent exact-head CodeRabbit and Codex review of `e8abb45f29b00d096318efe2cb8900dd038f571f` raised 19 findings that were not yet reconciled. That evidence is not final.
-
-- review reconciliation: remote commit `b383e9b4a3df5751f3e2eddae7dc1c410e900917` binds `approval_comment_id`/`approval_created_at` from the provider envelope instead of the authored body, which is what made a real human approval constructible at all; enforces the canonical policy `target_type`/`fingerprint_contract`/`target_commit_contract` columns that were previously parsed and discarded; makes the remote-head lookup fail closed; refuses provider redirects that would replay the `Authorization` header; traverses issue-comment pagination instead of rejecting it; coerces numeric path IDs; and decides schema relevance from the parsed object. Full suite 110/110, 0 failures, 0 timeouts, 191s.
-
-- pre-merge: remote last code/config/test commit `5a3f5bc4eed501d2be4fd3d7488e7b019020a2e0` moves claims from the Approval Registry to the Consumption Ledger so the documented two-issue contract is real, aligns the git-ref request parser with the `skip_git_globals` rule in `enforce-git.sh`, scopes the workflow test's authorization assertion to its own request, and records the residual limits of an issue-backed ledger in the runbook. Full suite 110/110, 0 failures, 0 timeouts, 204s; strict 42/42 contract; source and template copies byte-identical. All 19 review threads were reconciled against this content and resolved.
-
-- learning capture: `a5eec91` adds `lessons-learned/bugs/self-referential-provider-identity-in-immutable-payload.md`, recording that a validation contract requiring provider-assigned identity inside an immutable, edit-forbidden payload is unsatisfiable by construction, and that fixture-backed tests cannot detect it because fixtures are authored with the provider values already present. `test-learning` 16/16 passed. No implementation, config, or test change follows this checkpoint.
+- start: plan-first rebuilt implementation started from canonical `main` `6a589971c59561b88cb4abaa0752235b9bb4d5df`.
+- mid: provider foundation, canonical policy/validator, call-site migration, fail-closed behavior and installed-target coverage were implemented and reviewed.
+- superseded pre-merge: `6855c7d66c08edba02ff9ab9adbcb79c19cc4d1f` had green CI but was later proven to permit repeat authorization from the same approval; that evidence is historical only.
+- one-shot regression: `4100a29a4f6a9f65ab0659247531059dd2a90d35` added a regression that failed on the repeat-authorization defect.
+- corrected implementation: exact code/docs target `7795c967c1be5ecadd7e31c68da3159067316368` passed 111/111 `test-*.sh`, 0 failures, 0 real timeouts; 192 shell files passed `bash -n`, 42 Python files compiled, 19 YAML files parsed, provider validation/clean install/installed target/one-shot hardening passed. Temporary export workflow was removed in `554ae5b14ec08ddf455325647ab37a3c29eb9333`.
+- scope correction: live bootstrap work after `554ae5b14ec08ddf455325647ab37a3c29eb9333` was compared to the canonical audit and removed from the PR branch; final CI/review evidence must now be regenerated on the corrected exact head.
 
 ## Claude Run Trace
 
-- goal: finish PR #264 with provider-backed fail-closed authorization and truthful lifecycle evidence.
-- hypothesis: separate credentials + human provider approval + exact binding + unique claim/marker consumption remove env-only authorization.
-- candidate: `9a2eb7b6c900da43654b716a5203aed45d723344` / tree `039753e82e72a02d1264ccd9c20cf7f1aaf7e3b7`.
-- experiment: plan-first rebuild, replay, regenerate local/CI/review/live evidence.
-- rejected: lifecycle backfill, own-history exemption, policy weakening, env/local/Git-tag authorization.
+- goal: prevent forged Engineering OS bypasses and satisfy only `gap:bypass-approval-provenance`.
+- hypothesis: one canonical provider-backed validator plus durable trusted one-shot consumption can make env variables request-only without leaving local bypass fallbacks.
+- experiment: prove env-only/forged/wrong-scope/replay denial, preserve one valid bounded approval fixture, verify installed behavior, then exact-head CI/review.
+- rejected: env/local/Git-tag authorization, requirement weakening, reusable approval, GitHub App provisioning as a merge prerequisite, and live production qualification as part of this PR's closure bar.
 
 ## Validation Plan
 
-1. Commit this plan alone and validate evidence policy.
-2. Replay provider foundation; run focused provider/fail-closed/installed checks; commit `mid` evidence.
-3. Add template callers pinned to the new immutable foundation SHA plus hardening test.
-4. Run full local validation and all `test-*.sh`; commit `pre-merge` evidence after the last code change; re-run final validation.
-5. Publish exact head, collect latest-attempt CI, update PR body, reconcile and refresh reviews.
-6. Create/verify the private control repository, execute denial/success qualification, stop for manual approval publication, then later for owner merge approval.
+1. Reconcile the PR diff against the canonical audit/registry — complete.
+2. Remove bootstrap/qualification-only commits and update scope evidence — complete/in progress for documentation.
+3. Re-run focused bypass/provider/one-shot/fail-closed checks and full exact-head CI.
+4. Reconcile fresh CodeRabbit/Codex review on the corrected exact head.
+5. Stop for explicit owner approval of that exact head.
+6. After merge, run post-merge validation; update canonical gap closure only with matching evidence.
 
 ## Remaining External Gates
 
-Exact-head CI/review; live control-plane qualification; manual approval publication; explicit owner approval; expected-head merge; post-merge proof; separate closure.
+Exact-head CI; fresh review reconciliation; explicit owner approval for the exact final head; protected merge; post-merge validation; separate canonical gap closure. No live GitHub App/control-repository qualification is required for PR #264 merge readiness.
