@@ -142,11 +142,39 @@
         ]
       },
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
             "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event PostToolUse --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" -- post_tool_use; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
+          }
+        ],
+        "matcher": ".*"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/session-setup.sh\" 2>&1 | head -50 || true"
+          },
+          {
+            "type": "command",
+            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event SessionStart --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-session-start.sh\"; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "GATE=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\"; [ -r \"$GATE\" ] || { echo \"ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing: $GATE\" >&2; exit 2; }; bash \"$GATE\" --event Stop --matcher '*' --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-stop-hook.sh\""
+          },
+          {
+            "type": "command",
+            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event Stop --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" -- stop; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
           }
         ]
       }
@@ -250,7 +278,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event StopFailure --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" -- stop_failure; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
+            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event StopFailure --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" -- stop_failure; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
           }
         ]
       }
@@ -260,35 +288,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event SessionEnd --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" -- session_end; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event SessionStart --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-session-start.sh\"; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
-          },
-          {
-            "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/session-setup.sh\" 2>&1 | head -50 || true"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "GATE=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/hook-gate.sh\"; [ -r \"$GATE\" ] || { echo \"ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing: $GATE\" >&2; exit 2; }; bash \"$GATE\" --event Stop --matcher '*' --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-stop-hook.sh\""
-          },
-          {
-            "type": "command",
-            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event Stop --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/eos-telemetry-event.sh\" -- stop; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
+            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event SessionEnd --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" -- session_end; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
           }
         ]
       }

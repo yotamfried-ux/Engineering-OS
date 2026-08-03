@@ -35,6 +35,7 @@ if [ -x "$mcp_installer" ]; then
 fi
 
 for runtime in \
+  scripts/enforcement/hook-criticality.tsv \
   scripts/monitoring/patch-settings-telemetry.py \
   scripts/monitoring/eos-telemetry-session-start.sh \
   scripts/monitoring/eos-telemetry-event.sh \

@@ -44,6 +44,9 @@ while IFS=$'\t' read -r workflow dep; do
   mkdir -p "$FAKE_HOME/$(dirname "$dep")"; cp "$ROOT/$dep" "$FAKE_HOME/$dep"
 done < "$MANIFEST"
 cp "$MANIFEST" "$FAKE_HOME/scripts/enforcement/policy-gate-dependencies.tsv"
+# The canonical required-hook registry drives the telemetry patcher, so an install
+# without it must fail rather than wire a partial hook set.
+cp "$ROOT/scripts/enforcement/hook-criticality.tsv" "$FAKE_HOME/scripts/enforcement/hook-criticality.tsv"
 cp "$ROOT/.claude/settings.json" "$FAKE_HOME/.claude/settings.json"
 for runtime in \
   patch-settings-telemetry.py eos-telemetry-session-start.sh eos-telemetry-event.sh \

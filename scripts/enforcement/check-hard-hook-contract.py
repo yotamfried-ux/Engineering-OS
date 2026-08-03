@@ -14,7 +14,7 @@ from typing import Iterable, NoReturn
 COLUMNS = 10
 VALID_CLASSES = {"hard", "advisory", "recorder", "lifecycle"}
 VALID_WIRING = {"direct", "nested", "inline"}
-VALID_SURFACES = {"both", "source", "installed"}
+VALID_SURFACES = {"both", "source", "installed", "dispatcher"}
 BLOCKABLE_EVENTS = {"PreToolUse", "Stop"}
 
 
@@ -223,11 +223,24 @@ def validate_hard_wiring(root: Path, settings: dict, rows: list[Row], surface: s
 
 def validate_soft_rows(settings: dict, rows: list[Row], surface: str) -> None:
     for row in rows:
-        if not row.applies(surface) or row.wiring != "direct" or row.klass not in {"advisory", "recorder"}:
+        if not row.applies(surface) or row.wiring != "direct" or row.klass not in {"advisory", "recorder", "lifecycle"}:
             continue
         matches = [cmd for _, cmd in commands_for(settings, row.event, row.matcher) if row.unit in cmd]
         if not matches:
-            continue
+            # An advisory unit is guidance and may legitimately be absent. A recorder or
+            # lifecycle unit is how a run is observed and completed, so a registered row
+            # with no wiring is exactly the boundary drift this contract exists to catch.
+            if row.klass == "advisory":
+                continue
+            fail(
+                f"registered {row.klass} unit is not wired on this surface: "
+                f"{row.event}/{row.matcher}/{row.unit}"
+            )
+        if len(matches) > 1:
+            fail(
+                f"duplicate {row.klass} wiring for {row.event}/{row.matcher}/{row.unit}: "
+                f"{len(matches)} commands"
+            )
         if any("/lib/hook-gate.sh" in cmd and "soft-hook-gate.sh" not in cmd for cmd in matches):
             fail(f"soft {row.klass} unit must not use the hard hook gate: {row.unit}")
 
