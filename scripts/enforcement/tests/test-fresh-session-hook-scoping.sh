@@ -58,9 +58,23 @@ run_guard() {
       bash "$REQUIRE")
 }
 
-for tool in Bash Read Glob Grep ToolSearch AskUserQuestion mcp__github__get_me; do
+run_unready_guard() {
+  local tool="$1"
+  printf '{"tool_name":"%s","tool_input":{}}' "$tool" | \
+    (cd "$TARGET" && \
+      EOS_TELEMETRY_HANDOFF_MODE=disabled \
+      EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
+      EOS_TELEMETRY_FILE="$TMP/unready-events.jsonl" \
+      EOS_TELEMETRY_RUN_ID_FILE="$TMP/unready-run-id" \
+      bash "$REQUIRE")
+}
+
+for tool in Bash Read Glob Grep ToolSearch AskUserQuestion ExitPlanMode mcp__github__get_me; do
   pass "fresh_session_allows_${tool}" run_guard "$tool"
 done
+
+pass unready_session_allows_ExitPlanMode run_unready_guard ExitPlanMode
+blockcase unready_session_blocks_Bash run_unready_guard Bash
 
 blockcase required_mode_rejects_legacy_boundary_wiring bash -c "
   cd '$TARGET'
