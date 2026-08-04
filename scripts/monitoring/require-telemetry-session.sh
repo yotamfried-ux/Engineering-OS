@@ -1,6 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+HOOK_INPUT=""
+if [ ! -t 0 ]; then
+  HOOK_INPUT="$(cat 2>/dev/null || true)"
+fi
+TOOL_NAME="$(printf '%s' "$HOOK_INPUT" | python3 -c '
+import json
+import sys
+
+try:
+    payload = json.load(sys.stdin)
+except Exception:
+    raise SystemExit(0)
+
+if isinstance(payload, dict) and isinstance(payload.get("tool_name"), str):
+    print(payload["tool_name"])
+' 2>/dev/null || true)"
+
+# ExitPlanMode only presents the generated plan for owner approval. It does not
+# execute the plan or mutate the workspace, so telemetry readiness is enforced
+# on the first operational tool after approval rather than on this transition.
+if [ "$TOOL_NAME" = "ExitPlanMode" ]; then
+  exit 0
+fi
+
 block() {
   echo "ERROR_FOR_AGENT: $1" >&2
   [ -z "${2:-}" ] || echo "ACTION: $2" >&2

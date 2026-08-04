@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SESSION_START="$ROOT/scripts/monitoring/eos-telemetry-session-start.sh"
 REQUIRE="$ROOT/scripts/monitoring/require-telemetry-session.sh"
+HOOK_GATE="$ROOT/scripts/enforcement/lib/hook-gate.sh"
 PATCHER="$ROOT/scripts/monitoring/patch-settings-telemetry.py"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -58,9 +59,102 @@ run_guard() {
       bash "$REQUIRE")
 }
 
-for tool in Bash Read Glob Grep ToolSearch AskUserQuestion mcp__github__get_me; do
+run_unready_guard() {
+  local tool="$1"
+  printf '{"tool_name":"%s","tool_input":{}}' "$tool" | \
+    (cd "$TARGET" && \
+      EOS_TELEMETRY_HANDOFF_MODE=disabled \
+      EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
+      EOS_TELEMETRY_FILE="$TMP/unready-events.jsonl" \
+      EOS_TELEMETRY_RUN_ID_FILE="$TMP/unready-run-id" \
+      bash "$REQUIRE")
+}
+
+run_wrapped_unready_guard() {
+  local tool="$1"
+  printf '{"hook_event_name":"PreToolUse","tool_name":"%s","tool_input":{}}' "$tool" | \
+    (cd "$TARGET" && \
+      EOS_TELEMETRY_HANDOFF_MODE=disabled \
+      EOS_CLAUDE_SETTINGS_FILE="$TARGET/.claude/settings.json" \
+      EOS_TELEMETRY_FILE="$TMP/unready-events.jsonl" \
+      EOS_TELEMETRY_RUN_ID_FILE="$TMP/unready-run-id" \
+      bash "$HOOK_GATE" \
+        --event PreToolUse \
+        --matcher '.*' \
+        --unit "$REQUIRE")
+}
+
+wrapped_unready_exit_plan_is_allowed() {
+  local output
+  output="$(run_wrapped_unready_guard ExitPlanMode)"
+  [ -z "$output" ]
+}
+
+wrapped_unready_bash_is_denied() {
+  local output
+  output="$(run_wrapped_unready_guard Bash)"
+  printf '%s' "$output" | python3 -c '
+import json
+import sys
+
+payload = json.load(sys.stdin)
+specific = payload.get("hookSpecificOutput")
+if not isinstance(specific, dict):
+    raise SystemExit("missing hookSpecificOutput")
+if specific.get("hookEventName") != "PreToolUse":
+    raise SystemExit("wrong hookEventName")
+if specific.get("permissionDecision") != "deny":
+    raise SystemExit("Bash was not denied")
+reason = specific.get("permissionDecisionReason")
+if not isinstance(reason, str) or "telemetry" not in reason.lower():
+    raise SystemExit("deny reason does not preserve telemetry diagnostic")
+'
+}
+
+manual_tty_preflight() {
+  python3 - "$REQUIRE" "$TARGET" <<'PY'
+import os
+import pty
+import subprocess
+import sys
+
+script, cwd = sys.argv[1:3]
+master, slave = pty.openpty()
+env = os.environ.copy()
+env["EOS_TELEMETRY_DISABLED"] = "1"
+proc = subprocess.Popen(
+    ["bash", script],
+    cwd=cwd,
+    stdin=slave,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    env=env,
+)
+os.close(slave)
+try:
+    try:
+        return_code = proc.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+        raise SystemExit("manual preflight waited for TTY EOF")
+finally:
+    os.close(master)
+
+if return_code != 2:
+    raise SystemExit(f"expected fail-closed exit 2, got {return_code}")
+PY
+}
+
+for tool in Bash Read Glob Grep ToolSearch AskUserQuestion ExitPlanMode mcp__github__get_me; do
   pass "fresh_session_allows_${tool}" run_guard "$tool"
 done
+
+pass unready_session_allows_ExitPlanMode run_unready_guard ExitPlanMode
+blockcase unready_session_blocks_Bash run_unready_guard Bash
+pass wrapped_unready_session_allows_ExitPlanMode wrapped_unready_exit_plan_is_allowed
+pass wrapped_unready_session_denies_Bash wrapped_unready_bash_is_denied
+pass manual_tty_preflight_does_not_wait_for_eof manual_tty_preflight
 
 blockcase required_mode_rejects_legacy_boundary_wiring bash -c "
   cd '$TARGET'
