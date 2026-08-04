@@ -1,6 +1,9 @@
 # event	matcher	unit	class	failure_semantics	wiring	parent	surface	requires	deny_mode
 # surface: both|source|installed|dispatcher. wiring: direct|nested|inline.
 # Hard direct units are invoked through scripts/enforcement/lib/hook-gate.sh.
+# failure_semantics propagate_failure means the unit's exit status must reach Claude
+# Code unwrapped: soft-hook-gate.sh always exits 0, so gating a terminal boundary
+# would convert a failed required durable handoff into a successfully closed session.
 # This file is the single canonical owner of the required hook set. Every settings
 # surface is derived from it: Engineering OS checked-in settings and generated target
 # settings through scripts/enforcement/check-hard-hook-contract.py, and the direct-mode
@@ -53,6 +56,6 @@ TaskCompleted	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidenc
 PostCompact	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
 Stop	*	scripts/enforcement/post-stop-hook.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	stop_json
 Stop	*	scripts/enforcement/check-runtime-evidence.sh	hard	fail_closed	nested	scripts/enforcement/post-stop-hook.sh	both	scripts/enforcement/lib/evidence.sh	stop_json
-Stop	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	soft_setup	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none
-StopFailure	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	soft_setup	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none
-SessionEnd	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	soft_setup	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none
+Stop	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	propagate_failure	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none
+StopFailure	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	propagate_failure	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none
+SessionEnd	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	propagate_failure	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none

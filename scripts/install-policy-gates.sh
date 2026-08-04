@@ -36,6 +36,8 @@ fi
 
 for runtime in \
   scripts/enforcement/hook-criticality.tsv \
+  scripts/enforcement/lib/hook-gate.sh \
+  scripts/enforcement/lib/soft-hook-gate.sh \
   scripts/monitoring/patch-settings-telemetry.py \
   scripts/monitoring/eos-telemetry-session-start.sh \
   scripts/monitoring/eos-telemetry-event.sh \

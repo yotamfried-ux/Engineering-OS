@@ -74,18 +74,24 @@ recorders = [c for c in pretool if targets(c, "pre_tool_use")]
 assert len(recorders) == 1, pretool
 assert soft_gate in recorders[0] and hard_gate not in recorders[0], recorders[0]
 
-assert len(session_start) == 1, session_start
-assert targets(session_start[0], "session_start"), session_start
-assert soft_gate in session_start[0] and hard_gate not in session_start[0], session_start
+# Count only owned commands: an unrelated user hook on these events must survive.
+owned_session_start = [c for c in session_start if dispatch in c]
+assert len(owned_session_start) == 1, session_start
+assert targets(owned_session_start[0], "session_start"), session_start
+assert soft_gate in owned_session_start[0] and hard_gate not in owned_session_start[0], owned_session_start
 
-# Terminal boundaries must be wired, or a dispatched run never completes a bundle.
+# Terminal boundaries must be wired, or a dispatched run never completes a bundle. They
+# run unwrapped so a failed required durable handoff cannot be reported as success.
 for event, argument in (("Stop", "stop"), ("StopFailure", "stop_failure"), ("SessionEnd", "session_end")):
     commands = [
         hook["command"]
         for block in settings["hooks"][event]
         for hook in block.get("hooks", [])
+        if dispatch in hook["command"]
     ]
-    assert len(commands) == 1 and targets(commands[0], argument), (event, commands)
+    assert len(commands) == 1, (event, commands)
+    assert commands[0].rstrip().endswith(f" {argument}"), (event, commands)
+    assert soft_gate not in commands[0] and hard_gate not in commands[0], (event, commands)
 
 # The dispatcher never calls a per-repository unit directly; scope is resolved first.
 for stale in (

@@ -243,6 +243,16 @@ def validate_soft_rows(settings: dict, rows: list[Row], surface: str) -> None:
             )
         if any("/lib/hook-gate.sh" in cmd and "soft-hook-gate.sh" not in cmd for cmd in matches):
             fail(f"soft {row.klass} unit must not use the hard hook gate: {row.unit}")
+        # soft-hook-gate.sh always exits 0. Wrapping a unit whose exit status must reach
+        # Claude Code would convert a failed required durable handoff into a session that
+        # looks cleanly closed while no bundle was produced.
+        if row.semantics == "propagate_failure" and any(
+            "soft-hook-gate.sh" in cmd for cmd in matches
+        ):
+            fail(
+                f"unit declared propagate_failure must not be wrapped in the fail-open "
+                f"soft gate: {row.event}/{row.matcher}/{row.unit}"
+            )
 
 
 def main(argv: list[str] | None = None) -> int:

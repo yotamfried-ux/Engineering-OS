@@ -19,6 +19,8 @@ REGISTRY_COLUMNS = 10
 # Only telemetry units are owned by this patcher; enforcement units are wired by the
 # checked-in settings and by install-policy-gates.sh.
 OWNED_UNIT_PREFIX = "scripts/monitoring/"
+# Units whose exit status must reach Claude Code unwrapped.
+PROPAGATE_FAILURE = "propagate_failure"
 # Units that receive no per-event argument. Everything else is called with the
 # snake_case form of its event name.
 ARGLESS_UNITS = (
@@ -33,7 +35,9 @@ DISPATCH_SUBCOMMANDS = {
     "scripts/monitoring/require-telemetry-session.sh": "guard",
     "scripts/monitoring/eos-telemetry-session-start.sh": "session_start",
 }
-MARKERS = (
+# Fallback ownership markers, used only for --uninstall when the registry is gone.
+# The installed set is derived from the registry; see owned_markers().
+FALLBACK_MARKERS = (
     "require-telemetry-session.sh",
     "eos-telemetry-session-start.sh",
     "eos-telemetry-event.sh",
@@ -64,12 +68,12 @@ def event_argument(event: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", event).lower()
 
 
-def read_registry(path: Path) -> list[tuple[str, str, str, str]]:
-    """Return the (event, matcher, unit, class) rows this patcher owns."""
+def read_registry(path: Path) -> list[tuple[str, str, str, str, str]]:
+    """Return the (event, matcher, unit, class, failure_semantics) rows this patcher owns."""
 
     if path.is_symlink() or not path.is_file():
         raise PatchError(f"required hook registry is missing or not a regular file: {path}")
-    rows: list[tuple[str, str, str, str]] = []
+    rows: list[tuple[str, str, str, str, str]] = []
     for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if not raw.strip() or raw.startswith("#"):
             continue
@@ -79,20 +83,22 @@ def read_registry(path: Path) -> list[tuple[str, str, str, str]]:
                 f"malformed hook registry row {number}: expected {REGISTRY_COLUMNS} "
                 f"columns, got {len(parts)}"
             )
-        event, matcher, unit, klass, _semantics, wiring, _parent, surface = parts[:8]
+        event, matcher, unit, klass, semantics, wiring, _parent, surface = parts[:8]
         if wiring != "direct" or not unit.startswith(OWNED_UNIT_PREFIX):
             continue
         # Dispatcher rows exist so hook-gate.sh accepts the scope resolver as a canonical
         # hard unit; the wiring itself is rendered from the source rows below.
         if surface == "dispatcher":
             continue
-        rows.append((event, matcher, unit, klass))
+        rows.append((event, matcher, unit, klass, semantics))
     if not rows:
         raise PatchError(f"hook registry declares no telemetry units: {path}")
     return rows
 
 
-def render_command(unit: str, event: str, matcher: str, klass: str, mode: str, home: str) -> str:
+def render_command(
+    unit: str, event: str, matcher: str, klass: str, semantics: str, mode: str, home: str
+) -> str:
     """Render one settings command, keeping criticality identical across surfaces."""
 
     if mode == "direct":
@@ -105,6 +111,12 @@ def render_command(unit: str, event: str, matcher: str, klass: str, mode: str, h
 
     unit_path = f"{home}/{target}"
     suffix = f" -- {argument}" if argument else ""
+    if semantics == PROPAGATE_FAILURE:
+        # Terminal boundaries run unwrapped on purpose. soft-hook-gate.sh always exits 0,
+        # so gating these would turn a failed required durable handoff into a session
+        # that looks cleanly closed while no bundle was ever produced.
+        argv = f" {argument}" if argument else ""
+        return f'bash "{unit_path}"{argv}'
     if klass == "hard":
         gate = f"{home}/scripts/enforcement/lib/hook-gate.sh"
         return (
@@ -139,14 +151,30 @@ def desired_hooks(
 
     runtime_home = home or home_placeholder()
     hooks: list[tuple[str, str | None, str]] = []
-    for event, matcher, unit, klass in read_registry(registry_path()):
-        command = render_command(unit, event, matcher, klass, mode, runtime_home)
+    for event, matcher, unit, klass, semantics in read_registry(registry_path()):
+        command = render_command(unit, event, matcher, klass, semantics, mode, runtime_home)
         hooks.append((event, None if matcher == "*" else matcher, command))
     return hooks
 
 
+def owned_markers() -> tuple[str, ...]:
+    """Ownership markers derived from the registry, so there is one source of truth.
+
+    A new scripts/monitoring/ unit added to the registry is owned automatically. With a
+    hardcoded list, such a unit would leave its previous command behind on reinstall and
+    then be reported both missing and duplicated.
+    """
+
+    try:
+        units = {unit for _e, _m, unit, _k, _s in read_registry(registry_path())}
+    except PatchError:
+        return FALLBACK_MARKERS
+    units.add(DISPATCH_UNIT)
+    return tuple(sorted({Path(unit).name for unit in units}))
+
+
 def is_marker_owned(command: str) -> bool:
-    return any(marker in command for marker in MARKERS)
+    return any(marker in command for marker in owned_markers())
 
 
 def load_settings(path: Path) -> dict[str, Any]:

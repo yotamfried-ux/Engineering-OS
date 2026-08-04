@@ -24,6 +24,8 @@ target="${EOS_USER_SETTINGS_PATH:-$HOME/.claude/settings.json}"
 
 for runtime in \
   scripts/enforcement/hook-criticality.tsv \
+  scripts/enforcement/lib/hook-gate.sh \
+  scripts/enforcement/lib/soft-hook-gate.sh \
   scripts/monitoring/patch-settings-telemetry.py \
   scripts/monitoring/eos-telemetry-dispatch.sh \
   scripts/monitoring/eos-telemetry-dispatch-resolve.py \

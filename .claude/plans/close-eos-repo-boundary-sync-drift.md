@@ -72,8 +72,9 @@ no importer, no Project 8 changes, no bypass work.
   trailing argument. Once hooks are gate-wrapped the guard reported them missing, and in
   the boundary case under a `required` policy that verdict blocks rather than warns —
   which would have blocked Project 8 instead of producing a bundle. Both checks now match
-  a unit whether it is invoked bare or through a gate. Measured `BOUNDARY_READY=1` on the
-  direct, dispatcher, and checked-in surfaces.
+  a unit whether it is invoked bare or through a gate. Measured `BOUNDARY_READY=1` on all four surfaces:
+  checked-in Engineering OS settings, the direct-mode render, the generated target
+  settings that render produces, and the user-level dispatcher render.
 - **follow-up enforcement**: Per-mismatch-class regressions (missing, mismatched,
   duplicate, legacy, wrong criticality, missing terminal boundary), then exact-head CI,
   review, owner approval, expected-head merge, post-merge validation, and gap closure.
@@ -153,7 +154,22 @@ no importer, no Project 8 changes, no bypass work.
 
 - start: Route Plan committed before any change to `scripts/enforcement/hook-criticality.tsv`, `scripts/monitoring/patch-settings-telemetry.py`, `scripts/enforcement/check-hard-hook-contract.py`, `scripts/monitoring/require-telemetry-session.sh`, or `.claude/settings.json`. Measured drift on `main` at `bd07042cffd2cc12447318379e08620d1034cf14`: `grep -c record-and-sync-telemetry.sh .claude/settings.json` returned `0`, and `patch-settings-telemetry.py --mode direct --verify` reported more than forty mismatches.
 - mid: made `scripts/enforcement/hook-criticality.tsv` the single owner, derived `scripts/monitoring/patch-settings-telemetry.py` from it, closed the `validate_soft_rows` hole, re-rendered `.claude/settings.json`, declared the registry an install dependency, and added `scripts/enforcement/tests/test-hook-boundary-parity.sh`. The full suite then surfaced a defect this plan had not anticipated: `scripts/monitoring/require-telemetry-session.sh` held a third and fourth copy of the expected command shape, each matching only a bare trailing argument, so gate-wrapped hooks read as missing. Under a `required` telemetry policy the boundary copy blocks rather than warns, which would have blocked Project 8 instead of producing a bundle. Both checks are now gate-aware, with a regression that reuses the guard's own boundary block.
-- pre-merge: full enforcement suite 112 suites, 0 failures; `check-hard-hook-contract.py --surface source` passed with `direct=13 nested=1`; `patch-settings-telemetry.py --mode direct --verify` reported `verified`; the `BOUNDARY_READY` probe measured `1` on the direct, dispatcher, and checked-in surfaces; the settings semantic diff showed exactly 3 hooks changed and 35 unchanged; `shellcheck` 0.9.0 reported no findings on every changed shell file. Recorded on PR #266.
+- review correction: Codex raised a P1 that reproduced exactly. Classifying the terminal
+  boundaries `lifecycle`/`soft_setup` routed them through `soft-hook-gate.sh`, which
+  always exits 0, so a failed required durable handoff would have been reported as a
+  cleanly closed session — measured directly: the gate-wrapped command returned 0 while
+  the unit itself returned 2. This contradicted `test-dispatch-policy-isolation.sh`,
+  which asserts the opposite but invokes the unit directly rather than the rendered
+  command, so it could not catch the wiring. The boundaries now carry a distinct
+  `propagate_failure` semantics and render unwrapped, the hard-hook contract rejects a
+  soft-gated `propagate_failure` unit, and four regressions cover it. Codex also found
+  the gate wrappers missing from both installer preflights, now added. CodeRabbit found
+  that the parity test kept only the last owned hook per event and matcher, so the
+  hard-gated guard was never actually compared across surfaces; ownership markers were
+  hardcoded rather than derived from the registry; and the matching rule existed twice
+  in the session guard. All three are fixed, the rule now living in
+  `scripts/monitoring/telemetry_hook_match.py`.
+- pre-merge: full enforcement suite 112 suites, 0 failures; `check-hard-hook-contract.py --surface source` passed with `direct=13 nested=1`; `patch-settings-telemetry.py --mode direct --verify` reported `verified`; the `BOUNDARY_READY` probe measured `1` on all four surfaces (checked-in, direct-mode render, generated target, dispatcher); the settings semantic diff showed exactly 3 hooks changed and 35 unchanged; `shellcheck` 0.9.0 reported no findings on every changed shell file. Recorded on PR #266.
 - outstanding external gates: exact-head CI on PR #266, live review reconciliation, explicit owner approval, expected-head protected merge, and post-merge validation. No gap status changes before all of those complete.
 
 ## Definition of Done — Implementation
@@ -175,9 +191,10 @@ External gates remaining before closure:
 
 ## Validation Plan
 
-1. `test-hook-classification.sh`, `test-hard-hook-fail-closed.sh`, `test-hard-hook-symlinks.sh`, `test-hook-gate.sh`.
-2. `test-clean-install-and-usage.sh`, `test-install-policy-gate-coverage.sh`, `test-user-level-telemetry-installer.sh`, `test-fresh-session-hook-scoping.sh`.
-3. Full enforcement suite.
-4. Exact-head CI on the PR head; latest attempt only.
-5. Reconcile every live review thread; do not weaken a gate to pass CI.
-6. No merge without a new explicit owner approval for the final exact head.
+1. `test-hook-boundary-parity.sh` — the regression for every drift class.
+2. `test-hook-classification.sh`, `test-hard-hook-fail-closed.sh`, `test-hard-hook-symlinks.sh`, `test-hook-gate.sh`.
+3. `test-clean-install-and-usage.sh`, `test-install-policy-gate-coverage.sh`, `test-user-level-telemetry-installer.sh`, `test-fresh-session-hook-scoping.sh`.
+4. Full enforcement suite.
+5. Exact-head CI on the PR head; latest attempt only.
+6. Reconcile every live review thread; do not weaken a gate to pass CI.
+7. No merge without a new explicit owner approval for the final exact head.

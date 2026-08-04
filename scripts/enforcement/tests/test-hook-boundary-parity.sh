@@ -244,7 +244,82 @@ for mode in direct dispatcher; do
   fi
 done
 
-# 13. Every telemetry unit the registry declares is actually reachable on disk.
+# 13. A terminal boundary must never be wrapped in the fail-open soft gate.
+#     soft-hook-gate.sh always exits 0, so wrapping one converts a failed required
+#     durable handoff into a session that looks cleanly closed with no bundle.
+for mode in direct dispatcher; do
+  probe="$WORK/nogate-$mode.json"
+  python3 "$PATCHER" "$probe" --mode "$mode" --home "$ROOT" --no-backup >/dev/null
+  if python3 - "$probe" <<'NOGATE'
+import json, sys
+data = json.loads(open(sys.argv[1]).read())
+for event in ("Stop", "StopFailure", "SessionEnd"):
+    commands = [h["command"] for b in data["hooks"][event] for h in b.get("hooks", [])]
+    assert len(commands) == 1, (event, commands)
+    assert "soft-hook-gate.sh" not in commands[0], (event, commands[0])
+NOGATE
+  then
+    ok "terminal boundaries are not soft-gated on the $mode surface"
+  else
+    bad "a terminal boundary is soft-gated on the $mode surface"
+  fi
+done
+
+# 14. Prove the exit status survives the rendered command, rather than inferring it
+#     from the absence of a wrapper.
+FAILROOT="$WORK/failing-boundary"
+mkdir -p "$FAILROOT/scripts/monitoring" "$FAILROOT/scripts/enforcement/lib"
+cp "$ROOT/scripts/enforcement/lib/soft-hook-gate.sh" "$FAILROOT/scripts/enforcement/lib/"
+printf '#!/usr/bin/env bash\necho "required durable handoff failed" >&2\nexit 2\n' \
+  > "$FAILROOT/scripts/monitoring/record-and-sync-telemetry.sh"
+rendered="$(python3 - "$PATCHER" "$FAILROOT" <<'RENDER'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("patcher", sys.argv[1])
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+for event, _matcher, command in mod.desired_hooks("direct", sys.argv[2]):
+    if event == "Stop" and "record-and-sync-telemetry.sh" in command:
+        print(command)
+RENDER
+)"
+set +e
+echo '{}' | bash -c "$rendered" >/dev/null 2>&1
+boundary_status=$?
+set -e
+if [ "$boundary_status" -ne 0 ]; then
+  ok "a failing required boundary propagates its exit status (got $boundary_status)"
+else
+  bad "a failing required boundary was swallowed into success"
+fi
+
+# 15. The contract must reject a soft-gated propagate_failure unit outright.
+GATEROOT="$WORK/softgated"
+mkdir -p "$GATEROOT/.claude"
+cp -r "$ROOT/scripts" "$GATEROOT/scripts"
+python3 - "$SETTINGS" "$GATEROOT/.claude/settings.json" "$ROOT" <<'SOFTGATE'
+import json, sys
+data = json.loads(open(sys.argv[1]).read())
+root = sys.argv[3]
+soft = root + "/scripts/enforcement/lib/soft-hook-gate.sh"
+unit = root + "/scripts/monitoring/record-and-sync-telemetry.sh"
+for block in data["hooks"]["Stop"]:
+    for hook in block.get("hooks", []):
+        if "record-and-sync-telemetry.sh" in hook["command"]:
+            hook["command"] = (
+                'SOFT="' + soft + '"; if [ -r "$SOFT" ]; then bash "$SOFT" --event Stop '
+                '--unit "' + unit + '" -- stop; else exit 0; fi'
+            )
+open(sys.argv[2], "w").write(json.dumps(data, indent=2))
+SOFTGATE
+if python3 "$CONTRACT" --root "$GATEROOT" --surface source >/dev/null 2>"$WORK/softgate.err"; then
+  bad "hard-hook contract accepted a soft-gated terminal boundary"
+elif grep -q 'must not be wrapped in the fail-open soft gate' "$WORK/softgate.err"; then
+  ok "hard-hook contract rejects a soft-gated terminal boundary"
+else
+  bad "contract failed for the wrong reason: $(head -1 "$WORK/softgate.err")"
+fi
+
+# 16. Every telemetry unit the registry declares is actually reachable on disk.
 if python3 - "$REGISTRY" "$ROOT" <<'PY'
 import sys
 from pathlib import Path
