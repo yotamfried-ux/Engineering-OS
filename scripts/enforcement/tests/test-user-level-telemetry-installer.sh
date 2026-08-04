@@ -25,7 +25,7 @@ assert_mode() {
 
 assert_dispatcher_only() {
   python3 - "$SETTINGS" "$ROOT" <<'PY'
-import json, sys
+import json, re, sys
 from pathlib import Path
 settings = json.loads(Path(sys.argv[1]).read_text())
 root = sys.argv[2]
@@ -48,10 +48,52 @@ session_start = [
     for block in settings["hooks"]["SessionStart"]
     for hook in block.get("hooks", [])
 ]
-expected = f'bash "{root}/scripts/monitoring/eos-telemetry-dispatch.sh"'
-assert pretool.count(f"{expected} guard") == 1, pretool
-assert sum(c.endswith(" pre_tool_use") and expected in c for c in pretool) == 1, pretool
-assert session_start == [f"{expected} session_start"], session_start
+dispatch = f'{root}/scripts/monitoring/eos-telemetry-dispatch.sh'
+hard_gate = f'{root}/scripts/enforcement/lib/hook-gate.sh'
+soft_gate = f'{root}/scripts/enforcement/lib/soft-hook-gate.sh'
+
+
+def targets(command, argument):
+    # The argument must end at a word boundary: "-- stop" must not match "-- stop_failure".
+    return re.search(rf'--unit "{re.escape(dispatch)}" -- {argument}(?![a-z_])', command) is not None
+
+
+# Every Engineering OS telemetry command fronts the scope resolver. Unrelated user
+# hooks are none of this patcher's business and must survive untouched.
+owned = [c for c in all_commands if "scripts/monitoring/" in c]
+assert owned and all(dispatch in c for c in owned), owned
+
+# Criticality must match the direct surface: the session guard is hard-gated, every
+# recorder and lifecycle unit is soft-gated. A guard installed without the hard gate is
+# the fail-open boundary drift this registry exists to prevent.
+guards = [c for c in pretool if targets(c, "guard")]
+assert len(guards) == 1, pretool
+assert hard_gate in guards[0] and soft_gate not in guards[0], guards[0]
+
+recorders = [c for c in pretool if targets(c, "pre_tool_use")]
+assert len(recorders) == 1, pretool
+assert soft_gate in recorders[0] and hard_gate not in recorders[0], recorders[0]
+
+# Count only owned commands: an unrelated user hook on these events must survive.
+owned_session_start = [c for c in session_start if dispatch in c]
+assert len(owned_session_start) == 1, session_start
+assert targets(owned_session_start[0], "session_start"), session_start
+assert soft_gate in owned_session_start[0] and hard_gate not in owned_session_start[0], owned_session_start
+
+# Terminal boundaries must be wired, or a dispatched run never completes a bundle. They
+# run unwrapped so a failed required durable handoff cannot be reported as success.
+for event, argument in (("Stop", "stop"), ("StopFailure", "stop_failure"), ("SessionEnd", "session_end")):
+    commands = [
+        hook["command"]
+        for block in settings["hooks"][event]
+        for hook in block.get("hooks", [])
+        if dispatch in hook["command"]
+    ]
+    assert len(commands) == 1, (event, commands)
+    assert commands[0].rstrip().endswith(f" {argument}"), (event, commands)
+    assert soft_gate not in commands[0] and hard_gate not in commands[0], (event, commands)
+
+# The dispatcher never calls a per-repository unit directly; scope is resolved first.
 for stale in (
     "require-telemetry-session.sh",
     "eos-telemetry-session-start.sh",
@@ -149,7 +191,7 @@ if run_installer --verify >"$TMP/stale.out" 2>"$TMP/stale.err"; then
   echo "ERROR_FOR_AGENT: --verify accepted a stale dispatcher path" >&2
   exit 1
 fi
-grep -q 'stale owned hook' "$TMP/stale.err"
+grep -q 'mismatched required hook' "$TMP/stale.err"
 run_installer >/dev/null
 run_installer --verify
 
@@ -171,7 +213,7 @@ if run_installer --verify >"$TMP/extra.out" 2>"$TMP/extra.err"; then
   echo "ERROR_FOR_AGENT: --verify accepted an unexpected owned hook" >&2
   exit 1
 fi
-grep -q 'unexpected owned hook' "$TMP/extra.err"
+grep -q 'unregistered or legacy owned hook' "$TMP/extra.err"
 run_installer >/dev/null
 run_installer --verify
 assert_dispatcher_only
@@ -199,7 +241,7 @@ chmod 600 "$SETTINGS"
 run_installer >/dev/null
 assert_mode 600
 python3 - "$SETTINGS" <<'PY'
-import json, sys
+import json, re, sys
 from pathlib import Path
 data = json.loads(Path(sys.argv[1]).read_text())
 assert data["model"] == "claude-opus"
@@ -211,7 +253,13 @@ commands = [
 ]
 assert "echo my-custom-hook" in commands, commands
 assert "bash ~/hooks/post_tool_use-notify.sh" in commands, commands
-assert sum("eos-telemetry-dispatch.sh" in c and c.endswith(" post_tool_use") for c in commands) == 1
+# Exactly one dispatched post_tool_use hook, and the user's own post_tool_use-notify.sh
+# hook is not miscounted as one.
+dispatched = [
+    c for c in commands
+    if re.search(r'eos-telemetry-dispatch\.sh" -- post_tool_use(?![a-z_])', c)
+]
+assert len(dispatched) == 1, dispatched
 PY
 assert_dispatcher_only
 

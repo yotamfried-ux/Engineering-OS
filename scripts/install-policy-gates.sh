@@ -35,6 +35,9 @@ if [ -x "$mcp_installer" ]; then
 fi
 
 for runtime in \
+  scripts/enforcement/hook-criticality.tsv \
+  scripts/enforcement/lib/hook-gate.sh \
+  scripts/enforcement/lib/soft-hook-gate.sh \
   scripts/monitoring/patch-settings-telemetry.py \
   scripts/monitoring/eos-telemetry-session-start.sh \
   scripts/monitoring/eos-telemetry-event.sh \
@@ -43,6 +46,7 @@ for runtime in \
   scripts/monitoring/telemetry_handoff.py \
   scripts/monitoring/export-telemetry-run.py \
   scripts/monitoring/require-telemetry-session.sh \
+  scripts/monitoring/telemetry_hook_match.py \
   scripts/monitoring/eos-telemetry-summary.py; do
   [ -f "$home_dir/$runtime" ] || { echo "missing telemetry runtime dependency: $home_dir/$runtime" >&2; exit 1; }
 done

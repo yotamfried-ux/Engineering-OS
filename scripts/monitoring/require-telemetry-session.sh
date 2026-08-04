@@ -57,7 +57,7 @@ if [ ! -f "$SYNC" ]; then
     "update Engineering OS and re-run the installer before a required-handoff experiment."
 fi
 
-if ! python3 - "$EVENTS" "$RUN_ID_FILE" "$SETTINGS" "$HOOK_MODE" <<'PY'
+if ! python3 - "$EVENTS" "$RUN_ID_FILE" "$SETTINGS" "$HOOK_MODE" "$SCRIPT_DIR" <<'PY'
 from __future__ import annotations
 
 import json
@@ -68,6 +68,8 @@ from typing import Any
 
 events_path, run_id_path, settings_path = map(Path, sys.argv[1:4])
 hook_mode = sys.argv[4]
+sys.path.insert(0, sys.argv[5])
+from telemetry_hook_match import invokes
 run_id = run_id_path.read_text(encoding="utf-8", errors="replace").splitlines()[0].strip()
 if not run_id:
     raise SystemExit("ERROR_FOR_AGENT: telemetry run_id is empty")
@@ -103,28 +105,24 @@ def commands_for(event: str, *, catch_all_only: bool = False) -> list[str]:
 
 session_commands = commands_for("SessionStart")
 pretool_commands = commands_for("PreToolUse", catch_all_only=True)
+
+
 if hook_mode == "direct":
     requirements: tuple[tuple[str, list[str], Any], ...] = (
         (
             "SessionStart",
             session_commands,
-            lambda command: "eos-telemetry-session-start.sh" in command,
+            lambda command: invokes(command, "eos-telemetry-session-start.sh"),
         ),
         (
             "catch-all PreToolUse guard",
             pretool_commands,
-            lambda command: "require-telemetry-session.sh" in command,
+            lambda command: invokes(command, "require-telemetry-session.sh"),
         ),
         (
             "catch-all PreToolUse event recorder",
             pretool_commands,
-            lambda command: (
-                "eos-telemetry-event.sh" in command
-                and (
-                    command.rstrip().endswith(" pre_tool_use")
-                    or re.search(r"--\s+pre_tool_use(?:\s|[;&|)]|$)", command)
-                )
-            ),
+            lambda command: invokes(command, "eos-telemetry-event.sh", "pre_tool_use"),
         ),
     )
 else:
@@ -132,26 +130,17 @@ else:
         (
             "dispatcher SessionStart",
             session_commands,
-            lambda command: (
-                "eos-telemetry-dispatch.sh" in command
-                and command.rstrip().endswith(" session_start")
-            ),
+            lambda command: invokes(command, "eos-telemetry-dispatch.sh", "session_start"),
         ),
         (
             "dispatcher catch-all PreToolUse guard",
             pretool_commands,
-            lambda command: (
-                "eos-telemetry-dispatch.sh" in command
-                and command.rstrip().endswith(" guard")
-            ),
+            lambda command: invokes(command, "eos-telemetry-dispatch.sh", "guard"),
         ),
         (
             "dispatcher catch-all PreToolUse event recorder",
             pretool_commands,
-            lambda command: (
-                "eos-telemetry-dispatch.sh" in command
-                and command.rstrip().endswith(" pre_tool_use")
-            ),
+            lambda command: invokes(command, "eos-telemetry-dispatch.sh", "pre_tool_use"),
         ),
     )
 
@@ -192,13 +181,16 @@ then
   exit 2
 fi
 
-BOUNDARY_READY="$(python3 - "$SETTINGS" "$HOOK_MODE" <<'PY'
+BOUNDARY_READY="$(python3 - "$SETTINGS" "$HOOK_MODE" "$SCRIPT_DIR" <<'PY'
 import json
+import re
 import sys
 from pathlib import Path
 
 settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 hook_mode = sys.argv[2]
+sys.path.insert(0, sys.argv[3])
+from telemetry_hook_match import invokes as _invokes
 hooks = settings.get("hooks", {}) if isinstance(settings, dict) else {}
 
 commands_by_event = {}
@@ -219,20 +211,17 @@ expected = {
     "StopFailure": "stop_failure",
     "SessionEnd": "session_end",
 }
-ready = True
-for event, suffix in expected.items():
-    commands = commands_by_event.get(event, [])
-    if hook_mode == "direct":
-        present = any(
-            "record-and-sync-telemetry.sh" in command and command.rstrip().endswith(f" {suffix}")
-            for command in commands
-        )
-    else:
-        present = any(
-            "eos-telemetry-dispatch.sh" in command and command.rstrip().endswith(f" {suffix}")
-            for command in commands
-        )
-    ready = ready and present
+unit = "record-and-sync-telemetry.sh" if hook_mode == "direct" else "eos-telemetry-dispatch.sh"
+
+
+def invokes(command: str, argument: str) -> bool:
+    return _invokes(command, unit, argument)
+
+
+ready = all(
+    any(invokes(command, argument) for command in commands_by_event.get(event, []))
+    for event, argument in expected.items()
+)
 print("1" if ready else "0")
 PY
 )"

@@ -6,6 +6,7 @@ import argparse
 from collections import Counter
 import json
 import os
+import re
 import shutil
 import stat
 import sys
@@ -13,33 +14,36 @@ import time
 from pathlib import Path
 from typing import Any
 
-MARKERS = (
+REGISTRY_RELATIVE = "scripts/enforcement/hook-criticality.tsv"
+REGISTRY_COLUMNS = 10
+# Only telemetry units are owned by this patcher; enforcement units are wired by the
+# checked-in settings and by install-policy-gates.sh.
+OWNED_UNIT_PREFIX = "scripts/monitoring/"
+# Units whose exit status must reach Claude Code unwrapped.
+PROPAGATE_FAILURE = "propagate_failure"
+# Units that receive no per-event argument. Everything else is called with the
+# snake_case form of its event name.
+ARGLESS_UNITS = (
+    "scripts/monitoring/require-telemetry-session.sh",
+    "scripts/monitoring/eos-telemetry-session-start.sh",
+)
+# In dispatcher mode one scope-resolving unit fronts every telemetry unit. The registry
+# cannot express this as rows, because a single unit would then serve two roles on
+# PreToolUse and collide on the registry's (event, matcher, unit, wiring, surface) key.
+DISPATCH_UNIT = "scripts/monitoring/eos-telemetry-dispatch.sh"
+DISPATCH_SUBCOMMANDS = {
+    "scripts/monitoring/require-telemetry-session.sh": "guard",
+    "scripts/monitoring/eos-telemetry-session-start.sh": "session_start",
+}
+# Fallback ownership markers, used only for --uninstall when the registry is gone.
+# The installed set is derived from the registry; see owned_markers().
+FALLBACK_MARKERS = (
     "require-telemetry-session.sh",
     "eos-telemetry-session-start.sh",
     "eos-telemetry-event.sh",
     "record-and-sync-telemetry.sh",
     "eos-telemetry-dispatch.sh",
 )
-EVENTS_WITH_MATCHER = (
-    "PreToolUse",
-    "PostToolUse",
-    "PostToolUseFailure",
-    "PermissionDenied",
-    "SubagentStart",
-    "SubagentStop",
-)
-EVENTS_WITHOUT_MATCHER = (
-    "SessionStart",
-    "UserPromptSubmit",
-    "InstructionsLoaded",
-    "TaskCreated",
-    "TaskCompleted",
-    "PostCompact",
-    "Stop",
-    "StopFailure",
-    "SessionEnd",
-)
-ALL_EVENTS = EVENTS_WITH_MATCHER + EVENTS_WITHOUT_MATCHER
 
 
 class PatchError(ValueError):
@@ -50,104 +54,127 @@ def home_placeholder() -> str:
     return "${ENGINEERING_OS_HOME:-$(pwd)}"
 
 
-def command_set(mode: str, home: str | None = None) -> dict[str, str]:
-    runtime_home = home or home_placeholder()
+def registry_path() -> Path:
+    """Resolve the canonical registry from this script's own checkout.
+
+    Deliberately not derived from --home or $HOME: the registry that governs a settings
+    file must be the one shipped alongside the runtime that will execute those hooks.
+    """
+
+    return Path(__file__).resolve().parent.parent.parent / REGISTRY_RELATIVE
+
+
+def event_argument(event: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", event).lower()
+
+
+def read_registry(path: Path) -> list[tuple[str, str, str, str, str]]:
+    """Return the (event, matcher, unit, class, failure_semantics) rows this patcher owns."""
+
+    if path.is_symlink() or not path.is_file():
+        raise PatchError(f"required hook registry is missing or not a regular file: {path}")
+    rows: list[tuple[str, str, str, str, str]] = []
+    for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not raw.strip() or raw.startswith("#"):
+            continue
+        parts = raw.split("\t")
+        if len(parts) != REGISTRY_COLUMNS:
+            raise PatchError(
+                f"malformed hook registry row {number}: expected {REGISTRY_COLUMNS} "
+                f"columns, got {len(parts)}"
+            )
+        event, matcher, unit, klass, semantics, wiring, _parent, surface = parts[:8]
+        if wiring != "direct" or not unit.startswith(OWNED_UNIT_PREFIX):
+            continue
+        # Dispatcher rows exist so hook-gate.sh accepts the scope resolver as a canonical
+        # hard unit; the wiring itself is rendered from the source rows below.
+        if surface == "dispatcher":
+            continue
+        rows.append((event, matcher, unit, klass, semantics))
+    if not rows:
+        raise PatchError(f"hook registry declares no telemetry units: {path}")
+    return rows
+
+
+def render_command(
+    unit: str, event: str, matcher: str, klass: str, semantics: str, mode: str, home: str
+) -> str:
+    """Render one settings command, keeping criticality identical across surfaces."""
+
     if mode == "direct":
-        return {
-            "guard": f'bash "{runtime_home}/scripts/monitoring/require-telemetry-session.sh"',
-            "session_start": f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-session-start.sh"',
-            "recorder": f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-event.sh"',
-            "boundary": f'bash "{runtime_home}/scripts/monitoring/record-and-sync-telemetry.sh"',
-        }
-    if mode == "dispatcher":
-        dispatch = f'bash "{runtime_home}/scripts/monitoring/eos-telemetry-dispatch.sh"'
-        return {
-            "guard": f"{dispatch} guard",
-            "session_start": f"{dispatch} session_start",
-            "recorder": dispatch,
-            "boundary": dispatch,
-        }
-    raise PatchError(f"unknown mode: {mode}")
+        target, argument = unit, "" if unit in ARGLESS_UNITS else event_argument(event)
+    elif mode == "dispatcher":
+        target = DISPATCH_UNIT
+        argument = DISPATCH_SUBCOMMANDS.get(unit, event_argument(event))
+    else:
+        raise PatchError(f"unknown mode: {mode}")
+
+    unit_path = f"{home}/{target}"
+    suffix = f" -- {argument}" if argument else ""
+    if semantics == PROPAGATE_FAILURE:
+        # Terminal boundaries run unwrapped on purpose. soft-hook-gate.sh always exits 0,
+        # so gating these would turn a failed required durable handoff into a session
+        # that looks cleanly closed while no bundle was ever produced.
+        argv = f" {argument}" if argument else ""
+        return f'bash "{unit_path}"{argv}'
+    if klass == "hard":
+        gate = f"{home}/scripts/enforcement/lib/hook-gate.sh"
+        return (
+            f'GATE="{gate}"; [ -r "$GATE" ] || {{ echo "ERROR_FOR_AGENT: Engineering OS '
+            f'hard-hook wrapper missing: $GATE" >&2; exit 2; }}; bash "$GATE" --event '
+            f"{event} --matcher '{matcher}' --unit \"{unit_path}\"{suffix}"
+        )
+    gate = f"{home}/scripts/enforcement/lib/soft-hook-gate.sh"
+    return (
+        f'SOFT="{gate}"; if [ -r "$SOFT" ]; then bash "$SOFT" --event {event} --unit '
+        f'"{unit_path}"{suffix}; else echo "WARNING_FOR_AGENT: Engineering OS soft-hook '
+        f'wrapper missing: $SOFT" >&2; exit 0; fi'
+    )
 
 
 def desired_hooks(
     mode: str,
     home: str | None = None,
-) -> list[tuple[str, str | None, str, str, bool]]:
-    commands = command_set(mode, home)
-    guard_marker = (
-        "require-telemetry-session.sh"
-        if mode == "direct"
-        else 'eos-telemetry-dispatch.sh" guard'
-    )
-    session_marker = (
-        "eos-telemetry-session-start.sh"
-        if mode == "direct"
-        else "eos-telemetry-dispatch.sh"
-    )
-    boundary_marker = (
-        "record-and-sync-telemetry.sh"
-        if mode == "direct"
-        else "eos-telemetry-dispatch.sh"
-    )
-    recorder = commands["recorder"]
-    boundary = commands["boundary"]
-    return [
-        ("PreToolUse", ".*", guard_marker, commands["guard"], True),
-        ("PreToolUse", ".*", "pre_tool_use", f"{recorder} pre_tool_use", False),
-        ("PostToolUse", ".*", "post_tool_use", f"{recorder} post_tool_use", False),
-        (
-            "PostToolUseFailure",
-            ".*",
-            "post_tool_use_failure",
-            f"{recorder} post_tool_use_failure",
-            False,
-        ),
-        (
-            "PermissionDenied",
-            ".*",
-            "permission_denied",
-            f"{recorder} permission_denied",
-            False,
-        ),
-        ("SessionStart", None, session_marker, commands["session_start"], True),
-        (
-            "UserPromptSubmit",
-            None,
-            "user_prompt_submit",
-            f"{recorder} user_prompt_submit",
-            False,
-        ),
-        (
-            "InstructionsLoaded",
-            None,
-            "instructions_loaded",
-            f"{recorder} instructions_loaded",
-            False,
-        ),
-        ("SubagentStart", ".*", "subagent_start", f"{recorder} subagent_start", False),
-        ("SubagentStop", ".*", "subagent_stop", f"{recorder} subagent_stop", False),
-        ("TaskCreated", None, "task_created", f"{recorder} task_created", False),
-        ("TaskCompleted", None, "task_completed", f"{recorder} task_completed", False),
-        ("PostCompact", None, "post_compact", f"{recorder} post_compact", False),
-        ("Stop", None, boundary_marker, f"{boundary} stop", False),
-        (
-            "StopFailure",
-            None,
-            boundary_marker,
-            f"{boundary} stop_failure",
-            False,
-        ),
-        ("SessionEnd", None, boundary_marker, f"{boundary} session_end", False),
-    ]
+) -> list[tuple[str, str | None, str]]:
+    """Derive the required hook set from the canonical registry.
+
+    Returns (event, settings_matcher, command) in registry order. A registry matcher of
+    "*" means the event carries no matcher in settings, which Claude Code represents as
+    an absent key.
+
+    Registry order is the wiring order: within an event the guard row precedes the
+    recorder rows it guards, and appending preserves that while leaving any pre-existing
+    unowned hook (notably the PreToolUse JSON guard) ahead of everything this patcher
+    owns. Prepending here would place the telemetry guard before the JSON guard and
+    break the hard-hook contract.
+    """
+
+    runtime_home = home or home_placeholder()
+    hooks: list[tuple[str, str | None, str]] = []
+    for event, matcher, unit, klass, semantics in read_registry(registry_path()):
+        command = render_command(unit, event, matcher, klass, semantics, mode, runtime_home)
+        hooks.append((event, None if matcher == "*" else matcher, command))
+    return hooks
+
+
+def owned_markers() -> tuple[str, ...]:
+    """Ownership markers derived from the registry, so there is one source of truth.
+
+    A new scripts/monitoring/ unit added to the registry is owned automatically. With a
+    hardcoded list, such a unit would leave its previous command behind on reinstall and
+    then be reported both missing and duplicated.
+    """
+
+    try:
+        units = {unit for _e, _m, unit, _k, _s in read_registry(registry_path())}
+    except PatchError:
+        return FALLBACK_MARKERS
+    units.add(DISPATCH_UNIT)
+    return tuple(sorted({Path(unit).name for unit in units}))
 
 
 def is_marker_owned(command: str) -> bool:
-    return any(marker in command for marker in MARKERS)
-
-
-def is_owned_declaration(command: str, marker: str) -> bool:
-    return is_marker_owned(command) and marker in command
+    return any(marker in command for marker in owned_markers())
 
 
 def load_settings(path: Path) -> dict[str, Any]:
@@ -275,8 +302,6 @@ def ensure_hook(
     event: str,
     matcher: str | None,
     command: str,
-    *,
-    prepend: bool,
 ) -> None:
     sequence = hooks.setdefault(event, [])
     if not isinstance(sequence, list):
@@ -297,8 +322,7 @@ def ensure_hook(
     entries = block.setdefault("hooks", [])
     if not isinstance(entries, list):
         raise PatchError(f"hooks for {event}/{matcher} must be an array")
-    entry = {"type": "command", "command": command}
-    entries.insert(0, entry) if prepend else entries.append(entry)
+    entries.append({"type": "command", "command": command})
 
 
 def apply_install(data: dict[str, Any], mode: str, home: str | None = None) -> bool:
@@ -307,8 +331,8 @@ def apply_install(data: dict[str, Any], mode: str, home: str | None = None) -> b
         raise PatchError("settings hooks must be a JSON object")
     before = json.dumps(hooks, ensure_ascii=False, sort_keys=True)
     remove_owned_hooks(hooks)
-    for event, matcher, _marker, command, prepend in desired_hooks(mode, home):
-        ensure_hook(hooks, event, matcher, command, prepend=prepend)
+    for event, matcher, command in desired_hooks(mode, home):
+        ensure_hook(hooks, event, matcher, command)
     return before != json.dumps(hooks, ensure_ascii=False, sort_keys=True)
 
 
@@ -344,48 +368,47 @@ def verify(path: Path, mode: str, home: str | None = None) -> list[str]:
     if not isinstance(hooks, dict):
         return ["no hooks object present"]
 
-    desired = desired_hooks(mode, home)
+    try:
+        desired = desired_hooks(mode, home)
+    except PatchError as exc:
+        return [str(exc)]
     problems: list[str] = []
     blocks = Blocks(hooks)
-    for event, matcher, marker, command, _prepend in desired:
+    for event, matcher, command in desired:
         block = blocks.find(event, matcher)
         if block is None:
             problems.append(f"missing hook block for {event}/{matcher}")
             continue
         entries = block.get("hooks")
         entries = entries if isinstance(entries, list) else []
-        matches = [
-            hook
+        owned = [
+            str(hook.get("command") or "")
             for hook in entries
-            if isinstance(hook, dict)
-            and is_owned_declaration(str(hook.get("command") or ""), marker)
+            if isinstance(hook, dict) and is_marker_owned(str(hook.get("command") or ""))
         ]
-        if not matches:
-            problems.append(f"missing owned hook for {event} (marker={marker})")
-            continue
-        if len(matches) > 1:
+        exact = [installed for installed in owned if installed == command]
+        if not exact:
             problems.append(
-                f"duplicate owned hooks for {event} "
-                f"(marker={marker}): {len(matches)} entries"
+                f"missing required hook for {event}/{matcher}"
+                if not owned
+                else f"mismatched required hook for {event}/{matcher} (mode={mode})"
             )
-        for hook in matches:
-            installed = str(hook.get("command") or "")
-            if installed != command:
-                problems.append(
-                    f"stale owned hook for {event} (marker={marker}): "
-                    f"installed command does not match mode={mode}"
-                )
+            continue
+        if len(exact) > 1:
+            problems.append(
+                f"duplicate required hook for {event}/{matcher}: {len(exact)} entries"
+            )
 
-    expected_counts = Counter(command for _e, _m, _k, command, _p in desired)
+    # Anything owned by this patcher that the registry does not declare is a legacy or
+    # unregistered command and must fail rather than linger.
+    expected_counts = Counter(command for _e, _m, command in desired)
     actual_counts = Counter(
         command
         for _event, _matcher, _hook, command in iter_hook_commands(hooks)
         if is_marker_owned(command)
     )
     for command, count in sorted((actual_counts - expected_counts).items()):
-        problems.append(f"unexpected owned hook ({count} entries): {command}")
-    for command, count in sorted((expected_counts - actual_counts).items()):
-        problems.append(f"missing expected owned command ({count} entries): {command}")
+        problems.append(f"unregistered or legacy owned hook ({count} entries): {command}")
     return problems
 
 

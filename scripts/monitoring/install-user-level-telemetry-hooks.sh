@@ -23,6 +23,9 @@ home_dir="$(cd "$home_dir" && pwd)"
 target="${EOS_USER_SETTINGS_PATH:-$HOME/.claude/settings.json}"
 
 for runtime in \
+  scripts/enforcement/hook-criticality.tsv \
+  scripts/enforcement/lib/hook-gate.sh \
+  scripts/enforcement/lib/soft-hook-gate.sh \
   scripts/monitoring/patch-settings-telemetry.py \
   scripts/monitoring/eos-telemetry-dispatch.sh \
   scripts/monitoring/eos-telemetry-dispatch-resolve.py \
@@ -31,6 +34,7 @@ for runtime in \
   scripts/monitoring/eos-telemetry-event.sh \
   scripts/monitoring/record-and-sync-telemetry.sh \
   scripts/monitoring/require-telemetry-session.sh \
+  scripts/monitoring/telemetry_hook_match.py \
   scripts/monitoring/sync-telemetry-run.py \
   scripts/monitoring/telemetry_handoff.py; do
   if [ ! -f "$home_dir/$runtime" ]; then

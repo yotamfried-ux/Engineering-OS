@@ -1,6 +1,15 @@
 # event	matcher	unit	class	failure_semantics	wiring	parent	surface	requires	deny_mode
-# surface: both|source|installed. wiring: direct|nested|inline.
+# surface: both|source|installed|dispatcher. wiring: direct|nested|inline.
 # Hard direct units are invoked through scripts/enforcement/lib/hook-gate.sh.
+# failure_semantics propagate_failure means the unit's exit status must reach Claude
+# Code unwrapped: soft-hook-gate.sh always exits 0, so gating a terminal boundary
+# would convert a failed required durable handoff into a successfully closed session.
+# This file is the single canonical owner of the required hook set. Every settings
+# surface is derived from it: Engineering OS checked-in settings and generated target
+# settings through scripts/enforcement/check-hard-hook-contract.py, and the direct-mode
+# and user-level dispatcher installs through scripts/monitoring/patch-settings-telemetry.py.
+# The "dispatcher" surface covers user-level settings, where one scope-resolving unit
+# fronts the same telemetry units; those rows never apply to source or installed.
 PreToolUse	Bash	scripts/enforcement/pre-tool-use-json-guard.sh	hard	fail_closed	direct	-	both	-	pretool_json
 PreToolUse	Bash	scripts/enforcement/enforce-bash-entry.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
 PreToolUse	Bash	scripts/enforcement/enforce-workflow.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
@@ -24,6 +33,7 @@ PreToolUse	Agent	scripts/enforcement/pre-tool-use-json-guard.sh	hard	fail_closed
 PreToolUse	Agent	scripts/enforcement/enforce-workflow.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	pretool_json
 PreToolUse	.*	scripts/enforcement/pre-tool-use-json-guard.sh	hard	fail_closed	direct	-	both	-	pretool_json
 PreToolUse	.*	scripts/monitoring/require-telemetry-session.sh	hard	fail_closed	direct	-	both	scripts/monitoring/telemetry_handoff.py	pretool_json
+PreToolUse	.*	scripts/monitoring/eos-telemetry-dispatch.sh	hard	fail_closed	direct	-	dispatcher	scripts/monitoring/eos-telemetry-dispatch-resolve.py,scripts/monitoring/telemetry_repo_discovery.py,scripts/monitoring/require-telemetry-session.sh	pretool_json
 PreToolUse	.*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
 PostToolUse	mcp__Context7__.*	inline-context7-recorder	recorder	false_evidence_safe	inline	-	both	-	none
 PostToolUse	Bash	scripts/enforcement/post-tool-use-bash.sh	recorder	false_evidence_safe	direct	-	both	scripts/enforcement/lib/evidence.sh	none
@@ -46,6 +56,6 @@ TaskCompleted	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidenc
 PostCompact	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
 Stop	*	scripts/enforcement/post-stop-hook.sh	hard	fail_closed	direct	-	both	scripts/enforcement/lib/evidence.sh	stop_json
 Stop	*	scripts/enforcement/check-runtime-evidence.sh	hard	fail_closed	nested	scripts/enforcement/post-stop-hook.sh	both	scripts/enforcement/lib/evidence.sh	stop_json
-Stop	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
-StopFailure	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
-SessionEnd	*	scripts/monitoring/eos-telemetry-event.sh	recorder	false_evidence_safe	direct	-	both	-	none
+Stop	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	propagate_failure	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none
+StopFailure	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	propagate_failure	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none
+SessionEnd	*	scripts/monitoring/record-and-sync-telemetry.sh	lifecycle	propagate_failure	direct	-	both	scripts/monitoring/eos-telemetry-event.sh,scripts/monitoring/sync-telemetry-run.py	none
