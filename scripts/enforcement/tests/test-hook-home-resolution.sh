@@ -74,12 +74,19 @@ echo "ok: unresolvable_home_denies (exit 2)"
 # 2. The bare form is recorded as the defect it is. This case documents the difference the
 #    fix protects: if a future change reverts to an ungated command, case 1 fails while this
 #    one keeps explaining why 127 is not a denial.
+#
+#    Assert exactly 127 rather than "not 2". "Not a denial" would also accept 1 or 126, which
+#    are different failures with different causes, and accepting them would let this fixture
+#    keep passing while no longer demonstrating the shell's command-not-found path.
 run_unresolved "$BARE" && code=0 || code=$?
-if [ "$code" -eq 2 ]; then
-  echo "fail: bare command returned 2; this fixture is meant to demonstrate the non-blocking exit"
+if [ "$code" -ne 127 ]; then
+  echo "fail: bare command returned $code; this fixture demonstrates the command-not-found exit 127"
+  echo "  stderr: $(tr '\n' ' ' < "$TMP/err")"
   exit 1
 fi
-echo "ok: bare_form_is_non_blocking (exit $code, not a denial)"
+grep -q 'No such file or directory' "$TMP/err" || {
+  echo "fail: bare command exited 127 without a command-not-found diagnostic"; exit 1; }
+echo "ok: bare_form_is_non_blocking (exit 127, not a denial)"
 
 # 3. The renderer must not emit a bare hard command for a project surface at all.
 if printf '%s' "$GATED" | grep -q '/lib/hook-gate.sh'; then
@@ -101,11 +108,37 @@ if printf '%s' "$GATED" | grep -Eq '/(home|Users)/[^/$]+/'; then
 fi
 echo "ok: portable_root_preserved_without_machine_specific_path"
 
-# 5. A resolvable home must still allow the gate to run its unit rather than short-circuit.
+# 5. A resolvable home must reach the unit and faithfully report its result, rather than
+#    short-circuiting on the bootstrap.
+#
+#    Asserting a fixed exit code here would be wrong: the guard's own result legitimately
+#    depends on the telemetry state of the working tree. So the assertion compares the
+#    gate-wrapped result against the unit run directly in the same environment, and requires
+#    the documented mapping from scripts/enforcement/lib/hook-gate.sh — a unit that succeeds
+#    passes through as 0, and a unit that fails becomes a structured PreToolUse deny (exit 0
+#    with deny JSON on stdout) rather than a raw nonzero status.
+UNIT_DIRECT="bash \"$ROOT/scripts/monitoring/require-telemetry-session.sh\""
+run_unresolved "$UNIT_DIRECT" && direct=0 || direct=$?
+
 run_unresolved "${GATED//$PORTABLE/$ROOT}" && code=0 || code=$?
 if grep -q 'hard-hook wrapper missing' "$TMP/err"; then
-  echo "fail: resolvable home still reported a missing wrapper"; exit 1
+  echo "fail: resolvable home still reported a missing wrapper; the gate never reached the unit"
+  exit 1
 fi
-echo "ok: resolvable_home_reaches_the_unit (exit $code)"
+if [ "$direct" -eq 0 ]; then
+  [ "$code" -eq 0 ] || {
+    echo "fail: unit succeeded directly ($direct) but the gate returned $code"; exit 1; }
+  echo "ok: resolvable_home_reaches_the_unit (unit exit $direct passed through as $code)"
+else
+  # A failing unit must surface as a deny, not as a raw status the runtime would ignore.
+  if [ "$code" -eq 0 ] && grep -q 'permissionDecision' "$TMP/out"; then
+    echo "ok: resolvable_home_reaches_the_unit (unit exit $direct converted to a structured deny)"
+  elif [ "$code" -eq 2 ]; then
+    echo "ok: resolvable_home_reaches_the_unit (unit exit $direct surfaced as exit 2)"
+  else
+    echo "fail: unit failed directly ($direct) but the gate returned $code with no deny output"
+    exit 1
+  fi
+fi
 
 echo "hook home resolution tests passed"
