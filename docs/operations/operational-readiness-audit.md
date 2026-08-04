@@ -184,7 +184,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | operational-work-history-foundation | closed | P1 | Operational work history foundation. |
 | dispatch-scope-double-record | mitigated | P1 | Dispatch scope double record. |
 | multirepo-remote-telemetry-validation | open | P1 | Multirepo remote telemetry validation. |
-| eos-repo-boundary-sync-drift | open | P1 | Required-hook parity across settings surfaces. |
+| eos-repo-boundary-sync-drift | closed | P1 | Required-hook parity across settings surfaces; one canonical manifest now renders all four surfaces and terminal boundaries propagate failure. |
 | audit-live-state-verification | closed | P0 | Audit live state verification. |
 | hard-hook-fail-closed | closed | P0 | Hard hook infrastructure failure semantics; observed PR, push, and artifact evidence was reconciled by `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`). |
 | bypass-approval-provenance | closed | P1 | Technical bypass authorization and one-shot consumption are closed; behavioral effectiveness is observed in the experiment. |
@@ -235,7 +235,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | Cleanup debug leftovers | Enforced | Gate: enforce-quality.sh. Owner: cleanup-governance. Evidence: cleanup fixtures. | Required nested enforcement failure is covered by the closed hard-hook contract. |
 | Cleanup semantic hygiene | Enforced | Gate: semantic-cleanup-policy and import-cleanup-policy. Owner: cleanup-governance. Evidence: cleanup fixtures. | Deep semantics are reviewed. |
 | Project install contract | Enforced | Gate: install-policy-gates and generated-target tests. Owner: install-governance. Evidence: downstream behavior fixtures. | Cross-boundary hook parity remains open. |
-| Required-hook settings parity | Missing enforcement | Gate: installer patchers and verify modes. Owner: install-governance. Evidence: checked-in, direct-mode, user-dispatcher, and generated-target settings. | gap:eos-repo-boundary-sync-drift — required hooks can differ across four runtime surfaces. |
+| Required-hook settings parity | Enforced | Gate: canonical `hook-criticality.tsv`, registry-driven patcher rendering, `--verify`, `check-hard-hook-contract.py`, and `test-hook-boundary-parity.sh`. Owner: install-governance. Evidence: PR #266 exact head `2ed31c0e6cd9ba52c8540cfdd93f945c27f9772b` passed all 22 exact-head check runs including `enforcement-tests`, `semantic-cleanup-policy`, `import-cleanup-policy` and `pr-policy`; 5 review threads from ChatGPT Codex and CodeRabbit resolved; full enforcement suite 112 suites / 0 failures and `test-hook-boundary-parity.sh` 18/18; merged as `2366333d66946454e0ebdeb83d4afbe34fce88e1`; push workflows `enforcement-tests` 1599 / `30867048831`, `post-merge-validation` `30867048828` job `91861104652`, and `telemetry-handoff-tests` `30867048842`, all `completed/success` on the merge commit. | Closed for wiring parity. Failure behavior inside an already-wired hard hook remains gap:hard-hook-fail-closed. |
 | Hard-hook blocking semantics | Enforced | Gate: hook classification, canonical hard/soft wrappers, static contract validation, installed-target regressions, exact-head CI, and live-state reconciliation. Owner: hooks-governance. Evidence: PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3`; PR workflows `pr-policy` 1770 / `30115981865`; `enforcement-tests` 1463 / `30115055846`; `workflow-evidence-policy` 1230 / `30115055765`; `connector-evidence-policy` 1241 / `30115055853`; `capability-evidence-policy` 1123 / `30115056044`; `documentation-asset-policy` 879 / `30115055789`; `plan-policy` 1242 / `30115055798`; `semantic-cleanup-policy` 903 / `30115055848`; `import-cleanup-policy` 903 / `30115056039`; and `telemetry-handoff-tests` 365 / `30115055914`; 11 resolved review threads; approval comment `5074786377`; merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; push workflows `post-merge-validation` 93 / `30128189835` and `enforcement-tests` 1464 / `30128189839`, both `completed/success` on merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; reconciliation `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`). | Closed; queued or `in_progress` required runs and completed non-success conclusions fail closed in the live validator. |
 | Enforcement bypass provenance | Enforced | Gate: canonical provider-backed bypass validator and one-shot consumption path. Owner: hooks-governance. Evidence: PR #264 reviewed head `335bd0ba1b92c60e02f0a18a6197587b4c940c0a`, 111/111 local enforcement suites, installed-target validation, exact-head CI, 46 resolved review threads, and merge `f9449e708f9cfaff89458419baea2b96a3af8210` identical to `main`. | Technical implementation closed. Behavioral effectiveness remains an experiment observation, not a pre-experiment blocker. |
 | Result Loop Contract enforcement | Enforced | Gate: named result-loop CI plus Operational Work History. Owner: ops-readiness. Evidence: fixtures and real positive/negative PRs. | Contract semantics are reviewed. |
@@ -279,9 +279,10 @@ Exit: satisfied; proceed to Phase 1 in dependency order.
 
 `gap:bypass-approval-provenance` is technically closed through PR #264; experiment behavior remains an observation rather than a blocker. Remaining work:
 
-1. `gap:eos-repo-boundary-sync-drift`
-2. `gap:pattern-registry-canonical-drift`
-3. `gap:telemetry-archive-import-integrity`
+`gap:eos-repo-boundary-sync-drift` is closed through PR #266. Remaining:
+
+1. `gap:pattern-registry-canonical-drift`
+2. `gap:telemetry-archive-import-integrity`
 
 Exit: protected actions fail safely, bypasses require durable approval, required hooks are wired consistently, pattern state has one owner, and archive import validates integrity before mutation.
 
@@ -387,14 +388,20 @@ Official basis: <https://code.claude.com/docs/en/hooks>.
 
 Owner decision: **Technical implementation: closed. Behavioral effectiveness remains an experiment observation, not a pre-experiment blocker.**
 
-### gap:eos-repo-boundary-sync-drift — P1
+### gap:eos-repo-boundary-sync-drift — P1 — closed
 
-- [ ] Define one canonical manifest for required event, matcher, command identity, criticality, failure mode, and terminal-boundary behavior.
-- [ ] Cross-check Engineering OS `.claude/settings.json`, the direct-mode patcher, user-level dispatcher settings, and generated target settings against that manifest.
-- [ ] Verify runtime-evidence, connector-selection, template-selection, session guard, event recorder, Stop, StopFailure, SessionEnd, and catch-all `.*` wiring exactly.
-- [ ] Fail `--verify` on a missing, mismatched, duplicate, legacy, non-durable, or unregistered command.
-- [ ] Prove parity in checked-in Engineering OS and a clean installed target.
-- [ ] Pass patcher, trust-boundary, archive, hook-classification, full suites, exact-head review, owner-approved merge, and post-merge validation.
+Official basis: <https://code.claude.com/docs/en/hooks>.
+
+- [x] Define one canonical manifest: `scripts/enforcement/hook-criticality.tsv` is the single owner for event, matcher, unit, criticality, failure semantics, wiring and surface. The competing hardcoded manifest in `patch-settings-telemetry.py:desired_hooks()` was deleted, and ownership markers are derived from the registry instead of a static list.
+- [x] Cross-check all four surfaces: the patcher renders checked-in, direct-mode/generated-target and dispatcher settings from the registry with the same gates, so criticality is identical everywhere. `test-hook-boundary-parity.sh` compares unit, argument and gate class per event and matcher across surfaces, accumulating every owned hook in a block rather than only the last.
+- [x] Verify wiring exactly, including the catch-all `.*` path and the three terminal events. Two real defects were found and fixed here: Engineering OS settings carried **zero** `record-and-sync-telemetry.sh` boundaries before this change, and the session guard reported correctly-wired gate-wrapped hooks as missing, which **blocks** rather than warns under `remote_handoff.mode = "required"`.
+- [x] Fail `--verify` on missing, mismatched, duplicate, legacy and unregistered commands; `check-hard-hook-contract.py` additionally fails when a registered recorder/lifecycle row is unwired, and rejects a soft-gated `propagate_failure` unit. Before the fix `--verify` reported 40+ mismatches against checked-in settings; after, it reports `verified`.
+- [x] Prove parity in checked-in Engineering OS and a clean installed target: `check-hard-hook-contract.py --surface source` passes (`direct=13 nested=1`), the `BOUNDARY_READY` probe measures `1` on all four surfaces, and `test-clean-install-and-usage.sh` plus `test-install-policy-gate-coverage.sh` cover the generated target.
+- [x] Pass patcher, trust-boundary, archive, hook-classification and full suites, exact-head review, owner-approved merge, and post-merge validation: PR #266 exact head `2ed31c0e6cd9ba52c8540cfdd93f945c27f9772b` passed all 22 exact-head check runs including `enforcement-tests`, `semantic-cleanup-policy`, `import-cleanup-policy` and `pr-policy`; 5 review threads from ChatGPT Codex and CodeRabbit resolved; full enforcement suite 112 suites / 0 failures and `test-hook-boundary-parity.sh` 18/18; merged as `2366333d66946454e0ebdeb83d4afbe34fce88e1`; push workflows `enforcement-tests` 1599 / `30867048831`, `post-merge-validation` `30867048828` job `91861104652`, and `telemetry-handoff-tests` `30867048842`, all `completed/success` on the merge commit.
+
+Review round: ChatGPT Codex raised a P1 showing that classifying terminal boundaries `lifecycle`/`soft_setup` routed them through `soft-hook-gate.sh`, whose unconditional `exit 0` would have reported a failed required durable handoff as a cleanly closed session with no bundle. Measured directly: the gate-wrapped command returned `0` where the unit returned `2`. `test-dispatch-policy-isolation.sh` already asserted that contract but invoked the unit directly rather than the rendered command, so it could not catch a wiring-level break — recorded in `lessons-learned/bugs/unit-level-contract-passing-while-wiring-violates-it.md`. Terminal boundaries now carry `propagate_failure` semantics and render unwrapped.
+
+Scope: this closes **wiring parity** only. Failure behavior inside an already-wired hard hook belongs to `gap:hard-hook-fail-closed` and was not reopened.
 
 ### gap:pattern-registry-canonical-drift — P1
 
