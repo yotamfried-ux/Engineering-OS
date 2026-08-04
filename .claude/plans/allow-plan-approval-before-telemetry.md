@@ -109,7 +109,7 @@ Merge readiness remains a separate live-state decision in PR #270; this implemen
 ## Documentation Asset Evidence
 
 - internal: `core/hooks-policy.md`; `docs/operations/remote-multirepo-telemetry-hooks.md`; `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`.
-- context7: not required — the official vendor source `https://code.claude.com/docs/en/hooks` directly defines the relevant hook input and blocking behavior.
+- context7: official vendor documentation at `https://code.claude.com/docs/en/hooks` was selected directly because this task depends on Claude Code provider hook semantics rather than a third-party library API.
 - decision: no new runbook is needed for a narrow regression repair; executable behavior and its fixture are the durable source.
 
 ## Capability Evidence
