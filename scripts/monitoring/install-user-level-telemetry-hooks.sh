@@ -32,6 +32,7 @@ for runtime in \
   scripts/monitoring/eos-telemetry-event.sh \
   scripts/monitoring/record-and-sync-telemetry.sh \
   scripts/monitoring/require-telemetry-session.sh \
+  scripts/monitoring/telemetry_hook_match.py \
   scripts/monitoring/sync-telemetry-run.py \
   scripts/monitoring/telemetry_handoff.py; do
   if [ ! -f "$home_dir/$runtime" ]; then

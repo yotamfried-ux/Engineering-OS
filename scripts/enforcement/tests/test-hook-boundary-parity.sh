@@ -137,9 +137,17 @@ def owned(path):
                     continue
                 unit = re.search(r"scripts/monitoring/[A-Za-z0-9_.-]+", command).group(0)
                 argument = re.search(r" -- ([a-z_]+)", command)
-                gate = "hard" if "/lib/hook-gate.sh" in command else "soft"
-                found[(event, str(block.get("matcher")))] = (
-                    unit, argument.group(1) if argument else None, gate
+                if "/lib/hook-gate.sh" in command and "soft-hook-gate.sh" not in command:
+                    gate = "hard"
+                elif "soft-hook-gate.sh" in command:
+                    gate = "soft"
+                else:
+                    gate = "none"
+                # Accumulate: a block can hold several owned commands (the catch-all
+                # PreToolUse block holds both the hard guard and the recorder), and
+                # overwriting would compare only the last one.
+                found.setdefault((event, str(block.get("matcher"))), []).append(
+                    (unit, argument.group(1) if argument else None, gate)
                 )
     return found
 
@@ -207,10 +215,19 @@ from pathlib import Path
 settings, hook_mode, guard = sys.argv[1], sys.argv[2], sys.argv[3]
 # Reuse the guard's own boundary block rather than restating its rule here.
 source = Path(guard).read_text()
-start = source.index('BOUNDARY_READY="$(python3 - "$SETTINGS" "$HOOK_MODE" <<\'PY\'')
-block = source[source.index("\n", start) + 1:source.index("\nPY\n", start)]
+marker = 'BOUNDARY_READY="$(python3 - "$SETTINGS" "$HOOK_MODE" "$SCRIPT_DIR" <<\'PY\''
+start = source.find(marker)
+end = source.find("\nPY\n", start) if start != -1 else -1
+assert start != -1 and end != -1, (
+    "the boundary block in require-telemetry-session.sh no longer matches the shape "
+    "this test extracts; update both together"
+)
+block = source[source.index("\n", start) + 1:end]
+monitoring = str(Path(guard).parent)
 proc = subprocess.run(
-    [sys.executable, "-c", block, settings, hook_mode], capture_output=True, text=True
+    [sys.executable, "-c", block, settings, hook_mode, monitoring],
+    capture_output=True,
+    text=True,
 )
 assert proc.returncode == 0, proc.stderr
 print(proc.stdout.strip())

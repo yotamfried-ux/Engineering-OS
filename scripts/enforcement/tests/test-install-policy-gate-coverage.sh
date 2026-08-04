@@ -51,7 +51,8 @@ cp "$ROOT/.claude/settings.json" "$FAKE_HOME/.claude/settings.json"
 for runtime in \
   patch-settings-telemetry.py eos-telemetry-session-start.sh eos-telemetry-event.sh \
   record-and-sync-telemetry.sh sync-telemetry-run.py telemetry_handoff.py \
-  export-telemetry-run.py require-telemetry-session.sh eos-telemetry-summary.py; do
+  export-telemetry-run.py require-telemetry-session.sh eos-telemetry-summary.py \
+  telemetry_hook_match.py; do
   cp "$ROOT/scripts/monitoring/$runtime" "$FAKE_HOME/scripts/monitoring/$runtime"
 done
 TARGET_OK="$TMP/install-target-ok"; mkdir -p "$TARGET_OK"

@@ -44,6 +44,7 @@ for runtime in \
   scripts/monitoring/telemetry_handoff.py \
   scripts/monitoring/export-telemetry-run.py \
   scripts/monitoring/require-telemetry-session.sh \
+  scripts/monitoring/telemetry_hook_match.py \
   scripts/monitoring/eos-telemetry-summary.py; do
   [ -f "$home_dir/$runtime" ] || { echo "missing telemetry runtime dependency: $home_dir/$runtime" >&2; exit 1; }
 done

@@ -57,7 +57,7 @@ if [ ! -f "$SYNC" ]; then
     "update Engineering OS and re-run the installer before a required-handoff experiment."
 fi
 
-if ! python3 - "$EVENTS" "$RUN_ID_FILE" "$SETTINGS" "$HOOK_MODE" <<'PY'
+if ! python3 - "$EVENTS" "$RUN_ID_FILE" "$SETTINGS" "$HOOK_MODE" "$SCRIPT_DIR" <<'PY'
 from __future__ import annotations
 
 import json
@@ -68,6 +68,8 @@ from typing import Any
 
 events_path, run_id_path, settings_path = map(Path, sys.argv[1:4])
 hook_mode = sys.argv[4]
+sys.path.insert(0, sys.argv[5])
+from telemetry_hook_match import invokes
 run_id = run_id_path.read_text(encoding="utf-8", errors="replace").splitlines()[0].strip()
 if not run_id:
     raise SystemExit("ERROR_FOR_AGENT: telemetry run_id is empty")
@@ -103,23 +105,6 @@ def commands_for(event: str, *, catch_all_only: bool = False) -> list[str]:
 
 session_commands = commands_for("SessionStart")
 pretool_commands = commands_for("PreToolUse", catch_all_only=True)
-
-
-def invokes(command: str, unit: str, argument: str | None = None) -> bool:
-    """Match a wired unit whether it is invoked bare or through a hook gate.
-
-    Gate-wrapped commands carry the argument after "--" and continue with shell text,
-    so a trailing-suffix test alone would miss every gated hook.
-    """
-
-    if unit not in command:
-        return False
-    if argument is None:
-        return True
-    return bool(
-        command.rstrip().endswith(f" {argument}")
-        or re.search(rf"--\s+{re.escape(argument)}(?:\s|[;&|)]|$)", command)
-    )
 
 
 if hook_mode == "direct":
@@ -196,7 +181,7 @@ then
   exit 2
 fi
 
-BOUNDARY_READY="$(python3 - "$SETTINGS" "$HOOK_MODE" <<'PY'
+BOUNDARY_READY="$(python3 - "$SETTINGS" "$HOOK_MODE" "$SCRIPT_DIR" <<'PY'
 import json
 import re
 import sys
@@ -204,6 +189,8 @@ from pathlib import Path
 
 settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 hook_mode = sys.argv[2]
+sys.path.insert(0, sys.argv[3])
+from telemetry_hook_match import invokes as _invokes
 hooks = settings.get("hooks", {}) if isinstance(settings, dict) else {}
 
 commands_by_event = {}
@@ -228,19 +215,7 @@ unit = "record-and-sync-telemetry.sh" if hook_mode == "direct" else "eos-telemet
 
 
 def invokes(command: str, argument: str) -> bool:
-    """Match the boundary unit whether it is invoked bare or through a hook gate.
-
-    A gate-wrapped command carries the argument after "--" and continues with shell
-    text, so a trailing-suffix test alone would report every gated boundary as missing.
-    Under a "required" policy that misreport blocks the session outright.
-    """
-
-    if unit not in command:
-        return False
-    return bool(
-        command.rstrip().endswith(f" {argument}")
-        or re.search(rf"--\s+{re.escape(argument)}(?:\s|[;&|)]|$)", command)
-    )
+    return _invokes(command, unit, argument)
 
 
 ready = all(
