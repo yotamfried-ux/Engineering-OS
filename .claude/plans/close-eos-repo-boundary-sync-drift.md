@@ -169,7 +169,7 @@ no importer, no Project 8 changes, no bypass work.
   hardcoded rather than derived from the registry; and the matching rule existed twice
   in the session guard. All three are fixed, the rule now living in
   `scripts/monitoring/telemetry_hook_match.py`.
-- pre-merge: full enforcement suite 112 suites, 0 failures; `check-hard-hook-contract.py --surface source` passed with `direct=13 nested=1`; `patch-settings-telemetry.py --mode direct --verify` reported `verified`; the `BOUNDARY_READY` probe measured `1` on all four surfaces (checked-in, direct-mode render, generated target, dispatcher); the settings semantic diff showed exactly 3 hooks changed and 35 unchanged; `shellcheck` 0.9.0 reported no findings on every changed shell file. Recorded on PR #266.
+- pre-merge: re-verified on head `dfed46e` after the review round. Full enforcement suite 112 suites, 0 failures; `test-hook-boundary-parity.sh` 18 passed, 0 failed; `check-hard-hook-contract.py --surface source` passed with `direct=13 nested=1`; `patch-settings-telemetry.py --mode direct --verify` reported `verified`; the `BOUNDARY_READY` probe measured `1` on all four surfaces (checked-in, direct-mode render, generated target, dispatcher); a failing required boundary returns 2 through the rendered command, where the gate-wrapped form returned 0; `shellcheck` 0.9.0 reported no findings on every changed shell file. Recorded on PR #266.
 - outstanding external gates: exact-head CI on PR #266, live review reconciliation, explicit owner approval, expected-head protected merge, and post-merge validation. No gap status changes before all of those complete.
 
 ## Definition of Done — Implementation
