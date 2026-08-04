@@ -194,7 +194,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | audit-self-contained-contract | closed | P0 | Audit self contained contract. |
 | full-readiness-claim-semantics | open | P1 | Canonical state vocabulary and final assertion. |
 | project8-experiment-blindness | closed | P0 | Project 8 product-only blindness boundary is technically closed; behavioral effectiveness is observed in the experiment. |
-| telemetry-archive-import-integrity | open | P1 | Import-time bundle integrity and identity. |
+| telemetry-archive-import-integrity | closed | P1 | Import-time bundle integrity and identity. Closed by PR #268 (`d9d65cd`). |
 | merge-readiness-exact-head-and-attempt-ordering | closed | P0 | Exact-head latest-attempt merge evidence. |
 
 ## Current status matrix
@@ -242,8 +242,8 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | Operational work history evidence | Enforced | Gate: check-operational-work-history-evidence.sh through pr-policy. Owner: ops-readiness. Evidence: fixtures and real PRs. | Human interpretation remains reviewed. |
 | Scaling extension enforcement | Enforced | Gate: named scaling CI step. Owner: ops-readiness. Evidence: scaling fixtures and merged evidence. | Deep roadmap quality is reviewed. |
 | Registry/manifest coverage | Enforced | Gate: scaling coverage checks. Owner: registry-governance. Evidence: active rows across required manifests. | Documentation/runtime MANIFEST truth is tracked separately. |
-| Canonical telemetry trust boundaries | Enforced | Gate: telemetry-handoff-tests. Owner: ops-readiness. Evidence: merged PR #253 and exact-head regressions. | gap:telemetry-archive-import-integrity — direct archive import does not yet prove the same integrity contract. |
-| Telemetry archive import integrity | Missing enforcement | Gate: importer schema/privacy checks plus separate handoff validator. Owner: ops-readiness. Evidence: exporter checksums, `telemetry_handoff.validate_bundle()`, and importer behavior. | gap:telemetry-archive-import-integrity — import must invoke shared fail-closed checksum and identity validation before archive mutation. |
+| Canonical telemetry trust boundaries | Enforced | Gate: telemetry-handoff-tests. Owner: ops-readiness. Evidence: merged PR #253 and exact-head regressions. | Direct archive import now proves the same integrity contract through the same validator (PR #268). |
+| Telemetry archive import integrity | Enforced | Gate: telemetry archive suite (`test-telemetry-archive.sh`), 14 negative cases each pinning its own rejection reason. Owner: ops-readiness. Evidence: merged PR #268 (`d9d65cd`); `import-telemetry-run.py` calls `telemetry_handoff.validate_bundle()` on a private snapshot before any archive mutation and records the integrity decision in the archive index. | Residue: the validator is shared with the handoff path, so a defect there affects both. Real-run usefulness of the imported data remains gap:monitoring-metrics-sufficiency. |
 | Monitoring metrics first-run sufficiency | Missing enforcement | Gate: exporter, importer, analyzer, identity, and privacy tests exist. Owner: ops-readiness. Evidence: archive tests and runbooks. | gap:monitoring-metrics-sufficiency — one valid qualification bundle must be shown useful; import integrity is a prerequisite. |
 | Monitoring longitudinal sufficiency | Missing enforcement | Gate: archive analyzer can compare runs. Owner: ops-readiness. Evidence: analyzer and archive plan. | gap:monitoring-longitudinal-sufficiency — at least two qualification runs must prove repeatability. |
 | Project 8 technical qualification evidence | Missing enforcement | Gate: mandatory telemetry preflight exists. Owner: ops-readiness. Evidence: Project 8 preflight and findings runbook. | gap:project-8-real-run-evidence — fresh transport, identity, counts, and boundary evidence are missing. |
@@ -279,12 +279,11 @@ Exit: satisfied; proceed to Phase 1 in dependency order.
 
 `gap:bypass-approval-provenance` is technically closed through PR #264; experiment behavior remains an observation rather than a blocker. Remaining work:
 
-`gap:eos-repo-boundary-sync-drift` is closed through PR #266. Remaining:
+`gap:eos-repo-boundary-sync-drift` is closed through PR #266. `gap:telemetry-archive-import-integrity` is closed through PR #268. Remaining:
 
 1. `gap:pattern-registry-canonical-drift`
-2. `gap:telemetry-archive-import-integrity`
 
-Exit: protected actions fail safely, bypasses require durable approval, required hooks are wired consistently, pattern state has one owner, and archive import validates integrity before mutation.
+Exit: protected actions fail safely, bypasses require durable approval, required hooks are wired consistently, pattern state has one owner, and archive import validates integrity before mutation. All of these hold except canonical pattern ownership, which is the sole remaining Phase 1 item and is out of scope for telemetry qualification.
 
 ### Phase 2 — target coaching boundary technically complete
 
@@ -413,14 +412,20 @@ Scope: this closes **wiring parity** only. Failure behavior inside an already-wi
 - [ ] Migrate current rows without inventing evidence.
 - [ ] Complete exact-head review, owner-approved merge, and post-merge validation.
 
-### gap:telemetry-archive-import-integrity — P1
+### gap:telemetry-archive-import-integrity — P1 — closed
 
-- [ ] Make `import-telemetry-run.py` invoke one shared fail-closed bundle validator before any archive write, index update, or replacement.
-- [ ] Require regular non-symlink selected files, exact allowlisted filenames, event and summary checksums, event count, non-empty qualification mode, privacy contract, repository, branch, head, Engineering OS head, run, policy, handoff, and terminal boundary identity.
-- [ ] Reject a one-byte events mutation, summary mutation, manifest replacement, symlink/non-regular file, wrong repository, wrong branch/head/run, missing boundary, and invalid policy.
-- [ ] Import one valid selected bundle successfully and record the validation result in the archive index.
-- [ ] Ensure exporter, selector, validator, importer, and analyzer share the same identity vocabulary.
-- [ ] Complete focused/full exact-head CI, review, owner-approved merge, and post-merge validation.
+Official basis: <https://code.claude.com/docs/en/hooks>.
+
+- [x] Make `import-telemetry-run.py` invoke one shared fail-closed bundle validator before any archive write, index update, or replacement. `validate_before_mutation()` delegates to `telemetry_handoff.validate_bundle()`. Review showed the first implementation validated the caller's directory and then copied from it, leaving a window in which the archived bytes were never the validated bytes — so validation and archival now both act on one private snapshot staged outside the archive tree.
+- [x] Require regular non-symlink selected files, exact allowlisted filenames, event and summary checksums, event count, non-empty qualification mode, privacy contract, repository, branch, head, Engineering OS head, run, policy, handoff, and terminal boundary identity. Most of this was already implemented in `validate_bundle()` and simply not called on this path; the fix is a call, not a second implementation. Four concerns the shared validator does not own were added importer-side: bundle-directory symlink rejection, the filename allowlist, policy-schema identity, and `engineering_os_head_sha` — which `MANIFEST_REQUIRED` demanded and the index recorded but nothing ever checked.
+- [x] Reject a one-byte events mutation, summary mutation, manifest replacement, symlink/non-regular file, wrong repository, wrong branch/head/run, missing boundary, and invalid policy. All present, plus wrong Engineering OS head — 14 negative cases. Each asserts two things: that the archive is byte-identical after the rejection (per-file `sha256sum` fingerprint compared before and after), and **which check fired**, matched against the importer's real stderr rather than recorded in prose.
+- [x] Import one valid selected bundle successfully and record the validation result in the archive index. The `runs.jsonl` row carries validator name, `validated_before_mutation`, `snapshot_validated`, and the asserted `expected_*` identities. `checksums_verified` is pinned to the validator's actual set rather than derived from the manifest, so the record cannot claim coverage it does not have.
+- [x] Ensure exporter, selector, validator, importer, and analyzer share the same identity vocabulary — the importer reuses `telemetry_handoff` rather than paraphrasing it. Fixtures build synced bundles by calling the real `write_handoff_manifest`, so a change to that writer fails these tests instead of leaving them testing a stale shape.
+- [x] Complete focused/full exact-head CI, review, owner-approved merge, and post-merge validation: PR #268 exact head `41e225568d019906c0a1f2b073642a3565442ce4` passed all 21 exact-head check runs including `enforcement-tests`, `semantic-cleanup-policy`, `import-cleanup-policy` and `pr-policy`; 5 review threads from ChatGPT Codex and CodeRabbit resolved; full enforcement suite 112 suites / 0 failures and `test-telemetry-archive.sh` 42 assertions; merged as `d9d65cd88c618416afe246e890a192de8b8ad627`; push workflows `post-merge-validation` `30880041875`, `enforcement-tests` 1608 / `30880041494`, and `telemetry-handoff-tests` `30880041448`, all `completed/success` on the merge commit.
+
+Scope of this closure, stated narrowly: it covers **import-time** integrity. The exporter, the selector, `validate_bundle()` itself and the analyzer are unchanged, and whether an imported bundle is *useful* remains `gap:monitoring-metrics-sufficiency`. Because the importer now shares the handoff path's validator, a defect in `validate_bundle()` would affect both — that is the intended trade against a second, drifting copy.
+
+Review round: ChatGPT Codex raised a P1 TOCTOU between validation and copy and two P2s — `checksums_verified` listing manifest keys the validator never checks, and `engineering_os_head_sha` required and recorded but never validated. CodeRabbit then raised that a negative fixture asserted failure without asserting which check produced it. Its stated premise was wrong (the fixture rejects on the boundary, not the checksum, because `sync_bundle` succeeds on a boundaryless run and reseals the checksums) but the risk was real: the rejection reasons lived in the PR body as hand-written prose that no gate reads. Recorded in `lessons-learned/bugs/negative-test-passing-for-the-wrong-reason.md`, companion to the PR #266 lesson — that one an assertion proving the unit but not the wiring, this one an assertion proving a failure but not which check produced it.
 
 ### gap:pattern-evidence-maturity — P2
 
@@ -498,7 +503,7 @@ Official basis: Google SRE monitoring and OpenTelemetry instrumentation guidance
 
 ## Highest-priority gaps by ROI
 
-1. Telemetry archive import integrity and canonical pattern ownership — P1.
+1. Canonical pattern ownership — P1. Telemetry archive import integrity closed through PR #268.
 2. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.
 3. Pattern evidence maturity and second-run reproducibility — P2.
 4. Final full-readiness semantics and assertion — terminal P1.
@@ -556,7 +561,7 @@ Official basis: Vercel environments/variables/Vite/Express/monorepos/domains; Su
 
 PR #254 is merged as `c7d32a0b67a836811689d3a2bf80a63d727e1470` and closes the self-contained audit contract. PR #255 is merged as `0ee2dbee7a9ab58e86a11726021c30baca0faa22` after exact head `97d56e2f5743b019145da600cf0914f6d092cd0f` passed the dedicated live workflow, full enforcement, review, and merge-readiness gates. PR #257 is merged as `efb36cca413602cde3cd20aa17d32b3379f9eb53` after exact head `fedf8d069a8634085c650ea6381c1c0dabfdc368` passed deterministic latest-attempt enforcement, full exact-head CI, review reconciliation, and owner-approved expected-head protection. PR #259 is merged as `df01a8fea10df999572ab11466613e31a8c1a003`, synchronizing the registry/audit/live-claim closure metadata for that same gap; post-merge, `enforcement-tests` run 1388, `known-gaps-live-state` run 32, and `post-merge-validation` run 90 all succeeded on that exact commit. `docs/operations/live-state-claims.json` binds all three underlying closures and fails closed on live drift.
 
-PR #256 is merged as `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d` and reconciled capability wording, README inventory references, and CodeRabbit review policy. PR #260 exact head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79` completed the remaining `documentation-runtime-state-drift` contract by reconciling `scripts/enforcement/MANIFEST.tsv` with the active capability registry, enforcing first-run-versus-longitudinal telemetry terminology, assigning canonical ownership rows, and adding bidirectional fixtures. The exact head passed the latest required PR workflows including `pr-policy` 1692 and `enforcement-tests` 1391; all seven review threads were resolved; owner approval comment `5063627361` authorized the expected-head protected merge; PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; canonical `main` compares identical; and the canonical live-state claim requires successful post-merge workflows. The separate `telemetry-archive-import-integrity` gap remains open.
+PR #256 is merged as `4ca1fd5a58fc96275ae69a1d2e573b7712d9055d` and reconciled capability wording, README inventory references, and CodeRabbit review policy. PR #260 exact head `e63a27babb09da4a7c4589cbe3e37c112f6b6e79` completed the remaining `documentation-runtime-state-drift` contract by reconciling `scripts/enforcement/MANIFEST.tsv` with the active capability registry, enforcing first-run-versus-longitudinal telemetry terminology, assigning canonical ownership rows, and adding bidirectional fixtures. The exact head passed the latest required PR workflows including `pr-policy` 1692 and `enforcement-tests` 1391; all seven review threads were resolved; owner approval comment `5063627361` authorized the expected-head protected merge; PR #260 merged as `105ecd0d0dc72aa847d11b193190689dbda0dda8`; canonical `main` compares identical; and the canonical live-state claim requires successful post-merge workflows. The separate `telemetry-archive-import-integrity` gap was subsequently closed through PR #268 (`d9d65cd`).
 
 PR #262 exact head `5ee5d9fe51ddd8b9b490fe60424be4ea37cad9b3` implemented the canonical hard-hook registry, event-specific fail-closed wrapper, explicit observable soft wrapper, source/installed contract validation, and negative regressions for missing infrastructure, nested dependencies, symlinks, malformed input/output, signals, false evidence, token boundaries, and sibling isolation. Observed PR evidence: `pr-policy` 1770 / `30115981865`; `enforcement-tests` 1463 / `30115055846`; `workflow-evidence-policy` 1230 / `30115055765`; `connector-evidence-policy` 1241 / `30115055853`; `capability-evidence-policy` 1123 / `30115056044`; `documentation-asset-policy` 879 / `30115055789`; `plan-policy` 1242 / `30115055798`; `semantic-cleanup-policy` 903 / `30115055848`; `import-cleanup-policy` 903 / `30115056039`; and `telemetry-handoff-tests` 365 / `30115055914`, all `completed/success`; all 11 review threads were resolved; owner approval comment `5074786377` authorized the expected-head protected merge; PR #262 merged as `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; canonical `main` compares identical. Observed post-merge evidence: `post-merge-validation` 93 / `30128189835` and `enforcement-tests` 1464 / `30128189839`, both `completed/success` on merge `e405938ebe5fcbc7e5b7bf635ef50a9c10cbddb6`; reconciliation `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`) completed successfully and preserves the exact metadata-only snapshot.
 
