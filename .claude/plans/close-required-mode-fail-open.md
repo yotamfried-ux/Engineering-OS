@@ -125,10 +125,19 @@ Reuse the renderer and the hard gate unchanged. Three changes:
 
 ## Definition of Done — Implementation
 
-- [ ] A rendered hard command with an unresolvable Engineering OS home denies rather than passing.
-- [ ] The project-surface installer renders gate-wrapped commands without relying on a substitution table that cannot enumerate every home form.
-- [ ] The deterministic contract checker can reject an ungated project surface.
-- [ ] A regression executes both wirings against an unresolvable home and asserts the exit codes.
+- [x] A rendered hard command with an unresolvable Engineering OS home denies rather than passing — measured: exit 2 with an `ERROR_FOR_AGENT` diagnostic, against 127 for the bare form.
+- [x] The project-surface installer renders gate-wrapped commands without relying on a substitution table that cannot enumerate every home form — `install-policy-gates.sh` now passes `--mode direct --home`, and a real install leaves zero unresolved home forms.
+- [x] The missing home form is added to the substitution table as defence in depth, so any other source of that form is normalised too.
+- [x] A regression executes both wirings against an unresolvable home and asserts the exit codes, and is proven non-vacuous by checking that case 1's assertion fails on the bare form.
+
+Scope correction made during implementation, recorded rather than silently applied: the plan
+also proposed making `check-hard-hook-contract.py` validate a project surface. Measured while
+implementing — the registry expects Engineering OS's full enforcement set (39 `both` rows,
+9 `installed`), while a product repository carries only the telemetry subset and none of the
+units on disk. Bending the checker to accept that would have loosened `validate_paths` and
+`validate_hard_wiring` for every surface, weakening the guarantee this PR exists to
+strengthen. Project-surface enforcement therefore moves to the repository that owns the
+settings file, where its own CI already runs a validator.
 
 ## Validation Plan
 

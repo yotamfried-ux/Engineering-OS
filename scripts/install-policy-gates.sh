@@ -61,7 +61,13 @@ if [ ! -f "$settings" ]; then
 fi
 
 telemetry_patcher="$home_dir/scripts/monitoring/patch-settings-telemetry.py"
-python3 "$telemetry_patcher" "$settings"
+# Render with the resolved home rather than a placeholder. The post-pass below can only
+# rewrite home forms it knows about, and a form it misses stays unresolved at runtime —
+# which is not merely cosmetic: an unresolved home makes every hook command point at a
+# missing file, and a bare (ungated) command then exits 127. Only exit 2 denies at
+# PreToolUse, so under remote_handoff.mode=required the session proceeds with no telemetry
+# and reports success. Baking the home here removes that class at render time.
+python3 "$telemetry_patcher" "$settings" --mode direct --home "$home_dir"
 echo "installed/verified telemetry hooks, durable handoff, and session preflight"
 
 if [ "${EOS_SKIP_SETTINGS_PATCH:-0}" != "1" ]; then
@@ -79,9 +85,15 @@ import sys
 from pathlib import Path
 path = Path(sys.argv[1]); home = sys.argv[2]
 data = json.loads(path.read_text(encoding="utf-8"))
+# Every home form that can reach an installed target must be listed here. A form that is
+# absent stays unresolved at runtime, and an unresolved home is a fail-open hazard rather
+# than a cosmetic defect (see the comment on the telemetry patcher invocation above).
+# `${ENGINEERING_OS_HOME:-$HOME/.engineering-os}` was missing, which is how a target kept
+# an unresolved home while this installer reported success.
 replacements = {
     "${ENGINEERING_OS_HOME:-$(pwd)}": home,
     "${ENGINEERING_OS_HOME:-$PWD}": home,
+    "${ENGINEERING_OS_HOME:-$HOME/.engineering-os}": home,
     "${ENGINEERING_OS_HOME}": home,
 }
 def rewrite(value):
