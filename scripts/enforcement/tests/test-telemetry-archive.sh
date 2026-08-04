@@ -145,30 +145,44 @@ archive_fingerprint() {
 BASELINE="$(archive_fingerprint "$GOOD_ARCHIVE")"
 
 # reject_unchanged <name> <bundle> [extra importer args...]
+# reject_unchanged <name> <bundle> <expected-reason> [extra importer args...]
+#
+# A negative test that only asserts "it failed" can pass for the wrong reason: the
+# shared validator checks checksums before boundary position, so a fixture that
+# breaks both reports the checksum and proves nothing about the boundary. Each case
+# therefore names the failure it is supposed to provoke, and the reason is matched
+# against the importer's real stderr rather than recorded by hand in the PR body.
 reject_unchanged() {
-  local name="$1" bundle="$2"; shift 2
-  if python3 "$IMPORTER" "$bundle" --archive "$GOOD_ARCHIVE" "$@" >/dev/null 2>&1; then
+  local name="$1" bundle="$2" expected="$3"; shift 3
+  local err="$TMP/stderr-$name.txt"
+  if python3 "$IMPORTER" "$bundle" --archive "$GOOD_ARCHIVE" "$@" >/dev/null 2>"$err"; then
     echo "unexpected pass: $name"; exit 1
+  fi
+  if ! grep -qF -- "$expected" "$err"; then
+    echo "fail: $name was rejected for the wrong reason"
+    echo "  expected to contain: $expected"
+    echo "  actual: $(tr '\n' ' ' < "$err")"
+    exit 1
   fi
   if [ "$(archive_fingerprint "$GOOD_ARCHIVE")" != "$BASELINE" ]; then
     echo "fail: $name mutated the archive despite being rejected"; exit 1
   fi
-  echo "ok: $name (rejected, archive unchanged)"
+  echo "ok: $name (rejected on '$expected', archive unchanged)"
 }
 
 B="$INTEG/byte"; make_bundle "$B" integrity-byte-run
 printf 'x' >> "$B/events.jsonl"
-reject_unchanged byte_mutation_rejected "$B"
+reject_unchanged byte_mutation_rejected "$B" "telemetry events checksum mismatch"
 
 B="$INTEG/summary"; make_bundle "$B" integrity-summary-run
 printf 'tampered\n' >> "$B/latest-summary.md"
-reject_unchanged summary_mutation_rejected "$B"
+reject_unchanged summary_mutation_rejected "$B" "telemetry summary checksum mismatch"
 
 # Manifest replacement: a whole manifest swapped in from a different run.
 B="$INTEG/manifest-swap"; make_bundle "$B" integrity-swap-run
 OTHER="$INTEG/manifest-source"; make_bundle "$OTHER" integrity-other-run
 cp "$OTHER/manifest.json" "$B/manifest.json"
-reject_unchanged manifest_replacement_rejected "$B"
+reject_unchanged manifest_replacement_rejected "$B" "telemetry events checksum mismatch"
 
 B="$INTEG/checksum"; make_bundle "$B" integrity-checksum-run
 python3 -c "
@@ -176,20 +190,20 @@ import json,pathlib,sys
 p=pathlib.Path(sys.argv[1])/'manifest.json'
 m=json.loads(p.read_text()); m['checksums']['events_sha256']='0'*64
 p.write_text(json.dumps(m))" "$B"
-reject_unchanged checksum_mismatch_rejected "$B"
+reject_unchanged checksum_mismatch_rejected "$B" "telemetry events checksum mismatch"
 
 B="$INTEG/symlink"; make_bundle "$B" integrity-symlink-run
 mv "$B/events.jsonl" "$INTEG/events-target.jsonl"
 ln -s "$INTEG/events-target.jsonl" "$B/events.jsonl"
-reject_unchanged symlink_member_rejected "$B"
+reject_unchanged symlink_member_rejected "$B" "bundle member is missing, a symlink, or not a regular file"
 
 B="$INTEG/fifo"; make_bundle "$B" integrity-fifo-run
 rm -f "$B/events.jsonl"; mkfifo "$B/events.jsonl"
-reject_unchanged non_regular_file_rejected "$B"
+reject_unchanged non_regular_file_rejected "$B" "bundle member is missing, a symlink, or not a regular file"
 
 B="$INTEG/extra"; make_bundle "$B" integrity-extra-run
 printf 'unexpected\n' > "$B/stowaway.txt"
-reject_unchanged unexpected_file_rejected "$B"
+reject_unchanged unexpected_file_rejected "$B" "bundle contains files outside the allowlist"
 
 B="$INTEG/boundary"; make_bundle "$B" integrity-boundary-run
 python3 -c "
@@ -199,8 +213,12 @@ p=d/'events.jsonl'
 e=json.loads(p.read_text().splitlines()[0])
 e['name']='eos.pre_tool_use'; e['attributes']['eos.event.name']='pre_tool_use'
 p.write_text(json.dumps(e)+'\n')" "$B"
-sync_bundle "$B" 2>/dev/null || true
-reject_unchanged missing_terminal_boundary_rejected "$B"
+# Re-sync rather than mask a failure: the writer reseals the checksums for the edited
+# events, so the bundle reaches the validator internally consistent and can only be
+# rejected on the boundary itself. Swallowing this would let a stale checksum stand in
+# for the boundary check and the assertion below would prove nothing about boundaries.
+sync_bundle "$B"
+reject_unchanged missing_terminal_boundary_rejected "$B" "telemetry handoff boundary position is invalid"
 
 B="$INTEG/policy"; make_bundle "$B" integrity-policy-run
 python3 -c "
@@ -208,14 +226,14 @@ import json,pathlib,sys
 p=pathlib.Path(sys.argv[1])/'manifest.json'
 m=json.loads(p.read_text()); m['policy']={'schema_version':'eos.telemetry.policy.WRONG'}
 p.write_text(json.dumps(m))" "$B"
-reject_unchanged invalid_policy_rejected "$B"
+reject_unchanged invalid_policy_rejected "$B" "bundle declares an invalid telemetry policy identity"
 
 # Identity mismatches: the bundle is internally valid but belongs to another run.
 B="$INTEG/identity"; make_bundle "$B" integrity-identity-run
-reject_unchanged wrong_repository_rejected "$B" --expected-repo other-owner/other-repo
-reject_unchanged wrong_branch_rejected "$B" --expected-branch-hash "$(printf 'c%.0s' $(seq 32))"
-reject_unchanged wrong_head_rejected "$B" --expected-head-sha "$(printf 'd%.0s' $(seq 40))"
-reject_unchanged wrong_run_rejected "$B" --expected-run-id some-other-run
+reject_unchanged wrong_repository_rejected "$B" "telemetry bundle repository does not match current repository" --expected-repo other-owner/other-repo
+reject_unchanged wrong_branch_rejected "$B" "telemetry bundle branch hash does not match current branch" --expected-branch-hash "$(printf 'c%.0s' $(seq 32))"
+reject_unchanged wrong_head_rejected "$B" "telemetry bundle head does not match current head" --expected-head-sha "$(printf 'd%.0s' $(seq 40))"
+reject_unchanged wrong_run_rejected "$B" "telemetry bundle run id does not match current run" --expected-run-id some-other-run
 
 # The archive records that validation actually ran, so a later reader can tell.
 pass integrity_decision_recorded python3 -c "
@@ -230,7 +248,7 @@ assert 'events_sha256' in integ['checksums_verified'], integ
 
 # Engineering OS head is provenance the shared validator does not own, so the importer
 # binds it. Without this an otherwise valid bundle attributes evidence to the wrong version.
-reject_unchanged wrong_engineering_os_head_rejected "$B" \
+reject_unchanged wrong_engineering_os_head_rejected "$B" "bundle Engineering OS head does not match the expected version" \
   --expected-engineering-os-head-sha "$(printf 'e%.0s' $(seq 40))"
 
 # The integrity record must not claim coverage the validator does not provide: an extra
