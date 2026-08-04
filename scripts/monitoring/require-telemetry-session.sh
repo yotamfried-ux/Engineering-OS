@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-HOOK_INPUT="$(cat 2>/dev/null || true)"
+HOOK_INPUT=""
+if [ ! -t 0 ]; then
+  HOOK_INPUT="$(cat 2>/dev/null || true)"
+fi
 TOOL_NAME="$(printf '%s' "$HOOK_INPUT" | python3 -c '
 import json
 import sys
