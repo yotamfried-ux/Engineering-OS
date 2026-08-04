@@ -10,6 +10,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from telemetry_handoff import (  # noqa: E402
+    HandoffError,
+    POLICY_SCHEMA,
+    REQUIRED_BUNDLE_FILES,
+    validate_bundle,
+)
+
 MANIFEST_SCHEMA = "eos.telemetry.run.v1"
 EVENT_REQUIRED = {"schema_version", "trace_id", "span_id", "name", "timestamp", "resource", "attributes"}
 MANIFEST_REQUIRED = {"schema_version", "run_id", "project", "project_slug", "repo", "branch", "head_sha", "engineering_os_head_sha", "exported_at", "source_telemetry_dir", "events_file", "summary_file", "event_count", "privacy_contract"}
@@ -137,11 +145,65 @@ def coverage(events: list[dict[str, Any]]) -> dict[str, int]:
     }
 
 
+
+def validate_before_mutation(
+    bundle: Path,
+    *,
+    expected_repo: str = "",
+    expected_branch_hash: str = "",
+    expected_head_sha: str = "",
+    expected_run_id: str = "",
+) -> dict[str, Any]:
+    """Prove the bundle's integrity and identity before the archive is touched.
+
+    The exporter and the handoff validator already own checksum and identity
+    verification, so this calls the same shared validator rather than restating it.
+    Direct archive import previously skipped that path entirely and could accept a
+    mutated bundle, or one belonging to a different run, on schema checks alone.
+
+    Everything here runs before the first mkdir/rmtree/copy, so a rejected bundle
+    leaves the archive byte-identical.
+    """
+
+    if bundle.is_symlink() or not bundle.is_dir():
+        fail(f"bundle path must be a real directory, not a symlink: {bundle}")
+
+    # Exact allowlist: an unexpected file in a bundle means it was assembled by
+    # something other than the exporter/selector, so refuse rather than guess.
+    allowed = set(REQUIRED_BUNDLE_FILES)
+    present = {entry.name for entry in bundle.iterdir()}
+    unexpected = sorted(present - allowed)
+    if unexpected:
+        fail(f"bundle contains files outside the allowlist: {', '.join(unexpected)}")
+
+    try:
+        manifest = validate_bundle(
+            bundle,
+            expected_repo=expected_repo,
+            expected_branch_hash=expected_branch_hash,
+            expected_head_sha=expected_head_sha,
+            expected_run_id=expected_run_id,
+        )
+    except HandoffError as exc:
+        fail(f"bundle failed shared integrity validation: {exc}")
+
+    # Policy identity: a declared policy block must name the canonical schema.
+    policy = manifest.get("policy")
+    if policy is not None:
+        if not isinstance(policy, dict) or policy.get("schema_version") != POLICY_SCHEMA:
+            fail(f"bundle declares an invalid telemetry policy identity: {bundle}")
+    return manifest
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Import an Engineering OS telemetry bundle into the central archive.")
     parser.add_argument("bundle", type=Path)
     parser.add_argument("--archive", type=Path, default=Path("telemetry-archive"))
     parser.add_argument("--replace", action="store_true")
+    parser.add_argument("--expected-repo", default="")
+    parser.add_argument("--expected-branch-hash", default="")
+    parser.add_argument("--expected-head-sha", default="")
+    parser.add_argument("--expected-run-id", default="")
     args = parser.parse_args()
 
     bundle = args.bundle
@@ -150,6 +212,16 @@ def main() -> int:
     summary_path = bundle / "latest-summary.md"
     if not bundle.is_dir() or not manifest_path.exists() or not summary_path.exists():
         fail("bundle must contain manifest.json, events.jsonl, and latest-summary.md")
+
+    # Fail closed before any archive mutation. Everything below this point may write.
+    validate_before_mutation(
+        bundle,
+        expected_repo=args.expected_repo,
+        expected_branch_hash=args.expected_branch_hash,
+        expected_head_sha=args.expected_head_sha,
+        expected_run_id=args.expected_run_id,
+    )
+
     manifest = read_json(manifest_path)
     validate_manifest(manifest)
     events = load_events(events_path)
@@ -181,7 +253,7 @@ def main() -> int:
     shutil.copy2(summary_path, dest / "latest-summary.md")
     findings = dest / "findings.md"
     findings.write_text("# Telemetry Findings\n\nStatus: pending-review\n", encoding="utf-8")
-    rows.append({"schema_version": "eos.telemetry.archive.index.v1", "archive_key": archive_key, "archive_path": str(dest), "project": manifest.get("project"), "project_slug": project_slug, "run_id": run_id, "run_date": run_date, "repo": manifest.get("repo"), "branch": manifest.get("branch"), "head_sha": manifest.get("head_sha"), "engineering_os_head_sha": manifest.get("engineering_os_head_sha"), "exported_at": manifest.get("exported_at"), "imported_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(), "event_count": len(events), "summary_path": str(dest / "latest-summary.md"), "findings_path": str(findings), "privacy_contract": "metadata-only", "coverage": coverage(events)})
+    rows.append({"schema_version": "eos.telemetry.archive.index.v1", "archive_key": archive_key, "archive_path": str(dest), "project": manifest.get("project"), "project_slug": project_slug, "run_id": run_id, "run_date": run_date, "repo": manifest.get("repo"), "branch": manifest.get("branch"), "head_sha": manifest.get("head_sha"), "engineering_os_head_sha": manifest.get("engineering_os_head_sha"), "exported_at": manifest.get("exported_at"), "imported_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(), "event_count": len(events), "summary_path": str(dest / "latest-summary.md"), "findings_path": str(findings), "privacy_contract": "metadata-only", "coverage": coverage(events), "integrity": {"validator": "telemetry_handoff.validate_bundle", "validated_before_mutation": True, "checksums_verified": sorted((manifest.get("checksums") or {}).keys()), "expected_repo": args.expected_repo or None, "expected_branch_hash": args.expected_branch_hash or None, "expected_head_sha": args.expected_head_sha or None, "expected_run_id": args.expected_run_id or None}})
     write_jsonl(index_path, rows)
     projects = read_json(projects_path) if projects_path.exists() else {}
     entry = projects.setdefault(project_slug, {"project_slug": project_slug, "project": manifest.get("project"), "runs": 0})
