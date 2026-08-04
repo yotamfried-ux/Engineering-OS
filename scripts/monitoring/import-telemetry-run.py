@@ -6,9 +6,14 @@ import json
 import re
 import shutil
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+# The shared validator compares exactly these two digests. Recording anything else as
+# "verified" would make the archive's integrity record overclaim its own coverage.
+VERIFIED_CHECKSUM_KEYS = ("events_sha256", "summary_sha256")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from telemetry_handoff import (  # noqa: E402
@@ -148,11 +153,13 @@ def coverage(events: list[dict[str, Any]]) -> dict[str, int]:
 
 def validate_before_mutation(
     bundle: Path,
+    snapshot: Path,
     *,
     expected_repo: str = "",
     expected_branch_hash: str = "",
     expected_head_sha: str = "",
     expected_run_id: str = "",
+    expected_engineering_os_head_sha: str = "",
 ) -> dict[str, Any]:
     """Prove the bundle's integrity and identity before the archive is touched.
 
@@ -176,9 +183,22 @@ def validate_before_mutation(
     if unexpected:
         fail(f"bundle contains files outside the allowlist: {', '.join(unexpected)}")
 
+    # Refuse symlinked or non-regular members before copying. validate_bundle() rejects
+    # them too, but copying a FIFO would block before it ever got the chance.
+    for name in REQUIRED_BUNDLE_FILES:
+        member = bundle / name
+        if member.is_symlink() or not member.is_file():
+            fail(f"bundle member is missing, a symlink, or not a regular file: {name}")
+
+    # Validate the snapshot that will actually be archived. Validating the caller's path and
+    # then copying from it later leaves a window in which another process can swap the bytes,
+    # so everything downstream reads this private copy instead.
+    for name in REQUIRED_BUNDLE_FILES:
+        shutil.copy2(bundle / name, snapshot / name, follow_symlinks=False)
+
     try:
         manifest = validate_bundle(
-            bundle,
+            snapshot,
             expected_repo=expected_repo,
             expected_branch_hash=expected_branch_hash,
             expected_head_sha=expected_head_sha,
@@ -186,6 +206,17 @@ def validate_before_mutation(
         )
     except HandoffError as exc:
         fail(f"bundle failed shared integrity validation: {exc}")
+
+    # Engineering OS head identity. The shared validator does not own this field — it is
+    # written by the exporter and recorded in the archive index as provenance — so without
+    # this check a bundle could attribute evidence to the wrong Engineering OS version.
+    if expected_engineering_os_head_sha:
+        actual = str(manifest.get("engineering_os_head_sha") or "")
+        if actual != expected_engineering_os_head_sha:
+            fail(
+                "bundle Engineering OS head does not match the expected version: "
+                f"{actual or '<missing>'}"
+            )
 
     # Policy identity: a declared policy block must name the canonical schema.
     policy = manifest.get("policy")
@@ -204,6 +235,7 @@ def main() -> int:
     parser.add_argument("--expected-branch-hash", default="")
     parser.add_argument("--expected-head-sha", default="")
     parser.add_argument("--expected-run-id", default="")
+    parser.add_argument("--expected-engineering-os-head-sha", default="")
     args = parser.parse_args()
 
     bundle = args.bundle
@@ -213,15 +245,30 @@ def main() -> int:
     if not bundle.is_dir() or not manifest_path.exists() or not summary_path.exists():
         fail("bundle must contain manifest.json, events.jsonl, and latest-summary.md")
 
-    # Fail closed before any archive mutation. Everything below this point may write.
-    validate_before_mutation(
-        bundle,
-        expected_repo=args.expected_repo,
-        expected_branch_hash=args.expected_branch_hash,
-        expected_head_sha=args.expected_head_sha,
-        expected_run_id=args.expected_run_id,
-    )
+    # Fail closed before any archive mutation, against a private snapshot so the bytes that
+    # are validated are the bytes that get archived. Everything below this point may write.
+    staging = Path(tempfile.mkdtemp(prefix="eos-import-"))
+    try:
+        validate_before_mutation(
+            bundle,
+            staging,
+            expected_repo=args.expected_repo,
+            expected_branch_hash=args.expected_branch_hash,
+            expected_head_sha=args.expected_head_sha,
+            expected_run_id=args.expected_run_id,
+            expected_engineering_os_head_sha=args.expected_engineering_os_head_sha,
+        )
+        return import_validated_snapshot(args, staging)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
+
+def import_validated_snapshot(args: argparse.Namespace, bundle: Path) -> int:
+    """Archive the validated snapshot. `bundle` here is the private copy, never the caller's."""
+
+    manifest_path = bundle / "manifest.json"
+    events_path = bundle / "events.jsonl"
+    summary_path = bundle / "latest-summary.md"
     manifest = read_json(manifest_path)
     validate_manifest(manifest)
     events = load_events(events_path)
@@ -253,7 +300,7 @@ def main() -> int:
     shutil.copy2(summary_path, dest / "latest-summary.md")
     findings = dest / "findings.md"
     findings.write_text("# Telemetry Findings\n\nStatus: pending-review\n", encoding="utf-8")
-    rows.append({"schema_version": "eos.telemetry.archive.index.v1", "archive_key": archive_key, "archive_path": str(dest), "project": manifest.get("project"), "project_slug": project_slug, "run_id": run_id, "run_date": run_date, "repo": manifest.get("repo"), "branch": manifest.get("branch"), "head_sha": manifest.get("head_sha"), "engineering_os_head_sha": manifest.get("engineering_os_head_sha"), "exported_at": manifest.get("exported_at"), "imported_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(), "event_count": len(events), "summary_path": str(dest / "latest-summary.md"), "findings_path": str(findings), "privacy_contract": "metadata-only", "coverage": coverage(events), "integrity": {"validator": "telemetry_handoff.validate_bundle", "validated_before_mutation": True, "checksums_verified": sorted((manifest.get("checksums") or {}).keys()), "expected_repo": args.expected_repo or None, "expected_branch_hash": args.expected_branch_hash or None, "expected_head_sha": args.expected_head_sha or None, "expected_run_id": args.expected_run_id or None}})
+    rows.append({"schema_version": "eos.telemetry.archive.index.v1", "archive_key": archive_key, "archive_path": str(dest), "project": manifest.get("project"), "project_slug": project_slug, "run_id": run_id, "run_date": run_date, "repo": manifest.get("repo"), "branch": manifest.get("branch"), "head_sha": manifest.get("head_sha"), "engineering_os_head_sha": manifest.get("engineering_os_head_sha"), "exported_at": manifest.get("exported_at"), "imported_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(), "event_count": len(events), "summary_path": str(dest / "latest-summary.md"), "findings_path": str(findings), "privacy_contract": "metadata-only", "coverage": coverage(events), "integrity": {"validator": "telemetry_handoff.validate_bundle", "validated_before_mutation": True, "checksums_verified": list(VERIFIED_CHECKSUM_KEYS), "expected_repo": args.expected_repo or None, "expected_branch_hash": args.expected_branch_hash or None, "expected_head_sha": args.expected_head_sha or None, "expected_run_id": args.expected_run_id or None, "expected_engineering_os_head_sha": args.expected_engineering_os_head_sha or None, "snapshot_validated": True}})
     write_jsonl(index_path, rows)
     projects = read_json(projects_path) if projects_path.exists() else {}
     entry = projects.setdefault(project_slug, {"project_slug": project_slug, "project": manifest.get("project"), "runs": 0})

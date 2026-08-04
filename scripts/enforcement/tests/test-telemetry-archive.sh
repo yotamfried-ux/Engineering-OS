@@ -228,6 +228,29 @@ assert integ['validator']=='telemetry_handoff.validate_bundle', integ
 assert 'events_sha256' in integ['checksums_verified'], integ
 " "$GOOD_ARCHIVE"
 
+# Engineering OS head is provenance the shared validator does not own, so the importer
+# binds it. Without this an otherwise valid bundle attributes evidence to the wrong version.
+reject_unchanged wrong_engineering_os_head_rejected "$B" \
+  --expected-engineering-os-head-sha "$(printf 'e%.0s' $(seq 40))"
+
+# The integrity record must not claim coverage the validator does not provide: an extra
+# checksum key in the manifest is not verified, so it must not appear as verified.
+EXTRA="$INTEG/extra-checksum"; make_bundle "$EXTRA" integrity-extrasum-run
+python3 -c "
+import json,pathlib,sys
+p=pathlib.Path(sys.argv[1])/'manifest.json'
+m=json.loads(p.read_text()); m['checksums']['manifest_sha256']='0'*64
+p.write_text(json.dumps(m))" "$EXTRA"
+pass extra_checksum_key_not_claimed_verified bash -c "
+python3 '$IMPORTER' '$EXTRA' --archive '$TMP/integrity-archive-extrasum' >/dev/null &&
+python3 -c \"
+import json,pathlib,sys
+rows=[json.loads(l) for l in (pathlib.Path('$TMP/integrity-archive-extrasum')/'indexes'/'runs.jsonl').read_text().splitlines() if l.strip()]
+verified=rows[0]['integrity']['checksums_verified']
+assert verified==['events_sha256','summary_sha256'], verified
+assert rows[0]['integrity']['snapshot_validated'] is True, rows[0]['integrity']
+\""
+
 # A bundle that matches its declared identity still imports when identity is asserted.
 B="$INTEG/matched"; make_bundle "$B" integrity-matched-run
 pass matching_identity_imports python3 "$IMPORTER" "$B" --archive "$TMP/integrity-archive-matched" \
