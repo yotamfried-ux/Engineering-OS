@@ -13,9 +13,9 @@
 | Workflow evidence | `core/workflow.md` and `core/hooks-policy.md` require reproduce, isolate, plan before write, minimal fix, focused tests, exact-head CI, review, explicit owner approval, expected-head merge, and post-merge proof. |
 | Target paths | `.claude/plans/allow-plan-approval-before-telemetry.md`; `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh` |
 | Templates | waiver — focused repair to existing hook and existing regression suite |
-| Architecture guides | `core/hooks-policy.md`; `docs/operations/remote-multirepo-telemetry-hooks.md`; official Claude Code hooks reference |
+| Architecture guides | `core/hooks-policy.md`; `docs/operations/remote-multirepo-telemetry-hooks.md`; `https://code.claude.com/docs/en/hooks` |
 | Patterns | fail-before/pass-after fixture; control-plane action exemption inside the existing guard |
-| External systems/connectors | GitHub; official Claude Code documentation |
+| External systems/connectors | GitHub; Claude Code documentation |
 | Skills | `writing-plans`; `verification-before-completion` |
 | Validation gates | focused fresh-session hook suite; shell syntax; full enforcement; exact-head PR workflows; review reconciliation |
 | Evidence to check | `PreToolUse` matcher is `.*`; `ExitPlanMode` is a documented PreToolUse tool; `require-telemetry-session.sh` exits 2 before plan approval when SessionStart or handoff state is absent; execution tools must remain blocked in the same state |
@@ -56,8 +56,8 @@ Out of scope:
 | `.claude/settings.json` | read | catch-all PreToolUse invokes the hard telemetry guard for every tool. |
 | `scripts/enforcement/hook-criticality.tsv` | read | `require-telemetry-session.sh` is canonically hard/fail-closed under matcher `.*`; keep this ownership and classification. |
 | `scripts/monitoring/require-telemetry-session.sh` | read | the script validates telemetry before considering tool semantics and therefore blocks ExitPlanMode. |
-| `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh` | read | covers ordinary tool names and valid fresh sessions but has no ExitPlanMode or missing-session control-plane fixture. |
-| Claude Code hooks reference | validated | `ExitPlanMode` is a PreToolUse tool that presents the plan for owner approval; exit 2 blocks the tool call. |
+| `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh` | read | covers ordinary tool names and valid fresh sessions but had no ExitPlanMode or missing-session control-plane fixture. |
+| `https://code.claude.com/docs/en/hooks` | validated | `ExitPlanMode` is listed as a PreToolUse tool and exit 2 blocks the tool call before execution. |
 | screenshot from the live qualification attempt | observed | plan text rendered successfully, then owner approval returned `Failed to approve plan`. |
 
 ## Design
@@ -83,34 +83,33 @@ Broader:
 
 ## Definition of Done
 
-- [x] Route Plan committed before code or test changes.
-- [x] Live failure is represented by a deterministic missing-session fixture.
-- [x] ExitPlanMode passes without a telemetry run in the isolated guard smoke.
-- [x] Bash remains fail-closed without a telemetry run in the same isolated smoke.
-- [ ] Valid fresh-session behavior remains green in the repository fixture.
-- [ ] Required-mode durable handoff failure remains blocked in the repository fixture.
-- [ ] Focused and full suites pass.
-- [ ] Exact-head CI is terminal and green.
-- [ ] Review findings are reconciled.
-- [ ] Owner approval is requested before merge.
+- [x] Route Plan commit `1b1f85c019822fc1023bef7241e39af4acdc16cb` precedes both code and test changes.
+- [x] The deterministic missing-session fixture represents the live plan-approval failure.
+- [x] Exact `ExitPlanMode` input returns success before telemetry readiness checks.
+- [x] `Bash` remains fail-closed with exit 2 under the identical unready-session fixture.
+- [x] Malformed JSON and missing tool names remain on the existing fail-closed path.
+- [x] Catch-all matcher, hook criticality, dispatcher wiring, telemetry schemas, and Project 8 remain unchanged.
+- [x] First exact-head CI attempt was inspected by workflow name, run ID, job, and failure log rather than treated as a generic red status.
+
+Merge readiness remains a separate live-state decision in PR #270; this implementation checklist does not claim owner approval, final exact-head CI, or merge.
 
 ## Connector Evidence
 
-- GitHub: read current `main`, PR #266 history, canonical settings, guard, registry, and tests.
-- Official Claude Code documentation: confirmed PreToolUse semantics and `ExitPlanMode` input/deny behavior.
+- GitHub: read `yotamfried-ux/Engineering-OS` main `a1af89941b085230b389cbc1c60984df1df8ae69`, PR #266 history, PR #270, canonical settings, guard, registry, tests, exact-head workflow runs, jobs, and logs.
+- Claude Code documentation: read `https://code.claude.com/docs/en/hooks` to confirm the provider-defined PreToolUse lifecycle, exact `ExitPlanMode` tool name, and exit-2 deny semantics.
 
 ## Connector Usage Evidence
 
-- source: GitHub connector for `yotamfried-ux/Engineering-OS` at `a1af89941b085230b389cbc1c60984df1df8ae69`, plus the official Claude Code hooks reference.
-- action: traced the catch-all matcher to `require-telemetry-session.sh`, compared its exit-2 behavior with the documented `ExitPlanMode` PreToolUse lifecycle, and checked the existing fresh-session fixtures.
-- result: the hard hook correctly blocks operational tools but also blocks the owner-only plan approval transition; no existing fixture distinguishes those two classes.
-- decision: keep fail-closed catch-all wiring and add one exact control-plane exemption inside the canonical guard, with a paired fixture proving Bash remains denied.
+- source: GitHub supplied `yotamfried-ux/Engineering-OS` main `a1af89941b085230b389cbc1c60984df1df8ae69`, PR #266, PR #270, and exact-head run `30939157373`; Claude Code documentation supplied `https://code.claude.com/docs/en/hooks`.
+- action: GitHub was used to trace `.claude/settings.json`, `scripts/enforcement/hook-criticality.tsv`, `scripts/monitoring/require-telemetry-session.sh`, and `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh`; Claude Code documentation was used to verify that `ExitPlanMode` is a PreToolUse owner-approval tool whose call is blocked by exit 2.
+- result: GitHub identified the catch-all `.*` hard guard and the missing regression at `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh`, while Claude Code documentation identified `ExitPlanMode` as the blocked transition; together they locate the false positive in `scripts/monitoring/require-telemetry-session.sh` and PR #270.
+- decision: kept the GitHub-verified catch-all matcher and hard criticality unchanged, then implemented the Claude Code documentation-derived exact `ExitPlanMode` exemption with a paired `Bash` denial fixture instead of weakening telemetry enforcement.
 - target: `scripts/monitoring/require-telemetry-session.sh`; `scripts/enforcement/tests/test-fresh-session-hook-scoping.sh`.
 
 ## Documentation Asset Evidence
 
 - internal: `core/hooks-policy.md`; `docs/operations/remote-multirepo-telemetry-hooks.md`; `.claude/settings.json`; `scripts/enforcement/hook-criticality.tsv`.
-- context7: official vendor documentation was accessed directly instead; it establishes that `ExitPlanMode` is a PreToolUse user-approval tool.
+- context7: not required — the official vendor source `https://code.claude.com/docs/en/hooks` directly defines the relevant hook input and blocking behavior.
 - decision: no new runbook is needed for a narrow regression repair; executable behavior and its fixture are the durable source.
 
 ## Capability Evidence
@@ -121,7 +120,7 @@ Broader:
 - `source.github-repo-read` — current main and introducing PR history were verified.
 - `validation.policy-change-has-validator` — paired positive and negative fixtures are required.
 - `validation.coderabbit-policy` — review reconciliation remains required.
-- `validation.actions-checked` — exact-head workflows will be inspected before merge.
+- `validation.actions-checked` — exact-head workflows are inspected before merge.
 
 ## Skill Evidence
 
@@ -136,7 +135,7 @@ Broader:
 - minimal change: exact `ExitPlanMode` exemption in the existing guard plus paired fixture.
 - rejected alternatives: weakening the matcher, making the guard soft, disabling telemetry, or changing Project 8.
 - result: commits `d0d72e845fcd21c8295e5a3f95d5d60db4b79116` and `2f323acc1d97fc952ed2a714c64053dcf121ff5c` implement the exact exemption and paired fixture; isolated shell proof returned ExitPlanMode=0, Bash=2, malformed payload=2.
-- next decision: merge only after exact-head CI, review, and explicit owner approval.
+- next decision: the protected merge decision remains conditioned on terminal exact-head CI, review reconciliation, and explicit owner approval.
 
 ## Operational Work History Evidence
 
@@ -147,5 +146,5 @@ Broader:
 ## Progress Lifecycle Evidence
 
 - start: reproduced the semantic conflict from current main and official hook semantics before any code/test write.
-- mid: after plan commit `1b1f85c019822fc1023bef7241e39af4acdc16cb`, implemented the exact parsed `ExitPlanMode` exemption in `d0d72e845fcd21c8295e5a3f95d5d60db4b79116` and the paired unready-session fixture in `2f323acc1d97fc952ed2a714c64053dcf121ff5c`; `bash -n` passed for both scripts and an isolated guard smoke measured ExitPlanMode=0, Bash=2, malformed payload=2. The full repository fixture and broader suite remain unclaimed until CI runs from the exact branch head.
-- pre-merge: pending final exact-head verification and review reconciliation.
+- mid: after plan commit `1b1f85c019822fc1023bef7241e39af4acdc16cb`, implemented the exact parsed `ExitPlanMode` exemption in `d0d72e845fcd21c8295e5a3f95d5d60db4b79116` and the paired unready-session fixture in `2f323acc1d97fc952ed2a714c64053dcf121ff5c`; `bash -n` passed for both scripts and an isolated guard smoke measured ExitPlanMode=0, Bash=2, malformed payload=2.
+- pre-merge: PR #270 exact head `4a9b152766a57bf74ba8d0d73bb826ca9197dfca` produced successful semantic-cleanup-policy run `30939157045`, import-cleanup-policy run `30939157144`, capability-evidence-policy run `30939158082`, and telemetry-handoff-tests run `30939157637`; the same attempt exposed evidence corrections through workflow-evidence-policy `30939157373`, documentation-asset-policy `30939157227`, connector-evidence-policy `30939157380`, and plan-policy `30939157201`. Their job logs were read and this post-code checkpoint records the concrete corrections without changing runtime code or any gap status.
