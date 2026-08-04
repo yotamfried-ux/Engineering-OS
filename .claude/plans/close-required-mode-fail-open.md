@@ -119,7 +119,7 @@ Reuse the renderer and the hard gate unchanged. Three changes:
 ## Progress Lifecycle Evidence
 
 - start: Route Plan committed before the first code change. Measured on `main` at `a1af899`: a rendered gate-wrapped command with an unresolvable home exits 2, the bare form exits 127, and `install-policy-gates.sh`'s substitution table omits `${ENGINEERING_OS_HOME:-$HOME/.engineering-os}`.
-- mid: pending.
+- mid: rendered a settings file with the portable root and measured both wirings against an unresolvable home in one run, same input and same environment: gate-wrapped exits 2 with `ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing`, bare exits 127 with `No such file or directory`. Fixed the caller (`--mode direct --home` at render time) and closed the substitution-table omission behind it. Verified against a real `install-policy-gates.sh` run into a fresh git target: zero unresolved home forms remain and the guard is gate-wrapped with the exit-2 bootstrap. Dropped the planned `check-hard-hook-contract.py` project-surface extension after measuring that the registry expects Engineering OS's full enforcement set, so accepting a product repository's telemetry-only subset would have loosened the checker for every surface.
 - pre-merge: pending.
 - outstanding external gates: exact-head CI, live review reconciliation, explicit owner approval, expected-head protected merge, and post-merge validation. No gap status changes before all of those complete.
 
