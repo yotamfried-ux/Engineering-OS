@@ -142,6 +142,7 @@ bundles by calling the real `write_handoff_manifest`, not by hand-writing the ma
 ## Progress Lifecycle Evidence
 
 - start: Route Plan committed before the first importer change. Measured on `main` at `ee138b26b8d9aacedbc3fae350176c08ba49c7a6`: `import-telemetry-run.py` contained zero references to `telemetry_handoff`, and its first archive mutation (`rmtree`) ran after schema checks only.
+- mid: added `validate_before_mutation()` ahead of every write, wired the four `expected_*` passthroughs, recorded the integrity decision in the archive index, and rebuilt the fixtures as synced bundles via the real `write_handoff_manifest`. Each of the twelve required rejections was then checked for *why* it failed, not just that it failed — the boundaryless case additionally proved that `sync-telemetry-run.py` itself refuses to write handoff metadata for a run with no terminal boundary, so two independent layers reject it.
 - outstanding external gates: exact-head CI, live review reconciliation, explicit owner approval, expected-head protected merge, and post-merge validation. No gap status changes before all of those complete.
 
 ## Definition of Done — Implementation
