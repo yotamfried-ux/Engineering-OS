@@ -11,7 +11,7 @@
 | Planning Mode | implementation; reuse the existing renderer and hard gate rather than adding a new mechanism |
 | Task-router evidence | `core/task-router.md` routes Engineering OS enforcement/hooks governance through `ops-readiness`. |
 | Workflow evidence | `core/workflow.md`, `core/quality-gates.md`, `core/git-policy.md`, `core/hooks-policy.md`, `core/coderabbit-policy.md` require plan-first writes, focused PR, exact-head CI, review, explicit owner approval, expected-head merge, post-merge proof. |
-| Target paths | `.claude/plans/close-required-mode-fail-open.md`; `scripts/install-policy-gates.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/tests/test-hook-home-resolution.sh` |
+| Target paths | `.claude/plans/close-required-mode-fail-open.md`; `scripts/install-policy-gates.sh`; `scripts/enforcement/tests/test-hook-home-resolution.sh` |
 | Templates | waiver — focused change to an existing installer and an existing contract checker |
 | Architecture guides | `core/hooks-policy.md`; `docs/operations/project8-telemetry-preflight.md` |
 | Patterns | none — no new implementation pattern is introduced |
@@ -30,13 +30,12 @@ does all its work with no telemetry and reports success.
 
 ## Scope
 
-In: the renderer's project-surface caller (`install-policy-gates.sh`), the deterministic
-contract checker's ability to run against a project surface, and a regression that executes a
-rendered command with an unresolvable home.
+In: the renderer's project-surface caller (`install-policy-gates.sh`) and a regression that
+executes a rendered command with an unresolvable home.
 
 Out: `patch-settings-telemetry.py` (measured — it already renders the correct command),
-project-8's own settings (separate PR, separate repository), the telemetry data model, and
-any gap status change.
+`check-hard-hook-contract.py` (see the Design note), project-8's own settings (separate PR,
+separate repository), the telemetry data model, and any gap status change.
 
 ## Claude Run Trace
 
@@ -56,8 +55,9 @@ any gap status change.
   rejected after measuring that `--home` is already used verbatim (`:152`), so the portable form
   renders correctly with no code change. Baking an absolute path into the project surface —
   rejected because project-8's own contract forbids machine-specific paths.
-- **result**: the renderer is reused unchanged; the fix is in the caller, the checker, and a
-  regression that executes the rendered command.
+- **result**: the renderer and the hard gate are reused unchanged; the fix is in the caller
+  plus a regression that executes the rendered command. The contract-checker extension was
+  dropped after measurement — see Design.
 - **follow-up**: project-8's settings are re-rendered in a separate PR in that repository.
 
 ## Source of Truth Checks
@@ -72,15 +72,22 @@ any gap status change.
 
 ## Design
 
-Reuse the renderer and the hard gate unchanged. Three changes:
+Reuse the renderer and the hard gate unchanged. Two changes:
 
 1. `install-policy-gates.sh` passes the resolved home to the patcher explicitly instead of
    rendering with a placeholder and post-substituting a table that cannot cover every form.
-2. `check-hard-hook-contract.py` gains the ability to validate an arbitrary project settings
-   file, so the ungated shape is rejected by a gate rather than by review.
-3. A regression executes both wirings with an unresolvable home and asserts `2` and `127`
+2. A regression executes both wirings with an unresolvable home and asserts `2` and `127`
    respectively, so the difference the fix protects is written down as an assertion rather than
    as prose.
+
+A third change was designed and then dropped during implementation: extending
+`check-hard-hook-contract.py` to validate a project settings surface. Measured — its registry
+expects Engineering OS's full enforcement set (39 `both` rows plus 9 `installed`), while a
+product repository carries only the telemetry subset with none of the units on disk. Making
+the checker accept that would have loosened `validate_paths` and `validate_hard_wiring` for
+every surface, weakening the guarantee this change exists to strengthen. Project-surface
+enforcement belongs in the repository that owns the settings file, whose own CI already runs
+a validator against it.
 
 ## Capability Evidence
 
@@ -106,8 +113,8 @@ Reuse the renderer and the hard gate unchanged. Three changes:
 
 - source: GitHub connector for `yotamfried-ux/Engineering-OS` `main`, plus a live qualification session on `yotamfried-ux/project-8`.
 - action: ran a real session against an unresolved Engineering OS home, then measured both hook wirings directly rather than reasoning about the PreToolUse contract.
-- result: the bare form exits 127 and does not block; the gate-wrapped form exits 2 and denies. The session that ran ungated produced 2 events, no `session_start`, no bundle, and reported success under `mode: required`.
-- decision: fix the caller and the checker, reuse the renderer and gate unchanged, and assert the difference by executing both forms.
+- result: measured against `origin/main` at `a1af89941b085230b389cbc1c60984df1df8ae69` — the bare form exits 127 and does not block, while the gate-wrapped form exits 2 and denies. The ungated session on `yotamfried-ux/project-8` produced 2 events, no `session_start`, no bundle, and reported success under `mode: required`. The omission behind it sits in `scripts/install-policy-gates.sh` lines 76-94.
+- decision: changed the caller in `scripts/install-policy-gates.sh` to render with `--mode direct --home`, added the missing home form to its substitution table, kept `scripts/monitoring/patch-settings-telemetry.py` and `scripts/enforcement/lib/hook-gate.sh` unchanged after measuring that both already behave correctly, and implemented `scripts/enforcement/tests/test-hook-home-resolution.sh` to assert the difference by executing both forms.
 - target: `scripts/install-policy-gates.sh`; `scripts/enforcement/check-hard-hook-contract.py`; `scripts/enforcement/tests/test-hook-home-resolution.sh`.
 
 ## Documentation Asset Evidence
@@ -119,7 +126,7 @@ Reuse the renderer and the hard gate unchanged. Three changes:
 ## Progress Lifecycle Evidence
 
 - start: Route Plan committed before the first code change. Measured on `main` at `a1af899`: a rendered gate-wrapped command with an unresolvable home exits 2, the bare form exits 127, and `install-policy-gates.sh`'s substitution table omits `${ENGINEERING_OS_HOME:-$HOME/.engineering-os}`.
-- mid: rendered a settings file with the portable root and measured both wirings against an unresolvable home in one run, same input and same environment: gate-wrapped exits 2 with `ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing`, bare exits 127 with `No such file or directory`. Fixed the caller (`--mode direct --home` at render time) and closed the substitution-table omission behind it. Verified against a real `install-policy-gates.sh` run into a fresh git target: zero unresolved home forms remain and the guard is gate-wrapped with the exit-2 bootstrap. Dropped the planned `check-hard-hook-contract.py` project-surface extension after measuring that the registry expects Engineering OS's full enforcement set, so accepting a product repository's telemetry-only subset would have loosened the checker for every surface.
+- mid: rendered a settings file with the portable root and measured both wirings against an unresolvable home in one run, same input and same environment: gate-wrapped exits 2 with `ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing`, bare exits 127 with `No such file or directory`. Fixed the caller (`--mode direct --home` at render time) and closed the substitution-table omission behind it. Verified against a real `install-policy-gates.sh` run into a fresh git target: zero unresolved home forms remain and the guard is gate-wrapped with the exit-2 bootstrap. Dropped the proposed `check-hard-hook-contract.py` project-surface extension after measuring that the registry expects Engineering OS's full enforcement set, so accepting a product repository's telemetry-only subset would have loosened the checker for every surface.
 - pre-merge: full enforcement suite 113 suites, 0 failures — 112 previously plus this PR's new suite, which CI picks up automatically because `enforcement-tests.yml:104` globs `scripts/enforcement/tests/test-*.sh`. `test-hook-home-resolution.sh` carries 6 assertions and was proven non-vacuous rather than assumed to work: case 1's assertion was run against the bare form and returned 127 where it requires 2, so a regression to an ungated command fails it. That check matters here specifically — this PR's whole subject is a test-shaped blind spot, and a regression that cannot fail would have reproduced it. `shellcheck` reports no findings on both changed shell files; the one SC2016 it did raise was on the deliberate literal placeholder and is now suppressed with a stated reason rather than silently ignored. `check-workflow-evidence.sh`, `check-connector-evidence.sh`, `check-documentation-asset-evidence.sh` and `enforce-run-trace.sh` all pass. Recorded on the PR for this branch.
 - outstanding external gates: exact-head CI, live review reconciliation, explicit owner approval, expected-head protected merge, and post-merge validation. No gap status changes before all of those complete.
 
