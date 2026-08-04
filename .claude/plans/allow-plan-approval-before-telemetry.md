@@ -83,12 +83,12 @@ Broader:
 
 ## Definition of Done
 
-- [ ] Route Plan committed before code or test changes.
-- [ ] Live failure is represented by a deterministic missing-session fixture.
-- [ ] ExitPlanMode passes without a telemetry run.
-- [ ] Bash remains fail-closed without a telemetry run.
-- [ ] Valid fresh-session behavior remains green.
-- [ ] Required-mode durable handoff failure remains blocked.
+- [x] Route Plan committed before code or test changes.
+- [x] Live failure is represented by a deterministic missing-session fixture.
+- [x] ExitPlanMode passes without a telemetry run in the isolated guard smoke.
+- [x] Bash remains fail-closed without a telemetry run in the same isolated smoke.
+- [ ] Valid fresh-session behavior remains green in the repository fixture.
+- [ ] Required-mode durable handoff failure remains blocked in the repository fixture.
 - [ ] Focused and full suites pass.
 - [ ] Exact-head CI is terminal and green.
 - [ ] Review findings are reconciled.
@@ -135,6 +135,7 @@ Broader:
 - evidence: live UI failure; canonical matcher `.*`; guard exit 2; official tool lifecycle; missing regression coverage.
 - minimal change: exact `ExitPlanMode` exemption in the existing guard plus paired fixture.
 - rejected alternatives: weakening the matcher, making the guard soft, disabling telemetry, or changing Project 8.
+- result: commits `d0d72e845fcd21c8295e5a3f95d5d60db4b79116` and `2f323acc1d97fc952ed2a714c64053dcf121ff5c` implement the exact exemption and paired fixture; isolated shell proof returned ExitPlanMode=0, Bash=2, malformed payload=2.
 - next decision: merge only after exact-head CI, review, and explicit owner approval.
 
 ## Operational Work History Evidence
@@ -146,5 +147,5 @@ Broader:
 ## Progress Lifecycle Evidence
 
 - start: reproduced the semantic conflict from current main and official hook semantics before any code/test write.
-- mid: pending implementation and focused test result.
+- mid: after plan commit `1b1f85c019822fc1023bef7241e39af4acdc16cb`, implemented the exact parsed `ExitPlanMode` exemption in `d0d72e845fcd21c8295e5a3f95d5d60db4b79116` and the paired unready-session fixture in `2f323acc1d97fc952ed2a714c64053dcf121ff5c`; `bash -n` passed for both scripts and an isolated guard smoke measured ExitPlanMode=0, Bash=2, malformed payload=2. The full repository fixture and broader suite remain unclaimed until CI runs from the exact branch head.
 - pre-merge: pending final exact-head verification and review reconciliation.
