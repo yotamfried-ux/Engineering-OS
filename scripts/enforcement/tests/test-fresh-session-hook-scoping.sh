@@ -69,12 +69,48 @@ run_unready_guard() {
       bash "$REQUIRE")
 }
 
+manual_tty_preflight() {
+  python3 - "$REQUIRE" "$TARGET" <<'PY'
+import os
+import pty
+import subprocess
+import sys
+
+script, cwd = sys.argv[1:3]
+master, slave = pty.openpty()
+env = os.environ.copy()
+env["EOS_TELEMETRY_DISABLED"] = "1"
+proc = subprocess.Popen(
+    ["bash", script],
+    cwd=cwd,
+    stdin=slave,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    env=env,
+)
+os.close(slave)
+try:
+    try:
+        return_code = proc.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+        raise SystemExit("manual preflight waited for TTY EOF")
+finally:
+    os.close(master)
+
+if return_code != 2:
+    raise SystemExit(f"expected fail-closed exit 2, got {return_code}")
+PY
+}
+
 for tool in Bash Read Glob Grep ToolSearch AskUserQuestion ExitPlanMode mcp__github__get_me; do
   pass "fresh_session_allows_${tool}" run_guard "$tool"
 done
 
 pass unready_session_allows_ExitPlanMode run_unready_guard ExitPlanMode
 blockcase unready_session_blocks_Bash run_unready_guard Bash
+pass manual_tty_preflight_does_not_wait_for_eof manual_tty_preflight
 
 blockcase required_mode_rejects_legacy_boundary_wiring bash -c "
   cd '$TARGET'
