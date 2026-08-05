@@ -19,7 +19,10 @@ def hard_command(event: str, matcher: str, unit: str, *args: str) -> str:
     suffix = "" if not args else " -- " + " ".join(args)
     return (
         f'GATE="{base}/scripts/enforcement/lib/hook-gate.sh"; '
-        f'[ -r "$GATE" ] || {{ echo "ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing: $GATE" >&2; exit 2; }}; '
+        # A readable directory passes [ -r ] and then makes bash exit 126, which is
+        # non-blocking at PreToolUse. Require a regular readable file so an unusable
+        # wrapper denies rather than stepping aside.
+        f'{{ [ -f "$GATE" ] && [ -r "$GATE" ]; }} || {{ echo "ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing: $GATE" >&2; exit 2; }}; '
         f'bash "$GATE" --event {event} --matcher \'{matcher}\' --unit "{base}/{unit}"{suffix}'
     )
 
@@ -28,7 +31,8 @@ def soft_command(event: str, unit: str, *args: str) -> str:
     suffix = "" if not args else " -- " + " ".join(args)
     return (
         f'SOFT="{base}/scripts/enforcement/lib/soft-hook-gate.sh"; '
-        f'if [ -r "$SOFT" ]; then bash "$SOFT" --event {event} --unit "{base}/{unit}"{suffix}; '
+        # Same reason as hard_command: readability alone does not mean the path can be run.
+        f'if [ -f "$SOFT" ] && [ -r "$SOFT" ]; then bash "$SOFT" --event {event} --unit "{base}/{unit}"{suffix}; '
         f'else echo "WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT" >&2; exit 0; fi'
     )
 

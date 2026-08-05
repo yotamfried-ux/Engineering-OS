@@ -117,18 +117,24 @@ def render_command(
         # that looks cleanly closed while no bundle was ever produced.
         argv = f" {argument}" if argument else ""
         return f'bash "{unit_path}"{argv}'
+    # Both forms test for a regular readable file, not merely a readable one. `[ -r ]` alone
+    # is true for a directory, and bash then exits 126 rather than running anything — which
+    # PreToolUse treats as a non-blocking error, so a malformed install would fail open the
+    # same way an absent one used to. `[ -f ]` follows symlinks and tests the target, so a
+    # symlink to a real wrapper still works while a symlink to a directory does not.
     if klass == "hard":
         gate = f"{home}/scripts/enforcement/lib/hook-gate.sh"
         return (
-            f'GATE="{gate}"; [ -r "$GATE" ] || {{ echo "ERROR_FOR_AGENT: Engineering OS '
-            f'hard-hook wrapper missing: $GATE" >&2; exit 2; }}; bash "$GATE" --event '
+            f'GATE="{gate}"; {{ [ -f "$GATE" ] && [ -r "$GATE" ]; }} || {{ echo '
+            f'"ERROR_FOR_AGENT: Engineering OS hard-hook wrapper missing: $GATE" >&2; '
+            f'exit 2; }}; bash "$GATE" --event '
             f"{event} --matcher '{matcher}' --unit \"{unit_path}\"{suffix}"
         )
     gate = f"{home}/scripts/enforcement/lib/soft-hook-gate.sh"
     return (
-        f'SOFT="{gate}"; if [ -r "$SOFT" ]; then bash "$SOFT" --event {event} --unit '
-        f'"{unit_path}"{suffix}; else echo "WARNING_FOR_AGENT: Engineering OS soft-hook '
-        f'wrapper missing: $SOFT" >&2; exit 0; fi'
+        f'SOFT="{gate}"; if [ -f "$SOFT" ] && [ -r "$SOFT" ]; then bash "$SOFT" --event '
+        f'{event} --unit "{unit_path}"{suffix}; else echo "WARNING_FOR_AGENT: Engineering '
+        f'OS soft-hook wrapper missing: $SOFT" >&2; exit 0; fi'
     )
 
 

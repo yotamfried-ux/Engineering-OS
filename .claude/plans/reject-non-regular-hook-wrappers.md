@@ -109,16 +109,16 @@ reported as a denial rather than surfacing.
 ## Progress Lifecycle Evidence
 
 - start: Route Plan committed before the first code change. Measured on `main` at `4290481`: `[ -r <dir> ]` true, `[ -f <dir> ]` false, `bash <dir>` exit 126; the readable-only test appears at `patch-settings-telemetry.py:123` and `:129` and at `patch-settings-runtime-evidence.sh:22` and `:31`.
-- mid: recorded during implementation.
+- mid: tightened both forms in both renderers and measured the result in the same environment against a wrapper path that is a readable directory. Pre-change: hard exits **126**, soft exits **126** because it also invokes bash. Post-change: hard exits **2** with `ERROR_FOR_AGENT`, soft exits **0** with `WARNING_FOR_AGENT` and never invokes the directory, so the soft form keeps its criticality instead of becoming a hard failure. The new regression asserts its own premise first — the fixture must satisfy `[ -r ]` and fail `[ -f ]` — so it cannot pass against a fixture that does not reproduce the reported shape. Two corrections to this plan, recorded rather than silently applied. First, the plan predicted `test-hook-boundary-parity.sh:309` would need updating in lockstep; measured, that fixture constructs a deliberately bad command to check the contract rejects it and does not pin renderer output, so it needed no change. Second, the plan did not anticipate that the repository's own checked-in `.claude/settings.json` carries the rendered form and would be reported as drift by the parity suite. Re-running `patch-settings-runtime-evidence.sh` to regenerate it added four hooks that the checked-in file does not carry, so that was reverted and the two bootstrap expressions were normalised in place instead: 28 commands rewritten, hook count unchanged at 38, diff exactly 28 insertions and 28 deletions.
 - pre-merge: recorded after the last code change.
 - outstanding external gates: exact-head CI, live review reconciliation, explicit owner approval, expected-head protected merge, and post-merge validation. No gap status changes before all of those complete.
 
 ## Definition of Done — Implementation
 
-- [ ] A rendered hard command whose wrapper path is a readable directory denies with exit 2 instead of exiting 126.
-- [ ] A rendered soft command in the same situation emits its warning and exits 0 rather than invoking bash, preserving its criticality.
-- [ ] Both renderers are fixed, not only the one review pointed at.
-- [ ] The regression executes the malformed shape rather than inspecting the rendered text, and is proven non-vacuous against the pre-change form.
+- [x] A rendered hard command whose wrapper path is a readable directory denies with exit 2 instead of exiting 126 — measured both before and after.
+- [x] A rendered soft command in the same situation emits its warning and exits 0 rather than invoking bash, preserving its criticality — pre-change it exited 126.
+- [x] Both renderers are fixed, not only the one review pointed at — `patch-settings-telemetry.py` and `patch-settings-runtime-evidence.sh`, hard and soft in each.
+- [x] The regression executes the malformed shape rather than inspecting the rendered text, and is proven non-vacuous against the pre-change form — both new cases return 126 there, where they require 2 and 0.
 
 ## Validation Plan
 

@@ -141,4 +141,58 @@ else
   fi
 fi
 
+# 6. A resolvable home whose wrapper is present but NOT a regular file must also deny.
+#
+#    `[ -r path ]` is true for a directory, so a bootstrap that tests readability alone lets
+#    the command fall through to `bash "$GATE"`, which exits 126. Like 127, 126 is not a
+#    denial at PreToolUse, so a malformed install fails open by a different route than the
+#    absent one case 1 covers. This case executes that exact shape.
+MALFORMED="$TMP/malformed"
+mkdir -p "$MALFORMED/scripts/enforcement/lib/hook-gate.sh"
+mkdir -p "$MALFORMED/scripts/enforcement/lib/soft-hook-gate.sh"
+mkdir -p "$MALFORMED/scripts/monitoring"
+cp "$ROOT/scripts/monitoring/require-telemetry-session.sh" "$MALFORMED/scripts/monitoring/"
+
+# Sanity-check the premise rather than assuming it: the wrapper path must genuinely satisfy
+# the readable test while failing the regular-file test, or this case proves nothing.
+[ -r "$MALFORMED/scripts/enforcement/lib/hook-gate.sh" ] || {
+  echo "fail: fixture is not readable, so it does not reproduce the reported shape"; exit 1; }
+[ -f "$MALFORMED/scripts/enforcement/lib/hook-gate.sh" ] && {
+  echo "fail: fixture is a regular file, so it does not reproduce the reported shape"; exit 1; }
+
+run_unresolved "${GATED//$PORTABLE/$MALFORMED}" && code=0 || code=$?
+if [ "$code" -ne 2 ]; then
+  echo "fail: hard command with a non-regular gate wrapper returned $code; 126 and 127 are both non-blocking, only 2 denies"
+  echo "  stderr: $(tr '\n' ' ' < "$TMP/err")"
+  exit 1
+fi
+grep -q 'ERROR_FOR_AGENT' "$TMP/err" || {
+  echo "fail: non-regular gate wrapper denied without an ERROR_FOR_AGENT diagnostic"; exit 1; }
+echo "ok: non_regular_hard_wrapper_denies (exit 2)"
+
+# The soft form must keep its own criticality: it warns and exits 0 rather than denying, but
+# it must not invoke bash on the directory either, because that would exit 126 and turn a
+# soft hook into a hard failure.
+SOFT_GATED="$(python3 - "$TMP/settings.json" <<'PY'
+import json, sys
+data = json.loads(open(sys.argv[1], encoding="utf-8").read())
+for block in data.get("hooks", {}).get("PreToolUse", []):
+    for hook in block.get("hooks", []):
+        command = hook.get("command", "")
+        if "soft-hook-gate.sh" in command:
+            print(command)
+            raise SystemExit(0)
+raise SystemExit("no soft-gated command found in rendered settings")
+PY
+)"
+run_unresolved "${SOFT_GATED//$PORTABLE/$MALFORMED}" && code=0 || code=$?
+if [ "$code" -ne 0 ]; then
+  echo "fail: soft command with a non-regular wrapper returned $code; a soft hook must not start failing"
+  echo "  stderr: $(tr '\n' ' ' < "$TMP/err")"
+  exit 1
+fi
+grep -q 'WARNING_FOR_AGENT' "$TMP/err" || {
+  echo "fail: soft command with a non-regular wrapper did not warn, so it invoked the directory"; exit 1; }
+echo "ok: non_regular_soft_wrapper_warns_without_invoking (exit 0)"
+
 echo "hook home resolution tests passed"
