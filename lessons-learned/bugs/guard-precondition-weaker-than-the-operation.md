@@ -9,10 +9,17 @@ the wrapper is missing.
 
 The bootstrap tested `[ -r "$GATE" ]`. Live review on the downstream project-8 PR pointed out that
 a directory is readable. Measured: `[ -r <dir> ]` is true, `[ -f <dir> ]` is false, and
-`bash <dir>` exits **126**. So the *absent* wrapper denied, while a *malformed* one — a directory,
-or any other readable non-regular node left by a partial install — reached bash and stepped aside
-exactly as 127 used to. The soft form was worse in a different way: it also invoked the directory
-and exited 126, turning a hook whose whole contract is "never block" into a hard failure.
+`bash <dir>` exits **126**. So the *absent* wrapper denied, while a readable directory at the same
+path reached bash and stepped aside exactly as 127 used to.
+
+The measured case is a readable **directory**, and the claims here are limited to it. Other readable
+non-regular nodes were not measured and are not equivalent — a FIFO, for one, can block on open
+rather than return any status, which is a different failure needing a different remedy.
+
+The soft form was wrong in a second way: it also invoked the directory and exited **126**. That is a
+non-zero process status, not a `PreToolUse` denial — only exit 2 denies — but a hook whose entire
+contract is *never block* is defined to warn and exit 0, so any non-zero status makes it report a
+failure it is not supposed to be able to have.
 
 ## שורש הבעיה
 The guard asked whether the file could be **read**. The operation it guarded was to **run** the
