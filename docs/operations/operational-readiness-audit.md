@@ -8,9 +8,33 @@ This document is the canonical status map and closure contract for Engineering O
 - **Canonical repository:** `yotamfried-ux/Engineering-OS`
 - **Target repository:** `yotamfried-ux/project-8`
 - **Canonical gap registry:** `docs/operations/known-gaps.tsv`
-- **Last verified:** 2026-08-03 UTC
+- **Last verified:** 2026-08-05 UTC
 - **Intended readers:** LLMs, maintainers, reviewers, and operators with no prior conversation context
-- **Snapshot only:** Engineering OS `main` was inspected at `f9449e708f9cfaff89458419baea2b96a3af8210`; Project 8 `main` at `3ca98089045df7256755bacd4a9a1b8500624874`; merged Project 8 PR #9 reviewed head at `8591d2569fb7fcd2481670fe814c5ec46becb8aa`. Mutable state must always be re-fetched before a decision.
+- **Snapshot only:** Engineering OS `main` was inspected at `429048199345d5b4836c32626d0094116e5b4c25`; Project 8 `main` at `3ca98089045df7256755bacd4a9a1b8500624874`. Mutable state must always be re-fetched before a decision.
+
+### Qualification findings not yet reflected in the registry
+
+Recorded here when measured, so they are not lost between the run that found them and
+the docs-only PR that moves any status. None of these changes a gap status.
+
+- **Required mode had two fail-open routes, not one.** Under `remote_handoff.mode=required`
+  a hook command whose Engineering OS root does not resolve exits **127**, and one whose
+  wrapper path is a readable directory exits **126**. Claude Code denies at PreToolUse only
+  on exit **2**, so both step aside silently. The first was closed on `main` by PR #271; the
+  second is closed by PR #272. Measured directly rather than inferred, in both directions.
+- **A cancelled terminal boundary blocks the *next* session.** A session whose `SessionEnd`
+  hook is cancelled records its boundary locally but never hands it off, and
+  `sync-telemetry-run.py --check` then reports "latest completed session boundary was not
+  handed off remotely". Under required mode the following session's readiness guard denies
+  every tool call. Observed on Project 8: a run recorded 8 local events while the synced
+  bundle held 7, and the next run produced `pre_tool_use` with no `post_tool_use`. This is
+  the guard behaving correctly — it refuses to proceed when the previous run's evidence did
+  not land — but it means qualification sessions cannot chain unless each handoff completes.
+  Operators must complete the interrupted handoff before starting the next session.
+- **A denial can read as an injection attempt.** In the run above, the fresh session treated
+  the guard's `ERROR_FOR_AGENT` text as a possible injected instruction and declined to act
+  on it. The denial was legitimate. Worth knowing before the behavioural run, because the
+  message shapes how a context-free session interprets being blocked.
 
 ## Purpose and audience
 
