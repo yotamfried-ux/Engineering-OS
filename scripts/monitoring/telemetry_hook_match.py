@@ -7,7 +7,7 @@ Hook commands reach settings in two shapes. A bare invocation ends with its argu
 
 A gate-wrapped invocation passes the argument after "--" and continues with shell text:
 
-    SOFT=".../soft-hook-gate.sh"; if [ -r "$SOFT" ]; then bash "$SOFT" --event PreToolUse \\
+    SOFT=".../soft-hook-gate.sh"; if [ -f "$SOFT" ] && [ -r "$SOFT" ]; then bash "$SOFT" --event PreToolUse \\
       --unit ".../eos-telemetry-event.sh" -- pre_tool_use; else echo ...; exit 0; fi
 
 A trailing-suffix test alone therefore reports every gate-wrapped hook as missing. This
