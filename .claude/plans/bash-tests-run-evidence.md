@@ -48,8 +48,8 @@ Out of scope: changing G11 policy, changing `evidence.sh` ledger semantics, chan
 1. Parse Bash `tool_response.stdout`/`stderr` explicitly when the response is structured; preserve a conservative fallback for legacy/string payloads.
 2. Keep graphify evidence behavior isolated from test-output handling.
 3. Recognize direct Engineering OS enforcement-suite invocations and the repository's canonical all-suite loop shape.
-4. Require explicit successful suite summaries (`N passed, 0 failed` or the canonical all-suite success marker) before recording `tests_run`; do not accept a mere path mention or ambiguous failure output.
-5. Preserve existing generic runner support while reading the relevant tail/full structured output rather than only the first 2,000 characters.
+4. For a direct suite, rely on the PostToolUse success boundary plus an unwrapped simple-command shape and reject contradictory failure output; do not require every suite to print one artificial summary format. For a multi-suite loop, additionally require the canonical aggregate success marker after a failure-propagating loop.
+5. Preserve existing generic runner support while reading the relevant output tail rather than only the first 2,000 characters and rejecting explicit failure summaries before positive markers.
 6. Add an executable regression that proves positive and negative evidence behavior and exercises the Stop/G11 consumers without changing their implementation.
 
 ## Capability Evidence
@@ -87,6 +87,7 @@ Out of scope: changing G11 policy, changing `evidence.sh` ledger semantics, chan
 ## Progress Lifecycle Evidence
 
 - start: plan committed before code changes. Base is `19add0b12408d66d2969eeda5f5e69a511c7fcf1`; root cause and both consumers were traced before writing.
+- mid: recorder implementation now parses structured Bash output, recognizes direct EOS suites and the canonical aggregate loop, rejects explicit failure summaries, and keeps graphify behavior isolated. The first regression draft used `eval` to construct multiline JSON fixtures; review of the test itself found that quoting could become part of the result, so the fixture builder was replaced with environment-backed Python JSON serialization before any CI claim.
 
 ## Definition of Done — Implementation
 
