@@ -28,12 +28,27 @@ run_payload() {
   ) >"$dir/out" 2>"$dir/err"
 }
 
-run_generated_payload() {
-  local name="$1" generator="$2" dir
+# Build JSON with Python from environment variables instead of eval/shell quoting.
+# This is intentionally boring: the regression must not be able to pass or fail
+# because a multi-line test command happened to alter the shell that builds its fixture.
+run_structured_payload() {
+  local name="$1" command="$2" stdout="$3" stderr="${4:-}" dir
   dir="$(case_dir "$name")"
   rm -rf "$dir"
   mkdir -p "$dir"
-  eval "$generator" | (
+  CMD_VALUE="$command" STDOUT_VALUE="$stdout" STDERR_VALUE="$stderr" python3 - <<'PY' | (
+import json
+import os
+print(json.dumps({
+    "tool_name": "Bash",
+    "tool_input": {"command": os.environ["CMD_VALUE"]},
+    "tool_response": {
+        "stdout": os.environ["STDOUT_VALUE"],
+        "stderr": os.environ["STDERR_VALUE"],
+        "interrupted": False,
+    },
+}))
+PY
     cd "$dir" || exit 1
     EOS_EVIDENCE_DIR="$dir/evidence" bash "$RECORDER"
   ) >"$dir/out" 2>"$dir/err"
@@ -58,16 +73,24 @@ assert_no_tests() {
 }
 
 echo "── Engineering OS direct-suite evidence ──"
-run_payload direct_success '{"tool_name":"Bash","tool_input":{"command":"bash scripts/enforcement/tests/test-hook-classification.sh"},"tool_response":{"stdout":"hook classification: 8 passed, 0 failed\n","stderr":"","interrupted":false}}'
+run_structured_payload direct_success \
+  'bash scripts/enforcement/tests/test-hook-classification.sh' \
+  $'hook classification: 8 passed, 0 failed\n'
 assert_has_tests direct_success "successful direct enforcement suite records tests_run"
 
-run_payload direct_no_summary '{"tool_name":"Bash","tool_input":{"command":"bash scripts/enforcement/tests/test-workflow-evidence.sh"},"tool_response":{"stdout":"workflow evidence checks passed\n","stderr":"","interrupted":false}}'
+run_structured_payload direct_no_summary \
+  'bash scripts/enforcement/tests/test-workflow-evidence.sh' \
+  $'workflow evidence checks passed\n'
 assert_has_tests direct_no_summary "successful direct suite does not depend on one summary format"
 
-run_payload path_mention '{"tool_name":"Bash","tool_input":{"command":"echo bash scripts/enforcement/tests/test-hook-classification.sh"},"tool_response":{"stdout":"bash scripts/enforcement/tests/test-hook-classification.sh\n","stderr":"","interrupted":false}}'
+run_structured_payload path_mention \
+  'echo bash scripts/enforcement/tests/test-hook-classification.sh' \
+  $'bash scripts/enforcement/tests/test-hook-classification.sh\n'
 assert_no_tests path_mention "mentioning a test path does not fabricate tests_run"
 
-run_payload masked_direct '{"tool_name":"Bash","tool_input":{"command":"bash scripts/enforcement/tests/test-hook-classification.sh || true"},"tool_response":{"stdout":"hook classification: 7 passed, 1 failed\n","stderr":"","interrupted":false}}'
+run_structured_payload masked_direct \
+  'bash scripts/enforcement/tests/test-hook-classification.sh || true' \
+  $'hook classification: 7 passed, 1 failed\n'
 assert_no_tests masked_direct "masked direct failure does not record tests_run"
 
 echo "── canonical all-suite loop evidence ──"
@@ -81,21 +104,30 @@ if [ "$fail" -ne 0 ]; then
   exit 1
 fi
 echo "✅ all enforcement suites passed"'
-run_generated_payload full_loop_success "python3 -c 'import json; print(json.dumps({\"tool_name\":\"Bash\",\"tool_input\":{\"command\":'''$FULL_LOOP'''},\"tool_response\":{\"stdout\":\"suite output\\n✅ all enforcement suites passed\\n\",\"stderr\":\"\",\"interrupted\":False}}))'"
+run_structured_payload full_loop_success "$FULL_LOOP" $'suite output\n✅ all enforcement suites passed\n'
 assert_has_tests full_loop_success "failure-aggregating full-suite loop records tests_run"
 
 UNSAFE_LOOP='for t in scripts/enforcement/tests/test-*.sh; do bash "$t" || true; done; echo "✅ all enforcement suites passed"'
-run_generated_payload unsafe_loop "python3 -c 'import json; print(json.dumps({\"tool_name\":\"Bash\",\"tool_input\":{\"command\":'''$UNSAFE_LOOP'''},\"tool_response\":{\"stdout\":\"7 passed, 1 failed\\n✅ all enforcement suites passed\\n\",\"stderr\":\"\",\"interrupted\":False}}))'"
+run_structured_payload unsafe_loop "$UNSAFE_LOOP" $'7 passed, 1 failed\n✅ all enforcement suites passed\n'
 assert_no_tests unsafe_loop "failure-masking full-suite loop is rejected"
 
 echo "── existing ecosystem runners + long output ──"
-run_generated_payload pytest_long "python3 -c 'import json; print(json.dumps({\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"pytest -q\"},\"tool_response\":{\"stdout\":\"x\"*5000+\"\\n12 passed in 0.42s\\n\",\"stderr\":\"\",\"interrupted\":False}}))'"
+LONG_OUT="$(python3 - <<'PY'
+print('x' * 5000)
+print('12 passed in 0.42s')
+PY
+)"
+run_structured_payload pytest_long 'pytest -q' "$LONG_OUT"
 assert_has_tests pytest_long "pytest summary beyond the old 2,000-character cutoff records tests_run"
 
-run_payload pytest_masked_failure '{"tool_name":"Bash","tool_input":{"command":"pytest -q || true"},"tool_response":{"stdout":"1 failed, 4 passed in 0.50s\n","stderr":"","interrupted":false}}'
+run_structured_payload pytest_masked_failure \
+  'pytest -q || true' \
+  $'1 failed, 4 passed in 0.50s\n'
 assert_no_tests pytest_masked_failure "generic runner failure summary is not converted to tests_run"
 
-run_payload npm_success '{"tool_name":"Bash","tool_input":{"command":"npm test"},"tool_response":{"stdout":"PASS src/example.test.js\nTests: 3 passed, 3 total\n","stderr":"","interrupted":false}}'
+run_structured_payload npm_success \
+  'npm test' \
+  $'PASS src/example.test.js\nTests: 3 passed, 3 total\n'
 assert_has_tests npm_success "existing npm test evidence remains supported"
 
 run_payload malformed '{bad-json'
@@ -137,13 +169,11 @@ done
 G11_EVIDENCE="$WORK/g11-evidence"
 mkdir -p "$G11_EVIDENCE"
 : > "$G11_EVIDENCE/ledger"
-set +e
 (
   cd "$G11" || exit 1
   ENGINEERING_OS_HOME="$STUB_EOS" EOS_EVIDENCE_DIR="$G11_EVIDENCE" bash "$PRECOMMIT"
 ) >"$WORK/g11-without.out" 2>&1
 G11_WITHOUT=$?
-set -e
 if [ "$G11_WITHOUT" -ne 0 ] && grep -q 'G11 (Verification gate)' "$WORK/g11-without.out"; then
   ok "G11 blocks the same >2-code-file diff without verification evidence"
 else
@@ -151,13 +181,11 @@ else
 fi
 
 printf '%s\ttests_run\t\n' "$(date +%s)" > "$G11_EVIDENCE/ledger"
-set +e
 (
   cd "$G11" || exit 1
   ENGINEERING_OS_HOME="$STUB_EOS" EOS_EVIDENCE_DIR="$G11_EVIDENCE" bash "$PRECOMMIT"
 ) >"$WORK/g11-with.out" 2>&1
 G11_WITH=$?
-set -e
 if [ "$G11_WITH" -eq 0 ]; then
   ok "G11 accepts the same >2-code-file diff when tests_run exists"
 else
