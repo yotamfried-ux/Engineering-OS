@@ -71,12 +71,10 @@ case "$CMD" in
     ;;
 esac
 
-# Classify only invocation shapes whose test exit status is known to propagate to
-# the Bash tool result. PostToolUse fires only after the Bash tool succeeds, but a
-# shell wrapper can still hide an inner test failure (for example `test.sh || true`).
-# Direct EOS suites therefore must be the whole simple command. The all-suite loop
-# is accepted only when it either runs under `set -e` outside an `if`, or explicitly
-# aggregates failures and exits non-zero when any suite fails.
+# Classify only direct invocation shapes whose exit status is known to propagate to
+# the Bash tool result. We deliberately do NOT infer arbitrary shell-loop semantics:
+# comments, quoting, `set +e`, conditionals, and pipelines make raw-text inference
+# unsafe. Multi-suite execution has a canonical failure-propagating runner instead.
 _eos_test_mode() {
   command -v python3 >/dev/null 2>&1 || return
   python3 - "$1" <<'PY'
@@ -84,46 +82,28 @@ import re
 import sys
 
 cmd = sys.argv[1]
-direct = re.fullmatch(
-    r"\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^;&|\s]+\s+)*(?:bash|/bin/bash)\s+"
-    r"(?:\./)?scripts/enforcement/tests/test-[A-Za-z0-9._-]+\.sh"
-    r"(?:\s+[^;&|\n]*)?\s*",
+common_prefix = r"\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^;&|\s]+\s+)*(?:bash|/bin/bash)\s+"
+
+direct_suite = re.fullmatch(
+    common_prefix
+    + r"(?:\./)?scripts/enforcement/tests/test-[A-Za-z0-9._-]+\.sh"
+    + r"(?:\s+[^;&|\n]*)?\s*",
     cmd,
     re.S,
 )
-if direct:
-    print("direct")
+if direct_suite:
+    print("direct-suite")
     raise SystemExit(0)
 
-loop = re.search(
-    r"\bfor\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s+"
-    r"(?:\./)?scripts/enforcement/tests/test-\*\.sh\s*;\s*do\b",
+canonical_runner = re.fullmatch(
+    common_prefix
+    + r"(?:\./)?scripts/enforcement/run-enforcement-tests\.sh"
+    + r"(?:\s+[^;&|\n]*)?\s*",
     cmd,
     re.S,
 )
-if not loop:
-    raise SystemExit(0)
-var = re.escape(loop.group(1))
-bash_var = rf"\bbash\s+[\"']?\$\{{?{var}\}}?[\"']?"
-if not re.search(bash_var, cmd):
-    raise SystemExit(0)
-
-prefix = cmd[: loop.start()]
-set_e = bool(re.search(r"(?:^|[;\n])\s*set\s+-[A-Za-z]*e[A-Za-z]*(?:\s|;|$)", prefix))
-conditional_test = bool(re.search(rf"\bif\s+{bash_var}", cmd))
-masked_test = bool(re.search(rf"{bash_var}\s*(?:\|\||\|(?!\|))", cmd))
-set_e_safe = set_e and not conditional_test and not masked_test
-
-aggregates = all(
-    (
-        re.search(r"\bfail\s*=\s*0\b", cmd),
-        re.search(r"\belse\s+fail\s*=\s*1\s*;\s*fi\b", cmd, re.S),
-        re.search(r"\[\s*[\"']?\$fail[\"']?\s+-ne\s+0\s*\]", cmd),
-        re.search(r"\bexit\s+1\b", cmd),
-    )
-)
-if set_e_safe or aggregates:
-    print("full-suite")
+if canonical_runner:
+    print("canonical-runner")
 PY
 }
 
@@ -138,17 +118,17 @@ _test_output_has_failure() {
 # ── tests_run evidence (validation gate) ─────────────────────────────────────
 EOS_TEST_MODE="$(_eos_test_mode "$CMD")"
 case "$EOS_TEST_MODE" in
-  direct)
+  direct-suite)
     # The command itself is the test process. Since this is PostToolUse, its exit
-    # status was successful; reject only contradictory/masked failure output.
+    # status was successful; reject only contradictory failure output.
     if [ -n "$TEST_OUT" ] && ! _test_output_has_failure; then
       evidence_record tests_run
     fi
     ;;
-  full-suite)
-    # A multi-suite loop needs an aggregate success marker as an additional guard
-    # that the loop reached its success boundary after checking every test result.
-    if printf '%s' "$TEST_OUT" | grep -qiE 'all enforcement suites passed' \
+  canonical-runner)
+    # The canonical runner owns failure aggregation and exits non-zero if any suite
+    # fails. Require its final success boundary as defense against malformed output.
+    if printf '%s' "$TEST_OUT" | grep -qiE 'all [0-9]+ enforcement suites passed' \
        && ! _test_output_has_failure; then
       evidence_record tests_run
     fi
