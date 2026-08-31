@@ -10,9 +10,16 @@ if [ -z "$HEAD_SHA" ]; then
   HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || printf 'unknown')"
 fi
 
+FIXTURE_MODE=0
+if [ "${1:-}" = "--fixture" ]; then
+  FIXTURE_MODE=1
+  shift
+fi
+
 if [ "$#" -gt 0 ]; then
   TESTS=("$@")
 else
+  [ "$FIXTURE_MODE" -eq 0 ] || { echo "❌ --fixture requires explicit test paths" >&2; exit 1; }
   shopt -s nullglob
   TESTS=("$ROOT"/scripts/enforcement/tests/test-*.sh)
   shopt -u nullglob
@@ -37,7 +44,24 @@ for test_path in "${TESTS[@]}"; do
     continue
   fi
   rel_test="${abs_test#$ROOT/}"
+  if [ "$FIXTURE_MODE" -eq 0 ]; then
+    case "$rel_test" in
+      scripts/enforcement/tests/test-*.sh) ;;
+      *)
+        echo "❌ canonical runner refuses non-corpus test path: $test_path" >&2
+        fail=1
+        continue
+        ;;
+    esac
+  fi
+
   count=$((count + 1))
+  if [ "$FIXTURE_MODE" -eq 1 ]; then
+    echo "──────── fixture: $test_path ────────"
+    if bash "$abs_test"; then :; else fail=1; fi
+    continue
+  fi
+
   attempt="$(python3 "$ROOT/scripts/enforcement/test_evidence.py" next-attempt \
     --root "$ROOT" --receipt-file "$RECEIPT_FILE" --test-path "$rel_test")" || {
       echo "❌ failed to allocate evidence attempt for $rel_test" >&2
@@ -76,8 +100,16 @@ done
 
 echo
 if [ "$fail" -ne 0 ]; then
-  echo "❌ one or more enforcement suites failed or lacked trustworthy receipts"
+  if [ "$FIXTURE_MODE" -eq 1 ]; then
+    echo "❌ one or more fixture enforcement suites failed"
+  else
+    echo "❌ one or more enforcement suites failed or lacked trustworthy receipts"
+  fi
   exit 1
 fi
 
-echo "✅ all $count enforcement suites passed with execution receipts"
+if [ "$FIXTURE_MODE" -eq 1 ]; then
+  echo "✅ all $count fixture enforcement suites passed"
+else
+  echo "✅ all $count enforcement suites passed with execution receipts"
+fi
