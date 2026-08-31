@@ -4,67 +4,71 @@
 
 | Field | Decision |
 |---|---|
-| Task type | runtime evidence correctness defect found during full project audit |
+| Task type | runtime evidence correctness defect plus critical review of automated-test truthfulness |
 | Task class | `engineering_os_governance` |
-| Domain tags | hooks, validation evidence, bash tests, G11, Stop |
-| Plan Scope | focused |
-| Planning Mode | implementation; fix the existing evidence recorder without changing G11 semantics |
+| Domain tags | hooks, validation evidence, bash tests, G11, Stop, CI coverage |
+| Plan Scope | focused implementation plus test-corpus audit |
+| Planning Mode | implementation; fix the existing evidence recorder without changing G11 semantics, then verify that the repository actually executes the tests it counts |
 | Task-router evidence | `core/task-router.md` routes Engineering OS hook/evidence work through governance/ops-readiness. |
 | Workflow evidence | `core/workflow.md`, `core/quality-gates.md`, `core/hooks-policy.md`, `core/git-policy.md`, and `core/coderabbit-policy.md` require plan-first writes, executable regression evidence, focused PR review, exact-head CI, and explicit owner approval before merge. |
-| Target paths | `.claude/plans/bash-tests-run-evidence.md`; `scripts/enforcement/post-tool-use-bash.sh`; `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh` |
+| Target paths | `.claude/plans/bash-tests-run-evidence.md`; `scripts/enforcement/post-tool-use-bash.sh`; `scripts/enforcement/run-enforcement-tests.sh`; `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh`; `.github/workflows/enforcement-tests.yml` |
 | Templates | waiver — focused correction to an existing hook recorder and its regressions |
 | Architecture guides | `core/hooks-policy.md`; `scripts/enforcement/hook-criticality.tsv` |
 | Patterns | no matching reusable implementation pattern is required for this focused recorder correction |
 | External systems/connectors | GitHub |
 | Skills | `writing-plans`; `verification-before-completion` |
-| Validation gates | recorder regression; hook classification; G11 consumer behavior; Stop consumer behavior; full enforcement suite; exact-head CI; PR policy |
-| Evidence to check | `scripts/enforcement/post-tool-use-bash.sh`; `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh`; exact-head GitHub Actions run `enforcement-tests` 1632 |
+| Validation gates | recorder regression; canonical runner failure propagation; hook classification; G11 consumer behavior; Stop consumer behavior; full enforcement suite; bypass-provider Python suite; exact-head CI; PR policy |
+| Evidence to check | producer and consumers; canonical runner; dedicated regression; `.github/workflows/enforcement-tests.yml`; exact-head GitHub Actions; live review threads |
 | User decisions required | owner approval before merge |
 
 ## Goal
 
-A successful Engineering OS Bash enforcement suite must create `tests_run` evidence, while malformed input, non-test commands, failed/masked test output, and commands that merely mention a test path must not fabricate evidence.
+A successful Engineering OS Bash enforcement suite must create `tests_run` evidence, while malformed input, non-test commands, failed/masked test output, and commands that merely mention a test path must not fabricate evidence. The repository's automated-test claim must also correspond to tests that are actually executed by CI rather than merely existing under `scripts/enforcement/tests/`.
 
 ## Scope
 
-In scope: `post-tool-use-bash.sh`, a dedicated executable regression suite, consumer execution for Stop/G11, and exact-head CI evidence.
+In scope: `post-tool-use-bash.sh`, a canonical failure-propagating Bash-suite runner, a dedicated executable regression suite, consumer execution for Stop/G11, exact-head CI evidence, and correcting a directly observed unexecuted Python test in the enforcement corpus.
 
 Out of scope: changing G11 policy, changing `evidence.sh` ledger semantics, changing hook criticality/wiring, or treating deterministic fixture success as proof of production/runtime readiness.
 
 ### Gap-registration decision
 
-The opening plan proposed adding a new readiness-registry row before the fix. After reading the canonical gap contract and observing the regression on exact-head CI, that would mix two different claims: the implementation bug is deterministically testable and fixed here, while the still-missing fresh Claude Code observation is runtime evidence, not another implementation defect. This PR therefore does **not** create and immediately mitigate a new readiness gap. It keeps the live-runtime claim explicitly unclosed in this plan/PR, and the broader operational-readiness audit remains authoritative for real-run readiness. If the fresh runtime observation contradicts this deterministic result, that observation must create a new canonical gap rather than retroactively redefining this regression.
+The implementation bug is deterministically testable here, while the still-missing fresh Claude Code observation is runtime evidence rather than another implementation defect. This PR therefore does not create and immediately mitigate a duplicate readiness row. If fresh runtime evidence contradicts the deterministic result, that contradiction must create a canonical gap then.
 
 ## Source of Truth Checks
 
 | Source | Status | Finding / decision |
 |---|---|---|
-| `scripts/enforcement/post-tool-use-bash.sh` | read | Test recognition was a closed runner list and converted `tool_response` to a string truncated to the first 2,000 characters. Engineering OS Bash suites were invisible. |
+| `scripts/enforcement/post-tool-use-bash.sh` | read | Test recognition was a closed runner list and inspected only a leading output slice; Engineering OS Bash suites were invisible. |
 | `scripts/hooks/pre-commit.sh` | read | G11 consumes `tests_run`; missing evidence can block a >2-code-file commit even after real Bash tests passed. |
 | `scripts/enforcement/post-stop-hook.sh` | read | Stop reports `no successful test run` when the same evidence is absent. |
-| `scripts/enforcement/tests/test-hook-classification.sh` | read | Exercises malformed PostToolUse Bash input only; there was no positive regression proving `tests_run` could be recorded. |
-| `scripts/enforcement/hook-criticality.tsv` | read | The recorder is canonically `recorder / false_evidence_safe`; the fix must remain conservative. |
-| `https://code.claude.com/docs/en/hooks` | checked | Official hooks reference: `PostToolUse` runs after successful tool completion and Bash responses expose structured output fields; this supports using the success boundary only for direct, failure-propagating command shapes. |
+| `scripts/enforcement/hook-criticality.tsv` | read | The recorder is canonically `recorder / false_evidence_safe`; false-positive evidence is worse than a conservative false negative. |
+| `.github/workflows/enforcement-tests.yml` | read | All `test-*.sh` suites are executed, but Python tests are not auto-discovered by the Bash runner. |
+| `.github/workflows/telemetry-handoff-tests.yml` | read | Four Python enforcement tests are explicitly executed there. |
+| `scripts/enforcement/tests/test-bypass-provider-validation.py` | read | Contains a standalone `main()` with extensive provider-boundary/negative coverage; before this PR update it was imported as a helper but its standalone `main()` was not directly executed by CI. |
+| `https://code.claude.com/docs/en/hooks` | checked | Official hooks reference supports using PostToolUse success only when the actual test process/runner failure status propagates. |
 | `https://github.com/yotamfried-ux/Engineering-OS/commit/19add0b12408d66d2969eeda5f5e69a511c7fcf1` | checked | Exact `main` base was re-read before the first write. |
-| `https://github.com/yotamfried-ux/Engineering-OS/pull/274` | checked | Exact-head CI and live PR metadata are the mutable source for validation/review state. |
+| `https://github.com/yotamfried-ux/Engineering-OS/pull/274` | checked | Exact-head CI and live PR metadata are the mutable validation/review source. |
 
 ## Design
 
-1. Parse Bash `tool_response.stdout`/`stderr` explicitly when the response is structured; preserve a conservative fallback for legacy/string payloads.
+1. Parse Bash `tool_response.stdout`/`stderr` explicitly when structured and preserve a conservative string fallback.
 2. Keep graphify evidence behavior isolated from test-output handling.
-3. Recognize direct Engineering OS enforcement-suite invocations and the repository's canonical all-suite loop shape.
-4. For a direct suite, rely on the PostToolUse success boundary plus an unwrapped simple-command shape and reject contradictory failure output; do not require every suite to print one artificial summary format. For a multi-suite loop, additionally require the canonical aggregate success marker after a failure-propagating loop.
-5. Preserve existing generic runner support while reading the relevant output tail rather than only the first 2,000 characters and rejecting explicit failure summaries before positive markers.
-6. Add an executable regression that proves positive and negative evidence behavior and exercises the Stop/G11 consumers without changing their implementation.
+3. Trust direct `bash scripts/enforcement/tests/test-*.sh` simple commands and direct invocation of one canonical `scripts/enforcement/run-enforcement-tests.sh` runner; do not infer arbitrary shell-loop control flow from regexes.
+4. Make the canonical runner itself aggregate every discovered Bash suite and return non-zero if any suite fails.
+5. Reject contradictory failure summaries before recording positive evidence and keep existing generic runner support while reading the output tail.
+6. Exercise positive/negative recorder behavior plus actual Stop and G11 consumers.
+7. Ensure the previously unexecuted standalone `test-bypass-provider-validation.py` is invoked directly by enforcement CI.
 
 ## Capability Evidence
 
 - `routing.task-router-read` — `core/task-router.md` was consulted for the Engineering OS governance route.
-- `workflow.workflow-read` — `core/workflow.md`, `core/hooks-policy.md`, `core/quality-gates.md`, and `core/coderabbit-policy.md` were read for the workflow, hook criticality, verification, and review contracts.
-- `plan.route-plan-before-write` — this Route Plan was committed before the recorder/test implementation commits.
-- `source.github-repo-read` — exact `main@19add0b12408d66d2969eeda5f5e69a511c7fcf1` and PR #274 live state were read through GitHub.
-- `validation.policy-change-has-validator` — `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh` executes positive/negative recorder cases and real Stop/G11 consumers.
-- `validation.coderabbit-policy` — `core/coderabbit-policy.md` governs this ready-for-review PR; live threads were checked and merge remains blocked on explicit owner approval.
+- `workflow.workflow-read` — workflow, hook criticality, verification, review and merge contracts were read from the canonical core policies.
+- `plan.route-plan-before-write` — this Route Plan existed before implementation and is updated again after every material code/config/test change as required by workflow evidence policy.
+- `source.github-repo-read` — exact `main@19add0b12408d66d2969eeda5f5e69a511c7fcf1`, PR #274, workflow runs and live threads were read through GitHub.
+- `validation.policy-change-has-validator` — `test-post-tool-use-bash-evidence.sh` executes recorder, runner, Stop and G11 positive/negative behavior.
+- `validation.actions-checked` — exact-head Actions were inspected after each implementation iteration; the latest CI wiring change also directly executes `test-bypass-provider-validation.py` so repository test claims do not silently include an unrun standalone suite.
+- `validation.coderabbit-policy` — live review findings were treated as blocking until fixed and reconciled; explicit owner approval remains required before merge.
 
 ## Skill Evidence
 
@@ -73,52 +77,59 @@ The opening plan proposed adding a new readiness-registry row before the fix. Af
 
 ## Connector Evidence
 
-- GitHub: used to read the exact repository base, create branch `fix/bash-tests-run-evidence`, open PR #274, inspect exact-head workflow runs, and inspect live review threads.
+- GitHub: used to read the exact repository base, create/update branch `fix/bash-tests-run-evidence`, open PR #274, inspect exact-head workflow runs/logs, inspect live review threads, and apply the CI/test-plan corrections.
 
 ## Connector Usage Evidence
 
-- source: GitHub — `yotamfried-ux/Engineering-OS` main commit `19add0b12408d66d2969eeda5f5e69a511c7fcf1`, PR #274, and Actions run `enforcement-tests` 1632 on head `75d57f29c41b909117573d8ea3d8e2a259900e03`.
-- action: traced `tests_run` from `scripts/enforcement/post-tool-use-bash.sh` through `scripts/enforcement/post-stop-hook.sh` and `scripts/hooks/pre-commit.sh`; then observed exact-head CI and live review-thread state.
-- result: exact-head `enforcement-tests` run 1632 completed successfully on `75d57f29c41b909117573d8ea3d8e2a259900e03`; no review threads were present at that check; policy workflows correctly rejected incomplete plan/PR evidence rather than the implementation regression.
-- decision: selected a producer-only correction, kept G11/Stop/ledger semantics unchanged, and updated this plan to satisfy the exact capability/documentation/progress contracts exposed by CI instead of weakening those gates.
-- target: `scripts/enforcement/post-tool-use-bash.sh`; `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh`.
+- source: GitHub — `yotamfried-ux/Engineering-OS` main `19add0b12408d66d2969eeda5f5e69a511c7fcf1`, PR #274 and exact-head Actions.
+- action: traced `tests_run` from producer through Stop/G11; inspected review findings; audited Shell/Python test discovery and CI wiring; updated CI to execute the missing standalone Python provider suite.
+- result: `enforcement-tests` run 1637 passed on `01d439b827eab3861605d68c38f2c15a49ab6a67`; two review P1s exposed unsafe raw-shell inference and were fixed by replacing that inference with a canonical failure-propagating runner. The subsequent CI-wiring commit is `ee660c829c450dae29490da8ec56614add46975c`; its exact-head CI is not claimed until it completes.
+- decision: retain conservative producer semantics and one canonical Bash-suite runner; add direct CI execution for the observed standalone Python suite instead of counting file presence as test coverage.
+- target: producer, runner, focused regression, enforcement workflow.
 
 ## Documentation Asset Evidence
 
-- internal: `core/hooks-policy.md`; `scripts/enforcement/hook-criticality.tsv`; `scripts/enforcement/post-tool-use-bash.sh`; `scripts/hooks/pre-commit.sh`; `scripts/enforcement/post-stop-hook.sh`; `scripts/enforcement/tests/test-hook-classification.sh`.
-- context7: not required because this change does not implement, upgrade, or integrate an external library, framework, SDK, API, or service; the only external behavior contract needed was checked directly in the official Claude Code hooks reference at `https://code.claude.com/docs/en/hooks`.
-- decision: the internal hook classification required a conservative false-evidence-safe producer, while the official PostToolUse success boundary justified accepting only direct failure-propagating EOS suite shapes without inventing a universal output format.
+- internal: `core/hooks-policy.md`; `scripts/enforcement/hook-criticality.tsv`; producer/consumers; `enforcement-tests.yml`; `telemetry-handoff-tests.yml`; Python provider suite.
+- context7: not required because no external library/framework/SDK/API integration is being implemented; external hook semantics were checked in the official Claude Code hooks reference.
+- decision: internal false-evidence-safe classification requires conservative evidence, while the official PostToolUse boundary supports direct failure-propagating process shapes only.
 
 ## Progress Lifecycle Evidence
 
-- start: plan committed before code changes. Base is `19add0b12408d66d2969eeda5f5e69a511c7fcf1`; root cause and both consumers were traced before writing.
-- mid: recorder implementation parses structured Bash output, recognizes direct EOS suites and the canonical aggregate loop, rejects explicit failure summaries, and keeps graphify behavior isolated. The first regression draft used `eval` to construct multiline JSON fixtures; review of the test itself found that quoting could become part of the result, so the fixture builder was replaced with environment-backed Python JSON serialization before any CI claim.
-- pre-merge: PR #274 exact head `75d57f29c41b909117573d8ea3d8e2a259900e03` completed `enforcement-tests` run 1632 successfully, including the newly auto-discovered `test-post-tool-use-bash-evidence.sh`. The same head correctly failed capability/documentation/workflow/connector/plan/PR policy checks because this plan/PR evidence was incomplete; those failures are the reason for this post-code plan update. Live review threads were checked and none were present. No merge or fresh-Claude-runtime claim is made.
+- start: plan committed before code changes. Base is `19add0b12408d66d2969eeda5f5e69a511c7fcf1`; producer and both consumers were traced first.
+- mid: structured/tail parsing and EOS direct-suite support were implemented. The first JSON fixture builder used `eval`; it was replaced before relying on CI. Initial raw-loop classification then received two P1 review findings: `set -e` could be disabled before the loop, and comments/strings could satisfy aggregate regexes. Both findings were accepted.
+- pre-merge: raw-loop semantic inference was removed and replaced by direct recognition of `run-enforcement-tests.sh`, whose executable regression proves failing-suite propagation. Exact-head `enforcement-tests` run 1637 is green on `01d439b827eab3861605d68c38f2c15a49ab6a67`. The test-corpus audit then found five `test-*.py` files: four explicitly run in telemetry CI and `test-bypass-provider-validation.py` only imported as a helper despite having its own standalone `main()`. Commit `ee660c829c450dae29490da8ec56614add46975c` wires that standalone suite directly into enforcement CI. This plan update is intentionally after that last code/config change so the workflow checkpoint is current. Exact-head CI for the new head remains pending; no merge or fresh-Claude-runtime claim is made.
 
 ## Claude Run Trace
 
-- goal: make Engineering OS's own successful Bash enforcement suites produce trustworthy `tests_run` evidence without weakening G11 or fabricating evidence from command mentions/masked failures.
-- hypothesis: the defect is entirely at the PostToolUse producer: recognize only failure-propagating EOS suite command shapes, parse structured output instead of a 2,000-character leading string, and reject contradictory failure summaries; existing Stop and G11 consumers should then behave correctly without implementation changes.
-- steps: read the producer, ledger and both consumers; inspect current hook classification and regression coverage; commit the Route Plan; implement structured/tail parsing and EOS command classification; add positive/negative recorder fixtures plus executing Stop/G11 fixtures; replace an unsafe `eval` fixture builder after reviewing the test itself; open PR #274; inspect exact-head CI; reconcile policy failures against their canonical checkers rather than weakening them.
-- evidence: `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh`; exact-head GitHub Actions `enforcement-tests` run 1632 on `75d57f29c41b909117573d8ea3d8e2a259900e03`; live PR #274 metadata/thread check.
-- result: deterministic implementation regression is green. Fresh Claude Code runtime observation and merge/post-merge evidence remain separate and are not claimed here.
+- goal: make successful Engineering OS Bash tests produce trustworthy `tests_run` evidence and ensure the automated-test claim reflects executed tests.
+- hypothesis: the original defect is at the PostToolUse producer, but arbitrary shell text is not a safe place to infer failure propagation; a canonical executable runner provides a stronger trust boundary.
+- steps: trace producer/consumers; add structured output parsing and focused regression; open PR; inspect CI; accept two P1 review findings; replace regex shell-loop inference with canonical runner; rerun full enforcement CI; audit Shell/Python test discovery; find one standalone Python suite not directly executed; wire it to CI; refresh this checkpoint after the final code/config change.
+- evidence: focused regression; canonical runner; exact-head `enforcement-tests` run 1637 on `01d439b...`; live PR review; CI workflow wiring for the Python provider suite.
+- result: deterministic implementation regression is green on the previous exact head; the latest head requires a fresh exact-head pass. Fresh Claude Code runtime observation and merge/post-merge evidence remain separate.
 
 ## Definition of Done — Implementation
 
-- [x] A successful direct `bash scripts/enforcement/tests/test-*.sh` PostToolUse payload records `tests_run` in the dedicated regression.
-- [x] A canonical full-suite Bash loop with an explicit successful aggregate summary records `tests_run` in the dedicated regression.
-- [x] Malformed JSON, non-test commands, path mentions/echoes, failed output, and masked failures do not record `tests_run` in the dedicated regression.
-- [x] Existing pytest and npm evidence behavior is covered alongside the EOS cases; the pre-existing recorder keeps cargo/go/jest/vitest/yarn matching unchanged.
-- [x] Stop executes against the valid fixture ledger and reports `tests passed`.
-- [x] G11 executes against the same >2-code-file staged diff, blocks with no verification evidence, and allows it after `tests_run` exists without a G11 implementation change.
-- [x] The focused regression is auto-discovered by `.github/workflows/enforcement-tests.yml`, and exact-head `enforcement-tests` run 1632 is green on `75d57f29c41b909117573d8ea3d8e2a259900e03`.
-- [x] Canonical gap ownership was reviewed after implementation evidence: this PR does not create an immediately-mitigated duplicate readiness row; any contradiction from fresh runtime evidence must be registered as a new gap then.
+- [x] Successful direct EOS Bash suite PostToolUse payload records `tests_run`.
+- [x] Direct canonical runner invocation records `tests_run` only on a successful PostToolUse boundary.
+- [x] Canonical runner returns non-zero if any supplied/discovered Bash suite fails.
+- [x] Raw loops, including `set -e; set +e`, commented aggregate gates and `|| true`, cannot fabricate `tests_run`.
+- [x] Malformed JSON, path mentions, failed output and masked generic runners do not record `tests_run`.
+- [x] Existing pytest/npm evidence behavior remains covered.
+- [x] Stop reports `tests passed` after valid evidence.
+- [x] G11 blocks the same >2-code-file diff without evidence and accepts it with `tests_run`.
+- [x] Full Bash enforcement suite passed on exact head `01d439b...` in run 1637.
+- [x] Standalone `test-bypass-provider-validation.py` is now directly wired into enforcement CI.
+- [ ] Latest exact-head policy/CI set is green after commit `ee660c...` and this checkpoint update.
+- [ ] All actionable live review threads are reconciled/resolved.
+- [ ] Explicit owner approval is obtained before merge.
 
-Follow-up evidence, deliberately outside the implementation checklist: obtain a fresh Claude Code session observation of a real Engineering OS Bash suite producing `tests_run`/`tests passed`; keep PR #274 unmerged until exact-head policy checks, review and explicit owner approval satisfy the repository merge contract.
+Follow-up evidence outside implementation closure: observe a fresh Claude Code session running the canonical Engineering OS Bash suite and producing `tests_run`/`tests passed`. A deterministic green CI result must not be relabeled as that live-runtime proof.
 
 ## Validation Plan
 
 - Focused: `test-post-tool-use-bash-evidence.sh`, `test-hook-classification.sh`, `test-tests.sh`.
-- Consumers: execute `post-stop-hook.sh` against a fixture ledger; execute pre-commit G11 against >2 staged code files with and without `tests_run`.
-- Full: every auto-discovered `scripts/enforcement/tests/test-*.sh` suite through `enforcement-tests`.
+- Runner: success and mixed success/failure fixtures against `run-enforcement-tests.sh`.
+- Consumers: actual `post-stop-hook.sh` and pre-commit G11 fixtures.
+- Full Shell: every discovered `scripts/enforcement/tests/test-*.sh` through the canonical runner and existing grouped CI checks.
+- Python: direct CI execution of `test-bypass-provider-validation.py`; the four telemetry Python suites remain explicitly exercised by `telemetry-handoff-tests`.
 - External: exact-head CI, live review, explicit owner approval, expected-head merge, post-merge validation.
