@@ -4,6 +4,7 @@ set -u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RECORDER="$ROOT/scripts/enforcement/post-tool-use-bash.sh"
+RUNNER="$ROOT/scripts/enforcement/run-enforcement-tests.sh"
 STOP="$ROOT/scripts/enforcement/post-stop-hook.sh"
 PRECOMMIT="$ROOT/scripts/hooks/pre-commit.sh"
 WORK="$(mktemp -d)"
@@ -29,8 +30,6 @@ run_payload() {
 }
 
 # Build JSON with Python from environment variables instead of eval/shell quoting.
-# This is intentionally boring: the regression must not be able to pass or fail
-# because a multi-line test command happened to alter the shell that builds its fixture.
 run_structured_payload() {
   local name="$1" command="$2" stdout="$3" stderr="${4:-}" dir
   dir="$(case_dir "$name")"
@@ -93,23 +92,48 @@ run_structured_payload masked_direct \
   $'hook classification: 7 passed, 1 failed\n'
 assert_no_tests masked_direct "masked direct failure does not record tests_run"
 
-echo "── canonical all-suite loop evidence ──"
-FULL_LOOP='set -u
-fail=0
-for t in scripts/enforcement/tests/test-*.sh; do
-  if bash "$t"; then :; else fail=1; fi
-done
-if [ "$fail" -ne 0 ]; then
-  echo "one or more enforcement suites failed"
-  exit 1
-fi
-echo "✅ all enforcement suites passed"'
-run_structured_payload full_loop_success "$FULL_LOOP" $'suite output\n✅ all enforcement suites passed\n'
-assert_has_tests full_loop_success "failure-aggregating full-suite loop records tests_run"
+echo "── canonical all-suite runner ──"
+RUNNER_FIX="$WORK/runner-fixtures"
+mkdir -p "$RUNNER_FIX"
+printf '#!/usr/bin/env bash\necho good suite\nexit 0\n' > "$RUNNER_FIX/good.sh"
+printf '#!/usr/bin/env bash\necho bad suite\nexit 7\n' > "$RUNNER_FIX/bad.sh"
+chmod +x "$RUNNER_FIX/good.sh" "$RUNNER_FIX/bad.sh"
 
-UNSAFE_LOOP='for t in scripts/enforcement/tests/test-*.sh; do bash "$t" || true; done; echo "✅ all enforcement suites passed"'
-run_structured_payload unsafe_loop "$UNSAFE_LOOP" $'7 passed, 1 failed\n✅ all enforcement suites passed\n'
-assert_no_tests unsafe_loop "failure-masking full-suite loop is rejected"
+RUNNER_GOOD_OUT="$(bash "$RUNNER" "$RUNNER_FIX/good.sh" 2>&1)"
+RUNNER_GOOD_RC=$?
+if [ "$RUNNER_GOOD_RC" -eq 0 ] && printf '%s' "$RUNNER_GOOD_OUT" | grep -q 'all 1 enforcement suites passed'; then
+  ok "canonical runner propagates success and prints aggregate boundary"
+else
+  bad "canonical runner success fixture failed (code=$RUNNER_GOOD_RC output=$RUNNER_GOOD_OUT)"
+fi
+
+bash "$RUNNER" "$RUNNER_FIX/good.sh" "$RUNNER_FIX/bad.sh" >"$WORK/runner-fail.out" 2>&1
+RUNNER_FAIL_RC=$?
+if [ "$RUNNER_FAIL_RC" -ne 0 ] && grep -q 'one or more enforcement suites failed' "$WORK/runner-fail.out"; then
+  ok "canonical runner propagates a failing suite even when another suite passes"
+else
+  bad "canonical runner did not propagate failure (code=$RUNNER_FAIL_RC output=$(cat "$WORK/runner-fail.out"))"
+fi
+
+run_structured_payload canonical_runner_success \
+  'bash scripts/enforcement/run-enforcement-tests.sh' \
+  $'suite output\n✅ all 113 enforcement suites passed\n'
+assert_has_tests canonical_runner_success "successful direct canonical runner records tests_run"
+
+# Review regressions: raw shell loops are intentionally not trusted, regardless of
+# apparent set -e or aggregate tokens. The recorder no longer interprets shell control flow.
+SET_E_DISABLED='set -e; set +e; for t in scripts/enforcement/tests/test-*.sh; do bash "$t"; done; echo "✅ all 113 enforcement suites passed"'
+run_structured_payload set_e_disabled "$SET_E_DISABLED" $'silent inner failure\n✅ all 113 enforcement suites passed\n'
+assert_no_tests set_e_disabled "set -e disabled before a raw loop cannot fabricate tests_run"
+
+COMMENTED_GATE='fail=0; for t in scripts/enforcement/tests/test-*.sh; do bash "$t" || fail=1; done; # [ "$fail" -ne 0 ]; then exit 1; fi
+echo "✅ all 113 enforcement suites passed"'
+run_structured_payload commented_gate "$COMMENTED_GATE" $'silent inner failure\n✅ all 113 enforcement suites passed\n'
+assert_no_tests commented_gate "commented aggregate gate cannot fabricate tests_run"
+
+UNSAFE_LOOP='for t in scripts/enforcement/tests/test-*.sh; do bash "$t" || true; done; echo "✅ all 113 enforcement suites passed"'
+run_structured_payload unsafe_loop "$UNSAFE_LOOP" $'7 passed, 1 failed\n✅ all 113 enforcement suites passed\n'
+assert_no_tests unsafe_loop "failure-masking raw loop is rejected"
 
 echo "── existing ecosystem runners + long output ──"
 LONG_OUT="$(python3 - <<'PY'
