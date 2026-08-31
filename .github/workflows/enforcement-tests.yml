@@ -100,6 +100,9 @@ jobs:
       - name: Run all enforcement test suites
         run: bash scripts/enforcement/run-enforcement-tests.sh
 
+      - name: Verify bypass provider validation suite
+        run: python3 scripts/enforcement/tests/test-bypass-provider-validation.py
+
       - name: Verify task router contract
         run: |
           set -euo pipefail
