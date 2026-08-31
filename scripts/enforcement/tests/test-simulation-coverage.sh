@@ -19,6 +19,13 @@ cat > "$fixture_test" <<'EOF'
 # invalid-case-token
 EOF
 
+write_row() {
+  local file="$1" gate="$2" test_file="$3" positive="$4" negative="$5" invalid="$6" waiver="$7" notes="$8"
+  printf '# gate_id\towner\tenforcer\ttest_file\tpositive\tnegative\tinvalid\twaiver\tnotes\n' > "$file"
+  printf '%s\tvalidation-governance\tNONE\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$gate" "$test_file" "$positive" "$negative" "$invalid" "$waiver" "$notes" >> "$file"
+}
+
 make_receipt() {
   local receipt="$1" test_path="$2" result="$3" content="$4" head="${5:-$HEAD}"
   local log="$TMP/log-$(printf '%s-%s-%s' "$test_path" "$result" "$RANDOM" | sha256sum | cut -c1-16).txt"
@@ -45,10 +52,10 @@ PY
 }
 
 good_manifest="$TMP/good.tsv"
-cat > "$good_manifest" <<EOF
-# gate_id\towner\tenforcer\ttest_file\tpositive\tnegative\tinvalid\twaiver\tnotes
-fixture-gate\tvalidation-governance\tNONE\t$fixture_test\tcovered:positive-case-token\tcovered:negative-case-token\tcovered:invalid-case-token\tnone-by-design:This fixture gate deliberately exposes no waiver path.\tFixture gate.
-EOF
+write_row "$good_manifest" fixture-gate "$fixture_test" \
+  covered:positive-case-token covered:negative-case-token covered:invalid-case-token \
+  'none-by-design:This fixture gate deliberately exposes no waiver path.' 'Fixture gate.'
+
 good_receipts="$TMP/good.jsonl"
 make_receipt "$good_receipts" "$fixture_test" pass "positive-case-token
 negative-case-token
@@ -81,10 +88,9 @@ invalid-case-token" 2222222222222222222222222222222222222222
 failcase stale-head-receipt-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 "${CHECK_CMD[@]}" "$good_manifest" --receipts "$stale_receipts" --head-sha "$HEAD"
 
 missing_token_manifest="$TMP/missing-token.tsv"
-cat > "$missing_token_manifest" <<EOF
-# gate_id\towner\tenforcer\ttest_file\tpositive\tnegative\tinvalid\twaiver\tnotes
-fixture-gate\tvalidation-governance\tNONE\t$fixture_test\tcovered:positive-case-token\tcovered:missing-token-fails\tcovered:invalid-case-token\tnone-by-design:This fixture gate deliberately exposes no waiver path.\tFixture gate.
-EOF
+write_row "$missing_token_manifest" fixture-gate "$fixture_test" \
+  covered:positive-case-token covered:missing-token-fails covered:invalid-case-token \
+  'none-by-design:This fixture gate deliberately exposes no waiver path.' 'Fixture gate.'
 failcase missing-executed-token-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 "${CHECK_CMD[@]}" "$missing_token_manifest" --receipts "$good_receipts" --head-sha "$HEAD"
 
 malformed_manifest="$TMP/malformed.tsv"
@@ -92,18 +98,20 @@ printf 'fixture-gate\tvalidation-governance\tNONE\n' > "$malformed_manifest"
 failcase malformed-row-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 "${CHECK_CMD[@]}" "$malformed_manifest" --receipts "$good_receipts" --head-sha "$HEAD"
 
 waiver_manifest="$TMP/waiver.tsv"
-cat > "$waiver_manifest" <<'EOF'
-# gate_id\towner\tenforcer\ttest_file\tpositive\tnegative\tinvalid\twaiver\tnotes
-waiver-gate\tvalidation-governance\tNONE\tNONE\twaived:Positive simulation is temporarily unavailable for this manual-only fixture gate.\twaived:Negative simulation is temporarily unavailable for this manual-only fixture gate.\twaived:Invalid simulation is temporarily unavailable for this manual-only fixture gate.\twaived:Waiver simulation is temporarily unavailable because this row validates explicit waiver text.\tFixture waiver row.
-EOF
+write_row "$waiver_manifest" waiver-gate NONE \
+  'waived:Positive simulation is temporarily unavailable for this manual-only fixture gate.' \
+  'waived:Negative simulation is temporarily unavailable for this manual-only fixture gate.' \
+  'waived:Invalid simulation is temporarily unavailable for this manual-only fixture gate.' \
+  'waived:Waiver simulation is temporarily unavailable because this row validates explicit waiver text.' \
+  'Fixture waiver row.'
 : > "$TMP/empty.jsonl"
 pass waiver-row-passes env EOS_SIM_COVERAGE_REQUIRED_GATES=waiver-gate EOS_SIM_COVERAGE_MIN_ROWS=1 "${CHECK_CMD[@]}" "$waiver_manifest" --receipts "$TMP/empty.jsonl" --head-sha "$HEAD"
 
 stale_manifest="$TMP/stale-manifest.tsv"
-cat > "$stale_manifest" <<EOF
-# gate_id\towner\tenforcer\ttest_file\tpositive\tnegative\tinvalid\twaiver\tnotes
-stale-gate\tvalidation-governance\tNONE\t$fixture_test\tcovered:positive-case-token\tcovered:negative-case-token\tcovered:invalid-case-token\twaived:This fixture intentionally keeps old pending coverage text for validation.\tFixture still says future loop should add a direct test.
-EOF
+write_row "$stale_manifest" stale-gate "$fixture_test" \
+  covered:positive-case-token covered:negative-case-token covered:invalid-case-token \
+  'waived:This fixture intentionally keeps old pending coverage text for validation.' \
+  'Fixture still says future loop should add a direct test.'
 failcase deferred-language-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=stale-gate EOS_SIM_COVERAGE_MIN_ROWS=1 "${CHECK_CMD[@]}" "$stale_manifest" --receipts "$good_receipts" --head-sha "$HEAD"
 
 tamper_receipts="$TMP/tamper.jsonl"
