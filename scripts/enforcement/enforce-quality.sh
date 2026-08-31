@@ -64,7 +64,7 @@ done
 if [ -n "$plan_dod_ci_hits" ]; then
   echo "⚠️  quality-gates.md <definition_of_done>: a plan '## DoD' section names a CI-outcome item — this cannot be truthfully checked before the commit that triggers that CI run exists."
   printf '%b' "$plan_dod_ci_hits" | sed 's/^/    /'
-  echo "  ACTION: move it to a '## Live External Gates Before Merge' section instead (see .claude/plans/audit-freshness-p0.md for the pattern)."
+  echo "  ACTION: move it to a '## Live External Gates Before Merge' section instead (see core/quality-gates.md's <definition_of_done> for the pattern)."
 fi
 
 exit 0
