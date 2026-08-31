@@ -12,6 +12,9 @@ on:
 permissions:
   contents: read
 
+env:
+  EOS_TEST_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   enforcement-tests:
     runs-on: ubuntu-latest
@@ -20,10 +23,13 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           persist-credentials: false
+          ref: ${{ env.EOS_TEST_HEAD_SHA }}
 
       - name: Prepare enforcement test environment
         run: |
           set -euo pipefail
+          actual_head="$(git rev-parse HEAD)"
+          test "$actual_head" = "$EOS_TEST_HEAD_SHA"
           git config --global user.email "ci@engineering-os.local"
           git config --global user.name "engineering-os-ci"
           git config --global init.defaultBranch main
@@ -91,7 +97,7 @@ jobs:
           python3 scripts/enforcement/test_evidence.py check-receipts \
             --root . \
             --receipt-file .engineering-os/test-evidence/receipts.jsonl \
-            --head-sha "$GITHUB_SHA"
+            --head-sha "$EOS_TEST_HEAD_SHA"
 
       - name: Verify execution-backed simulation coverage
         run: |
@@ -99,7 +105,7 @@ jobs:
           python3 scripts/enforcement/check-simulation-coverage.py \
             --root . \
             --receipts .engineering-os/test-evidence/receipts.jsonl \
-            --head-sha "$GITHUB_SHA"
+            --head-sha "$EOS_TEST_HEAD_SHA"
 
       - name: Summarize truthful test evidence
         run: |
@@ -107,7 +113,7 @@ jobs:
           python3 scripts/enforcement/test_evidence.py summary \
             --root . \
             --receipt-file .engineering-os/test-evidence/receipts.jsonl \
-            --head-sha "$GITHUB_SHA" \
+            --head-sha "$EOS_TEST_HEAD_SHA" \
             --output .engineering-os/test-evidence/summary.json
           python3 scripts/enforcement/test_evidence.py inventory \
             --root . \
