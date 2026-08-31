@@ -98,20 +98,10 @@ jobs:
           done
 
       - name: Run all enforcement test suites
-        run: |
-          set -u
-          fail=0
-          for t in scripts/enforcement/tests/test-*.sh; do
-            echo "──────── $t ────────"
-            if bash "$t"; then :; else fail=1; fi
-          done
+        run: bash scripts/enforcement/run-enforcement-tests.sh
 
-          echo
-          if [ "$fail" -ne 0 ]; then
-            echo "❌ one or more enforcement suites failed"
-            exit 1
-          fi
-          echo "✅ all enforcement suites passed"
+      - name: Verify bypass provider validation suite
+        run: python3 scripts/enforcement/tests/test-bypass-provider-validation.py
 
       - name: Verify task router contract
         run: |
