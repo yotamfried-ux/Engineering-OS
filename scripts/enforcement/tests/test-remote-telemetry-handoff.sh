@@ -120,6 +120,7 @@ expect_selector_failure() {
     "$@" --out "$TMP/bad-$label" >/dev/null 2>&1; then
     echo "unexpected pass: $label"; exit 1
   fi
+  echo "scenario:selector-rejected-$label"
 }
 expect_selector_failure wrong-repo --repo other/repo --pr-number 42 --head-ref feature/test --head-sha "$HEAD"
 expect_selector_failure wrong-pr --repo "$REPO" --pr-number 9 --head-ref feature/test --head-sha "$HEAD"
@@ -145,6 +146,7 @@ if python3 "$SELECT" --root "$TARGET" --policy-file "$POLICY" --handoff-root "$T
   --repo "$REPO" --pr-number 42 --head-ref feature/test --head-sha "$HEAD" --out "$TMP/bad-checksum" >/dev/null 2>&1; then
   echo 'unexpected pass: checksum mismatch'; exit 1
 fi
+echo 'scenario:checksum-mismatch-rejected'
 
 cp -R "$HANDOFF" "$TMP/privacy"
 python3 - "$TMP/privacy/runs/$RUN_ID" <<'PY'
