@@ -104,6 +104,20 @@ assert d["passed_evidence_levels"]["static"] == 2, d
 PY
 echo "ok: duplicate-attempts-count-once"
 
+cp "$RECEIPTS" "$TMP/passing-retries.jsonl"
+python3 "$TOOL" record --root "$FIX" --receipt-file "$RECEIPTS" \
+  --test-path scripts/enforcement/tests/test-one.sh \
+  --runner scripts/enforcement/run-enforcement-tests.sh --result fail \
+  --log-path "$FIX/.engineering-os/test-evidence/logs/shell.log" --head-sha "$HEAD" --attempt 3 --duration-ms 12 >/dev/null
+failcase pass-plus-fail-rejected python3 "$TOOL" check-receipts --root "$FIX" --receipt-file "$RECEIPTS" --head-sha "$HEAD"
+cp "$TMP/passing-retries.jsonl" "$RECEIPTS"
+
+# Default local evidence is isolated by exact HEAD, so receipts from an older
+# commit cannot poison a new commit's otherwise complete run.
+grep -Fq '.engineering-os/test-evidence/$safe_head' "$ROOT/scripts/enforcement/run-enforcement-tests.sh"
+grep -Fq '.engineering-os/test-evidence" / safe_head' "$ROOT/scripts/enforcement/run-python-enforcement-tests.py"
+echo "ok: default-evidence-is-head-scoped"
+
 # Two isolated runner processes may both allocate attempt 1 before either
 # appends a receipt. Their immutable log names must still remain distinct and
 # both receipts must survive checksum validation.
