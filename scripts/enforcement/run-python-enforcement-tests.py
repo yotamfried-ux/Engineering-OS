@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -42,7 +43,16 @@ def main() -> int:
         test_id = item["id"]
         attempt = test_evidence.next_attempt(receipt_file, test_id)
         safe = test_path.replace("/", "_").replace(":", "_").replace(" ", "_")
-        log = evidence_dir / "logs" / f"{safe}.attempt-{attempt}.log"
+        # Use atomic exclusive creation rather than clocks/PIDs: isolated
+        # runners may share both, but the filesystem cannot allocate the same
+        # path twice.
+        fd, log_name = tempfile.mkstemp(
+            dir=evidence_dir / "logs",
+            prefix=f"{safe}.attempt-{attempt}.run-",
+            suffix=".log",
+        )
+        os.close(fd)
+        log = Path(log_name)
         start = time.monotonic()
         proc = subprocess.run(
             [sys.executable, str(root / test_path)],
