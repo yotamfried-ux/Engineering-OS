@@ -16,7 +16,7 @@
 | Architecture guides | `core/quality-gates.md`; `docs/operations/operational-readiness-audit.md` |
 | Patterns | no existing reusable pattern is trusted until the new evidence model is defined |
 | External systems/connectors | GitHub |
-| Skills | `writing-plans`; `verification-before-completion` |
+| Skills | none |
 | Validation gates | orphan-test detection; execution receipts; semantic simulation receipts; evidence-level classification; duplicate-run de-duplication; targeted fault injection; full enforcement suite; exact-head CI; PR policy |
 | Evidence to check | test discovery, workflow wiring, executed-suite receipts, scenario receipts, CI artifacts, live provider boundaries and review threads |
 | User decisions required | owner approval before merge; no runtime/experiment claim is implied by this work |
@@ -40,7 +40,7 @@ The objective is stronger truthfulness, not a larger raw test count.
 - [x] Midpoint verification recorded after the first implementation pass.
 - [x] Final corrections completed after midpoint findings.
 - [x] Final local verification completed on the final code state.
-- [ ] Pull request opened only after final local verification.
+- [x] Pull request opened only after final local verification: PR #276.
 
 Implementation-start checkpoint: work begins from `main@e5b761ce06a811fbd6f81991f3087f8f89744ef7` after this progress record is committed. The prior draft PR #275 is treated only as an implementation laboratory and evidence source; it is not the delivery branch.
 
@@ -83,13 +83,19 @@ Evidence-level reporting, duplicate de-duplication and targeted fault injection 
 
 | Source | Status | Finding / decision |
 |---|---|---|
-| `main@e5b761ce06a811fbd6f81991f3087f8f89744ef7` | checked | PR #274 is merged and `main` is the exact planning base. |
+| `CLAUDE.md` | read | Repository-wide operating contract applied. |
+| `core/task-router.md` | read | Routed as Engineering OS governance work. |
+| `core/workflow.md` | read | Plan-first lifecycle and validation order applied. |
+| `core/git-policy.md` | read | Clean branch and PR workflow applied. |
+| `core/quality-gates.md` | read | Exact-head, review and completion boundaries applied. |
+| `core/connector-policy.md` | read | GitHub reads/writes recorded below. |
+| `core/coderabbit-policy.md` | read | Ready PR opened for automated review. |
 | `.github/workflows/enforcement-tests.yml` | checked during PR #274 audit | Bash suites use a canonical runner; Python execution still depends on explicit workflow wiring rather than one corpus-wide ownership contract. |
 | `scripts/enforcement/check-simulation-coverage.sh` | read | `covered:<token>` is validated with literal source search using `grep -Fq`. |
 | `scripts/enforcement/tests/test-simulation-coverage.sh` | read | Its positive fixture contains only comment tokens, proving that current coverage is traceability rather than executed semantic proof. |
 | `scripts/enforcement/run-enforcement-tests.sh` | checked during PR #274 | Canonical Bash runner can provide reliable suite-level exit status and is the right place to emit execution receipts. |
 | `docs/operations/operational-readiness-audit.md` | read during audit | The audit already separates deterministic simulation from live/runtime closure and states that scenario quality remains reviewed. |
-| PR #274 / exact-head Actions | checked | One previously unexecuted Python suite was found and then directly wired, demonstrating the need for a systemic execution-completeness guard. |
+| `.claude/plans/test-evidence-trust-hardening.md` history | checked | Plan, implementation-start, midpoint and final checkpoints precede the PR; PR #276 is the delivery PR. |
 
 ## Design principles
 
@@ -294,3 +300,64 @@ No live-provider or real-runtime readiness gap is closed merely because these de
 ## Completion statement allowed after implementation
 
 After all phases pass, the project may claim that its deterministic automated-test evidence is complete, execution-backed, semantically linked and classified by evidence level for the covered corpus. It may not claim that live-provider or real-runtime behavior is proven unless those higher-level evidence sources were separately executed and validated.
+
+## Capability Evidence
+
+- `routing.task-router-read` — `core/task-router.md` was read and the task was routed as Engineering OS governance.
+- `workflow.workflow-read` — `core/workflow.md` was read before the clean delivery branch was constructed.
+- `plan.route-plan-before-write` — the remote branch history starts with the Route Plan, followed by a separate implementation-start checkpoint, before its first code/config/test change.
+- `source.github-repo-read` — Git history, PR #274, draft PR #275, branch state, workflow runs, job logs and review state were read from the repository and GitHub.
+- `validation.policy-change-has-validator` — the new receipt, simulation-coverage and fault-injection behavior has focused positive and negative regression suites.
+- `validation.coderabbit-policy` — PR #276 is ready for review; CodeRabbit status and review threads are checked before merge.
+- `validation.actions-checked` — PR #276 exact-head workflow runs were queried after opening; policy failures were read from their job logs and this documentation correction responds to those exact findings.
+
+## Connector Evidence
+
+- [x] GitHub was used to create the clean branch from exact `main` SHA `e5b761ce06a811fbd6f81991f3087f8f89744ef7`, publish the ordered commits, open PR #276, and inspect exact-head Actions and review state.
+- [x] The repository files published before PR creation were compared by Git blob SHA with the locally verified state: 25 of 25 matched.
+- [x] No test pushed to a production connector. The multirepo integration test preserves GitHub-shaped identity while redirecting transport to disposable local bare repositories.
+
+## Connector Usage Evidence
+
+- source: GitHub repository `yotamfried-ux/Engineering-OS`, PR #276 and commit `5abbc47be6332630a3936dc3a71653fd49ab97e6`.
+- action: created the clean delivery branch and ordered commits; opened PR #276; read workflow runs, failed-job logs, CodeRabbit status and review threads.
+- result: PR #276 opened after final local verification; exact-head CI started; the first policy pass identified missing canonical plan sections while CodeRabbit status succeeded and no review threads existed at that checkpoint.
+- decision: correct the plan metadata without changing verified runtime code, then require the new exact-head CI run to pass before merge readiness is claimed.
+- target: `.claude/plans/test-evidence-trust-hardening.md`.
+
+## Documentation Asset Waiver
+
+No new user-facing documentation or reusable reference asset is required. This change is self-documented by the Route Plan, machine-readable evidence-level registry, receipt schema, CI summary and focused regressions. The work changes internal enforcement behavior only; no external framework, SDK or API contract was introduced.
+
+## Skill Evidence
+
+Skills: none. The work followed the repository's own Route Plan and validation policies and did not require a separate task-specific implementation skill.
+
+## Claude Run Trace
+
+- **Goal:** make the automated-test claim complete, execution-backed, de-duplicated and explicit about its limits.
+- **Hypothesis:** canonical discovery plus exact-code receipts can prove that every standalone test ran; binding simulation cells to successful emitted output removes comment-only false coverage.
+- **Steps:** create plan-only commit → record implementation start → publish first implementation → record midpoint findings → fix concurrency, receipt immutability and hermetic transport → run the final corpus → record final checkpoint → open PR #276 → inspect exact-head CI and review.
+- **Evidence:** final code commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0` produced 121 receipts for 121 discovered tests; 116 Bash and 5 Python suites passed; 35 simulation gates and 125 covered cells resolved through executed output; targeted fault injection passed.
+- **Rejected:** source-token presence as semantic coverage; external log files as mutable receipt dependencies; repeated attempts as extra unique tests; live-provider or real-runtime claims without those executions.
+- **Result:** implementation complete locally and published unchanged in PR #276; exact-head CI and review reconciliation remain the merge-readiness gate.
+- **Follow-up:** resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
+
+## Progress Lifecycle Evidence
+
+- **start:** plan commit `d94389c2d59ccd53a863ef2eb2efb8f765341d1c` was created alone from exact main; implementation start was then recorded in separate commit `0fb1bc0e3d0597dfcb4cbd7cc631b968d81683f1` before the first remote code change.
+- **mid:** commit `1fd1a62cf0f34f59ddb82a5ef03e720fcc5bb430` recorded the first aggregate-run findings before final corrections: concurrent receipt-log collision risk and a non-hermetic multirepo transport path.
+- **pre-merge:** final runtime code matched locally verified commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0`; final checkpoint commit `5abbc47be6332630a3936dc3a71653fd49ab97e6` recorded 121/121 passes before PR #276 opened. This plan-only policy correction follows CI feedback and changes no validated runtime code; exact-head CI must rerun.
+
+## Definition of Done
+
+- [x] All standalone Bash and Python tests are discovered automatically: 121 found.
+- [x] Every discovered test is owned by a canonical runner and produced an exact-code receipt: 121 of 121.
+- [x] Repeated attempts are reported separately and unique tests are counted once.
+- [x] All simulation-coverage entries use successful executed output rather than source-token presence: 35 gates and 125 covered cells passed.
+- [x] Evidence ceilings are explicit: static 109, fixture 5, integration 7, live-provider 0, real-runtime 0.
+- [x] Receipt tampering, stale/wrong bindings and six targeted weakening mutations are detected by focused regressions.
+- [x] The full final local run passed: 116 Bash suites and 5 Python suites.
+- [x] Clean remote chronology preserves plan → start → code → midpoint → corrections → final verification → PR.
+- [x] PR #276 opened only after final local verification.
+- [x] Exact-head Actions were checked and initial policy findings were reconciled in this plan-only correction.
