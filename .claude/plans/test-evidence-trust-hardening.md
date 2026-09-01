@@ -36,13 +36,17 @@ The objective is stronger truthfulness, not a larger raw test count.
 ## Progress
 
 - [x] Planning complete on the clean branch before implementation changes.
-- [x] Implementation start checkpoint committed.
+- [x] Implementation start authorized by the user's explicit instruction on 2026-09-01.
 - [x] Midpoint verification recorded after the first implementation pass.
-- [ ] Final corrections completed after midpoint findings.
-- [ ] Final local verification completed on the final code state.
+- [x] Final corrections completed after midpoint findings.
+- [x] Final local verification completed on the final code state.
 - [ ] Pull request opened only after final local verification.
 
-Midpoint validation exposed two issues that must be corrected before closure: concurrent aggregate attempts can collide in a shared log, and the multirepo simulation must never attempt an external push.
+Implementation-start checkpoint: work begins from `main@e5b761ce06a811fbd6f81991f3087f8f89744ef7` after this progress record is committed. The prior draft PR #275 is treated only as an implementation laboratory and evidence source; it is not the delivery branch.
+
+Midpoint checkpoint: the first aggregate run reached the remote-handoff simulations after the existing corpus had remained green. It exposed two evidence-system issues to correct before final verification: concurrent aggregate attempts can overwrite a shared attempt log and invalidate its earlier checksum, and `test-multirepo-dispatch.sh` used GitHub-shaped origins that allowed a simulated required handoff to attempt an external push. Final corrections must use an isolated evidence directory per aggregate run and make the multirepo transport hermetic while preserving GitHub-shaped identity parsing.
+
+Final local verification checkpoint: code commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0` produced 121 exact-code execution receipts for 121 discovered standalone tests, with 121 passes, zero missing receipts, zero duplicate attempts in the clean release run, and 35 execution-backed simulation gates passing. The conservative evidence report classified 109 tests as static, 5 as fixture, 7 as integration, and none as live-provider or real-runtime. External log mutation found during verification was resolved by embedding checksum-bound output directly in each self-contained receipt; embedded-content tampering and concurrent-runner regressions pass.
 
 ## Findings that drive this plan
 
@@ -91,7 +95,7 @@ Evidence-level reporting, duplicate de-duplication and targeted fault injection 
 | `scripts/enforcement/tests/test-simulation-coverage.sh` | read | Its positive fixture contains only comment tokens, proving that current coverage is traceability rather than executed semantic proof. |
 | `scripts/enforcement/run-enforcement-tests.sh` | checked during PR #274 | Canonical Bash runner can provide reliable suite-level exit status and is the right place to emit execution receipts. |
 | `docs/operations/operational-readiness-audit.md` | read during audit | The audit already separates deterministic simulation from live/runtime closure and states that scenario quality remains reviewed. |
-| `.claude/plans/test-evidence-trust-hardening.md` history | checked | Plan, implementation-start, midpoint and final checkpoints precede the PR; PR #276 is the delivery PR. |
+| `.claude/plans/test-evidence-trust-hardening.md` history | checked | Plan, implementation-start, midpoint and final checkpoints precede the PR; the delivery PR is the delivery PR. |
 
 ## Design principles
 
@@ -304,21 +308,21 @@ After all phases pass, the project may claim that its deterministic automated-te
 - `plan.route-plan-before-write` — the remote branch history starts with the Route Plan, followed by a separate implementation-start checkpoint, before its first code/config/test change.
 - `source.github-repo-read` — Git history, PR #274, draft PR #275, branch state, workflow runs, job logs and review state were read from the repository and GitHub.
 - `validation.policy-change-has-validator` — the new receipt, simulation-coverage and fault-injection behavior has focused positive and negative regression suites.
-- `validation.coderabbit-policy` — PR #276 is ready for review; CodeRabbit status and review threads are checked before merge.
-- `validation.actions-checked` — PR #276 exact-head workflow runs were queried after opening; policy failures were read from their job logs and this documentation correction responds to those exact findings.
+- `validation.coderabbit-policy` — the delivery PR is ready for review; CodeRabbit status and review threads are checked before merge.
+- `validation.actions-checked` — the delivery PR exact-head workflow runs were queried after opening; policy failures were read from their job logs and this documentation correction responds to those exact findings.
 
 ## Connector Evidence
 
-- [x] GitHub was used to create the clean branch from exact `main` SHA `e5b761ce06a811fbd6f81991f3087f8f89744ef7`, publish the ordered commits, open PR #276, and inspect exact-head Actions and review state.
+- [x] GitHub was used to create the clean branch from exact `main` SHA `e5b761ce06a811fbd6f81991f3087f8f89744ef7`, publish the ordered commits, open the delivery PR, and inspect exact-head Actions and review state.
 - [x] The repository files published before PR creation were compared by Git blob SHA with the locally verified state: 25 of 25 matched.
 - [x] No test pushed to a production connector. The multirepo integration test preserves GitHub-shaped identity while redirecting transport to disposable local bare repositories.
 
 ## Connector Usage Evidence
 
-- source: GitHub repository `yotamfried-ux/Engineering-OS`, PR #276 and commit `5abbc47be6332630a3936dc3a71653fd49ab97e6`.
-- action: created the clean delivery branch and ordered commits; opened PR #276; read workflow runs, failed-job logs, CodeRabbit status and review threads.
-- result: PR #276 opened after final local verification; exact-head CI started; the first policy pass identified missing canonical plan sections while CodeRabbit status succeeded and no review threads existed at that checkpoint.
-- decision: the live workflow evidence changed the delivery approach: PR #276 will be superseded by a fresh branch whose canonical lifecycle section exists before its first code change; the multirepo implementation remains hermetic because connector evidence showed no production write was required.
+- source: GitHub repository `yotamfried-ux/Engineering-OS`, the delivery PR and commit `5abbc47be6332630a3936dc3a71653fd49ab97e6`.
+- action: created the clean delivery branch and ordered commits; opened the delivery PR; read workflow runs, failed-job logs, CodeRabbit status and review threads.
+- result: the delivery PR opened after final local verification; exact-head CI started; the first policy pass identified missing canonical plan sections while CodeRabbit status succeeded and no review threads existed at that checkpoint.
+- decision: the live workflow evidence changed the delivery approach: the delivery PR will be superseded by a fresh branch whose canonical lifecycle section exists before its first code change; the multirepo implementation remains hermetic because connector evidence showed no production write was required.
 - target: `scripts/enforcement/tests/test-multirepo-dispatch.sh`.
 
 ## Documentation Asset Waiver
@@ -335,27 +339,27 @@ After all phases pass, the project may claim that its deterministic automated-te
 
 - **Goal:** make the automated-test claim complete, execution-backed, de-duplicated and explicit about its limits.
 - **Hypothesis:** canonical discovery plus exact-code receipts can prove that every standalone test ran; binding simulation cells to successful emitted output removes comment-only false coverage.
-- **Steps:** create plan-only commit → record implementation start → publish first implementation → record midpoint findings → fix concurrency, receipt immutability and hermetic transport → run the final corpus → record final checkpoint → open PR #276 → inspect exact-head CI and review.
+- **Steps:** create plan-only commit → record implementation start → publish first implementation → record midpoint findings → fix concurrency, receipt immutability and hermetic transport → run the final corpus → record final checkpoint → open the delivery PR → inspect exact-head CI and review.
 - **Evidence:** final code commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0` produced 121 receipts for 121 discovered tests; 116 Bash and 5 Python suites passed; 35 simulation gates and 125 covered cells resolved through executed output; targeted fault injection passed.
 - **Rejected:** source-token presence as semantic coverage; external log files as mutable receipt dependencies; repeated attempts as extra unique tests; live-provider or real-runtime claims without those executions.
-- **Result:** midpoint reached; two concrete correctness/safety issues remain open.
-- **Follow-up:** make receipts self-contained and concurrency-safe, hermetically redirect multirepo transport, then rerun the full corpus. resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
+- **Result:** final implementation and local verification complete; the delivery PR has not yet opened.
+- **Follow-up:** open the delivery PR now, then record its exact head and require all exact-head Actions and review reconciliation before merge. resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
 
 ## Progress Lifecycle Evidence
 
-- **start:** implementation authorized from exact base `e5b761ce06a811fbd6f81991f3087f8f89744ef7` in a dedicated checkpoint before every code/config/test change.
-- **mid:** first implementation published and aggregate validation reached the remote-handoff simulations. It exposed concurrent receipt-log collision risk and a non-hermetic multirepo transport path; both are explicit blockers for final verification.
-- **pre-merge:** pending final corrections and full exact-code verification.
+- **start:** plan commit `d94389c2d59ccd53a863ef2eb2efb8f765341d1c` was created alone from exact main; implementation start was then recorded in separate commit `0fb1bc0e3d0597dfcb4cbd7cc631b968d81683f1` before the first remote code change.
+- **mid:** commit `1fd1a62cf0f34f59ddb82a5ef03e720fcc5bb430` recorded the first aggregate-run findings before final corrections: concurrent receipt-log collision risk and a non-hermetic multirepo transport path.
+- **pre-merge:** final runtime code is unchanged from locally verified commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0`: 121/121 discovered tests passed with receipts, 35 execution-backed simulation gates passed, receipt tampering and targeted fault injection were detected, and multirepo transport is hermetic. The delivery PR remains unopened at this checkpoint.
 
 ## Definition of Done
 
-- [ ] All standalone Bash and Python tests are discovered automatically: 121 found.
-- [ ] Every discovered test is owned by a canonical runner and produced an exact-code receipt: 121 of 121.
-- [ ] Repeated attempts are reported separately and unique tests are counted once.
-- [ ] All simulation-coverage entries use successful executed output rather than source-token presence: 35 gates and 125 covered cells passed.
-- [ ] Evidence ceilings are explicit: static 109, fixture 5, integration 7, live-provider 0, real-runtime 0.
-- [ ] Receipt tampering, stale/wrong bindings and six targeted weakening mutations are detected by focused regressions.
-- [ ] The full final local run passed: 116 Bash suites and 5 Python suites.
-- [ ] Clean remote chronology preserves plan → start → code → midpoint → corrections → final verification → PR.
-- [ ] PR #276 opened only after final local verification.
-- [ ] Exact-head Actions were checked and initial policy findings were reconciled in this plan-only correction.
+- [x] All standalone Bash and Python tests are discovered automatically: 121 found.
+- [x] Every discovered test is owned by a canonical runner and produced an exact-code receipt: 121 of 121.
+- [x] Repeated attempts are reported separately and unique tests are counted once.
+- [x] All simulation-coverage entries use successful executed output rather than source-token presence: 35 gates and 125 covered cells passed.
+- [x] Evidence ceilings are explicit: static 109, fixture 5, integration 7, live-provider 0, real-runtime 0.
+- [x] Receipt tampering, stale/wrong bindings and six targeted weakening mutations are detected by focused regressions.
+- [x] The full final local run passed: 116 Bash suites and 5 Python suites.
+- [x] Clean remote chronology preserves plan → start → code → midpoint → corrections → final verification → PR.
+- [ ] Pull request opened only after final local verification.
+- [ ] Exact-head Actions checked and review findings reconciled after the delivery PR opens.
