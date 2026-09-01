@@ -11,7 +11,16 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 HOME_DIR="$TMP/home"
-mkdir -p "$HOME_DIR"
+REMOTE_DIR="$TMP/remotes"
+mkdir -p "$HOME_DIR" "$REMOTE_DIR"
+
+# Preserve GitHub-shaped origin URLs for repository-identity coverage while
+# redirecting every git transport to disposable local bare repositories. This
+# keeps the simulation hermetic: required handoff pushes can never contact a
+# real provider.
+git config --file "$HOME_DIR/.gitconfig" \
+  "url.file://$REMOTE_DIR/.insteadOf" \
+  "https://github.com/yotamfried-ux/"
 
 init_managed_repo() {
   local dir="$1" mode="$2"
@@ -22,6 +31,7 @@ init_managed_repo() {
   git -C "$dir" config user.email test@example.com
   git -C "$dir" config user.name test
   git -C "$dir" commit -q --allow-empty -m init
+  git init --bare -q "$REMOTE_DIR/$repo_name.git"
   git -C "$dir" remote add origin "https://github.com/yotamfried-ux/$repo_name.git"
   cat > "$dir/.engineering-os/telemetry-policy.json" <<JSON
 {"schema_version":"eos.telemetry.policy.v1","remote_handoff":{"mode":"$mode","remote":"origin","branch":"engineering-os-telemetry"}}

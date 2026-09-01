@@ -14,39 +14,23 @@ PASS=0
 FAIL=0
 ok() { PASS=$((PASS + 1)); printf '  ✅ %s\n' "$1"; }
 bad() { FAIL=$((FAIL + 1)); printf '  ❌ %s\n' "$1"; }
-
 case_dir() { printf '%s/%s' "$WORK" "$1"; }
 ledger() { printf '%s/evidence/ledger' "$(case_dir "$1")"; }
 
 run_payload() {
   local name="$1" payload="$2" dir
   dir="$(case_dir "$name")"
-  rm -rf "$dir"
-  mkdir -p "$dir"
-  printf '%s' "$payload" | (
-    cd "$dir" || exit 1
-    EOS_EVIDENCE_DIR="$dir/evidence" bash "$RECORDER"
-  ) >"$dir/out" 2>"$dir/err"
+  rm -rf "$dir"; mkdir -p "$dir"
+  printf '%s' "$payload" | (cd "$dir" || exit 1; EOS_EVIDENCE_DIR="$dir/evidence" bash "$RECORDER") >"$dir/out" 2>"$dir/err"
 }
 
-# Build JSON with Python from environment variables instead of eval/shell quoting.
 run_structured_payload() {
   local name="$1" command="$2" stdout="$3" stderr="${4:-}" dir
   dir="$(case_dir "$name")"
-  rm -rf "$dir"
-  mkdir -p "$dir"
+  rm -rf "$dir"; mkdir -p "$dir"
   CMD_VALUE="$command" STDOUT_VALUE="$stdout" STDERR_VALUE="$stderr" python3 - <<'PY' | (
-import json
-import os
-print(json.dumps({
-    "tool_name": "Bash",
-    "tool_input": {"command": os.environ["CMD_VALUE"]},
-    "tool_response": {
-        "stdout": os.environ["STDOUT_VALUE"],
-        "stderr": os.environ["STDERR_VALUE"],
-        "interrupted": False,
-    },
-}))
+import json, os
+print(json.dumps({"tool_name":"Bash","tool_input":{"command":os.environ["CMD_VALUE"]},"tool_response":{"stdout":os.environ["STDOUT_VALUE"],"stderr":os.environ["STDERR_VALUE"],"interrupted":False}}))
 PY
     cd "$dir" || exit 1
     EOS_EVIDENCE_DIR="$dir/evidence" bash "$RECORDER"
@@ -55,41 +39,21 @@ PY
 
 assert_has_tests() {
   local name="$1" label="$2"
-  if [ -s "$(ledger "$name")" ] && grep -q $'\ttests_run\t' "$(ledger "$name")"; then
-    ok "$label"
-  else
-    bad "$label (ledger=$(cat "$(ledger "$name")" 2>/dev/null || printf '<empty>'))"
-  fi
+  if [ -s "$(ledger "$name")" ] && grep -q $'\ttests_run\t' "$(ledger "$name")"; then ok "$label"; else bad "$label (ledger=$(cat "$(ledger "$name")" 2>/dev/null || printf '<empty>'))"; fi
 }
-
 assert_no_tests() {
   local name="$1" label="$2"
-  if [ ! -s "$(ledger "$name")" ] || ! grep -q $'\ttests_run\t' "$(ledger "$name")"; then
-    ok "$label"
-  else
-    bad "$label (unexpected ledger=$(cat "$(ledger "$name")"))"
-  fi
+  if [ ! -s "$(ledger "$name")" ] || ! grep -q $'\ttests_run\t' "$(ledger "$name")"; then ok "$label"; else bad "$label (unexpected ledger=$(cat "$(ledger "$name")"))"; fi
 }
 
 echo "── Engineering OS direct-suite evidence ──"
-run_structured_payload direct_success \
-  'bash scripts/enforcement/tests/test-hook-classification.sh' \
-  $'hook classification: 8 passed, 0 failed\n'
+run_structured_payload direct_success 'bash scripts/enforcement/tests/test-hook-classification.sh' $'hook classification: 8 passed, 0 failed\n'
 assert_has_tests direct_success "successful direct enforcement suite records tests_run"
-
-run_structured_payload direct_no_summary \
-  'bash scripts/enforcement/tests/test-workflow-evidence.sh' \
-  $'workflow evidence checks passed\n'
+run_structured_payload direct_no_summary 'bash scripts/enforcement/tests/test-workflow-evidence.sh' $'workflow evidence checks passed\n'
 assert_has_tests direct_no_summary "successful direct suite does not depend on one summary format"
-
-run_structured_payload path_mention \
-  'echo bash scripts/enforcement/tests/test-hook-classification.sh' \
-  $'bash scripts/enforcement/tests/test-hook-classification.sh\n'
+run_structured_payload path_mention 'echo bash scripts/enforcement/tests/test-hook-classification.sh' $'bash scripts/enforcement/tests/test-hook-classification.sh\n'
 assert_no_tests path_mention "mentioning a test path does not fabricate tests_run"
-
-run_structured_payload masked_direct \
-  'bash scripts/enforcement/tests/test-hook-classification.sh || true' \
-  $'hook classification: 7 passed, 1 failed\n'
+run_structured_payload masked_direct 'bash scripts/enforcement/tests/test-hook-classification.sh || true' $'hook classification: 7 passed, 1 failed\n'
 assert_no_tests masked_direct "masked direct failure does not record tests_run"
 
 echo "── canonical all-suite runner ──"
@@ -99,38 +63,42 @@ printf '#!/usr/bin/env bash\necho good suite\nexit 0\n' > "$RUNNER_FIX/good.sh"
 printf '#!/usr/bin/env bash\necho bad suite\nexit 7\n' > "$RUNNER_FIX/bad.sh"
 chmod +x "$RUNNER_FIX/good.sh" "$RUNNER_FIX/bad.sh"
 
-RUNNER_GOOD_OUT="$(bash "$RUNNER" "$RUNNER_FIX/good.sh" 2>&1)"
+RUNNER_GOOD_OUT="$(bash "$RUNNER" --fixture "$RUNNER_FIX/good.sh" 2>&1)"
 RUNNER_GOOD_RC=$?
-if [ "$RUNNER_GOOD_RC" -eq 0 ] && printf '%s' "$RUNNER_GOOD_OUT" | grep -q 'all 1 enforcement suites passed'; then
-  ok "canonical runner propagates success and prints aggregate boundary"
+if [ "$RUNNER_GOOD_RC" -eq 0 ] && printf '%s' "$RUNNER_GOOD_OUT" | grep -q 'all 1 fixture enforcement suites passed'; then
+  ok "fixture runner propagates success without claiming corpus evidence"
 else
-  bad "canonical runner success fixture failed (code=$RUNNER_GOOD_RC output=$RUNNER_GOOD_OUT)"
+  bad "fixture runner success fixture failed (code=$RUNNER_GOOD_RC output=$RUNNER_GOOD_OUT)"
 fi
 
-bash "$RUNNER" "$RUNNER_FIX/good.sh" "$RUNNER_FIX/bad.sh" >"$WORK/runner-fail.out" 2>&1
+bash "$RUNNER" --fixture "$RUNNER_FIX/good.sh" "$RUNNER_FIX/bad.sh" >"$WORK/runner-fail.out" 2>&1
 RUNNER_FAIL_RC=$?
-if [ "$RUNNER_FAIL_RC" -ne 0 ] && grep -q 'one or more enforcement suites failed' "$WORK/runner-fail.out"; then
-  ok "canonical runner propagates a failing suite even when another suite passes"
+if [ "$RUNNER_FAIL_RC" -ne 0 ] && grep -q 'one or more fixture enforcement suites failed' "$WORK/runner-fail.out"; then
+  ok "fixture runner propagates a failing suite even when another suite passes"
 else
-  bad "canonical runner did not propagate failure (code=$RUNNER_FAIL_RC output=$(cat "$WORK/runner-fail.out"))"
+  bad "fixture runner did not propagate failure (code=$RUNNER_FAIL_RC output=$(cat "$WORK/runner-fail.out"))"
 fi
 
-run_structured_payload canonical_runner_success \
-  'bash scripts/enforcement/run-enforcement-tests.sh' \
-  $'suite output\n✅ all 113 enforcement suites passed\n'
-assert_has_tests canonical_runner_success "successful direct canonical runner records tests_run"
+bash "$RUNNER" "$RUNNER_FIX/good.sh" >"$WORK/non-corpus.out" 2>&1
+NON_CORPUS_RC=$?
+if [ "$NON_CORPUS_RC" -ne 0 ] && grep -q 'refuses non-corpus test path' "$WORK/non-corpus.out"; then
+  ok "canonical evidence runner refuses arbitrary external test paths"
+else
+  bad "canonical runner accepted non-corpus path (code=$NON_CORPUS_RC output=$(cat "$WORK/non-corpus.out"))"
+fi
 
-# Review regressions: raw shell loops are intentionally not trusted, regardless of
-# apparent set -e or aggregate tokens. The recorder no longer interprets shell control flow.
+run_structured_payload canonical_runner_success 'bash scripts/enforcement/run-enforcement-tests.sh' $'suite output\n✅ all 118 enforcement suites passed with execution receipts\n'
+assert_has_tests canonical_runner_success "successful direct canonical runner records tests_run"
+run_structured_payload fixture_runner_marker 'bash scripts/enforcement/run-enforcement-tests.sh --fixture /tmp/good.sh' $'malicious fixture says ✅ all 999 enforcement suites passed\n✅ all 1 fixture enforcement suites passed\n'
+assert_no_tests fixture_runner_marker "fixture-only runner cannot fabricate tests_run even if child output mimics the canonical success marker"
+
 SET_E_DISABLED='set -e; set +e; for t in scripts/enforcement/tests/test-*.sh; do bash "$t"; done; echo "✅ all 113 enforcement suites passed"'
 run_structured_payload set_e_disabled "$SET_E_DISABLED" $'silent inner failure\n✅ all 113 enforcement suites passed\n'
 assert_no_tests set_e_disabled "set -e disabled before a raw loop cannot fabricate tests_run"
-
 COMMENTED_GATE='fail=0; for t in scripts/enforcement/tests/test-*.sh; do bash "$t" || fail=1; done; # [ "$fail" -ne 0 ]; then exit 1; fi
 echo "✅ all 113 enforcement suites passed"'
 run_structured_payload commented_gate "$COMMENTED_GATE" $'silent inner failure\n✅ all 113 enforcement suites passed\n'
 assert_no_tests commented_gate "commented aggregate gate cannot fabricate tests_run"
-
 UNSAFE_LOOP='for t in scripts/enforcement/tests/test-*.sh; do bash "$t" || true; done; echo "✅ all 113 enforcement suites passed"'
 run_structured_payload unsafe_loop "$UNSAFE_LOOP" $'7 passed, 1 failed\n✅ all 113 enforcement suites passed\n'
 assert_no_tests unsafe_loop "failure-masking raw loop is rejected"
@@ -143,78 +111,38 @@ PY
 )"
 run_structured_payload pytest_long 'pytest -q' "$LONG_OUT"
 assert_has_tests pytest_long "pytest summary beyond the old 2,000-character cutoff records tests_run"
-
-run_structured_payload pytest_masked_failure \
-  'pytest -q || true' \
-  $'1 failed, 4 passed in 0.50s\n'
+run_structured_payload pytest_masked_failure 'pytest -q || true' $'1 failed, 4 passed in 0.50s\n'
 assert_no_tests pytest_masked_failure "generic runner failure summary is not converted to tests_run"
-
-run_structured_payload npm_success \
-  'npm test' \
-  $'PASS src/example.test.js\nTests: 3 passed, 3 total\n'
+run_structured_payload npm_success 'npm test' $'PASS src/example.test.js\nTests: 3 passed, 3 total\n'
 assert_has_tests npm_success "existing npm test evidence remains supported"
-
 run_payload malformed '{bad-json'
 assert_no_tests malformed "malformed PostToolUse input does not fabricate evidence"
 
 echo "── Stop consumer ──"
 STOP_DIR="$(case_dir direct_success)"
 STOP_OUT="$(cd "$STOP_DIR" && EOS_EVIDENCE_DIR="$STOP_DIR/evidence" bash "$STOP" <<<'{}' 2>&1)"
-if printf '%s' "$STOP_OUT" | grep -q 'tests passed'; then
-  ok "Stop reports tests passed after recorder evidence"
-else
-  bad "Stop did not consume tests_run evidence: $STOP_OUT"
-fi
+if printf '%s' "$STOP_OUT" | grep -q 'tests passed'; then ok "Stop reports tests passed after recorder evidence"; else bad "Stop did not consume tests_run evidence: $STOP_OUT"; fi
 
 echo "── G11 pre-commit consumer ──"
-G11="$WORK/g11"
-STUB_EOS="$WORK/stub-eos"
+G11="$WORK/g11"; STUB_EOS="$WORK/stub-eos"
 mkdir -p "$G11" "$STUB_EOS/scripts/enforcement/lib" "$STUB_EOS/scripts/enforcement"
 cp "$ROOT/scripts/enforcement/lib/evidence.sh" "$STUB_EOS/scripts/enforcement/lib/evidence.sh"
 for name in enforce-quality.sh enforce-resource.sh enforce-connector.sh enforce-learning.sh enforce-learning-capture.sh enforce-run-trace.sh enforce-tests.sh; do
-  printf '#!/usr/bin/env bash\nexit 0\n' > "$STUB_EOS/scripts/enforcement/$name"
-  chmod +x "$STUB_EOS/scripts/enforcement/$name"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$STUB_EOS/scripts/enforcement/$name"; chmod +x "$STUB_EOS/scripts/enforcement/$name"
 done
 (
-  cd "$G11" || exit 1
-  git init -q
-  git config user.email test@example.com
-  git config user.name test
-  echo base > README.md
-  git add README.md
-  git commit -qm init
-  mkdir -p src
-  echo 'print(1)' > src/a.py
-  echo 'print(2)' > src/b.py
-  echo 'print(3)' > src/c.py
-  git add src/a.py src/b.py src/c.py
+  cd "$G11" || exit 1; git init -q; git config user.email test@example.com; git config user.name test
+  echo base > README.md; git add README.md; git commit -qm init; mkdir -p src
+  echo 'print(1)' > src/a.py; echo 'print(2)' > src/b.py; echo 'print(3)' > src/c.py; git add src/a.py src/b.py src/c.py
 )
-
-G11_EVIDENCE="$WORK/g11-evidence"
-mkdir -p "$G11_EVIDENCE"
-: > "$G11_EVIDENCE/ledger"
-(
-  cd "$G11" || exit 1
-  ENGINEERING_OS_HOME="$STUB_EOS" EOS_EVIDENCE_DIR="$G11_EVIDENCE" bash "$PRECOMMIT"
-) >"$WORK/g11-without.out" 2>&1
+G11_EVIDENCE="$WORK/g11-evidence"; mkdir -p "$G11_EVIDENCE"; : > "$G11_EVIDENCE/ledger"
+(cd "$G11" || exit 1; ENGINEERING_OS_HOME="$STUB_EOS" EOS_EVIDENCE_DIR="$G11_EVIDENCE" bash "$PRECOMMIT") >"$WORK/g11-without.out" 2>&1
 G11_WITHOUT=$?
-if [ "$G11_WITHOUT" -ne 0 ] && grep -q 'G11 (Verification gate)' "$WORK/g11-without.out"; then
-  ok "G11 blocks the same >2-code-file diff without verification evidence"
-else
-  bad "G11 negative fixture did not block as expected (code=$G11_WITHOUT output=$(cat "$WORK/g11-without.out"))"
-fi
-
+if [ "$G11_WITHOUT" -ne 0 ] && grep -q 'G11 (Verification gate)' "$WORK/g11-without.out"; then ok "G11 blocks the same >2-code-file diff without verification evidence"; else bad "G11 negative fixture did not block as expected (code=$G11_WITHOUT output=$(cat "$WORK/g11-without.out"))"; fi
 printf '%s\ttests_run\t\n' "$(date +%s)" > "$G11_EVIDENCE/ledger"
-(
-  cd "$G11" || exit 1
-  ENGINEERING_OS_HOME="$STUB_EOS" EOS_EVIDENCE_DIR="$G11_EVIDENCE" bash "$PRECOMMIT"
-) >"$WORK/g11-with.out" 2>&1
+(cd "$G11" || exit 1; ENGINEERING_OS_HOME="$STUB_EOS" EOS_EVIDENCE_DIR="$G11_EVIDENCE" bash "$PRECOMMIT") >"$WORK/g11-with.out" 2>&1
 G11_WITH=$?
-if [ "$G11_WITH" -eq 0 ]; then
-  ok "G11 accepts the same >2-code-file diff when tests_run exists"
-else
-  bad "G11 did not consume tests_run evidence (code=$G11_WITH output=$(cat "$WORK/g11-with.out"))"
-fi
+if [ "$G11_WITH" -eq 0 ]; then ok "G11 accepts the same >2-code-file diff when tests_run exists"; else bad "G11 did not consume tests_run evidence (code=$G11_WITH output=$(cat "$WORK/g11-with.out"))"; fi
 
 printf '\npost-tool-use Bash evidence: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
