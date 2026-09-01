@@ -48,5 +48,7 @@ if failures:
     print('pr-policy workflow wiring failures:')
     for item in failures: print('-',item)
     raise SystemExit(1)
+print('scenario:pinned-checkouts-verified')
+print('scenario:collector-order-verified')
 print('pr-policy workflow wiring passed')
 PY
