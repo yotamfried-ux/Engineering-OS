@@ -60,12 +60,14 @@ assert_fail() {
     exit 1
   fi
   grep -qi "$expected" "$TMP/$label.out"
+  echo "scenario:$label"
 }
 
 assert_pass() {
   local label="$1" plan="$2"
   make_repo "$label" "$plan"
   bash "$CHECK" "$base" "$head"
+  echo "scenario:$label"
 }
 
 BASE_PLAN='| Field | Value |
