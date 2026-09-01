@@ -10,8 +10,9 @@
 # call. Pass --apply to actually PUT the protection.
 #
 # Required check CONTEXTS are the check-run/job names (NOT workflow names) — derived
-# from each required workflow file's job `name:` (falling back to the job id). The
-# set of required workflows is sourced from REQUIRED_WORKFLOWS_DEFAULT in
+# from each required workflow file's job-level `name:` (falling back to the job id).
+# Nested step/action fields such as `with: name:` must never be mistaken for job names.
+# The required workflow set is sourced from REQUIRED_WORKFLOWS_DEFAULT in
 # check-merge-readiness.sh, so this never drifts.
 set -euo pipefail
 
@@ -33,14 +34,14 @@ for arg in "$@"; do
   esac
 done
 
-# Required workflow set (authoritative): REQUIRED_WORKFLOWS_DEFAULT in the merge checker.
 required_workflows() {
   awk -F'"' '/^REQUIRED_WORKFLOWS_DEFAULT=/ { print $2; exit }' "$MERGE_CHECK" \
     | tr ' ' '\n' | sed '/^$/d'
 }
 
-# job_context <workflow-file> — the check-run context GitHub shows for the workflow's
-# single job: its `name:` if set, else the job-id key under `jobs:`.
+# job_context <workflow-file> — resolve the first job's GitHub check context.
+# YAML emitted by this repository uses two spaces for a job id and four spaces for a
+# job-level name. Anything deeper belongs to steps/with/env and is deliberately ignored.
 job_context() {
   awk '
     /^jobs:[[:space:]]*$/ { injobs = 1; next }
@@ -48,13 +49,16 @@ job_context() {
       line = $0
       sub(/^[[:space:]]+/, "", line); sub(/:.*$/, "", line)
       jobid = line
+      next
     }
-    injobs && /^[[:space:]]+name:[[:space:]]*/ && jobname == "" {
+    injobs && jobid != "" && /^[[:space:]]{4}name:[[:space:]]*/ && jobname == "" {
       line = $0
       sub(/^[[:space:]]+name:[[:space:]]*/, "", line)
       gsub(/^["'"'"']|["'"'"']$/, "", line)
       jobname = line
+      next
     }
+    injobs && jobid != "" && /^[[:space:]]{2}[A-Za-z0-9_-]+:[[:space:]]*$/ { exit }
     END { print (jobname != "" ? jobname : jobid) }
   ' "$1"
 }
@@ -81,7 +85,6 @@ done < <(required_workflows)
 [ "$missing" -eq 0 ] || { echo "Aborting: could not resolve all required check contexts." >&2; exit 1; }
 [ "${#contexts[@]}" -gt 0 ] || { echo "Aborting: no required check contexts resolved." >&2; exit 1; }
 
-# Build the protection body (classic branch-protection API).
 BODY="$(python3 - "$BRANCH" "${contexts[@]}" <<'PY'
 import json, sys
 branch = sys.argv[1]
@@ -115,7 +118,6 @@ if [ "$APPLY" -ne 1 ]; then
   exit 0
 fi
 
-# --apply: prefer gh, fall back to curl + token.
 if command -v gh >/dev/null 2>&1; then
   printf '%s' "$BODY" | gh api -X PUT "$API_PATH" \
     -H "Accept: application/vnd.github+json" --input - \
