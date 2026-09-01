@@ -69,7 +69,15 @@ for test_path in "${TESTS[@]}"; do
       continue
     }
   safe_name="$(printf '%s' "$rel_test" | tr '/: ' '___')"
-  log="$EVIDENCE_DIR/logs/${safe_name}.attempt-${attempt}.log"
+  # Attempt numbers are report metadata, not a safe filesystem lock. Use the
+  # filesystem's atomic exclusive-create primitive so nested/concurrent
+  # runners cannot ever select the same backing log, even with identical
+  # clocks, random seeds, or container PIDs.
+  log="$(mktemp "$EVIDENCE_DIR/logs/${safe_name}.attempt-${attempt}.run-XXXXXXXX.log")" || {
+    echo "❌ failed to allocate immutable evidence log for $rel_test" >&2
+    fail=1
+    continue
+  }
   start_ms="$(date +%s%3N)"
 
   echo "──────── $rel_test ────────"
