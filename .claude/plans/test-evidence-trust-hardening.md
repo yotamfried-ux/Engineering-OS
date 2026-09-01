@@ -36,13 +36,13 @@ The objective is stronger truthfulness, not a larger raw test count.
 ## Progress
 
 - [x] Planning complete on the clean branch before implementation changes.
-- [ ] Implementation start checkpoint committed.
+- [x] Implementation start checkpoint committed.
 - [ ] Midpoint verification recorded after the first implementation pass.
 - [ ] Final corrections completed after midpoint findings.
 - [ ] Final local verification completed on the final code state.
 - [ ] Pull request opened only after final local verification.
 
-The implementation remains blocked until a dedicated start checkpoint is committed after this plan-only commit and before any code/config/test write.
+Implementation start is now authorized from exact base `e5b761ce06a811fbd6f81991f3087f8f89744ef7`. This checkpoint is committed separately after the plan-only commit and before any code/config/test write.
 
 ## Findings that drive this plan
 
@@ -338,12 +338,12 @@ After all phases pass, the project may claim that its deterministic automated-te
 - **Steps:** create plan-only commit → record implementation start → publish first implementation → record midpoint findings → fix concurrency, receipt immutability and hermetic transport → run the final corpus → record final checkpoint → open PR #276 → inspect exact-head CI and review.
 - **Evidence:** final code commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0` produced 121 receipts for 121 discovered tests; 116 Bash and 5 Python suites passed; 35 simulation gates and 125 covered cells resolved through executed output; targeted fault injection passed.
 - **Rejected:** source-token presence as semantic coverage; external log files as mutable receipt dependencies; repeated attempts as extra unique tests; live-provider or real-runtime claims without those executions.
-- **Result:** pending implementation and verification.
-- **Follow-up:** record start before code, then midpoint and pre-merge checkpoints in chronological commits. resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
+- **Result:** implementation authorized; code work has not yet started on this branch.
+- **Follow-up:** publish the first implementation, then record midpoint and pre-merge checkpoints chronologically. resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
 
 ## Progress Lifecycle Evidence
 
-- **start:** pending dedicated checkpoint. This canonical lifecycle section is introduced in the plan-only commit before any code/config/test change. Implementation must not begin until the next plan-only update records the exact base and authorization.
+- **start:** implementation authorized by the user's explicit instruction from exact base `e5b761ce06a811fbd6f81991f3087f8f89744ef7`. The canonical lifecycle section was introduced in the preceding plan-only commit; this separate checkpoint still precedes every code/config/test change.
 - **mid:** pending first implementation pass and aggregate validation.
 - **pre-merge:** pending final corrections and full exact-code verification.
 
