@@ -33,8 +33,10 @@ EOF
 
 make_plan "$TMP/ui.md" unclassified "frontend, react" "ui-ux-pro-max"
 (cd "$TMP" && bash "$CHECK" --plan "$TMP/ui.md" --target app/components/Button.tsx)
+echo "scenario:ui-skill-selected"
 make_plan "$TMP/ui-miss.md" unclassified "frontend, react" "None"
 (cd "$TMP" && ! bash "$CHECK" --plan "$TMP/ui-miss.md" --target app/components/Button.tsx)
+echo "scenario:ui-skill-missing-rejected"
 
 make_plan "$TMP/pay.md" unclassified "stripe, payments" "superpowers, security-review"
 (cd "$TMP" && bash "$CHECK" --plan "$TMP/pay.md" --target src/payments/stripe.ts)
@@ -53,6 +55,7 @@ make_plan "$TMP/code-miss.md" code_change "backend" "None"
 
 make_plan "$TMP/dep.md" unclassified "frontend" "frontend-design"
 (cd "$TMP" && ! bash "$CHECK" --plan "$TMP/dep.md" --target app/page.tsx)
+echo "scenario:deprecated-skill-rejected"
 
 # claude-mem: multi-session/context-carryover work requires the memory skill.
 make_plan "$TMP/mem.md" unclassified "multi-session, context-carryover" "claude-mem"
@@ -69,6 +72,7 @@ cat >> "$TMP/mem-waiver.md" <<'EOF'
 - claude-mem: environment lacks claude-mem in this remote session; manual context record is used instead.
 EOF
 (cd "$TMP" && bash "$CHECK" --plan "$TMP/mem-waiver.md" --target scripts/session.sh)
+echo "scenario:memory-skill-waiver-accepted"
 
 # claude-code-workflows: large-refactor work requires the review workflow skill.
 make_plan "$TMP/lr-miss.md" unclassified "large-refactor" "superpowers, graphify"
