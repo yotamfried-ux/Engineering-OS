@@ -317,16 +317,21 @@ def check_receipts(root: Path, receipt_file: Path, head_sha: str) -> dict:
         by_id[rec["test_id"]].append(rec)
     missing = []
     no_pass = []
+    failed = []
     for item in inventory:
         if not item["required_direct_execution"]:
             continue
         rs = by_id.get(item["id"], [])
         if not rs:
             missing.append(item["path"])
+        elif any(r["result"] == "fail" for r in rs):
+            failed.append(item["path"])
         elif not any(r["result"] == "pass" for r in rs):
             no_pass.append(item["path"])
     if missing:
         raise ValueError("required standalone tests missing exact-run receipts: " + ", ".join(missing))
+    if failed:
+        raise ValueError("required standalone tests contain a failed exact-run attempt: " + ", ".join(failed))
     if no_pass:
         raise ValueError("required standalone tests have no passing exact-run receipt: " + ", ".join(no_pass))
     return summarize(inventory, records, head_sha)
