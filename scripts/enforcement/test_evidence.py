@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
 import hashlib
 import json
 import os
@@ -178,6 +179,7 @@ def append_receipt(*, root: Path, receipt_file: Path, test_path: str, runner: st
         log_rel = rel(root, log_abs)
     except ValueError:
         log_rel = str(log_abs.resolve())
+    log_bytes = log_abs.read_bytes()
     record = {
         "schema_version": 1,
         "test_id": item["id"],
@@ -190,7 +192,8 @@ def append_receipt(*, root: Path, receipt_file: Path, test_path: str, runner: st
         "duration_ms": int(duration_ms),
         "evidence_level": item["evidence_level"],
         "log_path": log_rel,
-        "log_sha256": sha256_file(log_abs),
+        "log_sha256": hashlib.sha256(log_bytes).hexdigest(),
+        "log_content_b64": base64.b64encode(log_bytes).decode("ascii"),
     }
     receipt_file.parent.mkdir(parents=True, exist_ok=True)
     with receipt_file.open("a", encoding="utf-8") as f:
@@ -228,12 +231,15 @@ def load_receipts(root: Path, receipt_file: Path, expected_head: str | None = No
         log_value = str(rec.get("log_path") or "")
         if not log_value:
             raise ValueError(f"{receipt_file}:{lineno}: missing log_path")
-        lp = Path(log_value)
-        log_abs = lp if lp.is_absolute() else root / lp
-        if not log_abs.is_file():
-            raise ValueError(f"{receipt_file}:{lineno}: log missing for {tid}: {log_value}")
-        if sha256_file(log_abs) != rec.get("log_sha256"):
-            raise ValueError(f"{receipt_file}:{lineno}: log checksum mismatch for {tid}")
+        encoded = rec.get("log_content_b64")
+        if not isinstance(encoded, str) or not encoded:
+            raise ValueError(f"{receipt_file}:{lineno}: missing self-contained log content for {tid}")
+        try:
+            log_bytes = base64.b64decode(encoded, validate=True)
+        except Exception as exc:
+            raise ValueError(f"{receipt_file}:{lineno}: invalid embedded log content for {tid}") from exc
+        if hashlib.sha256(log_bytes).hexdigest() != rec.get("log_sha256"):
+            raise ValueError(f"{receipt_file}:{lineno}: embedded log checksum mismatch for {tid}")
         try:
             attempt = int(rec.get("attempt"))
         except Exception as exc:
