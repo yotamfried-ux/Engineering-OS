@@ -116,6 +116,7 @@ cp "$TMP/passing-retries.jsonl" "$RECEIPTS"
 # commit cannot poison a new commit's otherwise complete run.
 grep -Fq '.engineering-os/test-evidence/$safe_head' "$ROOT/scripts/enforcement/run-enforcement-tests.sh"
 grep -Fq '.engineering-os/test-evidence" / safe_head' "$ROOT/scripts/enforcement/run-python-enforcement-tests.py"
+grep -Fq 'EOS_TEST_EVIDENCE_DIR: .engineering-os/test-evidence' "$ROOT/.github/workflows/enforcement-tests.yml"
 echo "ok: default-evidence-is-head-scoped"
 
 # Two isolated runner processes may both allocate attempt 1 before either
