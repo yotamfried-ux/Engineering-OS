@@ -3,12 +3,14 @@
 set -u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-EVIDENCE_DIR="${EOS_TEST_EVIDENCE_DIR:-$ROOT/.engineering-os/test-evidence}"
-RECEIPT_FILE="${EOS_TEST_RECEIPT_FILE:-$EVIDENCE_DIR/receipts.jsonl}"
 HEAD_SHA="${EOS_TEST_HEAD_SHA:-${GITHUB_SHA:-}}"
 if [ -z "$HEAD_SHA" ]; then
   HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || printf 'unknown')"
 fi
+safe_head="$(printf '%s' "$HEAD_SHA" | tr -cd 'A-Za-z0-9._-')"
+[ -n "$safe_head" ] || safe_head=unknown
+EVIDENCE_DIR="${EOS_TEST_EVIDENCE_DIR:-$ROOT/.engineering-os/test-evidence/$safe_head}"
+RECEIPT_FILE="${EOS_TEST_RECEIPT_FILE:-$EVIDENCE_DIR/receipts.jsonl}"
 
 FIXTURE_MODE=0
 if [ "${1:-}" = "--fixture" ]; then
