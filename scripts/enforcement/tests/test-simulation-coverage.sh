@@ -33,8 +33,9 @@ make_receipt() {
   local sha
   sha="$(sha256sum "$log" | awk '{print $1}')"
   python3 - "$receipt" "$test_path" "$result" "$log" "$sha" "$head" <<'PY'
-import json, sys
+import base64, json, sys
 receipt, test_path, result, log, sha, head = sys.argv[1:]
+content = open(log, "rb").read()
 with open(receipt, "a", encoding="utf-8") as f:
     f.write(json.dumps({
         "schema_version": 1,
@@ -47,6 +48,7 @@ with open(receipt, "a", encoding="utf-8") as f:
         "evidence_level": "fixture",
         "log_path": log,
         "log_sha256": sha,
+        "log_content_b64": base64.b64encode(content).decode("ascii"),
     }) + "\n")
 PY
 }
@@ -118,12 +120,13 @@ tamper_receipts="$TMP/tamper.jsonl"
 make_receipt "$tamper_receipts" "$fixture_test" pass "positive-case-token
 negative-case-token
 invalid-case-token"
-tamper_log="$(python3 - "$tamper_receipts" <<'PY'
+python3 - "$tamper_receipts" <<'PY'
 import json, sys
-print(json.loads(open(sys.argv[1]).readline())["log_path"])
+p = sys.argv[1]
+row = json.loads(open(p).readline())
+row["log_content_b64"] = row["log_content_b64"][:-4] + "AAAA"
+open(p, "w").write(json.dumps(row) + "\n")
 PY
-)"
-printf 'tamper\n' >> "$tamper_log"
-failcase log-checksum-tamper-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 "${CHECK_CMD[@]}" "$good_manifest" --receipts "$tamper_receipts" --head-sha "$HEAD"
+failcase embedded-log-checksum-tamper-fails env EOS_SIM_COVERAGE_REQUIRED_GATES=fixture-gate EOS_SIM_COVERAGE_MIN_ROWS=1 "${CHECK_CMD[@]}" "$good_manifest" --receipts "$tamper_receipts" --head-sha "$HEAD"
 
 echo "simulation coverage validator tests passed"
