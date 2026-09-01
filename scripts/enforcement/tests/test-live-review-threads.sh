@@ -7,10 +7,12 @@ cat > "$TMP/resolved.json" <<'JSON'
 [{"id":"a","isResolved":true,"isOutdated":false},{"id":"b","isResolved":true,"isOutdated":true}]
 JSON
 python3 "$CHECK" --threads-json "$TMP/resolved.json" >/dev/null
+echo 'scenario:resolved-threads-accepted'
 cat > "$TMP/current.json" <<'JSON'
 [{"id":"a","isResolved":false,"isOutdated":false}]
 JSON
 if python3 "$CHECK" --threads-json "$TMP/current.json" >/dev/null 2>&1; then echo 'unexpected pass: current unresolved thread'; exit 1; fi
+echo 'scenario:current-unresolved-rejected'
 cat > "$TMP/outdated.json" <<'JSON'
 [{"id":"a","isResolved":false,"isOutdated":true}]
 JSON
@@ -19,4 +21,5 @@ cat > "$TMP/missing.json" <<'JSON'
 [{"id":"a"}]
 JSON
 if python3 "$CHECK" --threads-json "$TMP/missing.json" >/dev/null 2>&1; then echo 'unexpected pass: missing thread metadata'; exit 1; fi
+echo 'scenario:missing-thread-metadata-rejected'
 echo 'live review thread tests passed'
