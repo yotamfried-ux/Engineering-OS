@@ -76,9 +76,14 @@ cp "$RECEIPTS" "$TMP/complete.jsonl"
 head -1 "$RECEIPTS" > "$TMP/missing.jsonl"
 failcase missing-python-receipt-fails python3 "$TOOL" check-receipts --root "$FIX" --receipt-file "$TMP/missing.jsonl" --head-sha "$HEAD"
 
-printf 'tampered\n' >> "$FIX/.engineering-os/test-evidence/logs/shell.log"
-failcase tampered-log-fails python3 "$TOOL" check-receipts --root "$FIX" --receipt-file "$RECEIPTS" --head-sha "$HEAD"
-printf 'shell scenario passed\n' > "$FIX/.engineering-os/test-evidence/logs/shell.log"
+python3 - "$RECEIPTS" <<'PY'
+import json, sys
+p = sys.argv[1]
+rows = [json.loads(line) for line in open(p) if line.strip()]
+rows[0]["log_content_b64"] = rows[0]["log_content_b64"][:-4] + "AAAA"
+open(p, "w").write("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+PY
+failcase tampered-embedded-log-fails python3 "$TOOL" check-receipts --root "$FIX" --receipt-file "$RECEIPTS" --head-sha "$HEAD"
 cp "$TMP/complete.jsonl" "$RECEIPTS"
 
 python3 "$TOOL" record --root "$FIX" --receipt-file "$RECEIPTS" \
@@ -98,5 +103,31 @@ assert d["unique_status"]["passed"] == 2, d
 assert d["passed_evidence_levels"]["static"] == 2, d
 PY
 echo "ok: duplicate-attempts-count-once"
+
+# Two isolated runner processes may both allocate attempt 1 before either
+# appends a receipt. Their immutable log names must still remain distinct and
+# both receipts must survive checksum validation.
+CONCURRENT="$TMP/concurrent"
+mkdir -p "$CONCURRENT"
+EOS_TEST_EVIDENCE_DIR="$CONCURRENT" bash "$ROOT/scripts/enforcement/run-enforcement-tests.sh" \
+  scripts/enforcement/tests/test-active-mcp-verification.sh >"$TMP/concurrent-a.out" 2>&1 &
+pid_a=$!
+EOS_TEST_EVIDENCE_DIR="$CONCURRENT" bash "$ROOT/scripts/enforcement/run-enforcement-tests.sh" \
+  scripts/enforcement/tests/test-active-mcp-verification.sh >"$TMP/concurrent-b.out" 2>&1 &
+pid_b=$!
+wait "$pid_a"
+wait "$pid_b"
+python3 - "$ROOT" "$CONCURRENT/receipts.jsonl" <<'PY'
+import sys
+from pathlib import Path
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root / "scripts/enforcement"))
+import test_evidence
+rows = test_evidence.load_receipts(root, Path(sys.argv[2]), test_evidence.git_head(root))
+assert len(rows) == 2, rows
+assert len({row["log_path"] for row in rows}) == 2, rows
+PY
+echo "ok: concurrent-receipts-validate"
+echo "ok: concurrent-runner-logs-are-immutable"
 
 echo "test evidence trust tests passed"
