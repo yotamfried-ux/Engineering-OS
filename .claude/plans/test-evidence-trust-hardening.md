@@ -37,12 +37,12 @@ The objective is stronger truthfulness, not a larger raw test count.
 
 - [x] Planning complete on the clean branch before implementation changes.
 - [x] Implementation start checkpoint committed.
-- [ ] Midpoint verification recorded after the first implementation pass.
+- [x] Midpoint verification recorded after the first implementation pass.
 - [ ] Final corrections completed after midpoint findings.
 - [ ] Final local verification completed on the final code state.
 - [ ] Pull request opened only after final local verification.
 
-Implementation start is now authorized from exact base `e5b761ce06a811fbd6f81991f3087f8f89744ef7`. This checkpoint is committed separately after the plan-only commit and before any code/config/test write.
+Midpoint validation exposed two issues that must be corrected before closure: concurrent aggregate attempts can collide in a shared log, and the multirepo simulation must never attempt an external push.
 
 ## Findings that drive this plan
 
@@ -338,13 +338,13 @@ After all phases pass, the project may claim that its deterministic automated-te
 - **Steps:** create plan-only commit → record implementation start → publish first implementation → record midpoint findings → fix concurrency, receipt immutability and hermetic transport → run the final corpus → record final checkpoint → open PR #276 → inspect exact-head CI and review.
 - **Evidence:** final code commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0` produced 121 receipts for 121 discovered tests; 116 Bash and 5 Python suites passed; 35 simulation gates and 125 covered cells resolved through executed output; targeted fault injection passed.
 - **Rejected:** source-token presence as semantic coverage; external log files as mutable receipt dependencies; repeated attempts as extra unique tests; live-provider or real-runtime claims without those executions.
-- **Result:** implementation authorized; code work has not yet started on this branch.
-- **Follow-up:** publish the first implementation, then record midpoint and pre-merge checkpoints chronologically. resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
+- **Result:** midpoint reached; two concrete correctness/safety issues remain open.
+- **Follow-up:** make receipts self-contained and concurrency-safe, hermetically redirect multirepo transport, then rerun the full corpus. resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
 
 ## Progress Lifecycle Evidence
 
-- **start:** implementation authorized by the user's explicit instruction from exact base `e5b761ce06a811fbd6f81991f3087f8f89744ef7`. The canonical lifecycle section was introduced in the preceding plan-only commit; this separate checkpoint still precedes every code/config/test change.
-- **mid:** pending first implementation pass and aggregate validation.
+- **start:** implementation authorized from exact base `e5b761ce06a811fbd6f81991f3087f8f89744ef7` in a dedicated checkpoint before every code/config/test change.
+- **mid:** first implementation published and aggregate validation reached the remote-handoff simulations. It exposed concurrent receipt-log collision risk and a non-hermetic multirepo transport path; both are explicit blockers for final verification.
 - **pre-merge:** pending final corrections and full exact-code verification.
 
 ## Definition of Done
