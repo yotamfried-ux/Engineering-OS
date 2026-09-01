@@ -16,9 +16,10 @@ import test_evidence  # noqa: E402
 
 def main() -> int:
     root = SCRIPT_DIR.parent.parent
-    evidence_dir = Path(os.environ.get("EOS_TEST_EVIDENCE_DIR", root / ".engineering-os/test-evidence"))
-    receipt_file = Path(os.environ.get("EOS_TEST_RECEIPT_FILE", evidence_dir / "receipts.jsonl"))
     head_sha = os.environ.get("EOS_TEST_HEAD_SHA") or os.environ.get("GITHUB_SHA") or test_evidence.git_head(root)
+    safe_head = "".join(c for c in head_sha if c.isalnum() or c in "._-") or "unknown"
+    evidence_dir = Path(os.environ.get("EOS_TEST_EVIDENCE_DIR", root / ".engineering-os/test-evidence" / safe_head))
+    receipt_file = Path(os.environ.get("EOS_TEST_RECEIPT_FILE", evidence_dir / "receipts.jsonl"))
     evidence_dir.mkdir(parents=True, exist_ok=True)
     (evidence_dir / "logs").mkdir(parents=True, exist_ok=True)
 
