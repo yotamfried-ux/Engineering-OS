@@ -139,7 +139,7 @@ Extend canonical runners so CI produces a machine-readable execution artifact fo
 - canonical runner identity;
 - attempt number;
 - start/end or duration metadata;
-- result: PR #277 review produced two concrete P2 threads; both changed runtime behavior and gained focused regressions before the full 121-test rerun.
+- result: PR #277 review findings were fixed, and exact-head CI then identified one concrete aggregation-path integration defect; it changed the workflow contract and gained a focused regression.
 - evidence level;
 - emitted scenario IDs where applicable.
 
@@ -342,14 +342,14 @@ After all phases pass, the project may claim that its deterministic automated-te
 - **Steps:** create plan-only commit → record implementation start → publish first implementation → record midpoint findings → fix concurrency, receipt immutability and hermetic transport → run the final corpus → record final checkpoint → open PR #277 → inspect exact-head CI and review.
 - **Evidence:** final code commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0` produced 121 receipts for 121 discovered tests; 116 Bash and 5 Python suites passed; 35 simulation gates and 125 covered cells resolved through executed output; targeted fault injection passed.
 - **Rejected:** source-token presence as semantic coverage; external log files as mutable receipt dependencies; repeated attempts as extra unique tests; live-provider or real-runtime claims without those executions.
-- **Result:** PR #277 review findings were implemented and fully reverified: 121/121 tests passed and receipt completeness passed on the corrected code.
-- **Follow-up:** require exact-head CI on the final plan commit, resolve both review threads after reconciliation, and obtain explicit owner approval before merge. resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
+- **Result:** both review findings and the CI aggregation-path defect are fixed with regressions; no claim is made until the new exact-head CI completes.
+- **Follow-up:** require all exact-head workflows green, confirm both review threads remain resolved, and obtain explicit owner approval before merge. resolve any exact-head policy/review finding, obtain owner approval, and do not merge without it.
 
 ## Progress Lifecycle Evidence
 
-- **start:** plan-only commit `b16d8a1c8956f0a6169af2fac6c3ea9670c4dfce` introduced this canonical lifecycle section before code. Start checkpoint `db03e17c5280b48f98edc5a2ad1e85cf11eee4c0` then authorized work from exact base `e5b761ce06a811fbd6f81991f3087f8f89744ef7`.
-- **mid:** checkpoint `fa2a83aed14b0820d434e6b9c280a862ea78c0f6` recorded concurrent receipt-log collision risk and non-hermetic multirepo transport before final corrections.
-- **pre-merge:** checkpoint `2ea3b64738ca4355484169488e4ca6f3240ee63d` recorded the initial 121/121 verified state before PR #277. Review then identified two P2 receipt-authority gaps. Final code commit `03663ddb33a5fa31d6dd1b07c2f8d8ad47723a36` isolates default local evidence by exact HEAD and rejects any evidence set containing a failed attempt. Focused receipt, simulation and six-mutation tests passed; the full corpus rerun passed 116 Bash plus 5 Python suites with 121 exact-code receipts, 121 unique passes and zero duplicates.
+- **start:** plan-only commit `b16d8a1c8956f0a6169af2fac6c3ea9670c4dfce` introduced this section before code; start checkpoint `db03e17c5280b48f98edc5a2ad1e85cf11eee4c0` authorized work from exact base `e5b761ce06a811fbd6f81991f3087f8f89744ef7`.
+- **mid:** checkpoint `fa2a83aed14b0820d434e6b9c280a862ea78c0f6` recorded receipt-concurrency and multirepo-transport findings before corrections.
+- **pre-merge:** checkpoint `2ea3b64738ca4355484169488e4ca6f3240ee63d` recorded the initial 121/121 state. Review fixes through `03663ddb33a5fa31d6dd1b07c2f8d8ad47723a36` isolated local receipts by HEAD and rejected mixed pass/fail evidence; 121/121 reran successfully. Exact-head CI then exposed that its intentional multi-phase aggregate used the old fixed artifact path while the runners' new local default was head-scoped. Commit `896ef2896856ff2cb2511760a29d4d0e3b74482e` now sets the CI evidence directory explicitly and adds a regression for that contract; focused receipt and simulation suites pass.
 
 ## Definition of Done
 
