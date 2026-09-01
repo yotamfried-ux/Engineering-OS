@@ -68,9 +68,9 @@ def main() -> int:
                 "EOS_TEST_EVIDENCE_TOOL",
             ),
             (
-                "tampered corpus log checksum accepted",
+                "tampered embedded corpus log checksum accepted",
                 EVIDENCE,
-                'if sha256_file(log_abs) != rec.get("log_sha256"):',
+                'if hashlib.sha256(log_bytes).hexdigest() != rec.get("log_sha256"):',
                 "if False:",
                 EVIDENCE_TEST,
                 "EOS_TEST_EVIDENCE_TOOL",
