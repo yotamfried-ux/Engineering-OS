@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -49,13 +50,17 @@ def load_receipts(root: Path, path: Path, head_sha: str) -> list[dict]:
         log_value = str(rec.get("log_path") or "")
         if not log_value:
             fail(f"{path}:{lineno}: missing receipt log_path")
-        log_path = resolve(root, log_value)
-        if not log_path.is_file():
-            fail(f"{path}:{lineno}: receipt log missing: {log_value}")
-        if sha256_file(log_path) != rec.get("log_sha256"):
-            fail(f"{path}:{lineno}: receipt log checksum mismatch: {log_value}")
+        encoded = rec.get("log_content_b64")
+        if not isinstance(encoded, str) or not encoded:
+            fail(f"{path}:{lineno}: missing self-contained receipt log content")
+        try:
+            log_bytes = base64.b64decode(encoded, validate=True)
+        except Exception as exc:
+            fail(f"{path}:{lineno}: invalid embedded receipt log content: {exc}")
+        if hashlib.sha256(log_bytes).hexdigest() != rec.get("log_sha256"):
+            fail(f"{path}:{lineno}: embedded receipt log checksum mismatch")
         rec = dict(rec)
-        rec["_log_text"] = log_path.read_text(encoding="utf-8", errors="replace")
+        rec["_log_text"] = log_bytes.decode("utf-8", errors="replace")
         records.append(rec)
     return records
 
