@@ -38,13 +38,15 @@ The objective is stronger truthfulness, not a larger raw test count.
 - [x] Planning complete on the clean branch before implementation changes.
 - [x] Implementation start authorized by the user's explicit instruction on 2026-09-01.
 - [x] Midpoint verification recorded after the first implementation pass.
-- [ ] Final corrections completed after midpoint findings.
-- [ ] Final local verification completed on the final code state.
+- [x] Final corrections completed after midpoint findings.
+- [x] Final local verification completed on the final code state.
 - [ ] Pull request opened only after final local verification.
 
 Implementation-start checkpoint: work begins from `main@e5b761ce06a811fbd6f81991f3087f8f89744ef7` after this progress record is committed. The prior draft PR #275 is treated only as an implementation laboratory and evidence source; it is not the delivery branch.
 
 Midpoint checkpoint: the first aggregate run reached the remote-handoff simulations after the existing corpus had remained green. It exposed two evidence-system issues to correct before final verification: concurrent aggregate attempts can overwrite a shared attempt log and invalidate its earlier checksum, and `test-multirepo-dispatch.sh` used GitHub-shaped origins that allowed a simulated required handoff to attempt an external push. Final corrections must use an isolated evidence directory per aggregate run and make the multirepo transport hermetic while preserving GitHub-shaped identity parsing.
+
+Final local verification checkpoint: code commit `7c25ee7bcfa7267fdeaca7a37b103279f8ecc9e0` produced 121 exact-code execution receipts for 121 discovered standalone tests, with 121 passes, zero missing receipts, zero duplicate attempts in the clean release run, and 35 execution-backed simulation gates passing. The conservative evidence report classified 109 tests as static, 5 as fixture, 7 as integration, and none as live-provider or real-runtime. External log mutation found during verification was resolved by embedding checksum-bound output directly in each self-contained receipt; embedded-content tampering and concurrent-runner regressions pass.
 
 ## Findings that drive this plan
 
