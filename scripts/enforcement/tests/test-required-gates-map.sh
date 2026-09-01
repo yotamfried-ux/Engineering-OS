@@ -33,8 +33,9 @@ EOF
 bash "$TMP/t.sh" > "$TMP/t.log"
 sha="$(sha256sum "$TMP/t.log" | awk '{print $1}')"
 python3 - "$TMP/receipts.jsonl" "$TMP/t.sh" "$TMP/t.log" "$sha" "$HEAD" <<'PY'
-import json, sys
+import base64, json, sys
 receipt, test_path, log, sha, head = sys.argv[1:]
+content = open(log, "rb").read()
 with open(receipt, "w", encoding="utf-8") as f:
     f.write(json.dumps({
         "schema_version": 1,
@@ -47,6 +48,7 @@ with open(receipt, "w", encoding="utf-8") as f:
         "evidence_level": "fixture",
         "log_path": log,
         "log_sha256": sha,
+        "log_content_b64": base64.b64encode(content).decode("ascii"),
     }) + "\n")
 PY
 SIM_ARGS=(--receipts "$TMP/receipts.jsonl" --head-sha "$HEAD")
