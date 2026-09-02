@@ -55,6 +55,10 @@ run_structured_payload path_mention 'echo bash scripts/enforcement/tests/test-ho
 assert_no_tests path_mention "mentioning a test path does not fabricate tests_run"
 run_structured_payload masked_direct 'bash scripts/enforcement/tests/test-hook-classification.sh || true' $'hook classification: 7 passed, 1 failed\n'
 assert_no_tests masked_direct "masked direct failure does not record tests_run"
+# A wrapped invocation is the common case, not the edge: the recorder used to match the
+# ENTIRE command, so a cd prefix, an && chain or a redirect made a real run invisible.
+run_structured_payload wrapped_cd 'cd /repo && bash scripts/enforcement/tests/test-hook-classification.sh 2>&1' $'hook classification: 8 passed, 0 failed\n'
+assert_has_tests wrapped_cd "a cd-prefixed, redirected suite run records tests_run"
 
 echo "── canonical all-suite runner ──"
 RUNNER_FIX="$WORK/runner-fixtures"

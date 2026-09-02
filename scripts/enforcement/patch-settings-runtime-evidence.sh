@@ -81,6 +81,9 @@ ensure_hook("PreToolUse", ".*", "eos-telemetry-event.sh", soft_command("PreToolU
 
 ensure_hook("PostToolUse", "mcp__.*", "post-tool-use-mcp.sh", soft_command("PostToolUse", "scripts/enforcement/post-tool-use-mcp.sh"), index=0)
 ensure_hook("PostToolUse", "Read", "post-tool-use-read-evidence.sh", soft_command("PostToolUse", "scripts/enforcement/post-tool-use-read-evidence.sh"), index=1)
+# Verification evidence must key on the work, so the Skill entry point records the
+# same evidence the Read entry point does.
+ensure_hook("PostToolUse", "Skill", "post-tool-use-skill-evidence.sh", soft_command("PostToolUse", "scripts/enforcement/post-tool-use-skill-evidence.sh"), index=0)
 ensure_hook(
     "PostToolUse",
     "mcp__Notion__.*",
