@@ -115,6 +115,13 @@ reducing risk.
   two new gaps were added as audit status-matrix rows. One self-inflicted bug was caught
   here too — `$(plan_stamp)` ran in a subshell so the sequence counter never advanced and
   every fixture shared a timestamp.
+- pre-merge: Full corpus green on the exact committed head with execution receipts —
+  117 Bash suites and 5 Python suites, 122 receipts, receipt count equal to corpus count,
+  none failing. Re-ran the four PR evidence gates that failed on the first pushed head
+  `6be9818`; that failure exposed a real defect (`.gitignore` kept new route plans
+  untracked) which is fixed in this branch, and the branch was reordered so the route-plan
+  commit precedes the code commit.
+
 ## Goal
 
 Plan freshness and plan selection must not depend on filesystem mtime, because a fresh
