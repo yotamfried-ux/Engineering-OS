@@ -337,6 +337,70 @@ def check_receipts(root: Path, receipt_file: Path, head_sha: str) -> dict:
     return summarize(inventory, records, head_sha)
 
 
+RUNTIME_EVIDENCE_KEY = "bash_suite_run"
+DEFAULT_LEDGER = Path(".claude/.evidence/ledger")
+
+
+def load_runtime_evidence(ledger: Path) -> dict[str, str]:
+    """Read the operational runtime evidence view: suite path -> latest result.
+
+    The ledger is the append-ordered, session-scoped view the Stop hook and the
+    pre-commit gates read. Lines are `<epoch>\t<key>\t<value>`; only the suite-run key
+    is read, so an unrelated or malformed line can never be mistaken for a suite record.
+
+    The LAST record for a suite wins, because that is what "the suite's result" means:
+    a suite that failed, was fixed, and then passed is passing. Keeping every historical
+    result instead would make a long session permanently red after any transient failure,
+    which reports the wrong state rather than a stricter one. A suite whose most recent
+    run failed is still reported as failing.
+    """
+    seen: dict[str, str] = {}
+    if not ledger.exists():
+        return seen
+    for raw in ledger.read_text(encoding="utf-8", errors="replace").splitlines():
+        parts = raw.split("\t")
+        if len(parts) < 3 or parts[1] != RUNTIME_EVIDENCE_KEY:
+            continue
+        value = parts[2].strip()
+        suite, _, result = value.rpartition(":")
+        if not suite or result not in {"pass", "fail"}:
+            continue
+        seen[suite] = result
+    return seen
+
+
+def reconcile_runtime_evidence(root: Path, ledger: Path) -> dict:
+    """Reconcile the runtime evidence view against the canonical discovered corpus.
+
+    Returns a report rather than a verdict: a caller that only wants visibility reads
+    the counts, and a caller enforcing completeness reads `missing` and `failed`.
+    """
+    inventory = discover(root)
+    bash_suites = [r["path"] for r in inventory if r["language"] == "bash"]
+    python_suites = [
+        r["path"] for r in inventory
+        if r["language"] == "python" and r["required_direct_execution"]
+    ]
+    observed = load_runtime_evidence(ledger)
+    known = set(bash_suites) | set(python_suites)
+    represented = sorted(p for p in bash_suites if p in observed)
+    missing = sorted(p for p in bash_suites if p not in observed)
+    failed = sorted(p for p in bash_suites if observed.get(p) == "fail")
+    # A record naming a path that is not in the corpus means the ledger and the corpus
+    # disagree about what exists — a stale record after a rename, or a fabricated one.
+    unknown = sorted(p for p in observed if p not in known)
+    return {
+        "ledger": str(ledger),
+        "corpus_bash_suites": len(bash_suites),
+        "corpus_python_suites": len(python_suites),
+        "corpus_total": len(bash_suites) + len(python_suites),
+        "represented": len(represented),
+        "missing": missing,
+        "failed": failed,
+        "unknown": unknown,
+    }
+
+
 def next_attempt(receipt_file: Path, test_id: str) -> int:
     if not receipt_file.exists():
         return 1
@@ -418,6 +482,39 @@ def cmd_summary(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_runtime_reconcile(args: argparse.Namespace) -> int:
+    root = Path(args.root).resolve()
+    ledger = path_arg(root, args.ledger)
+    report = reconcile_runtime_evidence(root, ledger)
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(
+            "bash suite runtime evidence: "
+            f"{report['represented']}/{report['corpus_bash_suites']} Bash suites represented "
+            f"(corpus {report['corpus_total']} = {report['corpus_bash_suites']} Bash + "
+            f"{report['corpus_python_suites']} Python)"
+        )
+    problems: list[str] = []
+    if report["unknown"]:
+        problems.append(
+            "runtime evidence names suites that are not in the discovered corpus: "
+            + ", ".join(report["unknown"])
+        )
+    if report["failed"]:
+        problems.append("suites recorded as failing: " + ", ".join(report["failed"]))
+    if args.require_complete and report["missing"]:
+        problems.append(
+            f"{len(report['missing'])} discovered Bash suite(s) executed with no runtime "
+            "evidence record, or never ran: " + ", ".join(report["missing"])
+        )
+    if problems:
+        for problem in problems:
+            print(f"ERROR_FOR_AGENT: {problem}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="command", required=True)
@@ -426,6 +523,7 @@ def build_parser() -> argparse.ArgumentParser:
     x = sub.add_parser("record"); x.add_argument("--root", default="."); x.add_argument("--receipt-file", required=True); x.add_argument("--test-path", required=True); x.add_argument("--runner", required=True); x.add_argument("--result", required=True); x.add_argument("--log-path", required=True); x.add_argument("--head-sha", required=True); x.add_argument("--attempt", type=int, required=True); x.add_argument("--duration-ms", type=int, required=True); x.set_defaults(func=cmd_record)
     x = sub.add_parser("next-attempt"); x.add_argument("--root", default="."); x.add_argument("--receipt-file", required=True); x.add_argument("--test-path", required=True); x.set_defaults(func=cmd_next_attempt)
     x = sub.add_parser("check-receipts"); x.add_argument("--root", default="."); x.add_argument("--receipt-file", required=True); x.add_argument("--head-sha", required=True); x.set_defaults(func=cmd_check_receipts)
+    x = sub.add_parser("runtime-reconcile"); x.add_argument("--root", default="."); x.add_argument("--ledger", default=str(DEFAULT_LEDGER)); x.add_argument("--require-complete", action="store_true"); x.add_argument("--json", action="store_true"); x.set_defaults(func=cmd_runtime_reconcile)
     x = sub.add_parser("summary"); x.add_argument("--root", default="."); x.add_argument("--receipt-file", required=True); x.add_argument("--head-sha", required=True); x.add_argument("--output"); x.set_defaults(func=cmd_summary)
     return p
 

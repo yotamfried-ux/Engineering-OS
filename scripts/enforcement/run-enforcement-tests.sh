@@ -3,6 +3,17 @@
 set -u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+# Runtime evidence is recorded from inside the execution, not inferred from the command
+# that started it. A `cd` prefix, an `&&` chain, a pipe or a redirect changes the
+# command text without changing the work, so a matcher reading that text reports a real
+# run as "did not happen". Here the runner records what it actually ran.
+# Deliberately non-fatal when absent: the runner's job is to run suites and emit
+# receipts, and a missing evidence helper must not take that down. A missing record is
+# not silently tolerated either — check-bash-runtime-evidence.sh reconciles the ledger
+# against the discovered corpus and fails when a suite ran without one.
+# shellcheck source=lib/test-run-evidence.sh
+. "$ROOT/scripts/enforcement/lib/test-run-evidence.sh" 2>/dev/null || true
 HEAD_SHA="${EOS_TEST_HEAD_SHA:-${GITHUB_SHA:-}}"
 if [ -z "$HEAD_SHA" ]; then
   HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || printf 'unknown')"
@@ -83,11 +94,16 @@ for test_path in "${TESTS[@]}"; do
   start_ms="$(date +%s%3N)"
 
   echo "──────── $rel_test ────────"
-  if bash "$abs_test" >"$log" 2>&1; then
+  # EOS_SUITE_RUN_ACTIVE marks the nesting boundary: a corpus suite that invokes this
+  # runner itself must not write corpus evidence on behalf of the outer session.
+  if EOS_SUITE_RUN_ACTIVE=1 bash "$abs_test" >"$log" 2>&1; then
     result=pass
   else
     result=fail
     fail=1
+  fi
+  if declare -f eos_record_suite_run >/dev/null 2>&1; then
+    eos_record_suite_run "$rel_test" "$result" "$ROOT" || true
   fi
   cat "$log"
   end_ms="$(date +%s%3N)"

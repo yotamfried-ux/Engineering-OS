@@ -3,12 +3,23 @@ set -o pipefail
 # post-tool-use-bash.sh — PostToolUse evidence recorder for Bash tool.
 #
 # Records evidence for gates that depend on successful Bash commands:
-#   graphify_used  — graphify query/explain/path/update exited cleanly (G7)
-#   tests_run      — a test command produced trustworthy passing evidence
+#   graphify_used   — graphify query/explain/path/update exited cleanly (G7)
+#   tests_run       — a test command produced trustworthy passing evidence
+#   bash_suite_run  — a named corpus suite executed, and how it ended
 #
-# Evidence is recorded ONLY when the command is a recognised subcommand AND
-# the result is strong enough to avoid fabricating evidence from mentions,
-# help text, masked failures, malformed hook payloads, or fixture-only runners.
+# Evidence is recorded ONLY when the command actually executed something AND the
+# result is strong enough to avoid fabricating evidence from mentions, help text,
+# masked failures, malformed hook payloads, or fixture-only runners.
+#
+# Suite detection is delegated to lib/bash_test_invocation.py, which classifies each
+# control-operator segment of the command rather than matching the whole command
+# string. The previous whole-command `re.fullmatch` recognised only a bare invocation,
+# so a `cd` prefix, an `&&` chain, a pipe or a redirect made a real suite run invisible
+# — and since virtually every real invocation is wrapped, that was the common case.
+#
+# This recorder covers *direct* suite invocations. Runs that go through
+# run-enforcement-tests.sh record themselves from inside the execution via
+# lib/test-run-evidence.sh, where no command wrapper can affect the outcome.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/evidence.sh" 2>/dev/null || true
@@ -58,36 +69,10 @@ case "$CMD" in
     ;;
 esac
 
-_eos_test_mode() {
+_eos_test_invocations() {
   command -v python3 >/dev/null 2>&1 || return
-  python3 - "$1" <<'PY'
-import re
-import sys
-
-cmd = sys.argv[1]
-common_prefix = r"\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^;&|\s]+\s+)*(?:bash|/bin/bash)\s+"
-
-direct_suite = re.fullmatch(
-    common_prefix
-    + r"(?:\./)?scripts/enforcement/tests/test-[A-Za-z0-9._-]+\.sh"
-    + r"(?:\s+[^;&|\n]*)?\s*",
-    cmd,
-    re.S,
-)
-if direct_suite:
-    print("direct-suite")
-    raise SystemExit(0)
-
-canonical_runner = re.fullmatch(
-    common_prefix
-    + r"(?:\./)?scripts/enforcement/run-enforcement-tests\.sh"
-    + r"(?:\s+[^;&|\n]*)?\s*",
-    cmd,
-    re.S,
-)
-if canonical_runner and not re.search(r"(?:^|\s)--fixture(?:\s|$)", cmd):
-    print("canonical-runner")
-PY
+  [ -f "$SCRIPT_DIR/lib/bash_test_invocation.py" ] || return
+  python3 "$SCRIPT_DIR/lib/bash_test_invocation.py" "$1" 2>/dev/null || printf ''
 }
 
 _test_output_has_failure() {
@@ -95,20 +80,46 @@ _test_output_has_failure() {
     '([1-9][0-9]*[[:space:]]+(tests?[[:space:]]+)?failed|[1-9][0-9]*[[:space:]]+failures?|one or more enforcement suites failed|test result:[[:space:]]*FAILED|(^|[[:space:]])FAIL([[:space:]:]|$))'
 }
 
-EOS_TEST_MODE="$(_eos_test_mode "$CMD")"
-case "$EOS_TEST_MODE" in
-  direct-suite)
-    if [ -n "$TEST_OUT" ] && ! _test_output_has_failure; then
-      evidence_record tests_run
-    fi
-    ;;
-  canonical-runner)
-    if printf '%s' "$TEST_OUT" | grep -qiE 'all [0-9]+ enforcement suites passed' \
-       && ! _test_output_has_failure; then
-      evidence_record tests_run
-    fi
-    ;;
-esac
+# A positive success signal, required whenever the observed output passed through a
+# downstream filter that could have dropped the failure lines. Absence of a failure
+# marker is not enough there: `| head -1` removes evidence rather than adding it.
+_test_output_has_success() {
+  printf '%s' "$TEST_OUT" | grep -qiE \
+    '(^|[[:space:]])(✅|PASS|passed|OK)([[:space:]:.,]|$)|all [0-9]+ [a-z ]*suites passed|[0-9]+ tests? (ok|passed)|test result:[[:space:]]*ok'
+}
+
+while IFS="$(printf '\t')" read -r EOS_TEST_KIND EOS_TEST_PATH EOS_TEST_TRUST; do
+  [ -n "$EOS_TEST_KIND" ] || continue
+  # A masked (`||`) or backgrounded (`&`) invocation is never evidence: its status is
+  # discarded, which is precisely how a failing suite is made to look successful.
+  [ "$EOS_TEST_TRUST" = "untrusted" ] && continue
+  [ -n "$TEST_OUT" ] || continue
+  case "$EOS_TEST_KIND" in
+    direct-suite)
+      if _test_output_has_failure; then
+        # The suite genuinely ran and genuinely failed. Record that it ran — a failed
+        # run is still runtime evidence — but never as a passing one.
+        evidence_record bash_suite_run "${EOS_TEST_PATH}:fail"
+        continue
+      fi
+      if [ "$EOS_TEST_TRUST" = "filtered" ] && ! _test_output_has_success; then
+        continue
+      fi
+      evidence_record bash_suite_run "${EOS_TEST_PATH}:pass"
+      evidence_record tests_run "$EOS_TEST_PATH"
+      ;;
+    canonical-runner)
+      # The runner records each suite from inside its own execution. This branch only
+      # adds the corpus-level summary, and only on the runner's own success line.
+      if printf '%s' "$TEST_OUT" | grep -qiE 'all [0-9]+ enforcement suites passed' \
+         && ! _test_output_has_failure; then
+        evidence_record tests_run
+      fi
+      ;;
+  esac
+done <<EOF_TEST_INVOCATIONS
+$(_eos_test_invocations "$CMD")
+EOF_TEST_INVOCATIONS
 
 case "$CMD" in
   *pytest*|*"npm test"*|*"npm run test"*|*"pnpm test"*|*"pnpm run test"*|\

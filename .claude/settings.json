@@ -93,6 +93,15 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SOFT=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/soft-hook-gate.sh\"; if [ -f \"$SOFT\" ] && [ -r \"$SOFT\" ]; then bash \"$SOFT\" --event PostToolUse --unit \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/post-tool-use-skill-evidence.sh\"; else echo \"WARNING_FOR_AGENT: Engineering OS soft-hook wrapper missing: $SOFT\" >&2; exit 0; fi"
+          }
+        ]
+      },
+      {
         "matcher": "mcp__.*",
         "hooks": [
           {

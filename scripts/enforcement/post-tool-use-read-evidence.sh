@@ -58,7 +58,14 @@ PY
     total="${total:-0}"
     existing="$(evidence_get "dod_initial_${fname}" 2>/dev/null || true)"
     [ -n "$existing" ] || evidence_record "dod_initial_${fname}" "$total" 2>/dev/null || true ;;
-  .claude/commands/superpowers-verify.md|*/.claude/commands/superpowers-verify.md)
+  # The verification gate must key on the verification work, not on one file path.
+  # Any canonical superpowers-verify asset counts — the portable slash command, the
+  # skill definition, or a plugin-installed copy of either. The Skill tool path is
+  # covered separately by post-tool-use-skill-evidence.sh, so invoking the checklist
+  # as a skill and reading it as a file produce the same evidence.
+  */superpowers-verify.md|superpowers-verify.md|\
+  */superpowers-verify/SKILL.md|superpowers-verify/SKILL.md|\
+  */superpowers/skills/verification-before-completion/SKILL.md)
     evidence_record superpowers_verify_run 2>/dev/null || true
     evidence_record skill_used superpowers-verify 2>/dev/null || true ;;
 esac

@@ -94,6 +94,14 @@ jobs:
       - name: Run all standalone Python enforcement test suites
         run: python3 scripts/enforcement/run-python-enforcement-tests.py
 
+      # Receipts prove the suites executed. This step proves the *operational runtime
+      # evidence view* saw them execute — the thing that was silently empty while the
+      # corpus was green. It runs on the exact head, right after the full corpus run
+      # that produces the evidence, so a suite that runs without leaving a record fails
+      # here instead of passing unnoticed.
+      - name: Reconcile Bash suite runtime evidence against the canonical corpus
+        run: bash scripts/enforcement/check-bash-runtime-evidence.sh --require-complete
+
       - name: Verify exact-head test execution completeness
         run: |
           set -euo pipefail

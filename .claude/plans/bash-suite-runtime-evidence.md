@@ -22,7 +22,7 @@ Planning Mode: approved
 | Patterns | `patterns/testing/README.md` |
 | External systems/connectors | GitHub |
 | Skills | `engineering-route` |
-| Validation gates | `scripts/enforcement/tests/test-bash-runtime-evidence.sh`; `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh`; full 122-suite corpus with execution receipts; `check-bash-runtime-evidence.sh` reconciliation on the exact head in CI; `check-known-gaps.sh`; `check-readiness-audit.sh`; `check-hard-hook-contract.py`. |
+| Validation gates | `scripts/enforcement/tests/test-bash-runtime-evidence.sh`; `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh`; full corpus with execution receipts; `check-bash-runtime-evidence.sh` reconciliation on the exact head in CI; `check-known-gaps.sh`; `check-readiness-audit.sh`; `check-hard-hook-contract.py`. |
 | Evidence to check | live reproduction of the wrapped-command miss recorded below; `run-enforcement-tests.sh` receipts; `hook-criticality.tsv` as the canonical hook-set owner. |
 | User decisions required | one, asked and answered — how the registry should represent the second instance of the defect class (see Decision Record). |
 
@@ -266,12 +266,13 @@ branch/PR/CI/review path. One new hook row is added to the canonical hook set, w
 - Negative: a suite executed with the runtime recorder suppressed must make
   `check-bash-runtime-evidence.sh` fail; path mentions, `||` masking, failed output and
   backgrounding must record nothing.
-- Reconciliation: runtime evidence view vs the canonical 122-suite corpus, run in CI on the
-  exact head.
+- Reconciliation: runtime evidence view vs the canonical discovered corpus, run in CI on
+  the exact head.
 - Repo-wide: `check-hard-hook-contract.py` over both settings surfaces; `check-known-gaps.sh`;
   `check-readiness-audit.sh`; orphan-test check.
-- Full: all 122 suites (117 Bash + 5 Python) via `run-enforcement-tests.sh` and
-  `run-python-enforcement-tests.py` on the final commit.
+- Full: the whole corpus via `run-enforcement-tests.sh` and
+  `run-python-enforcement-tests.py` on the final commit. The corpus grows from 122 to
+  123 (118 Bash + 5 Python) because this change adds one suite.
 
 ## Open Questions
 
@@ -281,16 +282,17 @@ by the repository's own contracts.
 
 ## DoD
 
-- [ ] Runtime evidence is produced by the executing runner, so no command wrapper can suppress it
-- [ ] Direct single-suite invocations behind `cd`, env prefixes, pipes and redirects record evidence
-- [ ] Path mentions, `||` masking, failed output and backgrounding still record nothing
-- [ ] `superpowers_verify_run` records when the verification skill runs, not only on one Read path
-- [ ] New PostToolUse Skill recorder registered in `hook-criticality.tsv` and present on both settings surfaces
-- [ ] Negative fixture proves a suppressed runtime record makes the reconciler fail
-- [ ] Reconciliation against the canonical 122-suite corpus runs in CI on the exact head
-- [ ] `plan-freshness-clone-safety` closed with real post-merge evidence and mirrored in the audit
-- [ ] `bash-runtime-test-evidence` widened to the defect class with both instances named
-- [ ] Full enforcement corpus green before the final commit: 122 suites with execution receipts
+- [x] Runtime evidence is produced by the executing runner, so no command wrapper can suppress it
+- [x] Direct single-suite invocations behind `cd`, env prefixes, pipes and redirects record evidence
+- [x] Path mentions, `||` masking, command substitution, failed output and backgrounding still record nothing
+- [x] `superpowers_verify_run` records when the verification skill runs, not only on one Read path
+- [x] New PostToolUse Skill recorder registered in `hook-criticality.tsv` and derived into both settings surfaces
+- [x] Negative fixture proves a suppressed runtime record makes the reconciler fail
+- [x] Reconciliation wired into `.github/workflows/enforcement-tests.yml` on the exact head, after the corpus run
+- [x] Reconciliation green locally on the full corpus: 118/118 Bash suites represented
+- [x] `plan-freshness-clone-safety` closed with real post-merge evidence and mirrored in the audit
+- [x] `bash-runtime-test-evidence` widened to the defect class with both instances named
+- [x] Full enforcement corpus green: 118 Bash + 5 Python suites with execution receipts
 
 ## Claude Run Trace
 
@@ -303,8 +305,9 @@ by the repository's own contracts.
   that does not match the mechanism is recorded as "did not happen".
 - **Connectors:** GitHub only (branch, draft PR, exact-head CI, review reconciliation, and the
   PR #278 closure facts). Context7 not required: no external package or library version is
-  involved. Notion not on the required path. Nemotron MCP failed to connect this session and
-  is L1 optional, so it was not used.
+  involved. Notion was not on the required path for this task, so no
+  `notion_progress_validated` evidence applies and no Notion decision was taken. Nemotron MCP
+  failed to connect this session (`CONNECTION_CLOSED`) and is L1 optional, so it was not used.
 - **Steps:** routed via the `engineering-route` skill; read the router, workflow, capability
   registry and testing patterns; ran a graphify BFS over the evidence-recording surface and
   found the executing runner is not connected to the ledger at all; asked the owner the one
@@ -332,7 +335,7 @@ hand-marking this file.
 
 - Branch pushed and draft PR opened
 - Enforcement corpus re-run and green on the exact committed head
-- Runtime-evidence reconciliation green on the exact committed head
+- Runtime-evidence reconciliation green on the exact committed head in CI
 - Exact-head CI green on the final pushed commit
 - Review threads reconciled
 - Explicit owner approval before merge

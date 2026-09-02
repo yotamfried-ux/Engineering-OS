@@ -13,3 +13,4 @@ scripts/enforcement/tests/test-remote-telemetry-handoff.sh	integration	Exercises
 scripts/enforcement/tests/test-multirepo-dispatch.sh	integration	Exercises multi-repository dispatch behavior in disposable repository fixtures.
 scripts/enforcement/tests/test-telemetry-archive.sh	integration	Exercises archive/import/integrity behavior with real local files and repositories.
 scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh	integration	Executes the recorder plus Stop and G11 consumers with real local subprocess behavior.
+scripts/enforcement/tests/test-bash-runtime-evidence.sh	integration	Runs the real canonical runner over a disposable corpus and reconciles the resulting runtime evidence, including a suppressed-record negative fixture.

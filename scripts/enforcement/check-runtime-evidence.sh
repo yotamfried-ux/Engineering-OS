@@ -129,5 +129,20 @@ $(normalize_list "$skills")
 EOF_SKILLS
 fi
 
+# Represent executed Bash enforcement suites in this view. Until now the view only
+# described connectors and skills, so a suite could run and pass while the operational
+# evidence path showed nothing about it. Reporting is non-blocking here — the Stop gate
+# is not the place to demand a full corpus run — but the numbers are real, and CI
+# enforces completeness on the exact head via check-bash-runtime-evidence.sh.
+suite_report() {
+  local root
+  root="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)" || return 0
+  [ -f "$root/scripts/enforcement/test_evidence.py" ] || return 0
+  command -v python3 >/dev/null 2>&1 || return 0
+  python3 "$root/scripts/enforcement/test_evidence.py" runtime-reconcile \
+    --root "$root" --ledger "$(_evidence_file)" 2>/dev/null || true
+}
+suite_report
+
 [ "$bad" -eq 0 ] || exit 1
 echo "Runtime evidence checks passed for active plan: $(basename "$plan")"
