@@ -165,6 +165,20 @@ reducing risk.
   shape, `bash scripts/enforcement/tests/test-known-gaps.sh` records `tests_run`, while the
   same command behind a `cd /home/user/Engineering-OS &&` prefix records nothing, and the
   identical miss applies to a pipe, a redirect and backgrounding.
+- mid: Implementation landed and three things it exposed were root-caused rather than
+  waived. First, the graphify evidence gate refused the first write of this session: the
+  earlier graphify call had been piped through `head`, and a `SessionStart:resume` had reset
+  the ledger — the defect class blocking the very change that fixes it. Second, the runtime
+  evidence view showed `skill_used` had no producer at all outside the superpowers-verify
+  Read path, so a plan declaring `engineering-route` could never satisfy its own skill check;
+  the new PostToolUse Skill recorder then recorded `skill_used engineering-route` from a real
+  invocation, which is the live proof for instance 2. Third, the full corpus run failed six
+  checks in the new suite: its disposable corpus inherited `EOS_SUITE_RUN_ACTIVE` from the
+  outer runner, so the nesting guard correctly suppressed recording. The fixture was
+  corrected and the guard now has its own case rather than being an implicit assumption. A
+  fourth finding came from reconciliation itself — the ledger accumulates across runs in one
+  session, so a suite that failed and was later fixed still read as failing; the reconciler
+  now takes the latest record per suite, with both directions pinned by fixtures.
 
 ## Goal
 
