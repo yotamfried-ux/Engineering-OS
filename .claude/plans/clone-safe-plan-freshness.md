@@ -127,13 +127,20 @@ reducing risk.
   two new gaps were added as audit status-matrix rows. One self-inflicted bug was caught
   here too — `$(plan_stamp)` ran in a subshell so the sequence counter never advanced and
   every fixture shared a timestamp.
-- pre-merge: Full corpus green on the exact committed head with execution receipts —
-  117 Bash suites and 5 Python suites, 122 receipts, receipt count equal to corpus count,
-  none failing. Re-ran the four PR evidence gates that failed on the first pushed head
-  `6be9818`; that failure exposed a real defect (`.gitignore` kept new route plans
-  untracked) which is fixed in this branch, and the branch was reordered so the route-plan
-  commit precedes the code commit.
-
+- pre-merge: Full corpus green on the committed head with execution receipts — 117 Bash
+  suites and 5 Python suites, 122 receipts, receipt count equal to corpus count, none
+  failing; re-confirmed on the final head `f19c801` after the learning-loop lesson landed.
+  Two rounds of CI on this PR each exposed something the local run could not. The first
+  pushed head `6be9818` failed four PR evidence gates, which uncovered a real defect:
+  `.gitignore` had kept newly created route plans untracked, so no route plan reached the
+  gates and the git-history branch of the new resolver could never apply to a new plan.
+  The second round showed the PR-body contract is enforced one section per run — Review
+  Fallback, then Merge Readiness, then Operational Behavior Evidence, then Operational
+  Work History Evidence — and that the job reporting all of it is named
+  "Require ready-for-review PR", which sent the first diagnosis to the wrong cause. The
+  branch was reordered so the route-plan commit precedes the code commit, and the
+  learning loop records the generalizable lesson: mtime describes the checkout, not the
+  file. Merge remains blocked on review and explicit owner approval.
 ## Goal
 
 Plan freshness and plan selection must not depend on filesystem mtime, because a fresh
