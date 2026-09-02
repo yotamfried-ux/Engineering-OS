@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Covers Route Plan .claude/plans/remote-multirepo-telemetry-hooks.md, Test
+# Covers the retired route plan remote-multirepo-telemetry-hooks.md (PR #250), Test
 # Plan scenario G (downstream compatibility): dispatcher-produced per-repo
 # telemetry state feeds into the EXISTING, unmodified export/select
 # pipeline (export-telemetry-run.py, select-pr-telemetry.py) exactly like a

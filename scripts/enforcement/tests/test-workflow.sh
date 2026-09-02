@@ -13,10 +13,26 @@ ok()   { PASS=$((PASS+1)); printf '  ✅ %s\n' "$1"; }
 # bad <desc> — record a failing assertion.
 bad()  { FAIL=$((FAIL+1)); printf '  ❌ %s\n' "$1"; }
 
+# Plan freshness is resolved by lib/plan-time.sh from git history or the plan's declared
+# 'Plan Timestamp' — never from mtime, which a clone rewrites. These fixtures write plans
+# into a bare temp dir with no git history, so they must declare a timestamp like any real
+# plan does. Stamping here keeps each fixture focused on the gate it exercises; the
+# missing/invalid/future-timestamp cases are covered directly in
+# test-plan-freshness-clone-safety.sh.
+stamp_plans() {
+  local plan
+  for plan in .claude/plans/*.md; do
+    [ -f "$plan" ] || continue
+    grep -qiE '^[[:space:]]*[|[:space:]-]*plan[[:space:]]+timestamp[[:space:]]*[|:]' "$plan" && continue
+    printf 'Plan Timestamp: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$plan"
+  done
+}
+
 # run_enforcer <tool> <file_path|command> ; returns enforcer exit code
 run_enforcer() {
   local tool="$1" arg="$2" key="file_path"
   [ "$tool" = "Bash" ] && key="command"
+  stamp_plans
   printf '{"tool_name":"%s","tool_input":{"%s":"%s"}}' "$tool" "$key" "$arg" \
     | bash "$ENFORCER" >/dev/null 2>&1
 }
@@ -394,6 +410,7 @@ steps
 ## חלופות
 alts
 EOF
+stamp_plans   # these G12 cases call the enforcer directly, bypassing run_enforcer
 # New generic file (not on disk) + patterns/ exists + no patterns_read_* in ledger → WARNING (exit 0)
 OUT=$(printf '{"tool_name":"Write","tool_input":{"file_path":"src/utils.ts"}}' \
   | bash "$ENFORCER" 2>&1); RC=$?

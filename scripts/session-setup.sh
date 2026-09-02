@@ -290,11 +290,23 @@ _check_plan_continuity() {
     return
   fi
 
-  local newest; newest="$(ls -t "$plan_dir"/*.md 2>/dev/null | head -1)"
-  local now mtime age_h
-  now="$(date +%s 2>/dev/null || echo 0)"
-  mtime="$(stat -c %Y "$newest" 2>/dev/null || stat -f %m "$newest" 2>/dev/null || echo 0)"
-  age_h=$(( (now - mtime) / 3600 ))
+  # Recency and age come from plan-time.sh (git history for committed plans, the plan's
+  # declared 'Plan Timestamp' otherwise). Filesystem mtime is not used: in a fresh remote
+  # container every plan carries the clone time, so mtime would report a months-old plan
+  # as 0h and this warning would never fire when it matters most.
+  # shellcheck source=enforcement/lib/plan-time.sh
+  . "$(dirname "${BASH_SOURCE[0]}")/enforcement/lib/plan-time.sh" 2>/dev/null || return
+
+  local newest; newest="$(eos_newest_plan "$plan_dir" 2>/dev/null)"
+  [ -n "$newest" ] || return
+
+  local age_h
+  if ! age_h="$(eos_plan_age_hours "$newest")"; then
+    printf '\n%s⚠️  [Engineering OS] Plan age unknown: %s — %s%s\n' \
+      "$Y" "$(basename "$newest")" "$(eos_plan_time_reason "$newest")" "$Z"
+    printf "   Add '| Plan Timestamp | %s |' to the plan, or commit it.\n\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    return
+  fi
 
   if [ "$age_h" -ge "$max_age_h" ]; then
     printf '\n%s⚠️  [Engineering OS] Stale plan: %s (age: %dh > %dh)%s\n' \

@@ -35,7 +35,7 @@ bypass_command_request EOS_BYPASS_ENTRY "$CMD" && { log "bypassed via provider-v
 
 [ -z "$CMD" ] && { log "no bash command found in hook payload; allowing"; exit 0; }
 
-newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1 || true; }
+newest_plan() { eos_newest_plan 2>/dev/null || true; }
 
 # detect_plan_scope/plan_missing_sections mirror enforce-workflow.sh (core/workflow.md
 # <evidence_backed_planning>) so a work-like Bash command is held to the same Plan

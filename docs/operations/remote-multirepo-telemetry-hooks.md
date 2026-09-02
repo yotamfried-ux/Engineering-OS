@@ -1,6 +1,6 @@
 # Remote multi-repository telemetry hooks
 
-This runbook covers Claude Code Remote sessions that start above one or more repositories. The design and evidence history are in `.claude/plans/remote-multirepo-telemetry-hooks.md` and PR #250.
+This runbook covers Claude Code Remote sessions that start above one or more repositories. The design and evidence history are in PR #250 (its route plan, `remote-multirepo-telemetry-hooks.md`, was retired with that PR and remains in git history).
 
 ## Scope
 

@@ -100,7 +100,9 @@ EOS_LIB_G10="$EOS_HOME/scripts/enforcement/lib/evidence.sh"
 # shellcheck source=../enforcement/lib/evidence.sh
 . "$EOS_LIB_G10" 2>/dev/null || { echo "BYPASS DENIED: canonical bypass library is unavailable" >&2; exit 2; }
 if ! bypass_staged_tree_request EOS_BYPASS_DOD 2>/dev/null; then
-  G10_PLAN="$(ls -t "$REPO_ROOT_G10/.claude/plans/"*.md 2>/dev/null | head -1 || true)"
+  # Recency via plan-time.sh (git history / declared timestamp), never mtime — a clone
+  # flattens every plan's mtime and `ls -t` would then pick an unrelated plan's DoD.
+  G10_PLAN="$(eos_newest_plan "$REPO_ROOT_G10/.claude/plans" 2>/dev/null || true)"
   G10_CODE="$(git diff --cached --name-only 2>/dev/null \
     | grep -cE '\.(ts|tsx|js|jsx|py|go|rs|sh)$' 2>/dev/null)" || G10_CODE=0
   if [ -n "$G10_PLAN" ] && [ "${G10_CODE:-0}" -gt 0 ]; then

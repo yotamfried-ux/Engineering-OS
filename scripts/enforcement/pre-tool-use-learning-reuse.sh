@@ -23,7 +23,7 @@ select_plan() {
     return 0
   fi
   local candidate
-  for candidate in $(ls -t .claude/plans/*.md 2>/dev/null || true); do
+  for candidate in $(eos_plans_by_recency 2>/dev/null || true); do
     case "$(basename "$candidate")" in
       README.md|_TEMPLATE.md|learning-reuse-complete.md) continue ;;
     esac

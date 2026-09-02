@@ -9,8 +9,24 @@ LOG_FILE="$TMP/plan-selection.log"
 
 pass() { local name="$1"; shift; "$@" >"$LOG_FILE" 2>&1 || { echo "fail: $name"; cat "$LOG_FILE"; exit 1; }; echo "ok: $name"; }
 
+# Recency is declared, not inferred from mtime: lib/plan-time.sh reads a plan's
+# 'Plan Timestamp' (or its git history), so these fixtures state their own order.
+# PLAN_SEQ increments per plan written, making each new plan one minute newer than
+# the last — the ordering the old fixtures got from `sleep 1` plus mtime.
+# plan_stamp must be called as a statement, not inside $( ) — command substitution runs
+# in a subshell, so the PLAN_SEQ increment would be lost and every plan would share one
+# timestamp. It publishes its result in PLAN_STAMP instead.
+PLAN_SEQ=0
+PLAN_STAMP=""
+PLAN_EPOCH0="$(date -u +%s)"
+plan_stamp() {
+  PLAN_SEQ=$((PLAN_SEQ + 1))
+  PLAN_STAMP="$(date -u -d "@$(( PLAN_EPOCH0 - 3600 + PLAN_SEQ * 60 ))" +%Y-%m-%dT%H:%M:%SZ)"
+}
+
 write_plan() {
   local path="$1" targets="$2"
+  plan_stamp
   cat > "$path" <<EOF
 # Route Plan
 
@@ -18,6 +34,7 @@ write_plan() {
 |---|---|
 | Task class | unclassified |
 | Target paths | $targets |
+| Plan Timestamp | $PLAN_STAMP |
 EOF
 }
 
@@ -37,7 +54,6 @@ cd "$TMP/repo"
 
 # Older plan targets scripts/x; newer plan targets docs/y. The write target decides.
 write_plan .claude/plans/older-scripts.md "scripts/x"
-sleep 1
 write_plan .claude/plans/newer-docs.md "docs/y"
 
 expect_selected "matching older plan beats unrelated newest plan" "scripts/x/tool.sh" ".claude/plans/older-scripts.md"
@@ -54,16 +70,17 @@ expect_selected "active.md overrides target matching" "scripts/x/tool.sh" ".clau
 rm .claude/plans/active.md
 
 # Plans without a Target paths field never match but still serve as newest fallback.
-sleep 1
-cat > .claude/plans/no-targets.md <<'EOF'
+plan_stamp
+cat > .claude/plans/no-targets.md <<EOF
 # Route Plan with no targets table
+
+| Plan Timestamp | $PLAN_STAMP |
 EOF
 expect_selected "field-less newest plan is fallback only" "scripts/x/tool.sh" ".claude/plans/older-scripts.md"
 expect_selected "field-less newest plan wins when nothing matches" "src/unrelated.ts" ".claude/plans/no-targets.md"
 
 # Unscoped Target paths ("none"/"any"/"n/a") mean match-all: a newer unscoped
 # plan must win over an older plan with a literal, unrelated prefix match.
-sleep 1
 write_plan .claude/plans/newer-unscoped.md "none"
 expect_selected "newer unscoped plan matches any target" "scripts/x/tool.sh" ".claude/plans/newer-unscoped.md"
 expect_selected "newer unscoped plan matches unrelated target too" "src/unrelated.ts" ".claude/plans/newer-unscoped.md"

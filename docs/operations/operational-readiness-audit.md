@@ -173,6 +173,8 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | gap_id | status | priority | audit row / readiness context |
 |---|---|---|---|
 | audit-freshness | closed | P0 | Audit freshness. |
+| plan-freshness-clone-safety | open | P0 | Plan freshness and selection must not depend on filesystem mtime, which a clone resets. |
+| bash-runtime-test-evidence | open | P1 | Bash enforcement suites must appear in operational runtime test evidence, not only CI receipts. |
 | route-plan-semantic-quality | closed | P1 | Route plan semantic quality. |
 | connector-semantic-use | closed | P1 | Connector semantic use. |
 | progress-semantic-lifecycle | closed | P1 | Progress semantic lifecycle. |
@@ -273,6 +275,8 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | Project 8 technical qualification evidence | Missing enforcement | Gate: mandatory telemetry preflight exists. Owner: ops-readiness. Evidence: Project 8 preflight and findings runbook. | gap:project-8-real-run-evidence — fresh transport, identity, counts, and boundary evidence are missing. |
 | Remote multi-repository telemetry dispatch | Partially enforced | Gate: dispatcher fixtures cover attribution, isolation, policy, failures, and PR matching. Owner: ops-readiness. Evidence: deterministic tests plus failed live attempt. | gap:dispatch-scope-double-record and gap:multirepo-remote-telemetry-validation — a fresh successful qualification session is required. |
 | Full-readiness claim semantics | Partially enforced | Gate: merged `--assert-full-ready` and positive/negative fixtures. Owner: ops-readiness. Evidence: canonical checker/test on `main`. | gap:full-readiness-claim-semantics — canonical state vocabulary and terminal live proof remain required. |
+| Route plan freshness and selection | Partially enforced | Gate: `scripts/enforcement/tests/test-plan-freshness-clone-safety.sh` over the shared resolver `scripts/enforcement/lib/plan-time.sh`. Owner: ops-readiness. Evidence: clone-flattened and mtime-inverted fixtures, each demonstrated to fail against the pre-fix implementation. | gap:plan-freshness-clone-safety — the fix is implemented and locally green, but exact-head CI, review reconciliation and owner approval on the merge are still required. |
+| Bash suite runtime evidence | Partially enforced | Gate: `scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh`. Owner: ops-readiness. Evidence: CI execution receipts from `run-enforcement-tests.sh`. | gap:bash-runtime-test-evidence — CI receipts are execution-backed, but the operational runtime evidence view does not yet represent every Bash enforcement suite. |
 | Project 8 behavioral blindness | Enforced | Gate: Project 8 product-only boundary and telemetry-only runtime configuration. Owner: ops-readiness. Evidence: PR #9 head `8591d2569fb7fcd2481670fe814c5ec46becb8aa`, all exact-head checks green, 12 resolved review threads, owner-approved merge `3ca98089045df7256755bacd4a9a1b8500624874`, `main` identical, local coaching removed, and telemetry hooks retained. | Technical implementation closed. Behavioral effectiveness remains an experiment observation, not a pre-experiment blocker. |
 | Git/branch policy | Enforced | Gate: pr-policy. Owner: merge-governance. Evidence: merge readiness artifact. | Machine verification of run recency is tracked separately. |
 | PR review / external review | Enforced | Gate: check-pr-review-evidence.sh through pr-policy. Owner: review-governance. Evidence: review fixtures. | Review depth is human. |

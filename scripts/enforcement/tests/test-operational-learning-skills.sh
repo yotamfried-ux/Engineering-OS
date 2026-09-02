@@ -20,6 +20,7 @@ write_plan() {
 # Route Plan
 
 Plan Scope: simple
+Plan Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 ## Goal
 

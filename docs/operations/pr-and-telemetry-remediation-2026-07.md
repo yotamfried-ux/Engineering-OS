@@ -1,6 +1,7 @@
 # PR and Telemetry-Gap Remediation Checklist (2026-07)
 
-Tracking plan: `.claude/plans/pr-and-telemetry-remediation.md`
+Tracking plan: `pr-and-telemetry-remediation.md` — a route plan, retired with its PR.
+Route plans are temporary by design; read it from git history if needed.
 
 Purpose: track execution of the remediation identified from a direct review of the
 Engineering OS open PRs, `docs/operations/operational-readiness-audit.md`, and the
@@ -98,8 +99,8 @@ it can run would make it permanently unsatisfiable.
       (DoD items cannot be removed) and G10 (all DoD items must be checked before
       commit) make such an item structurally impossible to satisfy honestly before
       the commit that would trigger that CI run exists. The fix codifies the
-      "Live External Gates Before Merge" section — already used ad hoc in
-      `.claude/plans/audit-freshness-p0.md` — as the required, documented pattern
+      "Live External Gates Before Merge" section — already used ad hoc in the
+      route plans of the day — as the required, documented pattern
       for this class of item. Also added a non-blocking advisory check to
       `enforce-quality.sh` (the required md-sync enforcer for
       `quality-gates.md`) that warns, at commit time, when a staged plan's

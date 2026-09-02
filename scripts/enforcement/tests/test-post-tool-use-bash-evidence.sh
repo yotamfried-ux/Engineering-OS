@@ -127,6 +127,8 @@ echo "── G11 pre-commit consumer ──"
 G11="$WORK/g11"; STUB_EOS="$WORK/stub-eos"
 mkdir -p "$G11" "$STUB_EOS/scripts/enforcement/lib" "$STUB_EOS/scripts/enforcement"
 cp "$ROOT/scripts/enforcement/lib/evidence.sh" "$STUB_EOS/scripts/enforcement/lib/evidence.sh"
+# evidence.sh sources plan-time.sh (canonical plan recency) and fails closed without it.
+cp "$ROOT/scripts/enforcement/lib/plan-time.sh" "$STUB_EOS/scripts/enforcement/lib/plan-time.sh"
 for name in enforce-quality.sh enforce-resource.sh enforce-connector.sh enforce-learning.sh enforce-learning-capture.sh enforce-run-trace.sh enforce-tests.sh; do
   printf '#!/usr/bin/env bash\nexit 0\n' > "$STUB_EOS/scripts/enforcement/$name"; chmod +x "$STUB_EOS/scripts/enforcement/$name"
 done

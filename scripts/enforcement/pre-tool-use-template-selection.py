@@ -16,13 +16,29 @@ def is_plan(path: str) -> bool:
 
 
 def newest_plan() -> str:
+    """Most recent plan, per the canonical resolver in lib/plan-time.sh.
+
+    Delegating rather than reimplementing keeps one definition of plan recency: a
+    second implementation here could drift from the hooks' and disagree about which
+    plan is active. st_mtime is specifically not used — a fresh clone stamps every
+    plan with the checkout time, so mtime ordering is arbitrary.
+    """
     plans_dir = Path(".claude/plans")
     if not plans_dir.is_dir():
         return ""
-    plans = [p for p in plans_dir.glob("*.md") if p.name not in {"README.md", "_TEMPLATE.md"}]
-    if not plans:
+    lib = SCRIPT_DIR / "lib" / "plan-time.sh"
+    if not lib.is_file():
         return ""
-    return str(max(plans, key=lambda p: p.stat().st_mtime))
+    try:
+        result = subprocess.run(
+            ["bash", "-c", f'. "$1" && eos_newest_plan', "_", str(lib)],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
 
 
 def select_plan(target: str) -> str:
