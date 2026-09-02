@@ -49,7 +49,9 @@ TOOL="$(read_field tool)"
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper: does the newest plan document workflow steps 1–4?
 # ─────────────────────────────────────────────────────────────────────────────
-newest_plan() { ls -t .claude/plans/*.md 2>/dev/null | head -1; }
+# Recency comes from plan-time.sh (git history / declared timestamp), never from mtime:
+# a fresh clone gives every plan the same mtime, so `ls -t` picks arbitrarily.
+newest_plan() { eos_newest_plan 2>/dev/null; }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # detect_plan_scope <plan_file> — echoes simple|standard|project|missing|invalid.
@@ -244,7 +246,10 @@ gate_write() {
   fi
 
   # Freshness: block code writes if the newest plan is stale (default 48h; 0 disables).
-  # Uses stat for mtime — reliable across Linux/macOS, no touch -d portability issues.
+  # Age comes from plan-time.sh, which reads git history for committed plans and the
+  # plan's declared 'Plan Timestamp' otherwise. Filesystem mtime is deliberately not
+  # consulted: a clone rewrites it to the checkout time, which would report every plan,
+  # however old, as 0h and let a zombie plan authorize code writes.
   local max_age="${EOS_PLAN_MAX_AGE_H:-48}"
   if ! printf '%s' "$max_age" | grep -qE '^[0-9]+$'; then
     echo "ERROR_FOR_AGENT: invalid EOS_PLAN_MAX_AGE_H='$max_age' (expected a non-negative integer)."
@@ -252,10 +257,21 @@ gate_write() {
     exit 1
   fi
   if [ "${max_age}" != "0" ]; then
-    local now mtime age_h
-    now="$(date +%s 2>/dev/null || echo 0)"
-    mtime="$(stat -c %Y "$pf" 2>/dev/null || stat -f %m "$pf" 2>/dev/null || echo "$now")"
-    age_h=$(( (now - mtime) / 3600 ))
+    local age_h
+    if ! command -v eos_plan_age_hours >/dev/null 2>&1; then
+      echo "ERROR_FOR_AGENT: workflow.md gate — the canonical plan-time resolver (scripts/enforcement/lib/plan-time.sh) is unavailable, so plan freshness cannot be established."
+      echo "ACTION: restore scripts/enforcement/lib/plan-time.sh, or set EOS_PLAN_MAX_AGE_H=0 to disable the freshness check."
+      echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
+      exit 1
+    fi
+    if ! age_h="$(eos_plan_age_hours "$pf")"; then
+      # Unresolvable time is a block, not a pass: reporting an unknown age as fresh is
+      # exactly the defect this gate exists to prevent.
+      echo "ERROR_FOR_AGENT: workflow.md gate — cannot establish how current the newest plan ($(basename "$pf")) is: $(eos_plan_time_reason "$pf")."
+      echo "ACTION: add '| Plan Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |' to the plan's Route Plan table, or commit the plan so its git history supplies the time."
+      echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
+      exit 1
+    fi
     if [ "$age_h" -ge "$max_age" ]; then
       echo "ERROR_FOR_AGENT: workflow.md gate — newest plan ($(basename "$pf")) is ${age_h}h old (limit: ${max_age}h, possible zombie plan)."
       echo "ACTION: create/refresh a plan for the current task, or set EOS_PLAN_MAX_AGE_H=0 to disable freshness."

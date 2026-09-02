@@ -200,6 +200,7 @@ Task type: <...>
 Task class: <task class from core/capability-registry.yaml, or unclassified + waiver>
 Domain tags: <...>
 Plan Scope: <simple|standard|project>          # ראה workflow.md <evidence_backed_planning>
+Plan Timestamp: <ISO-8601 UTC, e.g. 2026-09-02T00:41:02Z>  # מתי ה-plan נכתב; ראה workflow.md — לא mtime
 Planning Mode: <discovery|evidence-pass|final-for-approval|approved>
 Templates: <...>
 Architecture guides: <...>

@@ -1,6 +1,7 @@
 # Workflow Result Loop Integration Audit
 
-Tracking plan: `.claude/plans/wf-route-table.md`
+Tracking plan: `wf-route-table.md` — a route plan, retired with its PR.
+Route plans are temporary by design; read it from git history if needed.
 
 ## Completed
 

@@ -134,7 +134,7 @@ select_plan() {
   if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then printf '%s\n' "$EOS_ACTIVE_PLAN"; return 0; fi
   if [ -f .claude/plans/active.md ]; then printf '%s\n' .claude/plans/active.md; return 0; fi
   local candidate
-  for candidate in $(ls -t .claude/plans/*.md 2>/dev/null || true); do
+  for candidate in $(eos_plans_by_recency 2>/dev/null || true); do
     case "$(basename "$candidate")" in README.md|_TEMPLATE.md) continue ;; esac
     printf '%s\n' "$candidate"; return 0
   done

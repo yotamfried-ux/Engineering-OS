@@ -30,7 +30,7 @@ SESSION_MSG="Session: ${GQ_STATUS} | ${TR_STATUS} | ${NT_STATUS} | ${VF_STATUS} 
 
 NMSG=""
 if evidence_has notion_spec_created 2>/dev/null; then
-  PLAN="$(ls -t .claude/plans/*.md 2>/dev/null | head -1 || true)"
+  PLAN="$(eos_newest_plan 2>/dev/null || true)"
   if [ -n "$PLAN" ]; then
     if ! grep -qiE 'notion.*(page_id|[0-9a-f]{32})|page_id.*notion' "$PLAN" 2>/dev/null; then
       NMSG="Notion spec created but plan '$(basename "$PLAN")' is missing a notion_page_id anchor. "
@@ -46,7 +46,7 @@ if [ -z "$STAGED" ]; then
   exit 0
 fi
 
-PLAN="$(ls -t .claude/plans/*.md 2>/dev/null | head -1 || true)"
+PLAN="$(eos_newest_plan 2>/dev/null || true)"
 PMSG=""
 [ -n "$PLAN" ] && PMSG="spec_loop: plan '$(basename "$PLAN")' exists; verify every DoD item before committing. "
 

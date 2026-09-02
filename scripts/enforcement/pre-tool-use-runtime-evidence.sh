@@ -71,7 +71,7 @@ newest_plan() {
   if declare -f eos_select_plan >/dev/null 2>&1; then
     eos_select_plan "${1:-}"
   else
-    ls -t .claude/plans/*.md 2>/dev/null | head -1 || true
+    eos_newest_plan 2>/dev/null || true
   fi
 }
 

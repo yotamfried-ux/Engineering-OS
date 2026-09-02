@@ -111,7 +111,7 @@ PY
   if declare -f eos_select_plan >/dev/null 2>&1; then
     plan="$(eos_select_plan "$file")"
   else
-    plan="$(ls -t .claude/plans/*.md 2>/dev/null|head -1||true)"
+    plan="$(eos_newest_plan 2>/dev/null||true)"
   fi
   [ -n "$plan" ] && [ -f "$plan" ] || exit 0
   if ! reason="$(check_plan_scope "$plan" "$file")"; then deny "plan scope gate — $(printf '%s' "$reason"|tr '\n' ' ') Manual override needs current user approval."; fi

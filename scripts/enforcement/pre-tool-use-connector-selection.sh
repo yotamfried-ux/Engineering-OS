@@ -63,7 +63,7 @@ select_plan() {
   esac
   if [ -n "${EOS_ACTIVE_PLAN:-}" ] && [ -f "${EOS_ACTIVE_PLAN:-}" ]; then printf '%s\n' "$EOS_ACTIVE_PLAN"; return 0; fi
   if [ -f .claude/plans/active.md ]; then printf '%s\n' .claude/plans/active.md; return 0; fi
-  ls -t .claude/plans/*.md 2>/dev/null | head -1 || true
+  eos_newest_plan 2>/dev/null || true
 }
 
 TOOL="$(json_field tool)"

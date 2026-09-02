@@ -11,6 +11,19 @@
 # Ledger: .claude/.evidence/ledger  (relative to project cwd; reset each session)
 # Line format: <epoch>\t<key>\t<value>
 
+# Plan recency/freshness is owned by plan-time.sh, never by filesystem mtime — a clone
+# resets every plan's mtime, so `ls -t` would pick an arbitrary plan. Sourcing it here
+# gives every enforcer that already loads this library the canonical resolver.
+#
+# Deliberately not fatal when absent: this library's own job is the evidence/bypass
+# ledger, and a missing plan helper must not take that down with it. Callers that need
+# plan recency check for the function and fail closed themselves (see the freshness gate
+# in enforce-workflow.sh), so an absent resolver blocks writes rather than passing them.
+if [ -f "$(dirname "${BASH_SOURCE[0]}")/plan-time.sh" ]; then
+  # shellcheck source=plan-time.sh
+  . "$(dirname "${BASH_SOURCE[0]}")/plan-time.sh"
+fi
+
 # Resolve ledger path relative to the current project (cwd), not the script dir,
 # so it follows the project the hooks run in.
 _evidence_dir() { printf '%s' "${EOS_EVIDENCE_DIR:-.claude/.evidence}"; }
@@ -83,8 +96,7 @@ eos_select_plan() {
     printf '%s\n' .claude/plans/active.md; return 0
   fi
   file="$(printf '%s' "$hint" | sed -E 's#^\./##')"
-  for candidate in $(ls -t .claude/plans/*.md 2>/dev/null || true); do
-    case "$(basename "$candidate")" in README.md|_TEMPLATE.md) continue ;; esac
+  for candidate in $(eos_plans_by_recency 2>/dev/null || true); do
     [ -n "$newest" ] || newest="$candidate"
     [ -n "$file" ] || continue
     targets="$(awk -F'|' 'NF>1{for(i=1;i<NF;i++){f=tolower($i);gsub(/[*_`]/,"",f);gsub(/^[ \t]+|[ \t]+$/,"",f);if(f ~ /^target paths?$|^target files$|^target scope$/){v=$(i+1);gsub(/^[ \t]+|[ \t]+$/,"",v);print v;exit}}}' "$candidate" 2>/dev/null)"

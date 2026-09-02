@@ -104,6 +104,6 @@ so any future regression in `parse_repo_slug_from_remote` blocks CI.
 ## תועד ב
 
 `scripts/monitoring/telemetry_handoff.py` (`parse_repo_slug_from_remote`),
-`.claude/plans/fix-repo-slug-url-parsing.md`
+route plan `fix-repo-slug-url-parsing.md` (retired; in git history)
 
 ## Prevented Future Issues: 0

@@ -5,6 +5,12 @@
 !.claude/agents/**
 !.claude/commands/
 !.claude/commands/**
+# Route plans must be tracked: the PR evidence gates require a changed
+# .claude/plans/*.md in the diff, and lib/plan-time.sh dates a committed plan from
+# git history. Without this negation a newly created plan is silently ignored, so it
+# reaches neither. The existing plans predate the .claude/* rule above.
+!.claude/plans/
+!.claude/plans/**
 
 # Graphify knowledge graph (rebuilt each session via session-setup.sh)
 graphify-out/
