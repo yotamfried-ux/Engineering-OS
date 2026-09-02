@@ -59,7 +59,7 @@ approval path with executable positive and negative evidence.
 - action: graphify BFS depth=2 traversal of the plan-reading enforcement surface to enumerate every caller that resolves "the active plan"
 - result: the graph showed the plan readers are spread across `enforce-workflow.sh`, `lib/evidence.sh`, `check-plan-scope.sh`, `post-stop-hook.sh`, `enforce-bash-entry.sh`, `enforce-run-trace.sh`, `enforce-learning-capture.sh` and three `pre-tool-use-*` hooks, each repeating its own `ls -t` instead of depending on one owner — so the defect has ten independent call sites, not one
 - decision: the graph finding changed the write from a local patch of the freshness gate into a shared owner module, `scripts/enforcement/lib/plan-time.sh`, that every one of those callers is routed through
-- target: scripts/enforcement/lib/plan-time.sh, scripts/enforcement, scripts, core, docs/operations, .claude/plans, .gitignore
+- target: scripts/enforcement/lib/plan-time.sh, scripts/enforcement, scripts, core, docs/operations, .claude/plans, .gitignore, lessons-learned
 
 ## Source of Truth Checks
 
