@@ -50,6 +50,12 @@ review → owner-approval path with executable positive and negative evidence.
   is added as the executable validator for the new contract, including the negative fixture
   that proves a missing runtime record is detected rather than tolerated, and
   `scripts/enforcement/check-bash-runtime-evidence.sh` is the CI-side reconciler.
+- `validation.actions-checked` — this change edits `.github/workflows/enforcement-tests.yml`,
+  adding the exact-head reconciliation step, so GitHub Actions state is part of the required
+  path: the live check runs on this branch's head are read through the GitHub connector, and
+  PR #278's 23/23 green checks plus the post-merge runs on `main` (`post-merge-validation`
+  run 106, `enforcement-tests` run 1660, `known-gaps-live-state` run 77,
+  `telemetry-handoff-tests` run 562) are the evidence used to close the phase-2 gap.
 - `validation.coderabbit-policy` — the repository has fewer than 10 stars, so CodeRabbit does
   not auto-review; per `core/coderabbit-policy.md` the fallback is a recorded manual review in
   the PR body, and the PR stays draft and unmerged until review and explicit owner approval.
@@ -113,9 +119,11 @@ review → owner-approval path with executable positive and negative evidence.
   `c6ace6f4e2d8d270cc9c14cb47c839a059990b27`, squash merge
   `aaa2fba184e4847718a94b14e0b605de0739b4e8`, 23/23 checks green on that head — none of which
   are derivable from the working tree
-- decision: that GitHub evidence is what closes `plan-freshness-clone-safety` in
-  `docs/operations/known-gaps.tsv` and in the audit's Known gaps freshness ledger and status
-  matrix; without it the row would have had to stay open
+- decision: that GitHub evidence changed the work — it is why I updated
+  `plan-freshness-clone-safety` from `open` to `closed` in `docs/operations/known-gaps.tsv`
+  and changed the audit's "Route plan freshness and selection" row from Partially enforced to
+  Enforced. Without the live reviewed head, merge commit, check count and post-merge run
+  numbers the row would have been kept open, since none of them are derivable locally
 - target: docs/operations/known-gaps.tsv, docs/operations/operational-readiness-audit.md, scripts/enforcement, .github/workflows/enforcement-tests.yml, .claude/settings.json
 
 ## Documentation Asset Evidence
@@ -134,6 +142,22 @@ review → owner-approval path with executable positive and negative evidence.
   `.claude/settings.json` and `patch-settings-runtime-evidence.sh`; `test-evidence-levels.tsv`
   decided that the new suite is registered at `fixture` level rather than being left to the
   `static` default, because it drives the real recorder and the real reconciler.
+
+## Template/Pattern Rating Evidence
+
+- asset: `patterns/testing/README.md`
+- rating: useful — applied, not merely opened
+- outcome: its test-pyramid guidance shaped the shape of the new coverage rather than its
+  existence. The bulk of `test-bash-runtime-evidence.sh` is fast, in-process classification
+  and ledger assertions; exactly one section pays for a real subprocess corpus, and there is
+  no end-to-end path. Its "mocking the thing under test means testing the mock" warning is
+  why the disposable corpus copies and runs the *real* runner and the *real* reconciler
+  instead of stubbing them.
+- decision: kept the suite at one integration-level section over a disposable corpus and
+  registered it as `integration` in `test-evidence-levels.tsv`, rather than promoting the
+  whole suite or leaving it at the conservative `static` default.
+- confidence: high — the guidance is general and was directly actionable here; no adaptation
+  cost beyond choosing where the one subprocess-heavy section belongs.
 
 ## Skill Evidence
 
@@ -179,6 +203,18 @@ reducing risk.
   fourth finding came from reconciliation itself — the ledger accumulates across runs in one
   session, so a suite that failed and was later fixed still read as failing; the reconciler
   now takes the latest record per suite, with both directions pinned by fixtures.
+- pre-merge: Verified from a deleted ledger so nothing could carry over between runs:
+  `run-enforcement-tests.sh` green across all 118 Bash suites with execution receipts,
+  `run-python-enforcement-tests.py` green across all 5 Python suites, and
+  `check-bash-runtime-evidence.sh --require-complete` reporting 118/118 Bash suites
+  represented in operational runtime evidence. That last number is the whole point of the
+  phase: before this change the same seven green corpus runs produced zero. The PR evidence
+  gates were each run locally against `origin/main..HEAD` and each one that failed changed
+  the plan rather than being argued away — Connector Usage Evidence needed a decision that
+  named what the GitHub evidence actually changed, the `.github/workflows` edit implied the
+  `validation.actions-checked` capability, and declaring a `patterns/` asset required rating
+  evidence for it. `shellcheck` was installed in this container and passed on all ten touched
+  shell scripts rather than waived as it was in phase 2.
 
 ## Goal
 
@@ -329,15 +365,30 @@ by the repository's own contracts.
   the whole-command matcher with a segment scanner; added the Skill recorder and registered it
   in the canonical hook set; added the reconciler and its CI gate; added the positive and
   negative fixtures; closed the phase-2 gap with live GitHub evidence.
-- **Evidence:** to be completed from the executed suites, the reconciler output and the
-  exact-head CI run before the pre-merge checkpoint.
+- **Evidence:** before the change, the same payload recorded `tests_run` for
+  `bash scripts/enforcement/tests/test-known-gaps.sh` and recorded nothing for the identical
+  command behind a `cd` prefix, a pipe, a redirect or backgrounding — and phase 2's seven
+  green corpus runs left `tests_run = 0`. After it, a full corpus run from a deleted ledger
+  reports 118/118 Bash suites represented. Instance 2 has live proof rather than a fixture:
+  invoking `engineering-route` through the Skill tool recorded `skill_used engineering-route`,
+  which no producer in the repository could do before. 67 checks in
+  `test-bash-runtime-evidence.sh`, including a negative fixture in which the suites genuinely
+  execute with recording suppressed and reconciliation is required to fail. 20 checks in the
+  pre-existing recorder suite still pass unmodified, so no trust property from phase 1 was
+  traded away.
 - **Rejected:** widening the regex alone (keeps the evidence keyed on the command string, so
   the next wrapper reintroduces the blindness); recording on any mention of a suite path
   (fabricates evidence from `echo` and from masked failures); editing all 117 suites (no single
   owner, and new suites opt out silently); reconciling from CI receipts alone (a direct
   single-suite run leaves no receipt); replacing the Read key with a Skill key (trades one
   single-mechanism key for another).
-- **Result:** to be completed at the pre-merge checkpoint.
+- **Result:** the executing runner owns suite evidence, so no command wrapper can suppress
+  it; direct invocations are classified per control-operator segment with an explicit
+  `filtered` tier for piped output; verification records on the skill invocation as well as
+  on any canonical verification asset; and a missing record now fails a gate in CI on the
+  exact head instead of being invisible. `plan-freshness-clone-safety` is closed with live
+  post-merge evidence, and `bash-runtime-test-evidence` is widened to the defect class with
+  both instances named.
 - **Follow-up:** Project 8 qualification (`project-8-real-run-evidence`,
   `monitoring-metrics-sufficiency`) remains the next open readiness work after this phase.
 
