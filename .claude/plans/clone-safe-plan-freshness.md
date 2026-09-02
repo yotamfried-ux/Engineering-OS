@@ -105,6 +105,16 @@ reducing risk.
   that neither gap id existed in `docs/operations/known-gaps.tsv`. Reproduced the defect in
   a clean clone before writing anything: 118 tracked plans, one distinct mtime, `ls -t`
   selecting a plan 58 days old, `age_h = 0`.
+- mid: After adding `lib/plan-time.sh` and migrating the call sites, ran the targeted
+  suites and found 16 real failures in `test-workflow.sh` plus 5 more across
+  `test-active-plan-selection.sh`, `test-learning-reuse.sh`,
+  `test-operational-learning-skills.sh`, `test-post-tool-use-bash-evidence.sh` and
+  `test-readiness-audit.sh`. Each was root-caused rather than waived: fixtures that
+  expressed recency through `sleep 1` plus mtime now declare timestamps; `evidence.sh` was
+  changed to stop treating a missing plan-time library as fatal to the bypass ledger; the
+  two new gaps were added as audit status-matrix rows. One self-inflicted bug was caught
+  here too — `$(plan_stamp)` ran in a subshell so the sequence counter never advanced and
+  every fixture shared a timestamp.
 ## Goal
 
 Plan freshness and plan selection must not depend on filesystem mtime, because a fresh
