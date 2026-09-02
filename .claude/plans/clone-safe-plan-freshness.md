@@ -73,6 +73,18 @@ approval path with executable positive and negative evidence.
 | scripts/enforcement/check-known-gaps.sh | validated | The 10-column TSV contract and the mandatory audit ledger mirror; ran it to confirm 50 gaps pass. |
 | docs/operations/operational-readiness-audit.md | validated | Non-closed gaps must also appear as status-matrix rows; ran check-readiness-audit.sh to confirm. |
 
+## Connector Evidence
+
+- GitHub — the only connector on the required path for this change: reading repository and
+  branch state, pushing `claude/plan-freshness-clone-safety-f1neiv`, opening PR #278, and
+  reading its exact-head check runs and review threads.
+- Context7 — not required and not queried: the change introduces no external library,
+  framework, or package version, and relies only on `git`, `date` and POSIX shell builtins
+  already used throughout `scripts/enforcement/`.
+- Nemotron MCP — configured but failed to connect this session (`CONNECTION_CLOSED`). It is
+  L1 optional and not on this task's required path, so the session continued without it
+  per `core/connector-policy.md`'s fallback rule.
+
 ## Connector Usage Evidence
 
 - source: GitHub — repository, branch, commit history, PR #274 and #277 (merged phase-1 work), and live PR #278 for this change
