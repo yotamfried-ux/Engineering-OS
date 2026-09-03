@@ -214,7 +214,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | audit-live-state-verification | closed | P0 | Audit live state verification. |
 | hard-hook-fail-closed | closed | P0 | Hard hook infrastructure failure semantics; observed PR, push, and artifact evidence was reconciled by `known-gaps-live-state` 48 / `30130053645`, job `89602353324`, artifact `8610734070` (`sha256:add627ebc6a5475f4d4939cf47f02dd76adea706a70661cd3ceb352352cf2214`). |
 | bypass-approval-provenance | closed | P1 | Technical bypass authorization and one-shot consumption are closed; behavioral effectiveness is observed in the experiment. |
-| pattern-registry-canonical-drift | open | P1 | Pattern lifecycle canonical ownership. |
+| pattern-registry-canonical-drift | closed | P1 | Pattern lifecycle canonical ownership; closed by PR #284 merged at `4d517840f18d8c1699a95110e0790d6919450ba4` with post-merge validation run `33773417273` reporting success. |
 | pattern-evidence-maturity | open | P2 | Real multi-context pattern outcomes. |
 | documentation-runtime-state-drift | closed | P1 | Active documentation and executable-owner consistency. |
 | audit-self-contained-contract | closed | P0 | Audit self contained contract. |
@@ -241,7 +241,7 @@ Analyzers produce evidence and findings; they do not assign canonical closure st
 | Connector correctness / source-of-truth use | Enforced | Gate: check-connector-evidence.sh. Owner: connector-governance. Evidence: target and identifier fixtures. | Deep result interpretation is reviewed. |
 | Template selection | Enforced | Gate: check-required-templates.py. Owner: template-governance. Evidence: coverage and precision fixtures. | Template fit is reviewed. |
 | Pattern usage | Enforced | Gate: check-required-patterns.sh. Owner: pattern-governance. Evidence: domain and waiver fixtures. | Pattern fit is reviewed. |
-| Pattern lifecycle canonical ownership | Enforced | Gate: check-pattern-canonical-state.sh. Owner: pattern-governance. Evidence: conflicting status, score, usage, and evidence fixtures, plus unknown-row, active-below-threshold, and README-state-leakage fixtures in test-pattern-canonical-state.sh. | gap:pattern-registry-canonical-drift — `patterns/registry.yaml` is the single declared owner and divergence now fails closed; the gap stays open until exact-head CI, review, merge, and post-merge validation are recorded. |
+| Pattern lifecycle canonical ownership | Enforced | Gate: check-pattern-canonical-state.sh. Owner: pattern-governance. Evidence: conflicting status, score, usage, and evidence fixtures, plus unknown-row, active-below-threshold, and README-state-leakage fixtures in test-pattern-canonical-state.sh. | gap:pattern-registry-canonical-drift — closed. `patterns/registry.yaml` is the single declared owner and divergence fails closed; exact-head CI, review, merge `4d517840f18d8c1699a95110e0790d6919450ba4`, and post-merge validation run `33773417273` are all recorded. |
 | Pattern evidence maturity | Missing enforcement | Gate: rating schema exists. Owner: pattern-governance. Evidence: `patterns/registry.yaml`, scoring guide, and real-use records. | gap:pattern-evidence-maturity — no pattern has verified two-context evidence supporting active status. |
 | Template/pattern rating lifecycle | Enforced | Gate: check-template-pattern-ratings.sh. Owner: reuse-governance. Evidence: exact-asset feedback fixtures. | Canonical state drift is tracked separately. |
 | Documentation/reference asset selection lifecycle | Enforced | Gate: check-documentation-asset-evidence.sh. Owner: asset-governance. Evidence: documentation selection fixtures. | Best source is reviewed. |
@@ -531,12 +531,12 @@ Official basis: Google SRE monitoring and OpenTelemetry instrumentation guidance
 
 ## Highest-priority gaps by ROI
 
-1. Canonical pattern ownership — P1. Telemetry archive import integrity closed through PR #268.
-2. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.
-3. Pattern evidence maturity and second-run reproducibility — P2.
-4. Final full-readiness semantics and assertion — terminal P1.
+1. Fresh Remote and Project 8 qualification, then first-run monitoring usefulness — P1.
+2. Pattern evidence maturity and second-run reproducibility — P2.
+3. Final full-readiness semantics and assertion — terminal P1.
 
 Required-hook settings parity is no longer listed: it closed through PR #266.
+Canonical pattern ownership is no longer listed: it closed through PR #284.
 
 Closed regression surfaces retained by the readiness gate: coverage map hardening; RTK runtime hardening; route plan quality gate; learning closure gate; progress lifecycle; connector correctness; simulation completeness; post-merge validation; documentation hygiene; semantic cleanup; hard-hook fail-closed; live-state reconciliation.
 
