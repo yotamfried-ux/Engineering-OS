@@ -77,6 +77,24 @@ Task class: `engineering_os_governance`.
   clutter; added a check that skips archiving a run made only of session-lifecycle
   bookkeeping events (`session_start`/`stop`/`stop_failure`/`session_end`) with no real
   tool/prompt/subagent activity in between.
+- pre-merge: `scripts/enforcement/tests/test-local-telemetry-auto-archive.sh` passes all
+  11 checks; `test-telemetry-archive.sh` and `test-project8-telemetry-readiness.sh` still
+  pass unchanged (no regression to the existing recorder/sync contract). A live simulation
+  against the real `project-8` checkout's identity (a throwaway local clone, origin URL
+  only, never pushed) and this repo's real `telemetry-archive/`, run end to end through the
+  unmodified `record-and-sync-telemetry.sh stop`, produced one correctly identity-matched
+  entry (`repo: yotamfried-ux/project-8`, real `head_sha`, real Engineering OS `head_sha`,
+  `metadata-only`, no raw content) that `analyze-telemetry-archive.py` read successfully;
+  reverted afterward so the real archive stays empty. Opening the PR then surfaced five
+  governance gates this plan had gotten wrong on the first pass — connector-evidence field
+  format (`External systems/connectors` needed an exact none-ish phrase, not a descriptive
+  sentence), Documentation Asset Evidence, capability-evidence's placeholder check
+  (`not required` satisfies both the connector checker's none-ish set and the
+  capability checker's non-placeholder requirement, where bare `none` satisfied only one),
+  Route-Plan-before-code commit ordering (this plan's own commit had to precede the code
+  commit, not share it), and this section's own start/mid/pre-merge staged-commit
+  requirement — each was reproduced locally against the exact base/head SHAs with the
+  same scripts CI runs, and fixed before pushing again, rather than pushed speculatively.
 
 ## Goal / מטרה
 
