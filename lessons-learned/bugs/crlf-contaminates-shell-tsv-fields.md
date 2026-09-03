@@ -51,4 +51,3 @@ High
 Verified Lesson
 
 ## Prevented Future Issues: 0
-
