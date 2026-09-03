@@ -21,7 +21,7 @@ Planning Mode: approved
 | Architecture guides | `docs/operations/project8-telemetry-preflight.md`, `docs/operations/runtime-telemetry-archive-plan.md`, `docs/operations/known-gaps.tsv` (`project-8-real-run-evidence`). |
 | Patterns | none applicable — this is runtime script code, not a product pattern. |
 | External systems/connectors | not required |
-| Skills | none |
+| Skills | not required |
 | Validation gates | new `scripts/enforcement/tests/test-local-telemetry-auto-archive.sh`; existing `scripts/enforcement/tests/test-telemetry-archive.sh`, `test-project8-telemetry-readiness.sh` (must keep passing — confirms no regression to the existing recorder/sync contract); a live local simulation against the real `project-8` checkout + real `telemetry-archive/` (see Validation Plan) before opening the PR. |
 | Evidence to check | Read (this session): `scripts/monitoring/export-telemetry-run.py`, `import-telemetry-run.py`, `record-and-sync-telemetry.sh`, `sync-telemetry-run.py`, `require-telemetry-session.sh`, `eos-telemetry-session-start.sh`, `analyze-telemetry-archive.py`, and the two existing telemetry tests, to confirm the archive/import contract and reuse it exactly rather than reinventing sanitization or identity checks. |
 | User decisions required | none remaining — user explicitly asked to plan **and** execute this in the same instruction ("תיצור תוכנית לעדכון - תבצע אותו ואז תאמת בעזרת סימולציה"). Merge to `main` still requires the owner's explicit approval per `coderabbit-policy.md`; this plan does not authorize merging. |
@@ -56,7 +56,7 @@ Task class: `engineering_os_governance`.
 
 - none — routing was done directly against `core/task-router.md` and `core/workflow.md`
   (see Source of Truth Checks above), not through the packaged `engineering-route` skill;
-  the `Skills` field is `none` rather than claiming a skill invocation that did not happen.
+  the `Skills` field is `not required` rather than claiming a skill invocation that did not happen.
 
 ## Progress Lifecycle Evidence
 
