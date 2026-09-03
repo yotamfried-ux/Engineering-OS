@@ -79,7 +79,7 @@ hook הוא סקריפט שרץ אוטומטית באירוע מחזור-חיי�
 - **`enforce-documentation.sh`** (documentation-policy.md) — `pre-commit`: D1 חוסם `patterns/<domain>/` או `external-systems/<service>/` ב-staged ללא `README.md` (`EOS_BYPASS_DOCREADME=1`); D2 חוסם היעדר README בשורש (`EOS_BYPASS_ROOTREADME=1`); D3 חוסם placeholder עצמאי (TBD/FIXME/XXX/???) בקובצי `.md` (`EOS_BYPASS_TBD=1`). master: `EOS_BYPASS_DOC=1`. ולידציה index-based.
 - **`pre-commit.sh`** — שני שערים חדשים (נוספו על גבי הקיימים):
   - **G10** (DoD completion): חוסם commit כשיש קבצי קוד staged וה-plan הנוכחי מכיל פריטי `- [ ]` בסעיף DoD. evidence: קריאה ישירה מה-plan file (לא תלוי ב-evidence ledger). bypass: `EOS_BYPASS_DOD=1`
-  - **G11** (Verification): חוסם commit של >2 קבצי קוד כשגם `superpowers_verify_run` וגם `tests_run` חסרים מה-ledger. מספיק EITHER אחד מהם. evidence: `superpowers_verify_run` נרשם כש-`.claude/commands/superpowers-verify.md` נקרא (PostToolUse Read); `tests_run` נרשם ב-`post-tool-use-bash.sh`. bypass: `EOS_BYPASS_VERIFY=1`
+  - **G11** (Verification): חוסם commit של >2 קבצי קוד כשגם `superpowers_verify_run` וגם `tests_run` חסרים מה-ledger. מספיק EITHER אחד מהם. evidence: `superpowers_verify_run` ו-`skill_used` נרשמים על invocation מוצלח ב-`post-tool-use-skill-evidence.sh`, וקריאת נכס verification קנוני נשארת נתיב תקף דרך `post-tool-use-read-evidence.sh`; `tests_run` נרשם מתוך `run-enforcement-tests.sh` באמצעות `lib/test-run-evidence.sh`, ובנתיב direct מה-recorder של Bash. bypass: `EOS_BYPASS_VERIFY=1`
 
 ### סיווג קריטיות של hooks
 
@@ -144,7 +144,7 @@ migrations"). אל תסתפק בטקסט עבור כלל שאסור שייכשל
 | **KG4** | **`core/precedence.md` ו-`core/mcp-servers.md` נשארים NONE** — conflict resolution הוא judgment; reference table אין לו טריגר ברור | מתועד ב-MANIFEST.tsv עם נימוק | by design |
 | **KG5** | **שערי evidence (G6) תלויים ב-PostToolUse(Read) hook**: אם ה-hook לא פועל (כשל טעינה), evidence לא נרשם ו-G6 חוסם בלי סיבה | evidence_reset ב-SessionStart מאפס; fallback: `EOS_BYPASS_WORKFLOW=1`; recorders נבדקים שלא יוצרים evidence שקרי על input שבור | מיטיגטד |
 | **KG6** | **graphify evidence = הוכחה שרץ, לא שהממצאים שימשו**: `graphify_used` נרשם כש-output >30 תווים — Claude יכול להריץ graphify ולהתעלם מהתוצאות | G7 חוסם אם לא רץ בכלל; MANDATORY reminder ב-Read/Glob מזכיר לשלב ממצאים | by design |
-| **KG7** | **Zombie Plan semantic**: plan יכול להיות טרי (age <48h) אבל לא רלוונטי למשימה הנוכחית | אין hook לsemantic relevance — דורש LLM/NLP; `ls -t plans/` מציג שם ו-Claude רואה אותו | by design |
+| **KG7** | **Zombie Plan semantic**: plan יכול להיות טרי (age <48h) אבל לא רלוונטי למשימה הנוכחית | אין hook לsemantic relevance — דורש LLM/NLP; `eos_plans_by_recency` מציג שמות בסדר קנוני, דטרמיניסטי ו-clone-safe כדי שה-agent יוכל לבדוק התאמה סמנטית | by design |
 | **KG8** | **G12 advisory בלבד** — קובץ גנרי חדש (utils.ts, helpers.py) יכול להיכתב ללא patterns read | WARNING_FOR_AGENT מוצג; G8 מכסה דומיינים מוכרים; G12 advisory לא blocking | intentional |
 
 **אחריות תיעוד:** כשמתגלה פגם אכיפה חדש — הוסף שורה לטבלה הזו לפני שדנים בתיקון, כדי שהפגם לא יחזור לאחר refactor.
