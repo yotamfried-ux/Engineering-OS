@@ -21,7 +21,7 @@ Planning Mode: approved
 | Architecture guides | `core/hooks-policy.md`; `docs/operations/project8-telemetry-preflight.md` |
 | Patterns | none — the fix is input normalization at an existing manifest boundary. |
 | External systems/connectors | GitHub |
-| Skills | none |
+| Skills | `engineering-route` |
 | Validation gates | CRLF manifest regression; `git diff --check`; exact-head GitHub Actions; live review/thread reconciliation. |
 | Evidence to check | reproduced CRLF bytes under `core.autocrlf=true`; target installer error; focused installer test; PR checks. |
 | User decisions required | explicit approval received to create a branch and PR; merge requires a later explicit approval. |
@@ -70,7 +70,7 @@ No scaffold applies to a three-file installer compatibility repair. The existing
 
 ## Skill Evidence
 
-- none — this repair uses the repository's existing installer, manifest, and focused regression suite; no external implementation skill would change the decision or reduce risk.
+- `engineering-route` — applied the repository-native task route for an Engineering OS governance change: source inspection, plan-first branch history, focused validator extension, exact-head CI, review reconciliation, and explicit owner approval before merge.
 
 ## Progress Lifecycle Evidence
 
