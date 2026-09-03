@@ -73,7 +73,7 @@ export async function confirmUpload(userId: string, fileKey: string) {
 **Testing Strategy:**
 Assert the presigned URL is scoped to the correct key. Test that attempting to upload to a different key with the same URL fails. Test confirm rejects keys belonging to other users.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -139,7 +139,7 @@ export async function invalidateAsset(key: string) {
 **Testing Strategy:**
 Verify the S3 bucket rejects direct public access. Test cache-hit responses include `X-Cache: Hit from cloudfront`. Test signed URL expiry returns 403 after the TTL.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -208,7 +208,7 @@ async function processImageJob(fileKey: string) {
 **Testing Strategy:**
 Test happy path produces the correct output key and status. Test failure path sets `failed` status and the error message. Test reprocessing an already-processed file is idempotent.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -261,7 +261,7 @@ const bucket = new s3.Bucket(this, 'AssetsBucket', {
 **Testing Strategy:**
 Validate lifecycle rules with AWS CLI (`s3api get-bucket-lifecycle-configuration`). Spot-check that files older than the transition threshold show the expected storage class in S3 metadata.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [AWS S3 Docs](https://docs.aws.amazon.com/s3/) — object storage fundamentals

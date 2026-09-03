@@ -72,7 +72,7 @@ async function listPosts(limit: number, cursor?: string) {
 **Testing Strategy:**
 Test with a dataset that has ties on the cursor field. Verify that paginating through all pages returns every item exactly once. Test that inserting or deleting rows between pages does not cause duplicates or gaps.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -136,7 +136,7 @@ export async function rateLimitMiddleware(req: Request, res: Response, next: Nex
 **Testing Strategy:**
 Send requests in rapid succession and assert the 101st returns 429. Verify headers are correct. Test that limits reset after the window expires.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -191,7 +191,7 @@ function deprecationMiddleware(sunsetDate: string) {
 **Testing Strategy:**
 Run the full test suite against each active version. Add a canary test that calls v1 and asserts the `Deprecation` header is present once it enters sunset.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -251,7 +251,7 @@ app.post('/users', validate(CreateUserSchema), createUser);
 **Testing Strategy:**
 Test with valid input (passes), missing required fields (400), wrong types (400), extra fields (stripped), and boundary values (min/max string length, numeric ranges).
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -322,7 +322,7 @@ throw new AppError('VALIDATION_FAILED', 'Invalid input', 400, validationDetails)
 **Testing Strategy:**
 Assert every error path returns the expected `code` and `statusCode`. Verify that unhandled exceptions return `INTERNAL_ERROR` without leaking details. Confirm `requestId` is always present.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [Microsoft REST API Guidelines](https://github.com/microsoft/api-guidelines) — production REST design

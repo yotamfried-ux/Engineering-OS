@@ -56,7 +56,7 @@ def make_splits(
 **Testing:**
 Assert that `len(train) + len(val) + len(test) == len(df)`. Assert there is no row overlap between splits (`pd.merge` on the index should return an empty frame). Assert class proportions in each split match the full dataset within a small tolerance.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -115,7 +115,7 @@ feature_vector = store.get_online_features(
 **Testing:**
 Write an integration test that materializes a known feature value, then fetches it via the online store and asserts it matches. Write a point-in-time test that verifies the offline store returns the historically correct value, not the current one.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -174,7 +174,7 @@ def load_production_model():
 **Testing:**
 Write a test that registers a model, asserts it appears in Staging, then asserts that loading by stage returns the correct version. Test that a model below the threshold is blocked from promotion.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -234,7 +234,7 @@ async def _log_shadow(features: dict, prod_label: str) -> None:
 **Testing:**
 Write a test that asserts the production prediction is returned even when the shadow model raises an exception. Assert that shadow logs are emitted for every request. Assert that shadow inference does not increase p99 latency beyond an acceptable threshold.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [Scikit-Learn Docs](https://scikit-learn.org/stable/) — classical ML algorithms

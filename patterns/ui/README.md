@@ -98,7 +98,7 @@ module.exports = {
 
 **Testing:** Run a generated-output snapshot test on every PR that touches `tokens/`. Assert that every CSS variable name in `dist/tokens.css` corresponds to an entry in the source JSON. Catch any primitive reference leaking into a component with a lint rule that bans raw hex literals in component files.
 
-**Score:** Candidate
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -202,7 +202,7 @@ export function useUserSearch() {
 - Organisms and Features: integration test with mocked API responses using `msw`.
 - Never mock child atoms inside a molecule test — let them render and test the composed output.
 
-**Score:** Candidate
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -311,7 +311,7 @@ function NavMenu() {
 - Manual: navigate each interactive component with keyboard only; verify with VoiceOver on macOS and NVDA on Windows.
 - CI: integrate `@axe-core/playwright` into E2E tests and fail the build on any violation with severity `critical` or `serious`.
 
-**Score:** Candidate
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -482,7 +482,7 @@ export function UserTable({ data, onSort, onBulkDelete }: UserTableProps) {
 - E2E: select all rows, deselect one, confirm the bulk-action toolbar shows the correct count, and assert the delete confirmation dialog appears.
 - Accessibility: assert the table has an `aria-label`, all `<th>` elements have `scope="col"` or `scope="row"`, and sortable headers have `aria-sort`.
 
-**Score:** Candidate
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -616,7 +616,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 - Test tenant theme injection: mock a tenant config, assert that CSS variables resolve to the tenant's values under `[data-theme="brand-<tenant>"]`.
 - Mock `window.matchMedia('(prefers-color-scheme: dark)')` and assert the correct theme is applied without user action.
 
-**Score:** Candidate
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -753,7 +753,7 @@ export function SignInForm() {
 - Test loading state with a screen reader: confirm the `aria-label="Signing in..."` text is announced when `isSubmitting` is true.
 - Assert the form-level error summary receives focus after a failed submission.
 
-**Score:** Candidate
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -895,7 +895,7 @@ export function KpiCard({ label, metricKey }: KpiCardProps) {
 - Data permissions: assert a user authenticated with tenant A's token cannot see tenant B's data in any chart or KPI.
 - Stale data: assert the last-updated timestamp updates after the SWR refresh interval elapses.
 
-**Score:** Candidate
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 

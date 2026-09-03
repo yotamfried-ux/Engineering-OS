@@ -69,7 +69,7 @@ export async function sendWelcomeEmail(user: { name: string; email: string }) {
 **Testing Strategy:**
 Unit-test template rendering with snapshot tests. Integration-test the mailer with a mock provider. E2e test the full flow using Mailpit or similar local SMTP catcher.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -136,7 +136,7 @@ export async function sendPushNotification(
 **Testing Strategy:**
 Mock Firebase Admin SDK. Test multicast with mixed valid/invalid tokens and assert invalid tokens are removed. Test that zero-device users do not cause errors.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -201,7 +201,7 @@ async function createNotification(userId: string, type: string, payload: object)
 **Testing Strategy:**
 Test notification creation inserts a DB record. Test SSE stream delivers the event to the right user only. Test badge count decrements on mark-as-read. Test `readAll` marks all as read.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -265,7 +265,7 @@ export async function verifyCode(phone: string, code: string): Promise<boolean> 
 **Testing Strategy:**
 Test successful verification deletes the Redis key. Test expired OTP returns false. Test wrong code increments failure counter. Test rate limiting blocks after N sends.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [Resend Docs](https://resend.com/docs) — developer-first transactional email API

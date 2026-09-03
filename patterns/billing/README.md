@@ -61,7 +61,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 **Testing Strategy:**
 Use Stripe's webhook CLI to replay events locally. Test all transitions: created → active → past_due → canceled → active (reactivation). Assert DB state after each event.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -131,7 +131,7 @@ export async function stripeWebhook(req: Request, res: Response) {
 **Testing Strategy:**
 Send the same event ID twice and assert only one DB record is created and one email sent. Test signature validation with a tampered payload. Test the `failed` status path.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -184,7 +184,7 @@ async function reportUsage(orgId: string, billingPeriodEnd: Date) {
 **Testing Strategy:**
 Test aggregate query returns correct total. Mock Stripe and assert `action: 'set'` is used. Test that running the job twice in the same period does not double-count.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -242,7 +242,7 @@ async function startTrial(customerId: string, priceId: string) {
 **Testing Strategy:**
 Use Stripe test clock to simulate time advancing. Test trial creation, `trial_will_end` email trigger, and both end-of-trial paths (payment success and no card on file).
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [Stripe Docs](https://stripe.com/docs) — payment processing documentation

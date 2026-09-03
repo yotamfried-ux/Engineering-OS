@@ -1,0 +1,2 @@
+# gate_id	owner	enforcer	test_file	positive	negative	invalid	waiver	notes
+pattern-canonical-state	pattern-governance	scripts/enforcement/check-pattern-canonical-state.sh	scripts/enforcement/tests/test-pattern-canonical-state.sh	covered:agreeing_pattern_row_passes	covered:conflicting_status_fails	covered:empty_registry_fails	covered:template_row_is_ignored	Canonical pattern-state gate covers agreement, the four conflict classes (status, score, usage, evidence), unknown rows, active-below-threshold promotion, README state leakage, and fail-closed behavior on an empty registry.
