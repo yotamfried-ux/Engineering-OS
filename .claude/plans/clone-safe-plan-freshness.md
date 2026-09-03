@@ -285,10 +285,10 @@ brief and confirmed against the working tree (118 tracked plans − 2 existing k
 - **Result:** one canonical resolver owns plan recency; undatable plans fail closed with a
   named reason instead of reporting as fresh; the historical corpus cleanup remains exact.
   A final stages 1–3 audit found one presentation-only `ls -lt` residue in the session-start
-  Existing plans list. PR #280 removes it, adds a production-wide bypass scan, and aligns
+  Existing plans list. PR #282 removes it, adds a production-wide bypass scan, and aligns
   KG7 and G11 documentation with the implemented resolver and runtime-evidence producers.
 - **Follow-up:** exact-head CI, review reconciliation and explicit owner approval remain
-  live external gates for PR #280. Project 8 qualification follows after merge.
+  live external gates for PR #282. Project 8 qualification follows after merge.
 
 ## Live External Gates Before Merge
 
