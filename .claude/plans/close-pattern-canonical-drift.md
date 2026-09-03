@@ -121,6 +121,10 @@ No scaffold applies to a status transition in two existing governance ledger fil
 ## Progress Lifecycle Evidence
 
 - start: PR #284 merged at `4d517840f18d8c1699a95110e0790d6919450ba4`; the designated branch was restarted from that merged `main` per the merged-PR instruction, leaving a clean tree.
+- mid: merged `main` was verified locally before any ledger edit — `check-pattern-canonical-state.sh` passed (88 records, 0 active, single owner), its 19-assertion suite passed, and the full runner reported `all 119 enforcement suites passed with execution receipts`, confirming the enforcement is live in the canonical branch rather than only on a feature branch.
+- mid: `post-merge-validation` run `33773417273` was polled until it concluded `success` at 2026-09-03T15:36:32Z on the merge commit; only then was the ledger row changed, so the closure claim never preceded its evidence.
+- mid: the row moved `open` → `closed` in `docs/operations/known-gaps.tsv` (43 closed / 1 mitigated / 6 open), and three stale statements in the audit were corrected: the gap ledger row, the status-matrix note that still said the gap "stays open until … post-merge validation are recorded", and the highest-priority list that still ranked canonical pattern ownership first.
+- mid: `--assert-full-ready` now names seven blocking gaps instead of eight, with `pattern-registry-canonical-drift` absent; `check-known-gaps.sh`, `check-readiness-audit.sh`, `git diff --check`, and the full 119-suite runner all pass on this branch.
 
 ## Definition of Done
 
