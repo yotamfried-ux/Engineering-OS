@@ -16,7 +16,7 @@ Planning Mode: approved
 | Planning Mode | approved |
 | Task-router evidence | `core/task-router.md` routes enforcement and installer changes through the governance workflow and exact validation gates. |
 | Workflow evidence | `core/workflow.md`, `core/git-policy.md`, `core/hooks-policy.md`, and `core/quality-gates.md` require plan-first history, a focused regression, exact-head CI, review reconciliation, and explicit approval before merge. |
-| Target paths | `scripts/install-policy-gates.sh`; `scripts/enforcement/tests/test-install-policy-gate-coverage.sh`; `.gitattributes` |
+| Target paths | `scripts/install-policy-gates.sh`; `scripts/enforcement/tests/test-install-policy-gate-coverage.sh`; `.gitattributes`; `lessons-learned/bugs/crlf-contaminates-shell-tsv-fields.md` |
 | Templates | waiver — focused repair to an existing installer and its existing test suite. |
 | Architecture guides | `core/hooks-policy.md`; `docs/operations/project8-telemetry-preflight.md` |
 | Patterns | none — the fix is input normalization at an existing manifest boundary. |
@@ -79,6 +79,7 @@ No scaffold applies to a three-file installer compatibility repair. The existing
 - mid: `install-policy-gates.sh` now strips a trailing carriage return from both manifest fields; `.gitattributes` keeps shell and TSV checkouts on LF; the existing installer suite rewrites its fixture to CRLF before exercising the positive path.
 - mid: structural assertions and `git diff --check` pass. Direct Git Bash execution is unavailable in this Codex Windows sandbox because the process cannot create its signal pipe, so executable confirmation is delegated to exact-head GitHub Actions rather than claimed locally.
 - pre-merge: PR #283 opened at exact head `f3ad53af92f224911b0901b5ac18ec0bd025c548`; its first exact-head attempt passed `telemetry-handoff-tests` and returned concrete evidence-format failures, which were read from job logs and corrected in this post-code checkpoint without changing implementation.
+- pre-merge: exact head `c37ca2d13c3b443e9bbc44c362b2cf87a39c660a` passed the full `enforcement-tests` suite and every dedicated evidence workflow; the remaining `pr-policy` failure required a concrete learning-loop artifact, so the verified CRLF lesson was added without changing runtime behavior.
 
 ## Definition of Done
 
