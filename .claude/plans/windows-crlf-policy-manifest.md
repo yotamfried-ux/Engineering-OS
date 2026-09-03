@@ -80,6 +80,7 @@ No scaffold applies to a three-file installer compatibility repair. The existing
 - mid: structural assertions and `git diff --check` pass. Direct Git Bash execution is unavailable in this Codex Windows sandbox because the process cannot create its signal pipe, so executable confirmation is delegated to exact-head GitHub Actions rather than claimed locally.
 - pre-merge: PR #283 opened at exact head `f3ad53af92f224911b0901b5ac18ec0bd025c548`; its first exact-head attempt passed `telemetry-handoff-tests` and returned concrete evidence-format failures, which were read from job logs and corrected in this post-code checkpoint without changing implementation.
 - pre-merge: exact head `c37ca2d13c3b443e9bbc44c362b2cf87a39c660a` passed the full `enforcement-tests` suite and every dedicated evidence workflow; the remaining `pr-policy` failure required a concrete learning-loop artifact, so the verified CRLF lesson was added without changing runtime behavior.
+- pre-merge: final patch self-review found CR-only blank lines introduced by the PowerShell-to-GitHub API upload in this plan and the new lesson; both EOFs were normalized to one LF, `git diff --check` became clean, and final exact-head CI was restarted without any runtime-code change.
 
 ## Definition of Done
 
