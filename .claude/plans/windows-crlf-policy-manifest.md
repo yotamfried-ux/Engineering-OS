@@ -21,7 +21,7 @@ Planning Mode: approved
 | Architecture guides | `core/hooks-policy.md`; `docs/operations/project8-telemetry-preflight.md` |
 | Patterns | none — the fix is input normalization at an existing manifest boundary. |
 | External systems/connectors | GitHub |
-| Skills | none — focused POSIX shell boundary repair using repository-native policy and tests. |
+| Skills | none |
 | Validation gates | CRLF manifest regression; `git diff --check`; exact-head GitHub Actions; live review/thread reconciliation. |
 | Evidence to check | reproduced CRLF bytes under `core.autocrlf=true`; target installer error; focused installer test; PR checks. |
 | User decisions required | explicit approval received to create a branch and PR; merge requires a later explicit approval. |
