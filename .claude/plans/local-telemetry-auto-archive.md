@@ -64,6 +64,19 @@ Task class: `engineering_os_governance`.
   Confirmed by reading both repos' `.github/workflows/` that no workflow anywhere calls
   `import-telemetry-run.py`, so a session with no PR never gets archived. Initial plan was
   a bare `export-telemetry-run.py` → `import-telemetry-run.py` call from the new script.
+- mid: The initial plan was wrong in one concrete way: `import-telemetry-run.py`'s shared
+  integrity validator rejected the bare export-only bundle with `telemetry bundle has no
+  valid handoff metadata` — reproduced directly, not assumed. Fixed by dynamically loading
+  `sync-telemetry-run.py` and reusing its own `write_handoff_manifest()`/`detect_repo_slug()`
+  /`latest_boundary_position()` instead of duplicating that logic. The first version of the
+  new test then exposed a second wrong assumption: it expected a session with zero tool
+  calls to have zero events, but `eos-telemetry-session-start.sh` always writes one
+  `eos.session_start` event and the `Stop` boundary always adds a second `eos.stop` event
+  before archiving — a "zero-event session" isn't a real case. Mid-task, an explicit
+  requirement arrived that the archive stay orderly over time rather than accumulate
+  clutter; added a check that skips archiving a run made only of session-lifecycle
+  bookkeeping events (`session_start`/`stop`/`stop_failure`/`session_end`) with no real
+  tool/prompt/subagent activity in between.
 
 ## Goal / מטרה
 
