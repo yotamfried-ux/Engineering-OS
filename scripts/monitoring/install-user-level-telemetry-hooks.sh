@@ -25,6 +25,7 @@ target="${EOS_USER_SETTINGS_PATH:-$HOME/.claude/settings.json}"
 for runtime in \
   scripts/enforcement/hook-criticality.tsv \
   scripts/enforcement/lib/hook-gate.sh \
+  scripts/enforcement/lib/python-runtime.sh \
   scripts/enforcement/lib/soft-hook-gate.sh \
   scripts/monitoring/patch-settings-telemetry.py \
   scripts/monitoring/eos-telemetry-dispatch.sh \
@@ -44,6 +45,14 @@ for runtime in \
   fi
 done
 
+python_runtime="$home_dir/scripts/enforcement/lib/python-runtime.sh"
+# Refuse before creating or replacing settings. Once hook commands are activated they
+# must be able to resolve Python 3 in the same Git Bash environment that runs them.
+# shellcheck source=../enforcement/lib/python-runtime.sh
+. "$python_runtime"
+eos_python_preflight || exit 1
+export BASH_ENV="$python_runtime"
+
 patcher_args=("$target" --mode dispatcher --home "$home_dir")
 case "${1:-}" in
   --dry-run) patcher_args+=(--dry-run) ;;
@@ -57,4 +66,4 @@ case "${1:-}" in
 esac
 
 mkdir -p "$(dirname "$target")"
-python3 "$home_dir/scripts/monitoring/patch-settings-telemetry.py" "${patcher_args[@]}"
+eos_python "$home_dir/scripts/monitoring/patch-settings-telemetry.py" "${patcher_args[@]}"

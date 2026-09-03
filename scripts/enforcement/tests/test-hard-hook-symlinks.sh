@@ -33,6 +33,7 @@ make_root() {
   local root="$WORK/$name"
   mkdir -p "$root/scripts/enforcement/lib"
   cp "$GATE" "$root/scripts/enforcement/lib/hook-gate.sh"
+  cp "$ROOT/scripts/enforcement/lib/python-runtime.sh" "$root/scripts/enforcement/lib/python-runtime.sh"
   printf '%s\n' "$root"
 }
 
@@ -60,6 +61,10 @@ run_runtime() {
 root="$(make_root unit-link)"
 printf '#!/usr/bin/env bash\nexit 0\n' >"$root/scripts/enforcement/real-unit.sh"
 ln -s real-unit.sh "$root/scripts/enforcement/unit.sh"
+if [ ! -L "$root/scripts/enforcement/unit.sh" ]; then
+  echo "hard-hook symlink regression skipped: this filesystem emulates ln -s as a copy; Linux CI exercises real symlinks"
+  exit 0
+fi
 write_registry "$root" scripts/enforcement/unit.sh
 write_settings "$root" scripts/enforcement/unit.sh
 run_static "$root"

@@ -34,4 +34,14 @@ def invokes(command: str, unit: str, argument: str | None = None) -> bool:
         return True
     if command.rstrip().endswith(f" {argument}"):
         return True
-    return bool(re.search(rf"--\s+{re.escape(argument)}(?![A-Za-z0-9_])", command))
+    if re.search(rf"--\s+{re.escape(argument)}(?![A-Za-z0-9_])", command):
+        return True
+    # A terminal command may preflight its runtime before invoking the unit and then
+    # continue with shell recovery logic. Match the actual unit argv rather than
+    # requiring the argument to be the final token in the complete command string.
+    return bool(
+        re.search(
+            rf"{re.escape(unit)}[\"']?\s+{re.escape(argument)}(?=$|[\s;&|])",
+            command,
+        )
+    )

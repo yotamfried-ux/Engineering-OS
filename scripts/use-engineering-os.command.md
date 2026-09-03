@@ -25,10 +25,19 @@ Steps:
    cd /path/to/target-project && bash "$ENGINEERING_OS_HOME/scripts/use-in-project.sh"
    ```
 
-   **First time on a local machine:**
-   ```bash
-   bash -c "$(curl -fsSL https://raw.githubusercontent.com/yotamfried-ux/Engineering-OS/main/scripts/use-in-project.sh)"
+   **First time on Windows PowerShell:**
+   ```powershell
+   $source = Invoke-RestMethod "https://raw.githubusercontent.com/yotamfried-ux/Engineering-OS/main/scripts/install-engineering-os-project.ps1"; & ([scriptblock]::Create($source)) -Target (Get-Location).Path
    ```
+
+   **First time on Bash / Git Bash:**
+   ```bash
+   bash -c "$(curl -fsSL https://raw.githubusercontent.com/yotamfried-ux/Engineering-OS/main/scripts/install-engineering-os-project.sh)" -- "$(pwd)"
+   ```
+
+   These full installers preflight the shared Python runtime, refresh project hooks,
+   install the user-level dispatcher, and verify both surfaces. They are sourced from
+   GitHub; a machine-specific helper script or `python3` shim is not required.
 
 2. For all work in THIS project from now on, follow the rules in
    `${ENGINEERING_OS_HOME:-$HOME/.engineering-os}/CLAUDE.md` and its `core/` policies

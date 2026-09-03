@@ -7,10 +7,15 @@ INSTALLER="$ROOT/scripts/install-policy-gates.sh"
 installed_workflows() { grep -oE '^for name in [^;]+' "$INSTALLER" | sed -E 's/^for name in //'; }
 pass() { echo "ok: $1"; }
 fail() { echo "fail: $1"; exit 1; }
-manifest_has() { grep -Fqx "$1"$'\t'"$2" "$MANIFEST"; }
+manifest_has() {
+  grep -Fqx "$1"$'\t'"$2" "$MANIFEST" \
+    || grep -Fqx "$1"$'\t'"$2"$'\r' "$MANIFEST"
+}
 [ -f "$MANIFEST" ] || fail manifest_present; pass manifest_present
 bad=0
 while IFS=$'\t' read -r workflow dep; do
+  workflow="${workflow%$'\r'}"
+  dep="${dep%$'\r'}"
   case "${workflow:-}" in ''|'#'*) continue ;; esac
   [ -n "${dep:-}" ] || { echo "  fail: malformed row for $workflow"; bad=1; continue; }
   [ -f "$ROOT/$dep" ] || { echo "  fail: $workflow declares missing dependency $dep"; bad=1; }
@@ -39,6 +44,8 @@ FAKE_HOME="$TMP/fake-eos-home"
 mkdir -p "$FAKE_HOME/.github/workflows" "$FAKE_HOME/scripts/enforcement" "$FAKE_HOME/scripts/monitoring" "$FAKE_HOME/.claude"
 for wf in $INSTALLED; do cp "$WORKFLOWS_DIR/$wf" "$FAKE_HOME/.github/workflows/$wf"; done
 while IFS=$'\t' read -r workflow dep; do
+  workflow="${workflow%$'\r'}"
+  dep="${dep%$'\r'}"
   case "${workflow:-}" in ''|'#'*) continue ;; esac
   [ -n "${dep:-}" ] || continue
   mkdir -p "$FAKE_HOME/$(dirname "$dep")"; cp "$ROOT/$dep" "$FAKE_HOME/$dep"
@@ -56,7 +63,7 @@ PY
 # test-hook-boundary-parity.sh.
 cp "$ROOT/scripts/enforcement/hook-criticality.tsv" "$FAKE_HOME/scripts/enforcement/hook-criticality.tsv"
 mkdir -p "$FAKE_HOME/scripts/enforcement/lib"
-for gate in hook-gate.sh soft-hook-gate.sh; do
+for gate in hook-gate.sh python-runtime.sh soft-hook-gate.sh; do
   cp "$ROOT/scripts/enforcement/lib/$gate" "$FAKE_HOME/scripts/enforcement/lib/$gate"
 done
 cp "$ROOT/.claude/settings.json" "$FAKE_HOME/.claude/settings.json"
@@ -69,9 +76,24 @@ for runtime in \
 done
 TARGET_OK="$TMP/install-target-ok"; mkdir -p "$TARGET_OK"
 printf 'existing-entry\n' > "$TARGET_OK/.gitignore"
+
+# Runtime validation must happen before the installer creates anything in the target.
+TARGET_NO_PYTHON="$TMP/install-target-no-python"
+if EOS_PYTHON_BIN=definitely-missing-python EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$FAKE_HOME" bash "$INSTALLER" "$TARGET_NO_PYTHON" >"$TMP/no-python.out" 2>"$TMP/no-python.err"; then
+  fail installer_rejects_missing_python_runtime
+elif [ -e "$TARGET_NO_PYTHON" ]; then
+  fail installer_preflight_precedes_target_mutation
+elif grep -q 'configured Python runtime' "$TMP/no-python.err"; then
+  pass installer_rejects_missing_python_before_target_mutation
+else
+  fail installer_missing_python_diagnostic_is_actionable
+fi
+
 if EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$FAKE_HOME" bash "$INSTALLER" "$TARGET_OK" >/dev/null 2>&1; then pass installer_accepts_windows_crlf_manifest; else fail installer_accepts_windows_crlf_manifest; fi
 bad=0
 while IFS=$'\t' read -r workflow dep; do
+  workflow="${workflow%$'\r'}"
+  dep="${dep%$'\r'}"
   case "${workflow:-}" in ''|'#'*) continue ;; esac
   [ -n "${dep:-}" ] || continue
   [ -f "$TARGET_OK/$dep" ] || { echo "  fail: $dep missing from installed target"; bad=1; }

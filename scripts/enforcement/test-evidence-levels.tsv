@@ -11,6 +11,8 @@ scripts/enforcement/tests/test-clean-install-and-usage.sh	integration	Installs E
 scripts/enforcement/tests/test-project8-telemetry-readiness.sh	integration	Runs the telemetry readiness path against a disposable Project-8-like repository; it is not a real Project 8 session.
 scripts/enforcement/tests/test-remote-telemetry-handoff.sh	integration	Exercises the handoff path across disposable repositories/workspaces without claiming a live remote session.
 scripts/enforcement/tests/test-multirepo-dispatch.sh	integration	Exercises multi-repository dispatch behavior in disposable repository fixtures.
+scripts/enforcement/tests/test-python-runtime.sh	fixture	Uses controlled executable candidates to verify argv-safe interpreter discovery and failure behavior.
+scripts/enforcement/tests/test-project-installer.sh	integration	Installs and verifies real project/user settings in disposable targets, including Windows PowerShell and no-python3 PATH coverage; not live Claude or remote handoff proof.
 scripts/enforcement/tests/test-telemetry-archive.sh	integration	Exercises archive/import/integrity behavior with real local files and repositories.
 scripts/enforcement/tests/test-post-tool-use-bash-evidence.sh	integration	Executes the recorder plus Stop and G11 consumers with real local subprocess behavior.
 scripts/enforcement/tests/test-bash-runtime-evidence.sh	integration	Runs the real canonical runner over a disposable corpus and reconciles the resulting runtime evidence, including a suppressed-record negative fixture.

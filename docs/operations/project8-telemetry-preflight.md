@@ -15,6 +15,8 @@ Local telemetry alone is not sufficient. Claude Code Remote runs in an ephemeral
 
 The corrected runtime now:
 
+- resolves one verified Python 3 runtime through `python3`, `python`, or Windows `py -3`;
+- preflights that runtime before any hook settings are activated;
 - creates or safely patches Claude settings;
 - records metadata-only session/tool events;
 - pushes sanitized bundles to the isolated `engineering-os-telemetry` branch;
@@ -51,7 +53,7 @@ Already merged in Project 8:
 
 Still required before opening the experiment session:
 
-1. merge the Engineering OS canonical Git-remote parsing and trust-boundary hardening PR chain;
+1. merge the Engineering OS portable Python runtime and repository installer repair;
 2. update the actual `ENGINEERING_OS_HOME` checkout to that merged head;
 3. install and exactly verify the user-level dispatcher from that checkout;
 4. open a genuinely fresh Claude session.
@@ -60,11 +62,21 @@ Do not run another blind full `use-in-project.sh` sync into Project 8 before the
 
 ## Safe preparation sequence
 
-The updated `pr-policy.yml` and required telemetry policy already exist on `project-8/main`. Use this order:
+The updated `pr-policy.yml` and required telemetry policy already exist on `project-8/main`. Use this order. On Windows, run the repository-tracked installer from the Project 8 root:
+
+```powershell
+$source = Invoke-RestMethod "https://raw.githubusercontent.com/yotamfried-ux/Engineering-OS/main/scripts/install-engineering-os-project.ps1"; & ([scriptblock]::Create($source)) -Target (Get-Location).Path
+```
+
+The command obtains its durable implementation from GitHub, refreshes
+`~/.engineering-os`, installs both settings surfaces, and executes both verifiers. A
+local checkout remains necessary at runtime because Claude hooks execute local commands;
+it is a disposable clone of GitHub, not a separate source of truth. Do not use an
+`outputs/` helper or a persistent `python3` shim.
 
 1. merge the Engineering OS experiment-readiness PR chain;
 2. update the canonical Engineering OS checkout used by Claude;
-3. install the user-level dispatcher:
+3. if the full installer above was not used, install the user-level dispatcher:
 
    ```bash
    ENGINEERING_OS_HOME=/absolute/path/to/Engineering-OS \

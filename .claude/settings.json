@@ -10,7 +10,7 @@
           },
           {
             "type": "command",
-            "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *grep*|*rg\\ *|*ripgrep*|*find\\ *|*fd\\ *) [ -f graphify-out/graph.json ] && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"MANDATORY: graphify-out/graph.json exists. Run graphify query before broad raw file search.\"}}' || true ;; esac"
+            "command": "PYTHON_RUNTIME=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/python-runtime.sh\"; if [ -f \"$PYTHON_RUNTIME\" ] && [ -r \"$PYTHON_RUNTIME\" ] && . \"$PYTHON_RUNTIME\" && eos_python_preflight; then export BASH_ENV=\"$PYTHON_RUNTIME\"; else echo \"WARNING_FOR_AGENT: Engineering OS inline hook runtime unavailable; no evidence recorded.\" >&2; exit 0; fi; CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *grep*|*rg\\ *|*ripgrep*|*find\\ *|*fd\\ *) [ -f graphify-out/graph.json ] && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"MANDATORY: graphify-out/graph.json exists. Run graphify query before broad raw file search.\"}}' || true ;; esac"
           },
           {
             "type": "command",
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "HIT=$(python3 -c \"import json,sys;d=json.load(sys.stdin);t=d.get('tool_input',d);s=(str(t.get('file_path') or '')+' '+str(t.get('pattern') or '')+' '+str(t.get('path') or '')).lower().replace(chr(92),'/');sys.stdout.write('1' if 'graphify-out/' not in s and any(e in s for e in ('.py','.js','.ts','.tsx','.jsx','.go','.rs','.java','.rb','.c','.h','.cpp','.hpp','.cc','.cs','.kt','.swift','.php','.scala','.lua','.sh','.md','.rst','.txt','.mdx')) else '')\" 2>/dev/null || true); if [ \"$HIT\" = 1 ] && [ -f graphify-out/graph.json ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"MANDATORY: graphify-out/graph.json exists. Run graphify before reading source files.\"}}'; fi || true"
+            "command": "PYTHON_RUNTIME=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/python-runtime.sh\"; if [ -f \"$PYTHON_RUNTIME\" ] && [ -r \"$PYTHON_RUNTIME\" ] && . \"$PYTHON_RUNTIME\" && eos_python_preflight; then export BASH_ENV=\"$PYTHON_RUNTIME\"; else echo \"WARNING_FOR_AGENT: Engineering OS inline hook runtime unavailable; no evidence recorded.\" >&2; exit 0; fi; HIT=$(python3 -c \"import json,sys;d=json.load(sys.stdin);t=d.get('tool_input',d);s=(str(t.get('file_path') or '')+' '+str(t.get('pattern') or '')+' '+str(t.get('path') or '')).lower().replace(chr(92),'/');sys.stdout.write('1' if 'graphify-out/' not in s and any(e in s for e in ('.py','.js','.ts','.tsx','.jsx','.go','.rs','.java','.rb','.c','.h','.cpp','.hpp','.cc','.cs','.kt','.swift','.php','.scala','.lua','.sh','.md','.rst','.txt','.mdx')) else '')\" 2>/dev/null || true); if [ \"$HIT\" = 1 ] && [ -f graphify-out/graph.json ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"MANDATORY: graphify-out/graph.json exists. Run graphify before reading source files.\"}}'; fi || true"
           }
         ]
       },
@@ -115,7 +115,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "INPUT=$(cat 2>/dev/null || true); if printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; sys.exit(0 if name.startswith('mcp__Context7__') else 1)\" >/dev/null 2>&1; then bash -c '. \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\" 2>/dev/null && evidence_record context7' 2>/dev/null || echo \"WARNING_FOR_AGENT: Context7 evidence recorder failed open.\" >&2; fi; exit 0"
+            "command": "PYTHON_RUNTIME=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/python-runtime.sh\"; if [ -f \"$PYTHON_RUNTIME\" ] && [ -r \"$PYTHON_RUNTIME\" ] && . \"$PYTHON_RUNTIME\" && eos_python_preflight; then export BASH_ENV=\"$PYTHON_RUNTIME\"; else echo \"WARNING_FOR_AGENT: Engineering OS inline hook runtime unavailable; no evidence recorded.\" >&2; exit 0; fi; INPUT=$(cat 2>/dev/null || true); if printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; sys.exit(0 if name.startswith('mcp__Context7__') else 1)\" >/dev/null 2>&1; then bash -c '. \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\" 2>/dev/null && evidence_record context7' 2>/dev/null || echo \"WARNING_FOR_AGENT: Context7 evidence recorder failed open.\" >&2; fi; exit 0"
           }
         ]
       },
@@ -133,7 +133,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "F=$(python3 -c \"import json,sys; d=json.load(sys.stdin); t=d.get('tool_input',d); print(t.get('file_path','') or '')\" 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; RECORDER_FAILED=0; case \"$F\" in core/pattern-lifecycle.md|*/core/pattern-lifecycle.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_pattern_lifecycle || RECORDER_FAILED=1 ;; core/maintenance-routine.md|*/core/maintenance-routine.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_maintenance_routine || RECORDER_FAILED=1 ;; core/hooks-policy.md|*/core/hooks-policy.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_hooks_policy || RECORDER_FAILED=1 ;; patterns/*|*/patterns/*) DOM=$(printf '%s' \"$F\" | sed 's|.*/patterns/||; s|/.*||'); . \"$EOS_LIB\" 2>/dev/null && { [ -n \"$DOM\" ] && evidence_record \"patterns_read_${DOM}\" || true; } || RECORDER_FAILED=1 ;; .claude/plans/*.md|*/.claude/plans/*.md) FNAME=$(basename \"$F\" .md); TOTAL=$(grep -cE '^\\- \\[(x| )\\]' \"$F\" 2>/dev/null) || TOTAL=0; . \"$EOS_LIB\" 2>/dev/null && { EXISTING=$(evidence_get \"dod_initial_${FNAME}\" 2>/dev/null || true); [ -n \"$EXISTING\" ] || evidence_record \"dod_initial_${FNAME}\" \"$TOTAL\"; } || RECORDER_FAILED=1 ;; .claude/commands/superpowers-verify.md|*/.claude/commands/superpowers-verify.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record superpowers_verify_run || RECORDER_FAILED=1 ;; esac; if [ \"$RECORDER_FAILED\" -ne 0 ]; then echo \"WARNING_FOR_AGENT: Read evidence recorder failed open.\" >&2; fi; exit 0"
+            "command": "PYTHON_RUNTIME=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/python-runtime.sh\"; if [ -f \"$PYTHON_RUNTIME\" ] && [ -r \"$PYTHON_RUNTIME\" ] && . \"$PYTHON_RUNTIME\" && eos_python_preflight; then export BASH_ENV=\"$PYTHON_RUNTIME\"; else echo \"WARNING_FOR_AGENT: Engineering OS inline hook runtime unavailable; no evidence recorded.\" >&2; exit 0; fi; F=$(python3 -c \"import json,sys; d=json.load(sys.stdin); t=d.get('tool_input',d); print(t.get('file_path','') or '')\" 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; RECORDER_FAILED=0; case \"$F\" in core/pattern-lifecycle.md|*/core/pattern-lifecycle.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_pattern_lifecycle || RECORDER_FAILED=1 ;; core/maintenance-routine.md|*/core/maintenance-routine.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_maintenance_routine || RECORDER_FAILED=1 ;; core/hooks-policy.md|*/core/hooks-policy.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record read_hooks_policy || RECORDER_FAILED=1 ;; patterns/*|*/patterns/*) DOM=$(printf '%s' \"$F\" | sed 's|.*/patterns/||; s|/.*||'); . \"$EOS_LIB\" 2>/dev/null && { [ -n \"$DOM\" ] && evidence_record \"patterns_read_${DOM}\" || true; } || RECORDER_FAILED=1 ;; .claude/plans/*.md|*/.claude/plans/*.md) FNAME=$(basename \"$F\" .md); TOTAL=$(grep -cE '^\\- \\[(x| )\\]' \"$F\" 2>/dev/null) || TOTAL=0; . \"$EOS_LIB\" 2>/dev/null && { EXISTING=$(evidence_get \"dod_initial_${FNAME}\" 2>/dev/null || true); [ -n \"$EXISTING\" ] || evidence_record \"dod_initial_${FNAME}\" \"$TOTAL\"; } || RECORDER_FAILED=1 ;; .claude/commands/superpowers-verify.md|*/.claude/commands/superpowers-verify.md) . \"$EOS_LIB\" 2>/dev/null && evidence_record superpowers_verify_run || RECORDER_FAILED=1 ;; esac; if [ \"$RECORDER_FAILED\" -ne 0 ]; then echo \"WARNING_FOR_AGENT: Read evidence recorder failed open.\" >&2; fi; exit 0"
           },
           {
             "type": "command",
@@ -146,7 +146,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "INPUT=$(cat 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; if PAGE_ID=$(printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; r=d.get('tool_response'); assert name.startswith('mcp__Notion__') and isinstance(r,dict); print(r.get('id','') or r.get('page_id','') or '')\" 2>/dev/null); then . \"$EOS_LIB\" 2>/dev/null && evidence_record notion_spec_created && { [ -n \"$PAGE_ID\" ] && evidence_record notion_page_id \"$PAGE_ID\" || true; } || echo \"WARNING_FOR_AGENT: Notion evidence recorder failed open.\" >&2; else echo \"WARNING_FOR_AGENT: Notion evidence recorder received malformed input and recorded no evidence.\" >&2; fi; exit 0"
+            "command": "PYTHON_RUNTIME=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/python-runtime.sh\"; if [ -f \"$PYTHON_RUNTIME\" ] && [ -r \"$PYTHON_RUNTIME\" ] && . \"$PYTHON_RUNTIME\" && eos_python_preflight; then export BASH_ENV=\"$PYTHON_RUNTIME\"; else echo \"WARNING_FOR_AGENT: Engineering OS inline hook runtime unavailable; no evidence recorded.\" >&2; exit 0; fi; INPUT=$(cat 2>/dev/null || true); EOS_LIB=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/evidence.sh\"; if PAGE_ID=$(printf '%s' \"$INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); name=d.get('tool_name') or d.get('tool') or ''; r=d.get('tool_response'); assert name.startswith('mcp__Notion__') and isinstance(r,dict); print(r.get('id','') or r.get('page_id','') or '')\" 2>/dev/null); then . \"$EOS_LIB\" 2>/dev/null && evidence_record notion_spec_created && { [ -n \"$PAGE_ID\" ] && evidence_record notion_page_id \"$PAGE_ID\" || true; } || echo \"WARNING_FOR_AGENT: Notion evidence recorder failed open.\" >&2; else echo \"WARNING_FOR_AGENT: Notion evidence recorder received malformed input and recorded no evidence.\" >&2; fi; exit 0"
           }
         ]
       },
@@ -183,7 +183,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" stop"
+            "command": "PYTHON_RUNTIME=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/python-runtime.sh\"; if [ -f \"$PYTHON_RUNTIME\" ] && [ -r \"$PYTHON_RUNTIME\" ] && BASH_ENV= bash \"$PYTHON_RUNTIME\" --check >/dev/null 2>&1; then BASH_ENV=\"$PYTHON_RUNTIME\" bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" stop; else echo \"WARNING_FOR_AGENT: Engineering OS terminal telemetry could not resolve Python 3; session termination is allowed for recovery, but no further work may continue until the runtime is restored.\" >&2; exit 0; fi"
           }
         ]
       }
@@ -287,7 +287,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" stop_failure"
+            "command": "PYTHON_RUNTIME=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/python-runtime.sh\"; if [ -f \"$PYTHON_RUNTIME\" ] && [ -r \"$PYTHON_RUNTIME\" ] && BASH_ENV= bash \"$PYTHON_RUNTIME\" --check >/dev/null 2>&1; then BASH_ENV=\"$PYTHON_RUNTIME\" bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" stop_failure; else echo \"WARNING_FOR_AGENT: Engineering OS terminal telemetry could not resolve Python 3; session termination is allowed for recovery, but no further work may continue until the runtime is restored.\" >&2; exit 0; fi"
           }
         ]
       }
@@ -297,7 +297,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" session_end"
+            "command": "PYTHON_RUNTIME=\"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/enforcement/lib/python-runtime.sh\"; if [ -f \"$PYTHON_RUNTIME\" ] && [ -r \"$PYTHON_RUNTIME\" ] && BASH_ENV= bash \"$PYTHON_RUNTIME\" --check >/dev/null 2>&1; then BASH_ENV=\"$PYTHON_RUNTIME\" bash \"${ENGINEERING_OS_HOME:-$(pwd)}/scripts/monitoring/record-and-sync-telemetry.sh\" session_end; else echo \"WARNING_FOR_AGENT: Engineering OS terminal telemetry could not resolve Python 3; session termination is allowed for recovery, but no further work may continue until the runtime is restored.\" >&2; exit 0; fi"
           }
         ]
       }

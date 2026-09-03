@@ -4,6 +4,7 @@ set -euo pipefail
 
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SOURCE_GATE="$SOURCE_ROOT/scripts/enforcement/lib/hook-gate.sh"
+SOURCE_RUNTIME="$SOURCE_ROOT/scripts/enforcement/lib/python-runtime.sh"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
@@ -17,6 +18,7 @@ make_root() {
   local root="$WORK/$name"
   mkdir -p "$root/scripts/enforcement/lib"
   cp "$SOURCE_GATE" "$root/scripts/enforcement/lib/hook-gate.sh"
+  cp "$SOURCE_RUNTIME" "$root/scripts/enforcement/lib/python-runtime.sh"
   cat > "$root/scripts/enforcement/hook-criticality.tsv" <<EOF_REG
 $event	$matcher	scripts/enforcement/unit.sh	hard	fail_closed	direct	-	both	-	$mode
 EOF_REG
@@ -97,6 +99,35 @@ PreToolUse	Bash	scripts/enforcement/nested.sh	hard	fail_closed	nested	scripts/en
 EOF_REG
 run_gate "$root" PreToolUse Bash "$pre_event"
 if [ "$RUN_CODE" -eq 2 ] && printf '%s' "$RUN_ERR" | grep -qi 'nested.sh'; then ok "missing required nested validator blocks"; else bad "missing nested validator should exit 2 (code=$RUN_CODE err=$RUN_ERR)"; fi
+
+# 8b. Runtime disappearance at Stop permits termination for recovery, but never runs the unit.
+root="$(make_root stop-recovery Stop '*' stop_json)"
+printf '#!/usr/bin/env bash\ntouch "$EOS_STOP_UNIT_MARKER"\nexit 0\n' > "$root/scripts/enforcement/unit.sh"
+marker="$root/unit-ran"
+run_gate "$root" Stop '*' "$stop_event" EOS_HOOK_GATE_PYTHON=definitely-missing-python EOS_STOP_UNIT_MARKER="$marker"
+if [ "$RUN_CODE" -eq 0 ] && [ ! -e "$marker" ] && printf '%s' "$RUN_ERR" | grep -q 'Session termination is allowed for recovery'; then ok "missing runtime cannot trap the session in Stop"; else bad "Stop recovery contract failed (code=$RUN_CODE err=$RUN_ERR)"; fi
+
+# 8c. An explicit runtime path containing spaces reaches both the gate and its child unit.
+real_python="$(type -P python3 2>/dev/null || type -P python 2>/dev/null || true)"
+if [ -n "$real_python" ]; then
+  wrapper_dir="$root/runtime with spaces"
+  mkdir -p "$wrapper_dir"
+  cat > "$wrapper_dir/python wrapper" <<'EOF_PYTHON_WRAPPER'
+#!/usr/bin/env bash
+exec "$EOS_TEST_REAL_PYTHON" "$@"
+EOF_PYTHON_WRAPPER
+  chmod +x "$wrapper_dir/python wrapper"
+  root="$(make_root spaced-runtime)"
+  cat > "$root/scripts/enforcement/unit.sh" <<'EOF_UNIT'
+#!/usr/bin/env bash
+cat >/dev/null
+python3 -c 'print("nested runtime ready")'
+EOF_UNIT
+  run_gate "$root" PreToolUse Bash "$pre_event" EOS_HOOK_GATE_PYTHON="$wrapper_dir/python wrapper" EOS_TEST_REAL_PYTHON="$real_python"
+  if [ "$RUN_CODE" -eq 0 ] && printf '%s' "$RUN_OUT" | grep -q 'nested runtime ready'; then ok "spaced runtime override propagates to child hooks"; else bad "spaced runtime propagation failed (code=$RUN_CODE out=$RUN_OUT err=$RUN_ERR)"; fi
+else
+  bad "test host exposes neither python3 nor python for spaced runtime propagation"
+fi
 
 # 9. Required nested validator failure propagates as deny through the parent.
 root="$(make_root nested-failure)"

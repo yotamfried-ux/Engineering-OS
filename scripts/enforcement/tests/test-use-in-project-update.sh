@@ -37,7 +37,7 @@ grep -q "KEEPME" "$d2/.claude/settings.json" \
 ls "$d2/.claude/settings.json.bak."* >/dev/null 2>&1 \
   && ok "a backup of the prior settings is created" \
   || bad "update run should create a .bak backup"
-python3 -c "import json,sys; d=json.load(open('$d2/.claude/settings.json')); sys.exit(0 if 'hooks' in d else 1)" 2>/dev/null \
+python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if 'hooks' in d else 1)" "$d2/.claude/settings.json" 2>/dev/null \
   && ok "refreshed settings is valid JSON with hooks" \
   || bad "refreshed settings must be valid JSON with a hooks block"
 
@@ -45,7 +45,8 @@ python3 -c "import json,sys; d=json.load(open('$d2/.claude/settings.json')); sys
 # A read-only .claude dir blocks creating the new .bak while the existing
 # settings.json inode stays writable (Codex's clobber-without-backup case).
 # Root bypasses DAC permission bits, so this check only applies as a non-root user.
-if [ "$(id -u)" != "0" ]; then
+platform="$(uname -s)"
+if [ "$(id -u)" != "0" ] && [[ "$platform" != MINGW* && "$platform" != MSYS* && "$platform" != CYGWIN* ]]; then
   d3="$(make_target)"
   chmod 555 "$d3/.claude"
   ( cd "$d3" && EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$ROOT" EOS_UPDATE_SETTINGS=1 bash "$UIP" >/dev/null 2>&1 ) || true
@@ -55,10 +56,24 @@ if [ "$(id -u)" != "0" ]; then
     || bad "must not overwrite settings when the backup fails"
   rm -rf "$d3"
 else
-  echo "  ➖ backup-failure scenario skipped (running as root; chmod does not restrict root)"
+  echo "  ➖ backup-failure scenario skipped (chmod does not enforce this fixture on $platform or for root)"
 fi
 
-rm -rf "$d1" "$d2"
+# Scenario 4 — runtime preflight fails before the target receives Engineering OS files.
+d4="$(mktemp -d)"
+git -C "$d4" init -q
+printf 'keep\n' > "$d4/original.txt"
+set +e
+( cd "$d4" && EOS_CONTRACT_TEST=1 ENGINEERING_OS_HOME="$ROOT" EOS_PYTHON_BIN=definitely-missing-python bash "$UIP" >"$d4/run.out" 2>"$d4/run.err" )
+d4_code=$?
+set -e
+if [ "$d4_code" -ne 0 ] && [ ! -e "$d4/.engineering-os" ] && [ ! -e "$d4/.claude" ] && grep -q 'configured Python runtime' "$d4/run.err"; then
+  ok "runtime preflight precedes target installation"
+else
+  bad "missing runtime mutated the target or lacked diagnostics (code=$d4_code)"
+fi
+
+rm -rf "$d1" "$d2" "$d4"
 echo
 echo "use-in-project update: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

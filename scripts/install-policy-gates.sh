@@ -5,6 +5,18 @@ target="${1:-$(pwd)}"
 home_dir="${ENGINEERING_OS_HOME:-$HOME/.engineering-os}"
 home_dir="$(cd "$home_dir" && pwd)"
 
+python_runtime="$home_dir/scripts/enforcement/lib/python-runtime.sh"
+[ -f "$python_runtime" ] && [ -r "$python_runtime" ] || {
+  echo "ERROR_FOR_AGENT: missing Python runtime resolver: $python_runtime" >&2
+  exit 1
+}
+# Preflight before the first target mutation. A partially installed settings file can
+# activate hooks immediately, so the runtime contract must be satisfied up front.
+# shellcheck source=enforcement/lib/python-runtime.sh
+. "$python_runtime"
+eos_python_preflight || exit 1
+export BASH_ENV="$python_runtime"
+
 mkdir -p "$target/.github/workflows"
 for name in pr-policy.yml plan-policy.yml connector-evidence-policy.yml workflow-evidence-policy.yml capability-evidence-policy.yml documentation-asset-policy.yml semantic-cleanup-policy.yml import-cleanup-policy.yml; do
   src="$home_dir/.github/workflows/$name"
@@ -39,6 +51,7 @@ fi
 for runtime in \
   scripts/enforcement/hook-criticality.tsv \
   scripts/enforcement/lib/hook-gate.sh \
+  scripts/enforcement/lib/python-runtime.sh \
   scripts/enforcement/lib/soft-hook-gate.sh \
   scripts/monitoring/patch-settings-telemetry.py \
   scripts/monitoring/eos-telemetry-session-start.sh \
@@ -69,7 +82,7 @@ telemetry_patcher="$home_dir/scripts/monitoring/patch-settings-telemetry.py"
 # missing file, and a bare (ungated) command then exits 127. Only exit 2 denies at
 # PreToolUse, so under remote_handoff.mode=required the session proceeds with no telemetry
 # and reports success. Baking the home here removes that class at render time.
-python3 "$telemetry_patcher" "$settings" --mode direct --home "$home_dir"
+eos_python "$telemetry_patcher" "$settings" --mode direct --home "$home_dir"
 echo "installed/verified telemetry hooks, durable handoff, and session preflight"
 
 if [ "${EOS_SKIP_SETTINGS_PATCH:-0}" != "1" ]; then
@@ -81,7 +94,7 @@ else
   echo "runtime-evidence settings patch skipped; telemetry hooks remain required"
 fi
 
-python3 - "$settings" "$home_dir" <<'PY'
+eos_python - "$settings" "$home_dir" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -125,7 +138,7 @@ fi
 
 gitignore="$target/.gitignore"
 touch "$gitignore"
-python3 - "$gitignore" <<'PY'
+eos_python - "$gitignore" <<'PY'
 import sys
 from pathlib import Path
 path=Path(sys.argv[1])

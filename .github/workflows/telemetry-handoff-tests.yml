@@ -10,6 +10,26 @@ permissions:
   contents: read
 
 jobs:
+  windows-runtime-installer:
+    name: Verify Windows Python runtime and project installer
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+      - name: Verify portable runtime and installed hook commands
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BASH_ENV="$PWD/scripts/enforcement/lib/python-runtime.sh"
+          bash scripts/enforcement/lib/python-runtime.sh --check
+          bash scripts/enforcement/tests/test-python-runtime.sh
+          bash scripts/enforcement/tests/test-hook-gate.sh
+          bash scripts/enforcement/tests/test-hook-boundary-parity.sh
+          bash scripts/enforcement/tests/test-project-installer.sh
+          bash scripts/enforcement/tests/test-user-level-telemetry-installer.sh
+
   telemetry-handoff:
     name: Verify remote telemetry handoff
     runs-on: ubuntu-latest

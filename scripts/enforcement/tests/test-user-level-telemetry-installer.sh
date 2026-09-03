@@ -9,6 +9,7 @@ trap 'rm -rf "$TMP"' EXIT
 HOME_DIR="$TMP/home"
 mkdir -p "$HOME_DIR"
 SETTINGS="$HOME_DIR/.claude/settings.json"
+RENDERED_ROOT="$(python3 -c 'import sys; print(sys.argv[1])' "$ROOT")"
 
 run_installer() {
   HOME="$HOME_DIR" ENGINEERING_OS_HOME="$ROOT" bash "$INSTALLER" "$@"
@@ -16,6 +17,12 @@ run_installer() {
 
 assert_mode() {
   local expected="$1" actual
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      echo "POSIX mode assertion skipped on Windows (NTFS ACLs are not POSIX mode bits)"
+      return 0
+      ;;
+  esac
   actual="$(stat -c '%a' "$SETTINGS")"
   [ "$actual" = "$expected" ] || {
     echo "ERROR_FOR_AGENT: settings mode is $actual, expected $expected" >&2
@@ -51,6 +58,7 @@ session_start = [
 dispatch = f'{root}/scripts/monitoring/eos-telemetry-dispatch.sh'
 hard_gate = f'{root}/scripts/enforcement/lib/hook-gate.sh'
 soft_gate = f'{root}/scripts/enforcement/lib/soft-hook-gate.sh'
+python_runtime = f'{root}/scripts/enforcement/lib/python-runtime.sh'
 
 
 def targets(command, argument):
@@ -90,7 +98,8 @@ for event, argument in (("Stop", "stop"), ("StopFailure", "stop_failure"), ("Ses
         if dispatch in hook["command"]
     ]
     assert len(commands) == 1, (event, commands)
-    assert commands[0].rstrip().endswith(f" {argument}"), (event, commands)
+    assert f'BASH_ENV="$PYTHON_RUNTIME" bash "{dispatch}" {argument};' in commands[0], (event, commands)
+    assert python_runtime in commands[0], (event, commands)
     assert soft_gate not in commands[0] and hard_gate not in commands[0], (event, commands)
 
 # The dispatcher never calls a per-repository unit directly; scope is resolved first.
@@ -106,8 +115,8 @@ PY
 
 # 1. New settings are exact, dispatcher-only, and private.
 run_installer > "$TMP/install.log"
-python3 -c "import json; json.load(open('$SETTINGS'))"
-grep -q "$ROOT/scripts/monitoring/eos-telemetry-dispatch.sh" "$SETTINGS"
+python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$SETTINGS"
+grep -q "$RENDERED_ROOT/scripts/monitoring/eos-telemetry-dispatch.sh" "$SETTINGS"
 ! grep -q 'ENGINEERING_OS_HOME' "$SETTINGS"
 assert_dispatcher_only
 assert_mode 600
@@ -119,6 +128,10 @@ import os
 import stat
 import sys
 from pathlib import Path
+
+if os.name == "nt":
+    print("POSIX atomic-mode fixture skipped on Windows; functional atomic writes remain tested")
+    raise SystemExit(0)
 
 spec = importlib.util.spec_from_file_location("settings_patcher", sys.argv[1])
 module = importlib.util.module_from_spec(spec)
@@ -313,4 +326,15 @@ fi
 grep -q 'ERROR_FOR_AGENT: Engineering OS checkout not found' "$TMP/missing.err"
 grep -q 'ACTION:' "$TMP/missing.err"
 
-echo 'user-level telemetry installer tests passed: pre-write modes, exact verification, migration, strict ownership, permission preservation, idempotency, refusal, dry-run, uninstall, and actionable path failure'
+# 12. An unavailable interpreter is rejected before existing settings are touched.
+cp "$SETTINGS" "$TMP/before-no-python.json"
+if HOME="$HOME_DIR" ENGINEERING_OS_HOME="$ROOT" EOS_PYTHON_BIN=definitely-missing-python bash "$INSTALLER" \
+  >"$TMP/no-python.out" 2>"$TMP/no-python.err"; then
+  echo "ERROR_FOR_AGENT: installer activated hooks without a usable Python runtime" >&2
+  exit 1
+fi
+grep -q 'configured Python runtime' "$TMP/no-python.err"
+grep -q 'ACTION:' "$TMP/no-python.err"
+diff -q "$SETTINGS" "$TMP/before-no-python.json" >/dev/null
+
+echo 'user-level telemetry installer tests passed: pre-write modes, exact verification, migration, strict ownership, permission preservation, idempotency, refusal, dry-run, uninstall, and pre-mutation runtime validation'

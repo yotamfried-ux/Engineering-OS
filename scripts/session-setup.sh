@@ -12,6 +12,17 @@ set -u
 EOS_ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 export ENGINEERING_OS_HOME="$EOS_ROOT"
 
+PYTHON_RUNTIME="$EOS_ROOT/scripts/enforcement/lib/python-runtime.sh"
+if [ -f "$PYTHON_RUNTIME" ] && [ -r "$PYTHON_RUNTIME" ]; then
+  # SessionStart is advisory, but its child checks should use the same portable runtime
+  # contract as hard hooks whenever a Python 3 interpreter is available.
+  # shellcheck source=enforcement/lib/python-runtime.sh
+  . "$PYTHON_RUNTIME" 2>/dev/null || true
+  export BASH_ENV="$PYTHON_RUNTIME"
+else
+  printf 'WARNING_FOR_AGENT: Engineering OS Python runtime resolver missing: %s\n' "$PYTHON_RUNTIME" >&2
+fi
+
 # Reset the per-session evidence ledger (read by scripts/enforcement/*).
 # Ledger is project-cwd relative (.claude/.evidence/ledger); see lib/evidence.sh.
 . "$EOS_ROOT/scripts/enforcement/lib/evidence.sh" 2>/dev/null && evidence_reset 2>/dev/null || true

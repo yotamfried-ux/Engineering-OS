@@ -4,7 +4,19 @@ set -euo pipefail
 settings="${1:-.claude/settings.json}"
 [ -f "$settings" ] || { echo "settings file not found" >&2; exit 1; }
 
-python3 - "$settings" <<'PY'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PYTHON_RUNTIME="${ENGINEERING_OS_HOME:-$ROOT}/scripts/enforcement/lib/python-runtime.sh"
+[ -f "$PYTHON_RUNTIME" ] && [ -r "$PYTHON_RUNTIME" ] || {
+  echo "ERROR_FOR_AGENT: missing Python runtime resolver: $PYTHON_RUNTIME" >&2
+  exit 1
+}
+# shellcheck source=lib/python-runtime.sh
+. "$PYTHON_RUNTIME"
+eos_python_preflight || exit 1
+export BASH_ENV="$PYTHON_RUNTIME"
+
+eos_python - "$settings" <<'PY'
 import json
 import sys
 from pathlib import Path

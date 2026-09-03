@@ -98,15 +98,22 @@ hook הוא סקריפט שרץ אוטומטית באירוע מחזור-חיי�
 מיועד למשתמש, לא לסוכן. כלל זה נאכף גם ע"י הודעות ה-`ERROR_FOR_AGENT` שמזכירות
 "only with explicit user authorization".
 
-**הערה לסביבת remote (Claude Code on the web):** בסביבות remote container, hooks PreToolUse
-אמורים לפעול וחסימת `exit 1` אמורה להישמר. hard hooks חייבים להיכשל סגור אם:
-- `python3` אינו מותקן ב-runner.
+**חוזה runtime נייד:** כל hard hook ונתיב telemetry מחייב משתמש ב-
+`scripts/enforcement/lib/python-runtime.sh`. ה-resolver מאמת Python 3 ובוחר, לפי הסדר,
+`python3`, אחריו `python`, ואחריו `py -3` ב-Windows. פקודה עם arguments נשמרת כ-argv
+ולעולם אינה עוברת `eval`. מתקינים מבצעים את ה-preflight באותה סביבת Git Bash **לפני**
+שינוי settings. לכן hard hooks חייבים להיכשל סגור אם:
+- אף אחד מנתיבי Python 3 הנתמכים אינו זמין או שאינו Python 3.
 - מטא-נתוני ה-JSON הנכנסים לא תואמים את ה-schema הצפוי.
 - פקודת ה-hook עטופה בטעות ב-`|| true`.
 
 לכן Bash/Write/Agent מתחילים ב-`pre-tool-use-json-guard.sh`. לעומת זאת, PostToolUse recorders
 רשאים להיכשל רך כל עוד הם לא מייצרים evidence שקרי; חסר evidence יוביל לחסימה בשער הבא.
-אם hook שאמור לחסום לא חסם — **אל תניח שהאכיפה תקינה**; בדוק שהוא מסווג כ-hard ב-`hook-criticality.tsv`, ש`python3` זמין, ושאין `|| true` ב-command החוסם.
+`Stop`/`StopFailure`/`SessionEnd` מאפשרים סיום לצורך recovery כאשר ה-interpreter עצמו
+נעלם, משום שחסימת הסיום אינה יכולה לשחזר אותו ועלולה ליצור לולאה. כשל handoff אמיתי
+כאשר ה-runtime תקין עדיין שומר על סמנטיקת `propagate_failure`, וה-PreToolUse הבא נשאר
+חסום. אם hook שאמור לחסום לא חסם — **אל תניח שהאכיפה תקינה**; בדוק שהוא מסווג כ-hard
+ב-`hook-criticality.tsv`, שה-resolver מצליח, ושאין `|| true` ב-command החוסם.
 
 ### מה נשאר אישור-אדם (לא hook)
 

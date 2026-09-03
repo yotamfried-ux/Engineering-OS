@@ -110,13 +110,25 @@ def render_command(
         raise PatchError(f"unknown mode: {mode}")
 
     unit_path = f"{home}/{target}"
+    python_runtime = f"{home}/scripts/enforcement/lib/python-runtime.sh"
     suffix = f" -- {argument}" if argument else ""
     if semantics == PROPAGATE_FAILURE:
         # Terminal boundaries run unwrapped on purpose. soft-hook-gate.sh always exits 0,
         # so gating these would turn a failed required durable handoff into a session
-        # that looks cleanly closed while no bundle was ever produced.
+        # that looks cleanly closed while no bundle was ever produced. A missing Python
+        # runtime is different: Stop cannot repair its own interpreter, so blocking
+        # termination would trap the session. Preflight it and allow recovery while the
+        # next PreToolUse remains fail-closed in hook-gate.sh.
         argv = f" {argument}" if argument else ""
-        return f'bash "{unit_path}"{argv}'
+        return (
+            f'PYTHON_RUNTIME="{python_runtime}"; '
+            f'if [ -f "$PYTHON_RUNTIME" ] && [ -r "$PYTHON_RUNTIME" ] && '
+            f'BASH_ENV= bash "$PYTHON_RUNTIME" --check >/dev/null 2>&1; then '
+            f'BASH_ENV="$PYTHON_RUNTIME" bash "{unit_path}"{argv}; else echo '
+            f'"WARNING_FOR_AGENT: Engineering OS terminal telemetry could not resolve '
+            f'Python 3; session termination is allowed for recovery, but no further work '
+            f'may continue until the runtime is restored." >&2; exit 0; fi'
+        )
     # Both forms test for a regular readable file, not merely a readable one. `[ -r ]` alone
     # is true for a directory, and bash then exits 126 rather than running anything — which
     # PreToolUse treats as a non-blocking error, so a malformed install would fail open the

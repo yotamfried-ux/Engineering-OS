@@ -30,10 +30,37 @@ UNIT_ARGS=("$@")
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || fail_blocking "hook-gate cannot resolve its installation directory."
 ROOT="$(cd "$SCRIPT_DIR/../../.." 2>/dev/null && pwd)" || fail_blocking "hook-gate cannot resolve ENGINEERING_OS_HOME."
 REGISTRY="${EOS_HOOK_CRITICALITY_FILE:-$ROOT/scripts/enforcement/hook-criticality.tsv}"
-PYTHON="${EOS_HOOK_GATE_PYTHON:-python3}"
-CONVERTER="${EOS_HOOK_GATE_CONVERTER:-$PYTHON}"
+PYTHON_RUNTIME="$SCRIPT_DIR/python-runtime.sh"
+CONVERTER="${EOS_HOOK_GATE_CONVERTER:-}"
 
-command -v "$PYTHON" >/dev/null 2>&1 || fail_blocking "required hard-hook interpreter is unavailable: $PYTHON"
+runtime_unavailable() {
+  local reason="$1"
+  # A missing interpreter must deny every action boundary. Stop is different: denying
+  # termination cannot restore the interpreter and can create an unrecoverable stop-hook
+  # loop. Warn and allow session recovery; the next action remains hard-blocked.
+  if [ "$EVENT" = "Stop" ]; then
+    printf 'WARNING_FOR_AGENT: Engineering OS Stop validation unavailable: %s. Session termination is allowed for recovery; do not continue work until Python 3 is restored.\n' "$reason" >&2
+    exit 0
+  fi
+  fail_blocking "$reason"
+}
+
+[ -f "$PYTHON_RUNTIME" ] && [ -r "$PYTHON_RUNTIME" ] \
+  || runtime_unavailable "required Python runtime resolver is missing or unreadable: $PYTHON_RUNTIME"
+if [ -n "${EOS_HOOK_GATE_PYTHON:-}" ]; then
+  # Preserve the existing test/operator override, but feed it into the shared resolver
+  # before the resolver is loaded so an inherited BASH_ENV cannot cache another choice.
+  EOS_PYTHON_BIN="$EOS_HOOK_GATE_PYTHON"
+  export EOS_PYTHON_BIN
+fi
+# shellcheck source=python-runtime.sh
+. "$PYTHON_RUNTIME" \
+  || runtime_unavailable "required Python runtime resolver could not be loaded: $PYTHON_RUNTIME"
+eos_python_resolve \
+  || runtime_unavailable "required hard-hook interpreter is unavailable: ${EOS_PYTHON_ERROR:-unknown Python runtime error}"
+# Every nested Bash unit inherits the same resolver, including scripts that still use
+# the portable `python3` compatibility function supplied by python-runtime.sh.
+export BASH_ENV="$PYTHON_RUNTIME"
 [ ! -L "$REGISTRY" ] || fail_blocking "hard-hook criticality registry path is a symlink: $REGISTRY"
 [ -f "$REGISTRY" ] && [ -r "$REGISTRY" ] || fail_blocking "hard-hook criticality registry is missing or unreadable: $REGISTRY"
 [ ! -L "$UNIT" ] || fail_blocking "hard-hook enforcer path is a symlink: $UNIT"
@@ -49,7 +76,7 @@ STDERR_FILE="$TMP/stderr"
 cat > "$INPUT_FILE" || fail_blocking "hook-gate could not read hook input."
 [ -s "$INPUT_FILE" ] || fail_blocking "hard hook received empty JSON input."
 
-if ! "$PYTHON" - "$INPUT_FILE" "$EVENT" <<'PY' >/dev/null 2>"$STDERR_FILE"
+if ! eos_python - "$INPUT_FILE" "$EVENT" <<'PY' >/dev/null 2>"$STDERR_FILE"
 import json
 import sys
 from pathlib import Path
@@ -75,7 +102,7 @@ then
   fail_blocking "hard-hook input validation failed: ${reason:-unknown JSON validation error}"
 fi
 
-if ! "$PYTHON" - "$ROOT" "$REGISTRY" "$EVENT" "$MATCHER" "$UNIT" >"$CONTRACT_FILE" 2>"$STDERR_FILE" <<'PY'
+if ! eos_python - "$ROOT" "$REGISTRY" "$EVENT" "$MATCHER" "$UNIT" >"$CONTRACT_FILE" 2>"$STDERR_FILE" <<'PY'
 import json
 import os
 import sys
@@ -181,10 +208,18 @@ OUT="$(cat "$STDOUT_FILE")"
 ERR="$(cat "$STDERR_FILE")"
 REASON="$(printf '%s %s' "$OUT" "$ERR" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g; s/^ //; s/ $//' | cut -c1-4000)"
 
+run_converter() {
+  if [ -n "$CONVERTER" ]; then
+    command -v "$CONVERTER" >/dev/null 2>&1 || return 1
+    "$CONVERTER" "$@"
+    return $?
+  fi
+  eos_python "$@"
+}
+
 emit_structured() {
   local mode="$1" kind="$2" text="$3" input="$4"
-  command -v "$CONVERTER" >/dev/null 2>&1 || return 1
-  "$CONVERTER" - "$mode" "$kind" "$text" "$input" <<'PY'
+  run_converter - "$mode" "$kind" "$text" "$input" <<'PY'
 import json
 import sys
 mode, kind, text, raw = sys.argv[1:5]
@@ -230,13 +265,13 @@ else:
 PY
 }
 
-MODE="$("$PYTHON" -c 'import json,sys; print(json.load(open(sys.argv[1]))["deny_mode"])' "$CONTRACT_FILE" 2>/dev/null)" || fail_blocking "hard-hook contract result could not be read."
+MODE="$(eos_python -c 'import json,sys; print(json.load(open(sys.argv[1]))["deny_mode"])' "$CONTRACT_FILE" 2>/dev/null)" || fail_blocking "hard-hook contract result could not be read."
 
 if [ "$CODE" -eq 0 ]; then
   if [ -z "$OUT" ]; then
     exit 0
   fi
-  if printf '%s' "$OUT" | "$PYTHON" -c 'import json,sys; json.load(sys.stdin)' >/dev/null 2>&1; then
+  if printf '%s' "$OUT" | eos_python -c 'import json,sys; json.load(sys.stdin)' >/dev/null 2>&1; then
     if emit_structured "$MODE" forward "" "$OUT"; then exit 0; fi
     fail_blocking "hard-hook native JSON could not be validated or forwarded."
   fi

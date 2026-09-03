@@ -110,6 +110,22 @@ fi
 EOS_HOME="$(cd "$EOS_HOME" && pwd)"
 export ENGINEERING_OS_HOME="$EOS_HOME"
 
+PYTHON_RUNTIME="$EOS_HOME/scripts/enforcement/lib/python-runtime.sh"
+[ -f "$PYTHON_RUNTIME" ] && [ -r "$PYTHON_RUNTIME" ] || {
+  red "Missing Engineering OS Python runtime resolver: $PYTHON_RUNTIME"
+  red "Update the Engineering OS reference before installing hooks."
+  exit 1
+}
+# This is the last preflight before any target-project write. Hook settings are never
+# installed unless their Python 3 runtime can be resolved in this Bash environment.
+# shellcheck source=enforcement/lib/python-runtime.sh
+. "$PYTHON_RUNTIME"
+if ! eos_python_preflight; then
+  red "Engineering OS hooks were not activated."
+  exit 1
+fi
+export BASH_ENV="$PYTHON_RUNTIME"
+
 # 2. Record the reference pointer inside the target project.
 mkdir -p "$TARGET/.engineering-os"
 cat > "$TARGET/.engineering-os/REFERENCE.md" <<EOF

@@ -14,7 +14,7 @@ without rewriting the rules each time.
 | `external-skills/` | External skill wrappers such as superpowers, security-review, graphify, rtk, claude-mem, ui-ux-pro-max, gstack, and claude-code-workflows. The live inventory is `external-skills/README.md`; each installed wrapper follows its documented SIP contract. |
 | `external-systems/` | Third-party service and connector guides for LLM providers, databases, auth, payments, observability, CRM, and more. The live inventory is `external-systems/README.md`. |
 | `templates/` | Project scaffolds and reusable file templates (including `hooks/pre-commit`). |
-| `scripts/` | `use-in-project.sh` (apply OS to a new project), `skill-bootstrap.sh` (detect/install skills), `session-setup.sh` (SessionStart hook). |
+| `scripts/` | Repository-tracked project installers, `use-in-project.sh`, `skill-bootstrap.sh` (detect/install skills), and `session-setup.sh` (SessionStart hook). |
 | `docs/` | Architecture guides, framework references, troubleshooting. |
 | `lessons-learned/` | Documented bugs, post-mortems, prevention strategies. |
 | `failed-solutions/` | Approaches that were tried and failed — read before repeating them. |
@@ -22,15 +22,23 @@ without rewriting the rules each time.
 
 ## How to use in a new project
 
-**Recommended — one command from your project root:**
+**Windows PowerShell — one command from your project root:**
 
-```bash
-bash ~/.engineering-os/scripts/use-in-project.sh
+```powershell
+$source = Invoke-RestMethod "https://raw.githubusercontent.com/yotamfried-ux/Engineering-OS/main/scripts/install-engineering-os-project.ps1"; & ([scriptblock]::Create($source)) -Target (Get-Location).Path
 ```
 
-This clones Engineering OS to `~/.engineering-os/`, wires it into your project's
-`CLAUDE.md`, runs skill bootstrap, and prints the manual steps that can't be automated
-(superpowers plugin install, GitHub secrets for security-review).
+**Bash / Git Bash — one command from your project root:**
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/yotamfried-ux/Engineering-OS/main/scripts/install-engineering-os-project.sh)" -- "$(pwd)"
+```
+
+Both commands load their installer from this repository, clone or fast-forward
+`~/.engineering-os/`, preflight Python 3 in Git Bash, install the project and user-level
+hooks, and verify both settings surfaces. The local checkout and generated target settings
+are runtime state that can be recreated from GitHub; no machine-specific installer under
+`outputs/` and no `python3` shim are part of the contract.
 
 For submodule mode (pin the OS version to your repo), see `CLAUDE.template.md`.
 
@@ -57,6 +65,7 @@ claude mcp add context7 https://mcp.context7.com/mcp
 
 - [Claude Code CLI](https://claude.ai/code) with an Anthropic API key
 - `git` 2.x+
+- Python 3 exposed as `python3`, `python`, or the Windows `py -3` launcher
 - `uv` (Python package manager, for graphify)
 - `node` / `npm` (for rtk and other skills)
 

@@ -23,9 +23,16 @@ dim()  { printf '\033[2m%s\033[0m\n' "$*"; }
 [ -f "$BUNDLE_TEMPLATE" ] || { red "missing MCP bundle template: $BUNDLE_TEMPLATE"; exit 2; }
 [ -f "$GITHUB_TEMPLATE" ] || { red "missing GitHub MCP template: $GITHUB_TEMPLATE"; exit 2; }
 
+PYTHON_RUNTIME="$EOS_HOME/scripts/enforcement/lib/python-runtime.sh"
+[ -f "$PYTHON_RUNTIME" ] && [ -r "$PYTHON_RUNTIME" ] || { red "missing Python runtime resolver: $PYTHON_RUNTIME"; exit 2; }
+# shellcheck source=enforcement/lib/python-runtime.sh
+. "$PYTHON_RUNTIME"
+eos_python_preflight || exit 2
+export BASH_ENV="$PYTHON_RUNTIME"
+
 mkdir -p "$TARGET"
 
-python3 -S - "$BUNDLE_TEMPLATE" "$GITHUB_TEMPLATE" "$MCP_PATH" "$EOS_HOME" <<'PY'
+eos_python -S - "$BUNDLE_TEMPLATE" "$GITHUB_TEMPLATE" "$MCP_PATH" "$EOS_HOME" <<'PY'
 import json
 import sys
 from datetime import datetime, timezone

@@ -270,6 +270,7 @@ done
 FAILROOT="$WORK/failing-boundary"
 mkdir -p "$FAILROOT/scripts/monitoring" "$FAILROOT/scripts/enforcement/lib"
 cp "$ROOT/scripts/enforcement/lib/soft-hook-gate.sh" "$FAILROOT/scripts/enforcement/lib/"
+cp "$ROOT/scripts/enforcement/lib/python-runtime.sh" "$FAILROOT/scripts/enforcement/lib/"
 printf '#!/usr/bin/env bash\necho "required durable handoff failed" >&2\nexit 2\n' \
   > "$FAILROOT/scripts/monitoring/record-and-sync-telemetry.sh"
 rendered="$(python3 - "$PATCHER" "$FAILROOT" <<'RENDER'
@@ -292,7 +293,22 @@ else
   bad "a failing required boundary was swallowed into success"
 fi
 
-# 15. The contract must reject a soft-gated propagate_failure unit outright.
+# 15. Losing Python after installation cannot be repaired by Stop itself. The terminal
+#     boundary must allow the session to end for recovery while PreToolUse remains hard.
+set +e
+terminal_recovery_err="$(
+  echo '{}' | EOS_PYTHON_BIN=definitely-missing-python bash -c "$rendered" 2>&1 >/dev/null
+)"
+terminal_recovery_status=$?
+set -e
+if [ "$terminal_recovery_status" -eq 0 ] \
+   && printf '%s' "$terminal_recovery_err" | grep -q 'termination is allowed for recovery'; then
+  ok "missing runtime at a terminal boundary allows controlled recovery"
+else
+  bad "missing runtime trapped or silently skipped terminal recovery (code=$terminal_recovery_status)"
+fi
+
+# 16. The contract must reject a soft-gated propagate_failure unit outright.
 GATEROOT="$WORK/softgated"
 mkdir -p "$GATEROOT/.claude"
 cp -r "$ROOT/scripts" "$GATEROOT/scripts"
@@ -319,7 +335,7 @@ else
   bad "contract failed for the wrong reason: $(head -1 "$WORK/softgate.err")"
 fi
 
-# 16. Every telemetry unit the registry declares is actually reachable on disk.
+# 17. Every telemetry unit the registry declares is actually reachable on disk.
 if python3 - "$REGISTRY" "$ROOT" <<'PY'
 import sys
 from pathlib import Path

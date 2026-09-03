@@ -15,6 +15,16 @@ while [ "$#" -gt 0 ]; do
 done
 ARGS=("$@")
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
+PYTHON_RUNTIME="$SCRIPT_DIR/python-runtime.sh"
+if [ -f "$PYTHON_RUNTIME" ] && [ -r "$PYTHON_RUNTIME" ]; then
+  # A soft hook may continue when Python is absent, but when Python 3 is available under
+  # a Windows-compatible name every child unit must inherit the same resolver contract.
+  # shellcheck source=python-runtime.sh
+  . "$PYTHON_RUNTIME" 2>/dev/null || true
+  export BASH_ENV="$PYTHON_RUNTIME"
+fi
+
 observe() {
   local code="$1" message="$2"
   local root log

@@ -7,6 +7,9 @@
 #
 # Wired from .claude/settings.json PreToolUse under matchers: Write|Edit, Bash, Agent.
 # Routes by tool name (read from stdin). Blocks with exit 1. Bypass: EOS_BYPASS_WORKFLOW=1.
+# The installed hard-hook wrapper preflights lib/python-runtime.sh and passes it as
+# BASH_ENV. The python3 calls below therefore use the verified python/python3/py -3
+# argv contract; an unavailable runtime is denied by hook-gate before this unit runs.
 #
 # Governing policy: core/workflow.md
 #   - Step 1+4 (entry gate to writing): plan must exist with goal/plan/DoD/alternatives
