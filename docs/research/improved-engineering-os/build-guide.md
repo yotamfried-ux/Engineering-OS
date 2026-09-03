@@ -124,7 +124,7 @@ Each row is `PROPOSED` with a recommended default. The coding agent proceeds wit
 ### D19 — Identity and content addressing (PROPOSED)
 
 - Every canonical object gets an opaque, immutable id: `asset_01J...` (ULID with type prefix). Slugs and titles are mutable metadata.
-- `content_hash = sha256(canonical serialization of body + files)`. Two assets with the same `content_hash` are duplicates by definition; the importer merges them.
+- `content_hash = sha256(canonical serialization of body + files)` is an addressing key, not a merge rule. The importer merges two assets only when their `content_hash` is equal **and** their recommendation-relevant metadata is equivalent (`type`, `problem.id`, `applicability`, `compatibility`, `risk`). Equal hash with different metadata yields a `related_to` link and a report entry, never a merge. A `failed_solution` is never merged with any other type, whatever its hash.
 - `legacy_ids[]` records old Engineering-OS paths (for example `patterns/auth/oauth-pkce.md`) so provenance survives.
 - Renames never change ids. Supersession is a relationship, never an overwrite.
 
@@ -144,14 +144,15 @@ The Curator materializes a Candidate as a branch in the canonical repo containin
 
 1. One Supabase Auth user: the owner. Every table has `owner_id uuid not null default auth.uid()` and RLS policies `owner_id = auth.uid()` for select/insert; update/delete only where the domain allows.
 2. Dev machines and agent containers hold only the project URL, the publishable key and the owner's refresh token, stored by the runtime in the OS keychain when available and otherwise in `~/.ieos/credentials.json` with mode `0600`. Remote environments receive the same three values as environment secrets.
-3. The secret key exists only in Supabase Edge Functions (derivers, admin jobs) and in the owner's password manager. Fitness test F9 fails any commit containing `sb_secret_` or `service_role`.
+3. The secret key exists only in Supabase Edge Functions (derivers, admin jobs) and in the owner's password manager. Fitness test F9 fails any commit containing a secret-shaped value or a privileged client outside `supabase/functions`.
 4. Honest limit: an agent with shell access on the same machine can read the owner-scoped token. The boundary protects against admin/service-role authority and against other users' data, not against the agent reading the owner's own evidence rows. This is acceptable for D1 and must be stated in `SECURITY.md`.
 
 ### D23 — Remote and ephemeral sessions (PROPOSED)
 
 - The runtime classifies each Run: `session_kind: local_persistent | remote_ephemeral | ci`. Detection: environment markers (Claude Code web/cloud variables, CI variables), overridable in the Run.
 - `local_persistent`: SQLite outbox, background sync, as in the report.
-- `remote_ephemeral`: outbox still used for batching, but every terminal boundary (`Stop`, `SessionEnd`, and every N minutes) flushes synchronously with a short timeout; unacknowledged events at the last boundary are written as a handoff bundle to `.ieos/telemetry/<run_id>.jsonl` and committed to the working branch, from which CI imports and deletes them. Exit status of the terminal flush propagates (this repo's lesson: a soft-gated wrapper hid the failure).
+- `remote_ephemeral`: outbox still used for batching, but every terminal boundary (`Stop`, `SessionEnd`, and every N minutes) flushes synchronously with a short timeout. Exit status of the terminal flush propagates (this repo's lesson: a soft-gated wrapper hid the failure).
+- Fallback handoff bundle (only when the synchronous flush fails): unacknowledged events are written to `.ieos/telemetry/<run_id>/events.jsonl` plus `manifest.json` and committed to the working branch. The manifest carries `run_id`, `installation_id`, canonical `owner/repo`, branch, PR number when known, product head SHA, event count, last completed lifecycle boundary, and a SHA-256 over the event stream and over the manifest fields. CI validates the bundle before ingestion exactly as `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md` requires: strict UTF-8, schema allowlist, checksum match, manifest boundary equal to the boundary recomputed from events, repository identity, PR binding immutable per run, head equal to or an ancestor of the current head (bounded fetch before classifying ancestry), and monotonic event/boundary progress with incomparable progress failing closed. Only a validated bundle is ingested; CI then removes it from the branch. Because the bundle lives in a PR-controlled path, Evidence derived from it is marked `provenance.integrity: partial` unless the ingest function can also match it against a partial synchronous flush of the same run; Stage 5 tests must include an edited, a replayed and a removed bundle, each rejected or downgraded, never silently accepted.
 - `ci`: direct ingestion with a CI-scoped token.
 - Stage 5 gains a mandatory scenario: kill the container immediately after the last tool call, then prove the events arrive via one of the two paths.
 
@@ -296,10 +297,10 @@ Conventions for every stage:
 | F3 | nothing under `packages/` writes into `knowledge/` at runtime; only `curator` produces branches | filesystem-write guard in tests + grep for `knowledge/` writes |
 | F4 | `resolver` and Asset Score code never import raw telemetry types | dependency-cruiser |
 | F5 | `launcher` imports only Node built-ins | dependency-cruiser + `package.json` dependency count = 0 |
-| F6 | no `Project 8`/`SportReel`/absolute project paths outside `qualification/` | grep rule |
+| F6 | no real target-project names or absolute project paths in runtime or configuration paths (`packages/`, `contracts/`, `knowledge/`, `supabase/`, `simulations/`, `fitness/`, `tools/`, `.github/`); documentation (`docs/`, `*.md` at the root) and `qualification/` are excluded | grep rule with an explicit path scope and a committed exclusion list |
 | F7 | runtime never resolves `latest`: release resolution requires an exact version + digest | unit test on launcher |
 | F8 | knowledge index build is deterministic | build twice, compare hashes |
-| F9 | no `sb_secret_`, `service_role`, or key-shaped strings in the repo | secret scan in CI and pre-commit |
+| F9 | no key-shaped secret values anywhere in the repo (pattern match on `sb_secret_[A-Za-z0-9]{20,}`, JWT-shaped strings and similar), and no `service_role` / secret-key client construction in runtime paths (`packages/`, `supabase/functions` excepted for the admin role); the identifier words themselves are allowed in documentation and in negative test fixtures listed in `fitness/allowlist.yaml` | secret-value scan in CI and pre-commit + scoped grep for privileged client construction |
 | F10 | every Simulation Manifest references an evaluator entry that exists and is outside `simulations/` | manifest linter |
 
 **Tests and simulations.** Contract property tests (valid accepted, invalid rejected with reason, unknown enum tolerated where declared, migration fixtures deterministic). Harness self-test: two trials cannot see each other's state; a trial that references a non-existent Run is rejected. Grader validity: each grader has positive, negative and mutation controls.
