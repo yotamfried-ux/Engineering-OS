@@ -17,6 +17,8 @@ done
 manifest="$home_dir/scripts/enforcement/policy-gate-dependencies.tsv"
 [ -f "$manifest" ] || { echo "missing policy-gate dependency manifest: $manifest" >&2; exit 1; }
 while IFS=$'\t' read -r workflow dep; do
+  workflow="${workflow%$'\r'}"
+  dep="${dep%$'\r'}"
   case "${workflow:-}" in ''|'#'*) continue ;; esac
   [ -n "${dep:-}" ] || continue
   dep_src="$home_dir/$dep"

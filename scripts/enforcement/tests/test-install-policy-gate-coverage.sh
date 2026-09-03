@@ -44,6 +44,13 @@ while IFS=$'\t' read -r workflow dep; do
   mkdir -p "$FAKE_HOME/$(dirname "$dep")"; cp "$ROOT/$dep" "$FAKE_HOME/$dep"
 done < "$MANIFEST"
 cp "$MANIFEST" "$FAKE_HOME/scripts/enforcement/policy-gate-dependencies.tsv"
+python3 - "$FAKE_HOME/scripts/enforcement/policy-gate-dependencies.tsv" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+PY
 # Setup for the positive path: the canonical required-hook registry drives the telemetry
 # patcher, so the fake home needs it. The absent-registry failure path is asserted in
 # test-hook-boundary-parity.sh.
@@ -62,7 +69,7 @@ for runtime in \
 done
 TARGET_OK="$TMP/install-target-ok"; mkdir -p "$TARGET_OK"
 printf 'existing-entry\n' > "$TARGET_OK/.gitignore"
-if EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$FAKE_HOME" bash "$INSTALLER" "$TARGET_OK" >/dev/null 2>&1; then pass installer_succeeds_with_manifest_present; else fail installer_succeeds_with_manifest_present; fi
+if EOS_SKIP_SETTINGS_PATCH=1 ENGINEERING_OS_HOME="$FAKE_HOME" bash "$INSTALLER" "$TARGET_OK" >/dev/null 2>&1; then pass installer_accepts_windows_crlf_manifest; else fail installer_accepts_windows_crlf_manifest; fi
 bad=0
 while IFS=$'\t' read -r workflow dep; do
   case "${workflow:-}" in ''|'#'*) continue ;; esac
