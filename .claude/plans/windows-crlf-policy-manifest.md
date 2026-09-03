@@ -100,4 +100,3 @@ No scaffold applies to a three-file installer compatibility repair. The existing
 - goal: make target-project installation deterministic on Windows Git Bash checkouts.
 - evidence: user-provided failure output, local file existence, Git newline configuration, raw CRLF counts, installer source, and focused test source.
 - boundary: this PR fixes installation compatibility only; it does not claim Project 8 qualification or behavioral-experiment readiness.
-
