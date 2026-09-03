@@ -15,6 +15,7 @@ export ENGINEERING_OS_HOME="$EOS_ROOT"
 # Reset the per-session evidence ledger (read by scripts/enforcement/*).
 # Ledger is project-cwd relative (.claude/.evidence/ledger); see lib/evidence.sh.
 . "$EOS_ROOT/scripts/enforcement/lib/evidence.sh" 2>/dev/null && evidence_reset 2>/dev/null || true
+. "$EOS_ROOT/scripts/enforcement/lib/plan-time.sh" 2>/dev/null || true
 
 G=$'\033[32m'; Y=$'\033[33m'; D=$'\033[2m'; R=$'\033[31m'; Z=$'\033[0m'
 ok()   { printf '%s✅%s %s\n' "$G" "$Z" "$1"; }
@@ -216,11 +217,24 @@ else
   printf '       /superpowers-plan        (recommended: before non-trivial code)\n'
 fi
 
-# Show existing plan files with timestamps (zombie plan awareness)
-EXISTING_PLANS=$(ls -lt .claude/plans/*.md 2>/dev/null | head -5)
+# Show existing plan files in canonical, clone-safe recency order (zombie plan awareness).
+EXISTING_PLANS=$(cd "$EOS_ROOT" && eos_plans_by_recency .claude/plans 2>/dev/null | head -5)
 if [ -n "$EXISTING_PLANS" ]; then
   printf '\n%s📋 Existing plans (check if current for this task!):%s\n' "$Y" "$Z"
-  echo "$EXISTING_PLANS" | awk '{print "  " $NF, $6, $7, $8}'
+  while IFS= read -r plan; do
+    [ -n "$plan" ] || continue
+    if timestamp=$(cd "$EOS_ROOT" && eos_plan_timestamp "$plan" 2>/dev/null); then
+      display_time=$(date -u -d "@$timestamp" '+%Y-%m-%d %H:%M UTC' 2>/dev/null \
+        || date -u -r "$timestamp" '+%Y-%m-%d %H:%M UTC' 2>/dev/null \
+        || printf 'timestamp=%s' "$timestamp")
+      printf '  %s  %s\n' "$plan" "$display_time"
+    else
+      reason=$(cd "$EOS_ROOT" && eos_plan_time_reason "$plan")
+      printf '  %s  undatable: %s\n' "$plan" "$reason"
+    fi
+  done <<EOF
+$EXISTING_PLANS
+EOF
 fi
 
 # ── 10. Installation readiness report — defines "done", no manual actions needed ──
