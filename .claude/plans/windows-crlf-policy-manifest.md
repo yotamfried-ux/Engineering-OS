@@ -21,24 +21,29 @@ Planning Mode: approved
 | Architecture guides | `core/hooks-policy.md`; `docs/operations/project8-telemetry-preflight.md` |
 | Patterns | none — the fix is input normalization at an existing manifest boundary. |
 | External systems/connectors | GitHub |
-| Skills | repository-native governance workflow; no external implementation skill required. |
+| Skills | none — focused POSIX shell boundary repair using repository-native policy and tests. |
 | Validation gates | CRLF manifest regression; `git diff --check`; exact-head GitHub Actions; live review/thread reconciliation. |
 | Evidence to check | reproduced CRLF bytes under `core.autocrlf=true`; target installer error; focused installer test; PR checks. |
 | User decisions required | explicit approval received to create a branch and PR; merge requires a later explicit approval. |
 
 ## Source of Truth Checks
 
-- `scripts/install-policy-gates.sh` owns policy dependency manifest parsing.
-- `scripts/enforcement/policy-gate-dependencies.tsv` is the copied dependency inventory.
-- `scripts/enforcement/tests/test-install-policy-gate-coverage.sh` is the existing installer regression suite.
-- `.gitattributes` is the repository-level checkout newline contract.
+| Source | Status | What it settled |
+|---|---|---|
+| `scripts/install-policy-gates.sh` | read | Owns policy dependency manifest parsing and the fail-closed path that stopped Project 8 installation. |
+| `scripts/enforcement/policy-gate-dependencies.tsv` | checked | Contains the reported dependency and reproduced 29 CRLF line endings in the Windows checkout. |
+| `scripts/enforcement/tests/test-install-policy-gate-coverage.sh` | read | Is the canonical installer regression suite and the correct location for the CRLF fixture. |
+| `core/git-policy.md` | read | Requires branch, ready PR, exact-head CI, review reconciliation, and explicit approval before merge. |
+| `docs/operations/project8-telemetry-preflight.md` | read | Keeps technical qualification separate from the later behavioral experiment. |
 
 ## Capability Evidence
 
-- The failure was reproduced from the user's Project 8 installation output.
-- The local `~/.engineering-os` checkout contains the reported file, while the manifest contains 29 CRLF line endings and Git reports `core.autocrlf=true`.
-- The implementation strips a trailing carriage return from both manifest fields and independently enforces LF checkout for shell and TSV files.
-- The existing install-policy coverage suite is extended rather than creating a disconnected test.
+- `routing.task-router-read` — `core/task-router.md` was read through the repository's required governance route for an installer/enforcement change.
+- `workflow.workflow-read` — `core/workflow.md` and `core/git-policy.md` were read before the first branch commit and set the plan → code → progress → PR order.
+- `plan.route-plan-before-write` — commit `183184b1ec74918b6196ea34479991daa9618e17` added this Route Plan to the remote branch before commits touching installer code or tests.
+- `source.github-repo-read` — GitHub `main` at `4f587e2640495c44e7757cbab9497640ab2cafc4` and PR #283 exact-head state were read before evidence correction.
+- `validation.policy-change-has-validator` — `scripts/enforcement/tests/test-install-policy-gate-coverage.sh` now converts the real install manifest fixture to CRLF before invoking the real installer.
+- `validation.coderabbit-policy` — PR #283 is ready for review; exact-head review, comments, and threads will be reconciled before requesting explicit merge approval.
 
 ## Connector Evidence
 
@@ -49,13 +54,13 @@ Planning Mode: approved
 
 - source: GitHub repository `yotamfried-ux/Engineering-OS` and merged PR #282.
 - action: synchronized the local branch from merge commit `4f587e2640495c44e7757cbab9497640ab2cafc4` before creating the repair branch.
-- result: the repair branch starts from the exact current `main` tree.
-- decision: keep the change isolated in a new PR and require exact-head CI before requesting merge approval.
+- result: PR #283 starts from `4f587e2640495c44e7757cbab9497640ab2cafc4`; exact head `f3ad53af92f224911b0901b5ac18ec0bd025c548` passed `telemetry-handoff-tests` and exposed five concrete Route Plan evidence defects.
+- decision: GitHub evidence changed the work by limiting the next commit to correcting capability IDs, source statuses, connector impact, checklist state, and the post-code checkpoint while leaving the CRLF implementation unchanged.
 - target: `scripts/install-policy-gates.sh`, its focused test, and `.gitattributes`.
 
 ## Documentation Asset Evidence
 
-- internal: installer source, dependency manifest, focused installer test, Git policy, hook policy, and Project 8 telemetry preflight.
+- internal: `scripts/install-policy-gates.sh`; `scripts/enforcement/policy-gate-dependencies.tsv`; `scripts/enforcement/tests/test-install-policy-gate-coverage.sh`; `core/git-policy.md`; `core/hooks-policy.md`; `docs/operations/project8-telemetry-preflight.md`.
 - context7: not queried because no external API, library, or versioned dependency is changed.
 - decision: implement the compatibility guarantee in executable code and repository attributes rather than prose-only documentation.
 
@@ -63,31 +68,35 @@ Planning Mode: approved
 
 No scaffold applies to a three-file installer compatibility repair. The existing installer and test suite are the canonical extension points.
 
+## Skill Evidence
+
+- none — this repair uses the repository's existing installer, manifest, and focused regression suite; no external implementation skill would change the decision or reduce risk.
+
 ## Progress Lifecycle Evidence
 
 - start: Project 8 reached the latest `main`, but installation stopped after policy settings were refreshed and before user-level telemetry installation.
 - mid: inspection proved the named dependency exists; the manifest had CRLF line endings produced by `core.autocrlf=true`, causing Bash to retain a hidden carriage return in the dependency path.
 - mid: `install-policy-gates.sh` now strips a trailing carriage return from both manifest fields; `.gitattributes` keeps shell and TSV checkouts on LF; the existing installer suite rewrites its fixture to CRLF before exercising the positive path.
 - mid: structural assertions and `git diff --check` pass. Direct Git Bash execution is unavailable in this Codex Windows sandbox because the process cannot create its signal pipe, so executable confirmation is delegated to exact-head GitHub Actions rather than claimed locally.
-- pre-merge: pending focused CI, exact-head workflow completion, review reconciliation, and explicit owner merge approval.
+- pre-merge: PR #283 opened at exact head `f3ad53af92f224911b0901b5ac18ec0bd025c548`; its first exact-head attempt passed `telemetry-handoff-tests` and returned concrete evidence-format failures, which were read from job logs and corrected in this post-code checkpoint without changing implementation.
 
 ## Definition of Done
 
-- [x] Strip Windows carriage returns before validating manifest paths.
-- [x] Add a CRLF manifest regression to the existing installer suite.
-- [x] Add repository newline attributes for shell and TSV files.
-- [ ] Pass focused installer validation on an environment where Bash execution is permitted.
-- [ ] Pass exact-head required GitHub Actions.
+- complete: strip Windows carriage returns before validating manifest paths.
+- complete: add a CRLF manifest regression to the existing installer suite.
+- complete: add repository newline attributes for shell and TSV files.
+- external gate: focused executable validation and the required workflow set must pass on the final exact head before merge.
 
 ## Live External Gates Before Merge
 
-- [ ] Push the branch and open a ready-for-review PR.
-- [ ] Confirm every required workflow succeeds on the exact PR head.
-- [ ] Reconcile reviews and unresolved threads on the exact head.
-- [ ] Obtain explicit owner approval for that exact head before merge.
+- complete: branch published and ready-for-review PR #283 opened.
+- required before merge: every required workflow succeeds on the final exact PR head.
+- required before merge: reviews and unresolved threads are reconciled on that exact head.
+- required before merge: explicit owner approval is obtained for that exact head.
 
 ## Claude Run Trace
 
 - goal: make target-project installation deterministic on Windows Git Bash checkouts.
 - evidence: user-provided failure output, local file existence, Git newline configuration, raw CRLF counts, installer source, and focused test source.
 - boundary: this PR fixes installation compatibility only; it does not claim Project 8 qualification or behavioral-experiment readiness.
+
