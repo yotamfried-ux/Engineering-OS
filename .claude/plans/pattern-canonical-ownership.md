@@ -107,6 +107,7 @@ Planning Mode: approved
 - `source.github-repo-read` — `origin/main` was refetched and confirmed identical to the working head `5603787c4b130c56ffe63d5eb850e984443db18f`; live known-gap state was re-read rather than taken from the task snapshot.
 - `validation.policy-change-has-validator` — `scripts/enforcement/check-pattern-canonical-state.sh` and its positive/negative fixtures make the canonical-ownership rule executable rather than prose-only.
 - `validation.coderabbit-policy` — the PR is opened ready for review per `core/git-policy.md`; exact-head review and threads are reconciled before requesting merge approval.
+- `pattern.relevant-patterns-checked` — `patterns/registry.yaml` domains were enumerated and compared against this task's domain tags; `testing` and `observability` matched, both were inspected for applicability, and neither offers implementation guidance for a governance state-ownership repair, so both are waived in `## Pattern Selection Waiver` rather than silently skipped.
 
 ## Connector Evidence
 
@@ -118,8 +119,8 @@ Planning Mode: approved
 - source: GitHub repository `yotamfried-ux/Engineering-OS`, `origin/main`.
 - action: refetched `origin/main` and compared it to the local head before planning; enumerated accessible repositories to establish whether Project 8 qualification is performable from this session.
 - result: `origin/main` equals `5603787c4b130c56ffe63d5eb850e984443db18f` with a clean tree; `yotamfried-ux/project-8` is listed as accessible, but a Project 8 qualification requires a genuinely fresh SessionStart rooted in Project 8, which this Engineering-OS-rooted session cannot produce.
-- decision: scope this branch to the pattern canonical-ownership repair, which is fully performable here, and route the five qualification-dependent gaps to explicit owner coordination instead of simulating them.
-- target: `patterns/registry.yaml` as canonical owner, plus its policy, derived-state, README, and validator consumers.
+- decision: limited this branch to the pattern canonical-ownership repair, which is fully performable from this session, and changed the handling of the five qualification-dependent gaps to explicit owner coordination instead of simulating them.
+- target: scripts/enforcement/check-pattern-canonical-state.sh, scripts/enforcement/check-template-pattern-ratings.sh, core/pattern-lifecycle.md, docs/operations/template-pattern-ratings.tsv
 
 ## Documentation Asset Evidence
 
@@ -154,13 +155,14 @@ No scaffold applies to a governance state-ownership repair across existing regis
 - mid: three fixtures in `test-template-pattern-ratings.sh` used `type=pattern` incidentally and were retyped to `template` so they still test score and count validation rather than the new type rule; a dedicated `pattern_typed_row_fails` fixture now covers that rule.
 - mid: the full suite passes — `119 enforcement suites passed with execution receipts` — and `git diff --check`, orphan validation, documentation hygiene, known-gaps, and readiness-audit coverage all pass.
 - mid: the audit matrix row moved from `Missing enforcement` to `Enforced`, reducing `--assert-full-ready` matrix blockers from seven to six; the gap row itself stays `open` because merge and post-merge validation are part of its closure criterion.
+- mid: exact head `ee849ad746876d465369854b79ba29bf1395f876` opened PR #284 and returned three evidence-format failures against a passing implementation — run `33770141184` reported the capability `pattern.relevant-patterns-checked` as implied but undeclared, run `33770141368` reported Connector Usage Evidence lacking a decision verb and a changed target path, and run `33770141190` rejected a DoD item because "unknown rows" contains the placeholder token `unknown`. All three were corrected in the plan with no change to the validator, fixtures, policy, or repository state.
 
 ## Definition of Done
 
 - complete: declare `patterns/registry.yaml` the single canonical state owner in `core/pattern-lifecycle.md`.
 - complete: remove pattern-typed rows from the ratings TSV and reject their reintroduction in `check-template-pattern-ratings.sh`.
 - complete: remove lifecycle state from all 55 domain README lines, leaving implementation guidance that points at the canonical owner.
-- complete: add a canonical-state validator failing on conflicting status, score, usage, evidence, unknown rows, and active-below-threshold records.
+- complete: add a canonical-state validator failing on conflicting status, score, usage, and evidence, on rows that map to no registry record, and on active records below the canonical promotion thresholds.
 - complete: wire positive and negative fixtures into the canonical runner and the coverage manifests.
 - external gate: the required workflow set must pass on the final exact PR head before merge.
 - external gate: the gap row flips to `closed` only in a follow-up change carrying merge and post-merge evidence, matching the precedent of PR #260 → #261 and PR #268 → #269.
