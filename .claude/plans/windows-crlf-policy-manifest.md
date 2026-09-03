@@ -67,6 +67,8 @@ No scaffold applies to a three-file installer compatibility repair. The existing
 
 - start: Project 8 reached the latest `main`, but installation stopped after policy settings were refreshed and before user-level telemetry installation.
 - mid: inspection proved the named dependency exists; the manifest had CRLF line endings produced by `core.autocrlf=true`, causing Bash to retain a hidden carriage return in the dependency path.
+- mid: `install-policy-gates.sh` now strips a trailing carriage return from both manifest fields; `.gitattributes` keeps shell and TSV checkouts on LF; the existing installer suite rewrites its fixture to CRLF before exercising the positive path.
+- mid: structural assertions and `git diff --check` pass. Direct Git Bash execution is unavailable in this Codex Windows sandbox because the process cannot create its signal pipe, so executable confirmation is delegated to exact-head GitHub Actions rather than claimed locally.
 - pre-merge: pending focused CI, exact-head workflow completion, review reconciliation, and explicit owner merge approval.
 
 ## Definition of Done
