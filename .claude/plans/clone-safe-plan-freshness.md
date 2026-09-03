@@ -120,6 +120,9 @@ reducing risk.
   that neither gap id existed in `docs/operations/known-gaps.tsv`. Reproduced the defect in
   a clean clone before writing anything: 118 tracked plans, one distinct mtime, `ls -t`
   selecting a plan 58 days old, `age_h = 0`.
+- mid: Implementation review routed `scripts/session-setup.sh` through
+  `eos_plans_by_recency`, added a production-wide bypass scan, and synchronized KG7,
+  G11, the known-gaps registry, readiness audit, and verified lesson.
 - mid: After adding `lib/plan-time.sh` and migrating the call sites, ran the targeted
   suites and found 16 real failures in `test-workflow.sh` plus 5 more across
   `test-active-plan-selection.sh`, `test-learning-reuse.sh`,
