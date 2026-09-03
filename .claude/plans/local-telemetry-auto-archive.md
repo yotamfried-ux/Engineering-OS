@@ -95,6 +95,18 @@ Task class: `engineering_os_governance`.
   commit, not share it), and this section's own start/mid/pre-merge staged-commit
   requirement — each was reproduced locally against the exact base/head SHAs with the
   same scripts CI runs, and fixed before pushing again, rather than pushed speculatively.
+- pre-merge: The PR body itself needed two more structured sections
+  (`## Review Fallback Evidence` + `## Merge Readiness`, then `## Operational Behavior
+  Evidence`) before `check-pr-review-evidence.sh` and `check-operational-behavior-evidence.sh`
+  passed — CodeRabbit is confirmed unavailable on this repo (its own comment: fewer than 10
+  stars), so fallback evidence was recorded instead. A real `lessons-learned/bugs/` entry was
+  then added (`route-plan-none-value-inconsistent-across-checkers.md`) documenting that
+  `check-connector-evidence.sh` and `validate-capability-evidence.sh` disagree on whether bare
+  `none` is placeholder, and that `check-pr-review-evidence.sh`'s live `ci:` cross-check flags
+  any substring mention of a gate token regardless of surrounding context — both reproduced
+  directly on this PR, not assumed. Adding that lessons-learned file itself counted as a new
+  code/config/test commit under `check-workflow-evidence.sh`'s classification, which is why
+  this checkpoint needed a second entry after it, rather than editing the one above in place.
 
 ## Goal / מטרה
 
