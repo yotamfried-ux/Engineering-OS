@@ -31,8 +31,9 @@ Planning Mode: approved
 | Source | Status | What it settled |
 |---|---|---|
 | `docs/operations/known-gaps.tsv` | read | The closure criterion requires the six fixture classes to fail, all consumers to read the canonical owner, records migrated without invented evidence, and exact-head CI, review, merge, and post-merge validation to pass. |
-| GitHub PR #284 | read | Merged at `4d517840f18d8c1699a95110e0790d6919450ba4`; all nine required workflows were terminal successes on head `3280dfe82a6e37fb7a79ad104870d06c7952baff`; live review-thread gate reported `total=0, unresolved=0`. |
-| GitHub run `33773417273` | read | `post-merge-validation` on the merge commit concluded `success` at 15:36:32Z — the final outstanding element of the closure criterion. |
+| `scripts/enforcement/check-merge-readiness.sh` | run | Exited 0 against the live workflow-run summaries for head `3280dfe82a6e37fb7a79ad104870d06c7952baff`, selecting the latest exact-head attempt of all nine required workflows as terminal successes; PR #284 was then merged at `4d517840f18d8c1699a95110e0790d6919450ba4`. |
+| `.github/workflows/post-merge-validation.yml` | read | Defines the post-merge gate that runs on `main` after a merge; its run `33773417273` on the merge commit concluded `success` at 15:36:32Z — the final outstanding element of the closure criterion. |
+| `scripts/enforcement/check-known-gaps.sh` | run | Owns registry-to-audit synchronization; a deliberately desynchronized fixture (ledger `open`, audit `closed`) was rejected with `audit freshness mismatch`, and the real synchronized pair passes, proving this closure is enforced rather than merely consistent by eye. |
 | `docs/operations/operational-readiness-audit.md` | read | Carries the gap ledger row, the status-matrix row, and the next-priorities list, all of which must stay synchronized with the registry. |
 | `scripts/enforcement/check-pattern-canonical-state.sh` | read | Passes on merged `main` (88 records, 0 active, single owner), confirming the enforcement is live in the canonical branch. |
 
@@ -129,6 +130,8 @@ No scaffold applies to a status transition in two existing governance ledger fil
 - pre-merge: the branch carries exactly the ledger transition and its plan — no executable code, hook, installer, or enforcement logic changed, so the enforcement this closure cites is byte-identical to what merged in PR #284 and passed post-merge validation.
 - pre-merge: final self-review confirms the closure text cites only verified identifiers — merge SHA `4d517840f18d8c1699a95110e0790d6919450ba4`, post-merge run `33773417273` conclusion `success`, exact head `3280dfe82a6e37fb7a79ad104870d06c7952baff` for the nine required workflows — and that no other gap row, status, or priority was altered.
 - pre-merge: `git diff --check` is clean and the seven remaining gaps are unchanged, so this branch narrows the readiness claim by exactly one row and overstates nothing.
+- pre-merge: exact head `c23c34120b16cf34298c47c04bedb83e468fe7d4` returned `enforcement-tests` success at 15:51:23Z and success for every telemetry, dispatcher, cleanup, plan-checklist, capability, connector, documentation-asset and gap-state job; the single failure was `workflow-evidence-policy` run `33774637366`, which rejected two Source of Truth rows for naming broad sources (`GitHub PR #284`, `GitHub run 33773417273`) instead of concrete files. Those rows were replaced with the executable files that actually settled each fact, with no change to the ledger transition.
+- pre-merge: verification before completion re-run on this branch — every Definition of Done item confirmed by tool output, `all 119 enforcement suites passed with execution receipts`, the diff proven to contain no executable file, and a desynchronization fixture confirming `check-known-gaps.sh` enforces the ledger-to-audit agreement this closure depends on.
 
 ## Definition of Done
 
