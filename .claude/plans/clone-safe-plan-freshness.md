@@ -133,6 +133,9 @@ reducing risk.
   two new gaps were added as audit status-matrix rows. One self-inflicted bug was caught
   here too — `$(plan_stamp)` ran in a subshell so the sequence counter never advanced and
   every fixture shared a timestamp.
+- pre-merge: Static acceptance on the final eight-file tree reports 123 standalone test
+  suites, zero helpers, zero production mtime violations, one detected violation on the
+  `main` baseline, valid ten-column known-gap rows, and a clean Git diff.
 - pre-merge: Full corpus green on the committed head with execution receipts — 117 Bash
   suites and 5 Python suites, 122 receipts, receipt count equal to corpus count, none
   failing; re-confirmed on the final head `f19c801` after the learning-loop lesson landed.
