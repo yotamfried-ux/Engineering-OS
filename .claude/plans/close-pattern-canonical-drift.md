@@ -126,6 +126,10 @@ No scaffold applies to a status transition in two existing governance ledger fil
 - mid: the row moved `open` → `closed` in `docs/operations/known-gaps.tsv` (43 closed / 1 mitigated / 6 open), and three stale statements in the audit were corrected: the gap ledger row, the status-matrix note that still said the gap "stays open until … post-merge validation are recorded", and the highest-priority list that still ranked canonical pattern ownership first.
 - mid: `--assert-full-ready` now names seven blocking gaps instead of eight, with `pattern-registry-canonical-drift` absent; `check-known-gaps.sh`, `check-readiness-audit.sh`, `git diff --check`, and the full 119-suite runner all pass on this branch.
 
+- pre-merge: the branch carries exactly the ledger transition and its plan — no executable code, hook, installer, or enforcement logic changed, so the enforcement this closure cites is byte-identical to what merged in PR #284 and passed post-merge validation.
+- pre-merge: final self-review confirms the closure text cites only verified identifiers — merge SHA `4d517840f18d8c1699a95110e0790d6919450ba4`, post-merge run `33773417273` conclusion `success`, exact head `3280dfe82a6e37fb7a79ad104870d06c7952baff` for the nine required workflows — and that no other gap row, status, or priority was altered.
+- pre-merge: `git diff --check` is clean and the seven remaining gaps are unchanged, so this branch narrows the readiness claim by exactly one row and overstates nothing.
+
 ## Definition of Done
 
 - planned: transition the `pattern-registry-canonical-drift` row to `closed` with merge and post-merge identifiers.
