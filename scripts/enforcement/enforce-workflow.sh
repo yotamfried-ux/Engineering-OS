@@ -297,13 +297,13 @@ gate_write() {
       ;;
   esac
 
-  # G6b: hooks/enforcement/.claude/settings writes require reading core/hooks-policy.md
+  # G6b: hooks/enforcement/.claude/settings writes require recorded Read evidence for core/hooks-policy.md.
   case "$FILE" in
     scripts/hooks/*|*/scripts/hooks/*|scripts/enforcement/*|*/scripts/enforcement/*|\
     .claude/settings.json|*/.claude/settings.json)
       evidence_has read_hooks_policy || {
         echo "ERROR_FOR_AGENT: core/hooks-policy.md not read in this session."
-        echo "ACTION: read core/hooks-policy.md before modifying hooks or enforcement scripts."
+        echo "ACTION: read core/hooks-policy.md with the Read tool before modifying hooks or enforcement scripts so its PostToolUse recorder can persist the evidence."
         echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
         exit 1
       }

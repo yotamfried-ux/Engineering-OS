@@ -188,6 +188,56 @@ for plan in "$ROOT"/.claude/plans/*.md; do
   fi
 done
 
+mtime_violations="$(ROOT="$ROOT" python3 - <<'PY'
+import ast
+import os
+import re
+from pathlib import Path
+
+root = Path(os.environ["ROOT"])
+production_roots = (".github", "scripts", "templates")
+extensions = {".bash", ".js", ".mjs", ".py", ".ps1", ".sh", ".ts", ".yaml", ".yml"}
+plan_reference = re.compile(r"(?:\.claude[/\\]plans|\bplans?\b)", re.IGNORECASE)
+mtime_read = re.compile(
+    r"(?:\bls\b[^#\n]*(?:\s-[A-Za-z]*t[A-Za-z]*\b|--sort(?:=|\s+)time\b)|"
+    r"\bstat\b[^#\n]*(?:%Y|%m)|\bos\.path\.getmtime\b|\bst_mtime(?:_ns)?\b|"
+    r"\bmtimeMs\b|\bLastWriteTime\b|\bfind\b[^#\n]*-printf[^#\n]*%T)",
+    re.IGNORECASE,
+)
+
+for relative_root in production_roots:
+    base = root / relative_root
+    if not base.exists():
+        continue
+    for path in sorted(base.rglob("*")):
+        if not path.is_file() or path.suffix not in extensions or "tests" in path.parts:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        ignored_lines = set()
+        if path.suffix == ".py":
+            try:
+                tree = ast.parse(text)
+                for node in (tree, *ast.walk(tree)):
+                    body = getattr(node, "body", ())
+                    if isinstance(body, (list, tuple)) and body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
+                        ignored_lines.update(range(body[0].lineno, body[0].end_lineno + 1))
+            except SyntaxError:
+                pass
+        for line_number, line in enumerate(text.splitlines(), 1):
+            stripped = line.lstrip()
+            if line_number in ignored_lines or stripped.startswith(("#", "//")):
+                continue
+            if plan_reference.search(line) and mtime_read.search(line):
+                print(f"{path.relative_to(root)}:{line_number}:{line.strip()}")
+PY
+)"
+if [ -z "$mtime_violations" ]; then
+  ok "production plan readers never use filesystem mtime"
+else
+  bad "production plan reader bypasses canonical resolver"
+  printf '%s\n' "$mtime_violations"
+fi
+
 if [ "$fails" -ne 0 ]; then
   echo "FAILED: $fails check(s)"
   exit 1
