@@ -1,7 +1,7 @@
 # Route Plan — Clone-safe plan freshness and selection
 
 Plan Scope: standard
-Plan Timestamp: 2026-09-02T00:41:02Z
+Plan Timestamp: 2026-09-03T07:39:53Z
 Planning Mode: approved
 
 ## Route Plan
@@ -12,7 +12,7 @@ Planning Mode: approved
 | Task class | `engineering_os_governance` |
 | Domain tags | plan freshness, plan selection, clone safety, filesystem mtime, git history, enforcement hooks, known-gaps registry |
 | Plan Scope | standard |
-| Plan Timestamp | 2026-09-02T00:41:02Z |
+| Plan Timestamp | 2026-09-03T07:39:53Z |
 | Planning Mode | approved |
 | Task-router evidence | `core/task-router.md` routes Engineering OS enforcement changes through the canonical workflow, quality gates and git policy. |
 | Workflow evidence | `core/workflow.md` (plan-first writes), `core/quality-gates.md` (DoD vs live external gates), `core/hooks-policy.md` (KG7 zombie-plan gap), `core/git-policy.md` (branch → PR → review → approval). |
@@ -112,6 +112,9 @@ reducing risk.
 
 ## Progress Lifecycle Evidence
 
+- start: Final stages 1–3 acceptance audit on `main` at `b64050e` reproduced one
+  remaining checkout-mtime bypass in the session-start Existing plans display while the
+  blocking freshness resolver and all stage-3 runtime-evidence checks remained sound.
 - start: Session opened on `main` at `ba5f8d3` in a fresh container. Confirmed the phase-2
   branch `fix/clone-safe-plan-freshness` was never pushed, so no prior work survived, and
   that neither gap id existed in `docs/operations/known-gaps.tsv`. Reproduced the defect in
@@ -241,6 +244,7 @@ brief and confirmed against the working tree (118 tracked plans − 2 existing k
 - [x] Every reference to a deleted plan repointed or removed
 - [x] Both canonical gaps registered and mirrored in the audit ledger
 - [x] Full enforcement corpus green before the commit: 122 suites with execution receipts, plus the known-gaps and readiness-audit checkers
+- [x] Post-merge audit residual in the session-start plan display removed and covered by a production-wide no-mtime regression
 
 ## Claude Run Trace
 
@@ -272,12 +276,13 @@ brief and confirmed against the working tree (118 tracked plans − 2 existing k
   untracked plan has no git time, so every first write would be blocked); the declared
   timestamp alone (discards unforgeable committed history); a side index of plan times
   (a second source of truth that can drift from both git and the plan).
-- **Result:** one canonical resolver owns plan recency; no mtime path remains on any plan
-  path; undatable plans fail closed with a named reason instead of reporting as fresh;
-  the corpus is 3 plans; both gaps are registered and mirrored in the audit ledger.
-- **Follow-up:** the two registered gaps stay open until this change is merged with
-  exact-head CI, reconciled review threads and owner approval. `bash-runtime-test-evidence`
-  is the next phase; Project 8 qualification follows it.
+- **Result:** one canonical resolver owns plan recency; undatable plans fail closed with a
+  named reason instead of reporting as fresh; the historical corpus cleanup remains exact.
+  A final stages 1–3 audit found one presentation-only `ls -lt` residue in the session-start
+  Existing plans list. PR #280 removes it, adds a production-wide bypass scan, and aligns
+  KG7 and G11 documentation with the implemented resolver and runtime-evidence producers.
+- **Follow-up:** exact-head CI, review reconciliation and explicit owner approval remain
+  live external gates for PR #280. Project 8 qualification follows after merge.
 
 ## Live External Gates Before Merge
 
