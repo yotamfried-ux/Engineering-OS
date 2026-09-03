@@ -142,7 +142,7 @@ router.delete('/posts/:id', requirePermission('posts:delete'), deletePostHandler
 **Testing Strategy:**
 Write a boundary test per permission in the matrix: assert that a user with the role below the required level receives 403, and the user with the required level receives 200. Test role expiry: expired `user_roles` rows must be treated as absent. Test org isolation: a user from org A cannot access org B's resources even with the same role name.
 
-**Score:** Candidate (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -296,7 +296,7 @@ final_allow if {
 **Testing Strategy:**
 Write a policy decision table test: enumerate (subject, resource, env) tuples that should ALLOW and tuples that should DENY. Assert each combination. Test attribute injection: send a request with a forged `resource.classification` in the body and verify the server fetches the real value from DB. Test caching: verify a stale cache entry does not use an attribute value that was updated after the cache was populated.
 
-**Score:** Candidate (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -452,7 +452,7 @@ router.delete(
 **Testing Strategy:**
 Define a relationship graph fixture (a set of tuples) and assert expected check() outcomes across the matrix of users, relations, and objects. Test negative cases: a user with no path to an object receives DENY. Test inheritance: deleting a tuple from a parent stops access through that path for all descendants. Test `ListObjects` returns the correct set when membership changes.
 
-**Score:** Candidate (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -539,7 +539,7 @@ Is your model simple and static (flat roles, no relationship traversal needed)?
 **Testing Strategy:**
 For every engine: write a decision table test that enumerates all combinations of subject, action, and object that should ALLOW or DENY. Run these tests in CI against the actual engine binary or WASM module — do not mock the engine. For OPA: use `opa test` with the Rego test framework. For OpenFGA: use the model testing DSL (tuples + check assertions in YAML). For Cedar: use the Cedar policy testing utilities in the SDK. For Permit.io: test against the local PDP in CI, not the production cloud API.
 
-**Score:** Candidate (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 

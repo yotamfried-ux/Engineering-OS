@@ -72,7 +72,7 @@ emailWorker.on('failed', (job, err) => {
 **Testing:**
 Mock the mailer and assert that a thrown error triggers a retry with an increasing delay. Assert that after `maxRetries` the job lands in the failed set (DLQ). Assert that a successful execution removes the job from the active set.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -142,7 +142,7 @@ const worker = new Worker('reports', async (job) => {
 **Testing:**
 Spin up two worker instances in a test and assert that only one executes the handler when both attempt to acquire the lock simultaneously. Assert the second logs a `cron.lock_skipped` event. Assert the lock is released after a successful run.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -201,7 +201,7 @@ async function processChargeJob(job: { data: { userId: string; orderId: string; 
 **Testing:**
 Enqueue the same job twice with identical inputs and assert the business-logic side effect (e.g., payment charge) runs exactly once. Assert the second execution logs a `job.deduplicated` event. Assert behavior is correct when the first execution crashes mid-transaction.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -273,7 +273,7 @@ async function requeueFromDlq(dlqJobId: string) {
 **Testing:**
 Configure a job to fail on every attempt. Assert it appears in the DLQ with the correct error message and original payload after all retries are exhausted. Assert that calling `requeueFromDlq` moves it back to the processing queue and removes it from the DLQ.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [BullMQ Docs](https://docs.bullmq.io) — Redis-based job queue for Node.js

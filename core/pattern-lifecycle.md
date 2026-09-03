@@ -11,11 +11,22 @@
 
 ## <pattern_registry>
 
-האינדקס של התבניות מנוהל דרך **קבצי ה-policy** — `pattern-lifecycle.md` (סטטוס וחיים)
-ו-[`scoring-guide.md`](./scoring-guide.md) (ציון) — ולא בקובץ yaml נפרד.
-בחירת "התבנית בעלת הציון הגבוה ביותר שמתאימה למשימה" נעשית דרך קריאת קבצי ה-`README.md`
-בכל תת-תיקייה ב-`patterns/` בשילוב עם ציוני הסקירה המתועדים (ראה
+האינדקס של התבניות מנוהל ב-[`../patterns/registry.yaml`](../patterns/registry.yaml).
+זהו **הבעלים הקנוני היחיד** של מצב מחזור החיים: `status`, `score`, `used_in`, ו-`evidence`.
+
+קבצי ה-policy מגדירים את **הכללים**, לא את **המצב**: `pattern-lifecycle.md` מגדיר את
+קריטריוני המעבר, ו-[`scoring-guide.md`](./scoring-guide.md) מגדיר את נוסחת הציון והספים.
+קבצי ה-`README.md` בתת-תיקיות `patterns/` הם **הנחיית מימוש בלבד** — אסור שיצהירו
+`status`, `score`, `used_in` או `evidence`; הם מפנים לרישום.
+
+בחירת "התבנית בעלת הציון הגבוה ביותר שמתאימה למשימה" נעשית דרך שאילתה על הרישום,
+בשילוב קריאת ה-`README.md` של הדומיין להנחיית מימוש (ראה
 [`connector-policy.md`](./connector-policy.md) › `<information_sources>`).
+
+כל סתירה בין הרישום לבין מקור אחר — דירוגים, README, או תיעוד — נחסמת דטרמיניסטית ע"י
+[`../scripts/enforcement/check-pattern-canonical-state.sh`](../scripts/enforcement/check-pattern-canonical-state.sh),
+שנכשל על סתירת status/score/usage/evidence, על שורה שאינה מוכרת לרישום, ועל רשומה
+`active` שאינה עומדת בספים הקנוניים.
 
 כל רשומה כוללת:
 

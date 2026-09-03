@@ -69,7 +69,7 @@ class PrismaUserRepository implements UserRepository {
 **Testing Strategy:**
 Unit-test services by injecting an in-memory or mock repository. Integration-test the Prisma implementation against a real test DB spun up with Docker Compose.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -123,7 +123,7 @@ async function transferFunds(db: DB, accountId: string, amount: number, maxRetri
 **Testing Strategy:**
 Simulate concurrent updates in integration tests. Assert that exactly one succeeds and the other receives a conflict error. Test retry logic with a mock that fails N-1 times.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -174,7 +174,7 @@ prisma.$use(async (params, next) => {
 **Testing Strategy:**
 Test that deleted records are invisible to normal queries, visible to admin queries, restorable, and that unique constraints still work after soft deletion.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -228,7 +228,7 @@ ALTER TABLE users ALTER COLUMN subscription_tier SET DEFAULT 'free';
 **Testing Strategy:**
 Run migrations against a schema-only dump of production in CI. Verify idempotency (run twice without error). Test that the application works after each migration step independently.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -284,7 +284,7 @@ async function query(sql: string, params: unknown[]) {
 **Testing Strategy:**
 Load-test with concurrent requests to verify pool exhaustion produces a timeout error (not a hang). Assert that connections are always released by checking `pool.totalCount` after each test.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [Prisma Docs](https://www.prisma.io/docs) — TypeScript ORM, migrations, type safety

@@ -23,6 +23,10 @@ for lineno,line in enumerate(file.read_text().splitlines(),1):
     seen.add(asset)
     if any(not x for x in parts): errors.append(f"{asset}: empty field")
     if typ not in {'template','pattern'}: errors.append(f"{asset}: invalid type")
+    # Pattern lifecycle state has exactly one canonical owner: patterns/registry.yaml.
+    # A pattern-typed row here would be a second, hand-editable state surface and is
+    # how status/score/usage previously drifted (gap: pattern-registry-canonical-drift).
+    elif typ == 'pattern': errors.append(f"{asset}: pattern lifecycle state belongs in patterns/registry.yaml, not this file")
     if status not in {'active','candidate','deprecated','waived'}: errors.append(f"{asset}: invalid status")
     if confidence not in {'low','medium','high'}: errors.append(f"{asset}: invalid confidence")
     if score not in {'1','2','3','4','5'}: errors.append(f"{asset}: invalid score")

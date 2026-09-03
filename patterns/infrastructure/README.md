@@ -144,7 +144,7 @@ module "api" {
 **Testing Strategy:**
 Run `terraform validate` and `terraform plan` in CI on every pull request. Use `tflint` for provider-specific linting and `checkov` (or `tfsec`) for security policy checks. Use `terratest` (Go) or the native `tftest` framework for module integration tests that deploy real resources to a test account and assert outputs.
 
-**Score:** Candidate (see [pattern-lifecycle.md](../../core/pattern-lifecycle.md))
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 **Official References:**
 - Terraform Documentation: https://developer.hashicorp.com/terraform/docs (Official Documentation)
@@ -248,7 +248,7 @@ CMD ["node", "dist/index.js"]
 - Assert non-root execution: `docker run --rm <image> whoami` must not return `root`.
 - Assert image size has not regressed: compare against a stored baseline in CI.
 
-**Score:** Candidate (see [pattern-lifecycle.md](../../core/pattern-lifecycle.md))
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 **Official References:**
 - Docker Multi-Stage Builds: https://docs.docker.com/build/building/multi-stage/ (Official Documentation)
@@ -408,7 +408,7 @@ spec:
 - Validate rollout completes in CI: `kubectl rollout status deployment/api-deployment --timeout=120s`
 - Verify PodDisruptionBudget in staging: `kubectl drain <node> --ignore-daemonsets --delete-emptydir-data` and assert no service interruption.
 
-**Score:** Candidate (see [pattern-lifecycle.md](../../core/pattern-lifecycle.md))
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 **Official References:**
 - Kubernetes Deployments: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/ (Official Documentation)
@@ -542,7 +542,7 @@ terraform apply tfplan
 - Test state recovery: delete the current state version from S3, restore the previous S3 version, run `terraform plan`, and assert it shows no changes.
 - Assert bucket configuration in CI: `aws s3api get-bucket-versioning --bucket $TF_STATE_BUCKET` must return `Enabled`; `aws s3api get-bucket-encryption` must confirm KMS.
 
-**Score:** Candidate (see [pattern-lifecycle.md](../../core/pattern-lifecycle.md))
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 **Official References:**
 - Terraform S3 Backend: https://developer.hashicorp.com/terraform/language/backend/s3 (Official Documentation)
@@ -670,7 +670,7 @@ export async function getVaultSecret(path: string): Promise<Record<string, strin
 - Test rotation: update the secret value in Secrets Manager, wait for the TTL to expire, assert the application uses the new value without restarting.
 - Test missing secret: revoke the application's IAM permission, assert the application fails with a clear error message (`AccessDenied`) rather than a crash or silent null pointer.
 
-**Score:** Candidate (see [pattern-lifecycle.md](../../core/pattern-lifecycle.md))
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 **Official References:**
 - AWS Secrets Manager Developer Guide: https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html (Official Documentation)
@@ -865,7 +865,7 @@ export const serviceArn = apiService.serviceArn;
 - Integration tests: deploy to an ephemeral stack (`pulumi stack init test-pr-$PR_NUMBER`), run smoke tests against the deployed resources, destroy the stack regardless of test outcome.
 - CI gate: run `pulumi preview --diff` on every pull request and post the diff as a PR comment for review before merge.
 
-**Score:** Candidate (see [pattern-lifecycle.md](../../core/pattern-lifecycle.md))
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 **Official References:**
 - Pulumi Documentation: https://www.pulumi.com/docs/ (Official Documentation)

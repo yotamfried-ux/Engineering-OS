@@ -67,7 +67,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 **Testing Strategy:**
 Unit-test `sign` and `verify`. Integration-test middleware with expired, tampered, and missing tokens. Test refresh flow including DB revocation lookup and token rotation.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -129,7 +129,7 @@ export async function handleCallback(code: string) {
 **Testing Strategy:**
 Mock the OAuth provider. Test state mismatch rejection, successful user upsert, duplicate-email handling when provider differs, and token exchange failure paths.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -188,7 +188,7 @@ req.session.regenerate(() => {
 **Testing Strategy:**
 Verify login sets cookie, protected routes reject requests without valid sessions, logout deletes the Redis key, and regeneration changes the session ID while preserving user data.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -243,7 +243,7 @@ export async function validateApiKey(raw: string, db: DB) {
 **Testing Strategy:**
 Test that generation produces unique values, validation rejects tampered and revoked keys, `lastUsedAt` is updated on success, and the raw key is not stored or returned after initial creation.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [OAuth 2.0 RFC 6749](https://tools.ietf.org/html/rfc6749) — authorization framework standard

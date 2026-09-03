@@ -290,7 +290,9 @@ gate_write() {
     patterns/*|*/patterns/*)
       evidence_has read_pattern_lifecycle || {
         echo "ERROR_FOR_AGENT: core/pattern-lifecycle.md not read in this session."
-        echo "ACTION: read core/pattern-lifecycle.md (<lifecycle> section) before modifying patterns."
+        echo "ACTION: read core/pattern-lifecycle.md before modifying patterns — <pattern_registry> names"
+        echo "        patterns/registry.yaml as the single canonical owner of status/score/used_in/evidence,"
+        echo "        and <lifecycle> gives the promotion criteria those values must satisfy."
         echo "BYPASS: EOS_BYPASS_WORKFLOW=1 — only with explicit user authorization in the current conversation."
         exit 1
       }

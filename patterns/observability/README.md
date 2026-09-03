@@ -53,7 +53,7 @@ export function createRequestLogger(traceId: string, userId?: string) {
 **Testing:**
 Capture logger output in tests (redirect to a string buffer) and assert the emitted JSON contains the required fields. Assert that a request containing an `Authorization` header does not appear in the log output.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -116,7 +116,7 @@ async function chargeOrder(orderId: string, amountCents: number) {
 **Testing:**
 Use an in-memory OTel span exporter in tests. Assert that calling `chargeOrder` creates a span named `charge_order` with the expected attributes. Assert that a thrown error results in a span with `ERROR` status and a recorded exception event.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -175,7 +175,7 @@ export default router;
 **Testing:**
 Write an integration test that asserts `/health/live` returns 200 always. Assert `/health/ready` returns 503 when the DB connection is closed. Assert the JSON body contains a `checks` array with per-dependency results.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ---
 
@@ -242,7 +242,7 @@ groups:
 **Testing:**
 Replay synthetic traffic with a controlled error rate in a staging environment. Assert that the fast-burn alert fires when the error rate exceeds the threshold for the required duration. Assert it resolves when the error rate drops. Validate runbook URLs are reachable.
 
-**Score:** TBD (see pattern-lifecycle.md)
+**Registry:** see [`patterns/registry.yaml`](../registry.yaml) for canonical status, score, and usage.
 
 ## Official References
 - [OpenTelemetry Docs](https://opentelemetry.io/docs/) — observability instrumentation standard
