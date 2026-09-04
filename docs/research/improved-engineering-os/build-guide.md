@@ -478,7 +478,7 @@ No domain package imports a `store-*` package. Composition happens in adapters a
 
 ---
 
-## 4. Stage-by-stage build plan (order revised in 1.1)
+## 4. Stage-by-stage build plan
 
 Conventions for every stage:
 
@@ -664,7 +664,7 @@ Weekly dependency PR (D29), monthly Champion challenge (Stage 10 suite), native-
 
 ---
 
-## 5. Contracts (refined baselines, 1.1)
+## 5. Contracts (refined baselines)
 
 Every contract keeps the lifecycle block:
 
@@ -966,7 +966,7 @@ Computed on the current checkout of `yotamfried-ux/Engineering-OS`; the importer
 | `scripts/**`, `.claude/**`, `.github/**`, `telemetry-archive/`, `.checkpoints/`, `graphify-out/`, `experiments/` | — | **exclude** | Old implementation; reference only (D16). |
 | `CLAUDE.md`, `CLAUDE.template.md`, `core/workflow.md`, `core/task-router.md`, `core/hooks-policy.md`, `core/precedence.md`, `core/coderabbit-policy.md`, `core/skill-orchestration-policy.md` | — | **exclude** as rules; one `lesson` summarizing the governance-overhead retrospective | The old governance the report does not inherit. |
 
-## Appendix B — External facts: verification status (1.1)
+## Appendix B — External facts: verification status
 
 All rows marked "Verified" were checked in this session through Context7 against the vendor's official documentation.
 
