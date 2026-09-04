@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Document status | `1.1` — execution guide layered on the owner's `Architecture Baseline 1.0` report, revised after a second review round |
+| Document status | `1.2` — execution guide layered on the owner's `Architecture Baseline 1.0` report, revised after the second and third review rounds |
 | Source report | "Improved-Engineering-OS — דוח ארכיטקטורה סופי ותוכנית מימוש מבוססת ראיות" (4 Sep 2026) |
-| Supersedes | `1.0-review` (same file, PR #288 history) |
+| Supersedes | `1.1` and `1.0-review` (same file, PR #288 history) |
 | Written from | Engineering-OS repository, branch `claude/engineering-os-project-guide-roj911` |
 | Verified against | this repository's lessons and Project 8 findings; official docs via Context7 for Supabase, MCP `2026-07-28`, Node.js, pnpm, better-sqlite3, Zod 4, GitHub releases/attestations/Apps, Claude Code and Codex CLI (Appendix B) |
 | Consumers | (1) the owner, for the review verdict and the decisions to approve; (2) the coding agent that builds the new repository |
@@ -17,7 +17,7 @@
 המסמך הזה עושה שלושה דברים:
 
 1. **ביקורת** — עובר על 17 ההחלטות ועל תוכנית ה-Stages ומכריע לכל אחת: `CONFIRMED`, `CONFIRMED+CHANGE` או `GAP`. כל פער שעלול להפוך לחוב טכני מקבל מזהה `TD-xx`, חומרה, ופתרון קונקרטי (סעיף 1).
-2. **השלמות** — מוסיף החלטות D18–D31 שהדוח לא סגר אבל אי אפשר לבנות בלעדיהן. כל אחת מסומנת `PROPOSED` עד שתאשר, עם ברירת מחדל מומלצת כדי שהסוכן לא ייתקע (סעיף 2).
+2. **השלמות** — מוסיף החלטות D18–D34 שהדוח לא סגר אבל אי אפשר לבנות בלעדיהן. כל אחת מסומנת `PROPOSED` עד שתאשר, עם ברירת מחדל מומלצת כדי שהסוכן לא ייתקע (סעיף 2).
 3. **מדריך בנייה** — מבנה הריפו, ואז לכל Stage: מה בונים, באילו נתיבים, אילו ממשקים, אילו בדיקות/סימולציות, ומה שער היציאה (סעיפים 3–7).
 
 **מה השתנה בגרסה 1.1.** סבב הביקורת השני (סעיף 1.4) זיהה שהמדריך בגרסה 1.0 גלש בכמה מקומות לכיוון המערכת הישנה ורחוק מהעקרונות של הדוח. השינויים המהותיים:
@@ -32,7 +32,19 @@
 - **Holdout לא מזהם את עצמו:** Active Holdout לעולם אינו input לאופטימיזציה (D33).
 - **תיקונים קטנים:** dependency selectors ל-staleness, `context_snapshot_id` ב-Agent Contract, `emitter_id` בטלמטריה, SQLite ב-WAL במקום החלפת קבצים, Node 24 LTS ו-pin של pnpm, ריכוך ה-governance (ADR רק לגבולות ארכיטקטוניים; מטריצת CI מלאה אחרי ה-slice).
 
-**איך להשתמש:** פתח ריפו חדש, הכנס לתוכו את הדוח המקורי כ-`ARCHITECTURE.md` ואת המסמך הזה כ-`BUILD-GUIDE.md`, אשר או שנה את D18–D33 (טבלה בסעיף 2.0), ואז תן לסוכן את ההנחיה בסעיף 6.1. השאר כתוב באנגלית בכוונה: זו השפה שבה הסוכן מפרש מפרט בצורה הכי חד-משמעית.
+**מה השתנה בגרסה 1.2.** סבב הביקורת השלישי (סעיף 1.5) סגר את הפערים האחרונים בחוזים ובגבולות האמון:
+
+- **Champion מוצמד ל-release.** Scores חיים ומתעדכנים; ההמלצה הקנונית משתחררת. Evidence חדש מייצר `challenger_ready` ו-Promotion Proposal, אבל ברירת המחדל מתחלפת רק אחרי PR ו-release חדש (D34).
+- **D31 פוצל.** Curator עם סמכות Supabase בלבד מייצר Promotion Proposal מאומת; Promoter נפרד, שרץ ב-GitHub Actions של הריפו הקנוני, מחזיק רק סמכות GitHub ופותח את ה-PR. אף רכיב אחד לא מחזיק את שתי הסמכויות.
+- **Stage 2 כולל evidence kernel מינימלי ו-investigation גולמי**, כדי ש-Stage 3 יוכל לדרוש telemetry → evidence → investigation בלי implementation זרוק. Stage 7 מרחיב, לא מחליף.
+- **Stage 3 הוא סוכן ראשי בלבד.** parity בין Claude ל-Codex עוברת ל-Stage 8.
+- **`observe` הוא idempotent באמת:** `observation_id` נוצר בצד הקורא ו-UNIQUE בשרת. **`context_snapshot_id`** הוא רשומה דטרמיניסטית, durable, שנשמרת local-first ומסתנכרנת; `inspect` מקבל handle מסוג.
+- **תיקון עובדתי על MCP:** שרתים חייבים לממש `server/discover`; לקוחות אינם חייבים לקרוא לו. IEOS מיישם אותו ולא הופך אותו לדרישת תאימות.
+- **ה-launcher לא ממציא verifier קריפטוגרפי.** digest SHA-256 חובה בתוך ה-launcher; אימות attestation דרך `gh release verify` / `gh attestation verify` או ספרייה מוכחת, נדרש ב-qualification.
+- **Installation token:** invariants מפורשים (אנטרופיה, השוואה בזמן קבוע, מגבלות קצב וגודל, scopes מדויקים, והשרת בלבד קובע `origin_class` ו-`installation_id`).
+- **`main` תמיד releasable**, לא "release-only"; releases הם tags ו-artifacts immutable.
+
+**איך להשתמש:** פתח ריפו חדש, הכנס לתוכו את הדוח המקורי כ-`ARCHITECTURE.md` ואת המסמך הזה כ-`BUILD-GUIDE.md`, אשר או שנה את D18–D34 (טבלה בסעיף 2.0), ואז תן לסוכן את ההנחיה בסעיף 6.1. השאר כתוב באנגלית בכוונה: זו השפה שבה הסוכן מפרש מפרט בצורה הכי חד-משמעית.
 
 ---
 
@@ -48,13 +60,13 @@
 | D4 Thin project footprint | CONFIRMED+CHANGE | The footprint must be *generated*, never hand-edited, and must include the agent bootstrap files. See D18.4 and TD-07. |
 | D5 Dynamic Project Profile | CONFIRMED | `spec` in Git, `status` in Evidence Plane as written. Add `installation_id` to observations (TD-05). |
 | D6 Asset model | CONFIRMED+CHANGE | Schema is metadata only; body storage, identity minting and legacy IDs were unspecified. Closed by D19, D20. Canonical lifecycle no longer contains `candidate` (R-04). |
-| D7 Evidence-based catalog, Champion | CONFIRMED+CHANGE | Requires an offline score snapshot in the release or `resolve` fails without network. Closed by D24. Holdout evidence may never select a Champion (D33). |
-| D8 Observation → Curation → Admission | CONFIRMED+CHANGE | Promotion needs a concrete mechanism: a pull request into the canonical repo opened by a server-side Curator with its own identity. Closed by D21, D31. |
+| D7 Evidence-based catalog, Champion | CONFIRMED+CHANGE | Requires an offline score snapshot in the release or `resolve` fails without network (D24). Holdout evidence may never select a Champion (D33). **Champion is release-pinned; scores are live** (D34). |
+| D8 Observation → Curation → Admission | CONFIRMED+CHANGE | Promotion needs a concrete mechanism: a validated Promotion Proposal produced by a Curator (Supabase authority only) and a pull request opened by a separate Promoter (GitHub authority only). Closed by D21, D31. |
 | D9 `resolve / inspect / expand` | CONFIRMED+CHANGE | Read-only contract has no write side. Add `observe`; add `context_snapshot_id` so every recommendation is explainable. Closed by D25. |
 | D10 Adaptive Assurance | CONFIRMED+CHANGE | Staleness must be scoped by paths *and* dependency selectors, not by "any commit". Closed by D27. Assurance must not depend on the storage backend (Section 3). |
 | D11 Telemetry / Evidence | CONFIRMED+CHANGE | Correct for a persistent machine; ephemeral remote sessions need a direct-ingest strategy with an honest `INCOMPLETE` state, never a Git detour. Closed by D23, D26. |
 | D12 Pinned releases, launcher | CONFIRMED+CHANGE | Launcher runtime unspecified; also not needed for the first vertical slice. Closed by D18.2 and the new Stage 4. |
-| D13 Future-adaptive agent integration | CONFIRMED | MCP `2026-07-28` verified: stateless core, `server/discover` required, handles as tool arguments. The EOS MCP adapter is stateless by construction. |
+| D13 Future-adaptive agent integration | CONFIRMED | MCP `2026-07-28` verified: stateless core, servers must implement `server/discover` (clients need not call it; requests are self-describing), handles as tool arguments. The EOS MCP adapter is stateless by construction. |
 | D14 Verification, evals | CONFIRMED+CHANGE | Evaluator isolation needs a physical mechanism; agent trials need headless drivers (`claude -p` / Agent SDK with `setting_sources=[]`, `codex exec --json`). Holdout policy formalized (D33). |
 | D15 Dynamic external ecosystem | CONFIRMED | Freshness classes need a TTL policy file from Stage 11; no change to design. |
 | D16 Reuse knowledge, rebuild system | CONFIRMED | Import corpus and exclusion list in Appendix A; import now goes through a promotion PR, not directly into `knowledge/`. |
@@ -90,7 +102,7 @@ Severity: **S1** = would force a redesign or data migration later; **S2** = woul
 ### 1.3 Corrections to the report text
 
 - Replace every `citeturn…` token with a real URL (Appendix B has the verified ones).
-- "MCP moved to a stateless core in July 2026": verified. Add: protocol-level sessions and session headers were removed from Streamable HTTP, `server/discover` is mandatory, list results carry `ttlMs`/`cacheScope`, and HTTP+SSE is deprecated. Consequence for D13: the EOS MCP adapter keeps no per-connection state; handles go in tool arguments.
+- "MCP moved to a stateless core in July 2026": verified. Add: protocol-level sessions and session headers were removed from Streamable HTTP; **servers must implement** `server/discover`, while clients are not required to call it because every request carries protocol version and capabilities in `_meta` (a mismatch yields error `-32022`); list results carry `ttlMs`/`cacheScope`; HTTP+SSE is deprecated. Consequence for D13: the EOS MCP adapter keeps no per-connection state, implements `server/discover`, and never treats a client's discover call as a compatibility requirement.
 - "Supabase migrates from anon/service_role to publishable/secret keys by end of 2026": verified. Add: Edge Functions reserve the `Authorization` header for Supabase Auth JWTs and the `apikey` header for project keys; a custom installation token must therefore travel in its own header (D22).
 - "Database backups do not include Storage objects": verified. Add: Free plan has no automated daily backups and pauses after 7 idle days; Pro has daily backups retained 7 days, PITR is an add-on (D30).
 - Stage 1 of the report ("OS/runtime combinations supported") must reference the platform list in D18.3, otherwise the gate is unfalsifiable.
@@ -113,11 +125,26 @@ Severity: **S1** = would force a redesign or data migration later; **S2** = woul
 | R-11 | `installation_id + source.type + sequence` is not unique with concurrent processes; SQLite "atomic file replace" is the wrong tool. | **Accepted.** D26 adds `emitter_id`; SQLite uses WAL + transactions + busy timeout + unique `event_id` (verified against better-sqlite3 docs). |
 | R-12 | Governance creeping back: ADR for any directory, docs on every stage, 30 ADRs at Stage 0, four-platform CI before the slice. | **Accepted with one reservation.** ADR only for a new architectural boundary or top-level subsystem; docs only when a public contract or runbook changes; one baseline ADR for D1–D17. CI: Linux primary plus one Windows smoke from Stage 0 (the owner works on Windows and CRLF/path bugs are cheap early), full matrix after the slice. Node 24 LTS (verified) with `packageManager`/`devEngines` pinning. |
 
-One item the second round opened without closing: with R-02 and R-04, the component that turns Candidates into promotion PRs cannot be the agent or the owner's laptop. It is a server-side Curator with its own Supabase identity and a GitHub App installation token. That is a new component with a new credential; it is specified as D31.
+One item the second round opened without closing: with R-02 and R-04, the component that turns Candidates into promotion PRs cannot be the agent or the owner's laptop. It is specified as D31 and, after the third round, split into a Curator and a Promoter.
+
+### 1.5 Third review round (T-01 … T-10) and disposition
+
+| ID | Sev | Finding | Disposition in 1.2 |
+|---|---|---|---|
+| T-01 | S1 | A live score could change the Champion without a release, so a pinned release could recommend A today and B tomorrow. | **Accepted.** D34: scores are live; canonical recommendations are released. New evidence yields `challenger_ready` and a Promotion Proposal; the default changes only after PR + release. Connects D7, D8, D12, D24. |
+| T-02 | S1 | D31 gave one Curator both the Supabase secret key and the GitHub App key: one compromise = Evidence Plane admin + canonical Git writer. | **Accepted.** D31 split: Curator (Supabase authority only, produces a signed Promotion Proposal) and Promoter (GitHub authority only, runs in the canonical repo's Actions, validates the proposal, opens the PR, never merges). Edge Function secrets are project-wide, so the split is across systems, not across two functions in one project. |
+| T-03 | S1 | Stage 3 demanded telemetry → evidence → investigation while Stage 2 built no evidence at all. | **Accepted.** Stage 2 gains a minimal evidence kernel (attribution from events, D32 ids) and a raw investigation timeline; Stage 7 extends them. |
+| T-04 | S2 | `observe` declared `idempotentHint: true` without an idempotency key. | **Accepted.** Client-generated `observation_id` (ULID) is the key; `UNIQUE` server-side; a retry returns the same id. |
+| T-05 | S2 | `context_snapshot_id` had no lifecycle. | **Accepted.** Deterministic hash id over its inputs; durable record written local-first and synced through `ingest`; `inspect` takes a typed handle `{kind: asset \| snapshot, id}`. |
+| T-06 | S2 | Guide said `server/discover` is mandatory. | **Accepted with precision** (re-verified): servers must implement it; clients need not call it because requests are self-describing. IEOS implements it and does not depend on clients calling it. |
+| T-07 | S2 | Stage 3 required a second agent, making the "minimal slice" not minimal. | **Accepted.** Stage 3 is primary-agent only; Claude/Codex parity is Stage 8. |
+| T-08 | S2 | Launcher planned to reproduce `gh release verify` semantics in TypeScript. | **Accepted.** Digest verification is mandatory and in-launcher; attestation verification uses the official `gh` CLI (`gh release verify`, `gh release verify-asset`, `gh attestation verify`) or a proven Sigstore library, never a home-grown verifier; required in qualification, best-effort offline. |
+| T-09 | S2 | Installation-token invariants incomplete. | **Accepted.** D22.6: ≥ 256-bit random tokens, constant-time hash comparison, rate and body-size limits, exact RPC scopes, server-stamped `installation_id`, `origin_class` never client-settable. |
+| T-10 | S3 | "main is release-only" reintroduces governance. | **Accepted.** `main` is always releasable; releases are immutable tags and artifacts; small PRs land on `main` throughout a stage. |
 
 ---
 
-## 2. Added decisions (D18–D33)
+## 2. Added decisions (D18–D34)
 
 ### 2.0 Owner approval table
 
@@ -129,24 +156,25 @@ Each row is `PROPOSED` with a recommended default. The coding agent proceeds wit
 | D19 Identity & canonical lifecycle | Opaque ULID ids + mutable slugs + `content_hash` as addressing key; canonical statuses `active | restricted | quarantined | deprecated | superseded`; staging statuses only in Supabase | Path-derived ids (rejected) |
 | D20 Asset storage & retrieval | One directory per asset; deterministic retrieval (capability graph + SQLite FTS5) shipped as an index in the release | Embeddings behind a `Retriever` port only if Stage 14 proves deterministic recall insufficient |
 | D21 Promotion mechanism | Curator opens a pull request; owner approval = merge; low-risk auto-merge gated by CI only after Stage 10 | Custom approval UI (rejected) |
-| D22 Credential boundary | Installation-scoped token → Edge Function `ingest` → insert-only; no owner token and no Supabase key with authority on agent machines; secret key only inside Edge Functions | Supabase Auth anonymous users per installation (kept as alternative if custom tokens prove awkward) |
+| D22 Credential boundary | Installation-scoped high-entropy token → Edge Function `ingest` → insert-only RPCs with explicit invariants (D22.6); no owner token and no Supabase key with authority on agent machines; secret key only inside Edge Functions | Supabase Auth anonymous users per installation (kept as alternative if custom tokens prove awkward) |
 | D23 Remote/ephemeral sessions | Buffered direct ingest, retries at boundaries, else `telemetry_state: INCOMPLETE` and `qualification_eligible: false`; coding continues; no Git fallback | Rejected: telemetry via branch commits |
 | D24 Offline reads | Release carries `knowledge.sqlite` + `scores.snapshot.json`; live overlay when reachable; `score_source` reported | Rejected: network-required resolve |
-| D25 Agent Contract | `resolve`, `inspect`, `expand`, `observe`; every response carries `context_snapshot_id` | Rejected: infer everything from traces |
+| D25 Agent Contract | `resolve`, `inspect`, `expand`, `observe`; every response carries a durable `context_snapshot_id`; `observe` idempotent via client-generated `observation_id`; `inspect` takes a typed handle | Rejected: infer everything from traces |
 | D26 Telemetry registry & envelope | Attribute allowlist with sensitivity; envelope gains `installation_id`, `emitter_id`, `session_kind` | Rejected: denylist scanning as primary control |
 | D27 Evidence staleness | Path scope + dependency selectors + max age | Rejected: any-commit staleness |
 | D28 Taxonomy governance | `contracts/capabilities.yaml` seeded from this repo's `core/capability-registry.yaml`; growth only via promotion PR | Rejected: free-form tags |
 | D29 EOS dependency policy | Exact pins, lockfile, `pnpm ci` in CI, weekly update PR, Context7 check per new dependency, SBOM per release | — |
 | D30 Evidence Plane hosting | **Managed Supabase Pro only** for v1; weekly `pg_dump` export; restore drill each RC; Storage exported separately if adopted | Self-hosted Postgres (rejected for v1: not a drop-in for Auth/RLS/Edge Functions) |
-| D31 Server-side Curator identity | Curator = scheduled Edge Function with the secret key + GitHub App installation token (1 h, `contents: write`, `pull_requests: write`, single repo) | Owner-laptop curator (rejected: needs owner credentials on a dev machine) |
+| D31 Curator / Promoter split | Curator = scheduled Edge Function with Supabase authority only, emits signed Promotion Proposals; Promoter = GitHub Actions workflow in the canonical repo with a GitHub App installation token only (`contents: write`, `pull_requests: write`, single repo), validates the proposal and opens the PR | One component with both authorities (rejected: single compromise = plane admin + Git writer) |
 | D32 Derivation reproducibility | Deterministic evidence ids from `(run_id, deriver_id, deriver_version, input_snapshot_hash)`; supersession; replay comparison ignores identity/timestamps | Rejected: fresh ULID per derivation |
 | D33 Holdout policy | Active Holdout is never an optimization input; retirement reclassifies it as historical qualification evidence and requires a replacement set | Rejected: holdout results feed Champion selection |
+| D34 Release-pinned Champion | Canonical Champion per Solution Set is part of the release (index); live scores may only mark `challenger_ready` and open a Promotion Proposal; the default changes after PR + release | Rejected: live score swaps the Champion |
 
 ### D18 — Implementation stack and platforms (PROPOSED)
 
 **D18.1 Language and runtime.** TypeScript, strict mode, **Node 24 LTS** (LTS since 24.11.0, supported through April 2028; Node 22 leaves active LTS and is in maintenance until April 2027), pnpm workspaces, ESM. Rationale unchanged: the MCP SDK, `supabase-js`, Claude Code and Codex are Node-based, so Node is present wherever the agents run.
 
-**D18.2 Launcher.** Published as its own npm package (`@ieos/launcher`) with zero runtime dependencies, invoked as `npx @ieos/launcher@<exact-version> <command>`. It downloads release artifacts, verifies digests and the GitHub release attestation, manages the version cache and never imports core packages (fitness F5). **It is not built until Stage 4**; Stages 0–3 run from a source checkout.
+**D18.2 Launcher.** Published as its own npm package (`@ieos/launcher`) with zero runtime dependencies, invoked as `npx @ieos/launcher@<exact-version> <command>`. It downloads release artifacts, **verifies the SHA-256 digest itself (mandatory, offline-capable)**, and delegates attestation verification to the official GitHub CLI (`gh release verify`, `gh release verify-asset`, `gh attestation verify`) or, where `gh` is absent, to a proven Sigstore verification library; it never implements signature verification itself (T-08). Attestation verification is required for qualification and release rings and best-effort for offline installs, which are marked `attestation: unverified`. It manages the version cache and never imports core packages (fitness F5). **It is not built until Stage 4**; Stages 0–3 run from a source checkout.
 
 **D18.3 Supported platforms.** Target: Linux x64, macOS arm64, Windows 11 native (PowerShell), Windows WSL2. Sequencing (R-12): Stage 0–3 CI runs Linux as primary plus one Windows smoke job (path handling, CRLF, spawn); the full matrix becomes a gate at Stage 4. Rules from day one: no shell scripts in runtime paths (TypeScript only); `path.join` everywhere; `.gitattributes` with `* text=auto eol=lf`.
 
@@ -194,7 +222,8 @@ Supabase Evidence Plane
 2. **Header discipline (verified).** Supabase reserves `Authorization` for Supabase Auth JWTs and `apikey` for project keys; the installation token travels in `X-IEOS-Installation-Token` and the function is deployed with `--no-verify-jwt` so the platform does not reject the request before the function validates it.
 3. **What the agent cannot do.** No evidence mutation, no candidate promotion, no score mutation, no admin, no reads of other installations' sensitive records. The RPCs are the whole surface; the function never exposes a general query.
 4. **Other identities.** Owner (Supabase Auth user, used only by `ieos auth enroll` and the read-only investigation CLI), Curator and Deriver (server-side, D31), CI (a separate installation row with `ci` scope). The secret key exists only in Edge Function secrets and the owner's password manager. Fitness F9 fails any commit containing a secret-shaped value.
-5. **Honest limit.** An agent with shell access can still read the installation token. Its blast radius is now: inserting telemetry or observations as that installation, and minimal reads. Every insert is attributable to the installation and revocable. That is the accepted residual risk for D1.
+5. **Invariants (T-09).** Tokens are ≥ 256 bits from a CSPRNG and shown once; the function compares `sha256(token)` to `token_hash` in constant time; per-installation rate limits and request body-size limits are enforced in the function; each RPC accepts only the fields of its contract; the function stamps `installation_id`, `ingested_at` and `origin_class` server-side (clients can never set `origin_class`, so no client observation can pose as `qualification` or `holdout` evidence); revoked or expired tokens fail closed with a distinct error the runtime surfaces in `doctor`.
+6. **Honest limit.** An agent with shell access can still read the installation token. Its blast radius is now: inserting telemetry or observations as that installation, and minimal reads. Every insert is attributable to the installation and revocable. That is the accepted residual risk for D1.
 
 ### D23 — Remote and ephemeral sessions (PROPOSED, rewritten in 1.1)
 
@@ -208,11 +237,15 @@ Supabase Evidence Plane
 
 ### D24 — Offline reads (PROPOSED)
 
-Release build (and Stage 0–3 source build) queries the Evidence Plane through the `read.minimal` RPC and writes `scores.snapshot.json` (Asset Score, Champion state, evidence counts, `computed_at`, `scoring_policy_version`). Runtime overlays live values when reachable within a budget, otherwise uses the snapshot and marks `score_source: snapshot`.
+Release build (and Stage 0–3 source build) queries the Evidence Plane through the `read.minimal` RPC and writes `scores.snapshot.json` (Asset Score, evidence counts, `challenger_ready` flags, `computed_at`, `scoring_policy_version`). The **Champion per Solution Set is not in this snapshot**: it is part of the release index (D34). Runtime overlays live scores when reachable within a budget, otherwise uses the snapshot and marks `score_source: snapshot`; in both cases the Champion comes from the release.
 
 ### D25 — Agent Contract (PROPOSED, extended in 1.1)
 
-Tools: `resolve`, `inspect`, `expand`, `observe`. Every response carries `context_snapshot_id`, which resolves (via `inspect` or the CLI) to `{ repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, score_source, score_snapshot_digest, overlay_digest, index_digest }`. `observe` accepts a typed Observation and writes to staging only (fitness F3). MCP tools declare `readOnlyHint: true` for the three reads and `idempotentHint: true` for `observe`; the server implements `server/discover` and advertises `ttlMs`/`cacheScope` on lists (verified `2026-07-28`).
+Tools: `resolve`, `inspect`, `expand`, `observe`.
+
+- **Context snapshot (T-05).** `context_snapshot_id = "ctx_" + base32(sha256(canonical JSON of { repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, index_digest, score_source, score_snapshot_digest, overlay_digest, eos_release }))`. The runtime writes the snapshot record to the local outbox before answering, and it syncs through `ingest` as a `context_snapshots` row keyed by the same id; the id is therefore stable across machines and replayable. `inspect` accepts a typed handle `{ kind: "asset" | "snapshot", id }`.
+- **Idempotent observe (T-04).** The caller mints `observation_id` (ULID) and sends it with the request; the server enforces `UNIQUE(observation_id)` and returns the existing row on retry. `observe` writes to staging only (fitness F3).
+- **MCP surface.** `readOnlyHint: true` on the three reads, `idempotentHint: true` on `observe`; the server implements `server/discover` (a server obligation in `2026-07-28`) and advertises `ttlMs`/`cacheScope` on lists. The CLI, harness and adapters never require a client to call `server/discover`; requests are self-describing via `_meta` (T-06).
 
 ### D26 — Telemetry attribute registry and envelope fields (PROPOSED)
 
@@ -237,11 +270,15 @@ Exact pins, committed `pnpm-lock.yaml`, `pnpm ci` in CI, weekly automated update
 
 Managed **Supabase Pro** is the v1 Evidence Plane (no inactivity pause; daily backups retained 7 days; PITR available as an add-on). Domain code depends on ports, not on Supabase, so another backend remains possible later, but none is built now. Independent of plan: weekly `pg_dump` to owner-controlled storage via a scheduled job, and a restore drill into a scratch project at every RC. If Supabase Storage is adopted for cold telemetry, its objects are exported separately (database backups exclude them, verified).
 
-### D31 — Server-side Curator and Deriver identities (NEW in 1.1)
+### D31 — Server-side Deriver, Curator and Promoter identities (NEW in 1.1, split in 1.2)
 
-- **Deriver**: scheduled Edge Function (pg_cron → function, verified pattern) using the secret key; reads `raw_events`, writes `evidence` and `investigations`; idempotent per D32.
-- **Curator**: scheduled Edge Function using the secret key for staging reads and a **GitHub App installation token** (1-hour expiry, minted from the App private key stored in Edge Function secrets, permissions `contents: write` and `pull_requests: write` on the canonical repo only, verified) to push a branch and open the promotion PR. It never merges.
-- Neither identity is ever present on a developer machine or agent container.
+| Component | Runs where | Holds | Does | Never |
+|---|---|---|---|---|
+| **Deriver** | Supabase Edge Function on pg_cron | Supabase secret key | reads `raw_events`, writes `evidence`, `investigations` (D32) | touches Git |
+| **Curator** | Supabase Edge Function on pg_cron | Supabase secret key + a proposal-signing key (Ed25519, private half in function secrets, public half committed to the canonical repo) | turns Candidates into **Promotion Proposals** (`promotion_proposals` row with asset diff, evidence ids, `input_snapshot_hash`, risk class, trust vector, signature) | holds any GitHub credential |
+| **Promoter** | GitHub Actions scheduled workflow in the canonical repo | GitHub App installation token (1 h, `contents: write`, `pull_requests: write`, this repo only) + a `promoter` installation token with scopes `proposal.read`, `proposal.ack` | fetches open proposals through the ingest function's read RPC, verifies the signature against the committed public key, re-validates schemas and evidence references, pushes a branch and opens the PR, acknowledges the proposal | holds the Supabase secret key; merges |
+
+Rationale (T-02): Edge Function secrets are project-wide, so two functions in one Supabase project do not separate authority. Placing the Promoter in GitHub Actions puts the trust boundary between systems: a compromised Curator can propose but not write Git; a compromised Promoter can open PRs but not touch the Evidence Plane. Owner approval remains the merge.
 
 ### D32 — Derivation reproducibility (NEW in 1.1)
 
@@ -262,6 +299,19 @@ Managed **Supabase Pro** is the v1 Evidence Plane (no inactivity pause; daily ba
 | `external_attestation` | provenance only |
 
 `evidence_policy.eligible_origins` on an Asset may therefore never include active `holdout`.
+
+### D34 — Release-pinned Champion (NEW in 1.2)
+
+```text
+Evidence Plane → live Asset Scores → challenger_ready (per Solution Set)
+      → Qualification → Promotion Proposal (Curator) → PR (Promoter) → owner merge
+      → new canonical Champion in knowledge/solution-sets/*.yaml → next EOS release
+```
+
+- The canonical Champion of each Solution Set is a field in `knowledge/solution-sets/<id>.yaml` and is compiled into the release index. A pinned release therefore always recommends the same default for the same inputs.
+- Live scores never replace the Champion at runtime. They may set `challenger_ready: true` with the challenger id and the margin; `resolve` shows the pinned Champion first and lists the challenger with its live score, so the agent sees the signal without the default moving.
+- A Champion change is a promotion: Curator proposal → Promoter PR → owner merge → release. `contracts/promotion-policy.yaml` may later allow auto-merge for this category once Stage 10 has data.
+- Fitness rule F11 (from Stage 2): the resolver's Champion selection reads only the release index, never the score overlay.
 
 ---
 
@@ -309,9 +359,10 @@ Improved-Engineering-OS/
   supabase/
     migrations/                   # Supabase CLI migrations
     functions/
-      ingest/                     # D22: validates installation token, insert-only RPCs
+      ingest/                     # D22: validates installation token, insert-only RPCs + proposal read/ack for the Promoter
       derive/                     # D31 Deriver
-      curate/                     # D31 Curator (GitHub App token)
+      curate/                     # D31 Curator: signed Promotion Proposals (no GitHub credential)
+  .github/workflows/promote.yml   # D31 Promoter: GitHub authority only, opens promotion PRs
   simulations/
     manifests/*.yaml
     fixtures/
@@ -399,17 +450,17 @@ Stage 17 RC → Stable
 - `contracts/capabilities.yaml` seeded from the old repo's `core/capability-registry.yaml`; `contracts/telemetry-attributes.yaml` initial allowlist.
 - `docs/adr/ADR-0001-architecture-baseline.md` (accepts D1–D17 by reference to `ARCHITECTURE.md`) and one ADR per D18–D33 with the owner's answers from Section 2.0.
 - `tools/harness/`: `sandbox.ts` (fresh temp dir per trial, no inherited env, `evaluator/` never mounted), `drivers/claude-code.ts` (Agent SDK `query()` with `setting_sources=[]` and explicit `allowed_tools`, or `claude -p --output-format stream-json`), `drivers/codex.ts` (`codex exec --json --ephemeral`, optional `--output-schema`), `graders/{deterministic,trace,model}.ts`, `collect.ts`, `report.ts`, `budget.ts`.
-- `fitness/` with rules F1–F10 (table below) and `fitness/exclusions.yaml`, `fitness/allowlist.yaml`; `.github/workflows/{ci,fitness}.yml` on Linux plus one Windows smoke job.
+- `fitness/` with rules F1–F11 (table below) and `fitness/exclusions.yaml`, `fitness/allowlist.yaml`; `.github/workflows/{ci,fitness}.yml` on Linux plus one Windows smoke job.
 - `docs/budgets.md` with an empty baseline table and the measurement method.
 - Repo scaffolding: `.gitattributes` (`* text=auto eol=lf`), `.editorconfig`, `pnpm-workspace.yaml` with `engineStrict: true`, `package.json` with `packageManager` and `devEngines`, `SECURITY.md` skeleton.
 
-**Fitness rules (F1–F10).**
+**Fitness rules (F1–F11).**
 
 | ID | Invariant | Mechanism |
 |---|---|---|
 | F1 | `packages/core` contains no `claude`, `codex`, `anthropic`, `openai`, `supabase` identifiers and imports nothing outside itself | dependency-cruiser + grep |
 | F2 | adapters never own knowledge semantics: nothing under `adapters/` defines ranking or reads `knowledge/` directly | dependency-cruiser |
-| F3 | nothing under `packages/` writes into `knowledge/` at runtime; only `supabase/functions/curate` produces branches | filesystem-write guard in tests + grep |
+| F3 | nothing under `packages/` writes into `knowledge/` at runtime; only the Promoter workflow produces branches | filesystem-write guard in tests + grep |
 | F4 | `resolver`, `assurance`, `evidence-derivation` import no `store-*` package and no raw telemetry types | dependency-cruiser |
 | F5 | `launcher` imports only Node built-ins | dependency-cruiser + dependency count = 0 |
 | F6 | no real target-project names or absolute project paths in runtime/configuration paths (`packages/`, `contracts/`, `knowledge/`, `supabase/`, `simulations/`, `fitness/`, `tools/`, `.github/`); `docs/`, root Markdown and `qualification/` excluded via `fitness/exclusions.yaml` | scoped grep |
@@ -417,10 +468,11 @@ Stage 17 RC → Stable
 | F8 | knowledge index build is deterministic | build twice, compare hashes |
 | F9 | no key-shaped secret values anywhere (`sb_secret_[A-Za-z0-9]{20,}`, JWT-shaped, GitHub App private key headers); no privileged client construction outside `supabase/functions`; identifier words allowed in docs and in fixtures listed in `fitness/allowlist.yaml` | secret-value scan + scoped grep |
 | F10 | every Simulation Manifest references an evaluator entry that exists outside `simulations/` | manifest linter |
+| F11 | Champion selection in `resolver` reads only the release index, never the live score overlay (D34) | unit test + dependency-cruiser on the overlay module |
 
 **Tests and simulations.** Contract property tests (valid accepted, invalid rejected with reason, unknown enum tolerated where declared). Harness self-test: two trials cannot see each other's state; a trial referencing a non-existent Run is rejected; the agent sandbox contains no `evaluator/` path. Grader validity: each grader has positive, negative and mutation controls. D32 replay test on a synthetic derivation.
 
-**Exit gate additions.** F1–F10 green on Linux + Windows smoke; `contracts/schemas/` regenerated with no diff; ADRs exist for D18–D33.
+**Exit gate additions.** F1–F11 green on Linux + Windows smoke; `contracts/schemas/` regenerated with no diff; ADRs exist for D18–D33.
 
 **Debt watch.** No UI, embeddings, daemon, launcher or full CI matrix here.
 
@@ -430,7 +482,7 @@ Stage 17 RC → Stable
 
 **Deliverables.** `adapters/cli` skeleton (`ieos doctor|init|resolve|inspect|expand|observe|auth`), `adapters/mcp` stateless server exposing the four tools with `server/discover`, `store-sqlite` KnowledgeIndex reader, `releases/build-index.ts`.
 
-**Exit gate additions.** `ieos doctor` reports index digest, contracts versions, session kind and ingest reachability; MCP server passes an `2026-07-28` conformance smoke (discover, tools/list with `ttlMs`, tools/call).
+**Exit gate additions.** `ieos doctor` reports index digest, contracts versions, session kind and ingest reachability; MCP server passes a `2026-07-28` conformance smoke: `server/discover` implemented, self-describing `_meta` on every request accepted, `tools/list` with `ttlMs`, `tools/call`; the smoke also passes without the client ever calling `server/discover`.
 
 ### Stage 2 — Seed knowledge + minimal resolver + minimal telemetry + installation credential
 
@@ -439,8 +491,9 @@ Stage 17 RC → Stable
 **Deliverables.**
 
 - 10–20 representative assets hand-selected from the legacy corpus (Appendix A), imported through a *manual* promotion PR with `legacy_ids` and `provenance` (the bulk importer comes at Stage 5). Include at least one `lesson`, one `failed_solution`, two assets in the same Solution Set, one `control_guidance`.
-- `resolver` v1 (D20.3) over the index; `inspect` returning body + `evidence: none`.
-- `telemetry` v1: envelope (Section 5.3), allowlist sanitizer, `session_kind`, SQLite WAL outbox, boundary flush; `supabase/migrations/0001_*.sql` (`installations`, `raw_events`, `observations`, RLS on, `owner_id`); `supabase/functions/ingest` per D22; `ieos auth enroll|rotate|revoke`.
+- `resolver` v1 (D20.3) over the index, Champion from the release index (D34, F11); `inspect` returning body + `evidence: none`; durable `context_snapshot_id` (D25).
+- **Minimal evidence kernel (T-03):** `evidence-derivation` v0 with one deriver (`attribution`: `EXPOSED | INSPECTED | APPLIED` from `resolve`/`inspect`/`observe` events) producing D32 deterministic ids locally from the outbox; `ieos investigate <run_id>` v0 printing the raw event timeline plus the derived attribution rows. Stage 7 adds the server-side Deriver, more derivers and supersession handling on top of the same contracts; nothing here is throwaway.
+- `telemetry` v1: envelope (Section 5.3), allowlist sanitizer, `session_kind`, SQLite WAL outbox, boundary flush; `supabase/migrations/0001_*.sql` (`installations`, `raw_events`, `observations` with `UNIQUE(observation_id)`, `context_snapshots`, RLS on, `owner_id`); `supabase/functions/ingest` per D22 including the D22.6 invariants; `ieos auth enroll|rotate|revoke`.
 - Adapter hooks: Claude Code (`SessionStart`, `PostToolUse`, `Stop`, `SessionEnd`) and Codex (same events in `config.toml`) calling the same emitter.
 - Supabase project on Pro (D30) created by the owner; secret key stored only in function secrets.
 
@@ -454,19 +507,19 @@ Stage 17 RC → Stable
 
 **Hidden condition.** The target repo contains the generated bootstrap block (D18.4), which states that EOS tools exist and what they are for. No task-specific hints, no asset names, no instruction to call any tool.
 
-**Trials.** At least three independent tasks × the primary agent, plus one task with the second agent, each in a fresh sandbox, driven by the harness with `setting_sources=[]` so only the target repo's own files influence the run. One task requires a lesson imported at Stage 2; one includes a misleading clue; one has a test failure mid-task.
+**Trials (T-07).** At least three independent tasks with the **primary agent only**, each in a fresh sandbox, driven by the harness with `setting_sources=[]` so only the target repo's own files influence the run. One task requires a lesson imported at Stage 2; one includes a misleading clue; one has a test failure mid-task. The second agent is deliberately excluded: Stage 3 answers one question, whether EOS is natural for one real agent end to end; agent neutrality is Stage 8's question.
 
 **Measured.** Task success, whether `resolve` was called unprompted, critical asset recall, returned bytes, tool calls, tokens, wall-clock, resolve latency, telemetry completeness, rescues. These numbers become the first rows of `docs/budgets.md`.
 
-**Exit gate.** No rescue; telemetry → investigation complete for every trial; the agent used EOS in at least the trials where the imported lesson was needed, or correctly did not need it. **If the slice is not natural, stop here and simplify; nothing from Stage 4 onward is built until this passes.**
+**Exit gate.** No rescue; telemetry → attribution evidence → investigation timeline complete for every trial; the agent used EOS in at least the trials where the imported lesson was needed, or correctly did not need it. **If the slice is not natural, stop here and simplify; nothing from Stage 4 onward is built until this passes.**
 
 ### Stage 4 — Pinned releases, launcher, restore & rollback
 
-**Deliverables.** `packages/launcher` (`install|doctor|restore|update|rollback|which`), version cache `~/.ieos/releases/<version>/`, transaction-like activation, verification of `artifact_digest` and of the GitHub release attestation (`gh release verify` / `gh attestation verify` semantics reproduced in TypeScript: immutable releases lock tag and assets and generate a release attestation, verified); `packages/releases` manifest builder (Section 5.7); `.github/workflows/release.yml` publishing an immutable release with SBOM; `ieos init` now points at a pinned release; full platform matrix becomes a CI gate (D18.3).
+**Deliverables.** `packages/launcher` (`install|doctor|restore|update|rollback|which`), version cache `~/.ieos/releases/<version>/`, transaction-like activation, mandatory in-launcher SHA-256 verification of `artifact_digest`, plus attestation verification delegated to the official `gh release verify` / `gh release verify-asset` / `gh attestation verify` when `gh` is available or to a proven Sigstore library otherwise, never a home-grown verifier (T-08; immutable releases lock tag and assets and generate a release attestation, verified); `packages/releases` manifest builder (Section 5.7); `.github/workflows/release.yml` publishing an immutable release with SBOM; `ieos init` now points at a pinned release; full platform matrix becomes a CI gate (D18.3).
 
 **Simulations.** Two projects on different versions on one machine; kill during `update`; corrupt cache; tampered artifact; offline restore from cache; Windows path with spaces; clean-machine restore from `installation.json`.
 
-**Exit gate additions.** Tampered or unattested artifact never activates; rollback restores exact previous digest; four platforms green.
+**Exit gate additions.** Tampered artifact never activates; an unattested artifact activates only as `attestation: unverified` and is ineligible for qualification rings; rollback restores exact previous digest; four platforms green.
 
 ### Stage 5 — Bulk import of the legacy corpus via promotion PR
 
@@ -490,7 +543,7 @@ Stage 17 RC → Stable
 
 ### Stage 8 — Agent Contract parity and adapters
 
-**Deliverables.** Conformance suite run against MCP and CLI with the same fixtures; capability snapshot at run start recorded in Run metadata (never granting permission); Codex adapter at parity with Claude Code; `context_snapshot_id` resolution.
+**Deliverables.** Conformance suite run against MCP and CLI with the same fixtures; capability snapshot at run start recorded in Run metadata (never granting permission); **second agent (Codex) adapter at parity with the primary agent, with the Stage 3 task bank re-run through it** (T-07); `context_snapshot_id` resolution through both transports.
 
 **Simulations.** MCP server dies mid-run → CLI fallback yields the same semantic object; advertised-but-unauthorized integration reported, never used.
 
@@ -502,9 +555,9 @@ Stage 17 RC → Stable
 
 ### Stage 10 — Scoring, Champion, Curator, promotion policy
 
-**Deliverables.** `contracts/scoring-policy.yaml` (versioned), `evidence-derivation/score.ts` deterministic and replayable, `supabase/functions/curate` (D31 Curator with GitHub App token) opening promotion PRs, `contracts/promotion-policy.yaml` (everything requires owner merge initially), `releases/scores-snapshot.ts`, D33 holdout enforcement in the scorer (active holdout excluded by construction, with a test).
+**Deliverables.** `contracts/scoring-policy.yaml` (versioned), `evidence-derivation/score.ts` deterministic and replayable, `supabase/functions/curate` (D31 Curator, signed proposals) and `.github/workflows/promote.yml` (D31 Promoter) opening promotion PRs, Champion changes as promotions (D34), `contracts/promotion-policy.yaml` (everything requires owner merge initially), `releases/scores-snapshot.ts`, D33 holdout enforcement in the scorer (active holdout excluded by construction, with a test).
 
-**Simulations.** 500 correlated repeats discounted; critical failure quarantines; Champion changes only after independent non-holdout evidence; two Champions impossible; recompute under previous policy reproduces previous score.
+**Simulations.** 500 correlated repeats discounted; critical failure quarantines; a live score swing never changes the pinned Champion, only `challenger_ready`; Champion changes only via proposal → PR → release after independent non-holdout evidence; two Champions impossible; a proposal with an invalid signature is rejected by the Promoter; recompute under previous policy reproduces previous score.
 
 ### Stage 11 — External ecosystem
 
@@ -532,7 +585,7 @@ Stage 17 RC → Stable
 
 ### Stage 17 — RC → Stable
 
-**Deliverables.** `1.0.0-rc.N` through Development → Simulation → Shadow → Canary → Cross-project → RC → Stable rings; Evidence Plane restore drill into a scratch Supabase project (D30); rollback proof from RC to previous stable; artifact digest equals tested digest; release attestation verified by the launcher, not merely present.
+**Deliverables.** `1.0.0-rc.N` through Development → Simulation → Shadow → Canary → Cross-project → RC → Stable rings; Evidence Plane restore drill into a scratch Supabase project (D30); rollback proof from RC to previous stable; artifact digest equals tested digest; release attestation verified through the official tooling (T-08), not merely present.
 
 ### Continuous evolution
 
@@ -658,20 +711,20 @@ exemption: { allowed: true, max_days: 30, requires_decision: true }
 
 ```text
 resolve(request: { task_hint, project_id, run_id, limit?, include_controls? })
-  → { context_snapshot_id, items: [{ id, type, title, summary, project_fit, champion_of?, score, score_source, evidence_count }], omitted_count, controls: [...] }
+  → { context_snapshot_id, items: [{ id, type, title, summary, project_fit, champion_of?, challenger_ready?, score, score_source, evidence_count }], omitted_count, controls: [...] }   # champion_of comes from the release index (D34)
 
-inspect(request: { id | context_snapshot_id, run_id })
-  → asset: { asset, body, evidence_summary | "none", challengers: [{ id, title, why_not_champion }] }
-  → snapshot: { repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, score_source, score_snapshot_digest, overlay_digest, index_digest }
+inspect(request: { handle: { kind: "asset" | "snapshot", id }, run_id })
+  → asset: { asset, body, evidence_summary | "none", champion_source: "release", challengers: [{ id, title, live_score, challenger_ready, why_not_champion }] }
+  → snapshot: { repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, index_digest, score_source, score_snapshot_digest, overlay_digest, eos_release }
 
 expand(request: { task_hint, project_id, run_id, reason, beyond: "solution_set" | "type" | "corpus" })
   → same shape as resolve, plus { expansion_reason }
 
-observe(request: { run_id, kind, subject, evidence_refs?, note? })
-  → { observation_id, status: "recorded" }      # staging only, never canonical
+observe(request: { observation_id, run_id, kind, subject, evidence_refs?, note? })   # observation_id minted by the caller (ULID)
+  → { observation_id, status: "recorded" | "duplicate" }      # staging only, never canonical; UNIQUE(observation_id) server-side
 ```
 
-MCP annotations: `readOnlyHint: true` on `resolve`/`inspect`/`expand`; `idempotentHint: true` on `observe`. Server implements `server/discover`; lists carry `ttlMs` and `cacheScope`.
+MCP annotations: `readOnlyHint: true` on `resolve`/`inspect`/`expand`; `idempotentHint: true` on `observe` (backed by the caller-minted `observation_id`). Server implements `server/discover`; lists carry `ttlMs` and `cacheScope`; no client is required to call `server/discover`.
 
 ### 5.7 Release manifest
 
@@ -684,7 +737,8 @@ artifact_digest: "sha256:…"
 index_digest: "sha256:…"
 scores_snapshot_digest: "sha256:…"
 sbom_ref: "…"
-release_attestation: { verified_by_launcher: true }     # immutable release attestation (GitHub), verified at activation
+release_attestation: { status: "verified" | "unverified", verifier: "gh" | "sigstore-lib" | null }   # digest is always verified in-launcher; attestation via official tooling (T-08)
+champions_digest: "sha256:…"                # hash of the Solution Set champion assignments compiled into this release (D34)
 contracts: { asset: "1", project_profile: "1", telemetry: "1", evidence: "1", control: "1", simulation: "1", agent_contract: "1" }
 ```
 
@@ -706,6 +760,10 @@ create table installations (
   expires_at timestamptz not null, revoked_at timestamptz, last_seen_at timestamptz
 );
 alter table installations enable row level security;   -- owner-only policies; the ingest function uses SECURITY DEFINER RPCs
+
+-- staging (never in Git): observations (UNIQUE observation_id), candidates, promotion_proposals
+-- promotion_proposals carry: asset diff, evidence ids, input_snapshot_hash, risk class, trust vector,
+-- curator_signature (Ed25519; public key committed in the canonical repo), status open|acked|withdrawn
 ```
 
 ---
@@ -718,8 +776,8 @@ alter table installations enable row level security;   -- owner-only policies; t
 You are building Improved-Engineering-OS. Read ARCHITECTURE.md (constitution) and BUILD-GUIDE.md fully.
 Rules:
 1. Work stage by stage in the order of BUILD-GUIDE.md Section 4. Stages 4+ are not started before the
-   Stage 3 real-agent slice has a passing report in qualification/reports/.
-2. Section 2.0 decisions are accepted unless the owner changed the row. Record each in docs/adr/.
+   Stage 3 real-agent slice (primary agent only) has a passing report in qualification/reports/.
+2. Section 2.0 decisions (D18–D34) are accepted unless the owner changed the row. Record each in docs/adr/.
 3. Deliverables are listed paths. Ask before creating a new top-level directory or package.
 4. Never write into knowledge/ from runtime code. Never store or read a secret key, service_role or owner
    credential on a developer machine or agent container; the only client credential is the installation token.
@@ -734,7 +792,7 @@ Start with Stage 0.
 
 ### 6.2 Branch, commit and PR flow
 
-- `main` is release-only. One branch per stage slice: `stage-NN/<topic>`.
+- `main` is always releasable, not release-only (T-10): small PRs land on `main` throughout a stage; releases are immutable tags and artifacts cut from `main`. Branch naming: `stage-NN/<topic>`.
 - Commits: Conventional Commits plus a trailer `Evidence: <test command or report path>`. Enforced by CI lint, not by a blocking local hook.
 - PR body sections: `What`, `Why (ADR/stage)`, `Evidence`, `Contracts touched`, `Debt watch`.
 - Merge only when fitness, the stage's CI configuration and the stage-relevant simulation job are green and the owner approved.
@@ -755,6 +813,8 @@ Start with Stage 0.
 - Never add a UI, a daemon, embeddings or a marketplace before the stage that justifies it.
 - Never commit telemetry, evidence or staging data to any Git repository.
 - Never let holdout evidence reach the scorer.
+- Never let a live score change the pinned Champion at runtime; Champion changes are promotions (D34).
+- Never implement signature or attestation verification by hand; digest in-launcher, attestation via official tooling (T-08).
 
 ---
 
@@ -811,7 +871,7 @@ All rows marked "Verified" were checked in this session through Context7 against
 
 | Claim used in this guide | Status | Source |
 |---|---|---|
-| MCP `2026-07-28`: stateless core, initialization handshake removed, `server/discover` required, `ttlMs`/`cacheScope`, handles as tool arguments, HTTP+SSE deprecated | Verified | https://modelcontextprotocol.io/specification/2026-07-28/changelog · /server/discover · /server/tools · /deprecated |
+| MCP `2026-07-28`: stateless core, initialization handshake removed, servers must implement `server/discover` while every request is self-describing via `_meta` (clients need not call discover; mismatch → error `-32022`), `ttlMs`/`cacheScope`, handles as tool arguments, HTTP+SSE deprecated | Verified (re-checked in 1.2) | https://modelcontextprotocol.io/specification/2026-07-28/changelog · /server/discover · /basic/index · /basic/versioning · /server/tools · /deprecated |
 | Supabase publishable/secret keys replace anon/service_role; legacy keys deprecated by end of 2026; secret key bypasses RLS; `SUPABASE_SECRET_KEYS` env in functions | Verified | https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys |
 | Edge Functions: `Authorization` reserved for Supabase Auth JWTs, `apikey` for project keys; `--no-verify-jwt` to skip platform JWT check | Verified | https://supabase.com/docs/guides/functions/auth-headers · /guides/functions/function-configuration |
 | Supabase Pro: daily backups retained 7 days; Free: no daily backups, pauses after 7 idle days; PITR add-on; Storage objects excluded from database backups; pg_cron scheduling | Verified | https://supabase.com/docs/guides/platform/backups · /guides/deployment/going-into-prod · /guides/cron/quickstart |
@@ -838,6 +898,8 @@ All rows marked "Verified" were checked in this session through Context7 against
 | Staleness scope | Path globs, dependency selectors and max age that bound when Evidence stops being valid. |
 | Derivation | One deterministic run of a deriver over an input snapshot; identified by `evidence_id`; may supersede an earlier derivation. |
 | Active / retired holdout | Evidence origin that is never an optimization input while active; retiring it reclassifies it and requires a replacement set. |
-| Curator | Server-side function that turns Candidates into promotion PRs with its own identities; never merges. |
+| Curator | Server-side function with Supabase authority only that turns Candidates into signed Promotion Proposals. |
+| Promoter | GitHub Actions workflow with GitHub authority only that validates a Promotion Proposal and opens the PR; never merges. |
+| Release-pinned Champion | The Solution Set default compiled into a release; live scores can only flag a challenger. |
 | Fitness rule | An executable architectural invariant (F1–F10) that runs on every PR. |
 | Stage report | Harness-generated Markdown in `qualification/reports/` that closes a stage; the only artifact that may claim a gate passed. |
