@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Document status | `1.2` — execution guide layered on the owner's `Architecture Baseline 1.0` report, revised after the second and third review rounds |
+| Document status | `1.3 — FINAL for Stage 0` — execution guide layered on the owner's `Architecture Baseline 1.0` report; frozen after four review rounds. Further gaps are discovered through Stages 0–3, not through more design rounds. |
 | Source report | "Improved-Engineering-OS — דוח ארכיטקטורה סופי ותוכנית מימוש מבוססת ראיות" (4 Sep 2026) |
-| Supersedes | `1.1` and `1.0-review` (same file, PR #288 history) |
+| Supersedes | `1.2`, `1.1`, `1.0-review` (same file, PR #288 history) |
 | Written from | Engineering-OS repository, branch `claude/engineering-os-project-guide-roj911` |
 | Verified against | this repository's lessons and Project 8 findings; official docs via Context7 for Supabase, MCP `2026-07-28`, Node.js, pnpm, better-sqlite3, Zod 4, GitHub releases/attestations/Apps, Claude Code and Codex CLI (Appendix B) |
 | Consumers | (1) the owner, for the review verdict and the decisions to approve; (2) the coding agent that builds the new repository |
@@ -17,7 +17,7 @@
 המסמך הזה עושה שלושה דברים:
 
 1. **ביקורת** — עובר על 17 ההחלטות ועל תוכנית ה-Stages ומכריע לכל אחת: `CONFIRMED`, `CONFIRMED+CHANGE` או `GAP`. כל פער שעלול להפוך לחוב טכני מקבל מזהה `TD-xx`, חומרה, ופתרון קונקרטי (סעיף 1).
-2. **השלמות** — מוסיף החלטות D18–D34 שהדוח לא סגר אבל אי אפשר לבנות בלעדיהן. כל אחת מסומנת `PROPOSED` עד שתאשר, עם ברירת מחדל מומלצת כדי שהסוכן לא ייתקע (סעיף 2).
+2. **השלמות** — מוסיף החלטות D18–D36 שהדוח לא סגר אבל אי אפשר לבנות בלעדיהן. כל אחת מסומנת `PROPOSED` עד שתאשר, עם ברירת מחדל מומלצת כדי שהסוכן לא ייתקע (סעיף 2).
 3. **מדריך בנייה** — מבנה הריפו, ואז לכל Stage: מה בונים, באילו נתיבים, אילו ממשקים, אילו בדיקות/סימולציות, ומה שער היציאה (סעיפים 3–7).
 
 **מה השתנה בגרסה 1.1.** סבב הביקורת השני (סעיף 1.4) זיהה שהמדריך בגרסה 1.0 גלש בכמה מקומות לכיוון המערכת הישנה ורחוק מהעקרונות של הדוח. השינויים המהותיים:
@@ -34,7 +34,7 @@
 
 **מה השתנה בגרסה 1.2.** סבב הביקורת השלישי (סעיף 1.5) סגר את הפערים האחרונים בחוזים ובגבולות האמון:
 
-- **Champion מוצמד ל-release.** Scores חיים ומתעדכנים; ההמלצה הקנונית משתחררת. Evidence חדש מייצר `challenger_ready` ו-Promotion Proposal, אבל ברירת המחדל מתחלפת רק אחרי PR ו-release חדש (D34).
+- **Champion מוצמד ל-release.** Scores חיים ומתעדכנים; ההמלצה הקנונית משתחררת. Evidence חדש מסמן `champion_state: challenged` ופותח Promotion Proposal, אבל ברירת המחדל מתחלפת רק אחרי PR ו-release חדש (D34).
 - **D31 פוצל.** Curator עם סמכות Supabase בלבד מייצר Promotion Proposal מאומת; Promoter נפרד, שרץ ב-GitHub Actions של הריפו הקנוני, מחזיק רק סמכות GitHub ופותח את ה-PR. אף רכיב אחד לא מחזיק את שתי הסמכויות.
 - **Stage 2 כולל evidence kernel מינימלי ו-investigation גולמי**, כדי ש-Stage 3 יוכל לדרוש telemetry → evidence → investigation בלי implementation זרוק. Stage 7 מרחיב, לא מחליף.
 - **Stage 3 הוא סוכן ראשי בלבד.** parity בין Claude ל-Codex עוברת ל-Stage 8.
@@ -44,7 +44,19 @@
 - **Installation token:** invariants מפורשים (אנטרופיה, השוואה בזמן קבוע, מגבלות קצב וגודל, scopes מדויקים, והשרת בלבד קובע `origin_class` ו-`installation_id`).
 - **`main` תמיד releasable**, לא "release-only"; releases הם tags ו-artifacts immutable.
 
-**איך להשתמש:** פתח ריפו חדש, הכנס לתוכו את הדוח המקורי כ-`ARCHITECTURE.md` ואת המסמך הזה כ-`BUILD-GUIDE.md`, אשר או שנה את D18–D34 (טבלה בסעיף 2.0), ואז תן לסוכן את ההנחיה בסעיף 6.1. השאר כתוב באנגלית בכוונה: זו השפה שבה הסוכן מפרש מפרט בצורה הכי חד-משמעית.
+**מה השתנה בגרסה 1.3 (סופית).** סבב הביקורת הרביעי (סעיף 1.6) היה ניקוי חוזים, לא redesign:
+
+- **D21 מיושר ל-D31:** Curator → Promotion Proposal חתום → Promoter → branch + PR. ה-Curator לא נוגע ב-Git.
+- **D24 עובד גם לפני שיש Evidence Plane:** Stages 0–1 מייצרים `scores.snapshot.json` דטרמיניסטי במצב `UNPROVEN`; snapshot אמיתי רק מ-Stage 2.
+- **Run Classification Authority (D36):** רק service principal (ה-harness) רושם מראש `run_id → origin_class`; ה-ingest חותם `origin_class` מרשומת ה-Run בלבד; run לא רשום = `operational`.
+- **Hashing Contract (D35):** RFC 8785 (JCS) ל-JSON, UTF-8, נרמול LF לטקסט, קבצים לפי נתיב יחסי בסדר לקסיקוגרפי, SHA-256. אותו כלל ל-`content_hash`, `context_snapshot_id`, `input_snapshot_hash` וחתימות proposal.
+- **Champion אחד מלפנים:** `resolve` מחזיר רק את ה-Champion עם `champion_state: pinned | challenged`; פרטי ה-Challenger רק ב-`inspect`/`expand`.
+- **Score view קבוע ל-qualification:** `ranking_mode: live_overlay | recorded` ו-`score_view_id`; replay ו-qualification משתמשים ב-view מוקלט ובלתי-משתנה.
+- **Principals:** `principal_kind: installation | service`; Promoter ו-harness הם service principals עם scopes משלהם; מפתח ה-GitHub App נשמר כ-Actions secret בריפו הקנוני.
+- **חתימת ה-Curator מנוסחת ביושר:** מוכיחה שה-proposal הגיע מה-Evidence Plane המאושר, לא בידוד בין processes באותו פרויקט Supabase.
+- **Stage 2 בונה hooks של הסוכן הראשי בלבד;** D29 מנוסח ללא תלות בכלי מחקר ספציפי; יישור F1–F11 ו-D18–D36 בכל הטקסט.
+
+**איך להשתמש:** פתח ריפו חדש, הכנס לתוכו את הדוח המקורי כ-`ARCHITECTURE.md` ואת המסמך הזה כ-`BUILD-GUIDE.md`, אשר או שנה את D18–D36 (טבלה בסעיף 2.0), ואז תן לסוכן את ההנחיה בסעיף 6.1. השאר כתוב באנגלית בכוונה: זו השפה שבה הסוכן מפרש מפרט בצורה הכי חד-משמעית.
 
 ---
 
@@ -144,7 +156,25 @@ One item the second round opened without closing: with R-02 and R-04, the compon
 
 ---
 
-## 2. Added decisions (D18–D34)
+### 1.6 Fourth review round (Q-01 … Q-11) and disposition — final
+
+| ID | Sev | Finding | Disposition in 1.3 |
+|---|---|---|---|
+| Q-01 | must | D21 still said the Curator creates the branch/PR; D31 gives Git authority to the Promoter. | **Fixed.** D21 and its table row: Curator → signed Promotion Proposal → Promoter → branch + PR. |
+| Q-02 | must | D24 had source builds in Stage 0–1 reading `scores.snapshot.json` from an Evidence Plane that does not exist yet. | **Fixed.** Stage 0–1 emit a deterministic `UNPROVEN` snapshot; real snapshots only from Stage 2. |
+| Q-03 | must | D33 forbade clients from setting `origin_class` but named no trusted authority that sets it. | **Fixed.** D36 Run Classification Authority: service-principal `register_run` records `run_id → origin_class`; ingest stamps from that record; unregistered runs are `operational`. |
+| Q-04 | must | "Canonical JSON" was used in four hashes without a definition. | **Fixed.** D35 Hashing Contract (RFC 8785 JCS, UTF-8, LF normalization, sorted relative paths, SHA-256) applied everywhere. |
+| Q-05 | important | `resolve` listed challengers alongside the Champion, against "one solution in front". | **Fixed.** `resolve` returns the Champion with `champion_state`; challenger detail only in `inspect`/`expand`. |
+| Q-06 | important | Live scores could reorder `resolve` results, hurting eval reproducibility. | **Fixed.** `ranking_mode: live_overlay \| recorded` and `score_view_id`; qualification and replay use an immutable recorded score view. |
+| Q-07 | important | Promoter and harness were treated as installations; the App private key location was unstated. | **Fixed.** `principals` table with `principal_kind`; service principals have their own scopes; App private key lives only in the canonical repo's Actions secrets. |
+| Q-08 | important | The Curator signature was described as if it isolated the Curator from other functions in the same Supabase project. | **Fixed.** Described as an Evidence-Plane signature; isolation level to be revisited before any auto-merge. |
+| Q-09 | cleanup | Stage 2 built hooks for both agents although Stage 3 is primary-agent only. | **Fixed.** Stage 2 builds the primary agent's adapter only; the second agent's adapter is Stage 8. |
+| Q-10 | cleanup | D29 hard-wired a specific research tool into the dependency policy. | **Fixed.** "Verify against current official documentation; the retrieval mechanism is replaceable." |
+| Q-11 | cleanup | Residual inconsistencies (F1–F10 vs F11, ADR range, D21 row). | **Fixed** throughout. |
+
+**Design freeze.** With 1.3 the design is frozen for Stage 0. Remaining unknowns are expected to surface through the harness and the Stage 3 real-agent slice, and are handled as stage findings, not as further guide revisions before implementation.
+
+## 2. Added decisions (D18–D36)
 
 ### 2.0 Owner approval table
 
@@ -155,7 +185,7 @@ Each row is `PROPOSED` with a recommended default. The coding agent proceeds wit
 | D18 Stack & platforms | TypeScript, **Node 24 LTS**, pnpm with `packageManager` pin, one language for core and launcher; Linux primary + Windows smoke at Stage 0, full matrix (Linux, macOS, Windows native, WSL2) after Stage 3 | Go launcher if the "Node is always present" assumption breaks |
 | D19 Identity & canonical lifecycle | Opaque ULID ids + mutable slugs + `content_hash` as addressing key; canonical statuses `active | restricted | quarantined | deprecated | superseded`; staging statuses only in Supabase | Path-derived ids (rejected) |
 | D20 Asset storage & retrieval | One directory per asset; deterministic retrieval (capability graph + SQLite FTS5) shipped as an index in the release | Embeddings behind a `Retriever` port only if Stage 14 proves deterministic recall insufficient |
-| D21 Promotion mechanism | Curator opens a pull request; owner approval = merge; low-risk auto-merge gated by CI only after Stage 10 | Custom approval UI (rejected) |
+| D21 Promotion mechanism | Curator emits a signed Promotion Proposal; Promoter opens the pull request; owner approval = merge; low-risk auto-merge gated by CI only after Stage 10 | Custom approval UI (rejected) |
 | D22 Credential boundary | Installation-scoped high-entropy token → Edge Function `ingest` → insert-only RPCs with explicit invariants (D22.6); no owner token and no Supabase key with authority on agent machines; secret key only inside Edge Functions | Supabase Auth anonymous users per installation (kept as alternative if custom tokens prove awkward) |
 | D23 Remote/ephemeral sessions | Buffered direct ingest, retries at boundaries, else `telemetry_state: INCOMPLETE` and `qualification_eligible: false`; coding continues; no Git fallback | Rejected: telemetry via branch commits |
 | D24 Offline reads | Release carries `knowledge.sqlite` + `scores.snapshot.json`; live overlay when reachable; `score_source` reported | Rejected: network-required resolve |
@@ -163,12 +193,14 @@ Each row is `PROPOSED` with a recommended default. The coding agent proceeds wit
 | D26 Telemetry registry & envelope | Attribute allowlist with sensitivity; envelope gains `installation_id`, `emitter_id`, `session_kind` | Rejected: denylist scanning as primary control |
 | D27 Evidence staleness | Path scope + dependency selectors + max age | Rejected: any-commit staleness |
 | D28 Taxonomy governance | `contracts/capabilities.yaml` seeded from this repo's `core/capability-registry.yaml`; growth only via promotion PR | Rejected: free-form tags |
-| D29 EOS dependency policy | Exact pins, lockfile, `pnpm ci` in CI, weekly update PR, Context7 check per new dependency, SBOM per release | — |
+| D29 EOS dependency policy | Exact pins, lockfile, `pnpm ci` in CI, weekly update PR, verification against current official documentation per new dependency (retrieval tool replaceable), SBOM per release | — |
 | D30 Evidence Plane hosting | **Managed Supabase Pro only** for v1; weekly `pg_dump` export; restore drill each RC; Storage exported separately if adopted | Self-hosted Postgres (rejected for v1: not a drop-in for Auth/RLS/Edge Functions) |
 | D31 Curator / Promoter split | Curator = scheduled Edge Function with Supabase authority only, emits signed Promotion Proposals; Promoter = GitHub Actions workflow in the canonical repo with a GitHub App installation token only (`contents: write`, `pull_requests: write`, single repo), validates the proposal and opens the PR | One component with both authorities (rejected: single compromise = plane admin + Git writer) |
 | D32 Derivation reproducibility | Deterministic evidence ids from `(run_id, deriver_id, deriver_version, input_snapshot_hash)`; supersession; replay comparison ignores identity/timestamps | Rejected: fresh ULID per derivation |
 | D33 Holdout policy | Active Holdout is never an optimization input; retirement reclassifies it as historical qualification evidence and requires a replacement set | Rejected: holdout results feed Champion selection |
-| D34 Release-pinned Champion | Canonical Champion per Solution Set is part of the release (index); live scores may only mark `challenger_ready` and open a Promotion Proposal; the default changes after PR + release | Rejected: live score swaps the Champion |
+| D34 Release-pinned Champion | Canonical Champion per Solution Set is part of the release (index); `resolve` returns only the Champion with `champion_state: pinned \| challenged`; challenger detail in `inspect`/`expand`; live scores may only mark `challenged` and open a Promotion Proposal | Rejected: live score swaps the Champion or lists alternatives in `resolve` |
+| D35 Hashing Contract | One project-wide rule: RFC 8785 (JCS) for JSON, UTF-8, LF-normalized text, files sorted by relative path, SHA-256; used by `content_hash`, `context_snapshot_id`, `input_snapshot_hash`, proposal signatures | Per-subsystem "canonical serialization" (rejected) |
+| D36 Run Classification Authority | Only a service principal (harness) may pre-register `run_id → origin_class, eval_set_version`; ingest stamps `origin_class` from the Run record; unregistered runs are `operational` | Client-declared origin (rejected) |
 
 ### D18 — Implementation stack and platforms (PROPOSED)
 
@@ -187,7 +219,7 @@ Each row is `PROPOSED` with a recommended default. The coding agent proceeds wit
 ### D19 — Identity, content addressing and canonical lifecycle (PROPOSED)
 
 - Every canonical object gets an opaque, immutable id: `asset_01J...` (ULID with type prefix). Slugs and titles are mutable metadata.
-- `content_hash = sha256(canonical serialization of body + files)` is an addressing key, not a merge rule. The importer merges two assets only when `content_hash` is equal **and** recommendation-relevant metadata is equivalent (`type`, `problem.id`, `applicability`, `compatibility`, `risk`). Equal hash with different metadata yields `related_to` and a report entry. `failed_solution` is never merged with any other type.
+- `content_hash = sha256(D35 canonical bytes of body.md + files/)` is an addressing key, not a merge rule. The importer merges two assets only when `content_hash` is equal **and** recommendation-relevant metadata is equivalent (`type`, `problem.id`, `applicability`, `compatibility`, `risk`). Equal hash with different metadata yields `related_to` and a report entry. `failed_solution` is never merged with any other type.
 - `legacy_ids[]` records old Engineering-OS paths so provenance survives. Renames never change ids; supersession is a relationship.
 - **Canonical lifecycle (R-04).** Assets in `knowledge/` are `active | restricted | quarantined | deprecated | superseded`. `observation`, `candidate` and `promotion_proposal` exist only in Supabase staging tables. An `active` asset with no Evidence is explicitly "admitted, unproven": `inspect` shows `evidence: none`, and Champion selection never rests on legacy popularity.
 
@@ -201,7 +233,7 @@ Each row is `PROPOSED` with a recommended default. The coding agent proceeds wit
 
 ### D21 — Promotion is a pull request (PROPOSED)
 
-The Curator (D31) materializes a Candidate as a branch containing the asset change plus `promotion.yaml` (evidence links, risk class, trust vector, `input_snapshot_hash` of the evidence used). CI validates schemas, fitness rules and evidence references. Owner approval is the merge. `contracts/promotion-policy.yaml` (empty until Stage 10) may later enable auto-merge for low-risk categories. Git history is the audit log.
+The Curator (D31, Supabase authority only) turns a Candidate into a **signed Promotion Proposal** (`promotion_proposals` row: asset diff, evidence ids, `input_snapshot_hash`, risk class, trust vector, signature per D35). The Promoter (D31, GitHub authority only) validates the proposal and materializes it as a branch containing the asset change plus `promotion.yaml`, then opens the pull request. CI validates schemas, fitness rules and evidence references. Owner approval is the merge. `contracts/promotion-policy.yaml` (empty until Stage 10) may later enable auto-merge for low-risk categories. Git history is the audit log; the Curator never touches Git.
 
 ### D22 — Credential boundary, concretized (PROPOSED, rewritten in 1.1)
 
@@ -237,13 +269,15 @@ Supabase Evidence Plane
 
 ### D24 — Offline reads (PROPOSED)
 
-Release build (and Stage 0–3 source build) queries the Evidence Plane through the `read.minimal` RPC and writes `scores.snapshot.json` (Asset Score, evidence counts, `challenger_ready` flags, `computed_at`, `scoring_policy_version`). The **Champion per Solution Set is not in this snapshot**: it is part of the release index (D34). Runtime overlays live scores when reachable within a budget, otherwise uses the snapshot and marks `score_source: snapshot`; in both cases the Champion comes from the release.
+- **Bootstrap (Q-02).** In Stages 0–1 there is no Evidence Plane. The source build emits a deterministic `scores.snapshot.json` with `state: UNPROVEN`, every asset at the uniform prior, `evidence_count: 0`, `computed_at: null`, `scoring_policy_version: "0"`. Its hash is stable (D35) so Stage 0 fitness F8 already covers it.
+- **From Stage 2.** The release build (and the source build) queries the Evidence Plane through the `read.minimal` RPC and writes `scores.snapshot.json` (Asset Score, evidence counts, `champion_state` per Solution Set, `computed_at`, `scoring_policy_version`, `score_view_id`). The **Champion per Solution Set is not in this snapshot**: it is part of the release index (D34).
+- **Ranking modes (Q-06).** `ranking_mode: live_overlay` (default for ordinary work) overlays live scores when reachable within a budget and otherwise falls back to the snapshot with `score_source: snapshot`. `ranking_mode: recorded` (mandatory for qualification, evals and replay) uses an immutable recorded score view identified by `score_view_id = hash(D35) of the snapshot`; the harness pins it per simulation. In both modes the Champion comes from the release.
 
 ### D25 — Agent Contract (PROPOSED, extended in 1.1)
 
 Tools: `resolve`, `inspect`, `expand`, `observe`.
 
-- **Context snapshot (T-05).** `context_snapshot_id = "ctx_" + base32(sha256(canonical JSON of { repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, index_digest, score_source, score_snapshot_digest, overlay_digest, eos_release }))`. The runtime writes the snapshot record to the local outbox before answering, and it syncs through `ingest` as a `context_snapshots` row keyed by the same id; the id is therefore stable across machines and replayable. `inspect` accepts a typed handle `{ kind: "asset" | "snapshot", id }`.
+- **Context snapshot (T-05).** `context_snapshot_id = "ctx_" + base32(sha256(JCS({ repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, index_digest, ranking_mode, score_view_id, overlay_digest, eos_release })))` per D35. The runtime writes the snapshot record to the local outbox before answering, and it syncs through `ingest` as a `context_snapshots` row keyed by the same id; the id is therefore stable across machines and replayable. `inspect` accepts a typed handle `{ kind: "asset" | "snapshot", id }`.
 - **Idempotent observe (T-04).** The caller mints `observation_id` (ULID) and sends it with the request; the server enforces `UNIQUE(observation_id)` and returns the existing row on retry. `observe` writes to staging only (fitness F3).
 - **MCP surface.** `readOnlyHint: true` on the three reads, `idempotentHint: true` on `observe`; the server implements `server/discover` (a server obligation in `2026-07-28`) and advertises `ttlMs`/`cacheScope` on lists. The CLI, harness and adapters never require a client to call `server/discover`; requests are self-describing via `_meta` (T-06).
 
@@ -264,7 +298,7 @@ Evidence carries `scope: { paths: [globs], depends_on: [selectors], max_age_days
 
 ### D29 — Dependency policy for EOS itself (PROPOSED)
 
-Exact pins, committed `pnpm-lock.yaml`, `pnpm ci` in CI, weekly automated update PR, Context7 check recorded per new dependency, CycloneDX SBOM emitted per release and referenced from the release manifest.
+Exact pins, committed `pnpm-lock.yaml`, `pnpm ci` in CI, weekly automated update PR, verification of each new dependency against its current official documentation recorded in the PR (the retrieval mechanism is replaceable and not part of the architecture), CycloneDX SBOM emitted per release and referenced from the release manifest.
 
 ### D30 — Evidence Plane hosting (PROPOSED, narrowed in 1.1)
 
@@ -275,10 +309,12 @@ Managed **Supabase Pro** is the v1 Evidence Plane (no inactivity pause; daily ba
 | Component | Runs where | Holds | Does | Never |
 |---|---|---|---|---|
 | **Deriver** | Supabase Edge Function on pg_cron | Supabase secret key | reads `raw_events`, writes `evidence`, `investigations` (D32) | touches Git |
-| **Curator** | Supabase Edge Function on pg_cron | Supabase secret key + a proposal-signing key (Ed25519, private half in function secrets, public half committed to the canonical repo) | turns Candidates into **Promotion Proposals** (`promotion_proposals` row with asset diff, evidence ids, `input_snapshot_hash`, risk class, trust vector, signature) | holds any GitHub credential |
-| **Promoter** | GitHub Actions scheduled workflow in the canonical repo | GitHub App installation token (1 h, `contents: write`, `pull_requests: write`, this repo only) + a `promoter` installation token with scopes `proposal.read`, `proposal.ack` | fetches open proposals through the ingest function's read RPC, verifies the signature against the committed public key, re-validates schemas and evidence references, pushes a branch and opens the PR, acknowledges the proposal | holds the Supabase secret key; merges |
+| **Curator** | Supabase Edge Function on pg_cron | Supabase secret key + a proposal-signing key (Ed25519, private half in Supabase function secrets, public half committed to the canonical repo) | turns Candidates into **Promotion Proposals** (`promotion_proposals` row with asset diff, evidence ids, `input_snapshot_hash`, risk class, trust vector, signature over the D35 canonical bytes) | holds any GitHub credential; touches Git |
+| **Promoter** | GitHub Actions scheduled workflow in the canonical repo | GitHub App installation token (1 h, `contents: write`, `pull_requests: write`, this repo only; the App private key lives only in the canonical repo's Actions secrets) + a **service principal** token (`principal_kind: service`, scopes `proposal.read`, `proposal.ack`) | fetches open proposals through the ingest function's read RPC, verifies the signature against the committed public key, re-validates schemas and evidence references, pushes a branch and opens the PR, acknowledges the proposal | holds the Supabase secret key; merges |
 
 Rationale (T-02): Edge Function secrets are project-wide, so two functions in one Supabase project do not separate authority. Placing the Promoter in GitHub Actions puts the trust boundary between systems: a compromised Curator can propose but not write Git; a compromised Promoter can open PRs but not touch the Evidence Plane. Owner approval remains the merge.
+
+**What the signature proves (Q-08).** The proposal signature proves that the proposal came from the approved Evidence Plane project, whose secrets are shared by all its functions. It does **not** prove that only the Curator process could have produced it. That is sufficient while owner merge is mandatory; before any auto-merge category is enabled (D21, Stage 10+), the isolation level of the signing key must be revisited (separate Supabase project or an external signer).
 
 ### D32 — Derivation reproducibility (NEW in 1.1)
 
@@ -303,15 +339,48 @@ Rationale (T-02): Edge Function secrets are project-wide, so two functions in on
 ### D34 — Release-pinned Champion (NEW in 1.2)
 
 ```text
-Evidence Plane → live Asset Scores → challenger_ready (per Solution Set)
+Evidence Plane → live Asset Scores → champion_state: challenged (per Solution Set)
       → Qualification → Promotion Proposal (Curator) → PR (Promoter) → owner merge
       → new canonical Champion in knowledge/solution-sets/*.yaml → next EOS release
 ```
 
 - The canonical Champion of each Solution Set is a field in `knowledge/solution-sets/<id>.yaml` and is compiled into the release index. A pinned release therefore always recommends the same default for the same inputs.
-- Live scores never replace the Champion at runtime. They may set `challenger_ready: true` with the challenger id and the margin; `resolve` shows the pinned Champion first and lists the challenger with its live score, so the agent sees the signal without the default moving.
+- Live scores never replace the Champion at runtime. They may set `champion_state: challenged` on the Solution Set. **`resolve` returns only the Champion** (one solution in front, Q-05) with `champion_state: pinned | challenged`; the challenger's identity, live score, margin and evidence difference appear only in `inspect` of the Champion or in `expand(beyond: "solution_set")`. Knowledge keeps learning behind the scenes without handing the agent a list of maybes.
 - A Champion change is a promotion: Curator proposal → Promoter PR → owner merge → release. `contracts/promotion-policy.yaml` may later allow auto-merge for this category once Stage 10 has data.
 - Fitness rule F11 (from Stage 2): the resolver's Champion selection reads only the release index, never the score overlay.
+
+### D35 — Hashing Contract (NEW in 1.3)
+
+One rule for every hash and signature in the project; no subsystem defines its own "canonical serialization".
+
+```text
+JSON records      → RFC 8785 JSON Canonicalization Scheme (JCS), then UTF-8 bytes
+Strings           → UTF-8, NFC normalization
+Text assets       → line endings normalized to LF before hashing; no trailing-whitespace changes
+File sets         → entries sorted lexicographically by relative POSIX path (UTF-8 byte order);
+                    each entry hashed as  path || 0x00 || sha256(normalized bytes)
+Hash              → SHA-256; textual form "sha256:<lowercase hex>"; ids use base32 (RFC 4648, no padding) of the digest
+Signatures        → Ed25519 over the SHA-256 of the JCS bytes of the signed object
+```
+
+Applies to `content_hash`, `context_snapshot_id`, `input_snapshot_hash`, `evidence_id`, `score_view_id`, `index_digest`, `champions_digest`, `bootstrap_template_hash` and Promotion Proposal signatures. `packages/core/src/hashing.ts` is the single implementation; fitness rule F12 fails any other `createHash(` call outside it. Cross-platform fixture: the same asset tree hashed on Linux and Windows CI must yield identical digests (Stage 0 exit gate).
+
+### D36 — Run Classification Authority (NEW in 1.3)
+
+```text
+Eval harness / qualification runner   (service principal, scope run.register)
+        │  register_run(run_id, origin_class, eval_set_version, holdout_state?, simulation_id?)
+        ▼
+runs table (Evidence Plane)  ── trusted record ──▶  ingest stamps origin_class on every event of that run
+        ▲
+        │  no record → origin_class = operational
+Agent / installation (cannot call register_run; cannot send origin_class)
+```
+
+- `register_run` is an RPC exposed by the `ingest` function to **service principals only** (`principal_kind: service`, scope `run.register`). It must be called before the run's first event; late registration is rejected.
+- The Deriver reads `origin_class`, `eval_set_version` and `holdout_state` from the Run record, never from events. A compromised agent or installation can therefore only ever produce `operational` evidence.
+- `holdout_state: active` is settable only through `register_run` with an `eval_set_version` that the scorer treats per D33.
+- Schema in Section 5.9; the runs contract exists from Stage 0 so no migration is needed later.
 
 ---
 
@@ -326,7 +395,7 @@ Improved-Engineering-OS/
   SECURITY.md                     # threat model, identities (D22, D31), residual risks
   README.md
   docs/
-    adr/                          # ADR-0001 baseline (D1–D17 by reference) + ADRs for D18–D33 and later boundaries
+    adr/                          # ADR-0001 baseline (D1–D17 by reference) + ADRs for D18–D36 and later boundaries
     runbooks/                     # install, doctor, enroll/rotate, restore, rollback, backup drill
     budgets.md                    # overhead baselines and versioned budgets
   contracts/
@@ -446,15 +515,15 @@ Stage 17 RC → Stable
 **Deliverables.**
 
 - `packages/core/src/contracts/{asset,telemetry,evidence,agent-contract,simulation}.ts` (Zod 4) with the lifecycle block on each; `project-profile`, `control`, `release` contracts are *stubs* with `stability: development` until their stages.
-- `packages/core/src/ids.ts` (ULID + type prefix, `content_hash`, deterministic `evidence_id` per D32), `packages/core/src/ports/*`.
+- `packages/core/src/hashing.ts` (D35, the only hashing implementation), `packages/core/src/ids.ts` (ULID + type prefix, `content_hash`, deterministic `evidence_id` per D32), `packages/core/src/ports/*`; `runs` and `principals` contracts (D36, Q-07) so the Evidence Plane schema never needs a later migration for them.
 - `contracts/capabilities.yaml` seeded from the old repo's `core/capability-registry.yaml`; `contracts/telemetry-attributes.yaml` initial allowlist.
-- `docs/adr/ADR-0001-architecture-baseline.md` (accepts D1–D17 by reference to `ARCHITECTURE.md`) and one ADR per D18–D33 with the owner's answers from Section 2.0.
+- `docs/adr/ADR-0001-architecture-baseline.md` (accepts D1–D17 by reference to `ARCHITECTURE.md`) and one ADR per D18–D36 with the owner's answers from Section 2.0.
 - `tools/harness/`: `sandbox.ts` (fresh temp dir per trial, no inherited env, `evaluator/` never mounted), `drivers/claude-code.ts` (Agent SDK `query()` with `setting_sources=[]` and explicit `allowed_tools`, or `claude -p --output-format stream-json`), `drivers/codex.ts` (`codex exec --json --ephemeral`, optional `--output-schema`), `graders/{deterministic,trace,model}.ts`, `collect.ts`, `report.ts`, `budget.ts`.
-- `fitness/` with rules F1–F11 (table below) and `fitness/exclusions.yaml`, `fitness/allowlist.yaml`; `.github/workflows/{ci,fitness}.yml` on Linux plus one Windows smoke job.
+- `fitness/` with rules F1–F12 (table below) and `fitness/exclusions.yaml`, `fitness/allowlist.yaml`; `.github/workflows/{ci,fitness}.yml` on Linux plus one Windows smoke job.
 - `docs/budgets.md` with an empty baseline table and the measurement method.
 - Repo scaffolding: `.gitattributes` (`* text=auto eol=lf`), `.editorconfig`, `pnpm-workspace.yaml` with `engineStrict: true`, `package.json` with `packageManager` and `devEngines`, `SECURITY.md` skeleton.
 
-**Fitness rules (F1–F11).**
+**Fitness rules (F1–F12).**
 
 | ID | Invariant | Mechanism |
 |---|---|---|
@@ -469,10 +538,11 @@ Stage 17 RC → Stable
 | F9 | no key-shaped secret values anywhere (`sb_secret_[A-Za-z0-9]{20,}`, JWT-shaped, GitHub App private key headers); no privileged client construction outside `supabase/functions`; identifier words allowed in docs and in fixtures listed in `fitness/allowlist.yaml` | secret-value scan + scoped grep |
 | F10 | every Simulation Manifest references an evaluator entry that exists outside `simulations/` | manifest linter |
 | F11 | Champion selection in `resolver` reads only the release index, never the live score overlay (D34) | unit test + dependency-cruiser on the overlay module |
+| F12 | all hashing goes through `packages/core/src/hashing.ts` (D35); no other `createHash(` call | grep + dependency-cruiser |
 
 **Tests and simulations.** Contract property tests (valid accepted, invalid rejected with reason, unknown enum tolerated where declared). Harness self-test: two trials cannot see each other's state; a trial referencing a non-existent Run is rejected; the agent sandbox contains no `evaluator/` path. Grader validity: each grader has positive, negative and mutation controls. D32 replay test on a synthetic derivation.
 
-**Exit gate additions.** F1–F11 green on Linux + Windows smoke; `contracts/schemas/` regenerated with no diff; ADRs exist for D18–D33.
+**Exit gate additions.** F1–F12 green on Linux + Windows smoke; the D35 cross-platform hashing fixture yields identical digests on both; the `UNPROVEN` bootstrap snapshot hashes identically on both; `contracts/schemas/` regenerated with no diff; ADRs exist for D18–D36.
 
 **Debt watch.** No UI, embeddings, daemon, launcher or full CI matrix here.
 
@@ -480,7 +550,7 @@ Stage 17 RC → Stable
 
 **Goal.** `pnpm ieos` runs from a checkout on the owner's machine and in a cloud container, with `doctor`, `init` (footprint per D18.4 pointing at the *source checkout* for now) and `build:index`.
 
-**Deliverables.** `adapters/cli` skeleton (`ieos doctor|init|resolve|inspect|expand|observe|auth`), `adapters/mcp` stateless server exposing the four tools with `server/discover`, `store-sqlite` KnowledgeIndex reader, `releases/build-index.ts`.
+**Deliverables.** `adapters/cli` skeleton (`ieos doctor|init|resolve|inspect|expand|observe|auth`), `adapters/mcp` stateless server exposing the four tools with `server/discover`, `store-sqlite` KnowledgeIndex reader, `releases/build-index.ts`, `releases/scores-snapshot.ts` in bootstrap mode emitting the deterministic `UNPROVEN` snapshot (D24, Q-02).
 
 **Exit gate additions.** `ieos doctor` reports index digest, contracts versions, session kind and ingest reachability; MCP server passes a `2026-07-28` conformance smoke: `server/discover` implemented, self-describing `_meta` on every request accepted, `tools/list` with `ttlMs`, `tools/call`; the smoke also passes without the client ever calling `server/discover`.
 
@@ -493,8 +563,9 @@ Stage 17 RC → Stable
 - 10–20 representative assets hand-selected from the legacy corpus (Appendix A), imported through a *manual* promotion PR with `legacy_ids` and `provenance` (the bulk importer comes at Stage 5). Include at least one `lesson`, one `failed_solution`, two assets in the same Solution Set, one `control_guidance`.
 - `resolver` v1 (D20.3) over the index, Champion from the release index (D34, F11); `inspect` returning body + `evidence: none`; durable `context_snapshot_id` (D25).
 - **Minimal evidence kernel (T-03):** `evidence-derivation` v0 with one deriver (`attribution`: `EXPOSED | INSPECTED | APPLIED` from `resolve`/`inspect`/`observe` events) producing D32 deterministic ids locally from the outbox; `ieos investigate <run_id>` v0 printing the raw event timeline plus the derived attribution rows. Stage 7 adds the server-side Deriver, more derivers and supersession handling on top of the same contracts; nothing here is throwaway.
-- `telemetry` v1: envelope (Section 5.3), allowlist sanitizer, `session_kind`, SQLite WAL outbox, boundary flush; `supabase/migrations/0001_*.sql` (`installations`, `raw_events`, `observations` with `UNIQUE(observation_id)`, `context_snapshots`, RLS on, `owner_id`); `supabase/functions/ingest` per D22 including the D22.6 invariants; `ieos auth enroll|rotate|revoke`.
-- Adapter hooks: Claude Code (`SessionStart`, `PostToolUse`, `Stop`, `SessionEnd`) and Codex (same events in `config.toml`) calling the same emitter.
+- `telemetry` v1: envelope (Section 5.3), allowlist sanitizer, `session_kind`, SQLite WAL outbox, boundary flush; `supabase/migrations/0001_*.sql` (`principals`, `runs`, `raw_events`, `observations` with `UNIQUE(observation_id)`, `context_snapshots`, RLS on, `owner_id`); `supabase/functions/ingest` per D22 including the D22.6 invariants; `ieos auth enroll|rotate|revoke`.
+- Adapter hooks for the **primary agent only** (Q-09): `SessionStart`, `PostToolUse`, `Stop`, `SessionEnd` calling the emitter. The second agent's adapter is built at Stage 8.
+- `register_run` RPC and the harness service principal (D36) so Stage 3 trials are classified `qualification` by the harness, never by the agent; `scores-snapshot.ts` switches from bootstrap to the real Evidence Plane read.
 - Supabase project on Pro (D30) created by the owner; secret key stored only in function secrets.
 
 **Simulations.** Offline mode; duplicate batch; process crash; secret-like value rejected client-side and in the function; **container killed after last tool call in `remote_ephemeral` → events flushed or run `INCOMPLETE`**; token revoked → inserts rejected, coding continues.
@@ -507,7 +578,7 @@ Stage 17 RC → Stable
 
 **Hidden condition.** The target repo contains the generated bootstrap block (D18.4), which states that EOS tools exist and what they are for. No task-specific hints, no asset names, no instruction to call any tool.
 
-**Trials (T-07).** At least three independent tasks with the **primary agent only**, each in a fresh sandbox, driven by the harness with `setting_sources=[]` so only the target repo's own files influence the run. One task requires a lesson imported at Stage 2; one includes a misleading clue; one has a test failure mid-task. The second agent is deliberately excluded: Stage 3 answers one question, whether EOS is natural for one real agent end to end; agent neutrality is Stage 8's question.
+**Trials (T-07).** At least three independent tasks with the **primary agent only**, each in a fresh sandbox, driven by the harness with `setting_sources=[]` so only the target repo's own files influence the run. The harness pre-registers every run as `qualification` (D36) and pins `ranking_mode: recorded` with a fixed `score_view_id` (D24). One task requires a lesson imported at Stage 2; one includes a misleading clue; one has a test failure mid-task. The second agent is deliberately excluded: Stage 3 answers one question, whether EOS is natural for one real agent end to end; agent neutrality is Stage 8's question.
 
 **Measured.** Task success, whether `resolve` was called unprompted, critical asset recall, returned bytes, tool calls, tokens, wall-clock, resolve latency, telemetry completeness, rescues. These numbers become the first rows of `docs/budgets.md`.
 
@@ -543,7 +614,7 @@ Stage 17 RC → Stable
 
 ### Stage 8 — Agent Contract parity and adapters
 
-**Deliverables.** Conformance suite run against MCP and CLI with the same fixtures; capability snapshot at run start recorded in Run metadata (never granting permission); **second agent (Codex) adapter at parity with the primary agent, with the Stage 3 task bank re-run through it** (T-07); `context_snapshot_id` resolution through both transports.
+**Deliverables.** Conformance suite run against MCP and CLI with the same fixtures; capability snapshot at run start recorded in Run metadata (never granting permission); **second agent (Codex) adapter and hooks built here and brought to parity with the primary agent, with the Stage 3 task bank re-run through it** (T-07, Q-09); `context_snapshot_id` resolution through both transports.
 
 **Simulations.** MCP server dies mid-run → CLI fallback yields the same semantic object; advertised-but-unauthorized integration reported, never used.
 
@@ -557,7 +628,7 @@ Stage 17 RC → Stable
 
 **Deliverables.** `contracts/scoring-policy.yaml` (versioned), `evidence-derivation/score.ts` deterministic and replayable, `supabase/functions/curate` (D31 Curator, signed proposals) and `.github/workflows/promote.yml` (D31 Promoter) opening promotion PRs, Champion changes as promotions (D34), `contracts/promotion-policy.yaml` (everything requires owner merge initially), `releases/scores-snapshot.ts`, D33 holdout enforcement in the scorer (active holdout excluded by construction, with a test).
 
-**Simulations.** 500 correlated repeats discounted; critical failure quarantines; a live score swing never changes the pinned Champion, only `challenger_ready`; Champion changes only via proposal → PR → release after independent non-holdout evidence; two Champions impossible; a proposal with an invalid signature is rejected by the Promoter; recompute under previous policy reproduces previous score.
+**Simulations.** 500 correlated repeats discounted; critical failure quarantines; a live score swing never changes the pinned Champion, only `champion_state`, and never appears in `resolve` output beyond that flag; Champion changes only via proposal → PR → release after independent non-holdout evidence; two Champions impossible; a proposal with an invalid signature is rejected by the Promoter; recompute under previous policy reproduces previous score.
 
 ### Stage 11 — External ecosystem
 
@@ -669,7 +740,7 @@ harness: { agent: "claude-code", model: "…", adapter_version: "…", available
 attributes: {}                              # only keys in contracts/telemetry-attributes.yaml
 ```
 
-Run-level state written by the runtime (not an event): `telemetry_state: COMPLETE | INCOMPLETE`, `qualification_eligible: bool`, `ingest_reachable_at_start: bool` (D23).
+Run-level state written by the runtime (not an event): `telemetry_state: COMPLETE | INCOMPLETE`, `qualification_eligible: bool`, `ingest_reachable_at_start: bool` (D23). `origin_class` is never in the envelope; the ingest function stamps it from the Run record (D36).
 
 ### 5.4 Evidence (derived, D32)
 
@@ -710,11 +781,11 @@ exemption: { allowed: true, max_days: 30, requires_decision: true }
 ### 5.6 Agent Contract (identical over MCP and CLI)
 
 ```text
-resolve(request: { task_hint, project_id, run_id, limit?, include_controls? })
-  → { context_snapshot_id, items: [{ id, type, title, summary, project_fit, champion_of?, challenger_ready?, score, score_source, evidence_count }], omitted_count, controls: [...] }   # champion_of comes from the release index (D34)
+resolve(request: { task_hint, project_id, run_id, limit?, include_controls?, ranking_mode?: "live_overlay" | "recorded", score_view_id? })
+  → { context_snapshot_id, ranking_mode, score_view_id, items: [{ id, type, title, summary, project_fit, champion_of?, champion_state?: "pinned" | "challenged", score, score_source, evidence_count }], omitted_count, controls: [...] }   # one Champion per Solution Set, from the release index (D34); no challenger entries
 
 inspect(request: { handle: { kind: "asset" | "snapshot", id }, run_id })
-  → asset: { asset, body, evidence_summary | "none", champion_source: "release", challengers: [{ id, title, live_score, challenger_ready, why_not_champion }] }
+  → asset: { asset, body, evidence_summary | "none", champion_source: "release", champion_state, challenger?: { id, title, live_score, margin, evidence_difference, why_not_champion } }
   → snapshot: { repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, index_digest, score_source, score_snapshot_digest, overlay_digest, eos_release }
 
 expand(request: { task_hint, project_id, run_id, reason, beyond: "solution_set" | "type" | "corpus" })
@@ -739,6 +810,7 @@ scores_snapshot_digest: "sha256:…"
 sbom_ref: "…"
 release_attestation: { status: "verified" | "unverified", verifier: "gh" | "sigstore-lib" | null }   # digest is always verified in-launcher; attestation via official tooling (T-08)
 champions_digest: "sha256:…"                # hash of the Solution Set champion assignments compiled into this release (D34)
+score_view_id: "sv_…"                       # recorded score view shipped with this release (D24, Q-06); all digests per D35
 contracts: { asset: "1", project_profile: "1", telemetry: "1", evidence: "1", control: "1", simulation: "1", agent_contract: "1" }
 ```
 
@@ -748,23 +820,51 @@ contracts: { asset: "1", project_profile: "1", telemetry: "1", evidence: "1", co
 { "schema_version": "1", "release": "1.0.0", "artifact_digest": "sha256:…", "bootstrap_template_hash": "sha256:…", "installed_at": "…", "installation_id": "inst_…", "ingest_endpoint": "https://<project>.supabase.co/functions/v1/ingest" }
 ```
 
-### 5.9 Installation credential (Evidence Plane side, D22)
+### 5.9 Principals, runs and staging (Evidence Plane side, D22, D36)
 
 ```sql
-create table installations (
-  id text primary key,                 -- inst_…
+create type principal_kind as enum ('installation', 'service');
+
+create table principals (
+  id text primary key,                 -- inst_… or svc_…
+  kind principal_kind not null,
   owner_id uuid not null,
   token_hash bytea not null unique,    -- sha256 of the opaque token; token itself never stored
-  scopes text[] not null,              -- {'telemetry.insert','observation.insert','read.minimal'} or {'ci'}
+  scopes text[] not null,              -- installation: {'telemetry.insert','observation.insert','read.minimal'}
+                                       -- service:      subsets of {'run.register','proposal.read','proposal.ack','ci'}
   label text, created_at timestamptz not null default now(),
   expires_at timestamptz not null, revoked_at timestamptz, last_seen_at timestamptz
 );
-alter table installations enable row level security;   -- owner-only policies; the ingest function uses SECURITY DEFINER RPCs
+
+create table runs (
+  run_id text primary key,
+  owner_id uuid not null,
+  registered_by text references principals(id),   -- null for unregistered (operational) runs, filled on first event
+  origin_class text not null default 'operational', -- development | qualification | operational | holdout (D36)
+  holdout_state text,                               -- active | retired, only with origin_class = holdout
+  eval_set_version text, simulation_id text,
+  registered_at timestamptz, first_event_at timestamptz,
+  telemetry_state text, qualification_eligible boolean
+);
+
+alter table principals enable row level security;  -- owner-only policies; the ingest function uses SECURITY DEFINER RPCs
+alter table runs enable row level security;
 
 -- staging (never in Git): observations (UNIQUE observation_id), candidates, promotion_proposals
 -- promotion_proposals carry: asset diff, evidence ids, input_snapshot_hash, risk class, trust vector,
--- curator_signature (Ed25519; public key committed in the canonical repo), status open|acked|withdrawn
+-- signature over the D35 canonical bytes (Ed25519; public key committed in the canonical repo), status open|acked|withdrawn
 ```
+
+RPC surface of the `ingest` function by principal kind:
+
+| RPC | installation | service (`run.register`) | service (`proposal.*`) |
+|---|---|---|---|
+| `ingest_events(jsonb)` | yes | no | no |
+| `ingest_observations(jsonb)` | yes | no | no |
+| `ingest_context_snapshots(jsonb)` | yes | no | no |
+| `read_minimal(kind)` | yes | yes | yes |
+| `register_run(...)` | no | yes | no |
+| `read_proposals()`, `ack_proposal(id)` | no | no | yes |
 
 ---
 
@@ -777,13 +877,13 @@ You are building Improved-Engineering-OS. Read ARCHITECTURE.md (constitution) an
 Rules:
 1. Work stage by stage in the order of BUILD-GUIDE.md Section 4. Stages 4+ are not started before the
    Stage 3 real-agent slice (primary agent only) has a passing report in qualification/reports/.
-2. Section 2.0 decisions (D18–D34) are accepted unless the owner changed the row. Record each in docs/adr/.
+2. Section 2.0 decisions (D18–D36) are accepted unless the owner changed the row. Record each in docs/adr/.
 3. Deliverables are listed paths. Ask before creating a new top-level directory or package.
 4. Never write into knowledge/ from runtime code. Never store or read a secret key, service_role or owner
    credential on a developer machine or agent container; the only client credential is the installation token.
 5. Unknown is UNKNOWN. Telemetry loss is INCOMPLETE, never success. Do not change success criteria after a
    failure; revise the manifest and keep the old failure.
-6. Before adding a dependency: check current docs (Context7), pin exactly, note it in the PR body.
+6. Before adding a dependency: verify it against its current official documentation, pin exactly, note it in the PR body.
 7. Every PR: fitness green, tests green on the CI configuration of the current stage.
 8. Stop and report when: a fitness rule must be relaxed, a stage gate cannot be met without changing the
    architecture, a real target project is needed, or a credential/plan decision is required.
@@ -800,7 +900,7 @@ Start with Stage 0.
 ### 6.3 Definition of Done per PR
 
 - Tests for new behavior, including at least one negative case.
-- Fitness F1–F10 green.
+- Fitness F1–F12 green.
 - Contracts regenerated; `contracts/schemas/` has no uncommitted diff.
 - README or runbooks updated **only if** a public command, contract or runbook changed.
 - No placeholder markers, no commented-out code, no `latest` in runtime paths.
@@ -813,7 +913,8 @@ Start with Stage 0.
 - Never add a UI, a daemon, embeddings or a marketplace before the stage that justifies it.
 - Never commit telemetry, evidence or staging data to any Git repository.
 - Never let holdout evidence reach the scorer.
-- Never let a live score change the pinned Champion at runtime; Champion changes are promotions (D34).
+- Never let a live score change the pinned Champion at runtime, and never list challengers in `resolve`; Champion changes are promotions (D34).
+- Never hash or sign outside `packages/core/src/hashing.ts` (D35). Never let a client set `origin_class` (D36).
 - Never implement signature or attestation verification by hand; digest in-launcher, attestation via official tooling (T-08).
 
 ---
@@ -901,5 +1002,9 @@ All rows marked "Verified" were checked in this session through Context7 against
 | Curator | Server-side function with Supabase authority only that turns Candidates into signed Promotion Proposals. |
 | Promoter | GitHub Actions workflow with GitHub authority only that validates a Promotion Proposal and opens the PR; never merges. |
 | Release-pinned Champion | The Solution Set default compiled into a release; live scores can only flag a challenger. |
-| Fitness rule | An executable architectural invariant (F1–F10) that runs on every PR. |
+| Fitness rule | An executable architectural invariant (F1–F12) that runs on every PR. |
+| Principal | An authenticated caller of the Evidence Plane: `installation` (an agent machine or container) or `service` (harness, Promoter, CI). |
+| Run Classification Authority | The service-principal-only `register_run` path that fixes a run's `origin_class` before its first event (D36). |
+| Score view | An immutable, hash-identified set of scores used for `ranking_mode: recorded` in qualification and replay (D24). |
+| Hashing Contract | The single project-wide rule for canonical bytes, digests, ids and signatures (D35). |
 | Stage report | Harness-generated Markdown in `qualification/reports/` that closes a stage; the only artifact that may claim a gate passed. |
