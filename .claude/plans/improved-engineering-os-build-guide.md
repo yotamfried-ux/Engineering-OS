@@ -1,7 +1,7 @@
 # Route Plan — Improved-Engineering-OS build guide
 
 Plan Scope: standard
-Plan Timestamp: 2026-09-03T18:40:00Z
+Plan Timestamp: 2026-09-04T14:26:36Z
 Planning Mode: approved
 
 ## Goal / מטרה
@@ -107,6 +107,15 @@ and review every decision for correctness and hidden future technical debt.
 |---|---|---|
 | Context7 | used (read-only) | Verified Supabase API-key migration, backup scope and Free-plan pause; verified MCP 2026-07-28 changelog, caching and deprecations. |
 | GitHub | used | Pushed branch `claude/engineering-os-project-guide-roj911`, opened PR #288, read failing check-run logs. |
+
+## Revision 1.1
+
+Second review round (owner-supplied, 8 major + 4 minor findings) accepted; guide rewritten to 1.1 with
+reordered stages (real-agent slice at Stage 3), installation-scoped credential, no Git telemetry fallback,
+no candidate state in canonical knowledge, ports/adapters, Supabase-only v1, deterministic derivations,
+holdout policy, Node 24. Additional Context7 verification: Node.js LTS schedule, pnpm pinning fields,
+better-sqlite3 WAL/timeout, Zod 4 toJSONSchema, GitHub immutable releases/attestations/App tokens,
+Claude Code hooks and headless mode, Codex exec/hooks/AGENTS.md, Supabase Edge Function auth headers.
 
 ## Connector Usage Evidence
 

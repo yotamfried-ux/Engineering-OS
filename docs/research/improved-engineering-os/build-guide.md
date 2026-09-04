@@ -2,11 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Document status | `1.0-review` — execution guide layered on the owner's `Architecture Baseline 1.0` report |
+| Document status | `1.1` — execution guide layered on the owner's `Architecture Baseline 1.0` report, revised after a second review round |
 | Source report | "Improved-Engineering-OS — דוח ארכיטקטורה סופי ותוכנית מימוש מבוססת ראיות" (4 Sep 2026) |
+| Supersedes | `1.0-review` (same file, PR #288 history) |
 | Written from | Engineering-OS repository, branch `claude/engineering-os-project-guide-roj911` |
-| Verified against | this repository's lessons and Project 8 findings; Supabase docs and MCP spec `2026-07-28` via Context7 (see Appendix B) |
-| Consumers | (1) the owner, for the review verdict; (2) the coding agent that builds the new repository |
+| Verified against | this repository's lessons and Project 8 findings; official docs via Context7 for Supabase, MCP `2026-07-28`, Node.js, pnpm, better-sqlite3, Zod 4, GitHub releases/attestations/Apps, Claude Code and Codex CLI (Appendix B) |
+| Consumers | (1) the owner, for the review verdict and the decisions to approve; (2) the coding agent that builds the new repository |
 | Precedence | Architecture Constitution in the report > this guide > agent judgment. Where this guide changes the report, the change is marked `CHANGED` and explained. |
 
 ---
@@ -16,12 +17,22 @@
 המסמך הזה עושה שלושה דברים:
 
 1. **ביקורת** — עובר על 17 ההחלטות ועל תוכנית ה-Stages ומכריע לכל אחת: `CONFIRMED`, `CONFIRMED+CHANGE` או `GAP`. כל פער שעלול להפוך לחוב טכני מקבל מזהה `TD-xx`, חומרה, ופתרון קונקרטי (סעיף 1).
-2. **השלמות** — מוסיף החלטות D18–D30 שהדוח לא סגר אבל אי אפשר לבנות בלעדיהן (שפה, פלטפורמות, זהות נכסים, אחסון ידע, credentials, סשנים מרוחקים, תלויות). כל אחת מסומנת `PROPOSED` עד שתאשר, עם ברירת מחדל מומלצת כדי שהסוכן לא ייתקע (סעיף 2).
-3. **מדריך בנייה** — מבנה הריפו, ואז לכל Stage: מה בונים, באילו נתיבים, אילו ממשקים, אילו בדיקות/סימולציות, ומה שער היציאה (סעיפים 3–7). הסוכן אמור לעבוד Stage אחרי Stage בלי לנחש.
+2. **השלמות** — מוסיף החלטות D18–D31 שהדוח לא סגר אבל אי אפשר לבנות בלעדיהן. כל אחת מסומנת `PROPOSED` עד שתאשר, עם ברירת מחדל מומלצת כדי שהסוכן לא ייתקע (סעיף 2).
+3. **מדריך בנייה** — מבנה הריפו, ואז לכל Stage: מה בונים, באילו נתיבים, אילו ממשקים, אילו בדיקות/סימולציות, ומה שער היציאה (סעיפים 3–7).
 
-**איך להשתמש:** פתח ריפו חדש, הכנס לתוכו את הדוח המקורי כ-`ARCHITECTURE.md` ואת המסמך הזה כ-`BUILD-GUIDE.md`, אשר או שנה את D18–D30 (טבלה בסעיף 2.0), ואז תן לסוכן את ההנחיה בסעיף 6.1. השאר כתוב באנגלית בכוונה: זו השפה שבה הסוכן מפרש מפרט בצורה הכי חד-משמעית.
+**מה השתנה בגרסה 1.1.** סבב הביקורת השני (סעיף 1.4) זיהה שהמדריך בגרסה 1.0 גלש בכמה מקומות לכיוון המערכת הישנה ורחוק מהעקרונות של הדוח. השינויים המהותיים:
 
-**שורה תחתונה של הביקורת:** הארכיטקטורה נכונה ועקבית. שני הפערים שבאמת יכלו לעלות ביוקר הם (א) הדוח מניח "Local Runtime" עם SQLite קבוע, בעוד חלק ניכר מהעבודה שלך רץ בסשנים מרוחקים/אפמרליים שבהם ה-outbox נמחק — בדיוק הכשל שנרשם ב-Project 8; (ב) הדוח לא בוחר stack, פלטפורמות ומבנה אחסון של הידע, וזו ההחלטה הראשונה שסוכן קוד יעשה לבד אם לא תקבע אותה. שניהם סגורים למטה (D18, D23).
+- **ה-vertical slice של סוכן אמיתי עבר מ-Stage 8 ל-Stage 3.** בונים רק את המינימום שנדרש כדי שסוכן אמיתי ישתמש במערכת, מוכיחים שזה טבעי, ורק אז מרחיבים. זה בדיוק הלקח מהכשל של המערכת הישנה.
+- **הסוכן לא מקבל יותר את הזהות שלך.** במקום refresh token של ה-owner, כל installation מקבלת credential צר שמאפשר רק `telemetry.insert`, `observation.insert` וקריאה מינימלית דרך Edge Function. ה-Curator וה-admin הם זהויות נפרדות בצד השרת (D22, D31).
+- **אין יותר fallback של טלמטריה דרך Git.** אם ingest נכשל אחרי retries, ה-run מסומן `telemetry_state: INCOMPLETE` ואינו כשיר ל-qualification. אובדן טלמטריה לעולם לא נראה כ-run שנמדד (D23).
+- **אין `candidate` בתוך `knowledge/` הקנוני.** Observations ו-Candidates חיים ב-Supabase staging; ל-Git נכנס רק ידע שאושר. הייבוא מהמערכת הישנה הוא Bulk Import Promotion PR (D19, Stage 5).
+- **Assurance ו-Evidence לא תלויים ב-Supabase.** ה-domain מדבר עם ports; `store-supabase` מיישם אותם (סעיף 3).
+- **Supabase managed בלבד ב-v1.** אין abstraction לשני backends (D30).
+- **Derivation reproducible:** מזהי Evidence דטרמיניסטיים, `input_snapshot_hash`, ו-supersession במקום overwrite (D32).
+- **Holdout לא מזהם את עצמו:** Active Holdout לעולם אינו input לאופטימיזציה (D33).
+- **תיקונים קטנים:** dependency selectors ל-staleness, `context_snapshot_id` ב-Agent Contract, `emitter_id` בטלמטריה, SQLite ב-WAL במקום החלפת קבצים, Node 24 LTS ו-pin של pnpm, ריכוך ה-governance (ADR רק לגבולות ארכיטקטוניים; מטריצת CI מלאה אחרי ה-slice).
+
+**איך להשתמש:** פתח ריפו חדש, הכנס לתוכו את הדוח המקורי כ-`ARCHITECTURE.md` ואת המסמך הזה כ-`BUILD-GUIDE.md`, אשר או שנה את D18–D33 (טבלה בסעיף 2.0), ואז תן לסוכן את ההנחיה בסעיף 6.1. השאר כתוב באנגלית בכוונה: זו השפה שבה הסוכן מפרש מפרט בצורה הכי חד-משמעית.
 
 ---
 
@@ -32,465 +43,506 @@
 | Decision | Verdict | Note |
 |---|---|---|
 | D1 Personal system | CONFIRMED | Keep `owner_id` in every durable row from day one anyway (RLS needs it; costs nothing). |
-| D2 Claude + Codex first, neutral core | CONFIRMED | Enforced mechanically by fitness test F1 (Section 4, Stage 0). |
+| D2 Claude + Codex first, neutral core | CONFIRMED | Enforced mechanically by fitness test F1 (Section 4, Stage 0). Both agents now expose lifecycle hooks (Appendix B), so adapters can stay thin. |
 | D3 Central canonical repo | CONFIRMED | Monorepo layout fixed in Section 3. |
-| D4 Thin project footprint | CONFIRMED+CHANGE | The footprint must be *generated*, never hand-edited, and must include the agent bootstrap files (`.mcp.json` entry, one paragraph in `AGENTS.md`/`CLAUDE.md`). See D18.4 and TD-07. |
+| D4 Thin project footprint | CONFIRMED+CHANGE | The footprint must be *generated*, never hand-edited, and must include the agent bootstrap files. See D18.4 and TD-07. |
 | D5 Dynamic Project Profile | CONFIRMED | `spec` in Git, `status` in Evidence Plane as written. Add `installation_id` to observations (TD-05). |
-| D6 Asset model | CONFIRMED+CHANGE | Schema is metadata only; body storage, identity minting and legacy IDs were unspecified. Closed by D19, D20. |
-| D7 Evidence-based catalog, Champion | CONFIRMED+CHANGE | Requires an offline score snapshot in the release or `resolve` fails without network. Closed by D24. |
-| D8 Observation → Curation → Admission | CONFIRMED+CHANGE | "Promotion Proposal" and "user approval" need a concrete mechanism: a pull request into the canonical repo. Closed by D21. |
-| D9 `resolve / inspect / expand` | CONFIRMED+CHANGE | Read-only contract has no write side, so the learning loop has no input other than passive telemetry. Add `observe`. Closed by D25. |
-| D10 Adaptive Assurance | CONFIRMED+CHANGE | `stale_after_revision_change: true` on every commit makes every Control stale on every push. Scope staleness by paths. Closed by D27. |
-| D11 Telemetry / Evidence | CONFIRMED+CHANGE | Correct for a persistent local machine; wrong for ephemeral remote sessions. Closed by D23. Attribute allowlist made mandatory by D26. |
-| D12 Pinned releases, launcher | CONFIRMED+CHANGE | Launcher language/runtime unspecified; bootstrap problem if launcher needs the thing it installs. Closed by D18.2. |
-| D13 Future-adaptive agent integration | CONFIRMED | MCP `2026-07-28` verified: stateless core, sessions removed from Streamable HTTP, explicit handles. The report's conclusion (MCP is transport, not domain) is reinforced. |
-| D14 Verification, evals | CONFIRMED+CHANGE | Hidden evaluator workspace needs a physical mechanism (separate directory excluded from the agent sandbox), and agent trials need a headless driver per agent. Section 4, Stage 0/8. |
+| D6 Asset model | CONFIRMED+CHANGE | Schema is metadata only; body storage, identity minting and legacy IDs were unspecified. Closed by D19, D20. Canonical lifecycle no longer contains `candidate` (R-04). |
+| D7 Evidence-based catalog, Champion | CONFIRMED+CHANGE | Requires an offline score snapshot in the release or `resolve` fails without network. Closed by D24. Holdout evidence may never select a Champion (D33). |
+| D8 Observation → Curation → Admission | CONFIRMED+CHANGE | Promotion needs a concrete mechanism: a pull request into the canonical repo opened by a server-side Curator with its own identity. Closed by D21, D31. |
+| D9 `resolve / inspect / expand` | CONFIRMED+CHANGE | Read-only contract has no write side. Add `observe`; add `context_snapshot_id` so every recommendation is explainable. Closed by D25. |
+| D10 Adaptive Assurance | CONFIRMED+CHANGE | Staleness must be scoped by paths *and* dependency selectors, not by "any commit". Closed by D27. Assurance must not depend on the storage backend (Section 3). |
+| D11 Telemetry / Evidence | CONFIRMED+CHANGE | Correct for a persistent machine; ephemeral remote sessions need a direct-ingest strategy with an honest `INCOMPLETE` state, never a Git detour. Closed by D23, D26. |
+| D12 Pinned releases, launcher | CONFIRMED+CHANGE | Launcher runtime unspecified; also not needed for the first vertical slice. Closed by D18.2 and the new Stage 4. |
+| D13 Future-adaptive agent integration | CONFIRMED | MCP `2026-07-28` verified: stateless core, `server/discover` required, handles as tool arguments. The EOS MCP adapter is stateless by construction. |
+| D14 Verification, evals | CONFIRMED+CHANGE | Evaluator isolation needs a physical mechanism; agent trials need headless drivers (`claude -p` / Agent SDK with `setting_sources=[]`, `codex exec --json`). Holdout policy formalized (D33). |
 | D15 Dynamic external ecosystem | CONFIRMED | Freshness classes need a TTL policy file from Stage 11; no change to design. |
-| D16 Reuse knowledge, rebuild system | CONFIRMED | Import corpus and exclusion list in Appendix A. |
-| D17 Simulation-gated implementation | CONFIRMED | Stage order kept. Stage 5 (telemetry) gains a plan-tier decision gate (D30). |
+| D16 Reuse knowledge, rebuild system | CONFIRMED | Import corpus and exclusion list in Appendix A; import now goes through a promotion PR, not directly into `knowledge/`. |
+| D17 Simulation-gated implementation | CONFIRMED+CHANGE | Stage *order* changed so the first real-agent slice is proven at Stage 3, before bulk import, releases, assurance and scoring (R-01). |
 
-### 1.2 Technical-debt findings
+### 1.2 Technical-debt findings (first review round)
 
 Severity: **S1** = would force a redesign or data migration later; **S2** = would cause recurring friction or silent wrong behavior; **S3** = cleanup cost only.
 
 | ID | Sev | Finding | Why it becomes debt | Resolution |
 |---|---|---|---|---|
-| TD-01 | S1 | No implementation language, runtime, package layout or supported platforms are decided. | The first agent session decides them implicitly and every later stage inherits the accident. Windows support in particular cannot be retrofitted cheaply (this repo already carries a CRLF policy plan). | D18 |
-| TD-02 | S1 | Telemetry design assumes a persistent local machine with a durable SQLite outbox. Claude Code on the web / cloud sessions run in ephemeral containers that are reclaimed; the outbox dies with them. This exact failure produced `telemetry_events_count: 0` in two real Project 8 runs (`lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md`). | Stage 5 passes on a laptop and Stage 15 silently produces no evidence. | D23 |
-| TD-03 | S1 | Asset Score is derived in the Supabase Evidence Plane but `resolve` must work offline and must not block coding. Nothing says where scores come from when the plane is unreachable. | Either `resolve` grows a hidden network dependency or scores are duplicated ad hoc. | D24 |
-| TD-04 | S1 | Asset schema has no body/content model, no identity-minting rule, no rename rule, no legacy ID mapping. | Stage 2 import invents a layout under time pressure; Stage 4 retrieval then depends on it; changing it later means re-importing 300+ assets. | D19, D20 |
-| TD-05 | S2 | Telemetry envelope lacks `installation_id` / `device_id` and `session_kind`. `source.sequence` is meaningless across machines and containers. | Dedupe and causal ordering break the first time two environments report on the same Work Item. | D26 (envelope fields) |
-| TD-06 | S2 | `attributes: key: value` is free-form. This repository already learned that a denylist scanner leaks nested fields and that only an allowlist reconstruction is safe. | Secrets/prompt fragments end up in Supabase; retroactive purge is expensive. | D26 |
-| TD-07 | S2 | "Optional minimal agent bootstrap" in the target project is undefined. If it is hand-written it drifts from the pin; if it is missing the agent never discovers EOS (hooks/MCP are loaded at session start, per Project 8 findings). | Stage 8 "no coaching" criterion fails for the wrong reason. | D18.4 |
-| TD-08 | S2 | Promotion approval has no mechanism. A custom approval UI/CLI would be a new surface to maintain. | Approval state ends up in a side database that is not the canonical Git. | D21 |
-| TD-09 | S2 | `stale_after_revision_change: true` at repository granularity. | Every commit invalidates every Control; Assurance becomes noise and gets ignored, or agents re-run everything. | D27 |
-| TD-10 | S2 | Agent Contract is read-only. Observations, user decisions and "I applied asset X" have no first-class write path. | Attribution (`APPLIED` vs `EXPOSED`) has to be guessed from traces. | D25 |
-| TD-11 | S2 | Supabase plan tier, backups and export are undecided. Free plan pauses after 7 days of inactivity and has no downloadable backups (verified, Appendix B). | The Evidence Plane pauses during a quiet fortnight; Stage 13 "graceful degradation" then runs in production by accident. | D30 |
-| TD-12 | S2 | Credential boundary is described but not concretized: which Supabase auth identity the local runtime uses, where the token lives, what the agent process can read. | Someone puts a secret key in `.env` "temporarily". | D22 |
-| TD-13 | S2 | Retrieval mechanism for `resolve` is unspecified. Starting with vendor embeddings couples the core to a provider and makes Stage 4 metrics non-reproducible. | Provider lock-in inside the resolver; eval drift when the embedding model changes. | D20.3 |
-| TD-14 | S2 | Problem / capability taxonomy (`problem.id`, `capabilities[]`) has no owner or growth rule; Solution Set equivalence depends on it. | Taxonomy sprawl makes "one Champion per equivalent problem" undecidable. | D28 |
-| TD-15 | S2 | No dependency policy for EOS itself (pins, lockfile, update cadence, SBOM) although releases are digest-pinned. | The pinned release is reproducible but its inputs are not. | D29 |
-| TD-16 | S3 | Evaluator workspace isolation is stated as a principle without a mechanism. | Hidden fixtures leak into the agent checkout via a normal `git clone`. | Stage 0 layout: `evaluator/` excluded from agent sandboxes by construction. |
-| TD-17 | S3 | Report citations are unresolved placeholders (`citeturn15view4` etc.). | The document cannot be audited or refreshed. | Replace with URLs from Appendix B before committing the report as `ARCHITECTURE.md`. |
-| TD-18 | S3 | The 17 decisions exist only inside one large report. | No per-decision history, no supersession. | Stage 0: split into `docs/adr/ADR-0001..0017.md` with status fields. |
-| TD-19 | S3 | Two named real projects ("Project 8", "SportReel") appear in stage manifests. | Core or fixtures acquire project-specific paths. | Fitness test F6; canaries live in `qualification/targets/*.yaml`, never in core. |
-| TD-20 | S3 | Agent trial cost (tokens, wall-clock) for Stages 8, 12, 14, 15 is unbudgeted. | Stages get skipped "for now". | Stage 0 budget record; Section 7 register item 9. |
+| TD-01 | S1 | No implementation language, runtime, package layout or supported platforms are decided. | The first agent session decides them implicitly and every later stage inherits the accident. | D18 |
+| TD-02 | S1 | Telemetry design assumes a persistent local machine with a durable SQLite outbox. Claude Code on the web / cloud sessions run in ephemeral containers; the outbox dies with them. This exact failure produced `telemetry_events_count: 0` in two real Project 8 runs. | Stage 5 passes on a laptop and the real canary silently produces no evidence. | D23 |
+| TD-03 | S1 | Asset Score is derived in the Evidence Plane but `resolve` must work offline and must not block coding. | Either `resolve` grows a hidden network dependency or scores are duplicated ad hoc. | D24 |
+| TD-04 | S1 | Asset schema has no body/content model, no identity-minting rule, no rename rule, no legacy ID mapping. | Import invents a layout under time pressure; retrieval then depends on it. | D19, D20 |
+| TD-05 | S2 | Telemetry envelope lacks `installation_id`, `session_kind` and a per-process writer identity. | Dedupe and causal ordering break with two environments or two processes on one Work Item. | D26 |
+| TD-06 | S2 | `attributes: key: value` is free-form. This repository already learned that only an allowlist reconstruction is safe. | Secrets/prompt fragments end up in Supabase. | D26 |
+| TD-07 | S2 | "Optional minimal agent bootstrap" in the target project is undefined. | Agent never discovers EOS, or the bootstrap drifts from the pin. | D18.4 |
+| TD-08 | S2 | Promotion approval has no mechanism. | Approval state ends up in a side database. | D21, D31 |
+| TD-09 | S2 | `stale_after_revision_change: true` at repository granularity. | Every commit invalidates every Control. | D27 |
+| TD-10 | S2 | Agent Contract is read-only. | Attribution has to be guessed from traces. | D25 |
+| TD-11 | S2 | Supabase plan tier, backups and export undecided; Free plan pauses after 7 idle days and has no downloadable backups (verified). | Evidence Plane pauses during a quiet fortnight. | D30 |
+| TD-12 | S2 | Credential boundary described but not concretized. | Someone puts a secret key in `.env` "temporarily". | D22 |
+| TD-13 | S2 | Retrieval mechanism unspecified; vendor embeddings would couple the core to a provider. | Provider lock-in inside the resolver. | D20.3 |
+| TD-14 | S2 | Problem/capability taxonomy has no owner or growth rule. | "One Champion per equivalent problem" becomes undecidable. | D28 |
+| TD-15 | S2 | No dependency policy for EOS itself. | The pinned release is reproducible but its inputs are not. | D29 |
+| TD-16 | S3 | Evaluator workspace isolation is a principle without a mechanism. | Hidden fixtures leak into the agent checkout. | Stage 0 layout + harness `setting_sources=[]`. |
+| TD-17 | S3 | Report citations are unresolved placeholders (`citeturn…`). | The document cannot be audited or refreshed. | Replace with URLs from Appendix B before committing the report as `ARCHITECTURE.md`. |
+| TD-18 | S3 | The 17 decisions exist only inside one large report. | No per-decision history. | Stage 0: one baseline ADR referencing the report; individual ADRs only for D18+ (softened in 1.1, see R-12). |
+| TD-19 | S3 | Named real projects appear in stage manifests. | Core or fixtures acquire project-specific paths. | Fitness test F6 (scoped); canaries live in `qualification/targets/*.yaml`. |
+| TD-20 | S3 | Agent trial cost is unbudgeted. | Stages get skipped "for now". | Stage 0 budget record; Section 7 item 9. |
 
 ### 1.3 Corrections to the report text
 
 - Replace every `citeturn…` token with a real URL (Appendix B has the verified ones).
-- "MCP moved to a stateless core in July 2026": verified. Add to the same paragraph: protocol-level sessions and session headers were removed from Streamable HTTP, and HTTP+SSE is deprecated. Consequence for D13: the EOS MCP adapter must not keep per-connection state; handles go in tool arguments.
-- "Supabase migrates from anon/service_role to publishable/secret keys by end of 2026": verified. Add: secret keys return HTTP 401 from browser contexts, which does not help a CLI process; the boundary is procedural, not technical (see D22.4).
-- "Database backups do not include Storage objects": verified. Also add: Free plan has no automated daily backups and pauses after 7 idle days (D30).
-- Stage 1 "OS/runtime combinations supported" must reference the platform list in D18.3, otherwise the gate is unfalsifiable.
-- Stage 8 hidden condition "no instruction saying to call `resolve`" conflicts with D4's bootstrap unless clarified: the generated bootstrap may *describe* EOS tools generically; it may not contain task-specific coaching. Wording fixed in Section 4, Stage 8.
+- "MCP moved to a stateless core in July 2026": verified. Add: protocol-level sessions and session headers were removed from Streamable HTTP, `server/discover` is mandatory, list results carry `ttlMs`/`cacheScope`, and HTTP+SSE is deprecated. Consequence for D13: the EOS MCP adapter keeps no per-connection state; handles go in tool arguments.
+- "Supabase migrates from anon/service_role to publishable/secret keys by end of 2026": verified. Add: Edge Functions reserve the `Authorization` header for Supabase Auth JWTs and the `apikey` header for project keys; a custom installation token must therefore travel in its own header (D22).
+- "Database backups do not include Storage objects": verified. Add: Free plan has no automated daily backups and pauses after 7 idle days; Pro has daily backups retained 7 days, PITR is an add-on (D30).
+- Stage 1 of the report ("OS/runtime combinations supported") must reference the platform list in D18.3, otherwise the gate is unfalsifiable.
+- The report's Stage 8 hidden condition "no instruction saying to call `resolve`" is clarified in the new Stage 3: the generated bootstrap may *describe* EOS tools generically; it may not contain task-specific coaching.
+
+### 1.4 Second review round (R-01 … R-12) and disposition
+
+| ID | Finding | Disposition in 1.1 |
+|---|---|---|
+| R-01 | Real-agent vertical slice arrived at Stage 8, after seven infrastructure layers; this repeats the failure mode that motivated the rebuild. | **Accepted, S1.** Stage order rewritten: minimal contracts → run-from-source runtime → seed knowledge + minimal resolver + minimal telemetry → **real agent slice at Stage 3**. Pinning, bulk import, full evidence, assurance, scoring follow only after the slice is natural. |
+| R-02 | D22 handed the agent the owner's refresh token; too broad even under RLS and contradicts "scoped ingestion identity". | **Accepted, S1.** D22 rewritten: installation-scoped token → Edge Function `ingest` → insert-only paths; curator/deriver/admin are separate server-side identities (D31). |
+| R-03 | D23 used a Git branch as telemetry fallback, violating "Git = intent, Supabase = what happened" and creating privacy/tampering/cleanup problems. | **Accepted, S1**, with one addition: cloud environments have configurable network access (verified), so the ingest endpoint must be allowed there and `doctor` verifies reachability at session start, declaring eligibility up front. Telemetry loss must never look like a measured run. |
+| R-04 | Stage 2 wrote `status: candidate` assets straight into canonical `knowledge/`, bypassing Observation → Candidate → Promotion. | **Accepted, S1.** Canonical lifecycle: `active | restricted | quarantined | deprecated | superseded`; staging states live in Supabase; legacy import becomes a Bulk Import Promotion PR. Imported assets are `active` but carry `evidence: none`, and the resolver shows that. |
+| R-05 | `assurance → evidence → store-supabase` gave Assurance a transitive Supabase dependency, contradicting "local evaluation continues when the Evidence Plane is down". | **Accepted.** Ports/adapters: `core` owns contracts and ports; `evidence-derivation` and `assurance` depend on `core` only and receive an `EvidenceSnapshot`; `store-supabase` implements the ports. |
+| R-06 | "Supabase Pro or self-hosted Postgres with the same schema" is not one backend; the design uses Auth, RLS, Edge Functions, Storage and key semantics. | **Accepted.** Managed Supabase is the v1 Evidence Plane; domain ports stay provider-neutral; no second backend is built. |
+| R-07 | Derivation keyed on `(run_id, deriver_version)` is not reproducible once late CI evidence changes the inputs; replay with fresh ULIDs cannot be compared. | **Accepted.** D32: deterministic evidence ids, `input_snapshot_hash`, `supersedes_derivation_id`, replay comparison ignoring identity/timestamps. |
+| R-08 | Holdout evidence was allowed to change the Champion, so the holdout stops being a holdout. | **Accepted.** D33: Active Holdout is never an optimization input; retiring a holdout reclassifies it and requires a new holdout set. |
+| R-09 | Staleness by paths + max age misses dependency, Profile, provider and infra changes. | **Accepted.** D27 gains dependency selectors. |
+| R-10 | Resolver output is not tied to the repo state and inputs it was computed from. | **Accepted.** D25 adds `context_snapshot_id` (repo SHA, Profile status digest, change scope, capability snapshot hash, score snapshot/overlay digest). |
+| R-11 | `installation_id + source.type + sequence` is not unique with concurrent processes; SQLite "atomic file replace" is the wrong tool. | **Accepted.** D26 adds `emitter_id`; SQLite uses WAL + transactions + busy timeout + unique `event_id` (verified against better-sqlite3 docs). |
+| R-12 | Governance creeping back: ADR for any directory, docs on every stage, 30 ADRs at Stage 0, four-platform CI before the slice. | **Accepted with one reservation.** ADR only for a new architectural boundary or top-level subsystem; docs only when a public contract or runbook changes; one baseline ADR for D1–D17. CI: Linux primary plus one Windows smoke from Stage 0 (the owner works on Windows and CRLF/path bugs are cheap early), full matrix after the slice. Node 24 LTS (verified) with `packageManager`/`devEngines` pinning. |
+
+One item the second round opened without closing: with R-02 and R-04, the component that turns Candidates into promotion PRs cannot be the agent or the owner's laptop. It is a server-side Curator with its own Supabase identity and a GitHub App installation token. That is a new component with a new credential; it is specified as D31.
 
 ---
 
-## 2. Added decisions (D18–D30)
+## 2. Added decisions (D18–D33)
 
 ### 2.0 Owner approval table
 
-Each row is `PROPOSED` with a recommended default. The coding agent proceeds with the default unless the owner changes the row. Record the outcome in `docs/adr/ADR-00NN.md` at Stage 0.
+Each row is `PROPOSED` with a recommended default. The coding agent proceeds with the default unless the owner changes the row. Record the outcome in `docs/adr/` at Stage 0.
 
 | Decision | Recommended default | Alternative kept as Challenger |
 |---|---|---|
-| D18 Stack & platforms | TypeScript (Node 22 LTS), pnpm workspaces, one language for core and launcher; Linux, macOS, Windows native + WSL | Go launcher if the "Node is always present" assumption breaks |
-| D19 Identity | Opaque ULID ids + mutable slugs + `content_hash`; `legacy_ids[]` | Path-derived ids (rejected: renames change identity) |
-| D20 Asset storage & retrieval | One directory per asset (`asset.yaml` + `body.md` + files); deterministic retrieval (capability graph + SQLite FTS5) shipped as an index in the release | Embeddings behind an adapter, not before Stage 14 shows deterministic retrieval is insufficient |
-| D21 Promotion mechanism | Curator opens a pull request; owner approval = merge; low-risk auto-merge gated by CI only after Stage 10 | Custom approval CLI/UI (rejected: second source of truth) |
-| D22 Credential boundary | Owner Supabase Auth account + RLS; publishable key only on dev machines; token in OS keychain with 0600 file fallback; secret key only inside Edge Functions | Per-device ingestion tokens issued by an Edge Function (adopt if the owner token proves too broad) |
-| D23 Remote/ephemeral sessions | Runtime detects `session_kind`; ephemeral sessions flush synchronously at terminal boundaries; fallback handoff bundle committed to the PR branch under `.ieos/telemetry/` | Rejected: "remote sessions are out of scope" — this is where most real runs happen |
-| D24 Offline reads | Release artifact carries `knowledge.sqlite` (index) + `scores.snapshot.json`; live overlay when reachable; `resolve` reports `score_source` | Rejected: network-required resolve |
-| D25 Agent Contract write side | Add `observe` (and run lifecycle via adapters); four tools total | Rejected: infer everything from traces |
-| D26 Telemetry attribute registry | `contracts/telemetry-attributes.yaml` allowlist with type + sensitivity; exporter reconstructs events from it; envelope gains `installation_id`, `session_kind` | Rejected: denylist scanning as primary control |
-| D27 Evidence staleness scope | Evidence bound to `repo_sha` + path scope + max age; stale only when scope touched or age exceeded | Rejected: any-commit staleness |
-| D28 Taxonomy governance | `contracts/capabilities.yaml` seeded from this repo's `core/capability-registry.yaml`; additions only via promotion PR | Rejected: free-form tags |
-| D29 EOS dependency policy | Exact pins + committed lockfile; weekly automated update PR; Context7 check noted in the PR; SBOM emitted per release | — |
-| D30 Evidence Plane hosting | Supabase Pro (no pause, daily backups) **or** self-hosted Postgres; weekly `pg_dump` export to owner storage; restore drill each RC | Free plan (rejected: pauses, no backups) |
+| D18 Stack & platforms | TypeScript, **Node 24 LTS**, pnpm with `packageManager` pin, one language for core and launcher; Linux primary + Windows smoke at Stage 0, full matrix (Linux, macOS, Windows native, WSL2) after Stage 3 | Go launcher if the "Node is always present" assumption breaks |
+| D19 Identity & canonical lifecycle | Opaque ULID ids + mutable slugs + `content_hash` as addressing key; canonical statuses `active | restricted | quarantined | deprecated | superseded`; staging statuses only in Supabase | Path-derived ids (rejected) |
+| D20 Asset storage & retrieval | One directory per asset; deterministic retrieval (capability graph + SQLite FTS5) shipped as an index in the release | Embeddings behind a `Retriever` port only if Stage 14 proves deterministic recall insufficient |
+| D21 Promotion mechanism | Curator opens a pull request; owner approval = merge; low-risk auto-merge gated by CI only after Stage 10 | Custom approval UI (rejected) |
+| D22 Credential boundary | Installation-scoped token → Edge Function `ingest` → insert-only; no owner token and no Supabase key with authority on agent machines; secret key only inside Edge Functions | Supabase Auth anonymous users per installation (kept as alternative if custom tokens prove awkward) |
+| D23 Remote/ephemeral sessions | Buffered direct ingest, retries at boundaries, else `telemetry_state: INCOMPLETE` and `qualification_eligible: false`; coding continues; no Git fallback | Rejected: telemetry via branch commits |
+| D24 Offline reads | Release carries `knowledge.sqlite` + `scores.snapshot.json`; live overlay when reachable; `score_source` reported | Rejected: network-required resolve |
+| D25 Agent Contract | `resolve`, `inspect`, `expand`, `observe`; every response carries `context_snapshot_id` | Rejected: infer everything from traces |
+| D26 Telemetry registry & envelope | Attribute allowlist with sensitivity; envelope gains `installation_id`, `emitter_id`, `session_kind` | Rejected: denylist scanning as primary control |
+| D27 Evidence staleness | Path scope + dependency selectors + max age | Rejected: any-commit staleness |
+| D28 Taxonomy governance | `contracts/capabilities.yaml` seeded from this repo's `core/capability-registry.yaml`; growth only via promotion PR | Rejected: free-form tags |
+| D29 EOS dependency policy | Exact pins, lockfile, `pnpm ci` in CI, weekly update PR, Context7 check per new dependency, SBOM per release | — |
+| D30 Evidence Plane hosting | **Managed Supabase Pro only** for v1; weekly `pg_dump` export; restore drill each RC; Storage exported separately if adopted | Self-hosted Postgres (rejected for v1: not a drop-in for Auth/RLS/Edge Functions) |
+| D31 Server-side Curator identity | Curator = scheduled Edge Function with the secret key + GitHub App installation token (1 h, `contents: write`, `pull_requests: write`, single repo) | Owner-laptop curator (rejected: needs owner credentials on a dev machine) |
+| D32 Derivation reproducibility | Deterministic evidence ids from `(run_id, deriver_id, deriver_version, input_snapshot_hash)`; supersession; replay comparison ignores identity/timestamps | Rejected: fresh ULID per derivation |
+| D33 Holdout policy | Active Holdout is never an optimization input; retirement reclassifies it as historical qualification evidence and requires a replacement set | Rejected: holdout results feed Champion selection |
 
 ### D18 — Implementation stack and platforms (PROPOSED)
 
-**D18.1 Language and runtime.** TypeScript, strict mode, Node 22 LTS, pnpm workspaces, ESM. Rationale: the official MCP SDK, `supabase-js`, Claude Code and Codex are all Node-based, so Node is already present on every machine that runs the agents. One language keeps the launcher, core and adapters testable with one toolchain.
+**D18.1 Language and runtime.** TypeScript, strict mode, **Node 24 LTS** (LTS since 24.11.0, supported through April 2028; Node 22 leaves active LTS and is in maintenance until April 2027), pnpm workspaces, ESM. Rationale unchanged: the MCP SDK, `supabase-js`, Claude Code and Codex are Node-based, so Node is present wherever the agents run.
 
-**D18.2 Launcher.** Published as its own npm package (`@ieos/launcher`) with zero runtime dependencies beyond Node built-ins, invoked as `npx @ieos/launcher@<exact-version> <command>`. It downloads release artifacts, verifies digests, manages the version cache and never imports core packages. Fitness test F5 enforces the import boundary. If the Node assumption ever fails, the launcher is the only package to port.
+**D18.2 Launcher.** Published as its own npm package (`@ieos/launcher`) with zero runtime dependencies, invoked as `npx @ieos/launcher@<exact-version> <command>`. It downloads release artifacts, verifies digests and the GitHub release attestation, manages the version cache and never imports core packages (fitness F5). **It is not built until Stage 4**; Stages 0–3 run from a source checkout.
 
-**D18.3 Supported platforms (Stage 1 gate list).** Linux x64, macOS arm64, Windows 11 native (PowerShell), Windows WSL2. Rules that follow: no shell scripts in runtime paths (TypeScript only); `path.join` everywhere; `.gitattributes` with `* text=auto eol=lf` from the first commit; CI matrix on all four.
+**D18.3 Supported platforms.** Target: Linux x64, macOS arm64, Windows 11 native (PowerShell), Windows WSL2. Sequencing (R-12): Stage 0–3 CI runs Linux as primary plus one Windows smoke job (path handling, CRLF, spawn); the full matrix becomes a gate at Stage 4. Rules from day one: no shell scripts in runtime paths (TypeScript only); `path.join` everywhere; `.gitattributes` with `* text=auto eol=lf`.
 
-**D18.4 Generated project footprint.** `ieos init` writes exactly: `.ieos/installation.json` (pin + digest), `.ieos/profile.yaml` (`spec` only), an entry in `.mcp.json` (Claude Code) and `~/.codex/config.toml` guidance (Codex), and one generated paragraph in `AGENTS.md` and `CLAUDE.md` between `<!-- ieos:begin -->` / `<!-- ieos:end -->` markers. `ieos doctor` fails if the generated block differs from the template of the pinned release. Nothing else lands in the project.
+**D18.4 Generated project footprint.** `ieos init` writes exactly: `.ieos/installation.json` (pin + digest + `installation_id`), `.ieos/profile.yaml` (`spec` only), an entry in `.mcp.json` (Claude Code project scope, verified) and a `[mcp_servers.ieos]` block for Codex (`codex mcp add` or `.codex/config.toml`, verified), and one generated paragraph in `AGENTS.md` and `CLAUDE.md` between `<!-- ieos:begin -->` / `<!-- ieos:end -->` markers. `ieos doctor` fails if the generated block differs from the pinned release's template. Nothing else lands in the project.
 
-**D18.5 Tooling.** `vitest` for tests, `eslint` + `prettier`, `zod` as the schema source of truth with JSON Schema exported to `contracts/` at build time, `better-sqlite3` for SQLite, `@modelcontextprotocol/sdk` pinned to a version that implements `2026-07-28`, Supabase CLI for migrations, `dependency-cruiser` for fitness rules.
+**D18.5 Tooling.** `vitest`; `eslint` + `prettier`; **Zod 4** as schema source of truth with `z.toJSONSchema(..., { target: "draft-2020-12", unrepresentable: "throw" })` emitted to `contracts/schemas/` (verified: dates/maps/transforms are unrepresentable, so contracts use ISO strings and plain objects); `better-sqlite3` with `journal_mode = WAL`, `timeout` (busy timeout) and `.transaction()` (verified); `@modelcontextprotocol/sdk` pinned to a version implementing `2026-07-28`; Supabase CLI for migrations and functions; `dependency-cruiser` for fitness rules.
 
-### D19 — Identity and content addressing (PROPOSED)
+**D18.6 Toolchain pinning (R-12).** `package.json` carries `packageManager: "pnpm@<exact>"` and `devEngines.packageManager` (verified pnpm fields), `engines.node: "24.x"`, `engineStrict: true` in `pnpm-workspace.yaml`; CI installs with `pnpm ci` (clean + frozen lockfile, pnpm 11).
+
+### D19 — Identity, content addressing and canonical lifecycle (PROPOSED)
 
 - Every canonical object gets an opaque, immutable id: `asset_01J...` (ULID with type prefix). Slugs and titles are mutable metadata.
-- `content_hash = sha256(canonical serialization of body + files)` is an addressing key, not a merge rule. The importer merges two assets only when their `content_hash` is equal **and** their recommendation-relevant metadata is equivalent (`type`, `problem.id`, `applicability`, `compatibility`, `risk`). Equal hash with different metadata yields a `related_to` link and a report entry, never a merge. A `failed_solution` is never merged with any other type, whatever its hash.
-- `legacy_ids[]` records old Engineering-OS paths (for example `patterns/auth/oauth-pkce.md`) so provenance survives.
-- Renames never change ids. Supersession is a relationship, never an overwrite.
+- `content_hash = sha256(canonical serialization of body + files)` is an addressing key, not a merge rule. The importer merges two assets only when `content_hash` is equal **and** recommendation-relevant metadata is equivalent (`type`, `problem.id`, `applicability`, `compatibility`, `risk`). Equal hash with different metadata yields `related_to` and a report entry. `failed_solution` is never merged with any other type.
+- `legacy_ids[]` records old Engineering-OS paths so provenance survives. Renames never change ids; supersession is a relationship.
+- **Canonical lifecycle (R-04).** Assets in `knowledge/` are `active | restricted | quarantined | deprecated | superseded`. `observation`, `candidate` and `promotion_proposal` exist only in Supabase staging tables. An `active` asset with no Evidence is explicitly "admitted, unproven": `inspect` shows `evidence: none`, and Champion selection never rests on legacy popularity.
 
 ### D20 — Asset storage layout and retrieval (PROPOSED)
 
-**D20.1 Layout.** `knowledge/assets/<type>/<slug>/asset.yaml` (metadata, Section 5.1), `body.md` (the human/agent-readable content), optional `files/` (code, fixtures). `inspect` returns metadata + body; `resolve` returns metadata + `summary` only.
+**D20.1 Layout.** `knowledge/assets/<type>/<slug>/asset.yaml` (metadata, Section 5.1), `body.md`, optional `files/`. `inspect` returns metadata + body; `resolve` returns metadata + `summary` only.
 
-**D20.2 Index.** At release build time the knowledge tree is compiled into `knowledge.sqlite` (FTS5 over title/summary/tags/body, plus capability and solution-set tables). The runtime reads the index, never the tree. Rebuilding the index is deterministic (fitness test F8 diffs two builds).
+**D20.2 Index.** At release build time (and at Stage 0–3 via `pnpm build:index` from source) the knowledge tree compiles into `knowledge.sqlite` (FTS5 over title/summary/tags/body plus capability and solution-set tables). Rebuild is deterministic (fitness F8).
 
-**D20.3 Retrieval v1.** Deterministic ranking: (1) capability/problem match from Project Profile + task hints, (2) FTS5 BM25 score, (3) Project Fit filter, (4) Champion selection per Solution Set, (5) Asset Score tie-break. Embeddings are an optional `Retriever` adapter added only if Stage 14 shows deterministic recall is insufficient, and they never change contract semantics.
+**D20.3 Retrieval v1.** Deterministic ranking: capability/problem match → FTS5 BM25 → Project Fit filter → Champion per Solution Set → Asset Score tie-break. Embeddings are an optional `Retriever` port implementation added only if Stage 14 proves deterministic recall insufficient.
 
 ### D21 — Promotion is a pull request (PROPOSED)
 
-The Curator materializes a Candidate as a branch in the canonical repo containing the proposed asset change plus `promotion.yaml` (evidence links, risk class, trust vector). CI validates schemas, fitness rules and evidence references. Owner approval is the merge. Low-risk categories (defined in `contracts/promotion-policy.yaml`, empty until Stage 10) may enable auto-merge after CI. Git history is the promotion audit log; no separate approval store.
+The Curator (D31) materializes a Candidate as a branch containing the asset change plus `promotion.yaml` (evidence links, risk class, trust vector, `input_snapshot_hash` of the evidence used). CI validates schemas, fitness rules and evidence references. Owner approval is the merge. `contracts/promotion-policy.yaml` (empty until Stage 10) may later enable auto-merge for low-risk categories. Git history is the audit log.
 
-### D22 — Credential boundary, concretized (PROPOSED)
+### D22 — Credential boundary, concretized (PROPOSED, rewritten in 1.1)
 
-1. One Supabase Auth user: the owner. Every table has `owner_id uuid not null default auth.uid()` and RLS policies `owner_id = auth.uid()` for select/insert; update/delete only where the domain allows.
-2. Dev machines and agent containers hold only the project URL, the publishable key and the owner's refresh token, stored by the runtime in the OS keychain when available and otherwise in `~/.ieos/credentials.json` with mode `0600`. Remote environments receive the same three values as environment secrets.
-3. The secret key exists only in Supabase Edge Functions (derivers, admin jobs) and in the owner's password manager. Fitness test F9 fails any commit containing a secret-shaped value or a privileged client outside `supabase/functions`.
-4. Honest limit: an agent with shell access on the same machine can read the owner-scoped token. The boundary protects against admin/service-role authority and against other users' data, not against the agent reading the owner's own evidence rows. This is acceptable for D1 and must be stated in `SECURITY.md`.
+```text
+Agent process / EOS runtime on any machine or container
+        │  X-IEOS-Installation-Token: <opaque, per installation, revocable>
+        ▼
+Edge Function `ingest`  (deployed --no-verify-jwt; validates token hash itself)
+        │  admin client from SUPABASE_SECRET_KEYS, calls SECURITY DEFINER RPCs only:
+        │    ingest_events(jsonb)      → raw_events insert
+        │    ingest_observations(jsonb)→ observations insert
+        │    read_minimal(kind)        → health, score overlay, own-run status
+        ▼
+Supabase Evidence Plane
+```
 
-### D23 — Remote and ephemeral sessions (PROPOSED)
+1. **Installation token.** `ieos auth enroll` (run once per machine by the owner, authenticated as the owner) creates a row in `installations` with `token_hash = sha256(token)`, `scopes = ['telemetry.insert','observation.insert','read.minimal']`, `expires_at` (90 days, renewable) and stores the token in the OS keychain, with `~/.ieos/credentials.json` mode `0600` as fallback. Remote environments receive the token as an environment secret. `ieos auth rotate|revoke` exist from Stage 2.
+2. **Header discipline (verified).** Supabase reserves `Authorization` for Supabase Auth JWTs and `apikey` for project keys; the installation token travels in `X-IEOS-Installation-Token` and the function is deployed with `--no-verify-jwt` so the platform does not reject the request before the function validates it.
+3. **What the agent cannot do.** No evidence mutation, no candidate promotion, no score mutation, no admin, no reads of other installations' sensitive records. The RPCs are the whole surface; the function never exposes a general query.
+4. **Other identities.** Owner (Supabase Auth user, used only by `ieos auth enroll` and the read-only investigation CLI), Curator and Deriver (server-side, D31), CI (a separate installation row with `ci` scope). The secret key exists only in Edge Function secrets and the owner's password manager. Fitness F9 fails any commit containing a secret-shaped value.
+5. **Honest limit.** An agent with shell access can still read the installation token. Its blast radius is now: inserting telemetry or observations as that installation, and minimal reads. Every insert is attributable to the installation and revocable. That is the accepted residual risk for D1.
 
-- The runtime classifies each Run: `session_kind: local_persistent | remote_ephemeral | ci`. Detection: environment markers (Claude Code web/cloud variables, CI variables), overridable in the Run.
-- `local_persistent`: SQLite outbox, background sync, as in the report.
-- `remote_ephemeral`: outbox still used for batching, but every terminal boundary (`Stop`, `SessionEnd`, and every N minutes) flushes synchronously with a short timeout. Exit status of the terminal flush propagates (this repo's lesson: a soft-gated wrapper hid the failure).
-- Fallback handoff bundle (only when the synchronous flush fails): unacknowledged events are written to `.ieos/telemetry/<run_id>/events.jsonl` plus `manifest.json` and committed to the working branch. The manifest carries `run_id`, `installation_id`, canonical `owner/repo`, branch, PR number when known, product head SHA, event count, last completed lifecycle boundary, and a SHA-256 over the event stream and over the manifest fields. CI validates the bundle before ingestion exactly as `lessons-learned/bugs/remote-workspace-telemetry-requires-durable-handoff.md` requires: strict UTF-8, schema allowlist, checksum match, manifest boundary equal to the boundary recomputed from events, repository identity, PR binding immutable per run, head equal to or an ancestor of the current head (bounded fetch before classifying ancestry), and monotonic event/boundary progress with incomparable progress failing closed. Only a validated bundle is ingested; CI then removes it from the branch. Because the bundle lives in a PR-controlled path, Evidence derived from it is marked `provenance.integrity: partial` unless the ingest function can also match it against a partial synchronous flush of the same run; Stage 5 tests must include an edited, a replayed and a removed bundle, each rejected or downgraded, never silently accepted.
-- `ci`: direct ingestion with a CI-scoped token.
-- Stage 5 gains a mandatory scenario: kill the container immediately after the last tool call, then prove the events arrive via one of the two paths.
+### D23 — Remote and ephemeral sessions (PROPOSED, rewritten in 1.1)
+
+- The runtime classifies each Run: `session_kind: local_persistent | remote_ephemeral | ci`, detected from environment markers and overridable.
+- `local_persistent`: SQLite outbox (WAL), background sync.
+- `remote_ephemeral`: outbox for batching; synchronous flush at every terminal boundary (`Stop`, `SessionEnd`) and every N minutes with a short timeout and bounded retries.
+- **If all retries fail:** the run is marked `telemetry_state: INCOMPLETE` and `qualification_eligible: false`; coding continues; nothing is written to Git. Telemetry loss must never look like a measured run.
+- **Eligibility is declared up front.** Cloud environments have configurable network access (verified), so `ieos doctor` at SessionStart checks that the ingest endpoint is reachable and marks the run's eligibility before work starts, not after.
+- Hook semantics (verified): in Claude Code, exit code 2 from `Stop` *prevents termination* and from `SessionStart`/`PostToolUse` cannot block; therefore the terminal telemetry hook never uses exit 2 to signal failure. It writes `telemetry_state` and reports via stderr/JSON output. Codex hooks (`SessionStart`, `SessionEnd`, `Stop`, `PostToolUse` in `config.toml` or `hooks.json`) use the same emitter.
+- Stage 2 carries the mandatory scenario: container killed right after the last tool call → either events arrive via the boundary flush or the run is `INCOMPLETE`, never silently "complete".
 
 ### D24 — Offline reads (PROPOSED)
 
-The release build queries the Evidence Plane and writes `scores.snapshot.json` (Asset Score, Champion state, evidence counts, `computed_at`, `scoring_policy_version`). The runtime overlays live values when the plane answers within a budget, otherwise uses the snapshot and marks `score_source: snapshot`. Fitness test F4 (core never reads raw telemetry) is unchanged.
+Release build (and Stage 0–3 source build) queries the Evidence Plane through the `read.minimal` RPC and writes `scores.snapshot.json` (Asset Score, Champion state, evidence counts, `computed_at`, `scoring_policy_version`). Runtime overlays live values when reachable within a budget, otherwise uses the snapshot and marks `score_source: snapshot`.
 
-### D25 — Agent Contract write side (PROPOSED)
+### D25 — Agent Contract (PROPOSED, extended in 1.1)
 
-Tools: `resolve`, `inspect`, `expand`, `observe`. `observe` accepts a typed Observation (`kind: asset_applied | asset_rejected | fact_seen | decision_recorded | lesson_candidate`, `subject`, `evidence_refs`, free text limited by the attribute registry). It writes to Observations only, never to canonical knowledge (fitness test F3). Run lifecycle (`run.begin`/`run.end`) is emitted by adapters, not by the agent.
+Tools: `resolve`, `inspect`, `expand`, `observe`. Every response carries `context_snapshot_id`, which resolves (via `inspect` or the CLI) to `{ repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, score_source, score_snapshot_digest, overlay_digest, index_digest }`. `observe` accepts a typed Observation and writes to staging only (fitness F3). MCP tools declare `readOnlyHint: true` for the three reads and `idempotentHint: true` for `observe`; the server implements `server/discover` and advertises `ttlMs`/`cacheScope` on lists (verified `2026-07-28`).
 
 ### D26 — Telemetry attribute registry and envelope fields (PROPOSED)
 
-- `contracts/telemetry-attributes.yaml`: every allowed attribute with `type`, `sensitivity: public | internal | never`, and `max_length`. The exporter and the ingestion function reconstruct events from this allowlist; unknown keys are dropped and counted.
-- Envelope gains `installation_id` (stable per machine/container image), `session_kind`, and `source.sequence` becomes `(installation_id, source.type, sequence)`.
-- Strict UTF-8 decoding before any scanning (lesson from this repo).
+- `contracts/telemetry-attributes.yaml`: every allowed attribute with `type`, `sensitivity: public | internal | never`, `max_length`. Exporter and ingest function reconstruct events from this allowlist; unknown keys are dropped and counted.
+- Envelope gains `installation_id`, `emitter_id` (unique per process/run emitter), `session_kind`; ordering key is `(installation_id, emitter_id, sequence)`.
+- Strict UTF-8 decoding before any scanning.
+- **SQLite outbox (R-11):** `journal_mode = WAL`, `timeout` ≥ 5000 ms, all writes inside `.transaction()`, `UNIQUE(event_id)`; no file-level atomic replacement.
 
-### D27 — Evidence staleness scope (PROPOSED)
+### D27 — Evidence staleness scope (PROPOSED, extended in 1.1)
 
-Control evidence carries `scope: { paths: [globs], max_age_days }`. Evidence is `STALE` when a commit since `repo_sha` touched any path in scope, or `max_age_days` elapsed. Otherwise it is `VALID (revision drift)`. Controls declare their default scope; a Control without a scope is treated as whole-repository (loud, but explicit).
+Evidence carries `scope: { paths: [globs], depends_on: [selectors], max_age_days }`. Selectors: `dependency:<package>`, `profile:<field>`, `provider:<id>`, `infra:<path or key>`. Evidence is `STALE` when a commit since `repo_sha` touched a path in scope, any selector's observed value changed (lockfile entry, Profile field, provider version, infra file), or `max_age_days` elapsed. Otherwise `VALID (revision drift)`.
 
 ### D28 — Taxonomy governance (PROPOSED)
 
-`contracts/capabilities.yaml` is versioned, seeded from `core/capability-registry.yaml` in this repository, and grows only via promotion PRs. A Solution Set is defined by `problem.id` + a compatibility key derived from `compatibility` fields. Two assets are "equivalent" only if both match; otherwise they are related, not competing.
+`contracts/capabilities.yaml` is versioned, seeded from `core/capability-registry.yaml` in this repository, and grows only via promotion PRs. A Solution Set is `problem.id` + compatibility key.
 
 ### D29 — Dependency policy for EOS itself (PROPOSED)
 
-Exact version pins, committed `pnpm-lock.yaml`, `pnpm install --frozen-lockfile` in CI, one weekly automated update PR, Context7 check recorded in the PR body for any new dependency, CycloneDX SBOM emitted with every release and referenced from the release manifest.
+Exact pins, committed `pnpm-lock.yaml`, `pnpm ci` in CI, weekly automated update PR, Context7 check recorded per new dependency, CycloneDX SBOM emitted per release and referenced from the release manifest.
 
-### D30 — Evidence Plane hosting (PROPOSED)
+### D30 — Evidence Plane hosting (PROPOSED, narrowed in 1.1)
 
-Supabase Pro (no inactivity pause, daily backups) or self-hosted Postgres with the same schema; the Free plan is not acceptable for the Evidence Plane. Independent of the plan: weekly `pg_dump` to owner-controlled storage, and a restore drill into a scratch project at every RC (Stage 17). If Supabase Storage is adopted for cold telemetry, its objects get a separate export job.
+Managed **Supabase Pro** is the v1 Evidence Plane (no inactivity pause; daily backups retained 7 days; PITR available as an add-on). Domain code depends on ports, not on Supabase, so another backend remains possible later, but none is built now. Independent of plan: weekly `pg_dump` to owner-controlled storage via a scheduled job, and a restore drill into a scratch project at every RC. If Supabase Storage is adopted for cold telemetry, its objects are exported separately (database backups exclude them, verified).
+
+### D31 — Server-side Curator and Deriver identities (NEW in 1.1)
+
+- **Deriver**: scheduled Edge Function (pg_cron → function, verified pattern) using the secret key; reads `raw_events`, writes `evidence` and `investigations`; idempotent per D32.
+- **Curator**: scheduled Edge Function using the secret key for staging reads and a **GitHub App installation token** (1-hour expiry, minted from the App private key stored in Edge Function secrets, permissions `contents: write` and `pull_requests: write` on the canonical repo only, verified) to push a branch and open the promotion PR. It never merges.
+- Neither identity is ever present on a developer machine or agent container.
+
+### D32 — Derivation reproducibility (NEW in 1.1)
+
+- `evidence_id = "evd_" + base32(sha256(run_id | deriver_id | deriver_version | input_snapshot_hash))`.
+- `input_snapshot_hash` = hash over the ordered set of source event ids and external inputs (CI conclusions, review states) consumed by the derivation; `input_watermark` = latest `ingested_at` consumed.
+- Late input (CI failure a day later) produces a **new** derivation with a new `input_snapshot_hash` that `supersedes_derivation_id` the previous one; nothing is deleted.
+- Replay test: rerun the same deriver over the same snapshot → identical `evidence_id` and identical payload after stripping `derived_at`.
+
+### D33 — Holdout policy (NEW in 1.1)
+
+| Origin class | Allowed use |
+|---|---|
+| `development` | optimization allowed |
+| `operational` | optimization allowed |
+| `qualification` | release decisions allowed |
+| `holdout` (active) | **never** an optimization input; never selects a Champion; reported only |
+| `holdout` (retired) | reclassified as historical `qualification`; a new holdout set must replace it |
+| `external_attestation` | provenance only |
+
+`evidence_policy.eligible_origins` on an Asset may therefore never include active `holdout`.
 
 ---
 
 ## 3. Target repository layout
 
-Repository name: `Improved-Engineering-OS`. Monorepo, pnpm workspaces. Directories the agent must not create beyond this list without an ADR.
+Repository name: `Improved-Engineering-OS`. Monorepo, pnpm workspaces. A new top-level directory or a new package needs an ADR only when it introduces an architectural boundary (R-12); ordinary files do not.
 
 ```text
 Improved-Engineering-OS/
   ARCHITECTURE.md                 # the owner's report, citations fixed (TD-17)
   BUILD-GUIDE.md                  # this document
-  SECURITY.md                     # threat model + D22.4 honest limit
-  README.md                       # what/why/install/commands (kept current per stage)
+  SECURITY.md                     # threat model, identities (D22, D31), residual risks
+  README.md
   docs/
-    adr/                          # ADR-0001..0017 from the report, ADR-0018+ from Section 2
-    runbooks/                     # install, doctor, restore, rollback, backup drill, incident
-    budgets.md                    # overhead baselines and versioned budgets (Section 7)
-  contracts/                      # generated JSON Schema + hand-written YAML registries
-    schemas/*.schema.json         # emitted from packages/core/src/contracts (zod)
+    adr/                          # ADR-0001 baseline (D1–D17 by reference) + ADRs for D18–D33 and later boundaries
+    runbooks/                     # install, doctor, enroll/rotate, restore, rollback, backup drill
+    budgets.md                    # overhead baselines and versioned budgets
+  contracts/
+    schemas/*.schema.json         # emitted from packages/core (Zod 4 → draft-2020-12)
     capabilities.yaml             # D28
     telemetry-attributes.yaml     # D26
     freshness-policy.yaml         # Stage 11
     promotion-policy.yaml         # D21, empty until Stage 10
     scoring-policy.yaml           # Stage 10
   packages/
-    core/                         # domain model, contracts, pure logic; NO I/O, NO agent names
-    store-sqlite/                 # outbox, local cache, knowledge index reader
-    store-supabase/               # Evidence Plane client (owner-scoped), migrations live in supabase/
-    resolver/                     # resolve/inspect/expand over the knowledge index
-    curator/                      # observations -> candidates -> promotion PR
-    telemetry/                    # envelope, sanitizer (allowlist), session_kind, flush strategies
-    evidence/                     # derivers, attribution, investigation views
-    assurance/                    # controls engine, applicability, staleness scope
-    releases/                     # release manifest build, index build, score snapshot
+    core/                         # contracts, ids, ports (interfaces), pure domain logic; NO I/O, NO vendor, NO agent names
+    evidence-derivation/          # derivers, attribution, investigation; depends on core + EvidenceRepository port
+    assurance/                    # controls engine; depends on core only; consumes EvidenceSnapshot
+    resolver/                     # resolve/inspect/expand over KnowledgeIndex port
+    curator/                      # observations → candidates → promotion PR (runs server-side, see supabase/functions)
+    telemetry/                    # envelope, allowlist sanitizer, session_kind, flush strategies; uses Outbox + Ingest ports
+    releases/                     # release manifest, index build, score snapshot
+    store-sqlite/                 # implements Outbox, KnowledgeIndex (read), LocalCache ports
+    store-supabase/               # implements Ingest, EvidenceRepository, Staging ports (client side of Edge Functions)
     adapters/
-      mcp/                        # MCP server exposing the Agent Contract (stateless per 2026-07-28)
+      mcp/                        # stateless MCP server exposing the Agent Contract
       cli/                        # `ieos` command: same contract over a CLI
-      claude-code/                # hooks/bootstrap templates for Claude Code
-      codex/                      # config/bootstrap templates for Codex
-    launcher/                     # @ieos/launcher, zero deps, never imports other packages
+      claude-code/                # hook + bootstrap templates for Claude Code
+      codex/                      # hook + bootstrap templates for Codex
+    launcher/                     # @ieos/launcher, zero deps, never imports other packages (built at Stage 4)
   knowledge/
-    assets/<type>/<slug>/         # D20.1
+    assets/<type>/<slug>/         # admitted assets only (D19)
     solution-sets/*.yaml
     controls/*.yaml
   supabase/
-    migrations/                   # Supabase CLI migrations, versioned
-    functions/                    # Edge Functions: ingest, derive, admin (secret key lives here only)
+    migrations/                   # Supabase CLI migrations
+    functions/
+      ingest/                     # D22: validates installation token, insert-only RPCs
+      derive/                     # D31 Deriver
+      curate/                     # D31 Curator (GitHub App token)
   simulations/
-    manifests/*.yaml              # Simulation Manifests (public part)
-    fixtures/                     # public fixtures
-  evaluator/                      # hidden conditions, expected outputs, graders (TD-16)
-                                  # NEVER copied into an agent sandbox; harness mounts it read-only outside the sandbox
+    manifests/*.yaml
+    fixtures/
+  evaluator/                      # hidden conditions, expected outputs, graders; never inside an agent sandbox
   qualification/
-    targets/*.yaml                # real target projects (Project 8, SportReel): paths, SHAs, rollback (TD-19)
-    reports/                      # generated stage reports, one per stage run
-  fitness/                        # architecture fitness tests (dependency-cruiser + custom)
+    targets/*.yaml                # real target projects: paths, SHAs, rollback (TD-19)
+    reports/                      # harness-generated stage reports
+  fitness/                        # dependency-cruiser + custom rules, allowlist.yaml, exclusions.yaml
   tools/
-    import-legacy/                # Stage 2 importer from the old Engineering-OS checkout
-    harness/                      # simulation runner: sandbox, agent drivers, graders, artifact collection
-  .github/workflows/              # ci.yml (matrix), fitness.yml, release.yml, weekly-deps.yml
+    import-legacy/                # Stage 5 importer → promotion PR
+    harness/                      # sandbox, agent drivers, graders, artifact collection, budgets
+  .github/workflows/              # ci.yml, fitness.yml, release.yml (from Stage 4), weekly-deps.yml
 ```
 
-Package dependency direction (enforced by `fitness/` from Stage 0):
+**Ports (in `packages/core/src/ports/`)** — the only way domain code reaches I/O (R-05):
 
 ```text
-launcher  -> (nothing)
-core      -> (nothing)
-store-*   -> core
-resolver  -> core, store-sqlite
-telemetry -> core, store-sqlite, store-supabase
-evidence  -> core, store-supabase
-assurance -> core, evidence
-curator   -> core, evidence, store-supabase
-releases  -> core, resolver, evidence
-adapters/* -> core, resolver, telemetry, assurance   (never each other, never store-supabase directly)
+KnowledgeIndex        read assets, solution sets, controls from the compiled index
+Outbox                append/ack telemetry events locally
+Ingest                send events/observations; minimal reads
+EvidenceRepository    read evidence, write derivations (server-side only)
+Staging               observations, candidates, promotion proposals (server-side only)
+Clock, IdMinter       deterministic in tests
 ```
+
+**Package dependency direction (enforced by `fitness/` from Stage 0):**
+
+```text
+launcher             -> (nothing)
+core                 -> (nothing)
+evidence-derivation  -> core
+assurance            -> core
+resolver             -> core
+telemetry            -> core
+curator              -> core
+releases             -> core, resolver, evidence-derivation
+store-sqlite         -> core
+store-supabase       -> core
+adapters/*           -> core, resolver, telemetry, assurance, store-sqlite, store-supabase (composition root only)
+supabase/functions/* -> core, evidence-derivation, curator, store-supabase
+```
+
+No domain package imports a `store-*` package. Composition happens in adapters and functions.
 
 ---
 
-## 4. Stage-by-stage build plan
+## 4. Stage-by-stage build plan (order revised in 1.1)
 
 Conventions for every stage:
 
-- **Deliverables** are paths. If a path is not listed, ask before creating it.
-- **Exit gate** is the report's ten-row gate table plus the stage-specific rows below. A stage is closed by a report in `qualification/reports/stage-NN-<date>.md` produced by the harness, not by hand.
-- Work on stage N+1 may start while stage N's report is pending; **promotion** of anything from stage N+1 into a release may not.
-- Every stage ends with README and runbook updates in the same PR.
+- **Deliverables** are paths. Ask before creating a new top-level directory or package.
+- **Exit gate** is the report's ten-row gate table plus the stage-specific rows below. A stage is closed by a harness-generated report in `qualification/reports/stage-NN-<date>.md`.
+- Work on stage N+1 may start while stage N's report is pending; **promotion** into a release may not.
+- Documentation is updated in the same PR only when a public contract, command or runbook changes (R-12).
 
-### Stage 0 — Contracts + Simulation Harness
+```text
+Stage 0  Minimal contracts + minimal harness
+Stage 1  Minimal runtime from source (no launcher, no pinning yet)
+Stage 2  Seed knowledge (10–20 assets) + minimal resolver + minimal telemetry + installation credential
+Stage 3  REAL AGENT VERTICAL SLICE  ← the architectural checkpoint; nothing below is built before it passes
+Stage 4  Pinned releases, launcher, restore, rollback
+Stage 5  Bulk import of the legacy corpus via promotion PR
+Stage 6  Project Profile & onboarding
+Stage 7  Full telemetry, evidence derivation, investigation (server-side deriver)
+Stage 8  Agent Contract parity: MCP + CLI, Claude Code + Codex adapters
+Stage 9  Adaptive Assurance
+Stage 10 Scoring, Champion, Curator (server-side) and promotion policy
+Stage 11 External ecosystem
+Stage 12 Multi-agent & capability dynamics
+Stage 13 Resilience, security, scale, full platform matrix
+Stage 14 Native vs assisted, ablation, shadow
+Stage 15 Project 8 canary
+Stage 16 Cross-project qualification
+Stage 17 RC → Stable
+```
 
-**Goal.** Schemas, identities and the harness are trustworthy enough to build on.
+### Stage 0 — Minimal contracts + minimal harness
+
+**Goal.** Enough schema, identity and harness to run one real agent trial honestly. Not the whole contract surface.
 
 **Deliverables.**
 
-- `packages/core/src/contracts/{asset,project-profile,telemetry,evidence,control,simulation,release,agent-contract}.ts` — zod schemas with `schema_version`, `stability`, `introduced_in`, `deprecated_in`, `replacement`, `migration_path` on every top-level contract. Build step emits `contracts/schemas/*.schema.json`.
-- `packages/core/src/ids.ts` — ULID minting with type prefixes, `content_hash`, `legacy_ids` (D19).
-- `contracts/capabilities.yaml` seeded from the old repo's `core/capability-registry.yaml` (D28); `contracts/telemetry-attributes.yaml` with the initial allowlist (D26).
-- `docs/adr/ADR-0001..0017.md` (one per report decision, status `accepted`) and `ADR-0018..0030.md` (status `proposed` or `accepted` per the owner's answers to Section 2.0).
-- `tools/harness/`: `sandbox.ts` (fresh temp dir per trial, no inherited env, no `evaluator/` inside), `drivers/{claude-code,codex}.ts` (headless invocations: `claude -p` / Agent SDK, `codex exec`), `graders/{deterministic,trace,model}.ts`, `collect.ts` (artifact bundle per trial), `report.ts` (stage report writer), `budget.ts` (tokens, wall-clock, tool calls per trial).
-- `fitness/` with rules F1–F10 (below), wired into `.github/workflows/fitness.yml`.
-- `docs/budgets.md` with an empty baseline table and the measurement method (the numbers come at Stage 8 and 14).
-- Repo scaffolding: `.gitattributes` (`* text=auto eol=lf`), `.editorconfig`, `pnpm-workspace.yaml`, CI matrix on the four platforms (D18.3), `SECURITY.md` skeleton.
+- `packages/core/src/contracts/{asset,telemetry,evidence,agent-contract,simulation}.ts` (Zod 4) with the lifecycle block on each; `project-profile`, `control`, `release` contracts are *stubs* with `stability: development` until their stages.
+- `packages/core/src/ids.ts` (ULID + type prefix, `content_hash`, deterministic `evidence_id` per D32), `packages/core/src/ports/*`.
+- `contracts/capabilities.yaml` seeded from the old repo's `core/capability-registry.yaml`; `contracts/telemetry-attributes.yaml` initial allowlist.
+- `docs/adr/ADR-0001-architecture-baseline.md` (accepts D1–D17 by reference to `ARCHITECTURE.md`) and one ADR per D18–D33 with the owner's answers from Section 2.0.
+- `tools/harness/`: `sandbox.ts` (fresh temp dir per trial, no inherited env, `evaluator/` never mounted), `drivers/claude-code.ts` (Agent SDK `query()` with `setting_sources=[]` and explicit `allowed_tools`, or `claude -p --output-format stream-json`), `drivers/codex.ts` (`codex exec --json --ephemeral`, optional `--output-schema`), `graders/{deterministic,trace,model}.ts`, `collect.ts`, `report.ts`, `budget.ts`.
+- `fitness/` with rules F1–F10 (table below) and `fitness/exclusions.yaml`, `fitness/allowlist.yaml`; `.github/workflows/{ci,fitness}.yml` on Linux plus one Windows smoke job.
+- `docs/budgets.md` with an empty baseline table and the measurement method.
+- Repo scaffolding: `.gitattributes` (`* text=auto eol=lf`), `.editorconfig`, `pnpm-workspace.yaml` with `engineStrict: true`, `package.json` with `packageManager` and `devEngines`, `SECURITY.md` skeleton.
 
-**Fitness rules (F1–F10), all executable at Stage 0 even if some packages are empty.**
+**Fitness rules (F1–F10).**
 
 | ID | Invariant | Mechanism |
 |---|---|---|
-| F1 | `packages/core` contains no `claude`, `codex`, `anthropic`, `openai` identifiers and imports nothing outside itself | dependency-cruiser + grep rule |
-| F2 | adapters never own knowledge semantics: no file under `adapters/` imports `knowledge/` or defines ranking | dependency-cruiser |
-| F3 | nothing under `packages/` writes into `knowledge/` at runtime; only `curator` produces branches | filesystem-write guard in tests + grep for `knowledge/` writes |
-| F4 | `resolver` and Asset Score code never import raw telemetry types | dependency-cruiser |
-| F5 | `launcher` imports only Node built-ins | dependency-cruiser + `package.json` dependency count = 0 |
-| F6 | no real target-project names or absolute project paths in runtime or configuration paths (`packages/`, `contracts/`, `knowledge/`, `supabase/`, `simulations/`, `fitness/`, `tools/`, `.github/`); documentation (`docs/`, `*.md` at the root) and `qualification/` are excluded | grep rule with an explicit path scope and a committed exclusion list |
-| F7 | runtime never resolves `latest`: release resolution requires an exact version + digest | unit test on launcher |
+| F1 | `packages/core` contains no `claude`, `codex`, `anthropic`, `openai`, `supabase` identifiers and imports nothing outside itself | dependency-cruiser + grep |
+| F2 | adapters never own knowledge semantics: nothing under `adapters/` defines ranking or reads `knowledge/` directly | dependency-cruiser |
+| F3 | nothing under `packages/` writes into `knowledge/` at runtime; only `supabase/functions/curate` produces branches | filesystem-write guard in tests + grep |
+| F4 | `resolver`, `assurance`, `evidence-derivation` import no `store-*` package and no raw telemetry types | dependency-cruiser |
+| F5 | `launcher` imports only Node built-ins | dependency-cruiser + dependency count = 0 |
+| F6 | no real target-project names or absolute project paths in runtime/configuration paths (`packages/`, `contracts/`, `knowledge/`, `supabase/`, `simulations/`, `fitness/`, `tools/`, `.github/`); `docs/`, root Markdown and `qualification/` excluded via `fitness/exclusions.yaml` | scoped grep |
+| F7 | runtime never resolves `latest`: release resolution requires exact version + digest | unit test (from Stage 4) |
 | F8 | knowledge index build is deterministic | build twice, compare hashes |
-| F9 | no key-shaped secret values anywhere in the repo (pattern match on `sb_secret_[A-Za-z0-9]{20,}`, JWT-shaped strings and similar), and no `service_role` / secret-key client construction in runtime paths (`packages/`, `supabase/functions` excepted for the admin role); the identifier words themselves are allowed in documentation and in negative test fixtures listed in `fitness/allowlist.yaml` | secret-value scan in CI and pre-commit + scoped grep for privileged client construction |
-| F10 | every Simulation Manifest references an evaluator entry that exists and is outside `simulations/` | manifest linter |
+| F9 | no key-shaped secret values anywhere (`sb_secret_[A-Za-z0-9]{20,}`, JWT-shaped, GitHub App private key headers); no privileged client construction outside `supabase/functions`; identifier words allowed in docs and in fixtures listed in `fitness/allowlist.yaml` | secret-value scan + scoped grep |
+| F10 | every Simulation Manifest references an evaluator entry that exists outside `simulations/` | manifest linter |
 
-**Tests and simulations.** Contract property tests (valid accepted, invalid rejected with reason, unknown enum tolerated where declared, migration fixtures deterministic). Harness self-test: two trials cannot see each other's state; a trial that references a non-existent Run is rejected. Grader validity: each grader has positive, negative and mutation controls.
+**Tests and simulations.** Contract property tests (valid accepted, invalid rejected with reason, unknown enum tolerated where declared). Harness self-test: two trials cannot see each other's state; a trial referencing a non-existent Run is rejected; the agent sandbox contains no `evaluator/` path. Grader validity: each grader has positive, negative and mutation controls. D32 replay test on a synthetic derivation.
 
-**Exit gate additions.** F1–F10 green on CI matrix; `contracts/schemas/` regenerated with no diff; a corrupted Evidence fixture referencing a missing Run is rejected; ADRs exist for all 30 decisions.
+**Exit gate additions.** F1–F10 green on Linux + Windows smoke; `contracts/schemas/` regenerated with no diff; ADRs exist for D18–D33.
 
-**Debt watch.** Do not add a UI, embeddings, or a daemon here. Do not put Supabase code here.
+**Debt watch.** No UI, embeddings, daemon, launcher or full CI matrix here.
 
-### Stage 1 — Runtime, Releases & Recovery
+### Stage 1 — Minimal runtime from source
 
-**Goal.** A project can be pinned, restored, upgraded and rolled back without drift, on all four platforms.
+**Goal.** `pnpm ieos` runs from a checkout on the owner's machine and in a cloud container, with `doctor`, `init` (footprint per D18.4 pointing at the *source checkout* for now) and `build:index`.
 
-**Deliverables.**
+**Deliverables.** `adapters/cli` skeleton (`ieos doctor|init|resolve|inspect|expand|observe|auth`), `adapters/mcp` stateless server exposing the four tools with `server/discover`, `store-sqlite` KnowledgeIndex reader, `releases/build-index.ts`.
 
-- `packages/launcher`: commands `install`, `doctor`, `restore`, `update`, `rollback`, `which`. Version cache at `~/.ieos/releases/<version>/` with `manifest.json` + digest verification before activation; transaction-like activation (download → verify → stage → atomic symlink/junction swap → post-check → commit or revert).
-- `packages/releases`: release manifest builder (`version`, `tag`, `source_commit`, `artifact_digest`, `sbom_ref`, `attestation_ref?`, `contracts_versions`, `index_digest`, `scores_snapshot_digest`).
-- `.github/workflows/release.yml`: builds the artifact, emits SBOM, publishes an immutable GitHub release, attaches provenance attestation where the plan supports it.
-- `docs/runbooks/{install,doctor,restore,rollback}.md`.
-- `.ieos/installation.json` schema and generator (`ieos init`) with the generated bootstrap block (D18.4).
+**Exit gate additions.** `ieos doctor` reports index digest, contracts versions, session kind and ingest reachability; MCP server passes an `2026-07-28` conformance smoke (discover, tools/list with `ttlMs`, tools/call).
 
-**Simulations.** The report's Stage 1 manifest plus: two projects on different versions on one machine; kill during `update`; corrupt cache file; manifest pointing at a different version than the tag; offline restore from cache; Windows path with spaces.
+### Stage 2 — Seed knowledge + minimal resolver + minimal telemetry + installation credential
 
-**Exit gate additions.** All scenarios pass on all four platforms; tampered artifact never activates; `doctor` names the fault; rollback restores exact previous digest.
-
-### Stage 2 — Existing Engineering-OS Asset Import
-
-**Goal.** Start from the existing knowledge without importing the old architecture.
+**Goal.** Just enough knowledge and observability for one honest real task.
 
 **Deliverables.**
 
-- `tools/import-legacy/`: reads a checkout of the old repository (Appendix A), classifies each file into an asset type or an exclusion, mints ids, records `legacy_ids`, computes `content_hash`, groups duplicates into Solution Sets without choosing a Champion, writes `knowledge/assets/...` and `knowledge/solution-sets/...`, and emits `qualification/reports/import-<date>.md` (inventory before/after, mapping table, duplicate groups, exclusions with reasons, items needing manual classification).
-- Idempotent: re-running over the same input produces no diff.
+- 10–20 representative assets hand-selected from the legacy corpus (Appendix A), imported through a *manual* promotion PR with `legacy_ids` and `provenance` (the bulk importer comes at Stage 5). Include at least one `lesson`, one `failed_solution`, two assets in the same Solution Set, one `control_guidance`.
+- `resolver` v1 (D20.3) over the index; `inspect` returning body + `evidence: none`.
+- `telemetry` v1: envelope (Section 5.3), allowlist sanitizer, `session_kind`, SQLite WAL outbox, boundary flush; `supabase/migrations/0001_*.sql` (`installations`, `raw_events`, `observations`, RLS on, `owner_id`); `supabase/functions/ingest` per D22; `ieos auth enroll|rotate|revoke`.
+- Adapter hooks: Claude Code (`SessionStart`, `PostToolUse`, `Stop`, `SessionEnd`) and Codex (same events in `config.toml`) calling the same emitter.
+- Supabase project on Pro (D30) created by the owner; secret key stored only in function secrets.
 
-**Simulations.** Full import; import twice; three near-duplicate auth patterns resolve to one Solution Set with two duplicates and one distinct-context asset; a failed solution is imported with `type: failed_solution` and can never be returned as a recommendation (unit test on resolver later reuses this fixture).
+**Simulations.** Offline mode; duplicate batch; process crash; secret-like value rejected client-side and in the function; **container killed after last tool call in `remote_ephemeral` → events flushed or run `INCOMPLETE`**; token revoked → inserts rejected, coding continues.
 
-**Exit gate additions.** Every file in Appendix A's include list is accounted for (imported, merged, or excluded with reason); zero old workflow policies became runtime rules; provenance `integrity: unknown` is used where the source cannot be tied to a revision, never fabricated.
+**Exit gate additions.** No Supabase key with authority on the client; coding never blocked by ingest outage; `INCOMPLETE` runs visible in `ieos doctor --last-run`.
 
-### Stage 3 — Project Profile & Onboarding
+### Stage 3 — REAL AGENT VERTICAL SLICE
 
-**Goal.** EOS understands a project incrementally and never guesses.
+**Goal.** A real agent, in a fresh session, on a realistic disposable repo, performs an ordinary bounded task and uses EOS naturally: `agent → resolve → inspect → work → tests → telemetry → (minimal) evidence → investigation`.
 
-**Deliverables.**
+**Hidden condition.** The target repo contains the generated bootstrap block (D18.4), which states that EOS tools exist and what they are for. No task-specific hints, no asset names, no instruction to call any tool.
 
-- `packages/core/src/profile/` — `spec` schema, `status` observation schema, drift comparison (`ALIGNED | DRIFT | UNKNOWN`).
-- `packages/assurance/src/probes/` — deterministic probes: package manager, frameworks, database providers (config files, env names, migrations dirs), CI presence, deployment workflows, test runners, lifecycle hints. Each probe returns `{fact, value, provenance, confidence}`; nothing is inferred without a provenance.
-- `ieos profile {show,scan,ask}`: `ask` lists only consequential `UNKNOWN`s and records answers as `spec` + ADR stubs in the target project.
+**Trials.** At least three independent tasks × the primary agent, plus one task with the second agent, each in a fresh sandbox, driven by the harness with `setting_sources=[]` so only the target repo's own files influence the run. One task requires a lesson imported at Stage 2; one includes a misleading clue; one has a test failure mid-task.
 
-**Simulations.** Report's Stage 3 manifest plus: declared Supabase with a live Firebase config → `DRIFT`; `production=false` with a deploy workflow → `DRIFT`; repeated onboarding on an unchanged repo asks zero questions.
+**Measured.** Task success, whether `resolve` was called unprompted, critical asset recall, returned bytes, tool calls, tokens, wall-clock, resolve latency, telemetry completeness, rescues. These numbers become the first rows of `docs/budgets.md`.
 
-**Exit gate additions.** Question count is recorded per trial and is zero on re-onboarding; `status` is never written into the project's Git.
+**Exit gate.** No rescue; telemetry → investigation complete for every trial; the agent used EOS in at least the trials where the imported lesson was needed, or correctly did not need it. **If the slice is not natural, stop here and simplify; nothing from Stage 4 onward is built until this passes.**
 
-### Stage 4 — Knowledge Registry + Resolver (CLI only)
+### Stage 4 — Pinned releases, launcher, restore & rollback
 
-**Goal.** Find a few correct assets from a meaningful corpus.
+**Deliverables.** `packages/launcher` (`install|doctor|restore|update|rollback|which`), version cache `~/.ieos/releases/<version>/`, transaction-like activation, verification of `artifact_digest` and of the GitHub release attestation (`gh release verify` / `gh attestation verify` semantics reproduced in TypeScript: immutable releases lock tag and assets and generate a release attestation, verified); `packages/releases` manifest builder (Section 5.7); `.github/workflows/release.yml` publishing an immutable release with SBOM; `ieos init` now points at a pinned release; full platform matrix becomes a CI gate (D18.3).
 
-**Deliverables.**
+**Simulations.** Two projects on different versions on one machine; kill during `update`; corrupt cache; tampered artifact; offline restore from cache; Windows path with spaces; clean-machine restore from `installation.json`.
 
-- `packages/releases/src/build-index.ts` → `knowledge.sqlite` (D20.2).
-- `packages/resolver`: `resolve(request) → {items[≤N], champion_per_set, omitted_count, score_source}`, `inspect(id) → {metadata, body, evidence_summary}`, `expand(request) → wider search with explicit reason`. Progressive disclosure sizes are configuration, not code.
-- `simulations/fixtures/task-bank/` — labeled tasks (task text, Project Profile, expected critical asset ids, deliberate near-miss ids). Seed the labels from Stage 2's mapping (each imported asset's problem id), then hand-verify a holdout subset that is stored under `evaluator/`.
-- `ieos resolve|inspect|expand` CLI.
+**Exit gate additions.** Tampered or unattested artifact never activates; rollback restores exact previous digest; four platforms green.
 
-**Simulations.** Regression bank + holdout; metrics: critical recall, precision, returned bytes, latency; failure cases: full-catalog dump, failed solution recommended, two Champions in one set.
+### Stage 5 — Bulk import of the legacy corpus via promotion PR
 
-**Exit gate additions.** Targets are set *before* the run in the manifest (provisional numbers, Section 7 item 8); the same task through the CLI twice returns identical ids (determinism).
+**Deliverables.** `tools/import-legacy/`: classifies every file in Appendix A, mints ids, records `legacy_ids`, computes `content_hash`, applies the D19 merge rule, groups Solution Sets without choosing Champions, and **emits a promotion PR branch** (`promotion.yaml` + assets) plus `qualification/reports/import-<date>.md` (inventory before/after, mapping, duplicate groups, exclusions with reasons, manual-classification list). Idempotent re-run produces no diff. The owner approves the batch by merging.
 
-### Stage 5 — Telemetry Foundation
+**Simulations.** Full import; import twice; three near-duplicate auth patterns → one Solution Set with two merged duplicates and one distinct-context asset; `failed_solution` never returned by `resolve` (fixture reused by resolver tests).
 
-**Goal.** Events survive failures without leaking content or duplicating.
+**Exit gate additions.** Every file accounted for; zero old workflow policies became runtime rules; `integrity: unknown` where provenance cannot be tied to a revision.
 
-**Deliverables.**
+### Stage 6 — Project Profile & onboarding
 
-- `packages/telemetry`: envelope (Section 5.3), sanitizer that reconstructs from `telemetry-attributes.yaml`, strict UTF-8 gate, `session_kind` detection (D23), flush strategies (`background`, `boundary_sync`, `handoff_bundle`), idempotent batch upload keyed by `event_id`.
-- `packages/store-sqlite`: outbox with per-writer temp files and atomic replace; delete only after durable acknowledgement.
-- `supabase/migrations/0001_telemetry.sql`: `raw_events` (append-only, unique `event_id`, `owner_id`, RLS), `runs`, `work_items`, `installations`. `supabase/functions/ingest/`: validates against the allowlist server-side too, returns acknowledged ids.
-- Owner decision recorded: D30 plan tier; `docs/runbooks/backup-and-restore.md` with the weekly export job.
-- Adapter hooks: `adapters/claude-code` (SessionStart/PostToolUse/Stop/SessionEnd emitters, failure-propagating terminal boundary), `adapters/codex` (equivalent where the harness allows; otherwise CLI wrapper emitting the same events).
+**Deliverables.** `core/profile` (`spec`, `status`, drift `ALIGNED | DRIFT | UNKNOWN`), probes in `assurance/probes` returning `{fact, value, provenance, confidence}`, `ieos profile show|scan|ask`.
 
-**Simulations.** Report's Stage 5 manifest plus the D23 scenario: container killed right after the last tool call, in `remote_ephemeral` mode, events arrive through sync flush or handoff bundle; `local_persistent` with Supabase down for one hour then recovered; secret-like value in an allowed attribute is rejected at both client and ingest function.
+**Simulations.** Declared Supabase with live Firebase config → `DRIFT`; `production=false` with deploy workflow → `DRIFT`; re-onboarding an unchanged repo asks zero questions.
 
-**Exit gate additions.** Coding is never blocked by remote telemetry outage; terminal-boundary failure is visible (non-zero) in `required` mode; the export contains only allowlisted keys (test asserts absence of sentinel values in the serialized bundle).
+### Stage 7 — Full telemetry, evidence derivation, investigation
 
-### Stage 6 — Evidence + Investigation
+**Deliverables.** `supabase/functions/derive` (D31 Deriver, pg_cron scheduled), `evidence-derivation` with D32 deterministic ids, `input_snapshot_hash`, supersession, attribution levels, `origin_class`, `independence_group`, staleness scope with selectors (D27); `ieos investigate <run_id|work_id>` as Markdown timeline; `supabase/migrations/0002_evidence.sql`.
 
-**Goal.** Raw telemetry becomes explainable Evidence and reliable investigation.
+**Simulations.** Golden traces; CI failure a day later → new derivation superseding the old, both retained; displayed-only asset never `APPLIED`; replay reproduces identical ids and payloads.
 
-**Deliverables.**
+### Stage 8 — Agent Contract parity and adapters
 
-- `packages/evidence`: versioned derivers (`deriver_version` in every Evidence row), attribution levels `EXPOSED | INSPECTED | APPLIED | DIRECTLY_VERIFIED | FAILED`, `origin_class`, `independence_group`, staleness scope (D27), late-CI reclassification, rework/recurrence detection, failure taxonomy.
-- `supabase/migrations/0002_evidence.sql`, `supabase/functions/derive/` (runs derivers server-side with the secret key; idempotent per `(run_id, deriver_version)`).
-- `ieos investigate <run_id|work_id>` producing a Markdown timeline with source event ids; no custom dashboard.
+**Deliverables.** Conformance suite run against MCP and CLI with the same fixtures; capability snapshot at run start recorded in Run metadata (never granting permission); Codex adapter at parity with Claude Code; `context_snapshot_id` resolution.
 
-**Simulations.** Golden traces with ground-truth timelines; CI failure a day later reclassifies evidence for the same revision; asset merely displayed never gets `APPLIED`; timestamp-only ordering is rejected when trace links say otherwise.
-
-**Exit gate additions.** Replay of raw events with the same `deriver_version` reproduces identical Evidence rows (hash compare).
-
-### Stage 7 — Agent Contract + Adapters
-
-**Goal.** Same semantics over MCP and CLI; adapters stay thin.
-
-**Deliverables.**
-
-- `adapters/mcp`: stateless server (per MCP `2026-07-28`: no per-connection state; handles in arguments; discovery RPC advertising versions; caching hints), exposing `resolve`, `inspect`, `expand`, `observe`.
-- `adapters/cli`: same four operations, same JSON output.
-- Capability snapshot at run start: integrations advertised vs. authorized vs. healthy, recorded in Run metadata, never granting permission.
-- Contract conformance suite executed against both transports with the same fixtures.
-
-**Simulations.** Report's Stage 7 manifest plus: MCP server dies mid-run → CLI fallback produces the same object; an integration advertised but unauthorized is reported as `AVAILABLE, NOT AUTHORIZED` and never used.
-
-**Exit gate additions.** Semantic parity diff is empty; no code path branches on agent name (F1 extended to adapters' shared code).
-
-### Stage 8 — First Real Agent Vertical Slice
-
-**Goal.** A real agent uses EOS naturally end to end.
-
-**Clarified hidden condition (replaces the report's wording).** The target repo contains the generated bootstrap block (D18.4), which states that EOS tools exist and what they are for. It contains no task-specific hints, no asset names, and no instruction to call any tool for this task.
-
-**Deliverables.** `simulations/manifests/stage-08-*.yaml`; harness drivers proven for the primary agent; `docs/budgets.md` baseline filled from these trials (tokens, tool calls, wall-clock, resolve latency, context bytes).
-
-**Simulations.** Several independent tasks on a disposable realistic repo, one requiring a lesson imported at Stage 2; one misleading clue; a test failure mid-task.
-
-**Exit gate additions.** No rescue; telemetry → evidence → investigation complete for every trial; baseline table committed. **If the slice is not natural, stop and simplify before Stage 9.**
+**Simulations.** MCP server dies mid-run → CLI fallback yields the same semantic object; advertised-but-unauthorized integration reported, never used.
 
 ### Stage 9 — Adaptive Assurance
 
-**Deliverables.** `packages/assurance`: Control schema (Section 5.5), applicability rules from Project Profile, states `SATISFIED | MISSING | UNKNOWN | EXEMPT | STALE`, scoped staleness (D27), expiring exemptions with `decision_id`, fail-closed only for Controls marked `critical: true`. Initial Controls seeded from the old repo's quality gates (Appendix A) but re-expressed as conditional controls, not workflow steps.
+**Deliverables.** `assurance` engine consuming `EvidenceSnapshot` (from the plane when reachable, from the last local snapshot otherwise), Control schema (Section 5.5), states `SATISFIED | MISSING | UNKNOWN | EXEMPT | STALE`, expiring exemptions with `decision_id`, fail-closed only for `critical: true`. Initial Controls seeded from the old repo's quality gates, re-expressed as conditional controls.
 
-**Simulations.** Report's Stage 9 manifest plus: a commit outside a Control's scope does not stale it; a commit inside does; exemption past expiry returns to `MISSING`.
+**Simulations.** Commit outside scope does not stale; dependency bump matching a selector does; exemption expiry returns `MISSING`; Evidence Plane down → engine still evaluates from snapshot and marks freshness.
 
-**Exit gate additions.** Prototype-lifecycle project surfaces zero production Controls; critical Control with unverifiable evidence blocks only the destructive action, not coding.
+### Stage 10 — Scoring, Champion, Curator, promotion policy
 
-### Stage 10 — Learning, Asset Scores & Canonicalization
+**Deliverables.** `contracts/scoring-policy.yaml` (versioned), `evidence-derivation/score.ts` deterministic and replayable, `supabase/functions/curate` (D31 Curator with GitHub App token) opening promotion PRs, `contracts/promotion-policy.yaml` (everything requires owner merge initially), `releases/scores-snapshot.ts`, D33 holdout enforcement in the scorer (active holdout excluded by construction, with a test).
 
-**Deliverables.** `contracts/scoring-policy.yaml` (priors, weights, decay, independence discount, quarantine rule; versioned), `packages/evidence/src/score.ts` (deterministic, replayable), `packages/curator` (observations → candidates → promotion PR per D21), `contracts/promotion-policy.yaml` (initially: everything requires owner merge), `packages/releases/src/scores-snapshot.ts` (D24).
+**Simulations.** 500 correlated repeats discounted; critical failure quarantines; Champion changes only after independent non-holdout evidence; two Champions impossible; recompute under previous policy reproduces previous score.
 
-**Simulations.** 500 correlated repeats are discounted; one critical failure quarantines; Champion changes only after independent holdout evidence; two Champions in one set is impossible (unit test on the invariant).
+### Stage 11 — External ecosystem
 
-**Exit gate additions.** Score explanation lists every contributing Evidence id; recompute under the previous policy version reproduces the previous score.
+**Deliverables.** `contracts/freshness-policy.yaml`; provider/integration asset types with trust vectors; discovery adapters producing Observations only; live overlay API; runtime health/authorization snapshot.
 
-### Stage 11 — External Ecosystem
+### Stage 12 — Multi-agent & capability dynamics
 
-**Deliverables.** `contracts/freshness-policy.yaml` (classes, TTLs per fact type, provisional); provider/integration asset types with trust vectors; discovery adapters (MCP registry, official docs) producing Observations only; live overlay API (`verify(fact) → {value, source, retrieved_at, freshness}`); runtime health/authorization snapshot.
+**Deliverables.** Handoff of a Work Item between agents preserving Run lineage; concurrency tests on outbox and plane; unknown capability negotiated as `UNKNOWN`.
 
-**Simulations.** Stale pricing during an architecture decision → live verification, baseline untouched; registry entry with weak security evidence → candidate, never auto-installed; provider deprecation → Observation.
+### Stage 13 — Resilience, security, scale, platform hardening
 
-**Exit gate additions.** No code path installs anything; the overlay never writes to `knowledge/`.
+**Deliverables.** Fault-injection suite (Supabase outage, SQLite lock, full disk, tampered release, prompt-injection fixtures, concurrent runs, token revocation mid-run); synthetic scale (100k assets / 10k controls / 1M events) as stress margin; provisional budgets enforced as thresholds; full four-platform matrix on every PR from here on.
 
-### Stage 12 — Multi-Agent & Capability Dynamics
+### Stage 14 — Native vs assisted, ablation, shadow
 
-**Deliverables.** Codex driver at parity in the harness; handoff of a Work Item between agents preserving Run lineage; concurrency test on the outbox and the Evidence Plane; capability negotiation for an unknown capability (`UNKNOWN`, not error).
+**Deliverables.** Paired-trial runner; ablation switches per subsystem; shadow mode for candidate resolver/scoring versions; vector report as Markdown/CSV. Holdout tasks per D33.
 
-**Exit gate additions.** Both agents complete the same Work Item via different integrations with no core change; no history loss across handoff.
+### Stage 15 — Project 8 canary
 
-### Stage 13 — Resilience, Security & Scale
+**Preconditions (from this repository's findings).** Install the pinned candidate in the exact workspace that will run the agent, start a fresh session, run `ieos doctor` and confirm `telemetry: ready` and `qualification_eligible: true` before the task. Never mark this stage from CI artifacts alone.
 
-**Deliverables.** Fault-injection suite in `tools/harness/faults/` (Supabase outage, SQLite lock, full disk, tampered release, prompt-injection fixtures in external content, concurrent runs); synthetic scale generator (100k assets, 10k controls, 1M events) used as a stress margin only; provisional budgets from `docs/budgets.md` enforced as thresholds in this suite.
+### Stage 16 — Cross-project qualification
 
-**Exit gate additions.** External content never gains instruction authority (grader checks the agent did not execute injected instructions); release mismatch blocked; no corruption under concurrency.
-
-### Stage 14 — Native vs Assisted, Ablation & Shadow
-
-**Deliverables.** Paired-trial runner (same model, task, tools, budget); ablation switches per subsystem (Skills, Assurance, history, resolver); shadow mode for a candidate resolver/scoring version; vector dashboard as a generated Markdown/CSV report (no custom UI).
-
-**Exit gate additions.** No critical regression on any vector dimension; a subsystem with no measurable benefit is listed as a removal candidate in the stage report.
-
-### Stage 15 — Project 8 Canary
-
-**Deliverables.** `qualification/targets/project-8.yaml` (repo, baseline SHA, test command, rollback procedure, telemetry mode `required`); at least two materially different bounded tasks; full evidence chain per task.
-
-**Preconditions (from this repository's Project 8 findings).** Install the pinned candidate in the exact workspace that will run the agent, start a fresh session afterwards, run `ieos doctor` and confirm `telemetry: ready` with a positive event count *before* the task. Never mark this stage from CI artifacts alone.
-
-### Stage 16 — Cross-Project Qualification
-
-**Deliverables.** `qualification/targets/sportreel.yaml` (or another materially different archetype); same release; report of config delta and any core change requested (a core change here is a failure of D2/D13, not a task).
+**Deliverables.** A second, materially different target (`qualification/targets/*.yaml`); same release; report of config delta. A core change requested here is a failure of D2/D13, not a task.
 
 ### Stage 17 — RC → Stable
 
-**Deliverables.** `1.0.0-rc.N` artifact through Development → Simulation → Shadow → Canary → Cross-project → RC → Stable rings; restore drill of the Evidence Plane into a scratch project (D30); rollback proof from RC to previous stable on a real installation.
-
-**Exit gate additions.** Artifact digest equals the tested digest; SBOM and attestation (where available) verified by the launcher, not only present; a failed canary holds promotion automatically.
+**Deliverables.** `1.0.0-rc.N` through Development → Simulation → Shadow → Canary → Cross-project → RC → Stable rings; Evidence Plane restore drill into a scratch Supabase project (D30); rollback proof from RC to previous stable; artifact digest equals tested digest; release attestation verified by the launcher, not merely present.
 
 ### Continuous evolution
 
-After Stable: weekly dependency PR (D29), monthly Champion challenge run (Stage 10 suite), native-vs-assisted rerun on every major model change (Stage 14), removal PRs for subsystems that lost their benefit.
+Weekly dependency PR (D29), monthly Champion challenge (Stage 10 suite), native-vs-assisted rerun on every major model change (Stage 14), removal PRs for subsystems that lost their measured benefit, holdout rotation per D33.
 
 ---
 
-## 5. Contracts (refined baselines)
+## 5. Contracts (refined baselines, 1.1)
 
-These refine the report's conceptual schemas with the fields added by Section 2. They are the source for the zod definitions at Stage 0; every contract keeps the lifecycle block:
+Every contract keeps the lifecycle block:
 
 ```yaml
 schema_version: "1"
@@ -501,16 +553,18 @@ replacement: null
 migration_path: null
 ```
 
+Contracts are Zod 4 schemas; `z.toJSONSchema` with `target: "draft-2020-12"` and `unrepresentable: "throw"` emits `contracts/schemas/`. Dates are ISO-8601 strings; no `Date`, `Map`, `Set` or transforms in contract types (unrepresentable in JSON Schema, verified).
+
 ### 5.1 Asset (`knowledge/assets/<type>/<slug>/asset.yaml`)
 
 ```yaml
 id: "asset_01J9Z6Q0K3N6X4R8V2T7M5B1WQ"      # ULID, immutable (D19)
 type: "pattern"                             # pattern | skill | template | reference_test | reference_repo | lesson | failed_solution | provider | integration | fact | control_guidance
-slug: "oauth-pkce-web"                      # mutable
+slug: "oauth-pkce-web"
 title: "OAuth 2.1 PKCE for browser apps"
 summary: "≤ 400 chars, what `resolve` returns"
-status: "candidate"                         # candidate | active | superseded | quarantined | deprecated
-content_hash: "sha256:…"                    # over body.md + files/ (D19)
+status: "active"                            # active | restricted | quarantined | deprecated | superseded  (no staging states here, D19)
+content_hash: "sha256:…"
 legacy_ids: ["patterns/auth/oauth-pkce.md"]
 problem: { id: "problem.auth.browser-login", capabilities: ["auth.oauth.pkce"] }
 solution_set_id: "solset_01J…"
@@ -521,63 +575,70 @@ provenance:
 freshness: { class: "normal", last_verified_at: "…" }
 risk: { execution_authority: "data_only", blast_radius: "read_only" }
 relationships: { supersedes: [], superseded_by: [], related_to: [] }
-evidence_policy: { eligible_origins: ["qualification", "operational", "holdout"] }
+evidence_policy: { eligible_origins: ["qualification", "operational"] }   # never active holdout (D33)
 body: "body.md"
 files: []
 ```
 
-Champion is never a field here; it is derived from the Solution Set, `scoring-policy.yaml` and Evidence (D7).
-
-### 5.2 Project Profile (`.ieos/profile.yaml` in the target project)
+### 5.2 Project Profile (`.ieos/profile.yaml`)
 
 ```yaml
 schema_version: "1"
 project_id: "proj_01J…"
-eos: { pinned_release: "1.0.0", release_digest: "sha256:…" }
+eos: { pinned_release: "1.0.0", release_digest: "sha256:…" }   # Stage 0–3: { source_checkout: "<path>", index_digest: "…" }
 spec:
-  lifecycle: "prototype"                    # prototype | internal | production
+  lifecycle: "prototype"
   database_provider: "supabase"
   authentication_required: true
   deployment: "vercel"
   architecture_constraints: []
 decisions: [ { decision_id: "ADR-0003", subject: "database_provider", status: "accepted" } ]
 known_unknowns: ["production_user_count"]
-# status/observed lives in the Evidence Plane; drift = compare(spec, status)
 ```
 
 ### 5.3 Telemetry envelope
 
 ```yaml
 schema_version: "1"
-event_id: "evt_01J…"                        # idempotency key
-event_type: "tool.call"                     # closed enum, versioned
+event_id: "evt_01J…"                        # idempotency key, UNIQUE in outbox and plane
+event_type: "tool.call"
 project_id: "proj_…"
 work_id: "work_…"
 run_id: "run_…"
 installation_id: "inst_…"                   # D26
-session_kind: "remote_ephemeral"            # local_persistent | remote_ephemeral | ci (D23)
+emitter_id: "emt_…"                         # unique per process/run emitter (R-11)
+session_kind: "remote_ephemeral"            # local_persistent | remote_ephemeral | ci
 trace: { trace_id: "…", span_id: "…", parent_span_id: null, links: [] }
 time: { occurred_at: "…", observed_at: "…", ingested_at: null }
-source: { type: "agent", sequence: 42 }     # unique with (installation_id, source.type)
+source: { type: "agent", sequence: 42 }     # ordering key = (installation_id, emitter_id, sequence)
 revision: { repo_sha: "…", eos_release: "1.0.0" }
 harness: { agent: "claude-code", model: "…", adapter_version: "…", available_capabilities_hash: "…" }
-attributes: {}                              # only keys present in contracts/telemetry-attributes.yaml
+attributes: {}                              # only keys in contracts/telemetry-attributes.yaml
 ```
 
-### 5.4 Evidence
+Run-level state written by the runtime (not an event): `telemetry_state: COMPLETE | INCOMPLETE`, `qualification_eligible: bool`, `ingest_reachable_at_start: bool` (D23).
+
+### 5.4 Evidence (derived, D32)
 
 ```yaml
 schema_version: "1"
-evidence_id: "evd_01J…"
+evidence_id: "evd_<base32(sha256(run_id|deriver_id|deriver_version|input_snapshot_hash))>"
 subject: { type: "asset", id: "asset_…" }
 kind: "success"                             # success | failure | partial | verification | rework
 origin_class: "operational"                 # development | qualification | operational | holdout | external_attestation
+holdout_state: null                         # active | retired, when origin_class = holdout
 independence_group: "ig_…"
 strength: { polarity: "positive", weight: 0.0, confidence: 0.0 }
 attribution: { exposure: "applied", source_event_ids: ["evt_…"], trace_id: "…" }
-revision: { repo_sha: "…", deriver_version: "…" }
-scope: { paths: ["src/auth/**"], max_age_days: 90 }   # D27
-lifecycle: { created_at: "…", expires_at: null }
+derivation:
+  deriver_id: "attribution"
+  deriver_version: "3"
+  input_snapshot_hash: "sha256:…"
+  input_watermark: "…"                      # latest ingested_at consumed
+  derived_at: "…"                           # excluded from replay comparison
+  supersedes_derivation_id: null
+revision: { repo_sha: "…" }
+scope: { paths: ["src/auth/**"], depends_on: ["dependency:@supabase/ssr", "profile:authentication_required"], max_age_days: 90 }   # D27
 ```
 
 ### 5.5 Control
@@ -586,10 +647,10 @@ lifecycle: { created_at: "…", expires_at: null }
 schema_version: "1"
 id: "ctl_01J…"
 title: "Auth code paths have a security test"
-critical: false                             # only critical controls may fail closed
+critical: false
 applies_when: [ { fact: "authentication_required", eq: true }, { fact: "lifecycle", in: ["internal", "production"] } ]
 satisfied_by: [ { evidence_kind: "verification", subject_type: "control", min_confidence: 0.8 } ]
-default_scope: { paths: ["src/auth/**"], max_age_days: 90 }
+default_scope: { paths: ["src/auth/**"], depends_on: ["dependency:@supabase/ssr"], max_age_days: 90 }
 exemption: { allowed: true, max_days: 30, requires_decision: true }
 ```
 
@@ -597,17 +658,20 @@ exemption: { allowed: true, max_days: 30, requires_decision: true }
 
 ```text
 resolve(request: { task_hint, project_id, run_id, limit?, include_controls? })
-  → { items: [{ id, type, title, summary, project_fit, champion_of?, score, score_source }], omitted_count, controls: [...] }
+  → { context_snapshot_id, items: [{ id, type, title, summary, project_fit, champion_of?, score, score_source, evidence_count }], omitted_count, controls: [...] }
 
-inspect(request: { id, run_id })
-  → { asset (5.1 metadata), body, evidence_summary, challengers: [{ id, title, why_not_champion }] }
+inspect(request: { id | context_snapshot_id, run_id })
+  → asset: { asset, body, evidence_summary | "none", challengers: [{ id, title, why_not_champion }] }
+  → snapshot: { repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, score_source, score_snapshot_digest, overlay_digest, index_digest }
 
 expand(request: { task_hint, project_id, run_id, reason, beyond: "solution_set" | "type" | "corpus" })
   → same shape as resolve, plus { expansion_reason }
 
 observe(request: { run_id, kind, subject, evidence_refs?, note? })
-  → { observation_id, status: "recorded" }      # never touches canonical knowledge
+  → { observation_id, status: "recorded" }      # staging only, never canonical
 ```
+
+MCP annotations: `readOnlyHint: true` on `resolve`/`inspect`/`expand`; `idempotentHint: true` on `observe`. Server implements `server/discover`; lists carry `ttlMs` and `cacheScope`.
 
 ### 5.7 Release manifest
 
@@ -617,17 +681,31 @@ version: "1.0.0"
 tag: "v1.0.0"
 source_commit: "…"
 artifact_digest: "sha256:…"
-index_digest: "sha256:…"                    # knowledge.sqlite
-scores_snapshot_digest: "sha256:…"          # D24
-sbom_ref: "…"                               # D29
-attestation_ref: null                       # when the platform supports it
+index_digest: "sha256:…"
+scores_snapshot_digest: "sha256:…"
+sbom_ref: "…"
+release_attestation: { verified_by_launcher: true }     # immutable release attestation (GitHub), verified at activation
 contracts: { asset: "1", project_profile: "1", telemetry: "1", evidence: "1", control: "1", simulation: "1", agent_contract: "1" }
 ```
 
 ### 5.8 Installation manifest (`.ieos/installation.json`)
 
 ```json
-{ "schema_version": "1", "release": "1.0.0", "artifact_digest": "sha256:…", "bootstrap_template_hash": "sha256:…", "installed_at": "…", "installation_id": "inst_…" }
+{ "schema_version": "1", "release": "1.0.0", "artifact_digest": "sha256:…", "bootstrap_template_hash": "sha256:…", "installed_at": "…", "installation_id": "inst_…", "ingest_endpoint": "https://<project>.supabase.co/functions/v1/ingest" }
+```
+
+### 5.9 Installation credential (Evidence Plane side, D22)
+
+```sql
+create table installations (
+  id text primary key,                 -- inst_…
+  owner_id uuid not null,
+  token_hash bytea not null unique,    -- sha256 of the opaque token; token itself never stored
+  scopes text[] not null,              -- {'telemetry.insert','observation.insert','read.minimal'} or {'ci'}
+  label text, created_at timestamptz not null default now(),
+  expires_at timestamptz not null, revoked_at timestamptz, last_seen_at timestamptz
+);
+alter table installations enable row level security;   -- owner-only policies; the ingest function uses SECURITY DEFINER RPCs
 ```
 
 ---
@@ -639,15 +717,16 @@ contracts: { asset: "1", project_profile: "1", telemetry: "1", evidence: "1", co
 ```text
 You are building Improved-Engineering-OS. Read ARCHITECTURE.md (constitution) and BUILD-GUIDE.md fully.
 Rules:
-1. Work stage by stage in the order of BUILD-GUIDE.md Section 4. Do not start deliverables of a later
-   stage before the current stage's report exists in qualification/reports/, except tests and contracts.
+1. Work stage by stage in the order of BUILD-GUIDE.md Section 4. Stages 4+ are not started before the
+   Stage 3 real-agent slice has a passing report in qualification/reports/.
 2. Section 2.0 decisions are accepted unless the owner changed the row. Record each in docs/adr/.
-3. Every deliverable is a listed path. Ask before creating any directory not in Section 3.
-4. Never write into knowledge/ from runtime code. Never store or read sb_secret_/service_role anywhere.
-5. Unknown is UNKNOWN. Do not infer success. Do not change success criteria after a failure; revise the
-   manifest and keep the old failure.
+3. Deliverables are listed paths. Ask before creating a new top-level directory or package.
+4. Never write into knowledge/ from runtime code. Never store or read a secret key, service_role or owner
+   credential on a developer machine or agent container; the only client credential is the installation token.
+5. Unknown is UNKNOWN. Telemetry loss is INCOMPLETE, never success. Do not change success criteria after a
+   failure; revise the manifest and keep the old failure.
 6. Before adding a dependency: check current docs (Context7), pin exactly, note it in the PR body.
-7. Every PR: fitness green, tests green on the CI matrix, README/runbook updated in the same PR.
+7. Every PR: fitness green, tests green on the CI configuration of the current stage.
 8. Stop and report when: a fitness rule must be relaxed, a stage gate cannot be met without changing the
    architecture, a real target project is needed, or a credential/plan decision is required.
 Start with Stage 0.
@@ -656,103 +735,109 @@ Start with Stage 0.
 ### 6.2 Branch, commit and PR flow
 
 - `main` is release-only. One branch per stage slice: `stage-NN/<topic>`.
-- Commits: Conventional Commits (`feat(resolver): …`, `test(harness): …`) plus a trailer `Evidence: <test command or report path>`. Enforced by CI lint, not by a blocking local hook (the new system does not police workflow; it does verify).
-- PR body sections: `What`, `Why (ADR/stage)`, `Evidence` (commands and results), `Contracts touched`, `Debt watch` (anything deliberately deferred, with the Section 7 item it maps to).
-- Merge only when fitness, matrix CI and the stage-relevant simulation job are green and the owner approved.
+- Commits: Conventional Commits plus a trailer `Evidence: <test command or report path>`. Enforced by CI lint, not by a blocking local hook.
+- PR body sections: `What`, `Why (ADR/stage)`, `Evidence`, `Contracts touched`, `Debt watch`.
+- Merge only when fitness, the stage's CI configuration and the stage-relevant simulation job are green and the owner approved.
 
 ### 6.3 Definition of Done per PR
 
 - Tests for new behavior, including at least one negative case.
 - Fitness F1–F10 green.
 - Contracts regenerated; `contracts/schemas/` has no uncommitted diff.
-- README and runbooks reflect any new command or behavior.
-- No placeholder markers, no commented-out code, no `latest` anywhere in runtime paths.
+- README or runbooks updated **only if** a public command, contract or runbook changed.
+- No placeholder markers, no commented-out code, no `latest` in runtime paths.
 
 ### 6.4 Never list
 
 - Never bypass a failing simulation by editing its criteria in the same PR.
-- Never copy code from the old Engineering-OS `scripts/` into `packages/` (reference only; see Appendix A).
-- Never hard-code an agent, model, provider, or project name in `packages/core`.
-- Never add a UI, a daemon, embeddings, or a marketplace before the stage that justifies it.
-- Never skip the four-platform matrix for "quick" changes to launcher or telemetry.
+- Never copy code from the old Engineering-OS `scripts/` into `packages/` (reference only; Appendix A).
+- Never hard-code an agent, model, provider or project name in `packages/core`.
+- Never add a UI, a daemon, embeddings or a marketplace before the stage that justifies it.
+- Never commit telemetry, evidence or staging data to any Git repository.
+- Never let holdout evidence reach the scorer.
 
 ---
 
 ## 7. Open parameters register
 
-Numbers here are provisional until the named stage produces a baseline. Each becomes a versioned entry in the relevant `contracts/*-policy.yaml` or `docs/budgets.md` with the reason for every change.
-
 | # | Parameter | Provisional value | Decided at | From what data |
 |---|---|---|---|---|
 | 1 | Raw telemetry retention / cold storage | keep all until Stage 13 | Stage 13 | measured growth per run |
-| 2 | Evidence Plane RPO / RTO | RPO 24h (daily backup), RTO 1 working day | Stage 17 restore drill | drill timing |
-| 3 | Asset Score prior, weights, decay | uniform prior, no decay | Stage 10 | evidence distribution from Stages 8–9 |
-| 4 | Minimum independent evidence for Champion | 3 independence groups | Stage 10 | Champion challenge runs |
+| 2 | Evidence Plane RPO / RTO | RPO 24 h (daily backup), RTO 1 working day; PITR if RPO must shrink | Stage 17 restore drill | drill timing |
+| 3 | Asset Score prior, weights, decay | uniform prior, no decay | Stage 10 | evidence distribution from Stages 3–9 |
+| 4 | Minimum independent evidence for Champion | 3 independence groups, none holdout | Stage 10 | Champion challenge runs |
 | 5 | Champion replacement margin | not set | Stage 10 | same |
-| 6 | Freshness TTLs per class | stable 180d, normal 60d, volatile 7d, live_required 0 | Stage 11 | verification hit/miss log |
+| 6 | Freshness TTLs per class | stable 180 d, normal 60 d, volatile 7 d, live_required 0 | Stage 11 | verification hit/miss log |
 | 7 | Auto-mergeable promotion categories | none | Stage 10+ | promotion history |
-| 8 | Resolve latency / context budget | ≤ 1.5 s, ≤ 6 KB per resolve (provisional target for Stage 4 manifest) | Stage 8 | trial measurements |
-| 9 | Agent trial budget per simulation | set per manifest; harness aborts at 2× | Stage 8 | trial cost |
-| 10 | Trials and stopping rules per eval class | deterministic: 1; stochastic: 5 minimum | Stage 8 | observed variance |
+| 8 | Resolve latency / context budget | ≤ 1.5 s, ≤ 6 KB per resolve (provisional) | Stage 3 | slice measurements |
+| 9 | Agent trial budget per simulation | set per manifest; harness aborts at 2× | Stage 3 | trial cost |
+| 10 | Trials and stopping rules per eval class | deterministic 1; stochastic 5 minimum | Stage 3 | observed variance |
 | 11 | Release bake duration / ring thresholds | not set | Stage 17 | canary history |
 | 12 | Reproducibility-critical Evidence retention | indefinite | Stage 13 | storage cost |
-| 13 | Scale thresholds | 100k / 10k / 1M as stress margin only | Stage 13 | measured usage |
+| 13 | Scale thresholds | 100k / 10k / 1M stress margin | Stage 13 | measured usage |
 | 14 | Owner Defaults scope | none | after Stage 16 | repeated per-project config |
-| 15 | Supabase plan | Pro or self-hosted (D30) | Stage 5 | owner decision |
+| 15 | Installation token lifetime | 90 days, renewable | Stage 2 | enrol/rotate friction |
+| 16 | Ingest flush timeout and retry budget in ephemeral sessions | 5 s per flush, 3 retries | Stage 3 | INCOMPLETE rate |
+| 17 | Holdout set size and rotation cadence | ≥ 20 tasks, rotate when > 20% used for a release decision | Stage 14 | overfitting signals |
 
 ---
 
 ## Appendix A — Import map from the current Engineering-OS repository
 
-Computed on the current checkout of `yotamfried-ux/Engineering-OS`; the importer recomputes counts at run time and must not trust these numbers.
+Computed on the current checkout of `yotamfried-ux/Engineering-OS`; the importer recomputes counts at run time. **Stage 2** hand-selects 10–20 items from this map; **Stage 5** imports the rest through a Bulk Import Promotion PR.
 
 | Source path | Approx. size | Import as | Notes |
 |---|---|---|---|
-| `patterns/<domain>/**/*.md` + `patterns/registry.yaml` | 88 registry entries, 28 pattern README documents across 21 domains | `pattern` assets; registry `status/score/used_in` become provenance notes, never scores | All entries are `candidate`/`null` in the registry; import them as `candidate` with `evidence_policy` open. Group by `problem.id`. |
-| `templates/<type>/` | 27 template directories | `template` assets | `templates/hooks`, `templates/settings`, `templates/commands`, `templates/bypass-control-plane` are old-runtime artifacts: exclude or import as `lesson` references only. |
-| `external-systems/<service>/` | 49 service directories | `provider` assets (+ `integration` where the README documents a connector) | `external-systems/connectors/` maps to `integration`. |
-| `external-skills/<skill>/` | 10 skills | `skill` assets, `risk.execution_authority: executable` | Mandatory-activation rules in their SIP files are governance, not knowledge: strip. |
-| `docs/architecture-guides/`, `docs/frameworks/`, `docs/api-design/`, `docs/ui-ux/`, `docs/troubleshooting/` | part of 125 docs files | `pattern` or `fact` assets by content | Troubleshooting entries map well to `lesson`. |
-| `docs/official-docs/`, `docs/reference-repositories/`, `docs/api-references/` | — | `fact` / `reference_repo` assets with `freshness.class: volatile` | Live verification applies (Stage 11). |
-| `lessons-learned/bugs/*.md` | 19 lessons | `lesson` assets | Several are directly relevant to the new build (telemetry handoff, evidence keyed on mechanism, unit-vs-wiring); tag them `applies_to: ieos`. |
-| `lessons-learned/postmortems/*.md`, `prevention-strategies/*.md` | 2 + 1 | `lesson` | The experiment-1 postmortem documents *why* the old system chose hook policing; import as history, not as a rule. |
-| `failed-solutions/*.md` | 1 | `failed_solution` | Must never be returned by `resolve` (Stage 2 fixture). |
-| `architecture-decisions/ADR-*.md` | 2 | `fact` (decision records) | Provenance only. |
+| `patterns/<domain>/**/*.md` + `patterns/registry.yaml` | 88 registry entries, 28 pattern README documents across 21 domains | `pattern` assets, `status: active`, `evidence: none` | Registry `status/score/used_in` become provenance notes, never scores. Group by `problem.id`. |
+| `templates/<type>/` | 27 template directories | `template` assets | `hooks`, `settings`, `commands`, `bypass-control-plane` are old-runtime artifacts: exclude or import as `lesson` references. |
+| `external-systems/<service>/` | 49 service directories | `provider` (+ `integration` for `connectors/`) | |
+| `external-skills/<skill>/` | 10 skills | `skill` assets, `risk.execution_authority: executable` | Mandatory-activation rules are governance, not knowledge: strip. |
+| `docs/architecture-guides/`, `docs/frameworks/`, `docs/api-design/`, `docs/ui-ux/`, `docs/troubleshooting/` | part of 125 docs files | `pattern` or `fact` by content; troubleshooting → `lesson` | |
+| `docs/official-docs/`, `docs/reference-repositories/`, `docs/api-references/` | — | `fact` / `reference_repo`, `freshness.class: volatile` | Live verification applies (Stage 11). |
+| `lessons-learned/bugs/*.md` | 19 lessons | `lesson` | Several are directly relevant to the new build (telemetry handoff, evidence keyed on mechanism, unit-vs-wiring); tag `applies_to: ieos`. Stage 2 seed candidates. |
+| `lessons-learned/postmortems/*.md`, `prevention-strategies/*.md` | 2 + 1 | `lesson` | History, not rules. |
+| `failed-solutions/*.md` | 1 | `failed_solution` | Never returned by `resolve`. Stage 2 seed. |
+| `architecture-decisions/ADR-*.md` | 2 | `fact` | Provenance only. |
 | `core/capability-registry.yaml` | — | seed for `contracts/capabilities.yaml` (D28) | Keep ids; drop enforcement fields. |
-| `core/quality-gates.md`, `core/debugging-policy.md`, `core/learning-loop.md` | — | source material for Stage 9 Controls and Stage 6 derivers | Re-express as conditional Controls; do not import as workflow. |
-| `evals/engineering-os/*.jsonl` | 1 file | seed cases for `simulations/fixtures/` | Adversarial bank candidates. |
-| `docs/operations/*.md`, `docs/research/*.md` | 27 + 2 | **exclude** (old-runtime runbooks) except `project8-first-real-run-findings.md` → `lesson` | |
-| `scripts/**`, `.claude/**`, `.github/**`, `telemetry-archive/`, `.checkpoints/`, `graphify-out/`, `experiments/` | — | **exclude** | Old implementation; reference reading only (D16). Specific privacy/allowlist and atomic-write lessons are already captured as lessons above. |
-| `CLAUDE.md`, `CLAUDE.template.md`, `core/workflow.md`, `core/task-router.md`, `core/hooks-policy.md`, `core/precedence.md`, `core/coderabbit-policy.md`, `core/skill-orchestration-policy.md` | — | **exclude** as rules; import one `lesson` summarizing the governance-overhead retrospective | This is the "old governance" the report explicitly does not inherit. |
+| `core/quality-gates.md`, `core/debugging-policy.md`, `core/learning-loop.md` | — | source for Stage 9 Controls and Stage 7 derivers | Conditional controls, not workflow. |
+| `evals/engineering-os/*.jsonl` | 1 file | seed cases for `simulations/fixtures/` | |
+| `docs/operations/*.md`, `docs/research/*.md` | 27 + 2 | **exclude**, except `project8-first-real-run-findings.md` → `lesson` | |
+| `scripts/**`, `.claude/**`, `.github/**`, `telemetry-archive/`, `.checkpoints/`, `graphify-out/`, `experiments/` | — | **exclude** | Old implementation; reference only (D16). |
+| `CLAUDE.md`, `CLAUDE.template.md`, `core/workflow.md`, `core/task-router.md`, `core/hooks-policy.md`, `core/precedence.md`, `core/coderabbit-policy.md`, `core/skill-orchestration-policy.md` | — | **exclude** as rules; one `lesson` summarizing the governance-overhead retrospective | The old governance the report does not inherit. |
 
-Importer output requirements: inventory before/after, mapping table (`legacy_id → asset id`), duplicate groups with `content_hash`, exclusions with reasons, and a list of files needing manual classification (expected to be small; each manual decision is logged).
+## Appendix B — External facts: verification status (1.1)
 
-## Appendix B — External facts: verification status
+All rows marked "Verified" were checked in this session through Context7 against the vendor's official documentation.
 
-| Claim in the report | Status in this review | Source |
+| Claim used in this guide | Status | Source |
 |---|---|---|
-| MCP `2026-07-28` moved to a stateless core, removed the initialization handshake, requires a discovery RPC | Verified (Context7) | https://modelcontextprotocol.io/specification/2026-07-28/changelog |
-| Protocol-level sessions removed from Streamable HTTP; explicit handles for cross-call state; SSE resumability removed | Verified (Context7) | same changelog |
-| Caching utility alongside change notifications | Verified (Context7) | https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching |
-| HTTP+SSE transport deprecated | Verified (Context7) | https://modelcontextprotocol.io/specification/2026-07-28/deprecated |
-| Supabase publishable/secret keys replace anon/service_role; legacy keys deprecated by end of 2026; secret key bypasses RLS | Verified (Context7) | https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys |
-| Database backups exclude Storage objects | Verified (Context7) | https://supabase.com/docs/guides/platform/backups |
-| Free plan pauses after 7 idle days, no downloadable backups; Pro has daily backups | Verified (Context7), added by this review | https://supabase.com/docs/guides/deployment/going-into-prod |
-| GitHub Immutable Releases lock tag and assets; attestations must be verified | Not re-verified in this session | agent must fetch GitHub docs before Stage 1 release workflow |
-| MCP Registry is in preview; security scanning delegated | Not re-verified in this session | agent must fetch before Stage 11 |
-| OpenAI Evals platform read-only 31 Oct 2026, shutdown 30 Nov 2026 | Not re-verified in this session | informational only; no dependency planned |
-| Anthropic deferred tool loading; remote MCP trust warning | Not re-verified in this session | informational; consistent with D13 |
-| SWE-Bench Pro audit percentages | Not re-verified in this session | informational; motivates grader controls |
-| NIST SSDF framing | Not re-verified in this session | informational |
+| MCP `2026-07-28`: stateless core, initialization handshake removed, `server/discover` required, `ttlMs`/`cacheScope`, handles as tool arguments, HTTP+SSE deprecated | Verified | https://modelcontextprotocol.io/specification/2026-07-28/changelog · /server/discover · /server/tools · /deprecated |
+| Supabase publishable/secret keys replace anon/service_role; legacy keys deprecated by end of 2026; secret key bypasses RLS; `SUPABASE_SECRET_KEYS` env in functions | Verified | https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys |
+| Edge Functions: `Authorization` reserved for Supabase Auth JWTs, `apikey` for project keys; `--no-verify-jwt` to skip platform JWT check | Verified | https://supabase.com/docs/guides/functions/auth-headers · /guides/functions/function-configuration |
+| Supabase Pro: daily backups retained 7 days; Free: no daily backups, pauses after 7 idle days; PITR add-on; Storage objects excluded from database backups; pg_cron scheduling | Verified | https://supabase.com/docs/guides/platform/backups · /guides/deployment/going-into-prod · /guides/cron/quickstart |
+| Node.js 24 is LTS (since 24.11.0) supported through April 2028; Node 22 in maintenance until April 2027 | Verified | https://nodejs.org/en/blog/migrations/v22-to-v24 · https://nodejs.org/en/blog/release/v22.11.0 |
+| pnpm `packageManager` / `devEngines.packageManager`, `engineStrict`, `pnpm ci` (v11) | Verified | https://pnpm.io/package_json · https://pnpm.io/cli/ci · https://pnpm.io/settings/cli |
+| better-sqlite3: `journal_mode = WAL`, `timeout` (busy) option, `.transaction()` | Verified | https://github.com/wiselibs/better-sqlite3/blob/master/docs/api.md · docs/performance.md |
+| Zod 4 `z.toJSONSchema`, draft-2020-12 default, unrepresentable types (date, map, set, transform) throw | Verified | https://zod.dev/json-schema |
+| GitHub immutable releases lock tag and assets and generate a release attestation; `gh release verify`, `gh release verify-asset`, `gh attestation verify` | Verified | https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases · …/verifying-the-integrity-of-a-release |
+| GitHub App installation access tokens expire after 1 hour and can be scoped to repositories and permissions; creating/merging PRs needs `contents` and `pull_requests` permissions | Verified | https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app · https://docs.github.com/en/rest/pulls/pulls |
+| Claude Code: `.mcp.json` project scope; hooks `SessionStart`/`Stop`/`PostToolUse`; exit code 2 semantics per event; `claude -p --output-format json|stream-json`; Agent SDK `query()` with `setting_sources=[]`; cloud environments have network access controls | Verified | https://code.claude.com/docs/en/mcp-quickstart · /hooks · /best-practices · /agent-sdk/python · /cloud-environments |
+| Codex CLI: `codex exec --json --ephemeral --output-schema`; hooks (`SessionStart`, `SessionEnd`, `Stop`, `PostToolUse`, …) in `config.toml` or `hooks.json`; `AGENTS.md` discovery root→cwd with `AGENTS.override.md`; project `.codex/config.toml` layers with a denylist for credential-affecting keys; `codex mcp add` | Verified | https://github.com/openai/codex (codex-rs/exec, codex-rs/config, codex-rs/core/src/agents_md.rs) |
+| MCP Registry preview status; OpenAI Evals timeline; SWE-Bench Pro audit; NIST SSDF; Anthropic deferred tool loading | Not re-verified in this session | informational in the report; no design dependency |
 
 ## Appendix C — Glossary additions
 
 | Term | Definition |
 |---|---|
-| Installation | One machine or container image running an EOS release; identified by `installation_id`. |
-| Session kind | `local_persistent`, `remote_ephemeral`, or `ci`; selects the telemetry flush strategy. |
-| Handoff bundle | JSONL file of unacknowledged events committed to the working branch by an ephemeral session and imported by CI. |
+| Installation | One machine or container image running an EOS runtime; identified by `installation_id`; holds one revocable installation token. |
+| Installation token | Opaque per-installation credential accepted only by the `ingest` Edge Function; scopes `telemetry.insert`, `observation.insert`, `read.minimal`. |
+| Session kind | `local_persistent`, `remote_ephemeral`, or `ci`; selects the flush strategy. |
+| `telemetry_state` | `COMPLETE` or `INCOMPLETE` per run; `INCOMPLETE` runs are never qualification-eligible. |
 | Score snapshot | Release-time export of Asset Scores and Champion state used when the Evidence Plane is unreachable. |
-| Staleness scope | Path globs and max age that bound when a piece of Evidence stops being valid. |
+| Context snapshot | The inputs a `resolve` was computed from (repo SHA, profile digest, change scope, capability hash, score digests); addressable by `context_snapshot_id`. |
+| Staleness scope | Path globs, dependency selectors and max age that bound when Evidence stops being valid. |
+| Derivation | One deterministic run of a deriver over an input snapshot; identified by `evidence_id`; may supersede an earlier derivation. |
+| Active / retired holdout | Evidence origin that is never an optimization input while active; retiring it reclassifies it and requires a replacement set. |
+| Curator | Server-side function that turns Candidates into promotion PRs with its own identities; never merges. |
 | Fitness rule | An executable architectural invariant (F1–F10) that runs on every PR. |
 | Stage report | Harness-generated Markdown in `qualification/reports/` that closes a stage; the only artifact that may claim a gate passed. |
