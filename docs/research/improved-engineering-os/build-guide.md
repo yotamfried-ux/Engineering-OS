@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Document status | `1.4 — FINAL for Stage 0` — execution guide layered on the owner's `Architecture Baseline 1.0` report; design frozen after five review rounds. Further gaps are discovered through Stages 0–3, not through more design rounds. |
+| Document status | `1.4.1 — FINAL, FROZEN for Stage 0` — execution guide layered on the owner's `Architecture Baseline 1.0` report. Architecture phase closed after five review rounds plus one consistency patch. Further gaps are discovered through Stages 0–3, not through more design rounds. |
 | Source report | "Improved-Engineering-OS — דוח ארכיטקטורה סופי ותוכנית מימוש מבוססת ראיות" (4 Sep 2026) |
-| Supersedes | `1.3`, `1.2`, `1.1`, `1.0-review` (same file, PR #288 history) |
+| Supersedes | `1.4`, `1.3`, `1.2`, `1.1`, `1.0-review` (same file, PR #288 history) |
 | Written from | Engineering-OS repository, branch `claude/engineering-os-project-guide-roj911` |
 | Verified against | this repository's lessons and Project 8 findings; official docs via Context7 for Supabase, MCP `2026-07-28`, Node.js, pnpm, better-sqlite3, Zod 4, GitHub releases/attestations/Apps, Claude Code and Codex CLI (Appendix B) |
 | Consumers | (1) the owner, for the review verdict and the decisions to approve; (2) the coding agent that builds the new repository |
@@ -34,7 +34,7 @@
 
 **מה השתנה בגרסה 1.2.** סבב הביקורת השלישי (סעיף 1.5) סגר את הפערים האחרונים בחוזים ובגבולות האמון:
 
-- **Champion מוצמד ל-release.** Scores חיים ומתעדכנים; ההמלצה הקנונית משתחררת. Evidence חדש מסמן `champion_state: challenged` ופותח Promotion Proposal, אבל ברירת המחדל מתחלפת רק אחרי PR ו-release חדש (D34).
+- **Champion מוצמד ל-release.** Scores חיים ומתעדכנים; ההמלצה הקנונית משתחררת. Evidence חדש מסמן `challenge_state: challenged` ופותח Promotion Proposal, אבל ברירת המחדל מתחלפת רק אחרי PR ו-release חדש (D34).
 - **D31 פוצל.** Curator עם סמכות Supabase בלבד מייצר Promotion Proposal מאומת; Promoter נפרד, שרץ ב-GitHub Actions של הריפו הקנוני, מחזיק רק סמכות GitHub ופותח את ה-PR. אף רכיב אחד לא מחזיק את שתי הסמכויות.
 - **Stage 2 כולל evidence kernel מינימלי ו-investigation גולמי**, כדי ש-Stage 3 יוכל לדרוש telemetry → evidence → investigation בלי implementation זרוק. Stage 7 מרחיב, לא מחליף.
 - **Stage 3 הוא סוכן ראשי בלבד.** parity בין Claude ל-Codex עוברת ל-Stage 8.
@@ -50,7 +50,7 @@
 - **D24 עובד גם לפני שיש Evidence Plane:** Stages 0–1 מייצרים `scores.snapshot.json` דטרמיניסטי במצב `UNPROVEN`; snapshot אמיתי רק מ-Stage 2.
 - **Run Classification Authority (D36):** רק service principal (ה-harness) רושם מראש `run_id → origin_class`; ה-ingest חותם `origin_class` מרשומת ה-Run בלבד; run לא רשום = `operational`.
 - **Hashing Contract (D35):** RFC 8785 (JCS) ל-JSON, UTF-8, נרמול LF לטקסט, קבצים לפי נתיב יחסי בסדר לקסיקוגרפי, SHA-256. אותו כלל ל-`content_hash`, `context_snapshot_id`, `input_snapshot_hash` וחתימות proposal.
-- **Champion אחד מלפנים:** `resolve` מחזיר רק את ה-Champion עם `champion_state: pinned | challenged`; פרטי ה-Challenger רק ב-`inspect`/`expand`.
+- **Champion אחד מלפנים:** `resolve` מחזיר רק את ה-Champion עם סטטוס תצוגה אחד; פרטי ה-Challenger רק ב-`inspect`/`expand`.
 - **Score view קבוע ל-qualification:** `ranking_mode: live_overlay | recorded` ו-`score_view_id`; replay ו-qualification משתמשים ב-view מוקלט ובלתי-משתנה.
 - **Principals:** `principal_kind: installation | service`; Promoter ו-harness הם service principals עם scopes משלהם; מפתח ה-GitHub App נשמר כ-Actions secret בריפו הקנוני.
 - **חתימת ה-Curator מנוסחת ביושר:** מוכיחה שה-proposal הגיע מה-Evidence Plane המאושר, לא בידוד בין processes באותו פרויקט Supabase.
@@ -63,6 +63,14 @@
 - **`effective_score_view_id`.** ה-context snapshot שומר את קלטי הדירוג שבאמת השפיעו על אותה החלטה, לא רק digest. חקירה אחרי חודש יכולה לשחזר למה הוצע נכס מסוים, בלי לשמור עותק של כל הקטלוג בכל `resolve`.
 - **מסגור עץ ב-D35.** hash לכל קובץ, manifest ממוין, JCS, ואז SHA-256 אחד. בלי שרשור דו-משמעי של נתיבים ובתים.
 - **שני תיקוני ניסוח:** rotation של holdout לפי צריכה/חשיפה ולא לפי "שימוש בהחלטת release", ו-D34 מדויק יותר: release מוצמד מקבע את ה-Champion לכל Solution Set, לא את כל סדר התוצאות.
+
+**מה השתנה ב-1.4.1 (patch עקביות, בלי שינוי ארכיטקטורה).** ארבע נקודות בטקסט התנגשו זו בזו, ועוד דיוק אחד בסף ההכרעה:
+
+- **`champion_state` היו לו שני בעלים.** אותו שדה נשלט גם ב-Git/release וגם ב-Evidence Plane, בניגוד ל-State Ownership Constitution. עכשיו הוא מפוצל: `canonical_state: unresolved | pinned` בבעלות Git ו-release, ו-`challenge_state: none | challenged` שהוא ערך נגזר ב-runtime. ה-UX ב-`resolve` נשאר פשוט.
+- **D35 היה רחב מדי** והתנגש עם F5 (ה-launcher לא מייבא core) ועם D22 (hash של token). עכשיו מבחינים בין שלושה סוגים: canonical structured hashing ב-`hashing.ts`, שלמות artifact גולמי ב-launcher, ואימות credential במודול האימות. רק הראשון מגדיר זהויות קנוניות.
+- **D32 השתמש בפורמט hash שאינו D35.** `evidence_id` עובר ל-JCS כמו כל מזהה דטרמיניסטי אחר.
+- **Bootstrap Promotion סתר את D21 ו-F3.** לפני Stage 10 אין Promoter, ולכן ה-importer מייצר bundle מקומי בלבד וה-owner פותח את ה-PR. ה-importer לעולם לא עושה push. מ-Stage 10 ואילך: Curator → Promoter.
+- **סף ההכרעה דויק:** `reported` הוא אות ניקוד בלבד, `observed` הופך מועמד לראוי-ראיה, `corroborated` ומעלה נדרש להצעת promotion, ורק promotion מאושר עם release הופך set ל-`pinned`. אין מסלול נסתר מ-`unresolved` ל-`pinned`.
 
 **איך להשתמש:** פתח ריפו חדש, הכנס לתוכו את הדוח המקורי כ-`ARCHITECTURE.md` ואת המסמך הזה כ-`BUILD-GUIDE.md`, אשר או שנה את D18–D36 (טבלה בסעיף 2.0), ואז תן לסוכן את ההנחיה בסעיף 6.1. השאר כתוב באנגלית בכוונה: זו השפה שבה הסוכן מפרש מפרט בצורה הכי חד-משמעית.
 
@@ -191,7 +199,17 @@ One item the second round opened without closing: with R-02 and R-04, the compon
 | P-05 | wording | Open parameter 17 said "rotate when > 20% used for a release decision", contradicting D33's reported-only rule for active holdouts. | **Fixed.** Rotate on consumption/exposure in evaluation cycles, or on suspected contamination. |
 | P-06 | wording | D34 said a pinned release "always recommends the same default for the same inputs", which overstates the guarantee under `live_overlay`. | **Fixed.** A pinned release fixes the Champion per Solution Set; ordering and relevance across other assets may still move in `live_overlay`, and qualification uses `recorded`. |
 
-**Design freeze.** With 1.4 the design is frozen for Stage 0. Remaining unknowns are expected to surface through contract and property tests in Stage 0, composition in Stages 1–2, and above all the Stage 3 real-agent run, and are handled as stage findings rather than as further guide revisions before implementation.
+### 1.8 Consistency patch (C-01 … C-05) — 1.4.1
+
+| ID | Finding | Disposition |
+|---|---|---|
+| C-01 | `champion_state` was owned by both the release index and the Evidence Plane, violating the State Ownership Matrix. | Split into `canonical_state` (Git and release) and `challenge_state` (derived at runtime from the score view). `resolve` still presents one simple status. |
+| C-02 | D35 said all hashing goes through `hashing.ts`, which cannot hold together with F5 (launcher imports nothing) and D22 (`token_hash`). | Three hashing kinds distinguished: canonical structured hashing (core, defines EOS identities), raw artifact integrity (launcher), credential verification (auth). F12 and the Never list reworded accordingly. |
+| C-03 | `evidence_id` used pipe concatenation instead of the D35 canonical form. | `evidence_id = "evd_" + base32(sha256(JCS({ run_id, deriver_id, deriver_version, input_snapshot_hash })))`. Same rule for every deterministic id. |
+| C-04 | Stage 2 and Stage 5 imports enter through a PR, but F3 said only the Promoter produces branches, and the Promoter does not exist before Stage 10. | Bootstrap phase defined explicitly: before Stage 10 the import tool writes a local promotion bundle and the owner opens and reviews the PR; the tool never pushes. From Stage 10 machine-generated promotions go Curator → Promoter. F3 reworded. |
+| C-05 | Evidence thresholds allowed an implicit `unresolved → pinned` path at `observed`. | `reported` is a scoring signal only; `observed` makes a candidate or challenger evidence-worthy; `corroborated` or better is required for a Champion Promotion Proposal; only an approved promotion plus a release sets `canonical_state: pinned`. The exact numeric threshold stays an open parameter for Stage 10. |
+
+**Design freeze.** With 1.4.1 the architecture phase is closed and the guide is frozen for Stage 0. Remaining unknowns are expected to surface through contract and property tests in Stage 0, composition in Stages 1–2, and above all the Stage 3 real-agent run, and are handled as stage findings rather than as further guide revisions before implementation.
 
 ## 2. Added decisions (D18–D36)
 
@@ -217,7 +235,7 @@ Each row is `PROPOSED` with a recommended default. The coding agent proceeds wit
 | D31 Curator / Promoter split | Curator = scheduled Edge Function with Supabase authority only, emits signed Promotion Proposals; Promoter = GitHub Actions workflow in the canonical repo with a GitHub App installation token only (`contents: write`, `pull_requests: write`, single repo), validates the proposal and opens the PR | One component with both authorities (rejected: single compromise = plane admin + Git writer) |
 | D32 Derivation reproducibility | Deterministic evidence ids from `(run_id, deriver_id, deriver_version, input_snapshot_hash)`; supersession; replay comparison ignores identity/timestamps | Rejected: fresh ULID per derivation |
 | D33 Holdout policy | Active Holdout is never an optimization input; retirement reclassifies it as historical qualification evidence and requires a replacement set | Rejected: holdout results feed Champion selection |
-| D34 Release-pinned Champion | Canonical Champion per Solution Set is part of the release (index); `resolve` returns only the Champion with `champion_state: pinned \| challenged`; challenger detail in `inspect`/`expand`; live scores may only mark `challenged` and open a Promotion Proposal | Rejected: live score swaps the Champion or lists alternatives in `resolve` |
+| D34 Release-pinned Champion | Canonical Champion per Solution Set is part of the release index as `champion_id` + `canonical_state` (`unresolved \| pinned`); `challenge_state` (`none \| challenged`) is derived at runtime and never stored in Git; `resolve` returns only the Champion with one presentation status; challenger detail in `inspect`/`expand` | Rejected: live score swaps the Champion, lists alternatives in `resolve`, or writes state into Git |
 | D35 Hashing Contract | One project-wide rule: RFC 8785 (JCS) for JSON, UTF-8, LF-normalized text, files sorted by relative path, SHA-256; used by `content_hash`, `context_snapshot_id`, `input_snapshot_hash`, proposal signatures | Per-subsystem "canonical serialization" (rejected) |
 | D36 Run Classification Authority | Only a service principal (harness) may pre-register `run_id → origin_class, eval_set_version`; ingest stamps `origin_class` from the Run record; unregistered runs are `operational` | Client-declared origin (rejected) |
 
@@ -289,7 +307,7 @@ Supabase Evidence Plane
 ### D24 — Offline reads (PROPOSED)
 
 - **Bootstrap (Q-02).** In Stages 0–1 there is no Evidence Plane. The source build emits a deterministic `scores.snapshot.json` with `state: UNPROVEN`, every asset at the uniform prior, `evidence_count: 0`, `computed_at: null`, `scoring_policy_version: "0"`. Its hash is stable (D35) so Stage 0 fitness F8 already covers it.
-- **From Stage 2.** The release build (and the source build) queries the Evidence Plane through the `read.minimal` RPC and writes `scores.snapshot.json` (Asset Score, evidence counts, `champion_state` per Solution Set, `computed_at`, `scoring_policy_version`, `score_view_id`). The **Champion per Solution Set is not in this snapshot**: it is part of the release index (D34).
+- **From Stage 2.** The release build (and the source build) queries the Evidence Plane through the `read.minimal` RPC and writes `scores.snapshot.json` (Asset Score, evidence counts, derived `challenge_state` per Solution Set, `computed_at`, `scoring_policy_version`, `score_view_id`). The **Champion and its `canonical_state` are not in this snapshot**: they are part of the release index (D34, C-01).
 - **Ranking modes (Q-06).** `ranking_mode: live_overlay` (default for ordinary work) overlays live scores when reachable within a budget and otherwise falls back to the snapshot with `score_source: snapshot`. `ranking_mode: recorded` (mandatory for qualification, evals and replay) uses an immutable recorded score view identified by `score_view_id`; the harness pins it per simulation. In both modes the Champion comes from the release.
 - **Effective Score View (P-03).** Every `resolve` records the ranking inputs that actually affected it, not just a digest:
 
@@ -352,7 +370,7 @@ Rationale (T-02): Edge Function secrets are project-wide, so two functions in on
 
 ### D32 — Derivation reproducibility (NEW in 1.1)
 
-- `evidence_id = "evd_" + base32(sha256(run_id | deriver_id | deriver_version | input_snapshot_hash))`.
+- `evidence_id = "evd_" + base32(sha256(JCS({ run_id, deriver_id, deriver_version, input_snapshot_hash })))` per D35 (C-03). Every deterministic id in the project is formed the same way; no pipe or path concatenation.
 - `input_snapshot_hash` = hash over the ordered set of source event ids and external inputs (CI conclusions, review states) consumed by the derivation; `input_watermark` = latest `ingested_at` consumed.
 - Late input (CI failure a day later) produces a **new** derivation with a new `input_snapshot_hash` that `supersedes_derivation_id` the previous one; nothing is deleted.
 - Replay test: rerun the same deriver over the same snapshot → identical `evidence_id` and identical payload after stripping `derived_at`.
@@ -371,7 +389,16 @@ Rationale (T-02): Edge Function secrets are project-wide, so two functions in on
   | CI passed independently on the same repo SHA | `ci` | `corroborated` |
   | a GitHub check result for that exact SHA | `external` | `externally_verified` |
 
-  Rule: **client-originated operational telemetry alone can never produce `directly_verified` attribution or `externally_verified` integrity.** The deriver stamps both fields from the event source and the Run record (D36), never from event content. `scoring-policy.yaml` caps the weight of `reported` evidence and requires at least `observed` for `challenger_ready` and at least `corroborated` for a Champion promotion proposal. A compromised installation can therefore nudge a score slightly; it cannot move a Champion.
+  Rule: **client-originated operational telemetry alone can never produce `directly_verified` attribution or `externally_verified` integrity.** The deriver stamps both fields from the event source and the Run record (D36), never from event content. `scoring-policy.yaml` applies the eligibility ladder (C-05):
+
+  | Integrity reached | What it may do |
+  |---|---|
+  | `reported` | contribute a capped scoring signal only |
+  | `observed` | make a candidate or challenger evidence-worthy |
+  | `corroborated` or `externally_verified` | make a Solution Set eligible for a Champion Promotion Proposal |
+  | approved promotion + release | actually set `canonical_state: pinned` |
+
+  There is no path from `unresolved` to `pinned` that skips a promotion. A compromised installation can nudge a score slightly; it cannot move or create a Champion.
 
 ### D33 — Holdout policy (NEW in 1.1)
 
@@ -389,35 +416,38 @@ Rationale (T-02): Edge Function secrets are project-wide, so two functions in on
 ### D34 — Release-pinned Champion (NEW in 1.2)
 
 ```text
-Evidence Plane → live Asset Scores → champion_state: challenged (per Solution Set)
+Evidence Plane → live Asset Scores → challenge_state: challenged (derived, per Solution Set)
       → Qualification → Promotion Proposal (Curator) → PR (Promoter) → owner merge
       → new canonical Champion in knowledge/solution-sets/*.yaml → next EOS release
 ```
 
 - The canonical Champion of each Solution Set is a field in `knowledge/solution-sets/<id>.yaml` and is compiled into the release index. **A pinned release fixes the Champion of every resolved Solution Set** (P-06). It does not freeze the whole result list: under `ranking_mode: live_overlay` ordering and relevance across other assets and sets may still move; qualification and replay use `ranking_mode: recorded`.
-- **A Solution Set may legitimately have no Champion (P-01).** `champion_id` is nullable and the state machine is:
+- **A Solution Set may legitimately have no Champion (P-01), and its state has two owners kept apart (C-01).**
+
+  | Field | Owner | Values | Changes when |
+  |---|---|---|---|
+  | `champion_id` | Canonical Git, compiled into the release | `null` or an asset id | a promotion merges and a release is cut |
+  | `canonical_state` | Canonical Git, compiled into the release | `unresolved \| pinned` | same |
+  | `challenge_state` | Evidence Plane, derived at runtime into the score view | `none \| challenged` | live scores cross the challenger threshold |
 
   ```text
-  UNRESOLVED  ──sufficient independent, at-least-observed evidence──▶  PINNED
-      ▲                                                                  │
-      │                                            stronger challenger evidence
-      │                                                                  ▼
-      └──────────── quarantine / withdrawal ──────────────────────  CHALLENGED
-                                                                         │
-                                                    promotion + release  │
-                                                                         ▼
-                                                                  PINNED (new champion)
+  canonical_state:  UNRESOLVED ──promotion proposal + owner merge + release──▶ PINNED
+                        ▲                                                       │
+                        │  withdrawal / quarantine promotion                     │ promotion of a challenger
+                        └───────────────────────────────────────────────────────┘
+
+  challenge_state:  NONE ⇄ CHALLENGED        (derived; never written to Git, never changes canonical_state)
   ```
 
-  Freshly imported sets whose members are all unproven start `unresolved`; the Stage 5 importer groups sets and never chooses a Champion, which is now consistent with this contract.
+  Freshly imported sets whose members are all unproven start `unresolved`; the Stage 5 importer groups sets and never chooses a Champion, which is consistent with this contract. Leaving `unresolved` requires the C-05 ladder: evidence at `corroborated` or better, a promotion proposal, an owner merge and a release.
 - **What `resolve` does with an unresolved set.** It does not pick a temporary winner. It returns `coverage: { unresolved_solution_set: true, solution_set_id, member_count }` and a handle to the problem, so the agent knows EOS has relevant knowledge but no canonical answer. The candidates, their evidence state and the reason the set is unresolved appear in `inspect` of the set handle or in `expand(beyond: "solution_set")`. One solution in front, only when there is a real justification that it is the canonical one.
-- Live scores never replace the Champion at runtime. They may set `champion_state: challenged` on the Solution Set. **`resolve` returns only the Champion** (one solution in front, Q-05) with `champion_state: pinned | challenged`; the challenger's identity, live score, margin and evidence difference appear only in `inspect` of the Champion or in `expand(beyond: "solution_set")`. Knowledge keeps learning behind the scenes without handing the agent a list of maybes.
+- Live scores never replace the Champion at runtime. They may set `challenge_state: challenged` in the score view, never in Git. **`resolve` returns only the Champion** (one solution in front, Q-05) with a single presentation status derived from both owners (`pinned`, `pinned (challenged)`, or an unresolved-set coverage entry); the challenger's identity, live score, margin and evidence difference appear only in `inspect` of the Champion or in `expand(beyond: "solution_set")`. Knowledge keeps learning behind the scenes without handing the agent a list of maybes.
 - A Champion change is a promotion: Curator proposal → Promoter PR → owner merge → release. `contracts/promotion-policy.yaml` may later allow auto-merge for this category once Stage 10 has data.
-- Fitness rule F11 (from Stage 2): the resolver's Champion selection reads only the release index, never the score overlay. F11 also fails any code path that substitutes a highest-scoring asset when `champion_id` is null.
+- Fitness rule F11 (from Stage 2): the resolver's Champion selection reads `champion_id` and `canonical_state` only from the release index, never from the score overlay; `challenge_state` may come only from the score view and may never be written to `knowledge/`. F11 also fails any code path that substitutes a highest-scoring asset when `champion_id` is null.
 
 ### D35 — Hashing Contract (NEW in 1.3)
 
-One rule for every hash and signature in the project; no subsystem defines its own "canonical serialization".
+One rule for **canonical structured hashing**: no subsystem defines its own canonical serialization or its own domain-identity hash. Two narrow exceptions are named explicitly below (C-02).
 
 ```text
 JSON records      → RFC 8785 JSON Canonicalization Scheme (JCS), then UTF-8 bytes
@@ -432,7 +462,17 @@ Hash              → SHA-256; textual form "sha256:<lowercase hex>"; ids use ba
 Signatures        → Ed25519 over the SHA-256 of the JCS bytes of the signed object
 ```
 
-Applies to `content_hash`, `context_snapshot_id`, `input_snapshot_hash`, `evidence_id`, `score_view_id`, `index_digest`, `champions_digest`, `bootstrap_template_hash` and Promotion Proposal signatures. `packages/core/src/hashing.ts` is the single implementation; fitness rule F12 fails any other `createHash(` call outside it. Cross-platform fixture: the same asset tree hashed on Linux and Windows CI must yield identical digests (Stage 0 exit gate).
+Applies to `content_hash`, `context_snapshot_id`, `effective_score_view_id`, `input_snapshot_hash`, `evidence_id`, `score_view_id`, `index_digest`, `champions_digest`, `bootstrap_template_hash` and Promotion Proposal signatures. `packages/core/src/hashing.ts` is the single implementation.
+
+**Three kinds of hashing, only the first canonical (C-02):**
+
+| Kind | Where | What it hashes | May define an EOS identity |
+|---|---|---|---|
+| Canonical structured hashing | `packages/core/src/hashing.ts` | JCS records, tree manifests, ids, snapshots, proposals | yes |
+| Raw artifact integrity | `packages/launcher` | SHA-256 over the raw bytes of a downloaded release artifact | no |
+| Credential verification | the auth module and the `ingest` function | SHA-256 of a random opaque token (D22) | no |
+
+The two exceptions hash opaque bytes, never a structured domain object, so they cannot invent a canonical identity and do not require the launcher to import `core` (F5). Cross-platform fixture: the same asset tree hashed on Linux and Windows CI must yield identical digests (Stage 0 exit gate).
 
 ### D36 — Run Classification Authority (NEW in 1.3)
 
@@ -584,7 +624,7 @@ Stage 17 RC → Stable
 **Deliverables.**
 
 - `packages/core/src/contracts/{asset,telemetry,evidence,agent-contract,simulation}.ts` (Zod 4) with the lifecycle block on each; `project-profile`, `control`, `release` contracts are *stubs* with `stability: development` until their stages.
-- `packages/core/src/hashing.ts` (D35, the only hashing implementation), `packages/core/src/ids.ts` (ULID + type prefix, `content_hash`, deterministic `evidence_id` per D32), `packages/core/src/ports/*`; `runs` and `principals` contracts (D36, Q-07), the `solution_set` contract with nullable `champion_id` and `champion_state` (D34, P-01), the Evidence `integrity` fields (D32, P-02) and the Effective Score View contract (D24, P-03), so none of them needs a later migration.
+- `packages/core/src/hashing.ts` (D35, the only hashing implementation), `packages/core/src/ids.ts` (ULID + type prefix, `content_hash`, deterministic `evidence_id` per D32), `packages/core/src/ports/*`; `runs` and `principals` contracts (D36, Q-07), the `solution_set` contract with nullable `champion_id`, `canonical_state` and derived `challenge_state` (D34, P-01, C-01), the Evidence `integrity` fields (D32, P-02) and the Effective Score View contract (D24, P-03), so none of them needs a later migration.
 - `contracts/capabilities.yaml` seeded from the old repo's `core/capability-registry.yaml`; `contracts/telemetry-attributes.yaml` initial allowlist.
 - `docs/adr/ADR-0001-architecture-baseline.md` (accepts D1–D17 by reference to `ARCHITECTURE.md`) and one ADR per D18–D36 with the owner's answers from Section 2.0.
 - `tools/harness/`: `sandbox.ts` (fresh temp dir per trial, no inherited env, `evaluator/` never mounted), `drivers/claude-code.ts` (Agent SDK `query()` with `setting_sources=[]` and explicit `allowed_tools`, or `claude -p --output-format stream-json`), `drivers/codex.ts` (`codex exec --json --ephemeral`, optional `--output-schema`), `graders/{deterministic,trace,model}.ts`, `collect.ts`, `report.ts`, `budget.ts`.
@@ -598,7 +638,7 @@ Stage 17 RC → Stable
 |---|---|---|
 | F1 | `packages/core` contains no `claude`, `codex`, `anthropic`, `openai`, `supabase` identifiers and imports nothing outside itself | dependency-cruiser + grep |
 | F2 | adapters never own knowledge semantics: nothing under `adapters/` defines ranking or reads `knowledge/` directly | dependency-cruiser |
-| F3 | nothing under `packages/` writes into `knowledge/` at runtime; only the Promoter workflow produces branches | filesystem-write guard in tests + grep |
+| F3 | runtime code never mutates canonical knowledge: nothing under `packages/` writes into `knowledge/` at runtime. Before Stage 10, bootstrap imports enter only through an owner-created, reviewed PR and the import tool never pushes. From Stage 10 onward, machine-generated promotions are produced by the Promoter workflow only (C-04) | filesystem-write guard in tests + grep for push/branch calls in `tools/` and `packages/` |
 | F4 | `resolver`, `assurance`, `evidence-derivation` import no `store-*` package and no raw telemetry types | dependency-cruiser |
 | F5 | `launcher` imports only Node built-ins | dependency-cruiser + dependency count = 0 |
 | F6 | no real target-project names or absolute project paths in runtime/configuration paths (`packages/`, `contracts/`, `knowledge/`, `supabase/`, `simulations/`, `fitness/`, `tools/`, `.github/`); `docs/`, root Markdown and `qualification/` excluded via `fitness/exclusions.yaml` | scoped grep |
@@ -607,7 +647,7 @@ Stage 17 RC → Stable
 | F9 | no key-shaped secret values anywhere (`sb_secret_[A-Za-z0-9]{20,}`, JWT-shaped, GitHub App private key headers); no privileged client construction outside `supabase/functions`; identifier words allowed in docs and in fixtures listed in `fitness/allowlist.yaml` | secret-value scan + scoped grep |
 | F10 | every Simulation Manifest references an evaluator entry that exists outside `simulations/` | manifest linter |
 | F11 | Champion selection in `resolver` reads only the release index, never the live score overlay (D34) | unit test + dependency-cruiser on the overlay module |
-| F12 | all hashing goes through `packages/core/src/hashing.ts` (D35); no other `createHash(` call | grep + dependency-cruiser |
+| F12 | no subsystem defines its own canonical serialization or domain-identity hashing outside `packages/core/src/hashing.ts` (D35). Raw artifact integrity in `packages/launcher` and credential hashing in the auth path are the only permitted `createHash(` sites outside it, are listed in `fitness/allowlist.yaml`, and may not produce an EOS identity (C-02) | grep + dependency-cruiser + allowlist |
 
 **Tests and simulations.** Contract property tests (valid accepted, invalid rejected with reason, unknown enum tolerated where declared). Harness self-test: two trials cannot see each other's state; a trial referencing a non-existent Run is rejected; the agent sandbox contains no `evaluator/` path. Grader validity: each grader has positive, negative and mutation controls. D32 replay test on a synthetic derivation.
 
@@ -629,7 +669,7 @@ Stage 17 RC → Stable
 
 **Deliverables.**
 
-- 10–20 representative assets hand-selected from the legacy corpus (Appendix A), imported through a *manual* promotion PR with `legacy_ids` and `provenance` (the bulk importer comes at Stage 5). Include at least one `lesson`, one `failed_solution`, two assets in the same Solution Set, one `control_guidance`.
+- 10–20 representative assets hand-selected from the legacy corpus (Appendix A), entering through the **bootstrap path** (C-04): the tool writes a local promotion bundle, the owner opens and reviews the PR, and nothing machine-generated pushes a branch. Each asset carries `legacy_ids` and `provenance` (the bulk importer comes at Stage 5). Include at least one `lesson`, one `failed_solution`, two assets in the same Solution Set, one `control_guidance`.
 - `resolver` v1 (D20.3) over the index, Champion from the release index (D34, F11) including the `unresolved` path (P-01); `inspect` returning body + `evidence: none`; durable `context_snapshot_id` and Effective Score View (D25, D24).
 - **Minimal evidence kernel (T-03):** `evidence-derivation` v0 with one deriver (`attribution`: `EXPOSED | INSPECTED | APPLIED` from `resolve`/`inspect`/`observe` events) producing D32 deterministic ids locally from the outbox; `ieos investigate <run_id>` v0 printing the raw event timeline plus the derived attribution rows. Stage 7 adds the server-side Deriver, more derivers and supersession handling on top of the same contracts; nothing here is throwaway.
 - `telemetry` v1: envelope (Section 5.3), allowlist sanitizer, `session_kind`, SQLite WAL outbox, boundary flush; `supabase/migrations/0001_*.sql` (`principals`, `runs`, `raw_events`, `observations` with `UNIQUE(observation_id)`, `context_snapshots`, RLS on, `owner_id`); `supabase/functions/ingest` per D22 including the D22.6 invariants; `ieos auth enroll|rotate|revoke`.
@@ -663,7 +703,7 @@ Stage 17 RC → Stable
 
 ### Stage 5 — Bulk import of the legacy corpus via promotion PR
 
-**Deliverables.** `tools/import-legacy/`: classifies every file in Appendix A, mints ids, records `legacy_ids`, computes `content_hash`, applies the D19 merge rule, groups Solution Sets and leaves every one of them `unresolved` with `champion_id: null` (D34, P-01), and **emits a promotion PR branch** (`promotion.yaml` + assets) plus `qualification/reports/import-<date>.md` (inventory before/after, mapping, duplicate groups, exclusions with reasons, manual-classification list). Idempotent re-run produces no diff. The owner approves the batch by merging.
+**Deliverables.** `tools/import-legacy/`: classifies every file in Appendix A, mints ids, records `legacy_ids`, computes `content_hash`, applies the D19 merge rule, groups Solution Sets and leaves every one of them `unresolved` with `champion_id: null` (D34, P-01), and **writes a local promotion bundle** (`promotion.yaml` + assets) for the owner to open as a PR, never pushing a branch itself (C-04), plus `qualification/reports/import-<date>.md` (inventory before/after, mapping, duplicate groups, exclusions with reasons, manual-classification list). Idempotent re-run produces no diff. The owner approves the batch by merging.
 
 **Simulations.** Full import; import twice; three near-duplicate auth patterns → one Solution Set with two merged duplicates and one distinct-context asset; `failed_solution` never returned by `resolve` (fixture reused by resolver tests).
 
@@ -695,9 +735,9 @@ Stage 17 RC → Stable
 
 ### Stage 10 — Scoring, Champion, Curator, promotion policy
 
-**Deliverables.** `contracts/scoring-policy.yaml` (versioned), `evidence-derivation/score.ts` deterministic and replayable, `supabase/functions/curate` (D31 Curator, signed proposals) and `.github/workflows/promote.yml` (D31 Promoter) opening promotion PRs, Champion changes as promotions (D34), `contracts/promotion-policy.yaml` (everything requires owner merge initially), `releases/scores-snapshot.ts`, D33 holdout enforcement in the scorer (active holdout excluded by construction, with a test).
+**Deliverables.** `contracts/scoring-policy.yaml` (versioned), `evidence-derivation/score.ts` deterministic and replayable, `supabase/functions/curate` (D31 Curator, signed proposals) and `.github/workflows/promote.yml` (D31 Promoter) opening promotion PRs, which is the point at which machine-generated promotions replace the bootstrap path (C-04); Champion changes as promotions setting `canonical_state` (D34), `contracts/promotion-policy.yaml` (everything requires owner merge initially), `releases/scores-snapshot.ts`, D33 holdout enforcement in the scorer (active holdout excluded by construction, with a test).
 
-**Simulations.** 500 correlated repeats discounted; critical failure quarantines; a live score swing never changes the pinned Champion, only `champion_state`, and never appears in `resolve` output beyond that flag; Champion changes only via proposal → PR → release after independent non-holdout evidence; two Champions impossible; a proposal with an invalid signature is rejected by the Promoter; an unresolved set stays unresolved until evidence at `observed` or better exists, and `reported`-only evidence never reaches `challenger_ready`; recompute under previous policy reproduces previous score.
+**Simulations.** 500 correlated repeats discounted; critical failure quarantines; a live score swing never changes `champion_id` or `canonical_state` and never writes to `knowledge/`, only `challenge_state` in the score view; Champion changes only via proposal → PR → release after independent non-holdout evidence; two Champions impossible; a proposal with an invalid signature is rejected by the Promoter; an unresolved set stays unresolved until evidence at `corroborated` or better justifies a proposal, `observed` evidence can at most make a challenger evidence-worthy, and `reported`-only evidence never does either; recompute under previous policy reproduces previous score.
 
 ### Stage 11 — External ecosystem
 
@@ -815,7 +855,7 @@ Run-level state written by the runtime (not an event): `telemetry_state: COMPLET
 
 ```yaml
 schema_version: "1"
-evidence_id: "evd_<base32(sha256(run_id|deriver_id|deriver_version|input_snapshot_hash))>"
+evidence_id: "evd_<base32(sha256(JCS({run_id, deriver_id, deriver_version, input_snapshot_hash})))>"   # D35
 subject: { type: "asset", id: "asset_…" }
 kind: "success"                             # success | failure | partial | verification | rework
 origin_class: "operational"                 # development | qualification | operational | holdout | external_attestation
@@ -855,13 +895,13 @@ exemption: { allowed: true, max_days: 30, requires_decision: true }
 ```text
 resolve(request: { task_hint, project_id, run_id, limit?, include_controls?, ranking_mode?: "live_overlay" | "recorded", score_view_id? })
   → { context_snapshot_id, ranking_mode, effective_score_view_id,
-      items: [{ id, type, title, summary, project_fit, champion_of?, champion_state?: "pinned" | "challenged", score, score_source, evidence_count }],
+      items: [{ id, type, title, summary, project_fit, champion_of?, champion_status?: "pinned" | "pinned_challenged", score, score_source, evidence_count }],   # champion_status is presentation only: canonical_state from the release + challenge_state from the score view (C-01)
       coverage: [{ solution_set_id, unresolved_solution_set: true, member_count, problem_id }],   # P-01: relevant set with no canonical answer
       omitted_count, controls: [...] }   # one Champion per resolved Solution Set, from the release index (D34); no challenger entries
 
 inspect(request: { handle: { kind: "asset" | "snapshot" | "solution_set", id }, run_id })
-  → asset: { asset, body, evidence_summary | "none", champion_source: "release", champion_state, challenger?: { id, title, live_score, margin, evidence_difference, why_not_champion } }
-  → solution_set: { id, problem_id, champion_state, champion_id | null, members: [{ id, title, evidence_state, integrity_best }], why_unresolved }
+  → asset: { asset, body, evidence_summary | "none", champion_source: "release", canonical_state, challenge_state, challenger?: { id, title, live_score, margin, evidence_difference, why_not_champion } }
+  → solution_set: { id, problem_id, canonical_state, champion_id | null, challenge_state, members: [{ id, title, evidence_state, integrity_best }], why_unresolved }
   → snapshot: { repo_sha, profile_status_digest, change_scope, capability_snapshot_hash, index_digest, ranking_mode, effective_score_view_id, score_source, eos_release }
 
 expand(request: { task_hint, project_id, run_id, reason, beyond: "solution_set" | "type" | "corpus" })
@@ -885,7 +925,7 @@ index_digest: "sha256:…"
 scores_snapshot_digest: "sha256:…"
 sbom_ref: "…"
 release_attestation: { status: "verified" | "unverified", verifier: "gh" | "sigstore-lib" | null }   # digest is always verified in-launcher; attestation via official tooling (T-08)
-champions_digest: "sha256:…"                # hash of the Solution Set champion assignments compiled into this release (D34)
+champions_digest: "sha256:…"                # hash of the Solution Set champion_id + canonical_state assignments compiled into this release (D34, C-01)
 score_view_id: "sv_…"                       # recorded score view shipped with this release (D24, Q-06); all digests per D35
 contracts: { asset: "1", project_profile: "1", telemetry: "1", evidence: "1", control: "1", simulation: "1", agent_contract: "1" }
 ```
@@ -951,18 +991,23 @@ problem_id: "problem.auth.browser-login"
 compatibility_key: "web|supabase-auth"        # with problem_id defines the equivalence class (D28)
 members: ["asset_01J…", "asset_01K…", "asset_01M…"]
 
-champion_state: "unresolved"                  # unresolved | pinned | challenged   (P-01)
-champion_id: null                             # null while unresolved; an asset id otherwise
+# Canonical state: owned by Git, compiled into the release (C-01)
+canonical_state: "unresolved"                 # unresolved | pinned
+champion_id: null                             # null exactly when canonical_state = unresolved
 champion_since_release: null                  # release that pinned the current champion
-why_unresolved: "all members unproven at import; no evidence at observed or better"
+why_unresolved: "all members unproven at import; no evidence at corroborated or better"
 
-challenger:                                   # present only when champion_state = challenged
-  asset_id: null
-  margin: null
-  proposal_id: null
+# challenge_state is NOT stored here. It is derived at runtime into the Effective Score View:
+#   challenge_state: none | challenged
+#   challenger: { asset_id, margin, proposal_id }
 ```
 
-Invariants, enforced by contract tests at Stage 0 and by fitness F11: `champion_id` is non-null exactly when `champion_state` is `pinned` or `challenged`; a transition into `pinned` requires the independent-evidence threshold from `scoring-policy.yaml` with integrity at least `observed`; the release index compiles `champion_state` and `champion_id` verbatim; no resolver path may substitute a highest-scoring member for a null champion.
+Invariants, enforced by contract tests at Stage 0 and by fitness F11:
+
+- `champion_id` is non-null exactly when `canonical_state` is `pinned`.
+- A transition into `pinned` requires the C-05 ladder: independent evidence at integrity `corroborated` or better, meeting the threshold in `scoring-policy.yaml`, then a Promotion Proposal, an owner merge and a release. There is no runtime transition.
+- The release index compiles `canonical_state` and `champion_id` verbatim; `challenge_state` never appears in `knowledge/` or in the index.
+- No resolver path may substitute a highest-scoring member for a null champion.
 
 ---
 
@@ -1012,8 +1057,9 @@ Start with Stage 0.
 - Never commit telemetry, evidence or staging data to any Git repository.
 - Never let holdout evidence reach the scorer.
 - Never let a live score change the pinned Champion at runtime, and never list challengers in `resolve`; Champion changes are promotions (D34).
-- Never hash or sign outside `packages/core/src/hashing.ts` (D35). Never let a client set `origin_class` (D36) or `integrity` (D32).
-- Never invent a Champion for an unresolved Solution Set, in the importer, the resolver or the scorer (D34).
+- Never define canonical EOS hashing, serialization or domain identities outside `packages/core/src/hashing.ts` (D35); raw artifact integrity and credential hashing are the only exceptions and never produce an identity. Never let a client set `origin_class` (D36) or `integrity` (D32).
+- Never invent a Champion for an unresolved Solution Set, in the importer, the resolver or the scorer, and never move a set to `pinned` without a merged promotion and a release (D34, C-05).
+- Never let an import tool push a branch; before Stage 10 the owner opens the PR, after it the Promoter does (C-04).
 - Never implement signature or attestation verification by hand; digest in-launcher, attestation via official tooling (T-08).
 
 ---
@@ -1025,7 +1071,7 @@ Start with Stage 0.
 | 1 | Raw telemetry retention / cold storage | keep all until Stage 13 | Stage 13 | measured growth per run |
 | 2 | Evidence Plane RPO / RTO | RPO 24 h (daily backup), RTO 1 working day; PITR if RPO must shrink | Stage 17 restore drill | drill timing |
 | 3 | Asset Score prior, weights, decay | uniform prior, no decay | Stage 10 | evidence distribution from Stages 3–9 |
-| 4 | Minimum independent evidence to leave `unresolved` or change Champion | 3 independence groups, none holdout, integrity at least `observed` (`corroborated` for a promotion proposal) | Stage 10 | Champion challenge runs |
+| 4 | Minimum independent evidence to leave `unresolved` or change Champion | 3 independence groups, none holdout, integrity at least `corroborated` for the promotion proposal (`observed` only makes a challenger evidence-worthy) | Stage 10 | Champion challenge runs |
 | 5 | Champion replacement margin | not set | Stage 10 | same |
 | 6 | Freshness TTLs per class | stable 180 d, normal 60 d, volatile 7 d, live_required 0 | Stage 11 | verification hit/miss log |
 | 7 | Auto-mergeable promotion categories | none | Stage 10+ | promotion history |
@@ -1102,6 +1148,8 @@ All rows marked "Verified" were checked in this session through Context7 against
 | Promoter | GitHub Actions workflow with GitHub authority only that validates a Promotion Proposal and opens the PR; never merges. |
 | Release-pinned Champion | The Solution Set default compiled into a release; live scores can only flag a challenger. |
 | Unresolved Solution Set | A set with relevant members but no evidence-justified Champion; `resolve` reports it as coverage instead of choosing one. |
+| Canonical state / challenge state | `canonical_state` (`unresolved \| pinned`) is owned by Git and the release; `challenge_state` (`none \| challenged`) is derived at runtime and never written to Git. |
+| Bootstrap promotion | Before Stage 10, an import tool writes a local promotion bundle and the owner opens the PR; the tool never pushes. |
 | Effective Score View | The ranking inputs that actually affected one `resolve`, hash-identified and stored so the decision stays explainable. |
 | Evidence integrity | The `source_authority` and `verification` pair that says how strongly a claim was established; client-reported telemetry can never be the strongest grade. |
 | Fitness rule | An executable architectural invariant (F1–F12) that runs on every PR. |
