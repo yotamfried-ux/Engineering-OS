@@ -44,16 +44,16 @@ cp /tmp/claude-code-workflows/design-review/design-review-agent.md .claude/agent
 
 ```bash
 # Design review slash command
-cp /tmp/claude-code-workflows/design-review/<slash-command-file>.md .claude/commands/design-review.md
+cp /tmp/claude-code-workflows/design-review/design-review-slash-command.md .claude/commands/design-review.md
 
 # Pragmatic code review slash command (check code-review/ dir for the command file)
-cp /tmp/claude-code-workflows/code-review/<slash-command-file>.md .claude/commands/pragmatic-code-review.md
+cp /tmp/claude-code-workflows/code-review/pragmatic-code-review-slash-command.md .claude/commands/pragmatic-code-review.md
 
 # Security review slash command
-cp /tmp/claude-code-workflows/security-review/<slash-command-file>.md .claude/commands/security-review.md
+cp /tmp/claude-code-workflows/security-review/security-review-slash-command.md .claude/commands/security-review.md
 ```
 
-> Note: Inspect `code-review/`, `design-review/`, and `security-review/` directories in the cloned repo to identify which `.md` files are subagent definitions vs. slash command definitions. Subagent files go into `.claude/agents/`; command files go into `.claude/commands/`. The distinction is usually indicated by filename or a frontmatter `type:` field in the file.
+
 
 ### Step 5 — Copy GitHub Actions workflows
 
