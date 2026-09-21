@@ -19,6 +19,16 @@ Total catalogued knowledge assets: **323** (plus this catalog).
 
 This is not a separate technical asset type. The whole library is intended to avoid rediscovery: search for an existing pattern, example, integration guide, lesson, or reference before researching or generating the same knowledge again. Especially useful starting points are `external-skills/`, `external-systems/`, `patterns/`, `templates/`, and `docs/reference-repositories/`.
 
+
+## AI capability registry
+
+Before doing expensive manual work, check [`capability-registry/`](./capability-registry/README.md). It tells an AI worker what tools/connectors may already solve the task, how to route to ChatGPT/Codex vs Claude/Claude Code capabilities, and when to install token/context-saving tools.
+
+High-value entry points:
+- [Token & context efficiency](./capability-registry/token-context-efficiency.md) — RTK, Graphify, claude-mem and routing rules.
+- [Connector matrix](./capability-registry/connectors.md) — external-service capability routing for ChatGPT/Codex and Claude.
+- [Agent workflow tools](./capability-registry/agent-tools.md) — tools that improve the AI worker itself.
+
 ## How to use it
 
 Search this repository by **the job you need to accomplish**. The physical paths below are retained for provenance and precise GitHub search, while this catalog supplies the use-oriented mental model.
