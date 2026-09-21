@@ -52,3 +52,8 @@ When adding code examples:
 ## Coverage policy
 
 The capability/status framework in `project-qualification.md` remains the reporting model. The *test implementation* for each row must come from the authoritative sources above or the target project's own existing test conventions. Engineering-OS may compose those methods, but should not invent a new test framework.
+
+
+## Expanded coverage
+
+See [TESTING-KNOWLEDGE-MAP.md](./TESTING-KNOWLEDGE-MAP.md) for routing across unit, integration, contracts, browser/mobile E2E, property testing, fuzzing, security, performance, accessibility, migrations, webhooks/events, payments, concurrency, resilience, observability, visual/cross-platform, schema, CLI/storage and AI/LLM evaluation.
