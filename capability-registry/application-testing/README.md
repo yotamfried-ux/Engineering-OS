@@ -9,6 +9,7 @@ Use this registry before manually testing an application. It routes an AI agent 
 | Web UI | Playwright MCP + Playwright Test | Chrome DevTools MCP for network/console/performance debugging |
 | Android / iOS UI | Maestro MCP + deterministic Maestro flows | Appium MCP when deeper native/device/WebDriver control is required |
 | Complex native/device automation | Appium MCP | Native platform frameworks underneath Appium where appropriate |
+| MCP-native mobile exploration / supported physical devices | Mobile Next MCP | Maestro for durable regression flows; Appium for deeper native control |
 
 ## Agent workflow
 
@@ -27,6 +28,7 @@ Use this registry before manually testing an application. It routes an AI agent 
 - [Maestro MCP](./maestro-mcp.md)
 - [Appium MCP](./appium-mcp.md)
 - [Chrome DevTools MCP](./chrome-devtools-mcp.md)
+- [Mobile Next MCP](./mobile-next-mcp.md)
 
 ## Native frameworks
 
