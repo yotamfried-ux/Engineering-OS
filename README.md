@@ -1,21 +1,33 @@
 # Engineering Knowledge Library
 
-A reusable engineering knowledge repository for humans and AI agents.
+A use-oriented knowledge base for building software and improving AI-assisted engineering. This repository is deliberately a **library, not a runtime**.
 
-This repository is intentionally **not a software runtime**. It contains reusable knowledge, examples, skills, integration guidance, architecture guidance, troubleshooting knowledge, lessons, and proven/failed approaches. Use GitHub repository/code search to retrieve the relevant material.
+## Catalog by purpose
 
-## Use-oriented catalog
+| Purpose | What to search here | Assets |
+|---|---|---:|
+| **Build projects & implementations** | project starters, code/templates, implementation patterns, framework/API references, example repositories, UI guidance | 101 |
+| **Extend agent capabilities** | reusable skills, agent workflows, memory/context helpers, security/design/research capabilities | 42 |
+| **Integrate external systems** | APIs, SaaS, auth, databases, AI providers, observability, payments, connectors and infrastructure | 64 |
+| **Debug & avoid repeated failures** | troubleshooting, known failure modes, lessons, postmortems, prevention strategies and failed approaches | 58 |
+| **Architecture & decisions** | system architecture choices, AI/API/CV/ML/mobile/web architecture and reusable ADR knowledge | 50 |
+| **Testing, quality & reliability** | quality gates, contract/regression testing, logging and reliability guidance | 8 |
 
-- **Build projects & implementations** — reusable templates, patterns, framework guidance, API references, and reference repositories.
-- **Extend agent capabilities** — external skills and reusable agent/AI patterns.
-- **Integrate external systems** — practical knowledge for services, APIs, connectors, auth, data, observability, payments, AI providers, and infrastructure.
-- **Reduce context & token cost** — concise reusable patterns, templates, references, and pre-researched system knowledge that avoid rediscovering the same information.
-- **Debug & avoid repeated failures** — troubleshooting, lessons learned, and failed solutions.
-- **Architecture & decisions** — architecture guides and reusable architectural decision knowledge.
-- **Testing, quality & reliability** — testing patterns, reliability lessons, and quality-oriented guidance contained across the library.
+Total catalogued knowledge assets: **323** (plus this catalog).
 
-The physical folders preserve useful provenance and make GitHub search straightforward; this catalog describes **why** to use the assets rather than their file type.
+### Cross-cutting goal: reduce context and token cost
 
-## Scope
+This is not a separate technical asset type. The whole library is intended to avoid rediscovery: search for an existing pattern, example, integration guide, lesson, or reference before researching or generating the same knowledge again. Especially useful starting points are `external-skills/`, `external-systems/`, `patterns/`, `templates/`, and `docs/reference-repositories/`.
 
-There is no custom resolver, database, telemetry plane, experiment harness, qualification system, orchestration runtime, or mandatory agent workflow here. Historical implementation work is preserved on the archive branch `archive/pre-knowledge-library`.
+## How to use it
+
+Search this repository by **the job you need to accomplish**. The physical paths below are retained for provenance and precise GitHub search, while this catalog supplies the use-oriented mental model.
+
+- Building something new → start with `templates/`, `patterns/`, `docs/frameworks/`, `docs/reference-repositories/`, and `docs/official-docs/`.
+- Giving an AI agent a capability → search `external-skills/` and relevant AI patterns.
+- Connecting a service/tool → search `external-systems/` and integration patterns.
+- Solving a bug or avoiding a known trap → search `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`, and imported Stage 3 lessons.
+- Choosing an architecture → search `docs/architecture-guides/` and `architecture-decisions/`.
+- Hardening quality → search testing patterns plus the imported quality/reliability assets.
+
+Historical runtime/system implementation is preserved on `archive/pre-knowledge-library`; it is intentionally absent from this library's `main`.
