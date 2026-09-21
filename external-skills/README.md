@@ -3,17 +3,8 @@
 > The integration layer for capabilities that change **Claude's workflow behavior**.
 > Engines/backends and third-party app services live under [`external-systems/`](../external-systems/), not here.
 >
-> This README is **index-only**. It lists skill wrappers and status. The source of truth for orchestration rules is [`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md), and bootstrap / verification mechanics live in [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
+> This README is the index for reusable agent capabilities. Each wrapper's `activation.md` is the source of truth for installation and verification; the library does not depend on a central runtime/bootstrap layer.
 
-Canonical owners:
-
-| Question | Source of truth |
-|---|---|
-| Which skill wrappers exist? | This README |
-| Skill Integration Protocol | `../core/skill-orchestration-policy.md` |
-| Task routing to skills | `../core/task-router.md` |
-| Capability vocabulary | `../core/capability-registry.yaml` |
-| Install / verification mechanics | `../scripts/skill-bootstrap.sh` plus each skill's `activation.md` |
 | One skill's behavior contract | `external-skills/<name>/integration.md` and `policy.md` |
 
 ---
@@ -29,9 +20,9 @@ Skill = External Capability + Integration Contract + Execution Rules
 | Layer | What it governs |
 |---|---|
 | `external-skills/*` | Capabilities that change **Claude's own workflow** (this directory) |
-| `external-systems/*` | Third-party **services the target app integrates with** and engines/backends such as Nemotron |
+| `external-systems/*` | Third-party **services the target app integrates with** |
 | `patterns/*` | Reusable **code patterns** for the target app |
-| `core/*` | The OS's own **policies** |
+| `capability-registry/*` | Cross-tool discovery and routing guidance |
 
 ---
 
@@ -80,7 +71,7 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 | claude-code-workflows | ⚠️ **recommended with PR review** | Provides PR-review subagents + Actions; full value only in a PR-based flow. |
 | gstack | ➖ **opt-in (not default)** | Heavy (Bun + 59 SKILL.md) and overlaps superpowers/security/review. Chosen deliberately for complex multi-role projects, not installed by default. |
 
-**Default profile** that `skill-bootstrap.sh` expects in a standard project: superpowers · graphify · rtk · claude-mem.
+**Suggested baseline:** superpowers · graphify · rtk · claude-mem, when supported by the execution environment. Each capability must be installed and verified independently using its own activation guide.
 
 ---
 
@@ -90,7 +81,7 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 - **LEVEL 1 — recommended**: default-on unless there's an explicit reason to skip.
 - **LEVEL 2 — mandatory**: runs whenever its trigger conditions are met **and** it is installed. A missing L2 skill is a reported gap, not a silent skip — see the bootstrap protocol.
 
-Full definitions, the selection pipeline, the composition order, and the security-override rule are in [`core/skill-orchestration-policy.md`](../core/skill-orchestration-policy.md).
+The routing guidance in this README and `capability-registry/` is descriptive knowledge for the agent; it is not enforced by a hidden Engineering-OS runtime.
 
 ---
 
@@ -115,9 +106,9 @@ memory (claude-mem)               → restore at session start, summarize at sto
 2. Create `external-skills/<skill-name>/` with the four contract files.
 3. Assign `type` tags and an execution level in `policy.md`.
 4. Add a row to the registry table above.
-5. Add a detection entry to [`scripts/skill-bootstrap.sh`](../scripts/skill-bootstrap.sh).
-6. If it is an MCP server, also register it in [`core/mcp-servers.md`](../core/mcp-servers.md).
-7. If it is a significant capability, add it to [`CLAUDE.md`](../CLAUDE.md) navigation.
+5. Add or update the relevant entry in `capability-registry/`.
+6. If it exposes MCP, document the exact upstream server, transport, prerequisites, and a verification sequence in `activation.md`.
+7. Ensure the wrapper is self-contained and does not depend on project-local runtime helpers unless those helpers actually exist.
 
 ---
 

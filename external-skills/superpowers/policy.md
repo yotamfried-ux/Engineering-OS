@@ -12,11 +12,7 @@
 
 **LEVEL 2 — mandatory. Default-ON in every project.**
 
-superpowers is installed by default in **every** project (see
-[`core/skill-orchestration-policy.md`](../../core/skill-orchestration-policy.md) ›
-`<default_activation>`). Its SessionStart hook keeps the `using-superpowers` skill loaded
-at all times, so the methodology is **always active** — the only thing that scales is the
-*depth* of process, not the skill's presence.
+When superpowers is selected for a project, install and verify it using `activation.md`. This knowledge library does not contain a bootstrap/runtime layer that installs it automatically. Once installed, its SessionStart hook can keep `using-superpowers` available; workflow depth should still scale with the task.
 
 How depth scales with the task:
 
@@ -35,10 +31,7 @@ per task**; "skipping" only ever means skipping the heavy cycle for a genuinely 
 1. **Planning runs first.** `brainstorming` → `writing-plans` must complete before any
    file-modifying tool is called. Do not skip to `executing-plans` without a written plan.
 
-2. **Never overrides a security-level skill.** If a `patterns/security/` rule or an
-   Engineering OS hook (see [`core/hooks-policy.md`](../../core/hooks-policy.md)) conflicts
-   with a superpowers workflow step, the security/hook rule wins. Example: a pre-commit
-   hook that blocks a commit is not bypassed to satisfy `finishing-a-development-branch`.
+2. **Never overrides a security-level skill.** If a project security rule or an actual repository hook conflicts with a superpowers workflow step, the security/hook rule wins. Never assume Engineering-OS itself installed such a hook.
 
 3. **Review skills run last.** `requesting-code-review` and `receiving-code-review` are
    terminal-phase skills. They are never invoked before `verification-before-completion`
