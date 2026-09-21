@@ -1,6 +1,6 @@
 # Billing Patterns
 
-> Pattern library for subscription billing, webhooks, and usage metering. See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring and lifecycle.
+> Pattern library for subscription billing, webhooks, and usage metering. Use the pattern registry for catalog metadata; verify current authoritative sources before applying exact implementation details.
 
 ## Overview
 

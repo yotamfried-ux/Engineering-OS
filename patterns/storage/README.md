@@ -1,6 +1,6 @@
 # Storage Patterns
 
-> Pattern library for file storage, CDN delivery, and asset processing. See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring and lifecycle.
+> Pattern library for file storage, CDN delivery, and asset processing. Use the pattern registry for catalog metadata; verify current authoritative sources before applying exact implementation details.
 
 ## Overview
 

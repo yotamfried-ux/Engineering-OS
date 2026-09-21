@@ -1,6 +1,6 @@
 # Infrastructure Patterns
 
-> Pattern library for provisioning, containerizing, and operating production infrastructure. See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring and lifecycle.
+> Pattern library for provisioning, containerizing, and operating production infrastructure. Use the pattern registry for catalog metadata; verify current authoritative sources before applying exact implementation details.
 
 ## Overview
 

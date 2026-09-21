@@ -1,6 +1,6 @@
 # API Patterns
 
-> Pattern library for HTTP API design and implementation. See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring and lifecycle.
+> Pattern library for HTTP API design and implementation. Use the pattern registry for catalog metadata; verify current authoritative sources before applying exact implementation details.
 
 ## Overview
 

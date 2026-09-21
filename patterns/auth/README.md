@@ -1,6 +1,6 @@
 # Auth Patterns
 
-> Pattern library for authentication and authorization. See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring and lifecycle.
+> Pattern library for authentication and authorization. Use the pattern registry for catalog metadata; verify current authoritative sources before applying exact implementation details.
 
 ## Overview
 
