@@ -80,7 +80,6 @@ const response = await client.chat.completions.create({
 | Llama 3.1 8B | `meta/llama-3.1-8b-instruct` | 128k | Fast, free tier |
 | Llama 3.1 70B | `meta/llama-3.1-70b-instruct` | 128k | High quality |
 | Llama 3.1 405B | `meta/llama-3.1-405b-instruct` | 128k | Largest |
-| Nemotron 70B | `nvidia/nemotron-4-340b-instruct` | 4k | NVIDIA fine-tune |
 | Mistral NeMo | `nv-mistralai/mistral-nemo-12b-instruct` | 128k | Efficient |
 | CodeLlama 70B | `meta/codellama-70b` | 100k | Code-focused |
 
@@ -100,7 +99,7 @@ Rate limits: ~5 requests/minute on free tier; higher on paid.
 ## When to use vs. Anthropic/OpenAI
 
 - **Use NVIDIA NIM** when: you need open-weight models (Llama), want to avoid vendor
-  lock-in on inference, need specific NVIDIA-optimized models (Nemotron), or want a
+  lock-in on inference, or want a
   free-tier inference option.
 - **Use Anthropic** for Claude models (best tool use, instruction following).
 - **Use OpenAI** for GPT-4o, DALL-E, Whisper.

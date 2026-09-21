@@ -57,20 +57,11 @@ Each wrapper is written from a **verified scan of the real repository** — not 
 | **[superpowers](./superpowers/)** | planning, review, orchestration, self-correction | **L2** · default-on every project | Claude Code plugin (`/plugin install`) | 14 skills via the Skill tool (`brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, `verification-before-completion`…) |
 | **[frontend-design](./frontend-design/)** ⚠️ **DEPRECATED → use [ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | — (superseded) | do not install in new projects | superseded by `ui-ux-pro-max`; kept for reference only |
 | **[claude-code-workflows](./claude-code-workflows/)** | review, orchestration | L1 / **L2** for large refactors | manual file copy (templates) | `pragmatic-code-review` & `design-review` subagents, `/design-review`, GitHub Action |
-| **[security-review](./security-review/)** | security, review | **L2** · default-on · pre-commit + pre-merge gate | GitHub Action + slash command | `/security-review`, `anthropics/claude-code-security-review@main` Action |
 | **[claude-mem](./claude-mem/)** | memory, context-persistence | **L2** (passive system dependency) | plugin + MCP + hooks + worker | MCP tools `search`, `timeline`, `get_observations` (+ passive lifecycle hooks) |
 | **[gstack](./gstack/)** | orchestration, role-simulation | L1 (complex projects) | `git clone` + `./setup` (needs Bun) | role commands `/autoplan`, `/review`, `/qa`, `/cso`, `/ship` (23 specialists + 8 power tools) |
 | **[graphify](./graphify/)** | context-optimization, code-intelligence | **L2** (mandatory default-on every project) | `uv tool install graphifyy` + MCP | `/graphify .`, MCP tools `query_graph`, `get_node`, `get_pr_impact`… |
 | **[rtk](./rtk/)** | context-optimization | **L2** · default-on every project | `cargo install --git https://github.com/rtk-ai/rtk` | PreToolUse hook — auto-compresses all Bash output 60–90% |
 | **[ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | **L2** for UI projects / L1 otherwise | Claude Code plugin (marketplace) | UI/UX design workflow, component specs, accessibility review |
-
-> **Note — Nemotron is an engine, not a skill.** Nvidia Nemotron is an LLM
-> backend that *runs* capabilities (generation, first-pass review); it is not a
-> process skill and is not listed here. See
-> [`../external-systems/nvidia-nemotron/`](../external-systems/nvidia-nemotron/)
-> for the engine reference, and `.claude/agents/nemotron-*` for the runtime
-> adapters that invoke it. The `security-review` skill *may* use Nemotron as its
-> primary engine, but Nemotron itself is never the security gate.
 
 ---
 
@@ -81,7 +72,6 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 | Skill | Default per project | Why |
 |---|---|---|
 | superpowers | ✅ **every project** | Prevents the #1 failure mode (jumping to code without a spec). Always loaded via its SessionStart hook; only the *depth* of process scales with task size. |
-| security-review | ✅ **every production-bound project** | Security is a baseline, not an add-on. Diff-aware, so cheap to run before each commit; mandatory gate before merge to main. |
 | graphify | ✅ **every project** | Saves context cost every session. Always build the graph at session start, no exceptions. If the repo is tiny, Graphify itself warns — that is the tool's feedback, not a skip condition. The graph is in place when the repo grows. |
 | rtk | ✅ **every project** | Saves 60–90% of Bash output tokens via a PreToolUse hook. Zero-config once installed; negligible overhead on every command. |
 | claude-mem | ✅ **where the environment allows** | Cross-session memory helps almost any multi-session project. Opt-out only in locked-down/ephemeral environments or where data must not persist to disk. |
@@ -90,7 +80,7 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 | claude-code-workflows | ⚠️ **recommended with PR review** | Provides PR-review subagents + Actions; full value only in a PR-based flow. |
 | gstack | ➖ **opt-in (not default)** | Heavy (Bun + 59 SKILL.md) and overlaps superpowers/security/review. Chosen deliberately for complex multi-role projects, not installed by default. |
 
-**Default profile** that `skill-bootstrap.sh` expects in a standard project: superpowers · security-review · graphify · rtk · claude-mem.
+**Default profile** that `skill-bootstrap.sh` expects in a standard project: superpowers · graphify · rtk · claude-mem.
 
 ---
 
@@ -111,11 +101,11 @@ context-optimization (graphify)   → build/refresh code graph first, cross-cutt
 memory (claude-mem)               → restore at session start, summarize at stop (passive)
 1. planning   (superpowers, gstack /autoplan)   → before any code
 2. coding     (frontend-design, superpowers TDD)
-3. SECURITY GATE (security-review, gstack /cso)  → blocks before production; cannot be overridden
+3. SECURITY GATE (gstack /cso)  → blocks before production; cannot be overridden
 4. review     (claude-code-workflows, gstack /review, superpowers receiving-code-review) → last
 ```
 
-**Three rules:** planning first · security always overrides · review runs last.
+**Three rules:** planning first · security review before production · review runs last.
 
 ---
 

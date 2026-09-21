@@ -5,7 +5,6 @@ Capabilities that improve **how the AI worker operates**, rather than becoming d
 | Capability | Practical use | Activation source |
 |---|---|---|
 | superpowers | planning, TDD, debugging, verification, review discipline | `external-skills/superpowers/` |
-| security-review | security review/gating | `external-skills/security-review/` |
 | RTK | token-efficient Bash output | `external-skills/rtk/` |
 | Graphify | token-efficient code intelligence and impact/navigation | `external-skills/graphify/` |
 | claude-mem | cross-session memory/context persistence | `external-skills/claude-mem/` |

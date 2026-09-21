@@ -44,7 +44,6 @@
 | commits ללא tests | pre-commit.sh physical scan → exit 1 |
 | branches מרובים | branch count check → exit 1 |
 | L2 skills דילוג | session banner + stop hook awareness |
-| Nemotron לא נבדק | smoke test בkStartup |
 | worktree isolation כשל | תועד + remote limitations documented |
 
 ---
