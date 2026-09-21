@@ -34,7 +34,7 @@
 
 ---
 
-## composition (לפי skill-orchestration-policy.md)
+## Composition
 
 ```
 planning (superpowers)

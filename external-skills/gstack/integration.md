@@ -34,8 +34,6 @@ Do not invoke gstack skills when:
   and has no marketplace entry.
 - The task is **small or trivial** (one-liner fix, typo, documentation lookup) — the
   multi-role overhead is not warranted.
-- A **dedicated Engineering OS skill** already covers the need precisely (e.g., the
-  built-in `security-review` skill; see Composition below).
 
 ## How it affects Claude's workflow
 
@@ -165,14 +163,7 @@ All commands are slash-command skills invoked directly in Claude Code.
 
 - **Orchestration / role-simulation:** gstack spans the entire pipeline by mapping
   specialist roles to phases. It is not scoped to a single phase.
-- **Security phase:** `/cso` participates in the security gate (OWASP + STRIDE audit)
-  but does NOT replace the dedicated `security-review` Engineering OS skill. For
-  security-sensitive branches, run the Engineering OS `security-review` skill first;
-  `/cso` can serve as an additional role-simulation pass if warranted.
+- **Security phase:** `/cso` provides gstack's own OWASP + STRIDE-oriented security pass. Treat it as an advisory/review capability; it does not replace project-specific security tests or CI controls.
 - **Review phase:** `/review` runs last — after planning, implementation, and QA — and
   before `/ship`. It is never invoked before the implementation exists.
-- **Precedence:** Engineering OS hooks and quality gates (see
-  [`core/hooks-policy.md`](../../core/hooks-policy.md) and
-  [`core/quality-gates.md`](../../core/quality-gates.md)) take precedence over any
-  gstack role recommendation. A pre-commit hook that blocks a commit is not bypassed
-  to satisfy `/ship`.
+- **Precedence:** the target project's actual hooks, CI checks, branch protections, and release policy take precedence over gstack recommendations. Never bypass a real project gate to satisfy a role command.

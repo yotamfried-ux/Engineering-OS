@@ -85,5 +85,4 @@ All 14 skills are invoked through the Claude Code `Skill` tool.
 - **Security skills** (from `patterns/security/`) take precedence over superpowers
   methodology if a conflict arises (e.g., a security fix that must not be held behind a
   full brainstorm cycle). See [`core/precedence.md`](../../core/precedence.md).
-- superpowers does not replace or override any Engineering OS quality gate defined in
-  [`core/quality-gates.md`](../../core/quality-gates.md); it operates alongside them.
+- superpowers does not replace the target project's tests, CI checks, branch protections, or review policy; it operates alongside them.

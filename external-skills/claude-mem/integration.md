@@ -118,8 +118,6 @@ Invoked through the Claude Code `Skill` tool when available:
 - **Relationship to security skills:** claude-mem does not override security-review or
   any security gate. `<private>` exclusions in prompts are the mechanism to keep
   security-sensitive content out of the memory store.
-- **Relationship to quality gates:** claude-mem does not replace any Engineering OS
-  quality gate in [`core/quality-gates.md`](../../core/quality-gates.md). It informs
-  Claude's context; it does not certify correctness.
+- **Relationship to quality gates:** claude-mem supplies context only. It does not certify correctness or replace the target project's own tests, review rules, or CI gates.
 - **Storage ownership:** all data is owned by the local user at `~/.claude-mem/`. The
   system does not phone home. Chroma integration is opt-in.

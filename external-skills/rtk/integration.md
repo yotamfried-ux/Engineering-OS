@@ -58,7 +58,7 @@ RTK מסנן פלט. במקרים שבהם **הפלט המלא חיוני** (deb
 
 ---
 
-## composition (לפי skill-orchestration-policy.md)
+## Composition
 
 RTK הוא `context-optimization` — רץ **לפני הכל** ומשרת את כל שלבי ה-workflow.
 ממוקם עם graphify בשכבת ה-context-optimization, לפני planning/coding/security/review.
