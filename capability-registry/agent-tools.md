@@ -17,3 +17,7 @@ Capabilities that improve **how the AI worker operates**, rather than becoming d
 ## Agent rule
 
 Do not install every tool blindly. Select by task trigger, inspect `activation.md`, verify prerequisites and trust/source, install only when appropriate, and verify activation. Token/context tools are separately indexed in `token-context-efficiency.md` so they can be discovered before expensive work begins.
+
+## Application testing
+
+For application testing, use the dedicated [application testing registry](./application-testing/README.md): Playwright MCP for web, Maestro MCP as the default Android/iOS route, Appium MCP for deeper mobile automation, and Chrome DevTools MCP for web debugging/performance evidence.

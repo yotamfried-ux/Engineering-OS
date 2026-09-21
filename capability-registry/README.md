@@ -8,7 +8,8 @@ This registry is organized by **use**, not implementation type. Before doing exp
 
 1. **Need external data/action?** Check `connectors.md`.
 2. **Need to reduce token/context cost?** Check `token-context-efficiency.md` before reading large repos or emitting large CLI output.
-3. **Need to improve the agent's own workflow?** Check `agent-tools.md`.
+3. **Need to test a web/mobile application?** Check `application-testing/README.md` before choosing an automation stack.
+4. **Need to improve the agent's own workflow?** Check `agent-tools.md`.
 4. Prefer an already-authorized native/official capability over building a new integration.
 5. Never assume availability: product surface, plan, workspace policy, OS, authorization and provider permissions can differ.
 6. Verify installation/connection before depending on a capability.
