@@ -1,0 +1,26 @@
+schema_version: "1.0"
+project:
+  repository: ""
+  revision: ""
+  environment: ""
+capabilities:
+  - id: auth.login
+    statement: "A registered user can sign in and receive a persistent authenticated session"
+    criticality: critical
+    required_layers: [integration, e2e, persistence, failure]
+    checks:
+      - id: auth.login.e2e
+        command: ""
+        proves: "browser can complete sign-in"
+        dependency_mode: production-like
+        evidence: []
+      - id: auth.login.persistence
+        command: ""
+        proves: "session exists in authoritative session store"
+        dependency_mode: real-test
+        evidence: []
+      - id: auth.login.invalid-password
+        command: ""
+        proves: "invalid credentials are rejected for the expected reason"
+        dependency_mode: real-test
+        evidence: []

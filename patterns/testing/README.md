@@ -1,5 +1,4 @@
 # Testing Patterns
-> See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring.
 
 ## Overview
 Apply these patterns whenever you write, review, or refactor tests. The patterns here are language-agnostic and apply to web APIs, UI components, background workers, and CLI tools alike. Prefer these structures as defaults; deviate only with an explicit comment explaining why.
@@ -263,3 +262,8 @@ Check out the commit just before the fix and run only the new regression test �
 - [Testing Library](https://testing-library.com/docs/) — component testing philosophy
 - [Jest Docs](https://jestjs.io/docs/getting-started) — JavaScript testing framework
 - [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — security testing methodology
+
+
+## Project-level qualification
+
+For a real picture of what works and what does not, use [Project Qualification](./project-qualification.md) with [Evidence & Simulation Patterns](./evidence-and-simulation.md). Start from capabilities/user journeys, not test-file counts. Use `templates/testing/` for the manifest, evidence matrix and final report.
