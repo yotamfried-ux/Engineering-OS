@@ -20,3 +20,8 @@ Do not install every tool blindly. Select by task trigger, inspect `activation.m
 ## Application testing
 
 For application testing, use the dedicated [application testing registry](./application-testing/README.md): Playwright MCP for web, Maestro MCP as the default Android/iOS route, Appium MCP for deeper mobile automation, and Chrome DevTools MCP for web debugging/performance evidence.
+
+
+## Media understanding
+
+- **Video URL Analyzer MCP** — multimodal analysis of supported video URLs (YouTube, TikTok, public Instagram). See `video-analysis/video-url-analyzer-mcp.md`. Current qualification: **CONDITIONAL / NOT END-TO-END QUALIFIED**; require the wrapper's live verification contract before use as a trusted active capability.
