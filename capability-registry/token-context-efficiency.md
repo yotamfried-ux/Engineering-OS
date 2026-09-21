@@ -1,29 +1,49 @@
-# Token & Context Efficiency Tools
+# Token, Context & Memory Efficiency
 
-These are capabilities whose **primary practical value includes reducing context/token use or avoiding repeated retrieval**. An agent should inspect this list before consuming a large repository, long CLI output, or multi-session history.
+Use this registry when the bottleneck is **context size, repeated repository reading, noisy command output, or repeated rediscovery across sessions**. Select by bottleneck; do not install all tools automatically.
 
-| Tool | Primary saving mechanism | Surface | Install / activate | Agent trigger |
-|---|---|---|---|---|
-| **RTK (Rust Token Killer)** | Compresses/filter/groups/deduplicates Bash output before it reaches model context; wrapper documents typical 60–90% savings on dev-tool output | Claude Code | Install RTK, then `rtk init -g` to register PreToolUse hook | Before repeated Bash-heavy work, tests, builds, git, grep/find, Docker/K8s |
-| **Graphify** | Builds a queryable code knowledge graph so the agent retrieves relevant symbols/subgraphs instead of repeatedly reading whole files | Claude Code; optional MCP server may expose graph queries to compatible clients | `uv tool install graphifyy`, `graphify install`; optional `graphifyy[mcp]` | Non-trivial/large repo, unfamiliar codebase, impact analysis, cross-file navigation |
-| **claude-mem** | Persists semantic observations/summaries across sessions, reducing repeated rediscovery and context reconstruction | Claude Code | Claude Code plugin marketplace or `npx claude-mem install` | Multi-session projects where prior decisions/context would otherwise be reread/reconstructed |
+| Need | First candidate | Mechanism | Host/shape |
+|---|---|---|---|
+| High-volume shell/build/test/git output | **RTK** | filters/compresses CLI output before model context | Claude Code hook/CLI |
+| Large unfamiliar codebase / cross-file impact | **Graphify** | queryable code graph and targeted retrieval | CLI + optional MCP |
+| Claude Code cross-session memory | **claude-mem** | local observations/summaries + lifecycle hooks/MCP | Claude Code |
+| General coding-agent persistent memory | **agentmemory** | structured capture/retrieval across sessions | community capability; verify current host integration |
+| Larger unified memory/knowledge/skills substrate | **OpenViking** | hierarchical/on-demand context database | external context system; qualify before adoption |
 
-## Mandatory routing rule for agents
+## Routing
 
-Before a large engineering task:
-1. Estimate whether the task will involve a large repo, high-volume shell output, or repeated sessions.
-2. If shell-output heavy → consider **RTK**.
-3. If repository-reading heavy → consider **Graphify**.
-4. If multi-session/context-reconstruction heavy → consider **claude-mem**.
-5. Check the tool's `external-skills/<tool>/activation.md` before installation.
-6. Verify presence after installation; never silently assume a tool is active.
-7. If the environment cannot install it, continue normally and record the capability gap.
+1. Diagnose the actual waste first.
+2. Shell-output heavy → RTK.
+3. Repository-navigation heavy → Graphify.
+4. Repeated Claude Code session reconstruction → claude-mem.
+5. Need host-agnostic/general coding-agent memory → inspect agentmemory.
+6. Need a broader context database spanning memory, resources and skills → inspect OpenViking.
+7. If several appear applicable, compare rather than stacking by default.
 
-## Important distinction
+## Memory qualification requirements
 
-A knowledge library can reduce tokens by avoiding rediscovery, but the tools above are **operational capabilities designed to change how the agent consumes context**. They therefore get first-class routing treatment.
+Before adopting any persistent-memory/context substrate, verify:
+- supported host and integration mechanism;
+- where data is stored and transmitted;
+- what is captured automatically;
+- secrets/private-data exclusion;
+- retrieval quality on representative project questions;
+- update/freshness behavior when source files change;
+- deletion/reset/export behavior;
+- cross-project isolation;
+- token/context overhead;
+- failure behavior when the memory service is unavailable.
 
-Detailed wrappers:
-- `external-skills/rtk/`
-- `external-skills/graphify/`
-- `external-skills/claude-mem/`
+Memory output is **context assistance, not source-of-truth evidence**. Current repository state, authoritative documentation and current tests override stale remembered facts.
+
+## Detailed wrappers
+
+- RTK: `../external-skills/rtk/`
+- Graphify: `../external-skills/graphify/`
+- claude-mem: `../external-skills/claude-mem/`
+- agentmemory: `../external-skills/agentmemory/README.md`
+- OpenViking: `../external-systems/openviking/README.md`
+
+## Status discipline
+
+Do not repeat upstream token-saving/performance claims as Engineering-OS facts unless reproduced on a recorded workload. Verify installation/connection before depending on a capability; if the host cannot run it, continue normally and record the gap.
