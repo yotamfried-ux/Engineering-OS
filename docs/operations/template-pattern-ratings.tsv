@@ -1,2 +1,0 @@
-# asset_id	type	path	status	score	confidence	used_count	success_count	failure_count	last_used	use_when	avoid_when	evidence	notes
-template-microservice	template	templates/microservice/README.md	active	4	medium	1	1	0	2026-06-30	Use for service-oriented backend scaffolds with API boundaries.	Avoid for pure frontend or documentation-only changes.	templates/microservice/README.md	Initial seed rating; update after real project outcomes.

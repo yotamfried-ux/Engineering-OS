@@ -1,69 +1,21 @@
-# Engineering OS
+# Engineering Knowledge Library
 
-A read-only governance and knowledge layer that Claude loads before every coding task.
-It enforces consistent workflow, patterns, and quality gates across all your projects —
-without rewriting the rules each time.
+A reusable engineering knowledge repository for humans and AI agents.
 
-## What's inside
+This repository is intentionally **not a software runtime**. It contains reusable knowledge, examples, skills, integration guidance, architecture guidance, troubleshooting knowledge, lessons, and proven/failed approaches. Use GitHub repository/code search to retrieve the relevant material.
 
-| Directory | Purpose |
-|---|---|
-| `CLAUDE.md` | **Entry point.** Loaded by Claude at the start of every session. Defines role, principles, skill activation, and navigation. |
-| `core/` | Canonical policy files for workflow, quality gates, git policy, hooks, debugging, learning, skill orchestration, and related governance. The live inventory is the directory itself and the navigation table in `CLAUDE.md`. |
-| `patterns/` | Code-pattern domains for auth, billing, API, database, UI, AI agents, observability, security, testing, integrations, and more. Lifecycle metadata is owned by `patterns/registry.yaml`. |
-| `external-skills/` | External skill wrappers such as superpowers, security-review, graphify, rtk, claude-mem, ui-ux-pro-max, gstack, and claude-code-workflows. The live inventory is `external-skills/README.md`; each installed wrapper follows its documented SIP contract. |
-| `external-systems/` | Third-party service and connector guides for LLM providers, databases, auth, payments, observability, CRM, and more. The live inventory is `external-systems/README.md`. |
-| `templates/` | Project scaffolds and reusable file templates (including `hooks/pre-commit`). |
-| `scripts/` | `use-in-project.sh` (apply OS to a new project), `skill-bootstrap.sh` (detect/install skills), `session-setup.sh` (SessionStart hook). |
-| `docs/` | Architecture guides, framework references, troubleshooting. |
-| `lessons-learned/` | Documented bugs, post-mortems, prevention strategies. |
-| `failed-solutions/` | Approaches that were tried and failed — read before repeating them. |
-| `architecture-decisions/` | ADRs for cross-project architectural choices. |
+## Use-oriented catalog
 
-## How to use in a new project
+- **Build projects & implementations** — reusable templates, patterns, framework guidance, API references, and reference repositories.
+- **Extend agent capabilities** — external skills and reusable agent/AI patterns.
+- **Integrate external systems** — practical knowledge for services, APIs, connectors, auth, data, observability, payments, AI providers, and infrastructure.
+- **Reduce context & token cost** — concise reusable patterns, templates, references, and pre-researched system knowledge that avoid rediscovering the same information.
+- **Debug & avoid repeated failures** — troubleshooting, lessons learned, and failed solutions.
+- **Architecture & decisions** — architecture guides and reusable architectural decision knowledge.
+- **Testing, quality & reliability** — testing patterns, reliability lessons, and quality-oriented guidance contained across the library.
 
-**Recommended — one command from your project root:**
+The physical folders preserve useful provenance and make GitHub search straightforward; this catalog describes **why** to use the assets rather than their file type.
 
-```bash
-bash ~/.engineering-os/scripts/use-in-project.sh
-```
+## Scope
 
-This clones Engineering OS to `~/.engineering-os/`, wires it into your project's
-`CLAUDE.md`, runs skill bootstrap, and prints the manual steps that can't be automated
-(superpowers plugin install, GitHub secrets for security-review).
-
-For submodule mode (pin the OS version to your repo), see `CLAUDE.template.md`.
-
-## First-time machine setup
-
-```bash
-# 1. Required tools
-curl -LsSf https://astral.sh/uv/install.sh | sh   # for graphify
-# node/npm must already be installed
-
-# 2. MCP servers (run inside Claude Code CLI once per machine)
-claude mcp add notion https://mcp.notion.com/mcp
-claude mcp add context7 https://mcp.context7.com/mcp
-
-# 3. superpowers plugin (inside Claude Code CLI)
-/plugin install superpowers@claude-plugins-official
-
-# 4. Verify
-/mcp          # Notion and Context7 should show as connected
-/plugin list  # superpowers should appear
-```
-
-## Requirements
-
-- [Claude Code CLI](https://claude.ai/code) with an Anthropic API key
-- `git` 2.x+
-- `uv` (Python package manager, for graphify)
-- `node` / `npm` (for rtk and other skills)
-
-## Philosophy
-
-> Validate, don't guess. The system enforces quality gates deterministically —
-> not through reminders, but through hooks and policy files that Claude re-reads
-> before every action.
-
-Full rationale and principles: `CLAUDE.md` → `<core_principles>`.
+There is no custom resolver, database, telemetry plane, experiment harness, qualification system, orchestration runtime, or mandatory agent workflow here. Historical implementation work is preserved on the archive branch `archive/pre-knowledge-library`.
