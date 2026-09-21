@@ -1,139 +1,73 @@
 # external-systems
 
-Inventory of third-party services and connectors known to Engineering OS.
+Inventory of third-party services and connectors known to Engineering-OS. This directory is **knowledge/reference**, not proof that a service is connected in the current host.
 
-This README is index-only. Selection policy, task routing, capability vocabulary, and global workflow rules belong in `../core/`.
-
-Canonical owners:
+## Live routing owners
 
 | Question | Source of truth |
 |---|---|
-| Which service or connector exists? | This README |
-| Connector selection and fallback | `../core/connector-policy.md` |
-| Task class capability vocabulary | `../core/capability-registry.yaml` |
-| Task routing before work starts | `../core/task-router.md` |
-| One connector practical usage | `connectors/<name>/README.md` |
+| Which external system is documented? | This README |
+| Which connector/capability should the agent try first? | `../capability-registry/connectors.md` and `../capability-registry/ROUTING-MAP.md` |
+| How should source authority/freshness be judged? | `../capability-registry/SOURCE-POLICY.md` |
+| Practical connector notes | `connectors/<name>/README.md` |
+| Project integration patterns | `../patterns/integrations/` |
+
+Do not infer connection/authorization from the presence of a folder. Verify the current host and current official provider documentation before depending on exact API/auth behavior.
 
 ## LLM Providers & AI APIs
 
-| Service | Path | Notes |
-|---|---|---|
-| Anthropic (Claude) | `anthropic/` | Claude API |
-| OpenAI | `openai/` | GPT and embeddings |
-| Google Gemini | `google-gemini/` | Gemini models |
-| Mistral | `mistral/` | Mistral models |
-| Cohere | `cohere/` | Reranking and embeddings |
-| NVIDIA NIM | `nvidia/` | Inference API |
+Anthropic (`anthropic/`), OpenAI (`openai/`), Google Gemini (`google-gemini/`), Mistral (`mistral/`), Cohere (`cohere/`), NVIDIA (`nvidia/`).
 
 ## AI Agent Frameworks
 
-| Service | Path | Notes |
-|---|---|---|
-| LangGraph | `langgraph/` | Stateful agent graphs |
-| CrewAI | `crewai/` | Role-based agent crews |
-| AutoGen | `autogen/` | Conversational agents |
-| Pydantic AI | `pydantic-ai/` | Type-safe agents |
-| MCP SDK | `mcp-sdk/` | MCP servers |
+LangGraph, CrewAI, AutoGen, Pydantic AI, and MCP SDK are documented in their matching folders.
 
 ## Computer Vision & Media AI
 
-| Service | Path | Notes |
-|---|---|---|
-| Supervision | `supervision/` | Python CV toolkit for detections, annotations, datasets, and video/image review overlays |
+Supervision is documented under `supervision/`.
 
 ## Vector Databases & Search
 
-| Service | Path | Notes |
-|---|---|---|
-| Pinecone | `pinecone/` | Vector DB |
-| Weaviate | `weaviate/` | Vector DB |
-| Qdrant | `qdrant/` | Vector DB |
-| Chroma | `chroma/` | Local vector store |
-| Meilisearch | `meilisearch/` | Search |
-| Typesense | `typesense/` | Search |
-| Algolia | `algolia/` | Managed search |
+Pinecone, Weaviate, Qdrant, Chroma, Meilisearch, Typesense and Algolia.
 
 ## Databases & Data Pipelines
 
-| Service | Path | Notes |
-|---|---|---|
-| Supabase | `supabase/` | Postgres, Auth, Storage |
-| dlt | `dlt/` | Data loading |
-| Meltano | `meltano/` | ELT platform |
+Supabase, dlt and Meltano.
 
 ## Authentication & Identity
 
-| Service | Path | Notes |
-|---|---|---|
-| Auth0 | `auth0/` | Auth and SSO |
-| Clerk | `clerk/` | App auth |
-| Firebase Auth | `firebase-auth/` | Firebase auth |
+Auth0, Clerk and Firebase Auth.
 
 ## Payments & Commerce
 
-| Service | Path | Notes |
-|---|---|---|
-| Stripe | `stripe/` | Billing and webhooks |
-| Paddle | `paddle/` | SaaS billing |
-| LemonSqueezy | `lemonsqueezy/` | SaaS billing |
+Stripe, Paddle and LemonSqueezy.
 
 ## Observability & Analytics
 
-| Service | Path | Notes |
-|---|---|---|
-| Datadog | `datadog/` | APM and logs |
-| Grafana | `grafana/` | Observability |
-| LangSmith | `langsmith/` | LLM tracing |
-| DeepEval | `deepeval/` | LLM evaluation |
-| PostHog | `posthog/` | Product analytics |
-| Amplitude | `amplitude/` | Product analytics |
-| Mixpanel | `mixpanel/` | Product analytics |
+Datadog, Grafana, LangSmith, DeepEval, PostHog, Amplitude and Mixpanel.
 
 ## Feature Flags & Experimentation
 
-| Service | Path | Notes |
-|---|---|---|
-| GrowthBook | `growthbook/` | Feature flags |
-| LaunchDarkly | `launchdarkly/` | Feature flags |
-| Unleash | `unleash/` | Feature flags |
+GrowthBook, LaunchDarkly and Unleash.
 
-## Communication & Media
+## Communication, Media & Maps
 
-| Service | Path | Notes |
-|---|---|---|
-| Resend | `resend/` | Email API |
-| Ably | `ably/` | Realtime messaging |
-| Cloudinary | `cloudinary/` | Media CDN |
-| Mux | `mux/` | Video hosting |
-| Mapbox | `mapbox/` | Maps |
+Resend, Ably, Cloudinary, Mux and Mapbox.
 
-## Scheduling & Events
+## Scheduling, Events & Collaboration
 
-| Service | Path | Notes |
-|---|---|---|
-| Cal.com | `cal-com/` | Scheduling |
-| Inngest | `inngest/` | Durable functions |
-| Liveblocks | `liveblocks/` | Collaboration |
+Cal.com, Inngest and Liveblocks.
 
 ## CRM
 
-| Service | Path | Notes |
-|---|---|---|
-| Twenty CRM | `twenty-crm/` | CRM |
+Twenty CRM.
 
-## MCP Connectors
+## Additional cataloged systems
 
-| Connector | Path |
-|---|---|
-| GitHub | `connectors/github/` |
-| Notion | `connectors/notion/` |
-| Slack | `connectors/slack/` |
-| Linear | `connectors/linear/` |
-| Jira | `connectors/jira/` |
-| Stripe | `connectors/stripe/` |
-| Supabase | `connectors/supabase/` |
-| Postgres | `connectors/postgres/` |
-| Google Drive | `connectors/google-drive/` |
-| Google Sheets | `connectors/google-sheets/` |
-| Figma | `connectors/figma/` |
-| Discord | `connectors/discord/` |
+OmniRoute, OpenViking, open-wa and Scrapling are also cataloged here. Treat community projects according to the source policy rather than as official platform guidance.
+
+## Connector knowledge
+
+GitHub, Notion, Slack, Linear, Jira, Stripe, Supabase, PostgreSQL, Google Drive, Google Sheets, Figma and Discord have connector notes under `connectors/`.
+
+Connector notes describe known integration surfaces. They do **not** promise that the current ChatGPT/Claude/Codex account has that connector installed, authorized or writable.

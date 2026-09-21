@@ -1,43 +1,53 @@
 # AI Capability & Connector Registry
 
-Purpose: help an AI agent answer **what capability can I use for this task, on which surface, and how do I activate it?**
+Purpose: answer **what capability can I use for this task, where is its source of truth, and what must I verify before depending on it?**
 
-This registry is organized by **use**, not implementation type. Before doing expensive manual work, an agent should check this registry for an existing app, plugin, MCP server, skill, or local tool.
+Start with [ROUTING-MAP.md](./ROUTING-MAP.md). It routes by job and keeps context small. Use [SOURCE-POLICY.md](./SOURCE-POLICY.md) to distinguish official/canonical evidence from maintained references, community tools and historical material.
 
 ## Decision order
 
-1. **Need external data/action?** Check `connectors.md`.
-2. **Need to reduce token/context cost?** Check `token-context-efficiency.md` before reading large repos or emitting large CLI output.
-3. **Need to test a web/mobile application?** Check `application-testing/README.md` before choosing an automation stack.
-4. **Need to improve the agent's own workflow?** Check `agent-tools.md`.
-4. Prefer an already-authorized native/official capability over building a new integration.
-5. Never assume availability: product surface, plan, workspace policy, OS, authorization and provider permissions can differ.
-6. Verify installation/connection before depending on a capability.
+1. Identify the job; route through `ROUTING-MAP.md`.
+2. If external data/action is needed, check `connectors.md`.
+3. If context/token cost is the bottleneck, check `token-context-efficiency.md`.
+4. For web/mobile testing, check `application-testing/README.md`.
+5. For security work, check `security/` plus `../patterns/security/`.
+6. For agent workflow/capabilities, check `agent-tools.md` and the matching `../external-skills/` wrapper.
+7. Prefer an already-authorized native/official capability over installing a duplicate.
+8. Never assume availability. Verify host, plan/policy, OS/runtime, authorization and provider permissions.
+9. Never treat successful invocation as proof of target-system correctness; follow the testing/security evidence model.
 
-## Platform model
+## Normalized capability contract
 
-### ChatGPT / Codex
-Current OpenAI terminology distinguishes:
-- **App** — connection to an external service/data/actions.
-- **Plugin** — installable workflow package that may contain skills, apps/MCP, or both.
-- **MCP app/server** — custom tool surface; exact read/write support depends on product surface and plan.
-- **Skill** — reusable workflow/instruction capability.
-
-### Claude / Claude Code
-MCP is the common connection protocol across Anthropic products. Claude Code also supports local skills/plugins/hooks that can change the agent's workflow itself.
-
-## Registry contract
-
-Every capability entry should record:
+New executable/installable capability entries should record:
 - purpose / trigger
-- ChatGPT/Codex support
-- Claude/Claude Code support
-- mechanism (app, plugin, MCP, skill, hook, CLI/API)
+- **do-not-use / overlap guidance**
+- canonical upstream and source tier
+- supported host/surface and mechanism (app/plugin/MCP/skill/hook/CLI/API)
 - read/write scope
-- installation or connection path
-- authentication/secrets
-- verification command/check
-- limitations and security notes
-- source/provenance and last verification date
+- installation/connection
+- authentication/secrets/permissions
+- verification path
+- **what successful verification proves**
+- **what it does not prove**
+- limitations/security/privacy
+- qualification status and last live verification date when actually tested
 
-**Freshness:** product availability changes. Treat this registry as routing knowledge, then verify current platform documentation before installation when the exact availability matters.
+Older assets may predate this contract. Presence in the library is not a LIVE qualification.
+
+## Status semantics
+
+- **READY / HOST-DEPENDENT** — wrapper/upstream is coherent; live use still requires the target host/runtime.
+- **CONDITIONAL** — prerequisites or qualification gaps remain.
+- **REFERENCE ONLY** — useful knowledge, not an executable capability.
+- **STALE** — current upstream/instructions need re-verification.
+- **BROKEN** — known active path cannot work as documented.
+
+For target-project evidence, use the separate testing vocabulary: PASS / FAIL / PARTIAL / BLOCKED / NOT TESTED / FLAKY / NOT APPLICABLE.
+
+## Audit/evaluation
+
+- [NORMALIZATION-AUDIT.md](./NORMALIZATION-AUDIT.md) — current library-level findings and remaining debt.
+- [QUALIFICATION-REPORT.md](./QUALIFICATION-REPORT.md) — prior capability qualification evidence.
+- [EVALUATION-BANK.md](./EVALUATION-BANK.md) — representative routing scenarios for evaluating Engineering-OS itself.
+
+**Freshness rule:** exact product/API/install/release behavior changes. Verify current canonical upstream documentation when exact current behavior matters.
