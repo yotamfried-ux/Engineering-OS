@@ -162,8 +162,3 @@ To disable the secret without deleting it:
 gh secret set CLAUDE_CODE_OAUTH_TOKEN --body "disabled"
 ```
 
----
-
-## Reference
-
-See `scripts/skill-bootstrap.sh` in the Engineering OS repo for a bootstrap helper that automates directory creation and common copy steps across skill integrations.

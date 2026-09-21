@@ -42,15 +42,6 @@ After installation, confirm the plugin is active:
    the Skill tool. The SessionStart hook injects it automatically on session start, on
    `/clear`, and on `/compact` — no manual invocation is needed to bootstrap it.
 
-3. **Run the project verifier:**
-
-   ```bash
-   bash scripts/skill-bootstrap.sh
-   ```
-
-   `scripts/skill-bootstrap.sh` checks that the plugin is installed and that the
-   `using-superpowers` skill is available, then reports pass/fail. Run this after
-   install and after any Claude Code upgrade that could affect plugin state.
 
 4. **Confirm the SessionStart hook fires:** start a new Claude Code session and observe
    that `using-superpowers` is injected at the top of the context without any manual
@@ -62,26 +53,9 @@ After installation, confirm the plugin is active:
 None. superpowers has no environment variables, no API keys, and no configuration files
 beyond what the plugin manifest ships.
 
-## Availability Without Plugin (Remote/Web Sessions)
+## Availability without plugin
 
-When `/plugin install` is not available (Claude Code on the web, remote sessions, GitHub Actions),
-use the slash commands installed by `use-in-project.sh`:
-
-| Slash command | Replaces | L2 status |
-|---|---|---|
-| `/superpowers-brainstorm` | `superpowers:brainstorming` | **L2 mandatory before features** |
-| `/superpowers-verify` | `superpowers:verification-before-completion` | **L2 mandatory before done** |
-| `/superpowers-plan` | `superpowers:writing-plans` | Recommended before non-trivial code |
-
-These commands are **always available** — they are markdown files in `.claude/commands/` that
-work in every Claude Code environment without a plugin. The plugin adds automatic SessionStart
-injection on top; the commands are the portable foundation.
-
-**Invocation:** User or Claude types `/superpowers-brainstorm` (or the other commands) in
-Claude Code. No plugin, no API key, no setup beyond `use-in-project.sh` having run.
-
-**How they get installed:** `use-in-project.sh` copies them from
-`${EOS_HOME}/.claude/commands/` to the target project's `.claude/commands/` during bootstrap.
+Do not assume a portable Engineering-OS fallback exists. If the host does not support the plugin, use the upstream Superpowers installation/support guidance for that host, or continue without the capability and record the gap.
 
 ---
 

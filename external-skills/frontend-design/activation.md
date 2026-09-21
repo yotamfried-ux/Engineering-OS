@@ -35,7 +35,6 @@ cp -r /tmp/anthropics-skills/skills/frontend-design .claude/skills/
 
 The `.claude/skills/` directory is Claude Code's local skill search path. The skill is self-contained (`SKILL.md` + `LICENSE.txt`) — no further configuration needed.
 
-> Reference: see `scripts/skill-bootstrap.sh` in this repo for a scripted version of the manual copy workflow.
 
 ---
 

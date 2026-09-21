@@ -39,8 +39,6 @@ rtk init -g
 1. מוסיפה PreToolUse hook ל-`~/.claude/settings.json` (גלובלי)
 2. יוצרת `~/.claude/RTK.md` ומוסיפה `@RTK.md` ל-CLAUDE.md של הפרויקט
 
-**הערה:** `session-setup.sh` מריץ גם `rtk init -g` אוטומטית. אם RTK לא מותקן,
-הסקריפט מנסה להתקין דרך cargo.
 
 ---
 

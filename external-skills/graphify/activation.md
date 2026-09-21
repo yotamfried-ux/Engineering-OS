@@ -150,8 +150,3 @@ claude mcp remove graphify
 
 The `graphify-out/` directory (containing the graph JSON) can be deleted manually once the tool is uninstalled.
 
----
-
-## Reference
-
-For bootstrapping Graphify as part of a new project setup, see `scripts/skill-bootstrap.sh` in this Engineering OS repository.

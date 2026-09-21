@@ -186,10 +186,3 @@ rm -rf ~/.claude-mem/
 This is irreversible. There is no export-before-delete step built in; if you want to
 preserve data, copy the directory first.
 
----
-
-## Reference
-
-For a scripted install workflow, see `scripts/skill-bootstrap.sh` in the Engineering OS
-repository root. That script covers prerequisite checks and can be adapted to include
-claude-mem installation as part of a new project setup.

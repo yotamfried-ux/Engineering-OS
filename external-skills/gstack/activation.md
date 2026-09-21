@@ -43,8 +43,6 @@ git add .claude/ CLAUDE.md
 git commit -m "chore: add gstack team skills"
 ```
 
-> Reference: see `scripts/skill-bootstrap.sh` in this repo for a scripted version of
-> the personal install workflow.
 
 ---
 
