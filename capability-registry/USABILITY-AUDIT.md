@@ -81,3 +81,62 @@ The knowledge-library conversion intentionally removed runtime directories such 
 ## Audit limitation
 
 This report deliberately distinguishes **live connection evidence** from **upstream availability**. The current sandbox cannot reach arbitrary package registries/GitHub from the shell and has no Android/iOS device toolchain, so it would be misleading to mark every local MCP as end-to-end tested. Active upstream repositories were verified through GitHub access; vendor state was checked against current vendor documentation/plugin discovery; only connected services were marked LIVE.
+
+---
+
+# Project-Owned MCP & Agent Asset Qualification — 2026-09-21
+
+This section excludes connectors already built into ChatGPT. It qualifies assets the AI is expected to discover/use **from this repository**.
+
+## Results
+
+| Project asset | Verdict | Why |
+|---|---|---|
+| Playwright MCP wrapper | **WORKING, HOST-DEPENDENT** | Self-contained upstream npx install route; no missing Engineering-OS runtime dependency. Requires MCP host/browser. |
+| Maestro MCP wrapper | **WORKING, HOST-DEPENDENT** | Self-contained upstream Maestro MCP route. Real mobile execution requires emulator/simulator/device. |
+| Appium MCP wrapper | **WORKING, HOST-DEPENDENT** | Official upstream MCP route; requires platform SDK/device. |
+| Chrome DevTools MCP wrapper | **WORKING, HOST-DEPENDENT** | Self-contained npx route; requires Chrome + MCP host. |
+| Mobile Next MCP wrapper | **WORKING, HOST-DEPENDENT** | Deliberately points upstream; requires supported device/toolchain. |
+| RTK | **STALE / PARTIAL** | Direct install + rtk init route is usable, but wrapper falsely relies on removed session-setup automation. |
+| Graphify | **STALE / PARTIAL** | Direct uv install, graph build and MCP registration are usable; references removed session-setup and skill-bootstrap files. |
+| claude-mem | **STALE / PARTIAL** | Upstream plugin/npx route is self-contained; final bootstrap reference points to removed skill-bootstrap helper. Full behavior requires Claude Code/runtime prerequisites. |
+| gstack | **STALE / PARTIAL** | Upstream clone/setup is self-contained; bootstrap-helper reference is dead. |
+| ui-ux-pro-max | **WORKING, HOST-DEPENDENT** | Upstream Claude plugin/npm activation does not require a removed Engineering-OS runtime asset. |
+| frontend-design | **REFERENCE ONLY + STALE NOTE** | Explicitly deprecated; upstream/manual route remains usable but bootstrap reference is dead. |
+| superpowers | **STALE / PARTIAL** | Upstream plugin route can work. Engineering-OS verifier/portable fallback depends on removed scripts, .claude commands and use-in-project helper. |
+| claude-code-workflows | **STALE / PARTIAL** | Upstream clone/copy workflow can work, but includes manual placeholder resolution and a dead bootstrap-helper reference. |
+| Security Review | **BROKEN** | Advertised routes require absent local Nemotron MCP server and absent .claude security-review command; claimed automatic routing no longer exists. |
+| Nemotron MCP | **BROKEN** | Connector template and activation docs launch the removed scripts/nemotron-mcp-server.py. NVIDIA API reference remains useful; project-owned MCP is not runnable. |
+| engineering-os-mcp.json | **BROKEN AS DROP-IN** | Contains broken Nemotron entry plus unresolved environment URL placeholders. It is not a ready connector config. |
+
+## Proven missing dependencies on main
+
+The current repository tree contains none of these previously referenced runtime assets:
+
+- scripts/skill-bootstrap.sh
+- scripts/nemotron-mcp-server.py
+- .claude/commands/security-review.md
+- use-in-project.sh
+- core/skill-orchestration-policy.md
+- core/task-router.md
+- core/capability-registry.yaml
+
+## Root cause
+
+The knowledge-library conversion intentionally removed the old runtime/control plane, but several retained wrappers were written for that runtime. Their upstream installation instructions survived while project-local bootstrap, hooks, commands, policies and the custom Nemotron server became dangling dependencies.
+
+This is a library consistency issue, not a failure of ChatGPT's built-in connectors.
+
+## Remediation
+
+1. Do not restore the old OS runtime wholesale.
+2. Make every reusable wrapper self-contained: upstream source, prerequisites, install, verification and removal.
+3. Remove claims that deleted session-setup, skill-bootstrap, use-in-project, core policies or .claude commands exist.
+4. Either retain/rebuild the small Nemotron MCP as an explicit reusable template and qualify initialize/tools/call, or remove the project-owned MCP claim and keep Nemotron as an external engine/API reference.
+5. Rewrite Security Review around a capability that actually exists; until then keep it BROKEN.
+6. Split engineering-os-mcp.json into verified optional snippets or clearly mark unresolved placeholders.
+7. Qualify host/device-dependent tools in the target execution environment before an agent marks them active.
+
+## Bottom line
+
+The five application-testing wrappers and ui-ux-pro-max have the cleanest self-contained activation contracts. Several other skills are usable through their upstream installation path but have stale Engineering-OS automation references. The genuinely non-runnable project-owned capabilities are the custom Nemotron MCP and the Security Review route built on it.
