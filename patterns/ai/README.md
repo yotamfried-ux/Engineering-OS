@@ -1,5 +1,5 @@
 # AI Patterns
-> See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring.
+> Lifecycle note: treat legacy pattern scores as historical metadata; use current evidence/status rules for qualification.
 
 ## Overview
 
