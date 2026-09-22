@@ -39,7 +39,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone official Graphify upstream
-        run: git clone --depth 1 --branch v8 https://github.com/Graphify-Labs/graphify.git upstream-graphify
+        run: git clone --branch v8 https://github.com/Graphify-Labs/graphify.git upstream-graphify
+          cd upstream-graphify
+          git cat-file -e 47042beb05d1f6dd2186c0c499ae2840ce604ead^{commit}
       - name: Record upstream revision
         working-directory: upstream-graphify
         run: git rev-parse HEAD
