@@ -187,7 +187,7 @@ Validation rules:
 ### API Keys
 
 - Prefer the `Authorization` header with a custom scheme: `Authorization: ApiKey <key>`. This keeps secrets out of server logs that capture URLs.
-- Avoid query-parameter API keys (`?api_key=...`) — they appear in access logs, browser history, and referrer headers.
+- Avoid query-parameter API keys (for example, putting an API credential in the URL query string) — they appear in access logs, browser history, and referrer headers.
 - Store only a hashed representation of the key server-side; show the plaintext value only once at creation.
 - Support key rotation: allow multiple active keys per account so callers can rotate without downtime.
 - Scope keys to the minimum required permissions.
