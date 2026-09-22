@@ -11,7 +11,7 @@ MCP (Model Context Protocol) is Anthropic's open standard for connecting AI assi
 |---|---|---|
 | [Local Process Server](./local-process.md) | stdio | Claude Desktop/Code integrations, dev tools, local file access |
 | [Remote HTTP Server](./remote-server.md) | HTTP+SSE / Streamable HTTP | Multi-user SaaS, shared team tools, cloud-hosted data |
-| [Proxy / Gateway Server](./gateway.md) | Any | Aggregating multiple MCP servers, adding auth to existing APIs |
+| Proxy / Gateway Server | Any | Aggregating multiple MCP servers, adding auth to existing APIs |
 
 ## Decision Guide
 
