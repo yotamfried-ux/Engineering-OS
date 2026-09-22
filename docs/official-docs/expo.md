@@ -34,11 +34,11 @@
 
 - File-based navigation with Expo Router — see [patterns/ui/README.md](../../patterns/ui/README.md)
 - Auth flow (login screens, protected routes) — see [patterns/auth/README.md](../../patterns/auth/README.md)
-- Mobile app scaffold — see [templates/mobile-apps/README.md](../../templates/mobile-apps/README.md)
+- Mobile app scaffold — see templates/mobile-apps/README.md
 
 ## Related External Systems
 
-- see [external-systems/expo/README.md](../../external-systems/expo/README.md)
+- see external-systems/expo/README.md
 
 ## Gotchas & Version Notes
 
