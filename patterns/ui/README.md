@@ -1,5 +1,5 @@
 # UI/UX Patterns
-> See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring.
+> See current evidence/status rules for scoring.
 
 ## Overview
 
