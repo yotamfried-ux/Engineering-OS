@@ -48,7 +48,7 @@
 
 ## Related External Systems
 
-- see [external-systems/nestjs/README.md](../../external-systems/nestjs/README.md)
+- see external-systems/nestjs/README.md
 
 ---
 
