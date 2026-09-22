@@ -10,6 +10,8 @@ on:
       - "external-skills/graphify/**"
       - "external-skills/claude-mem/**"
       - "external-skills/superpowers/**"
+      - "external-skills/gstack/**"
+      - "external-skills/ui-ux-pro-max/**"
 
 permissions:
   contents: read
@@ -116,3 +118,61 @@ jobs:
         run: |
           bash tests/codex-plugin-sync/test-sync-to-codex-plugin.sh
           bash tests/diagnosing-superpowers/test-skill-structure.sh
+
+  gstack-upstream:
+    name: gstack upstream qualification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone official gstack upstream
+        run: git clone --depth 1 https://github.com/garrytan/gstack.git upstream-gstack
+      - name: Record upstream revision
+        working-directory: upstream-gstack
+        run: git rev-parse HEAD
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install dependencies
+        working-directory: upstream-gstack
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Run official skill check
+        working-directory: upstream-gstack
+        run: bun run skill:check
+      - name: Run official audit compliance suite
+        working-directory: upstream-gstack
+        run: bun run test:audit
+
+  ui-ux-pro-max-upstream:
+    name: ui-ux-pro-max upstream qualification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone official ui-ux-pro-max upstream
+        run: git clone --depth 1 https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git upstream-ui-ux
+      - name: Record upstream revision
+        working-directory: upstream-ui-ux
+        run: git rev-parse HEAD
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install pytest
+        run: pip install pytest
+      - name: Install CLI dependencies
+        working-directory: upstream-ui-ux/cli
+        run: npm ci
+      - name: Run official aggregate offline data gate
+        working-directory: upstream-ui-ux
+        run: npm --prefix cli run verify:data
+      - name: Run official skill regression tests
+        working-directory: upstream-ui-ux
+        run: python3 -m pytest .claude/skills -v
+      - name: Run official CLI typecheck
+        working-directory: upstream-ui-ux/cli
+        run: npm run typecheck
+      - name: Run official CLI build
+        working-directory: upstream-ui-ux/cli
+        run: npm run build
