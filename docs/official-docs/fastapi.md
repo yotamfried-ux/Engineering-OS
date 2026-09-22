@@ -46,7 +46,7 @@
 
 ## Related External Systems
 
-- see [external-systems/fastapi/README.md](../../external-systems/fastapi/README.md)
+- see external-systems/fastapi/README.md
 
 ---
 
