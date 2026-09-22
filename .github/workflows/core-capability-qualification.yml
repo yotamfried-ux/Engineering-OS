@@ -78,10 +78,13 @@ jobs:
           echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
       - name: Install dependencies
         working-directory: upstream-claude-mem
-        run: ~/.bun/bin/bun install --frozen-lockfile
+        run: npm install --no-audit --no-fund
       - name: Run official typecheck
         working-directory: upstream-claude-mem
-        run: ~/.bun/bin/bun run typecheck
+        run: npm run typecheck
+      - name: Run official build
+        working-directory: upstream-claude-mem
+        run: npm run build
       - name: Run official CI-safe focused suites
         working-directory: upstream-claude-mem
         run: |
