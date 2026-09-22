@@ -44,18 +44,9 @@ current phase; do not force the full pipeline onto small tasks.
    before implementation exists, and never used to bypass the Engineering OS pre-commit
    hooks or quality gates.
 
-4. **Never override the security-level gate.** Engineering OS hooks defined in
-   [`core/hooks-policy.md`](../../core/hooks-policy.md) and quality gates in
-   [`core/quality-gates.md`](../../core/quality-gates.md) are deterministic and cannot
-   be bypassed by a gstack role recommendation. If a hook blocks an action, treat the
-   block as valid; fix the underlying issue rather than using `/ship` or `/careful` to
-   work around it.
+4. **Never override the target project's deterministic security or quality gates.** If a project hook or CI gate blocks an action, treat the block as valid; fix the underlying issue rather than using `/ship` or `/careful` to work around it.
 
-5. **Platform choices remain the user's decision.** gstack role commands may suggest
-   deployment targets, infrastructure, or third-party services. Such suggestions are
-   input for discussion, not autonomous decisions. Follow
-   [`core/connector-policy.md`](../../core/connector-policy.md) — platform selection
-   requires explicit user approval.
+5. **Platform choices remain the user's decision.** gstack role commands may suggest deployment targets, infrastructure, or third-party services. Such suggestions are input for discussion, not autonomous decisions; follow the target project's approval policy.
 
 ## Notes / caveats
 
