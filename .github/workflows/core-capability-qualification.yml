@@ -8,6 +8,8 @@ on:
       - ".github/workflows/core-capability-qualification.yml"
       - "external-skills/rtk/**"
       - "external-skills/graphify/**"
+      - "external-skills/claude-mem/**"
+      - "external-skills/superpowers/**"
 
 permissions:
   contents: read
@@ -59,3 +61,41 @@ jobs:
       - name: Verify CLI
         working-directory: upstream-graphify
         run: uv run --frozen graphify --version
+
+
+  claude-mem-upstream:
+    name: claude-mem upstream qualification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone official claude-mem upstream
+        run: git clone --depth 1 https://github.com/thedotmack/claude-mem.git upstream-claude-mem
+      - name: Record upstream revision
+        working-directory: upstream-claude-mem
+        run: git rev-parse HEAD
+      - name: Install Bun
+        run: curl -fsSL https://bun.sh/install | bash
+      - name: Install dependencies
+        working-directory: upstream-claude-mem
+        run: ~/.bun/bin/bun install --frozen-lockfile
+      - name: Run official typecheck
+        working-directory: upstream-claude-mem
+        run: ~/.bun/bin/bun run typecheck
+      - name: Run official test suite
+        working-directory: upstream-claude-mem
+        run: ~/.bun/bin/bun test tests
+
+  superpowers-upstream:
+    name: Superpowers upstream qualification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone official Superpowers upstream
+        run: git clone --depth 1 https://github.com/obra/superpowers.git upstream-superpowers
+      - name: Record upstream revision
+        working-directory: upstream-superpowers
+        run: git rev-parse HEAD
+      - name: Install dependencies
+        working-directory: upstream-superpowers
+        run: npm install
+      - name: Run official plugin infrastructure suite
+        working-directory: upstream-superpowers
+        run: npm test
