@@ -1,0 +1,58 @@
+name: Core capability qualification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/core-capability-qualification.yml"
+      - "external-skills/rtk/**"
+      - "external-skills/graphify/**"
+
+permissions:
+  contents: read
+
+jobs:
+  rtk-upstream:
+    name: RTK upstream qualification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone official RTK upstream
+        run: git clone --depth 1 --branch master https://github.com/rtk-ai/rtk.git upstream-rtk
+      - name: Record upstream revision
+        working-directory: upstream-rtk
+        run: git rev-parse HEAD
+      - name: Run upstream CI test command
+        working-directory: upstream-rtk
+        run: cargo test --all
+      - name: Build release binary
+        working-directory: upstream-rtk
+        run: cargo build --release
+      - name: Verify official install checks
+        working-directory: upstream-rtk
+        run: |
+          ./target/release/rtk --version
+          RTK_DB_PATH="$RUNNER_TEMP/rtk-history.db" ./target/release/rtk gain
+
+  graphify-upstream:
+    name: Graphify upstream qualification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone official Graphify upstream
+        run: git clone --depth 1 --branch v8 https://github.com/Graphify-Labs/graphify.git upstream-graphify
+      - name: Record upstream revision
+        working-directory: upstream-graphify
+        run: git rev-parse HEAD
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Run upstream CI parity suite
+        working-directory: upstream-graphify
+        run: |
+          uv sync --all-extras --frozen
+          uv run --frozen pytest tests/ -q --tb=short
+          uv run --frozen python -m tools.skillgen --check
+          uv run --frozen python -m tools.skillgen --audit-coverage
+          uv run --frozen python -m tools.skillgen --schema-singleton
+      - name: Verify CLI
+        working-directory: upstream-graphify
+        run: uv run --frozen graphify --version
