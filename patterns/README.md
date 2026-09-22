@@ -20,7 +20,7 @@
 2. **קרא את ה-README של הדומיין** — implementation מלא + common mistakes.
 3. **בדוק `status`** — `active` עדיפה; `candidate` תקפה אך טרם אומתה בפרודקשן.
 
-> **כל התבניות כרגע בסטטוס `candidate`** — לא אומתו בפרודקשן עדיין. ה-score יתמלא בשימוש ראשון (ראה `core/scoring-guide.md`).
+> **כל התבניות כרגע בסטטוס `candidate`** — לא אומתו בפרודקשן עדיין. ה-score יתמלא בשימוש ראשון; treat historical scores as metadata, not current qualification.
 
 ## דומיינים
 
@@ -55,5 +55,5 @@
 
 1. כתוב ב-README.md של הדומיין הרלוונטי לפי המבנה הסטנדרטי (Problem → Solution → Implementation Notes → Example → Common Mistakes → Security Considerations → Testing → Score).
 2. הוסף רשומה ל-[`registry.yaml`](./registry.yaml) עם `status: candidate`.
-3. אחרי שימוש ראשון בפרודקשן — עדכן `evidence` וחשב `score` (ראה `core/scoring-guide.md`).
-4. לאחר שני שימושים עם ציון ≥60 — שנה ל-`status: active`.
+3. אחרי שימוש ראשון בפרודקשן — עדכן `evidence` וחשב `score`; record evidence under the current qualification model.
+4. Do not promote a pattern from historical score alone; record current evidence and qualification status.
