@@ -39,7 +39,7 @@
 
 ## Related External Systems
 
-- Next.js (App Router + RSC integration) — see [external-systems/nextjs/README.md](../../external-systems/nextjs/README.md)
+- Next.js (App Router + RSC integration) — see external-systems/nextjs/README.md
 
 ## Gotchas & Version Notes
 
