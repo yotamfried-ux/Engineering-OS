@@ -32,13 +32,13 @@
 
 ## Common Patterns
 
-- Full-stack Next.js app — see [templates/fullstack-saas/README.md](../../templates/fullstack-saas/README.md)
+- Full-stack Next.js app — see templates/fullstack-saas/README.md
 - Auth with middleware — see [patterns/auth/README.md](../../patterns/auth/README.md)
 - API route patterns — see [patterns/api/README.md](../../patterns/api/README.md)
 
 ## Related External Systems
 
-- see [external-systems/vercel/README.md](../../external-systems/vercel/README.md)
+- see external-systems/vercel/README.md
 
 ## Gotchas & Version Notes
 
