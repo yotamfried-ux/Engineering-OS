@@ -2,7 +2,7 @@
 
 > Part of [`patterns/integrations/`](../README.md). Covers connecting to analytics providers (Segment, Mixpanel, PostHog, Amplitude) for event tracking and data pipeline integration.
 >
-> See [`core/pattern-lifecycle.md`](../../../core/pattern-lifecycle.md) for scoring and lifecycle rules.
+> Lifecycle note: use current evidence/status rules; legacy pattern scoring is historical metadata.
 
 ## Status: Placeholder
 
