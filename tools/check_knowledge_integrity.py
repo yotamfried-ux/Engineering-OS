@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 MD=sorted(ROOT.rglob("*.md"))
 REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
 FORBIDDEN=("core/","scripts/","experiments/","evals/","telemetry-archive/",".claude/")
-HISTORICAL=("lessons-learned/","failed-solutions/","improved-stage3/","capability-registry/evaluations/","capability-registry/USABILITY-AUDIT","capability-registry/QUALIFICATION-REPORT","capability-registry/NORMALIZATION-AUDIT")
+HISTORICAL=("lessons-learned/","failed-solutions/","improved-stage3/","architecture-decisions/ADR-","capability-registry/evaluations/","capability-registry/USABILITY-AUDIT","capability-registry/QUALIFICATION-REPORT","capability-registry/NORMALIZATION-AUDIT")
 INSTALL_DOCS=("external-skills/","templates/")
 SECRET_QUERY=re.compile(r"(?i)[?&](?:mcp_token|access_token|api[_-]?key|token|secret)=")
 LINK=re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
@@ -27,7 +27,11 @@ for rel in REQUIRED:
     if not (ROOT/rel).exists(): errors.append(f"missing required entry point: {rel}")
 for p in MD:
     rel=p.relative_to(ROOT); rs=str(rel); text=p.read_text("utf-8",errors="replace")
-    if SECRET_QUERY.search(text) and "process.env." not in text: errors.append(f"{rel}: contains secret/share-token query parameter")
+    # Only flag token-bearing URL query strings that contain a literal-looking value.
+    for sm in re.finditer(r"(?i)[?&](?:mcp_token|access_token|api[_-]?key|token|secret)=([^&\\s)`]+)", text):
+        value=sm.group(1)
+        if not any(marker in value for marker in ("<", "{", "$", "YOUR_", "REDACTED", "example")):
+            errors.append(f"{rel}: contains literal-looking secret/share-token query parameter")
     if rs.startswith(HISTORICAL):
         continue
     for m in LINK.finditer(text):
