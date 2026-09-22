@@ -84,5 +84,5 @@ All 14 skills are invoked through the Claude Code `Skill` tool.
   before merge.
 - **Security skills** (from `patterns/security/`) take precedence over superpowers
   methodology if a conflict arises (e.g., a security fix that must not be held behind a
-  full brainstorm cycle). See [`core/precedence.md`](../../core/precedence.md).
+  full brainstorm cycle). Follow the target project's current security policy and authoritative gates.
 - superpowers does not replace the target project's tests, CI checks, branch protections, or review policy; it operates alongside them.
