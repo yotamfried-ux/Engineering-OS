@@ -19,7 +19,7 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Internet/social retrieval | `external-skills/agent-reach/` | provider/channel docs | diagnostics show requested channel is live |
 | Memory across sessions | `token-context-efficiency.md` | claude-mem, agentmemory, OpenViking | retrieval/update/deletion behavior verified |
 | Autonomous coding agent | `agent-tools.md` | OpenHands/Hermes/host-native agent tools | bounded task + diff + tests + sandbox review |
-| Voice/audio capability | `external-skills/voicebox/` | upstream docs | representative local I/O verified |
+| Local typed decisions on Apple Silicon | `external-skills/laya-coreml/` | upstream Core ML docs/tests/benchmarks | representative local decision + target-host evidence |\n| Voice/audio capability | `external-skills/voicebox/` | upstream docs | representative local I/O verified |
 | WhatsApp automation | `external-systems/open-wa/` | official WhatsApp/Meta route when appropriate | authorized account + representative safe action |
 | Debug known failure | `docs/troubleshooting/` | lessons + failed-solutions | reproduced cause + regression evidence |
 | Scientific/research workflow | `external-skills/scientific-agent-skills/` | authoritative domain sources | citations/data provenance + domain validation |
