@@ -2,7 +2,7 @@
 
 > Architecture Decision Records document significant technical decisions: why they were made, what alternatives were considered, and what trade-offs were accepted. An ADR is written when a decision is hard to reverse, affects multiple components, or will be questioned by future engineers.
 >
-> See [`core/workflow.md`](../core/workflow.md) › `<project_scaffold>` for when ADRs are created during project setup.
+> Use this document as the current ADR creation and lifecycle guide.
 
 ## When to write an ADR
 
