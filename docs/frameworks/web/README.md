@@ -1,7 +1,7 @@
 # Web Frameworks & Platforms
 
 ## Overview
-Consult this guide when choosing a web framework for a new project or evaluating migration options. Use it alongside `core/connector-policy.md` when a platform decision involves infrastructure or hosting. This guide covers full-stack frameworks, server-side rendering (SSR), static site generation (SSG), single-page apps (SPA), and lightweight API routers.
+Consult this guide when choosing a web framework for a new project or evaluating migration options. Use it alongside the target project's current connector/approval policy when a platform decision involves infrastructure or hosting. This guide covers full-stack frameworks, server-side rendering (SSR), static site generation (SSG), single-page apps (SPA), and lightweight API routers.
 
 **Decision heuristic:**
 - React ecosystem + full-stack + production scale → Next.js
