@@ -52,7 +52,7 @@ Each wrapper is written from a **verified scan of the real repository** — not 
 | **[gstack](./gstack/)** | orchestration, role-simulation | L1 (complex projects) | `git clone` + `./setup` (needs Bun) | role commands `/autoplan`, `/review`, `/qa`, `/cso`, `/ship` (23 specialists + 8 power tools) |
 | **[graphify](./graphify/)** | context-optimization, code-intelligence | **L2** (mandatory default-on every project) | `uv tool install graphifyy` + MCP | `/graphify .`, MCP tools `query_graph`, `get_node`, `get_pr_impact`… |
 | **[rtk](./rtk/)** | context-optimization | **L2** · default-on every project | `cargo install --git https://github.com/rtk-ai/rtk` | PreToolUse hook — auto-compresses all Bash output 60–90% |
-| **[laya-coreml](./laya-coreml/)** | local-ai, typed-decisions, Apple-Silicon | conditional | PyPI + model bundle | local choice/score/boolean decisions via Core ML; no text generation |\n| **[ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | **L2** for UI projects / L1 otherwise | Claude Code plugin (marketplace) | UI/UX design workflow, component specs, accessibility review |
+| **[laya-coreml](./laya-coreml/)** | local-ai, typed-decisions, Apple-Silicon | conditional | PyPI + model bundle | local choice/score/boolean decisions via Core ML; no text generation |\n| **[ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | **L2** for UI projects / L1 otherwise | Claude Code plugin (marketplace) | UI/UX design workflow, component specs, accessibility review |\n| **[cli-anything](./cli-anything/)** | tool-generation, cli, agent-interface, automation | L1 when non-agent-native software blocks reliable automation | Claude Code plugin / upstream host integration | generate, refine, test and validate application-specific CLI harnesses |
 
 ---
 
@@ -69,7 +69,7 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 | ui-ux-pro-max | ⚠️ **conditional — UI projects** | Full UI/UX design workflow. Replaces the deprecated `frontend-design`. Installed when there is a UI surface. |
 | frontend-design | ⚠️ **DEPRECATED — use ui-ux-pro-max** | Superseded by ui-ux-pro-max. Do not install in new projects. |
 | claude-code-workflows | ⚠️ **recommended with PR review** | Provides PR-review subagents + Actions; full value only in a PR-based flow. |
-| gstack | ➖ **opt-in (not default)** | Heavy (Bun + 59 SKILL.md) and overlaps superpowers/security/review. Chosen deliberately for complex multi-role projects, not installed by default. |
+| gstack | ➖ **opt-in (not default)** | Heavy (Bun + 59 SKILL.md) and overlaps superpowers/security/review. Chosen deliberately for complex multi-role projects, not installed by default. |\n| cli-anything | ➖ **opt-in (not default)** | Use when a GUI-heavy or otherwise non-agent-native application needs a deterministic tested CLI interface. |
 
 **Suggested baseline:** superpowers · graphify · rtk · claude-mem, when supported by the execution environment. Each capability must be installed and verified independently using its own activation guide.
 
