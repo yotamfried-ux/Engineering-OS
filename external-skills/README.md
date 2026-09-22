@@ -52,7 +52,7 @@ Each wrapper is written from a **verified scan of the real repository** — not 
 | **[gstack](./gstack/)** | orchestration, role-simulation | L1 (complex projects) | `git clone` + `./setup` (needs Bun) | role commands `/autoplan`, `/review`, `/qa`, `/cso`, `/ship` (23 specialists + 8 power tools) |
 | **[graphify](./graphify/)** | context-optimization, code-intelligence | **L2** (mandatory default-on every project) | `uv tool install graphifyy` + MCP | `/graphify .`, MCP tools `query_graph`, `get_node`, `get_pr_impact`… |
 | **[rtk](./rtk/)** | context-optimization | **L2** · default-on every project | `cargo install --git https://github.com/rtk-ai/rtk` | PreToolUse hook — auto-compresses all Bash output 60–90% |
-| **[ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | **L2** for UI projects / L1 otherwise | Claude Code plugin (marketplace) | UI/UX design workflow, component specs, accessibility review |
+| **[laya-coreml](./laya-coreml/)** | local-ai, typed-decisions, Apple-Silicon | conditional | PyPI + model bundle | local choice/score/boolean decisions via Core ML; no text generation |\n| **[ui-ux-pro-max](./ui-ux-pro-max/)** | ui-ux, coding | **L2** for UI projects / L1 otherwise | Claude Code plugin (marketplace) | UI/UX design workflow, component specs, accessibility review |
 
 ---
 
