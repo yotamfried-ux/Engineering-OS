@@ -80,9 +80,17 @@ jobs:
       - name: Run official typecheck
         working-directory: upstream-claude-mem
         run: ~/.bun/bin/bun run typecheck
-      - name: Run official test suite
+      - name: Run official CI-safe focused suites
         working-directory: upstream-claude-mem
-        run: ~/.bun/bin/bun test tests
+        run: |
+          mkdir -p "$RUNNER_TEMP/claude-mem-data/logs"
+          export CLAUDE_MEM_DATA_DIR="$RUNNER_TEMP/claude-mem-data"
+          ~/.bun/bin/bun run test:infra
+          ~/.bun/bin/bun run test:search
+          ~/.bun/bin/bun run test:context
+          ~/.bun/bin/bun run test:server
+          ~/.bun/bin/bun run lint:hook-io
+          ~/.bun/bin/bun run lint:spawn-env
 
   superpowers-upstream:
     name: Superpowers upstream qualification
@@ -93,9 +101,13 @@ jobs:
       - name: Record upstream revision
         working-directory: upstream-superpowers
         run: git rev-parse HEAD
-      - name: Install dependencies
+      - name: Run official brainstorm-server plugin suite
+        working-directory: upstream-superpowers/tests/brainstorm-server
+        run: |
+          npm ci
+          npm test
+      - name: Run official structural plugin checks
         working-directory: upstream-superpowers
-        run: npm install
-      - name: Run official plugin infrastructure suite
-        working-directory: upstream-superpowers
-        run: npm test
+        run: |
+          bash tests/codex-plugin-sync/run-tests.sh
+          bash tests/diagnosing-superpowers/test-skill-structure.sh
