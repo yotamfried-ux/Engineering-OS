@@ -3,7 +3,7 @@
 > Part of [`patterns/integrations/`](../README.md). Covers transactional email: provider abstraction, template management, queuing, and delivery tracking.
 >
 > **Related:** [`external-systems/`](../../../external-systems/) for provider-specific API references.
-> See [`core/pattern-lifecycle.md`](../../../core/pattern-lifecycle.md) for scoring and lifecycle rules.
+> Lifecycle note: use current evidence/status rules; legacy pattern scoring is historical metadata.
 
 ---
 
