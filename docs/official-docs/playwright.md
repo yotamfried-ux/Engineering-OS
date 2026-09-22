@@ -45,7 +45,7 @@
 
 ## Related External Systems
 
-- see [external-systems/playwright/README.md](../../external-systems/playwright/README.md)
+- see external-systems/playwright/README.md
 
 ---
 
