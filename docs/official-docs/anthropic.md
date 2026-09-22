@@ -17,7 +17,7 @@
 6. [Streaming](https://docs.anthropic.com/en/docs/build-with-claude/streaming) — SSE event types (`content_block_delta`, `message_delta`, `input_json_delta` for tools); how to reconstruct tool call arguments
 7. [Vision (Image Input)](https://docs.anthropic.com/en/docs/build-with-claude/vision) — `image` content blocks (base64 or URL); supported formats, size limits, and resolution pricing
 8. [Extended Thinking](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking) — `thinking` content blocks; `budget_tokens` controls reasoning depth; when traces are visible vs. hidden
-9. [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/build-with-claude/mcp) — How Claude connects to external tools via MCP servers; read before `core/mcp-servers.md`
+9. [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/build-with-claude/mcp) — How Claude connects to external tools via MCP servers; read before the current capability registry and routing map
 10. [Rate Limits & Errors](https://docs.anthropic.com/en/api/errors) — Error types, 429 handling, `overloaded_error`, per-model tier limits
 
 ## Important APIs / Concepts
