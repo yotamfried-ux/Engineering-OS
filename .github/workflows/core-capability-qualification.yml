@@ -73,7 +73,9 @@ jobs:
         working-directory: upstream-claude-mem
         run: git rev-parse HEAD
       - name: Install Bun
-        run: curl -fsSL https://bun.sh/install | bash
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
       - name: Install dependencies
         working-directory: upstream-claude-mem
         run: ~/.bun/bin/bun install --frozen-lockfile
@@ -109,5 +111,5 @@ jobs:
       - name: Run official structural plugin checks
         working-directory: upstream-superpowers
         run: |
-          bash tests/codex-plugin-sync/run-tests.sh
+          bash tests/codex-plugin-sync/test-sync-to-codex-plugin.sh
           bash tests/diagnosing-superpowers/test-skill-structure.sh
