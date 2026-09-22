@@ -2,7 +2,7 @@
 
 > The unified integration domain for Engineering OS. This is the single source of truth for patterns that connect the application to external third-party systems.
 >
-> See [`pattern-lifecycle.md`](../../core/pattern-lifecycle.md) for scoring and lifecycle rules.
+> Lifecycle note: use current evidence/status rules; legacy pattern scoring is historical metadata.
 
 ## What belongs here vs. elsewhere
 
@@ -48,7 +48,7 @@
 2. Follow the standard pattern structure (Problem → Architecture → Implementation Notes → Example Code → Common Mistakes → Security Considerations → Testing Strategy → Score)
 3. Add a corresponding `external-systems/<provider>/README.md` for each provider's raw API reference
 4. Add the domain to the table above
-5. Update [`CLAUDE.md`](../../CLAUDE.md) navigation table if it is a significant new domain
+5. Update the repository routing/navigation map if it is a significant new domain
 
 ---
 
