@@ -3,7 +3,7 @@
 > Part of [`patterns/integrations/`](../README.md). Covers connecting to external calendar and scheduling systems.
 >
 > **External system references:** [`external-systems/cal-com/`](../../../external-systems/cal-com/) for Cal.com API reference.
-> See [`core/pattern-lifecycle.md`](../../../core/pattern-lifecycle.md) for scoring and lifecycle rules.
+> Lifecycle note: use current evidence/status rules; legacy pattern scoring is historical metadata.
 
 ---
 
