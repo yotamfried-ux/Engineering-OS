@@ -135,12 +135,12 @@ jobs:
       - name: Install dependencies
         working-directory: upstream-gstack
         run: bun install --frozen-lockfile --ignore-scripts
-      - name: Run official skill check
+      - name: Generate official host skill docs
         working-directory: upstream-gstack
-        run: bun run skill:check
-      - name: Run official audit compliance suite
+        run: bun run gen:skill-docs --host all
+      - name: Run official free test suite
         working-directory: upstream-gstack
-        run: bun run test:audit
+        run: bun run test:free
 
   ui-ux-pro-max-upstream:
     name: ui-ux-pro-max upstream qualification
