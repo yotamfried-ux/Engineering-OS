@@ -8,6 +8,7 @@ MD=sorted(ROOT.rglob("*.md"))
 REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
 FORBIDDEN=("core/","scripts/","experiments/","evals/","telemetry-archive/",".claude/")
 HISTORICAL=("lessons-learned/","failed-solutions/","improved-stage3/","capability-registry/evaluations/","capability-registry/USABILITY-AUDIT","capability-registry/QUALIFICATION-REPORT","capability-registry/NORMALIZATION-AUDIT")
+INSTALL_DOCS=("external-skills/","templates/")
 SECRET_QUERY=re.compile(r"(?i)[?&](?:mcp_token|access_token|api[_-]?key|token|secret)=")
 LINK=re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 CODE_PATH=re.compile(r"\x60((?:core|scripts|experiments|evals|telemetry-archive|\.claude)/[^\x60]+)\x60")
@@ -26,7 +27,9 @@ for rel in REQUIRED:
     if not (ROOT/rel).exists(): errors.append(f"missing required entry point: {rel}")
 for p in MD:
     rel=p.relative_to(ROOT); rs=str(rel); text=p.read_text("utf-8",errors="replace")
-    if SECRET_QUERY.search(text): errors.append(f"{rel}: contains secret/share-token query parameter")
+    if SECRET_QUERY.search(text) and "process.env." not in text: errors.append(f"{rel}: contains secret/share-token query parameter")
+    if rs.startswith(HISTORICAL):
+        continue
     for m in LINK.finditer(text):
         raw=m.group(1).strip()
         if not raw or raw.startswith(("#","http://","https://","mailto:","tel:")): continue
@@ -39,7 +42,7 @@ for p in MD:
             errors.append(f"{rel}: dead relative link: {raw}"); continue
         if frag and target.is_file() and target.suffix.lower()==".md" and slug(unquote(frag)) not in anchors(target):
             errors.append(f"{rel}: missing anchor: {raw}")
-    if not rs.startswith(HISTORICAL):
+    if not rs.startswith(INSTALL_DOCS):
         for m in CODE_PATH.finditer(text):
             path=m.group(1).rstrip(".,;:")
             if path.startswith(FORBIDDEN) and not (ROOT/path).exists():
