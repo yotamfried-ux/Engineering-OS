@@ -3,7 +3,7 @@
 > Part of [`patterns/integrations/`](../README.md). Covers SMS and OTP verification via external messaging providers.
 >
 > **Related:** [`external-systems/`](../../../external-systems/) for provider-specific API references (Twilio, AWS SNS).
-> See [`core/pattern-lifecycle.md`](../../../core/pattern-lifecycle.md) for scoring and lifecycle rules.
+> Lifecycle note: use current evidence/status rules; legacy pattern scoring is historical metadata.
 
 ---
 
