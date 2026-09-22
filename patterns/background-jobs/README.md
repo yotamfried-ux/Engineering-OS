@@ -1,5 +1,5 @@
 # Background Jobs Patterns
-> See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring.
+> Lifecycle note: use current evidence/status rules; legacy pattern scoring is historical metadata.
 
 ## Overview
 
