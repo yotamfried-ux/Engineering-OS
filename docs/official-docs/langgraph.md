@@ -37,7 +37,7 @@
 
 ## Related External Systems
 
-- see [external-systems/langchain/README.md](../../external-systems/langchain/README.md)
+- see external-systems/langchain/README.md
 
 ## Gotchas & Version Notes
 
