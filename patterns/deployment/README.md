@@ -1,5 +1,5 @@
 # Deployment Patterns
-> See [pattern-lifecycle.md](../../core/pattern-lifecycle.md) for scoring.
+> Lifecycle note: use current evidence/status rules; legacy pattern scoring is historical metadata.
 
 ## Overview
 Apply these patterns when planning how a change moves from a passing CI build into production. Choose the pattern based on risk tolerance and rollback speed requirements: blue-green for instant rollback, canary for metric-gated confidence, feature flags for decoupling deploy from release, and expand-contract for schema changes that must stay backward-compatible.
