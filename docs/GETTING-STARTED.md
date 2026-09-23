@@ -7,77 +7,97 @@ machine. Do not re-clone it for every project or every AI session.**
 
 ```bash
 git clone https://github.com/yotamfried-ux/Engineering-OS.git ~/Engineering-OS
-cd ~/Engineering-OS
-```
-
-For later sessions, reuse the same checkout:
-
-```bash
 git -C ~/Engineering-OS pull --ff-only
 ```
 
-Do not delete/re-clone the library just to get current knowledge.
+The first command is one-time. Later sessions use only `git pull --ff-only`.
 
-Disposable cloud containers are different: their filesystem may disappear. In
-that case cloning again is unavoidable, but **tool discovery is still not** —
-use the capability manager below.
+Disposable cloud containers may lose their filesystem. Re-cloning can be
+unavoidable there, but rediscovering tool installation is not.
 
-## 2. New project: one setup command
+## 2. New project: declare its tools once
 
-For a normal Claude Code project:
-
-```bash
-python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project --profile core
-```
-
-For a mobile application project:
+Create a project manifest from a sensible seed:
 
 ```bash
-python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project --profile mobile
+# normal software project
+python3 ~/Engineering-OS/tools/eos_capabilities.py init-project --project /path/to/project --profile core
+
+# mobile application
+python3 ~/Engineering-OS/tools/eos_capabilities.py init-project --project /path/to/project --profile mobile
 ```
+
+This creates `.engineering-os-tools.json`. It is the project's durable list of
+Engineering-OS external tools. Commit it when the team wants the same tool
+selection on every checkout.
+
+Profiles are only starting points. Add/remove tools in that JSON as the project
+adopts them. The central catalog covers the integrated agent tools and
+application-testing tools, including Superpowers, RTK, Graphify, Maestro,
+Playwright MCP, Chrome DevTools MCP, Appium MCP, Mobile Next MCP, claude-mem,
+gstack, UI UX Pro Max and CLI-Anything.
+
+See every managed/catalogued tool without reading its activation guide:
+
+```bash
+python3 ~/Engineering-OS/tools/eos_capabilities.py catalog
+```
+
+## 3. Install/activate every declared project tool
+
+```bash
+python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project
+```
+
+Default `--profile auto` means:
+
+1. if `.engineering-os-tools.json` exists, process **every tool declared there**;
+2. otherwise fall back to the small `core` profile.
 
 The command is idempotent:
 
-- matching host tools are reused;
-- RTK's Claude hook is ensured, not rediscovered;
-- Graphify is installed once on the host and its graph/MCP is prepared once per project/revision;
-- Maestro is added only by the mobile profile;
-- no application dependencies, examples, reference repositories or the rest of the catalog are installed.
+- host tools are installed once and reused across projects when already ready;
+- host hooks/plugins are checked separately from binaries;
+- project MCP registration is done once per project;
+- Graphify is installed once on the host and its graph is rebuilt only when the
+  project revision changes;
+- npx-based MCPs are registered once instead of being rediscovered each session;
+- manual/conditional/deprecated tools fail closed to one known activation guide
+  instead of triggering open-ended research.
 
-Supported automatic profiles contain only the tools with live qualification from
-the 2026-09-23 Claude Code host work:
+Code examples, patterns, templates and reference repositories are **knowledge,
+not installation dependencies**. They are never installed just because a
+project uses Engineering-OS.
 
-- **core:** Superpowers, RTK, Graphify;
-- **mobile:** core + Maestro.
-
-Everything else in Engineering-OS remains knowledge until the task actually
-requires it.
-
-## 3. Later sessions: check, don't reinstall
-
-Usually no installation command is needed again. If the AI needs to verify the
-environment, use the compact status command:
+## 4. Later sessions: status first, never reinstall blindly
 
 ```bash
-python3 ~/Engineering-OS/tools/eos_capabilities.py status --project /path/to/project --profile core --json
+python3 ~/Engineering-OS/tools/eos_capabilities.py status --project /path/to/project --json
 ```
 
-If it reports `"ready": true`, **do not read installation guides and do not
-reinstall anything**. Start the actual engineering task.
+If it reports `"ready":true`, stop setup work and begin the engineering task.
+Do not reread activation docs and do not reinstall matching tools.
 
-The project checkout stores a tiny local state file under `.git/`; generated
-Graphify data remains project-local and is not a source-of-truth artifact.
+To add one newly adopted capability without reprocessing the project:
 
-## 4. Route knowledge separately from installing tools
+```bash
+python3 ~/Engineering-OS/tools/eos_capabilities.py ensure \
+  --project /path/to/project \
+  --tool playwright-mcp
+```
 
-Installation is not the purpose of most library assets.
+Then add that tool name to the project's `.engineering-os-tools.json` so later
+sessions know it belongs to the project.
 
-- Need a code example/pattern/reference? Read or copy the relevant knowledge only.
-- Need an external capability to execute something? Route through
-  `capability-registry/ROUTING-MAP.md`.
-- If the required tool is already READY, use it.
-- If a tool is outside the automatic profiles, read its `activation.md` only
-  when the task actually triggers it.
+## 5. What “install once” means
 
-This keeps setup from consuming the session that should be spent solving the
-project.
+- **Persistent host:** the actual host installation is reused.
+- **New project on the same host:** only project-local activation is added.
+- **New disposable cloud host:** binaries may need downloading again because the
+  previous filesystem no longer exists, but the AI does not rediscover commands;
+  the manager restores only missing/mismatched declared tools.
+- **Manual/conditional tools:** Engineering-OS points to the single activation
+  contract. They are not silently auto-installed until that path is qualified.
+
+This keeps setup from consuming the session that should be spent solving and
+testing the application.
