@@ -50,7 +50,7 @@ It does not prove general reasoning quality, application correctness, a universa
 Local inference can keep post-download decision inputs on-device, but model download, package installation, logs, surrounding application code, and any telemetry must be assessed separately. Treat model artifacts and package provenance as supply-chain inputs and pin/verify releases where the target requires reproducibility.
 
 ## Qualification status
-**NOT TESTED in Engineering-OS.** Catalogued from upstream documentation on 2026-09-22. Published benchmark and fidelity numbers remain upstream claims until reproduced on a target host.
+**HOST-DEPENDENT.** The wrapper and its four-file integration contract were re-verified against the canonical upstream on 2026-09-23, including the package metadata and upstream CI verification path. Actual Core ML/ANE inference and published Apple-Silicon benchmark/fidelity claims remain target-host evidence and are not claimed as reproduced by Engineering-OS.
 
 ## Canonical references
 - https://github.com/mizorewww/laya-coreml
