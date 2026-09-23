@@ -3,9 +3,25 @@
 > The integration layer for capabilities that change **Claude's workflow behavior**.
 > Engines/backends and third-party app services live under [`external-systems/`](../external-systems/), not here.
 >
-> This README is the index for reusable agent capabilities. Each wrapper's `activation.md` is the source of truth for installation and verification; the library does not depend on a central runtime/bootstrap layer.
+> This README is the index for reusable agent capabilities. Each wrapper's `activation.md` remains the source of truth for installation and verification. For the small live-qualified default set, `tools/eos_capabilities.py` is an optional convenience installer that encodes those verified recipes; it is not a hidden runtime and it never installs the whole catalog.
 
 | One skill's behavior contract | `external-skills/<name>/integration.md` and `policy.md` |
+
+---
+
+## Install-once fast path
+
+Do not make every AI session rediscover installation commands. For supported profiles, use the manager first:
+
+```bash
+python3 /path/to/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project --profile core
+# add Maestro only for mobile work:
+python3 /path/to/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project --profile mobile
+```
+
+Matching host installations are reused. Graphify project state is refreshed only when the project revision changes. In later sessions, a compact `status --json` check is enough; if READY, do not open the individual activation guides.
+
+The manager intentionally covers only the currently live-qualified automatic set. All other skills remain trigger-based and use their own `activation.md`.
 
 ---
 
@@ -65,7 +81,7 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 | Skill | Default per project | Why |
 |---|---|---|
 | superpowers | ✅ **every project** | Prevents the #1 failure mode (jumping to code without a spec). Always loaded via its SessionStart hook; only the *depth* of process scales with task size. |
-| graphify | ✅ **every project** | Saves context cost every session. Always build the graph at session start, no exceptions. If the repo is tiny, Graphify itself warns — that is the tool's feedback, not a skip condition. The graph is in place when the repo grows. |
+| graphify | ✅ **every project** | Saves context cost across sessions. Install the CLI once per host; build/refresh project graph state only when it is missing or the project revision changed. |
 | rtk | ✅ **every project** | Saves 60–90% of Bash output tokens via a PreToolUse hook. Zero-config once installed; negligible overhead on every command. |
 | claude-mem | ✅ **where the environment allows** | Cross-session memory helps almost any multi-session project. Opt-out only in locked-down/ephemeral environments or where data must not persist to disk. |
 | ui-ux-pro-max | ⚠️ **conditional — UI projects** | Full UI/UX design workflow. Replaces the deprecated `frontend-design`. Installed when there is a UI surface. |
@@ -75,7 +91,7 @@ Two separate axes: **execution level** (when a skill runs on a task) vs **defaul
 | laya-coreml | ➖ **conditional (not default)** | Apple-Silicon-only typed decision backend; install only when that target constraint and decision shape apply. |
 | cli-anything | ➖ **opt-in (not default)** | Use when a GUI-heavy or otherwise non-agent-native application needs a deterministic tested CLI interface. |
 
-**Suggested baseline:** superpowers · graphify · rtk · claude-mem, when supported by the execution environment. Each capability must be installed and verified independently using its own activation guide.
+**Automatic qualified core profile:** superpowers · graphify · rtk. The manager installs/reuses this set without rereading every activation guide. `claude-mem` remains environment-dependent and manual until it has equivalent live qualification for the target host. Individual `activation.md` files remain the fallback/source of truth.
 
 ---
 
