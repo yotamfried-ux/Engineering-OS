@@ -11,6 +11,8 @@ Capabilities that improve **how the AI worker operates**, rather than becoming d
 | ui-ux-pro-max | UI/UX design workflow and accessibility review | `external-skills/ui-ux-pro-max/` |
 | claude-code-workflows | PR/design review workflows | `external-skills/claude-code-workflows/` |
 | gstack | multi-role planning/review/QA/ship workflows | `external-skills/gstack/` |
+| cli-anything | generate tested CLI harnesses for GUI-heavy/non-agent-native software | `external-skills/cli-anything/` |
+| laya-coreml | local typed decision inference on supported Apple Silicon targets | `external-skills/laya-coreml/` |
 | frontend-design | deprecated; use ui-ux-pro-max | `external-skills/frontend-design/` |
 
 ## Agent rule
