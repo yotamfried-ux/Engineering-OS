@@ -51,6 +51,22 @@ for p in MD:
             path=m.group(1).rstrip(".,;:")
             if path.startswith(FORBIDDEN) and not (ROOT/path).exists():
                 errors.append(f"{rel}: references removed runtime path: {path}")
+# Integrated external-skill wrappers listed in the registry must have the exact contract.
+skills_index=(ROOT/"external-skills/README.md").read_text("utf-8")
+contract={"README.md","integration.md","policy.md","activation.md"}
+in_registry=False
+for line in skills_index.splitlines():
+    if line.strip()=="## Skill registry": in_registry=True; continue
+    if in_registry and line.startswith("## "): break
+    if not in_registry or not line.startswith("|"): continue
+    for name in re.findall(r"\]\(\./([^/]+)/\)", line):
+        d=ROOT/"external-skills"/name
+        if not d.is_dir():
+            errors.append(f"external-skills registry: missing directory: {name}")
+            continue
+        files={p.name for p in d.iterdir() if p.is_file()}
+        if files != contract:
+            errors.append(f"external-skills/{name}: integrated wrapper must contain exactly {sorted(contract)}; found {sorted(files)}")
 routing=(ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8")
 for line in routing.splitlines():
     if not line.startswith("|") or "First stop" in line or line.startswith("|---"): continue
