@@ -147,11 +147,11 @@ def ensure_posix() -> None:
 
 
 def install_superpowers(dry_run: bool) -> None:
-    if not command_exists("claude"):
-        raise RuntimeError("Claude Code CLI is required for Superpowers")
     if dry_run:
         print("CHANGE superpowers: add official marketplace and install plugin")
         return
+    if not command_exists("claude"):
+        raise RuntimeError("Claude Code CLI is required for Superpowers")
     run(["claude", "plugin", "marketplace", "add", "anthropics/claude-plugins-official"], check=False)
     run(["claude", "plugin", "install", "superpowers@claude-plugins-official"])
 
@@ -178,11 +178,11 @@ def install_rtk(version: str, dry_run: bool) -> None:
 
 
 def install_graphify(version: str, dry_run: bool) -> None:
-    if not command_exists("uv"):
-        raise RuntimeError("uv is required for the qualified Graphify install path")
     if dry_run:
         print(f"CHANGE graphify: uv tool install graphifyy[mcp]=={version}")
         return
+    if not command_exists("uv"):
+        raise RuntimeError("uv is required for the qualified Graphify install path")
     env = os.environ.copy()
     env.setdefault("UV_TOOL_BIN_DIR", str(Path.home() / ".local" / "bin"))
     run(["uv", "tool", "install", "--force", f"graphifyy[mcp]=={version}"], env=env)
@@ -191,12 +191,12 @@ def install_graphify(version: str, dry_run: bool) -> None:
 
 def install_maestro(version: str, dry_run: bool) -> None:
     ensure_posix()
-    java = first_line(["java", "-version"])
-    if not java:
-        raise RuntimeError("Java 17+ is required before installing Maestro")
     if dry_run:
         print(f"CHANGE maestro: install pinned CLI {version} under ~/.local/share/engineering-os")
         return
+    java = first_line(["java", "-version"])
+    if not java:
+        raise RuntimeError("Java 17+ is required before installing Maestro")
     install_root = Path.home() / ".local" / "share" / "engineering-os" / "maestro" / version
     bin_dir = Path.home() / ".local" / "bin"
     bin_dir.mkdir(parents=True, exist_ok=True)
