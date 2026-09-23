@@ -79,6 +79,17 @@ def state_path(project: Path) -> Path:
     return project / ".engineering-os-tools.json"
 
 
+def rtk_hook_ready() -> bool:
+    settings = Path.home() / ".claude" / "settings.json"
+    if not settings.is_file():
+        return False
+    return "rtk hook" in settings.read_text(encoding="utf-8", errors="replace")
+
+
+def mcp_ready(name: str, project: Path) -> bool:
+    return name.lower() in claude_list("mcp", cwd=project).lower()
+
+
 def graph_ready(project: Path) -> bool:
     graph = project / "graphify-out" / "graph.json"
     stamp = project / "graphify-out" / ".engineering-os-head"
@@ -96,20 +107,34 @@ def tool_status(name: str, version: str, project: Path) -> dict:
         ready = "superpowers" in plugins.lower()
         return {"ready": ready, "detail": "plugin active" if ready else "plugin missing"}
     if name == "rtk":
-        ready = version_matches("rtk", version)
-        return {"ready": ready, "detail": first_line(["rtk", "--version"]) if command_exists("rtk") else "missing"}
+        cli = version_matches("rtk", version)
+        hook = rtk_hook_ready()
+        ready = cli and hook
+        return {
+            "ready": ready,
+            "detail": f"cli={'yes' if cli else 'no'}, hook={'yes' if hook else 'no'}",
+        }
     if name == "graphify":
         cli = version_matches("graphify", version)
         mcp_bin = command_exists("graphify-mcp")
         graph = graph_ready(project)
-        ready = cli and mcp_bin and graph
+        mcp = mcp_ready("graphify", project)
+        ready = cli and mcp_bin and graph and mcp
         return {
             "ready": ready,
-            "detail": f"cli={'yes' if cli else 'no'}, mcp-bin={'yes' if mcp_bin else 'no'}, graph={'current' if graph else 'missing/stale'}",
+            "detail": (
+                f"cli={'yes' if cli else 'no'}, mcp-bin={'yes' if mcp_bin else 'no'}, "
+                f"graph={'current' if graph else 'missing/stale'}, mcp={'yes' if mcp else 'no'}"
+            ),
         }
     if name == "maestro":
-        ready = version_matches("maestro", version)
-        return {"ready": ready, "detail": first_line(["maestro", "--version"]) if command_exists("maestro") else "missing"}
+        cli = version_matches("maestro", version)
+        mcp = mcp_ready("maestro", project)
+        ready = cli and mcp
+        return {
+            "ready": ready,
+            "detail": f"cli={'yes' if cli else 'no'}, mcp={'yes' if mcp else 'no'}",
+        }
     return {"ready": False, "detail": "unsupported by installer"}
 
 
@@ -259,7 +284,10 @@ def print_status(manifest: dict, project: Path, profile: str, as_json: bool) -> 
         rows[name] = {"qualified_version": version, **status}
         all_ready = all_ready and bool(status["ready"])
     if as_json:
-        print(json.dumps({"profile": profile, "project": str(project), "ready": all_ready, "tools": rows}, indent=2))
+        print(json.dumps(
+            {"profile": profile, "project": str(project), "ready": all_ready, "tools": rows},
+            separators=(",", ":"),
+        ))
     else:
         for name, row in rows.items():
             print(f"{'READY' if row['ready'] else 'MISSING':7} {name:12} {row['detail']}")
@@ -275,19 +303,23 @@ def setup(manifest: dict, project: Path, profile: str, dry_run: bool) -> int:
     for name in names:
         version = manifest["tools"][name]["qualified_version"]
         status = tool_status(name, version, project)
-        if name != "graphify" and status["ready"]:
-            print(f"SKIP   {name}: {status['detail']}")
-            continue
         if name == "superpowers":
             if status["ready"]:
                 print("SKIP   superpowers: already installed")
             else:
                 install_superpowers(dry_run)
         elif name == "rtk":
-            if not status["ready"]:
+            if version_matches("rtk", version):
+                print(f"SKIP   rtk-cli: qualified {version} already installed")
+            else:
                 install_rtk(version, dry_run)
-            elif not dry_run:
-                run(["rtk", "init", "-g", "--auto-patch"])
+            if not rtk_hook_ready():
+                if dry_run:
+                    print("CHANGE rtk-hook: register Claude PreToolUse hook")
+                else:
+                    run(["rtk", "init", "-g", "--auto-patch"])
+            else:
+                print("SKIP   rtk-hook: already registered")
         elif name == "graphify":
             cli_ready = version_matches("graphify", version) and command_exists("graphify-mcp")
             if cli_ready:
@@ -296,7 +328,9 @@ def setup(manifest: dict, project: Path, profile: str, dry_run: bool) -> int:
                 install_graphify(version, dry_run)
             ensure_graphify_project(project, dry_run)
         elif name == "maestro":
-            if not status["ready"]:
+            if version_matches("maestro", version):
+                print(f"SKIP   maestro-cli: qualified {version} already installed")
+            else:
                 install_maestro(version, dry_run)
             ensure_maestro_project(project, dry_run)
 
