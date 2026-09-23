@@ -15,9 +15,25 @@ Capabilities that improve **how the AI worker operates**, rather than becoming d
 | laya-coreml | local typed decision inference on supported Apple Silicon targets | `external-skills/laya-coreml/` |
 | frontend-design | deprecated; use ui-ux-pro-max | `external-skills/frontend-design/` |
 
+## Install-once fast path
+
+Before spending context reading install docs, check the qualified profile:
+
+```bash
+python3 /path/to/Engineering-OS/tools/eos_capabilities.py status --project /path/to/project --profile core --json
+```
+
+If READY, use the tools immediately. For a new project, run `setup` once. Host-level matching installs are reused and project-level Graphify/MCP state is prepared without reinstalling the host tools.
+
+Automatic profiles:
+- `core`: Superpowers + RTK + Graphify.
+- `mobile`: core + Maestro.
+
+The profile list is deliberately small and stored in `INSTALL-PROFILES.json`; it is not permission to install every catalog capability.
+
 ## Agent rule
 
-Do not install every tool blindly. Select by task trigger, inspect `activation.md`, verify prerequisites and trust/source, install only when appropriate, and verify activation. Token/context tools are separately indexed in `token-context-efficiency.md` so they can be discovered before expensive work begins.
+Do not install every tool blindly. Select by task trigger. For the live-qualified profile, use the manager before opening individual activation docs. For capabilities outside that profile, inspect `activation.md`, verify prerequisites and trust/source, install only when appropriate, and verify activation. Token/context tools are separately indexed in `token-context-efficiency.md` so they can be discovered before expensive work begins.
 
 ## Application testing
 
