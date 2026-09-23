@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "principle": "clone the library once on a persistent host; install qualified tools only when a project profile requires them; reuse matching installations",
+  "tools": {
+    "superpowers": {
+      "qualified_version": "6.4.1",
+      "scope": "host",
+      "activation": "external-skills/superpowers/activation.md"
+    },
+    "rtk": {
+      "qualified_version": "0.49.0",
+      "scope": "host+claude-hook",
+      "activation": "external-skills/rtk/activation.md"
+    },
+    "graphify": {
+      "qualified_version": "0.9.66",
+      "scope": "host+project",
+      "activation": "external-skills/graphify/activation.md"
+    },
+    "maestro": {
+      "qualified_version": "2.10.0",
+      "scope": "host+project-mcp",
+      "activation": "capability-registry/application-testing/maestro-mcp.md"
+    }
+  },
+  "profiles": {
+    "core": {
+      "description": "Default Claude Code engineering helpers with live host qualification.",
+      "tools": ["superpowers", "rtk", "graphify"]
+    },
+    "mobile": {
+      "description": "Core profile plus Maestro for mobile application work.",
+      "tools": ["superpowers", "rtk", "graphify", "maestro"]
+    }
+  }
+}
