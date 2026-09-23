@@ -32,7 +32,7 @@ Post-cleanup qualification of project-owned AI capability wrappers and MCP asset
 | Chrome DevTools MCP | READY / HOST-DEPENDENT | Active official `ChromeDevTools/chrome-devtools-mcp`; needs Chrome and MCP host. |
 | Mobile Next MCP | READY / HOST-DEPENDENT | Active `mobile-next/mobile-mcp`; needs supported mobile target/toolchain. |
 
-All 12 active upstream repositories checked in this pass are reachable and not archived.
+All 12 active upstream repositories checked in the 2026-09-21 pass were reachable and not archived at that time. This is dated evidence, not a claim about every capability currently catalogued.
 
 ## Connector template
 
@@ -79,6 +79,6 @@ Until that environment-specific test is run, use **READY / HOST-DEPENDENT**, nev
 
 ## Final library state
 
-**Broken active project-owned capability wrappers found after remediation: 0.**
+At the 2026-09-21 qualification pass, **broken active project-owned capability wrappers found after remediation: 0**.
 
-The remaining limitations are explicit host/runtime/device requirements rather than dangling Engineering-OS dependencies.
+Since that report, the integrated skill set has changed; current status is governed by the live wrappers, routing map and Knowledge Integrity gate rather than this historical snapshot. Host/runtime/device requirements remain explicit and must still be verified on the target environment.
