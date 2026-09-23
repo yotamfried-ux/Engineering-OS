@@ -4,30 +4,33 @@ A use-oriented knowledge base for building software and improving AI-assisted en
 
 ## 60-second start
 
-**Persistent machine:** clone Engineering-OS once. Reuse that checkout for every project and session.
+**Persistent machine:** clone Engineering-OS once; later use `git pull --ff-only`.
+
+**New project:** create a durable project tool manifest, then run setup:
 
 ```bash
-git clone https://github.com/yotamfried-ux/Engineering-OS.git ~/Engineering-OS   # first time only
-git -C ~/Engineering-OS pull --ff-only                                      # later
+python3 ~/Engineering-OS/tools/eos_capabilities.py init-project --project /path/to/project --profile core
+# use --profile mobile for mobile apps
+
+python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project
 ```
 
-**New Claude Code project:** run one idempotent setup command. It installs only the small live-qualified profile and skips tools that already exist on the host.
+`setup` processes **every tool declared in the project's
+`.engineering-os-tools.json`**, installing/activating only what is missing.
+Later sessions use:
 
 ```bash
-python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project --profile core
-# mobile app:
-python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project --profile mobile
+python3 ~/Engineering-OS/tools/eos_capabilities.py status --project /path/to/project --json
 ```
 
-Later sessions should **not reinstall or reread install guides**. If verification is needed, use the compact status command:
+If it reports `"ready":true`, do not reread install docs or reinstall tools.
+Use `catalog` to see all centrally known installable/conditional tools and
+`ensure --tool <name>` when the project adopts another capability.
 
-```bash
-python3 ~/Engineering-OS/tools/eos_capabilities.py status --project /path/to/project --profile core --json
-```
+Code examples, patterns, templates and reference repositories remain knowledge,
+not dependencies.
 
-If it reports `"ready":true`, start the engineering task. Do not re-clone the library, reinstall matching tools, or load the whole capability catalog.
-
-See [Engineering-OS — 60-second start](docs/GETTING-STARTED.md) for persistent vs disposable hosts, project-local activation, and the mobile profile.
+See [Engineering-OS — 60-second start](docs/GETTING-STARTED.md).
 
 ## Catalog by purpose
 
