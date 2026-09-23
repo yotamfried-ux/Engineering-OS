@@ -12,6 +12,7 @@ on:
       - 'external-skills/**'
       - 'capability-registry/agent-tools.md'
       - 'capability-registry/token-context-efficiency.md'
+      - 'capability-registry/application-testing/**'
       - '.github/workflows/capability-installer-check.yml'
   push:
     branches: [main]
@@ -20,6 +21,7 @@ on:
       - 'tools/test_eos_capabilities.py'
       - 'capability-registry/INSTALL-PROFILES.json'
       - 'docs/GETTING-STARTED.md'
+      - 'capability-registry/application-testing/**'
       - '.github/workflows/capability-installer-check.yml'
 
 permissions:
@@ -35,11 +37,23 @@ jobs:
           python-version: '3.11'
       - name: Python syntax
         run: python -m py_compile tools/eos_capabilities.py tools/test_eos_capabilities.py
-      - name: Installer contract
+      - name: Capability manager contract
         run: python tools/test_eos_capabilities.py
-      - name: Clean-host core dry run
-        run: python tools/eos_capabilities.py setup --project . --profile core --dry-run
-      - name: Clean-host mobile dry run
-        run: python tools/eos_capabilities.py setup --project . --profile mobile --dry-run
+      - name: Catalog is machine-readable
+        run: python tools/eos_capabilities.py catalog --json | python -m json.tool >/dev/null
+      - name: Clean-host profile dry runs
+        run: |
+          python tools/eos_capabilities.py setup --project . --profile core --dry-run
+          python tools/eos_capabilities.py setup --project . --profile mobile --dry-run
+          python tools/eos_capabilities.py setup --project . --profile web --dry-run
+          python tools/eos_capabilities.py setup --project . --profile mobile-deep --dry-run
+      - name: Project manifest drives every declared tool
+        run: |
+          tmp="$(mktemp -d)"
+          git -C "$tmp" init -q
+          python tools/eos_capabilities.py init-project --project "$tmp" --profile mobile-deep
+          python tools/eos_capabilities.py setup --project "$tmp" --profile auto --dry-run
+          python tools/eos_capabilities.py ensure --project "$tmp" --tool claude-mem --dry-run
+          python tools/eos_capabilities.py ensure --project "$tmp" --tool cli-anything --dry-run
       - name: Knowledge integrity
         run: python tools/check_knowledge_integrity.py
