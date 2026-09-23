@@ -2,6 +2,33 @@
 
 A use-oriented knowledge base for building software and improving AI-assisted engineering. This repository is deliberately a **library, not a runtime**.
 
+## 60-second start
+
+**Persistent machine:** clone Engineering-OS once. Reuse that checkout for every project and session.
+
+```bash
+git clone https://github.com/yotamfried-ux/Engineering-OS.git ~/Engineering-OS   # first time only
+git -C ~/Engineering-OS pull --ff-only                                      # later
+```
+
+**New Claude Code project:** run one idempotent setup command. It installs only the small live-qualified profile and skips tools that already exist on the host.
+
+```bash
+python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project --profile core
+# mobile app:
+python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project --profile mobile
+```
+
+Later sessions should **not reinstall or reread install guides**. If verification is needed, use the compact status command:
+
+```bash
+python3 ~/Engineering-OS/tools/eos_capabilities.py status --project /path/to/project --profile core --json
+```
+
+If it reports `"ready":true`, start the engineering task. Do not re-clone the library, reinstall matching tools, or load the whole capability catalog.
+
+See [Engineering-OS — 60-second start](docs/GETTING-STARTED.md) for persistent vs disposable hosts, project-local activation, and the mobile profile.
+
 ## Catalog by purpose
 
 | Purpose | What to search here | Assets |
