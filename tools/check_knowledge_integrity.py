@@ -67,7 +67,22 @@ for line in skills_index.splitlines():
         files={p.name for p in d.iterdir() if p.is_file()}
         if files != contract:
             errors.append(f"external-skills/{name}: integrated wrapper must contain exactly {sorted(contract)}; found {sorted(files)}")
+# Agent entry point must explicitly route through the canonical routing map.
+agents=(ROOT/"AGENTS.md").read_text("utf-8")
+if "capability-registry/ROUTING-MAP.md" not in agents:
+    errors.append("AGENTS.md: does not route agents through capability-registry/ROUTING-MAP.md")
+if "capability-registry/SOURCE-POLICY.md" not in agents:
+    errors.append("AGENTS.md: does not expose the source/provenance policy")
+
+# Every integrated skill must be discoverable from agent-tools or a dedicated routing-map row.
+agent_tools=(ROOT/"capability-registry/agent-tools.md").read_text("utf-8")
 routing=(ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8")
+for name in sorted({name for line in skills_index.splitlines() if line.startswith("|") for name in re.findall(r"\\]\\(\\./([^/]+)/\\)", line)}):
+    if name == "frontend-design":
+        continue
+    skill_ref=f"external-skills/{name}/"
+    if skill_ref not in agent_tools and skill_ref not in routing:
+        errors.append(f"capability discovery: integrated skill is not routed: {name}")
 for line in routing.splitlines():
     if not line.startswith("|") or "First stop" in line or line.startswith("|---"): continue
     cells=[x.strip() for x in line.strip("|").split("|")]
