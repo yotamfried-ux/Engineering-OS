@@ -28,7 +28,7 @@ Skill = External Capability + Integration Contract + Execution Rules
 
 ## The standard 4-file contract
 
-Every skill lives in `external-skills/<skill-name>/` with exactly four files:
+Every **integrated skill wrapper listed in the Skill registry below** lives in `external-skills/<skill-name>/` with exactly four contract files. Other directories may be catalog-only references with a `README.md`; they are not treated as activated/integrated capabilities until promoted into the registry and completed to this contract:
 
 | File | Answers |
 |---|---|
@@ -103,7 +103,7 @@ memory (claude-mem)               → restore at session start, summarize at sto
 ## Adding a new skill
 
 1. **Scan the real repo first** (structure, manifests, real commands/tools) — never wrap from a description.
-2. Create `external-skills/<skill-name>/` with the four contract files.
+2. For a catalog-only reference, add a verified `README.md` only. To promote it into the integrated Skill registry, complete `external-skills/<skill-name>/` with the four contract files.
 3. Assign `type` tags and an execution level in `policy.md`.
 4. Add a row to the registry table above.
 5. Add or update the relevant entry in `capability-registry/`.
