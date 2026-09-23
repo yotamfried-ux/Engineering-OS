@@ -51,11 +51,11 @@ Do not upgrade HOST-DEPENDENT/CONDITIONAL to LIVE from documentation inspection 
 
 ## Remaining debt
 
-- Older `external-skills/` wrappers are uneven: some use the former four-file Claude-centric contract while newer additions are concise single-file wrappers.
+- Integrated skills are now explicitly separated from catalog-only references: every skill listed in the integrated Skill registry is enforced by Knowledge Integrity to have the exact four-file contract; README-only directories remain discovery/catalog references until promoted.
 - Many `external-systems/` entries are inventory/reference notes rather than fully normalized capability records.
 - Historical lessons intentionally contain names of removed runtime paths; these are evidence, not active dependencies.
-- Some old README counts are snapshots and should not be treated as automatically maintained inventory.
+- Root catalog counts are snapshot metadata and should not be treated as an automatically maintained inventory.
 
-## Next gate
+## Follow-up status — 2026-09-23
 
-Before building automated freshness maintenance, run **routing evaluations** against representative tasks. The success criterion is not “found a document”; it is whether an agent selects the right branch/source/tool, avoids irrelevant context, verifies prerequisites, and reports evidence/gaps correctly.
+The representative routing evaluation was subsequently run and remediated. The active routing map now covers the integrated capability entry points, and Knowledge Integrity validates resolvable first stops plus the exact integrated-skill contract. The remaining debt above is maintenance/normalization work, not a blocker to using the library.
