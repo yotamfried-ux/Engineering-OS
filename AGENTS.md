@@ -16,8 +16,9 @@ This repository is a **knowledge library, not a runtime**. Use this file as a ma
 
 - Host tools are installed once per persistent machine and reused across projects when versions match.
 - Project activation is performed once per project and refreshed only when its project state actually changes.
-- The `core` automatic profile is Superpowers + RTK + Graphify. The `mobile` profile adds Maestro.
-- Do not install the rest of the knowledge catalog. Code examples, reference repositories, docs and patterns are knowledge, not setup dependencies.
+- A project's `.engineering-os-tools.json` is the durable source for which external tools that project has adopted. `setup --profile auto` processes every declared tool; `core` and `mobile` are only seed profiles.
+- The central install catalog covers integrated agent/testing tools; tools outside automatic qualification remain explicit manual/conditional entries rather than being rediscovered from scratch.
+- Do not install the knowledge catalog itself. Code examples, reference repositories, docs and patterns are knowledge, not setup dependencies.
 - On disposable cloud hosts the filesystem may vanish, so downloads can recur; the installer still prevents repeated discovery and only restores missing/mismatched tools.
 
 ## Main knowledge domains
