@@ -36,6 +36,12 @@ Claude Code:
 claude mcp add maestro -- maestro mcp
 ```
 
+If `get.maestro.mobile.dev` is blocked by egress policy, install the same artifact from `https://github.com/mobile-dev-inc/Maestro/releases/download/cli-<version>/maestro.zip`. Set `MAESTRO_CLI_NO_ANALYTICS=1` in CI/sandboxes.
+
+## Host without an emulator
+
+On a host without KVM/Android SDK (e.g. Claude Code cloud containers), the MCP handshake works but `list_devices` shows no mobile target, so agentic exploration is BLOCKED there. Keep MCP for hosts that can see a device and run the deterministic flows with `maestro test` inside a CI emulator job instead. Pass secrets as `MAESTRO_*` environment variables (auto-exposed to flows), never in YAML, and scrub `--debug-output` artifacts because they record evaluated `inputText`. Live evidence: [2026-09-23 host qualification](../evaluations/2026-09-23-claude-code-cloud-host-qualification.md).
+
 Codex and other MCP clients can use the same local server command in their MCP configuration.
 
 ## Useful MCP behavior

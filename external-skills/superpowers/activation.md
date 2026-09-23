@@ -16,6 +16,8 @@ Two equivalent install paths are available inside a Claude Code session:
 /plugin install superpowers@claude-plugins-official
 ```
 
+On a fresh host with no marketplace configured this fails with "not found"; first run `claude plugin marketplace add anthropics/claude-plugins-official`. Non-interactive equivalent: `claude plugin install superpowers@claude-plugins-official`. Skills load from the next session. Live evidence: [2026-09-23 host qualification](../../capability-registry/evaluations/2026-09-23-claude-code-cloud-host-qualification.md).
+
 **Path B — marketplace add then install:**
 
 ```

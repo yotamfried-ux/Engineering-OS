@@ -39,8 +39,10 @@ If you want to use the MCP tools (`query_graph`, `get_pr_impact`, etc.) directly
 uv tool install "graphifyy[mcp]"
 
 # Register the MCP server in Claude Code (stdio transport — local, no token needed)
-claude mcp add --transport stdio graphify -- python -m graphify.serve graphify-out/graph.json
+claude mcp add --transport stdio graphify -- graphify-mcp "$PWD/graphify-out/graph.json"
 ```
+
+`python -m graphify.serve` only works inside the tool's own environment; after `uv tool install` use the installed `graphify-mcp` entry point with an absolute graph path. Headless `graphify extract .` needs an LLM API key for non-code files — use `graphify extract . --code-only` for a keyless, local-only code graph. `graphify hook install` also writes `.gitattributes` and a `merge.graphify` git config; in repositories that do not commit `graphify-out/`, remove both and add `graphify-out/` to `.git/info/exclude`. Live evidence: [2026-09-23 host qualification](../../capability-registry/evaluations/2026-09-23-claude-code-cloud-host-qualification.md).
 
 ### Step 4 — Install the post-commit hook (strongly recommended)
 
