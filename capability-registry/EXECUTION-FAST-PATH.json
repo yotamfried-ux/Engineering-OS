@@ -70,20 +70,33 @@
       ],
       "cost": "included",
       "rule": "never add timer/polling fallback while a live completion subscription exists; persist state before yielding"
+    },
+    "documentation_consistency": {
+      "first_stop": "patterns/testing/FAST-PATH.json",
+      "prefer": [
+        "exact search/grep",
+        "schema or contract tests",
+        "static assertions",
+        "diff-based checks"
+      ],
+      "cost": "none",
+      "rule": "do not use a hosted LLM worker for documentation consistency by default; use one only for a residual semantic question that survives deterministic checks and passes the hosted delegation ROI gate"
     }
   },
   "delegation_trigger": {
     "must_consider_when": "task has at least 3 independent bounded workstreams and at least 2 can execute without shared mutable state",
-    "must_delegate_when": "after decomposition, at least 2 read-only/bounded workstreams remain independent and a qualified worker route is already available without disproportionate setup or trust risk",
+    "must_delegate_when": "after decomposition, at least 2 bounded workstreams remain independent AND at least one ready no-model/local worker route can execute a slice with deterministic verification",
     "must_delegate": true,
+    "hosted_delegation_mandatory": false,
     "allowed_skip_reasons": [
-      "no qualified worker route is available",
+      "no ready no-model/local worker route is available",
       "worker setup/coordination cost is credibly greater than the bounded task",
       "workstreams share mutable state that cannot be isolated",
-      "security/credential/trust boundary forbids delegation"
+      "security/credential/trust boundary forbids delegation",
+      "the only remaining worker option is hosted and it does not pass the hosted delegation ROI gate"
     ],
     "insufficient_skip_reason": "shared project context alone is not sufficient; first carve out bounded read-only workstreams",
-    "decision_rule": "prefer none/local workers; use included host-native workers only when they materially improve wall-clock/context cost",
+    "decision_rule": "prefer none/local workers. Never spawn a hosted subagent merely to satisfy delegation. Hosted delegation requires the ROI gate below.",
     "record_decision_with": "capability-registry/EXECUTION-TRACE.json"
   },
   "trace_rule": {
@@ -110,5 +123,26 @@
     "sink": "project audit/final report; use an existing durable audit/log surface when one exists",
     "completion_rule": "a whole-project qualification report is incomplete until required trace records are emitted",
     "schema": "capability-registry/EXECUTION-TRACE.json"
+  },
+  "hosted_delegation_roi_gate": {
+    "default": "deny",
+    "all_required": [
+      "deterministic/static tooling cannot answer the residual question",
+      "no qualified local worker is ready or the local worker failed the task-specific quality gate",
+      "the subtask has a narrow immutable input packet and explicit output contract",
+      "expected hosted-worker token/context cost is materially lower than keeping the work in the coordinator",
+      "the worker output will be independently verified before it affects a PASS or code change"
+    ],
+    "worker_context_budget": {
+      "rule": "send the smallest relevant packet, not repository-wide context",
+      "default_packet": "exact question + relevant diff/hunks + at most 5 directly relevant files",
+      "max_text_bytes_default": 32768,
+      "escalation": "if the task needs broader context, split the task, use deterministic retrieval, use a local worker, or keep it in the coordinator; exceed the default only with a recorded ROI rationale"
+    },
+    "worker_output_budget": {
+      "default_max_tokens": 1200,
+      "rule": "request findings/evidence only; no broad recap or duplicated project summary"
+    },
+    "stop_rule": "if a hosted worker produces low-confidence or unverified findings, do not launch another hosted worker for the same slice; fall back to deterministic/coordinator verification"
   }
 }
