@@ -61,6 +61,15 @@
     "testing": {
       "first_stop": "patterns/testing/FAST-PATH.json",
       "cost": "none"
+    },
+    "event_driven_ci_continuation": {
+      "first_stop": "capability-registry/CI-CONTINUATION.md",
+      "prefer": [
+        "GitHub workflow_run",
+        "Claude Code Action automation mode"
+      ],
+      "cost": "included",
+      "rule": "prefer completion events over timers/polling; continuation is a new agent run, so persist state durably"
     }
   },
   "delegation_trigger": {
