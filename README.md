@@ -52,7 +52,7 @@ This is not a separate technical asset type. The whole library is intended to av
 
 ## AI capability registry
 
-Before doing expensive manual work, check [`capability-registry/`](./capability-registry/README.md). It tells an AI worker what tools/connectors may already solve the task, how to route to ChatGPT/Codex vs Claude/Claude Code capabilities, and when to install token/context-saving tools.
+[`capability-registry/`](./capability-registry/README.md) catalogs tools/connectors that may help with a task, host-specific capabilities, and token/context-saving options.
 
 High-value entry points:
 - [Token & context efficiency](./capability-registry/token-context-efficiency.md) — RTK, Graphify, claude-mem and routing rules.
@@ -66,7 +66,7 @@ High-value entry points:
 Search this repository by **the job you need to accomplish**. The physical paths below are retained for provenance and precise GitHub search, while this catalog supplies the use-oriented mental model.
 
 - Building something new → start with `templates/`, `patterns/`, `docs/frameworks/`, `docs/reference-repositories/`, and `docs/official-docs/`.
-- Delegating work / choosing an agent or model → start with `capability-registry/EXECUTION-FAST-PATH.json`; prefer no-LLM/local execution when it can be independently verified.
+- Delegating work / choosing an agent or model → `capability-registry/EXECUTION-FAST-PATH.json` describes available execution routes and cost classes.
 - Giving an AI agent a capability → search `external-skills/` and relevant AI patterns.
 - Connecting a service/tool → search `external-systems/` and integration patterns.
 - Solving a bug or avoiding a known trap → search `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`, and imported Stage 3 lessons.
