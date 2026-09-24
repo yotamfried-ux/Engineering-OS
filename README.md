@@ -58,6 +58,7 @@ High-value entry points:
 - [Token & context efficiency](./capability-registry/token-context-efficiency.md) — RTK, Graphify, claude-mem and routing rules.
 - [Connector matrix](./capability-registry/connectors.md) — external-service capability routing for ChatGPT/Codex and Claude.
 - [Agent workflow tools](./capability-registry/agent-tools.md) — tools that improve the AI worker itself.
+- [Testing fast path](./patterns/testing/FAST-PATH.md) — low-context routing + copy/adapt skeletons for unit, regression, integration, contract and UI tests.
 
 ## How to use it
 
@@ -68,6 +69,7 @@ Search this repository by **the job you need to accomplish**. The physical paths
 - Connecting a service/tool → search `external-systems/` and integration patterns.
 - Solving a bug or avoiding a known trap → search `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`, and imported Stage 3 lessons.
 - Choosing an architecture → search `docs/architecture-guides/` and `architecture-decisions/`.
-- Hardening quality → search testing patterns plus the imported quality/reliability assets.
+- Writing/choosing a test → start with `patterns/testing/FAST-PATH.json`; open `FAST-PATH.md` only when you need a skeleton/explanation.
+- Hardening/qualifying a whole project → use the full testing map and qualification patterns.
 
 Historical runtime/system implementation is preserved on `archive/pre-knowledge-library`; it is intentionally absent from this library's `main`.
