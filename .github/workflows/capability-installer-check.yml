@@ -8,7 +8,6 @@ on:
       - 'capability-registry/INSTALL-PROFILES.json'
       - 'docs/GETTING-STARTED.md'
       - 'README.md'
-      - 'AGENTS.md'
       - 'external-skills/**'
       - 'capability-registry/agent-tools.md'
       - 'capability-registry/token-context-efficiency.md'

@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "purpose": "low-context cost-aware routing for agents, parallel work and local models",
+  "version": 2,
+  "purpose": "descriptive low-context catalog of execution options, costs, and related knowledge",
   "priority": [
     "none",
     "local",
@@ -34,7 +34,7 @@
       "cost": "local"
     },
     "parallel_local_agents": {
-      "first_stop": "capability-registry/EXECUTION-FAST-PATH.md#when-to-delegate",
+      "first_stop": "capability-registry/EXECUTION-FAST-PATH.md#available-approaches",
       "inspect": [
         "external-systems/autogen/README.md",
         "external-systems/crewai/README.md",
@@ -69,46 +69,25 @@
         "GitHub workflow_run -> new agent run"
       ],
       "cost": "included",
-      "rule": "never add timer/polling fallback while a live completion subscription exists; persist state before yielding"
+      "notes": [
+        "same-session completion subscriptions can reduce manual polling",
+        "GitHub workflow_run can start a separate automated continuation"
+      ]
     }
   },
-  "delegation_trigger": {
-    "must_consider_when": "task has at least 3 independent bounded workstreams and at least 2 can execute without shared mutable state",
-    "must_delegate_when": "after decomposition, at least 2 read-only/bounded workstreams remain independent and a qualified worker route is already available without disproportionate setup or trust risk",
-    "must_delegate": true,
-    "allowed_skip_reasons": [
-      "no qualified worker route is available",
-      "worker setup/coordination cost is credibly greater than the bounded task",
-      "workstreams share mutable state that cannot be isolated",
-      "security/credential/trust boundary forbids delegation"
+  "priority_note": "cost classes are descriptive; this array is not a required execution order",
+  "delegation_options": {
+    "note": "delegation is optional; the active agent decides whether it helps the task",
+    "useful_when": [
+      "bounded workstreams are independent",
+      "context transfer and setup are small relative to the work",
+      "workers can be verified independently"
     ],
-    "insufficient_skip_reason": "shared project context alone is not sufficient; first carve out bounded read-only workstreams",
-    "decision_rule": "prefer none/local workers; use included host-native workers only when they materially improve wall-clock/context cost",
-    "record_decision_with": "capability-registry/EXECUTION-TRACE.json"
-  },
-  "trace_rule": {
-    "required_for": [
-      "whole-project qualification",
-      "agent/local-model experiment",
-      "delegation trigger fires",
-      "delegation used or skipped"
+    "caution_when": [
+      "work shares mutable state",
+      "worker setup or context transfer dominates",
+      "trust or credential boundaries make isolation difficult"
     ],
-    "minimum_records": "one record per routing/delegation decision that materially changes execution",
-    "required_fields": [
-      "task",
-      "entry_point",
-      "route_key",
-      "trigger",
-      "candidates",
-      "selected",
-      "cost_class",
-      "parallelizable",
-      "delegated",
-      "reason",
-      "verification"
-    ],
-    "sink": "project audit/final report; use an existing durable audit/log surface when one exists",
-    "completion_rule": "a whole-project qualification report is incomplete until required trace records are emitted",
-    "schema": "capability-registry/EXECUTION-TRACE.json"
+    "optional_trace_schema": "capability-registry/EXECUTION-TRACE.json"
   }
 }
