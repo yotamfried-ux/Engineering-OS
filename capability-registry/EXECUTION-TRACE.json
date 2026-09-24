@@ -1,19 +1,26 @@
 {
-  "version": 1,
-  "purpose": "compact evidence that Engineering-OS routing actually influenced an execution decision",
+  "version": 2,
+  "purpose": "compact evidence that Engineering-OS routing actually influenced execution",
   "record": {
     "task": "short bounded task/workstream",
-    "entry_point": "first Engineering-OS file/route used",
-    "candidates": ["routes or capabilities considered"],
+    "entry_point": "exact Engineering-OS file first used for this decision",
+    "route_key": "exact key from EXECUTION-FAST-PATH.json or ROUTING-MAP branch",
+    "trigger": "why routing/delegation evaluation was required",
+    "candidates": [
+      "routes/capabilities actually considered"
+    ],
     "selected": "selected route/capability or none",
     "cost_class": "none | local | included | paid | unknown",
     "parallelizable": true,
     "delegated": false,
-    "reason": "one concise sentence",
+    "reason": "one concise evidence-based sentence",
     "verification": "deterministic/evidence gate used to accept the result"
   },
   "rules": [
     "record decisions, not every file read or tool call",
+    "whole-project qualification must emit required records before final status",
+    "when delegation is skipped after the trigger, use only an allowed skip reason from EXECUTION-FAST-PATH.json",
+    "shared project context alone is not a sufficient skip reason",
     "keep each record compact",
     "do not include secrets or private data",
     "an agent/tool invocation is not verification by itself"
