@@ -2,6 +2,8 @@
 
 Capabilities that improve **how the AI worker operates**, rather than becoming dependencies of the application being built.
 
+Before spawning a worker or choosing a model/provider, read [`EXECUTION-FAST-PATH.json`](./EXECUTION-FAST-PATH.json). It prefers deterministic and qualified local-model execution before hosted usage when the task can be verified independently.
+
 | Capability | Practical use | Activation source |
 |---|---|---|
 | superpowers | planning, TDD, debugging, verification, review discipline | `external-skills/superpowers/` |
@@ -30,6 +32,12 @@ Automatic profiles:
 - `mobile`: core + Maestro.
 
 The profile list is deliberately small and stored in `INSTALL-PROFILES.json`; it is not permission to install every catalog capability.
+
+## Cost-aware delegation
+
+Agent frameworks and agent definitions are not automatically free. Their model cost follows the selected runtime/provider. Ollama-backed local inference can avoid per-call hosted API charges, but still consumes local compute and must be qualified for task quality. Claude-Code-specific skills are not automatically portable to local models.
+
+Use local/parallel agents mainly for bounded independent analysis, candidate generation and triage; keep final correctness/release claims behind deterministic evidence and one coordinating agent.
 
 ## Agent rule
 
