@@ -34,7 +34,7 @@
       "cost": "local"
     },
     "parallel_local_agents": {
-      "first_stop": "capability-registry/EXECUTION-FAST-PATH.md#when-to-delegate",
+      "first_stop": "capability-registry/EXECUTION-FAST-PATH.md#available-approaches",
       "inspect": [
         "external-systems/autogen/README.md",
         "external-systems/crewai/README.md",
