@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import unquote
 ROOT=Path(__file__).resolve().parents[1]
 MD=sorted(ROOT.rglob("*.md"))
-REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","capability-registry/EXECUTION-FAST-PATH.md","capability-registry/EXECUTION-FAST-PATH.json","patterns/testing/FAST-PATH.md","patterns/testing/FAST-PATH.json","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
+REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","capability-registry/EXECUTION-FAST-PATH.md","capability-registry/EXECUTION-FAST-PATH.json","capability-registry/EXECUTION-TRACE.json","patterns/testing/FAST-PATH.md","patterns/testing/FAST-PATH.json","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
 FORBIDDEN=("core/","scripts/","experiments/","evals/","telemetry-archive/",".claude/")
 HISTORICAL=("lessons-learned/","failed-solutions/","improved-stage3/","architecture-decisions/ADR-","capability-registry/evaluations/","capability-registry/USABILITY-AUDIT","capability-registry/QUALIFICATION-REPORT","capability-registry/NORMALIZATION-AUDIT")
 INSTALL_DOCS=("external-skills/","templates/")
@@ -125,6 +125,21 @@ if "capability-registry/EXECUTION-FAST-PATH.json" not in (ROOT/"AGENTS.md").read
     errors.append("execution fast path: AGENTS.md must expose EXECUTION-FAST-PATH.json")
 if "EXECUTION-FAST-PATH.json" not in (ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8"):
     errors.append("execution fast path: ROUTING-MAP.md must expose EXECUTION-FAST-PATH.json")
+trace_json=ROOT/"capability-registry/EXECUTION-TRACE.json"
+if trace_json.exists() and trace_json.stat().st_size > 3000:
+    errors.append(f"execution trace: JSON too large ({trace_json.stat().st_size} bytes; max 3000)")
+if trace_json.exists():
+    try:
+        trace_data=json.loads(trace_json.read_text("utf-8"))
+    except Exception as exc:
+        errors.append(f"execution trace: invalid JSON: {exc}")
+    else:
+        required={"task","entry_point","candidates","selected","cost_class","parallelizable","delegated","reason","verification"}
+        record=trace_data.get("record")
+        if not isinstance(record,dict) or set(record) != required:
+            errors.append("execution trace: record schema fields drifted")
+if "capability-registry/EXECUTION-TRACE.json" not in (ROOT/"AGENTS.md").read_text("utf-8"):
+    errors.append("execution trace: AGENTS.md must expose EXECUTION-TRACE.json")
 
 # Integrated external-skill wrappers listed in the registry must have the exact contract.
 skills_index=(ROOT/"external-skills/README.md").read_text("utf-8")

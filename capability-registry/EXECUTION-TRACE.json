@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "purpose": "compact evidence that Engineering-OS routing actually influenced an execution decision",
+  "record": {
+    "task": "short bounded task/workstream",
+    "entry_point": "first Engineering-OS file/route used",
+    "candidates": ["routes or capabilities considered"],
+    "selected": "selected route/capability or none",
+    "cost_class": "none | local | included | paid | unknown",
+    "parallelizable": true,
+    "delegated": false,
+    "reason": "one concise sentence",
+    "verification": "deterministic/evidence gate used to accept the result"
+  },
+  "rules": [
+    "record decisions, not every file read or tool call",
+    "keep each record compact",
+    "do not include secrets or private data",
+    "an agent/tool invocation is not verification by itself"
+  ]
+}
