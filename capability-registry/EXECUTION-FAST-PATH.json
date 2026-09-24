@@ -1,7 +1,13 @@
 {
   "version": 1,
   "purpose": "low-context cost-aware routing for agents, parallel work and local models",
-  "priority": ["none", "local", "included", "paid", "unknown"],
+  "priority": [
+    "none",
+    "local",
+    "included",
+    "paid",
+    "unknown"
+  ],
   "cost_classes": {
     "none": "no LLM/model call",
     "local": "no per-call hosted API fee; local compute and licensing still matter",
@@ -12,32 +18,64 @@
   "routes": {
     "deterministic_repo_work": {
       "first_stop": "capability-registry/agent-tools.md",
-      "prefer": ["RTK", "Graphify", "project tests", "GitHub Actions"],
+      "prefer": [
+        "RTK",
+        "Graphify",
+        "project tests",
+        "GitHub Actions"
+      ],
       "cost": "none"
     },
     "local_llm": {
       "first_stop": "external-systems/ollama/README.md",
-      "prefer": ["Ollama"],
+      "prefer": [
+        "Ollama"
+      ],
       "cost": "local"
     },
     "parallel_local_agents": {
       "first_stop": "capability-registry/EXECUTION-FAST-PATH.md#when-to-delegate",
-      "inspect": ["external-systems/autogen/README.md", "external-systems/crewai/README.md", "external-systems/langgraph/README.md", "external-skills/agency-agents/README.md"],
+      "inspect": [
+        "external-systems/autogen/README.md",
+        "external-systems/crewai/README.md",
+        "external-systems/langgraph/README.md",
+        "external-skills/agency-agents/README.md"
+      ],
       "cost": "local"
     },
     "autonomous_coding_agent": {
       "first_stop": "external-skills/openhands/README.md",
-      "inspect": ["external-skills/hermes-agent/README.md"],
+      "inspect": [
+        "external-skills/hermes-agent/README.md"
+      ],
       "cost": "unknown"
     },
     "claude_specialists": {
       "first_stop": "external-skills/gstack/README.md",
-      "inspect": ["external-skills/claude-code-workflows/README.md", "external-skills/superpowers/README.md"],
+      "inspect": [
+        "external-skills/claude-code-workflows/README.md",
+        "external-skills/superpowers/README.md"
+      ],
       "cost": "included"
     },
     "testing": {
       "first_stop": "patterns/testing/FAST-PATH.json",
       "cost": "none"
     }
+  },
+  "delegation_trigger": {
+    "must_consider_when": "task has at least 3 independent bounded workstreams and at least 2 can execute without shared mutable state",
+    "must_delegate": false,
+    "decision_rule": "compare deterministic, local, included and paid routes; delegate only when expected wall-clock/context benefit exceeds coordination overhead",
+    "record_decision_with": "capability-registry/EXECUTION-TRACE.json"
+  },
+  "trace_rule": {
+    "required_for": [
+      "whole-project qualification",
+      "agent/local-model experiment",
+      "delegation used or deliberately skipped after trigger"
+    ],
+    "sink": "project audit/final report; do not create a permanent trace file unless the project already has an audit/log surface",
+    "schema": "capability-registry/EXECUTION-TRACE.json"
   }
 }
