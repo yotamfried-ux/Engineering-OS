@@ -58,6 +58,7 @@ High-value entry points:
 - [Token & context efficiency](./capability-registry/token-context-efficiency.md) — RTK, Graphify, claude-mem and routing rules.
 - [Connector matrix](./capability-registry/connectors.md) — external-service capability routing for ChatGPT/Codex and Claude.
 - [Agent workflow tools](./capability-registry/agent-tools.md) — tools that improve the AI worker itself.
+- [Agent & execution fast path](./capability-registry/EXECUTION-FAST-PATH.json) — choose deterministic, local-model, included-credit or paid execution with minimum context.
 - [Testing fast path](./patterns/testing/FAST-PATH.md) — low-context routing + copy/adapt skeletons for unit, regression, integration, contract and UI tests.
 
 ## How to use it
@@ -65,6 +66,7 @@ High-value entry points:
 Search this repository by **the job you need to accomplish**. The physical paths below are retained for provenance and precise GitHub search, while this catalog supplies the use-oriented mental model.
 
 - Building something new → start with `templates/`, `patterns/`, `docs/frameworks/`, `docs/reference-repositories/`, and `docs/official-docs/`.
+- Delegating work / choosing an agent or model → start with `capability-registry/EXECUTION-FAST-PATH.json`; prefer no-LLM/local execution when it can be independently verified.
 - Giving an AI agent a capability → search `external-skills/` and relevant AI patterns.
 - Connecting a service/tool → search `external-systems/` and integration patterns.
 - Solving a bug or avoiding a known trap → search `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`, and imported Stage 3 lessons.
