@@ -1,9 +1,27 @@
 # Event-Driven CI Continuation
 
 Use this when an agent starts CI and should continue automatically when the run
-finishes. Prefer a GitHub event over timers or manual polling.
+finishes. Prefer an event subscription over timers or manual polling.
 
-## Preferred GitHub pattern
+## Priority order
+
+1. **Same-session host subscription first.** If the current agent host can
+   subscribe to PR/check-suite/workflow completion notifications and resume the
+   same session, subscribe before yielding. Persist the current SHA, acceptance
+   criteria and next action in the PR/audit. While that subscription is live,
+   do **not** add a timer, sleep-loop or status-poll fallback.
+2. **GitHub `workflow_run` fallback.** If the host cannot resume from a completion
+   subscription, start a new automated agent run after the upstream workflow
+   completes. The repository must carry enough durable state for the new run to
+   continue without reconstructing the chat.
+3. **Polling only as a last resort.** Use a single bounded status read only when
+   neither event path exists; record the missing capability as friction.
+
+A job-specific event is not required when a check-suite/PR completion event
+already proves that all required jobs reached terminal state. Do not add timers
+merely to wake earlier for one long-running job.
+
+## GitHub workflow_run fallback
 
 Use GitHub Actions `workflow_run` to start a downstream agent workflow after the
 upstream workflow completes. Claude Code Action supports `workflow_run` events
@@ -47,17 +65,16 @@ workflow inputs, because the supported action performs actor permission checks.
 
 ## Important boundary
 
-This pattern starts a **new automated agent run in GitHub Actions**. It does not
-wake or resume an existing chat UI session.
+The `workflow_run` fallback starts a **new automated agent run in GitHub
+Actions**. It does not wake an existing chat UI session. A host-native
+subscription is preferred when it can resume the same session.
 
-Therefore, continuation state must be durable: encode the task, current SHA,
+Continuation state must therefore be durable: encode the task, current SHA,
 acceptance criteria, prior findings and next action in the repository, PR/issue,
-artifact or another authoritative project surface. A new agent run can then
-resume from that state without reconstructing the conversation.
+artifact or another authoritative project surface.
 
-If the target chat/work platform exposes an explicit webhook for workflow-run
-events, that can be used instead; do not invent or simulate such a webhook when
-the platform does not expose one.
+If the target platform exposes another explicit completion webhook/subscription,
+use it; do not invent or simulate one.
 
 ## Official references
 

@@ -65,26 +65,50 @@
     "event_driven_ci_continuation": {
       "first_stop": "capability-registry/CI-CONTINUATION.md",
       "prefer": [
-        "GitHub workflow_run",
-        "Claude Code Action automation mode"
+        "host-native PR/check-suite subscription that resumes the same session",
+        "GitHub workflow_run -> new agent run"
       ],
       "cost": "included",
-      "rule": "prefer completion events over timers/polling; continuation is a new agent run, so persist state durably"
+      "rule": "never add timer/polling fallback while a live completion subscription exists; persist state before yielding"
     }
   },
   "delegation_trigger": {
     "must_consider_when": "task has at least 3 independent bounded workstreams and at least 2 can execute without shared mutable state",
-    "must_delegate": false,
-    "decision_rule": "compare deterministic, local, included and paid routes; delegate only when expected wall-clock/context benefit exceeds coordination overhead",
+    "must_delegate_when": "after decomposition, at least 2 read-only/bounded workstreams remain independent and a qualified worker route is already available without disproportionate setup or trust risk",
+    "must_delegate": true,
+    "allowed_skip_reasons": [
+      "no qualified worker route is available",
+      "worker setup/coordination cost is credibly greater than the bounded task",
+      "workstreams share mutable state that cannot be isolated",
+      "security/credential/trust boundary forbids delegation"
+    ],
+    "insufficient_skip_reason": "shared project context alone is not sufficient; first carve out bounded read-only workstreams",
+    "decision_rule": "prefer none/local workers; use included host-native workers only when they materially improve wall-clock/context cost",
     "record_decision_with": "capability-registry/EXECUTION-TRACE.json"
   },
   "trace_rule": {
     "required_for": [
       "whole-project qualification",
       "agent/local-model experiment",
-      "delegation used or deliberately skipped after trigger"
+      "delegation trigger fires",
+      "delegation used or skipped"
     ],
-    "sink": "project audit/final report; do not create a permanent trace file unless the project already has an audit/log surface",
+    "minimum_records": "one record per routing/delegation decision that materially changes execution",
+    "required_fields": [
+      "task",
+      "entry_point",
+      "route_key",
+      "trigger",
+      "candidates",
+      "selected",
+      "cost_class",
+      "parallelizable",
+      "delegated",
+      "reason",
+      "verification"
+    ],
+    "sink": "project audit/final report; use an existing durable audit/log surface when one exists",
+    "completion_rule": "a whole-project qualification report is incomplete until required trace records are emitted",
     "schema": "capability-registry/EXECUTION-TRACE.json"
   }
 }

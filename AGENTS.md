@@ -7,7 +7,7 @@ This repository is a **knowledge library, not a runtime**. Use this file as a ma
 0. **Do not spend the session rediscovering setup.** On a persistent host, reuse the existing Engineering-OS clone and update it with `git pull --ff-only`; do not re-clone it. For a project using the live-qualified tool profiles, check `tools/eos_capabilities.py status --json` first. If it says READY, do not reread activation guides or reinstall tools.
 1. Identify the job to be done.
 2. Open [capability-registry/ROUTING-MAP.md](capability-registry/ROUTING-MAP.md).
-3. Read only the branch of knowledge relevant to the task. Before spawning agents or choosing an LLM-backed workflow, read `capability-registry/EXECUTION-FAST-PATH.json`. If the task has 3+ independent bounded workstreams, explicitly consider delegation/parallelism and record the compact decision using `capability-registry/EXECUTION-TRACE.json` when the trace rule applies. For test-writing/selection, read `patterns/testing/FAST-PATH.json` first; open longer docs only if needed.
+3. Read only the branch of knowledge relevant to the task. Before spawning agents or choosing an LLM-backed workflow, read `capability-registry/EXECUTION-FAST-PATH.json`. If the task has 3+ independent bounded workstreams, decompose them first. When at least 2 remain independent and a qualified worker route is already available, delegate at least one bounded workstream unless an allowed skip reason applies. Shared project context alone is not enough to skip delegation. Record the decision with `capability-registry/EXECUTION-TRACE.json`; a whole-project qualification is incomplete without its required trace records. For test-writing/selection, read `patterns/testing/FAST-PATH.json` first; open longer docs only if needed.
 4. Prefer authoritative/current sources according to [SOURCE-POLICY.md](capability-registry/SOURCE-POLICY.md).
 5. For installable capabilities, use the [60-second start](docs/GETTING-STARTED.md) and the qualified installer profile when supported; open a tool's `activation.md` only when it is outside the automatic profile, missing, broken, or needs troubleshooting.
 6. For testing/security/release claims, produce evidence on the exact revision/environment; never turn NOT TESTED, BLOCKED or PARTIAL into PASS.
@@ -47,6 +47,7 @@ For project verification evidence use: PASS / FAIL / PARTIAL / BLOCKED / NOT TES
 ## Guardrails
 
 - Prefer deterministic/no-model execution first, then qualified local-model execution, before spending hosted model usage when quality/evidence requirements allow it.
+- When waiting on CI, prefer a host-native PR/check-suite subscription that can resume the same session; while such a subscription is live, do not add timer/polling fallbacks. Use `CI-CONTINUATION.md` for the fallback hierarchy.
 - Do not assume a local model is literally free: local compute, hardware, energy, latency and license constraints still count.
 - Do not install every tool by default.
 - Do not treat a community repository as an official standard.

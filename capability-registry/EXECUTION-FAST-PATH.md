@@ -28,16 +28,22 @@ model license and quality constraints still apply. Never label a provider/model
 
 ## When to delegate
 
-**Mandatory consideration trigger:** when a task contains at least three
-independent bounded workstreams and at least two can run without shared mutable
-state, explicitly evaluate delegation/parallel execution before continuing
-serially. This is a requirement to **consider**, not a requirement to spawn
-agents: skip delegation when coordination/setup overhead is likely to erase the
-benefit.
+**Mandatory delegation trigger:** when a task contains at least three bounded
+workstreams, decompose them before continuing serially. If at least two remain
+independent/read-only and a qualified worker route is already available, delegate
+at least one bounded workstream. Prefer `none`/`local` workers; use an included
+host-native worker only when it materially improves wall-clock/context cost.
 
-Record that decision using the compact schema in
-`capability-registry/EXECUTION-TRACE.json` for whole-project qualification,
-agent/local-model experiments, or whenever this trigger fires.
+Skip delegation only for an explicit allowed reason from
+`EXECUTION-FAST-PATH.json`. "The review needs shared project context" is not a
+sufficient reason by itself: first carve out bounded read-only slices such as
+independent module review, log triage, candidate-test generation, or docs drift.
+
+Record every material routing/delegation decision using the compact schema in
+`capability-registry/EXECUTION-TRACE.json`. Include the exact `entry_point`,
+`route_key`, trigger, candidates, cost class, delegation decision and verification
+gate. A whole-project qualification report is incomplete until its required
+records are present.
 
 Delegate only if the subtask has a clear input, output and acceptance check.
 
