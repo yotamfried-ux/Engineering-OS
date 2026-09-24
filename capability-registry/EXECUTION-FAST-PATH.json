@@ -74,29 +74,29 @@
     "documentation_consistency": {
       "first_stop": "patterns/testing/FAST-PATH.json",
       "prefer": [
-        "exact search/grep",
-        "schema or contract tests",
-        "static assertions",
-        "diff-based checks"
+        "search",
+        "contracts",
+        "static checks",
+        "diff checks"
       ],
       "cost": "none",
-      "rule": "do not use a hosted LLM worker for documentation consistency by default; use one only for a residual semantic question that survives deterministic checks and passes the hosted delegation ROI gate"
+      "rule": "hosted only for residual semantic questions after ROI gate"
     }
   },
   "delegation_trigger": {
-    "must_consider_when": "task has at least 3 independent bounded workstreams and at least 2 can execute without shared mutable state",
-    "must_delegate_when": "after decomposition, at least 2 bounded workstreams remain independent AND at least one ready no-model/local worker route can execute a slice with deterministic verification",
+    "must_consider_when": "3+ bounded workstreams; 2+ independent",
+    "must_delegate_when": "a ready none/local worker can run a bounded slice with deterministic verification",
     "must_delegate": true,
     "hosted_delegation_mandatory": false,
     "allowed_skip_reasons": [
-      "no ready no-model/local worker route is available",
-      "worker setup/coordination cost is credibly greater than the bounded task",
-      "workstreams share mutable state that cannot be isolated",
-      "security/credential/trust boundary forbids delegation",
-      "the only remaining worker option is hosted and it does not pass the hosted delegation ROI gate"
+      "no ready none/local worker",
+      "coordination cost exceeds task",
+      "state cannot be isolated",
+      "trust boundary forbids delegation",
+      "hosted-only option fails ROI gate"
     ],
-    "insufficient_skip_reason": "shared project context alone is not sufficient; first carve out bounded read-only workstreams",
-    "decision_rule": "prefer none/local workers. Never spawn a hosted subagent merely to satisfy delegation. Hosted delegation requires the ROI gate below.",
+    "insufficient_skip_reason": "shared context alone; carve out read-only slices first",
+    "decision_rule": "Never spawn a hosted subagent to satisfy delegation; none/local first, hosted only through ROI gate.",
     "record_decision_with": "capability-registry/EXECUTION-TRACE.json"
   },
   "trace_rule": {
@@ -127,22 +127,20 @@
   "hosted_delegation_roi_gate": {
     "default": "deny",
     "all_required": [
-      "deterministic/static tooling cannot answer the residual question",
-      "no qualified local worker is ready or the local worker failed the task-specific quality gate",
-      "the subtask has a narrow immutable input packet and explicit output contract",
-      "expected hosted-worker token/context cost is materially lower than keeping the work in the coordinator",
-      "the worker output will be independently verified before it affects a PASS or code change"
+      "deterministic tools cannot answer",
+      "no qualified local worker is ready/adequate",
+      "bounded immutable input and output contract",
+      "expected hosted cost is lower than coordinator work",
+      "independent verification exists"
     ],
     "worker_context_budget": {
-      "rule": "send the smallest relevant packet, not repository-wide context",
-      "default_packet": "exact question + relevant diff/hunks + at most 5 directly relevant files",
+      "default_packet": "question + relevant diff/hunks + <=5 files",
       "max_text_bytes_default": 32768,
-      "escalation": "if the task needs broader context, split the task, use deterministic retrieval, use a local worker, or keep it in the coordinator; exceed the default only with a recorded ROI rationale"
+      "escalation": "split/retrieve/local/coordinator; exceed only with recorded ROI"
     },
     "worker_output_budget": {
-      "default_max_tokens": 1200,
-      "rule": "request findings/evidence only; no broad recap or duplicated project summary"
+      "default_max_tokens": 1200
     },
-    "stop_rule": "if a hosted worker produces low-confidence or unverified findings, do not launch another hosted worker for the same slice; fall back to deterministic/coordinator verification"
+    "stop_rule": "do not repeat hosted workers for low-confidence/unverified findings"
   }
 }
