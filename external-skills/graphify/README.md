@@ -6,7 +6,7 @@
 
 ## Source
 
-- **Repository:** https://github.com/safishamsi/graphify
+- **Repository:** https://github.com/Graphify-Labs/graphify (canonical; the former `safishamsi/graphify` identity resolves to the same HEAD, and PyPI `graphifyy` 0.9.66 declares this repository — verified 2026-09-23)
 - **License:** MIT (Safi Shamsi)
 - **PyPI package name:** `graphifyy`
 

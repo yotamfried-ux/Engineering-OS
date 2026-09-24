@@ -14,8 +14,8 @@ Use this registry before manually testing an application. It routes an AI agent 
 ## Agent workflow
 
 1. Identify target surfaces: web, Android, iOS, or several.
-2. Check whether the preferred MCP is already connected.
-3. If not, read the capability wrapper and install only from the documented official source.
+2. Check the project tool state first: `python3 /path/to/Engineering-OS/tools/eos_capabilities.py status --project /path/to/project --json`.
+3. If the preferred testing tool belongs to the project but is missing, use `ensure --tool <name>` or add it to `.engineering-os-tools.json` and rerun `setup`. Read the capability wrapper only for manual/conditional prerequisites or troubleshooting.
 4. Verify the server/device/browser before testing.
 5. Explore the real application through MCP.
 6. Convert important discovered flows and every reproduced bug into deterministic regression tests stored with the application.

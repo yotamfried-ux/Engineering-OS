@@ -1,0 +1,59 @@
+name: Capability Installer Check
+
+on:
+  pull_request:
+    paths:
+      - 'tools/eos_capabilities.py'
+      - 'tools/test_eos_capabilities.py'
+      - 'capability-registry/INSTALL-PROFILES.json'
+      - 'docs/GETTING-STARTED.md'
+      - 'README.md'
+      - 'AGENTS.md'
+      - 'external-skills/**'
+      - 'capability-registry/agent-tools.md'
+      - 'capability-registry/token-context-efficiency.md'
+      - 'capability-registry/application-testing/**'
+      - '.github/workflows/capability-installer-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/eos_capabilities.py'
+      - 'tools/test_eos_capabilities.py'
+      - 'capability-registry/INSTALL-PROFILES.json'
+      - 'docs/GETTING-STARTED.md'
+      - 'capability-registry/application-testing/**'
+      - '.github/workflows/capability-installer-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Python syntax
+        run: python -m py_compile tools/eos_capabilities.py tools/test_eos_capabilities.py
+      - name: Capability manager contract
+        run: python tools/test_eos_capabilities.py
+      - name: Catalog is machine-readable
+        run: python tools/eos_capabilities.py catalog --json | python -m json.tool >/dev/null
+      - name: Clean-host profile dry runs
+        run: |
+          python tools/eos_capabilities.py setup --project . --profile core --dry-run
+          python tools/eos_capabilities.py setup --project . --profile mobile --dry-run
+          python tools/eos_capabilities.py setup --project . --profile web --dry-run
+          python tools/eos_capabilities.py setup --project . --profile mobile-deep --dry-run
+      - name: Project manifest drives every declared tool
+        run: |
+          tmp="$(mktemp -d)"
+          git -C "$tmp" init -q
+          python tools/eos_capabilities.py init-project --project "$tmp" --profile mobile-deep
+          python tools/eos_capabilities.py setup --project "$tmp" --profile auto --dry-run
+          python tools/eos_capabilities.py ensure --project "$tmp" --tool claude-mem --dry-run
+          python tools/eos_capabilities.py ensure --project "$tmp" --tool cli-anything --dry-run
+      - name: Knowledge integrity
+        run: python tools/check_knowledge_integrity.py

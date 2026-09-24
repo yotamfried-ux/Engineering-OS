@@ -1,6 +1,6 @@
 # Token, Context & Memory Efficiency
 
-Use this registry when the bottleneck is **context size, repeated repository reading, noisy command output, or repeated rediscovery across sessions**. Select by bottleneck; do not install all tools automatically.
+Use this registry when the bottleneck is **context size, repeated repository reading, noisy command output, or repeated rediscovery across sessions**. Select by bottleneck; do not install all tools automatically. For the live-qualified core tools, check `tools/eos_capabilities.py status --json` before reading install documentation; a READY result means setup context should not be spent again.
 
 | Need | First candidate | Mechanism | Host/shape |
 |---|---|---|---|

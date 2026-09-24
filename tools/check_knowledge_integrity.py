@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import re, sys
+import json, re, sys
 from pathlib import Path
 from urllib.parse import unquote
 ROOT=Path(__file__).resolve().parents[1]
 MD=sorted(ROOT.rglob("*.md"))
-REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
+REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","patterns/testing/FAST-PATH.md","patterns/testing/FAST-PATH.json","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
 FORBIDDEN=("core/","scripts/","experiments/","evals/","telemetry-archive/",".claude/")
 HISTORICAL=("lessons-learned/","failed-solutions/","improved-stage3/","architecture-decisions/ADR-","capability-registry/evaluations/","capability-registry/USABILITY-AUDIT","capability-registry/QUALIFICATION-REPORT","capability-registry/NORMALIZATION-AUDIT")
 INSTALL_DOCS=("external-skills/","templates/")
@@ -51,6 +51,42 @@ for p in MD:
             path=m.group(1).rstrip(".,;:")
             if path.startswith(FORBIDDEN) and not (ROOT/path).exists():
                 errors.append(f"{rel}: references removed runtime path: {path}")
+# Keep the ordinary test-writing entry point deliberately small and valid.
+fast_md=ROOT/"patterns/testing/FAST-PATH.md"
+fast_json=ROOT/"patterns/testing/FAST-PATH.json"
+if fast_md.exists() and fast_md.stat().st_size > 7000:
+    errors.append(f"testing fast path: FAST-PATH.md is too large ({fast_md.stat().st_size} bytes; max 7000)")
+if fast_json.exists() and fast_json.stat().st_size > 4000:
+    errors.append(f"testing fast path: FAST-PATH.json is too large ({fast_json.stat().st_size} bytes; max 4000)")
+if fast_json.exists():
+    try:
+        fast_data=json.loads(fast_json.read_text("utf-8"))
+    except Exception as exc:
+        errors.append(f"testing fast path: invalid JSON: {exc}")
+    else:
+        routes=fast_data.get("routes")
+        if not isinstance(routes,dict) or not routes:
+            errors.append("testing fast path: routes must be a non-empty object")
+        else:
+            for name,route in routes.items():
+                raw=route.get("first_stop") if isinstance(route,dict) else None
+                if not isinstance(raw,str) or not raw:
+                    errors.append(f"testing fast path: route {name} has no first_stop")
+                    continue
+                dest,_,frag=raw.partition("#")
+                target=(ROOT/dest).resolve()
+                try: target.relative_to(ROOT.resolve())
+                except ValueError:
+                    errors.append(f"testing fast path: route {name} escapes repository: {raw}"); continue
+                if not target.exists():
+                    errors.append(f"testing fast path: route {name} missing target: {raw}"); continue
+                if frag and target.suffix.lower()==".md" and slug(frag) not in anchors(target):
+                    errors.append(f"testing fast path: route {name} missing anchor: {raw}")
+if "patterns/testing/FAST-PATH.json" not in (ROOT/"AGENTS.md").read_text("utf-8"):
+    errors.append("testing fast path: AGENTS.md must route test-writing through FAST-PATH.json")
+if "patterns/testing/FAST-PATH.json" not in (ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8"):
+    errors.append("testing fast path: ROUTING-MAP.md must expose FAST-PATH.json")
+
 # Integrated external-skill wrappers listed in the registry must have the exact contract.
 skills_index=(ROOT/"external-skills/README.md").read_text("utf-8")
 contract={"README.md","integration.md","policy.md","activation.md"}

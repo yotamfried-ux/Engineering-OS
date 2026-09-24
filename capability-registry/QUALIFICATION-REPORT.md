@@ -67,6 +67,8 @@ It does **not** falsely claim that every MCP completed a live initialize/tools/c
 
 ## Remaining execution qualification
 
+First live Claude Code host results: [2026-09-23 host qualification](./evaluations/2026-09-23-claude-code-cloud-host-qualification.md) (Superpowers, RTK, Graphify CLI+MCP, Maestro CLI PASS; Maestro MCP PARTIAL — no emulator on that host).
+
 For a stronger L3-style qualification, run each host-dependent capability in its intended environment:
 1. install using the wrapper;
 2. verify version/presence;

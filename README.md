@@ -2,6 +2,36 @@
 
 A use-oriented knowledge base for building software and improving AI-assisted engineering. This repository is deliberately a **library, not a runtime**.
 
+## 60-second start
+
+**Persistent machine:** clone Engineering-OS once; later use `git pull --ff-only`.
+
+**New project:** create a durable project tool manifest, then run setup:
+
+```bash
+python3 ~/Engineering-OS/tools/eos_capabilities.py init-project --project /path/to/project --profile core
+# use --profile mobile for mobile apps
+
+python3 ~/Engineering-OS/tools/eos_capabilities.py setup --project /path/to/project
+```
+
+`setup` processes **every tool declared in the project's
+`.engineering-os-tools.json`**, installing/activating only what is missing.
+Later sessions use:
+
+```bash
+python3 ~/Engineering-OS/tools/eos_capabilities.py status --project /path/to/project --json
+```
+
+If it reports `"ready":true`, do not reread install docs or reinstall tools.
+Use `catalog` to see all centrally known installable/conditional tools and
+`ensure --tool <name>` when the project adopts another capability.
+
+Code examples, patterns, templates and reference repositories remain knowledge,
+not dependencies.
+
+See [Engineering-OS — 60-second start](docs/GETTING-STARTED.md).
+
 ## Catalog by purpose
 
 | Purpose | What to search here | Assets |
@@ -28,6 +58,7 @@ High-value entry points:
 - [Token & context efficiency](./capability-registry/token-context-efficiency.md) — RTK, Graphify, claude-mem and routing rules.
 - [Connector matrix](./capability-registry/connectors.md) — external-service capability routing for ChatGPT/Codex and Claude.
 - [Agent workflow tools](./capability-registry/agent-tools.md) — tools that improve the AI worker itself.
+- [Testing fast path](./patterns/testing/FAST-PATH.md) — low-context routing + copy/adapt skeletons for unit, regression, integration, contract and UI tests.
 
 ## How to use it
 
@@ -38,6 +69,7 @@ Search this repository by **the job you need to accomplish**. The physical paths
 - Connecting a service/tool → search `external-systems/` and integration patterns.
 - Solving a bug or avoiding a known trap → search `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`, and imported Stage 3 lessons.
 - Choosing an architecture → search `docs/architecture-guides/` and `architecture-decisions/`.
-- Hardening quality → search testing patterns plus the imported quality/reliability assets.
+- Writing/choosing a test → start with `patterns/testing/FAST-PATH.json`; open `FAST-PATH.md` only when you need a skeleton/explanation.
+- Hardening/qualifying a whole project → use the full testing map and qualification patterns.
 
 Historical runtime/system implementation is preserved on `archive/pre-knowledge-library`; it is intentionally absent from this library's `main`.

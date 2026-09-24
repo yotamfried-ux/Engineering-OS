@@ -21,8 +21,10 @@ brew install rtk
 
 ### שיטה B — curl (Linux / macOS)
 ```bash
-curl -fsSL https://rtk.ai/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
 ```
+
+Behind a proxy that blocks GitHub API/redirect lookups, pin the release: `RTK_VERSION=vX.Y.Z sh install.sh` (checksums are still verified). Live evidence: [2026-09-23 host qualification](../../capability-registry/evaluations/2026-09-23-claude-code-cloud-host-qualification.md).
 
 ### שיטה C — Cargo (כל מקום עם Rust)
 ```bash

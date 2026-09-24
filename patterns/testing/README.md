@@ -1,5 +1,7 @@
 # Testing Patterns
 
+> Fast path: if you only need to choose/write a test, start with [`FAST-PATH.json`](./FAST-PATH.json). Open [`FAST-PATH.md`](./FAST-PATH.md) only when you need a copy/adapt skeleton. This file is the deeper pattern reference.
+
 ## Overview
 Apply these patterns whenever you write, review, or refactor tests. The patterns here are language-agnostic and apply to web APIs, UI components, background workers, and CLI tools alike. Prefer these structures as defaults; deviate only with an explicit comment explaining why.
 

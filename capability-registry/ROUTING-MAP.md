@@ -9,6 +9,7 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Add/use an agent capability | `capability-registry/agent-tools.md` | matching `external-skills/<tool>/` | installation/connection verified before dependence |
 | Reduce tokens/context | `token-context-efficiency.md` | RTK, Graphify, memory tools | measured/observed benefit on the target workflow |
 | Connect external data/service | `connectors.md` | `external-systems/`, connector wrapper | auth + representative read/write action as applicable |
+| Write/choose a fast code test | `patterns/testing/FAST-PATH.json` | `patterns/testing/FAST-PATH.md` only if a skeleton/explanation is needed | smallest deterministic test that can falsify the claim |
 | Test web app | `application-testing/README.md` | Playwright, Chrome DevTools, testing knowledge map | capability matrix with evidence |
 | Test mobile app | `application-testing/README.md` | Maestro/Appium/Mobile Next + platform docs | build/install/launch + user journey + authoritative side effects |
 | Qualify whole project | `patterns/testing/project-qualification.md` | authoritative testing sources + templates | PASS/FAIL/PARTIAL/BLOCKED/NOT TESTED matrix |
