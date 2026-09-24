@@ -28,12 +28,14 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Debug known failure | `docs/troubleshooting/` | lessons + failed-solutions | reproduced cause + regression evidence |
 | Scientific/research workflow | `external-skills/scientific-agent-skills/` | authoritative domain sources | citations/data provenance + domain validation |
 
-## Selection rules
+## Navigation notes
 
-1. Before spawning agents, use `EXECUTION-FAST-PATH.json` and prefer deterministic/no-model or qualified local execution when it meets the evidence bar.
-2. Prefer an already available, authorized native capability over installing a duplicate.
-3. Prefer official docs/standards for claims about behavior, security, release requirements and APIs.
-4. Prefer deterministic framework-native tests for qualification; exploratory agent tools complement them.
-5. Use community catalogs as discovery sources, not as final authority.
-6. Do not load an entire corpus when one branch answers the task.
-7. If two tools overlap, choose based on the target job and constraints; do not install both merely because both exist.
+This map is descriptive. It exposes likely starting points and overlapping
+capabilities; it does not prescribe how an AI or human must execute a task.
+
+- `EXECUTION-FAST-PATH.json` contains cost/capability metadata for execution options.
+- Existing authorized capabilities can often avoid duplicate setup.
+- `SOURCE-POLICY.md` records provenance tiers for readers who need to evaluate sources.
+- Testing, agent and application-testing entries link to both deterministic and exploratory options.
+- Community catalogs are discovery sources; official/canonical material is identified separately where available.
+- Overlapping tools are intentionally preserved so the active worker can choose based on the task and environment.
