@@ -7,7 +7,7 @@ This repository is a **knowledge library, not a runtime**. Use this file as a ma
 0. **Do not spend the session rediscovering setup.** On a persistent host, reuse the existing Engineering-OS clone and update it with `git pull --ff-only`; do not re-clone it. For a project using the live-qualified tool profiles, check `tools/eos_capabilities.py status --json` first. If it says READY, do not reread activation guides or reinstall tools.
 1. Identify the job to be done.
 2. Open [capability-registry/ROUTING-MAP.md](capability-registry/ROUTING-MAP.md).
-3. Read only the branch of knowledge relevant to the task.
+3. Read only the branch of knowledge relevant to the task. For test-writing/selection, read `patterns/testing/FAST-PATH.json` first; open the longer testing docs only if needed.
 4. Prefer authoritative/current sources according to [SOURCE-POLICY.md](capability-registry/SOURCE-POLICY.md).
 5. For installable capabilities, use the [60-second start](docs/GETTING-STARTED.md) and the qualified installer profile when supported; open a tool's `activation.md` only when it is outside the automatic profile, missing, broken, or needs troubleshooting.
 6. For testing/security/release claims, produce evidence on the exact revision/environment; never turn NOT TESTED, BLOCKED or PARTIAL into PASS.
@@ -26,7 +26,7 @@ This repository is a **knowledge library, not a runtime**. Use this file as a ma
 - Build/architecture: `templates/`, `patterns/`, `docs/architecture-guides/`, `docs/frameworks/`
 - Agent capabilities: `capability-registry/`, `external-skills/`
 - External services: `external-systems/`
-- Testing/qualification: `patterns/testing/`, `templates/testing/`
+- Testing/qualification: `patterns/testing/FAST-PATH.json` first; then `patterns/testing/`, `templates/testing/` only as needed
 - Security: `patterns/security/`, `capability-registry/security/`, `templates/security/`
 - Troubleshooting: `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`
 - Reference implementations: `docs/reference-repositories/`
