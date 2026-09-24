@@ -4,17 +4,20 @@ Purpose: answer **what capability can I use for this task, where is its source o
 
 Start with [ROUTING-MAP.md](./ROUTING-MAP.md). It routes by job and keeps context small. Use [SOURCE-POLICY.md](./SOURCE-POLICY.md) to distinguish official/canonical evidence from maintained references, community tools and historical material.
 
-## Decision order
+## Navigation index
 
-1. Identify the job; route through `ROUTING-MAP.md`.
-2. If external data/action is needed, check `connectors.md`.
-3. If context/token cost is the bottleneck, check `token-context-efficiency.md`.
-4. For web/mobile testing, check `application-testing/README.md`.
-5. For security work, check `security/` plus `../patterns/security/`.
-6. For agent workflow/capabilities, check `agent-tools.md` and the matching `../external-skills/` wrapper.
-7. Prefer an already-authorized native/official capability over installing a duplicate.
-8. Never assume availability. Verify host, plan/policy, OS/runtime, authorization and provider permissions.
-9. Never treat successful invocation as proof of target-system correctness; follow the testing/security evidence model.
+The registry is a map of available knowledge and capabilities, not an execution
+policy. Useful entry points include:
+
+- `ROUTING-MAP.md` for task-to-knowledge navigation;
+- `connectors.md` for external data/actions;
+- `token-context-efficiency.md` for context/token tools;
+- `application-testing/README.md` for web/mobile testing capabilities;
+- `security/` and `../patterns/security/` for security knowledge;
+- `agent-tools.md` and `../external-skills/` for optional agent capabilities.
+
+Entries record availability, provenance, prerequisites and verification evidence
+where known so the active worker can choose how to proceed.
 
 ## Normalized capability contract
 
