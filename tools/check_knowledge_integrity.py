@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import unquote
 ROOT=Path(__file__).resolve().parents[1]
 MD=sorted(ROOT.rglob("*.md"))
-REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","patterns/testing/FAST-PATH.md","patterns/testing/FAST-PATH.json","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
+REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","capability-registry/EXECUTION-FAST-PATH.md","capability-registry/EXECUTION-FAST-PATH.json","patterns/testing/FAST-PATH.md","patterns/testing/FAST-PATH.json","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
 FORBIDDEN=("core/","scripts/","experiments/","evals/","telemetry-archive/",".claude/")
 HISTORICAL=("lessons-learned/","failed-solutions/","improved-stage3/","architecture-decisions/ADR-","capability-registry/evaluations/","capability-registry/USABILITY-AUDIT","capability-registry/QUALIFICATION-REPORT","capability-registry/NORMALIZATION-AUDIT")
 INSTALL_DOCS=("external-skills/","templates/")
@@ -86,6 +86,45 @@ if "patterns/testing/FAST-PATH.json" not in (ROOT/"AGENTS.md").read_text("utf-8"
     errors.append("testing fast path: AGENTS.md must route test-writing through FAST-PATH.json")
 if "patterns/testing/FAST-PATH.json" not in (ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8"):
     errors.append("testing fast path: ROUTING-MAP.md must expose FAST-PATH.json")
+
+# Keep the agent/execution entry point deliberately small and resolvable.
+exec_md=ROOT/"capability-registry/EXECUTION-FAST-PATH.md"
+exec_json=ROOT/"capability-registry/EXECUTION-FAST-PATH.json"
+if exec_md.exists() and exec_md.stat().st_size > 7000:
+    errors.append(f"execution fast path: Markdown too large ({exec_md.stat().st_size} bytes; max 7000)")
+if exec_json.exists() and exec_json.stat().st_size > 5000:
+    errors.append(f"execution fast path: JSON too large ({exec_json.stat().st_size} bytes; max 5000)")
+if exec_json.exists():
+    try:
+        exec_data=json.loads(exec_json.read_text("utf-8"))
+    except Exception as exc:
+        errors.append(f"execution fast path: invalid JSON: {exc}")
+    else:
+        priority=exec_data.get("priority")
+        if priority != ["none","local","included","paid","unknown"]:
+            errors.append("execution fast path: cost priority must remain none/local/included/paid/unknown")
+        routes=exec_data.get("routes")
+        if not isinstance(routes,dict) or not routes:
+            errors.append("execution fast path: routes must be a non-empty object")
+        else:
+            for name,route in routes.items():
+                raw=route.get("first_stop") if isinstance(route,dict) else None
+                if not isinstance(raw,str) or not raw:
+                    errors.append(f"execution fast path: route {name} has no first_stop")
+                    continue
+                dest,_,frag=raw.partition("#")
+                target=(ROOT/dest).resolve()
+                try: target.relative_to(ROOT.resolve())
+                except ValueError:
+                    errors.append(f"execution fast path: route {name} escapes repository: {raw}"); continue
+                if not target.exists():
+                    errors.append(f"execution fast path: route {name} missing target: {raw}"); continue
+                if frag and target.suffix.lower()==".md" and slug(frag) not in anchors(target):
+                    errors.append(f"execution fast path: route {name} missing anchor: {raw}")
+if "capability-registry/EXECUTION-FAST-PATH.json" not in (ROOT/"AGENTS.md").read_text("utf-8"):
+    errors.append("execution fast path: AGENTS.md must expose EXECUTION-FAST-PATH.json")
+if "EXECUTION-FAST-PATH.json" not in (ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8"):
+    errors.append("execution fast path: ROUTING-MAP.md must expose EXECUTION-FAST-PATH.json")
 
 # Integrated external-skill wrappers listed in the registry must have the exact contract.
 skills_index=(ROOT/"external-skills/README.md").read_text("utf-8")
