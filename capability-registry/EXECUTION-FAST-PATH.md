@@ -1,112 +1,49 @@
-# Agent & Execution Fast Path
+# Execution Capability Reference
 
-Use this before spawning agents or choosing an LLM-backed workflow. The goal is
-to finish the task with the **lowest reliable execution cost and context load**.
+This document describes execution options available in Engineering-OS. It is a
+reference, not a workflow contract. The active AI/agent may choose any approach
+that fits the task, including approaches not listed here.
 
 ## Cost classes
 
 | Class | Meaning | Examples |
 |---|---|---|
 | `none` | no model call | RTK, Graphify queries, tests, linters, ffmpeg, GitHub Actions |
-| `local` | no per-call hosted API fee; uses local hardware/energy | Ollama + supported open model |
-| `included` | uses a plan/credit bucket; verify current allowance | host-native/Agent SDK execution when available |
+| `local` | no per-call hosted API fee; local hardware/energy still matter | Ollama + supported open model |
+| `included` | uses a plan or credit bucket | host-native/Agent SDK execution when available |
 | `paid` | provider/API usage is billed or quota-metered | hosted OpenAI/Anthropic/Gemini/etc. |
-| `unknown` | cost cannot be assumed | any unverified MCP/provider/model |
+| `unknown` | cost is not established | unverified MCP/provider/model |
 
-**Local is not literally costless**: hardware, RAM/VRAM, electricity, latency,
-model license and quality constraints still apply. Never label a provider/model
-"free" without verifying its current terms.
+These labels are descriptive metadata only. They do not impose an execution
+order.
 
-## Selection order
+## Available approaches
 
-1. **Deterministic/no-LLM first.** If tests, static analysis, Graphify, RTK,
-   scripts or CI can answer the question, use them.
-2. **Reuse an already-ready capability.** Do not reinstall or rediscover.
-3. **Local model for bounded, parallelizable cognition** when quality is adequate.
-4. **Included-credit/host-native agent** when local quality is insufficient.
-5. **Paid hosted model** only when its capability materially improves the result.
+Engineering-OS contains examples and capabilities for:
 
-## When to delegate
+- deterministic repository work through tests, linters, RTK, Graphify and CI;
+- local-model work through Ollama and compatible orchestration frameworks;
+- host-native or hosted agents;
+- parallel workers for independent tasks;
+- application-testing tools such as Maestro, Playwright and Appium.
 
-**Mandatory delegation trigger:** when a task contains at least three bounded
-workstreams, decompose them before continuing serially. If at least two remain
-independent/read-only and a qualified worker route is already available, delegate
-at least one bounded workstream. Prefer `none`/`local` workers; use an included
-host-native worker only when it materially improves wall-clock/context cost.
+Delegation and parallelism are optional techniques. They can be useful when work
+is independent and isolation is cheap, and can be counterproductive when setup,
+context transfer or shared mutable state dominates.
 
-Skip delegation only for an explicit allowed reason from
-`EXECUTION-FAST-PATH.json`. "The review needs shared project context" is not a
-sufficient reason by itself: first carve out bounded read-only slices such as
-independent module review, log triage, candidate-test generation, or docs drift.
+## Evidence
 
-Record every material routing/delegation decision using the compact schema in
-`capability-registry/EXECUTION-TRACE.json`. Include the exact `entry_point`,
-`route_key`, trigger, candidates, cost class, delegation decision and verification
-gate. A whole-project qualification report is incomplete until its required
-records are present.
+Agent/model output and deterministic/runtime evidence are different kinds of
+information. For correctness-sensitive claims, the library contains examples of
+pairing hypotheses with tests, logs, exact code references or authoritative
+runtime state.
 
-Delegate only if the subtask has a clear input, output and acceptance check.
+## Related knowledge
 
-Good local/parallel candidates:
-- classify or summarize independent files/logs;
-- generate candidate tests that deterministic CI will validate;
-- inspect several independent modules for the same invariant;
-- triage static-analysis findings;
-- draft documentation from already-grounded project facts;
-- compare alternatives before the main agent makes the final decision.
-
-Keep on the main/high-confidence path:
-- destructive changes;
-- security conclusions without independent evidence;
-- release/merge decisions;
-- migrations or production-data changes;
-- final correctness claims;
-- ambiguous architectural decisions requiring project-wide context.
-
-## Agent asset compatibility
-
-- **Portable prompt/role assets:** Agency Agents can be adapted to a compatible
-  local agent runtime after inspecting the exact prompt/tool requirements.
-- **Local-model orchestration frameworks:** AutoGen, CrewAI, LangGraph and
-  Pydantic AI can use local/OpenAI-compatible model endpoints when supported.
-- **Local model runtime:** Ollama is the first-stop local runtime currently
-  catalogued by Engineering-OS.
-- **Provider-selectable runtimes:** OpenHands/Hermes may be useful for delegated
-  coding, but qualification must verify the selected model/provider and sandbox.
-- **Claude-Code-specific skills:** Superpowers, gstack and Claude Code workflow
-  assets are not automatically portable to a local model merely because their
-  prompts are visible. Use their documented host integration unless explicitly
-  adapted and re-qualified.
-
-## Parallelism rule
-
-Parallelize **independent state**. Do not fan out agents that mutate the same
-files, database rows, emulator, branch or environment without isolation.
-
-For N independent tasks:
-1. share one immutable revision/input set;
-2. give each worker a bounded output contract;
-3. collect outputs;
-4. validate with deterministic checks;
-5. let one coordinator integrate/reconcile.
-
-## Evidence rule
-
-An agent answer is a proposal, not proof. Pair model work with deterministic
-evidence wherever possible.
-
-Examples:
-- generated test -> run it;
-- code review finding -> reproduce or point to exact code;
-- local-model bug hypothesis -> failing test/log;
-- UI exploration -> authoritative backend evidence for side effects.
-
-## Deeper routes
-
-- Machine-readable routing: `capability-registry/EXECUTION-FAST-PATH.json`
-- Compact routing evidence: `capability-registry/EXECUTION-TRACE.json`
-- Agent tools: `capability-registry/agent-tools.md`
-- Context/token tools: `capability-registry/token-context-efficiency.md`
+- Machine-readable capability metadata: `capability-registry/EXECUTION-FAST-PATH.json`
+- Optional trace schema: `capability-registry/EXECUTION-TRACE.json`
+- Agent/tool catalog: `capability-registry/agent-tools.md`
+- Token/context tools: `capability-registry/token-context-efficiency.md`
 - Local inference: `external-systems/ollama/README.md`
-- Multi-agent orchestration: `external-systems/autogen/`, `crewai/`, `langgraph/`
-- Specialized prompt assets: `external-skills/agency-agents/`
+- Multi-agent references: `external-systems/autogen/`, `crewai/`, `langgraph/`
+- Specialized skill assets: `external-skills/`
