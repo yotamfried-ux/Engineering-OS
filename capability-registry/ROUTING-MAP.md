@@ -6,6 +6,8 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 |---|---|---|---|
 | Build a new application/system | `templates/` | `patterns/`, architecture guides, framework docs, reference repos | chosen architecture + implementation-specific tests |
 | Choose architecture | `docs/architecture-guides/` | `architecture-decisions/`, relevant reference repos | explicit trade-offs and target constraints |
+| Delegate/parallelize work or choose model cost | `EXECUTION-FAST-PATH.json` | `EXECUTION-FAST-PATH.md` only if explanation is needed | bounded workers + explicit cost class + deterministic verification |
+| Run local/open model work | `EXECUTION-FAST-PATH.json` | Ollama + compatible orchestration/agent assets | model/runtime/hardware qualified + task-quality evidence |
 | Add/use an agent capability | `capability-registry/agent-tools.md` | matching `external-skills/<tool>/` | installation/connection verified before dependence |
 | Reduce tokens/context | `token-context-efficiency.md` | RTK, Graphify, memory tools | measured/observed benefit on the target workflow |
 | Connect external data/service | `connectors.md` | `external-systems/`, connector wrapper | auth + representative read/write action as applicable |
@@ -28,9 +30,10 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 
 ## Selection rules
 
-1. Prefer an already available, authorized native capability over installing a duplicate.
-2. Prefer official docs/standards for claims about behavior, security, release requirements and APIs.
-3. Prefer deterministic framework-native tests for qualification; exploratory agent tools complement them.
-4. Use community catalogs as discovery sources, not as final authority.
-5. Do not load an entire corpus when one branch answers the task.
-6. If two tools overlap, choose based on the target job and constraints; do not install both merely because both exist.
+1. Before spawning agents, use `EXECUTION-FAST-PATH.json` and prefer deterministic/no-model or qualified local execution when it meets the evidence bar.
+2. Prefer an already available, authorized native capability over installing a duplicate.
+3. Prefer official docs/standards for claims about behavior, security, release requirements and APIs.
+4. Prefer deterministic framework-native tests for qualification; exploratory agent tools complement them.
+5. Use community catalogs as discovery sources, not as final authority.
+6. Do not load an entire corpus when one branch answers the task.
+7. If two tools overlap, choose based on the target job and constraints; do not install both merely because both exist.
