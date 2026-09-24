@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "purpose": "low-context cost-aware routing for agents, parallel work and local models",
+  "priority": ["none", "local", "included", "paid", "unknown"],
+  "cost_classes": {
+    "none": "no LLM/model call",
+    "local": "no per-call hosted API fee; local compute and licensing still matter",
+    "included": "uses a plan or credit bucket; verify current allowance",
+    "paid": "hosted provider/API metering",
+    "unknown": "do not assume cost until verified"
+  },
+  "routes": {
+    "deterministic_repo_work": {
+      "first_stop": "capability-registry/agent-tools.md",
+      "prefer": ["RTK", "Graphify", "project tests", "GitHub Actions"],
+      "cost": "none"
+    },
+    "local_llm": {
+      "first_stop": "external-systems/ollama/README.md",
+      "prefer": ["Ollama"],
+      "cost": "local"
+    },
+    "parallel_local_agents": {
+      "first_stop": "capability-registry/EXECUTION-FAST-PATH.md#when-to-delegate",
+      "inspect": ["external-systems/autogen/README.md", "external-systems/crewai/README.md", "external-systems/langgraph/README.md", "external-skills/agency-agents/README.md"],
+      "cost": "local"
+    },
+    "autonomous_coding_agent": {
+      "first_stop": "external-skills/openhands/README.md",
+      "inspect": ["external-skills/hermes-agent/README.md"],
+      "cost": "unknown"
+    },
+    "claude_specialists": {
+      "first_stop": "external-skills/gstack/README.md",
+      "inspect": ["external-skills/claude-code-workflows/README.md", "external-skills/superpowers/README.md"],
+      "cost": "included"
+    },
+    "testing": {
+      "first_stop": "patterns/testing/FAST-PATH.json",
+      "cost": "none"
+    }
+  }
+}
