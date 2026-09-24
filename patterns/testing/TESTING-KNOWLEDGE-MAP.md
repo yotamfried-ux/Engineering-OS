@@ -2,6 +2,8 @@
 
 This map routes an AI from a testing need to an authoritative method and maintained reference implementation. It complements the project qualification/status model; it does not invent test frameworks.
 
+For ordinary test-writing, prefer [`FAST-PATH.json`](./FAST-PATH.json) first. It is intentionally tiny and points here only when deeper source/tool selection is needed.
+
 | Need | Preferred knowledge source | Reference implementation |
 |---|---|---|
 | Unit / functional | language-native runner; pytest/JUnit/Vitest/Jest docs | official runner repos |
