@@ -28,6 +28,17 @@ model license and quality constraints still apply. Never label a provider/model
 
 ## When to delegate
 
+**Mandatory consideration trigger:** when a task contains at least three
+independent bounded workstreams and at least two can run without shared mutable
+state, explicitly evaluate delegation/parallel execution before continuing
+serially. This is a requirement to **consider**, not a requirement to spawn
+agents: skip delegation when coordination/setup overhead is likely to erase the
+benefit.
+
+Record that decision using the compact schema in
+`capability-registry/EXECUTION-TRACE.json` for whole-project qualification,
+agent/local-model experiments, or whenever this trigger fires.
+
 Delegate only if the subtask has a clear input, output and acceptance check.
 
 Good local/parallel candidates:
@@ -87,6 +98,7 @@ Examples:
 ## Deeper routes
 
 - Machine-readable routing: `capability-registry/EXECUTION-FAST-PATH.json`
+- Compact routing evidence: `capability-registry/EXECUTION-TRACE.json`
 - Agent tools: `capability-registry/agent-tools.md`
 - Context/token tools: `capability-registry/token-context-efficiency.md`
 - Local inference: `external-systems/ollama/README.md`
