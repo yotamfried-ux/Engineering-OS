@@ -3,14 +3,64 @@
   "purpose": "low-context routing for test selection and copy/adapt examples",
   "default_rule": "reuse the project's established runner; choose the cheapest layer that can falsify the claim",
   "routes": {
-    "unit": {"first_stop":"patterns/testing/FAST-PATH.md#typescript--vitest-or-jest--unitregression","tools":["project-native runner","pytest","Vitest","Jest","JUnit"]},
-    "regression": {"first_stop":"patterns/testing/FAST-PATH.md#typescript--vitest-or-jest--unitregression","rule":"reproduce red before fix; green after"},
-    "integration": {"first_stop":"patterns/testing/FAST-PATH.md#integration--real-disposable-dependency","tools":["project-native runner","Testcontainers"]},
-    "contract": {"first_stop":"patterns/testing/FAST-PATH.md#apicontract","tools":["Pact","OpenAPI","JSON Schema"]},
-    "web_e2e": {"first_stop":"capability-registry/application-testing/playwright-mcp.md","tools":["Playwright"]},
-    "mobile_e2e": {"first_stop":"capability-registry/application-testing/maestro-mcp.md","tools":["Maestro"]},
-    "deep_mobile": {"first_stop":"capability-registry/application-testing/appium-mcp.md","tools":["Appium","Mobile Next"]},
-    "load": {"first_stop":"patterns/testing/TESTING-KNOWLEDGE-MAP.md","tools":["k6","project-native benchmark"]},
-    "project_qualification": {"first_stop":"patterns/testing/project-qualification.md","tools":[]}
+    "unit": {
+      "first_stop": "patterns/testing/FAST-PATH.md#typescript-vitest-or-jest-unitregression",
+      "tools": [
+        "project-native runner",
+        "pytest",
+        "Vitest",
+        "Jest",
+        "JUnit"
+      ]
+    },
+    "regression": {
+      "first_stop": "patterns/testing/FAST-PATH.md#typescript-vitest-or-jest-unitregression",
+      "rule": "reproduce red before fix; green after"
+    },
+    "integration": {
+      "first_stop": "patterns/testing/FAST-PATH.md#integration-real-disposable-dependency",
+      "tools": [
+        "project-native runner",
+        "Testcontainers"
+      ]
+    },
+    "contract": {
+      "first_stop": "patterns/testing/FAST-PATH.md#apicontract",
+      "tools": [
+        "Pact",
+        "OpenAPI",
+        "JSON Schema"
+      ]
+    },
+    "web_e2e": {
+      "first_stop": "capability-registry/application-testing/playwright-mcp.md",
+      "tools": [
+        "Playwright"
+      ]
+    },
+    "mobile_e2e": {
+      "first_stop": "capability-registry/application-testing/maestro-mcp.md",
+      "tools": [
+        "Maestro"
+      ]
+    },
+    "deep_mobile": {
+      "first_stop": "capability-registry/application-testing/appium-mcp.md",
+      "tools": [
+        "Appium",
+        "Mobile Next"
+      ]
+    },
+    "load": {
+      "first_stop": "patterns/testing/TESTING-KNOWLEDGE-MAP.md",
+      "tools": [
+        "k6",
+        "project-native benchmark"
+      ]
+    },
+    "project_qualification": {
+      "first_stop": "patterns/testing/project-qualification.md",
+      "tools": []
+    }
   }
 }
