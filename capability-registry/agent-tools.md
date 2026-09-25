@@ -47,7 +47,10 @@ Do not install every tool blindly. Select by task trigger. For the live-qualifie
 
 For application testing, use the dedicated [application testing registry](./application-testing/README.md): Playwright MCP for web, Maestro MCP as the default Android/iOS route, Appium MCP for deeper mobile automation, and Chrome DevTools MCP for web debugging/performance evidence.
 
-
 ## Media understanding
 
-- **Video URL Analyzer MCP** — multimodal analysis of supported video URLs (YouTube, TikTok, public Instagram). See `video-analysis/video-url-analyzer-mcp.md`. Current qualification: **CONDITIONAL / NOT END-TO-END QUALIFIED**; require the wrapper's live verification contract before use as a trusted active capability.
+- **MCP Video Analyzer (`guimatheus92/mcp-video-analyzer`)** — preferred route for local pipeline-generated video artifacts. It exposes key frames, OCR, timeline, exact-frame, focused-moment and burst-frame evidence, with a one-shot CLI fallback when MCP is unavailable. See `video-analysis/mcp-video-analyzer.md`. Current qualification: **READY AS KNOWLEDGE / NOT YET END-TO-END QUALIFIED ON TARGET HOST**. For visual defect claims require timestamp/frame evidence, and for a fix require analysis of the rerun output rather than pipeline success alone.
+- **Video URL Analyzer MCP (`u2n4/video-url-analyzer-mcp`)** — complementary hosted multimodal analysis of supported video URLs (YouTube, TikTok, public Instagram). See `video-analysis/video-url-analyzer-mcp.md`. Current qualification: **CONDITIONAL / NOT END-TO-END QUALIFIED**; require the wrapper's live verification contract before use as a trusted active capability.
+- **`/watch` (`mathiaschu/watch`)** — local-first skill fallback/alternative for URL or local-file video understanding when its host integration is preferable. See `external-skills/watch-video/README.md`. Current qualification: **READY AS KNOWLEDGE / NOT YET END-TO-END QUALIFIED ON TARGET HOST**.
+
+For pipeline QA, start with the smallest route that can falsify the visual claim. Escalate from overview to a narrow moment/frame/burst and higher/native frame resolution only when needed; do not load dense full-video frames by default.
