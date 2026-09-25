@@ -17,7 +17,8 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Qualify whole project | `patterns/testing/project-qualification.md` | authoritative testing sources + templates | PASS/FAIL/PARTIAL/BLOCKED/NOT TESTED matrix |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
-| Analyze video/Instagram | `video-analysis/` | Video URL Analyzer MCP and `external-skills/watch-video/` | visual question + timestamp/frame evidence |
+| Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
+| Analyze public/social video URL | `video-analysis/video-url-analyzer-mcp.md` | `video-analysis/mcp-video-analyzer.md` or `external-skills/watch-video/` when local extraction is preferable | visual question + timestamp/frame evidence |
 | Browser automation/research | `external-skills/browser-use/` | Playwright for deterministic qualification; Page Agent for in-page UI agent use | result + target-specific verification |
 | Internet/social retrieval | `external-skills/agent-reach/` | provider/channel docs | diagnostics show requested channel is live |
 | Memory across sessions | `token-context-efficiency.md` | claude-mem, agentmemory, OpenViking | retrieval/update/deletion behavior verified |
