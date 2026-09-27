@@ -19,6 +19,7 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
 | Analyze public/social video URL | `video-analysis/video-url-analyzer-mcp.md` | `video-analysis/mcp-video-analyzer.md` or `external-skills/watch-video/` when local extraction is preferable | visual question + timestamp/frame evidence |
+| Create, revise, or inspect a 3D asset | `3d-asset-generation/README.md` | `3d-asset-generation/kiln.md`; then authoritative DCC/engine validation | representative asset generated/revised + downstream open/validation evidence |
 | Browser automation/research | `external-skills/browser-use/` | Playwright for deterministic qualification; Page Agent for in-page UI agent use | result + target-specific verification |
 | Internet/social retrieval | `external-skills/agent-reach/` | provider/channel docs | diagnostics show requested channel is live |
 | Memory across sessions | `token-context-efficiency.md` | claude-mem, agentmemory, OpenViking | retrieval/update/deletion behavior verified |
