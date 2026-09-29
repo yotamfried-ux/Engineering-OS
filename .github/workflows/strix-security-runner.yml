@@ -1,0 +1,150 @@
+name: Strix Security Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: 'Repository to scan (owner/name)'
+        required: true
+        default: 'yotamfried-ux/Video-editing-with-drone'
+        type: string
+      target_ref:
+        description: 'Git ref/commit to scan'
+        required: true
+        default: 'main'
+        type: string
+      scan_mode:
+        description: 'Strix scan depth'
+        required: true
+        default: 'quick'
+        type: choice
+        options:
+          - quick
+          - standard
+          - deep
+
+permissions:
+  contents: read
+
+env:
+  STRIX_LLM: openrouter/qwen/qwen3.8-27b:free
+  STRIX_TELEMETRY: '0'
+
+concurrency:
+  group: strix-${{ inputs.target_repo }}-${{ inputs.target_ref }}
+  cancel-in-progress: false
+
+jobs:
+  security-scan:
+    name: Strix security scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Validate target
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ inputs.target_repo }}" in
+            yotamfried-ux/*) ;;
+            *) echo "Refusing target outside yotamfried-ux/*" >&2; exit 64 ;;
+          esac
+          if [[ "${{ inputs.target_repo }}" == *".."* ]] || [[ "${{ inputs.target_repo }}" == *" "* ]]; then
+            echo "Invalid target repository" >&2
+            exit 64
+          fi
+
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.target_repo }}
+          ref: ${{ inputs.target_ref }}
+          path: target
+          persist-credentials: false
+
+      - name: Record target SHA
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "sha=$(git -C target rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Target: ${{ inputs.target_repo }}@$(git -C target rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify Docker
+        run: docker info
+
+      - name: Install Strix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip pipx
+          pipx install strix-agent
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Strix installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          strix --help >/dev/null
+          echo "Strix CLI installed successfully" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run Strix
+        id: strix
+        continue-on-error: true
+        env:
+          LLM_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        shell: bash
+        run: |
+          set +e
+          strix -n --target ./target --scan-mode "${{ inputs.scan_mode }}"
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          echo "Strix exit code: $code" >> "$GITHUB_STEP_SUMMARY"
+          exit "$code"
+
+      - name: Build machine-readable result
+        if: always()
+        shell: bash
+        env:
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+          STRIX_EXIT_CODE: ${{ steps.strix.outputs.exit_code }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          code = os.environ.get('STRIX_EXIT_CODE', '')
+          status = {'0':'clean','2':'findings'}.get(code, 'error')
+          payload = {
+            'target_repo': '${{ inputs.target_repo }}',
+            'target_ref': '${{ inputs.target_ref }}',
+            'target_sha': os.environ.get('TARGET_SHA',''),
+            'scan_mode': '${{ inputs.scan_mode }}',
+            'model': os.environ.get('STRIX_LLM',''),
+            'strix_exit_code': code,
+            'status': status,
+            'run_id': '${{ github.run_id }}',
+            'run_attempt': '${{ github.run_attempt }}'
+          }
+          pathlib.Path('strix-result.json').write_text(json.dumps(payload, indent=2) + '\n')
+          PY
+
+      - name: Upload Strix evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: strix-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            strix-result.json
+            strix_runs/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Enforce scan result
+        if: always()
+        shell: bash
+        env:
+          STRIX_EXIT_CODE: ${{ steps.strix.outputs.exit_code }}
+        run: |
+          case "$STRIX_EXIT_CODE" in
+            0) exit 0 ;;
+            2) echo "Strix found security vulnerabilities." >&2; exit 2 ;;
+            *) echo "Strix execution failed (exit=${STRIX_EXIT_CODE:-missing})." >&2; exit 1 ;;
+          esac
