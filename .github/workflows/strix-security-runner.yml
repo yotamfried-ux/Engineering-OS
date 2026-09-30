@@ -61,42 +61,76 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Verify Strix installation
         run: strix --help >/dev/null
-      - name: Run Strix with autonomous free-model failover
+      - name: Run Strix with autonomous cross-provider failover
         id: strix
         continue-on-error: true
         env:
-          LLM_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENROUTER_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         shell: bash
         run: |
           set +e
-          MODELS=(
-            'openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'
-            'openrouter/nvidia/nemotron-3-super-120b-a12b:free'
-            'openrouter/cohere/north-mini-code:free'
-            'openrouter/qwen/qwen3.8-27b:free'
+          # Ordered by independent free quota and suitability for agentic/code work.
+          # Each entry is provider|LiteLLM model id|secret env var.
+          PROVIDERS=(
+            'groq|groq/openai/gpt-oss-120b|GROQ_KEY'
+            'gemini|gemini/gemini-2.5-pro|GEMINI_KEY'
+            'gemini|gemini/gemini-2.5-flash|GEMINI_KEY'
+            'openrouter|openrouter/nvidia/nemotron-3-ultra-550b-a55b:free|OPENROUTER_KEY'
+            'openrouter|openrouter/nvidia/nemotron-3-super-120b-a12b:free|OPENROUTER_KEY'
+            'openrouter|openrouter/qwen/qwen3.8-27b:free|OPENROUTER_KEY'
           )
           final_code=1
           selected_model=''
+          selected_provider=''
           mkdir -p strix-attempt-logs
-          for model in "${MODELS[@]}"; do
+          : > strix-attempts.tsv
+
+          for entry in "${PROVIDERS[@]}"; do
+            IFS='|' read -r provider model key_var <<< "$entry"
+            key="${!key_var:-}"
+            if [[ -z "$key" ]]; then
+              printf '%s\t%s\t0\tskipped_missing_key\n' "$provider" "$model" >> strix-attempts.tsv
+              echo "Skipping $provider/$model: secret not configured" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
             export STRIX_LLM="$model"
+            export LLM_API_KEY="$key"
+            unset LLM_API_BASE OPENAI_API_BASE LITELLM_BASE_URL
+
+            # One immediate retry for transient provider/network failures, then circuit-break to next provider.
             for attempt in 1 2; do
-              log="strix-attempt-logs/$(echo "$model" | tr '/:' '__')-$attempt.log"
-              echo "Trying $model attempt $attempt" | tee -a "$GITHUB_STEP_SUMMARY"
+              safe_name="$(echo "${provider}_${model}" | tr '/:' '__')"
+              log="strix-attempt-logs/${safe_name}-${attempt}.log"
+              echo "Trying provider=$provider model=$model attempt=$attempt" | tee -a "$GITHUB_STEP_SUMMARY"
               strix -n --target ./target --scan-mode "${{ inputs.scan_mode }}" 2>&1 | tee "$log"
               code=${PIPESTATUS[0]}
+              printf '%s\t%s\t%s\t%s\n' "$provider" "$model" "$attempt" "$code" >> strix-attempts.tsv
+
               if [[ "$code" == 0 || "$code" == 2 ]]; then
-                final_code=$code; selected_model=$model; break 2
+                final_code=$code
+                selected_model=$model
+                selected_provider=$provider
+                break 2
               fi
-              if grep -Eqi '429|rate.?limit|provider.?overloaded|503|connection failed|temporar' "$log"; then
-                sleep $((attempt * 10)); continue
+
+              if grep -Eqi '429|rate.?limit|quota|provider.?overloaded|502|503|504|timeout|timed out|connection (failed|reset)|temporar' "$log" && [[ "$attempt" == 1 ]]; then
+                echo "Transient failure on $provider; retrying once" >> "$GITHUB_STEP_SUMMARY"
+                sleep 10
+                continue
               fi
-              final_code=$code; selected_model=$model; break 2
+
+              echo "Circuit breaker: moving from $provider/$model to next provider/model" >> "$GITHUB_STEP_SUMMARY"
+              break
             done
           done
+
           echo "exit_code=$final_code" >> "$GITHUB_OUTPUT"
           echo "selected_model=$selected_model" >> "$GITHUB_OUTPUT"
-          echo "Selected model: ${selected_model:-none}; exit=$final_code" >> "$GITHUB_STEP_SUMMARY"
+          echo "selected_provider=$selected_provider" >> "$GITHUB_OUTPUT"
+          echo "Selected provider: ${selected_provider:-none}; model: ${selected_model:-none}; exit=$final_code" >> "$GITHUB_STEP_SUMMARY"
           exit "$final_code"
       - name: Build machine-readable result
         if: always()
@@ -105,11 +139,32 @@ jobs:
           TARGET_SHA: ${{ steps.target.outputs.sha }}
           STRIX_EXIT_CODE: ${{ steps.strix.outputs.exit_code }}
           STRIX_SELECTED_MODEL: ${{ steps.strix.outputs.selected_model }}
+          STRIX_SELECTED_PROVIDER: ${{ steps.strix.outputs.selected_provider }}
         run: |
           python - <<'PY'
           import json, os, pathlib
           code=os.environ.get('STRIX_EXIT_CODE','')
-          payload={'target_repo':'${{ inputs.target_repo }}','target_ref':'${{ inputs.target_ref }}','target_sha':os.environ.get('TARGET_SHA',''),'scan_mode':'${{ inputs.scan_mode }}','model':os.environ.get('STRIX_SELECTED_MODEL',''),'strix_exit_code':code,'status':{'0':'clean','2':'findings'}.get(code,'error'),'run_id':'${{ github.run_id }}','run_attempt':'${{ github.run_attempt }}'}
+          attempts=[]
+          p=pathlib.Path('strix-attempts.tsv')
+          if p.exists():
+              for line in p.read_text().splitlines():
+                  parts=line.split('\t')
+                  if len(parts)==4:
+                      provider,model,attempt,result=parts
+                      attempts.append({'provider':provider,'model':model,'attempt':int(attempt),'result':result})
+          payload={
+              'target_repo':'${{ inputs.target_repo }}',
+              'target_ref':'${{ inputs.target_ref }}',
+              'target_sha':os.environ.get('TARGET_SHA',''),
+              'scan_mode':'${{ inputs.scan_mode }}',
+              'provider':os.environ.get('STRIX_SELECTED_PROVIDER',''),
+              'model':os.environ.get('STRIX_SELECTED_MODEL',''),
+              'attempts':attempts,
+              'strix_exit_code':code,
+              'status':{'0':'clean','2':'findings'}.get(code,'error'),
+              'run_id':'${{ github.run_id }}',
+              'run_attempt':'${{ github.run_attempt }}'
+          }
           pathlib.Path('strix-result.json').write_text(json.dumps(payload,indent=2)+'\n')
           PY
       - name: Upload Strix evidence
@@ -119,6 +174,7 @@ jobs:
           name: strix-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             strix-result.json
+            strix-attempts.tsv
             strix_runs/
             strix-attempt-logs/
           if-no-files-found: warn
@@ -132,5 +188,5 @@ jobs:
           case "$STRIX_EXIT_CODE" in
             0) exit 0 ;;
             2) echo 'Strix found security vulnerabilities.' >&2; exit 2 ;;
-            *) echo "Strix execution failed after autonomous free-model failover (exit=${STRIX_EXIT_CODE:-missing})." >&2; exit 1 ;;
+            *) echo "Strix execution failed after autonomous cross-provider failover (exit=${STRIX_EXIT_CODE:-missing})." >&2; exit 1 ;;
           esac
