@@ -1,4 +1,4 @@
-name: FreeLLMAPI Provider Qualification
+name: Free LLM Provider Qualification
 
 on:
   push:
@@ -10,31 +10,25 @@ permissions:
   contents: read
 
 jobs:
-  qualify-zai:
+  qualify-groq-qwen:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
-      - name: Verify Z.ai GLM native tool call with transient retry
+      - name: Verify Groq Qwen 3.8 native tool call
         env:
-          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${ZAI_API_KEY:-}" || { echo 'ZAI_API_KEY is missing'; exit 2; }
+          test -n "${GROQ_API_KEY:-}" || { echo 'GROQ_API_KEY is missing'; exit 2; }
           cat > /tmp/request.json <<'JSON'
-          {"model":"glm-4.7-flash","messages":[{"role":"user","content":"Use inspect_file to inspect app.py before answering."}],"tools":[{"type":"function","function":{"name":"inspect_file","description":"Inspect a source file","parameters":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
+          {"model":"qwen/qwen3.8-27b","messages":[{"role":"user","content":"Use inspect_file to inspect app.py before answering."}],"tools":[{"type":"function","function":{"name":"inspect_file","description":"Inspect a source file","parameters":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}}}],"tool_choice":"required","temperature":0,"max_completion_tokens":256,"reasoning_effort":"none"}
           JSON
-          delays=(0 5 15 30 60)
-          HTTP=''
-          for i in "${!delays[@]}"; do
-            delay="${delays[$i]}"; (( delay == 0 )) || sleep "$delay"
-            HTTP=$(curl -sS -D /tmp/headers -o /tmp/result.json -w '%{http_code}' -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' --data @/tmp/request.json https://api.z.ai/api/paas/v4/chat/completions)
-            echo "native-call HTTP=$HTTP attempt=$((i+1))"; cat /tmp/result.json
-            [[ "$HTTP" =~ ^2 ]] && break
-            if [[ "$HTTP" == 429 || "$HTTP" == 502 || "$HTTP" == 503 || "$HTTP" == 504 ]] || grep -Eq '"code"[[:space:]]*:[[:space:]]*"?1305"?' /tmp/result.json; then continue; fi
-            exit 1
-          done
-          [[ "$HTTP" =~ ^2 ]] || { echo 'Z.ai remained unavailable after native-call retries' >&2; exit 1; }
+          HTTP=$(curl -sS -D /tmp/headers -o /tmp/result.json -w '%{http_code}' \
+            -H "Authorization: Bearer $GROQ_API_KEY" -H 'Content-Type: application/json' \
+            --data @/tmp/request.json https://api.groq.com/openai/v1/chat/completions)
+          echo "native-call HTTP=$HTTP"; cat /tmp/result.json
+          [[ "$HTTP" =~ ^2 ]] || exit 1
           python - <<'PY'
           import json
           d=json.load(open('/tmp/result.json')); calls=d['choices'][0]['message'].get('tool_calls') or []
@@ -44,29 +38,23 @@ jobs:
           print('native_tool_call=PASS')
           PY
 
-      - name: Verify tool-result round trip with transient retry
+      - name: Verify Groq Qwen tool-result round trip
         env:
-          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           import json
           first=json.load(open('/tmp/result.json')); msg=first['choices'][0]['message']; call=msg['tool_calls'][0]
-          body={'model':'glm-4.7-flash','messages':[{'role':'user','content':'Use inspect_file to inspect app.py before answering.'},msg,{'role':'tool','tool_call_id':call['id'],'content':'app.py contains: def health(): return "ok"'}],'tools':[{'type':'function','function':{'name':'inspect_file','description':'Inspect a source file','parameters':{'type':'object','properties':{'path':{'type':'string'}},'required':['path'],'additionalProperties':False}}}],'temperature':0,'max_tokens':256}
+          body={'model':'qwen/qwen3.8-27b','messages':[{'role':'user','content':'Use inspect_file to inspect app.py before answering.'},msg,{'role':'tool','tool_call_id':call['id'],'content':'app.py contains: def health(): return "ok"'}],'tools':[{'type':'function','function':{'name':'inspect_file','description':'Inspect a source file','parameters':{'type':'object','properties':{'path':{'type':'string'}},'required':['path'],'additionalProperties':False}}}],'temperature':0,'max_completion_tokens':256,'reasoning_effort':'none'}
           open('/tmp/roundtrip-request.json','w').write(json.dumps(body))
           PY
-          delays=(5 15 30 60 90)
-          HTTP=''
-          for i in "${!delays[@]}"; do
-            delay="${delays[$i]}"; echo "spacing/retry delay ${delay}s"; sleep "$delay"
-            HTTP=$(curl -sS -D /tmp/roundtrip-headers -o /tmp/roundtrip-result.json -w '%{http_code}' -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' --data @/tmp/roundtrip-request.json https://api.z.ai/api/paas/v4/chat/completions)
-            echo "roundtrip HTTP=$HTTP attempt=$((i+1))"; cat /tmp/roundtrip-result.json
-            [[ "$HTTP" =~ ^2 ]] && break
-            if [[ "$HTTP" == 429 || "$HTTP" == 502 || "$HTTP" == 503 || "$HTTP" == 504 ]] || grep -Eq '"code"[[:space:]]*:[[:space:]]*"?1305"?' /tmp/roundtrip-result.json; then continue; fi
-            exit 1
-          done
-          [[ "$HTTP" =~ ^2 ]] || { echo 'Z.ai remained unavailable after roundtrip retries' >&2; exit 1; }
+          HTTP=$(curl -sS -D /tmp/roundtrip-headers -o /tmp/roundtrip-result.json -w '%{http_code}' \
+            -H "Authorization: Bearer $GROQ_API_KEY" -H 'Content-Type: application/json' \
+            --data @/tmp/roundtrip-request.json https://api.groq.com/openai/v1/chat/completions)
+          echo "roundtrip HTTP=$HTTP"; cat /tmp/roundtrip-result.json
+          [[ "$HTTP" =~ ^2 ]] || exit 1
           python - <<'PY'
           import json
           d=json.load(open('/tmp/roundtrip-result.json')); m=d['choices'][0]['message']
@@ -78,7 +66,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zai-glm-qualification-${{ github.run_id }}
+          name: groq-qwen38-qualification-${{ github.run_id }}
           path: |
             /tmp/result.json
             /tmp/headers
