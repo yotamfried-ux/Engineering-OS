@@ -42,7 +42,7 @@ jobs:
           print('usage=', json.dumps(d.get('usage',{}), sort_keys=True))
           PY
 
-      - name: Verify tool-result round trip
+      - name: Verify tool-result round trip with transient retry
         if: success()
         env:
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
@@ -67,18 +67,37 @@ jobs:
           }
           open('/tmp/roundtrip-request.json','w').write(json.dumps(body))
           PY
-          HTTP=$(curl -sS -D /tmp/roundtrip-headers -o /tmp/roundtrip-result.json -w '%{http_code}' \
-            -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' \
-            --data @/tmp/roundtrip-request.json https://api.z.ai/api/paas/v4/chat/completions)
-          echo "HTTP=$HTTP"
-          cat /tmp/roundtrip-result.json
-          [[ "$HTTP" =~ ^2 ]] || exit 1
+
+          delays=(0 5 15 30 60)
+          HTTP=''
+          for i in "${!delays[@]}"; do
+            delay="${delays[$i]}"
+            if (( delay > 0 )); then
+              echo "Transient Z.ai response; retrying after ${delay}s (attempt $((i+1))/${#delays[@]})"
+              sleep "$delay"
+            fi
+            HTTP=$(curl -sS -D /tmp/roundtrip-headers -o /tmp/roundtrip-result.json -w '%{http_code}' \
+              -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' \
+              --data @/tmp/roundtrip-request.json https://api.z.ai/api/paas/v4/chat/completions)
+            echo "HTTP=$HTTP attempt=$((i+1))"
+            cat /tmp/roundtrip-result.json
+            if [[ "$HTTP" =~ ^2 ]]; then
+              break
+            fi
+            if [[ "$HTTP" == 429 || "$HTTP" == 502 || "$HTTP" == 503 || "$HTTP" == 504 ]] || grep -Eq '"code"[[:space:]]*:[[:space:]]*"?1305"?' /tmp/roundtrip-result.json; then
+              continue
+            fi
+            echo "Non-transient Z.ai failure; not retrying" >&2
+            exit 1
+          done
+          [[ "$HTTP" =~ ^2 ]] || { echo "Z.ai remained unavailable after retries" >&2; exit 1; }
           python - <<'PY'
           import json
           d=json.load(open('/tmp/roundtrip-result.json'))
           m=d['choices'][0]['message']
           assert m.get('content') or m.get('tool_calls'), d
           print('tool_round_trip=PASS')
+          print('roundtrip_usage=', json.dumps(d.get('usage',{}), sort_keys=True))
           PY
 
       - name: Upload evidence
