@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Verify Z.ai GLM completion and native tool call
+      - name: Verify Z.ai GLM native tool call with transient retry
         env:
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         shell: bash
@@ -24,26 +24,27 @@ jobs:
           cat > /tmp/request.json <<'JSON'
           {"model":"glm-4.7-flash","messages":[{"role":"user","content":"Use inspect_file to inspect app.py before answering."}],"tools":[{"type":"function","function":{"name":"inspect_file","description":"Inspect a source file","parameters":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
           JSON
-          HTTP=$(curl -sS -D /tmp/headers -o /tmp/result.json -w '%{http_code}' \
-            -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' \
-            --data @/tmp/request.json https://api.z.ai/api/paas/v4/chat/completions)
-          echo "HTTP=$HTTP"
-          cat /tmp/result.json
-          [[ "$HTTP" =~ ^2 ]] || exit 1
+          delays=(0 5 15 30 60)
+          HTTP=''
+          for i in "${!delays[@]}"; do
+            delay="${delays[$i]}"; (( delay == 0 )) || sleep "$delay"
+            HTTP=$(curl -sS -D /tmp/headers -o /tmp/result.json -w '%{http_code}' -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' --data @/tmp/request.json https://api.z.ai/api/paas/v4/chat/completions)
+            echo "native-call HTTP=$HTTP attempt=$((i+1))"; cat /tmp/result.json
+            [[ "$HTTP" =~ ^2 ]] && break
+            if [[ "$HTTP" == 429 || "$HTTP" == 502 || "$HTTP" == 503 || "$HTTP" == 504 ]] || grep -Eq '"code"[[:space:]]*:[[:space:]]*"?1305"?' /tmp/result.json; then continue; fi
+            exit 1
+          done
+          [[ "$HTTP" =~ ^2 ]] || { echo 'Z.ai remained unavailable after native-call retries' >&2; exit 1; }
           python - <<'PY'
           import json
-          d=json.load(open('/tmp/result.json'))
-          calls=d['choices'][0]['message'].get('tool_calls') or []
+          d=json.load(open('/tmp/result.json')); calls=d['choices'][0]['message'].get('tool_calls') or []
           assert calls, d
           assert calls[0]['function']['name']=='inspect_file', calls
-          args=json.loads(calls[0]['function']['arguments'])
-          assert args.get('path')=='app.py', args
+          assert json.loads(calls[0]['function']['arguments']).get('path')=='app.py'
           print('native_tool_call=PASS')
-          print('usage=', json.dumps(d.get('usage',{}), sort_keys=True))
           PY
 
       - name: Verify tool-result round trip with transient retry
-        if: success()
         env:
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         shell: bash
@@ -51,53 +52,26 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json
-          first=json.load(open('/tmp/result.json'))
-          msg=first['choices'][0]['message']
-          call=msg['tool_calls'][0]
-          body={
-            'model':'glm-4.7-flash',
-            'messages':[
-              {'role':'user','content':'Use inspect_file to inspect app.py before answering.'},
-              msg,
-              {'role':'tool','tool_call_id':call['id'],'content':'app.py contains: def health(): return "ok"'},
-            ],
-            'tools':[{'type':'function','function':{'name':'inspect_file','description':'Inspect a source file','parameters':{'type':'object','properties':{'path':{'type':'string'}},'required':['path'],'additionalProperties':False}}}],
-            'temperature':0,
-            'max_tokens':256,
-          }
+          first=json.load(open('/tmp/result.json')); msg=first['choices'][0]['message']; call=msg['tool_calls'][0]
+          body={'model':'glm-4.7-flash','messages':[{'role':'user','content':'Use inspect_file to inspect app.py before answering.'},msg,{'role':'tool','tool_call_id':call['id'],'content':'app.py contains: def health(): return "ok"'}],'tools':[{'type':'function','function':{'name':'inspect_file','description':'Inspect a source file','parameters':{'type':'object','properties':{'path':{'type':'string'}},'required':['path'],'additionalProperties':False}}}],'temperature':0,'max_tokens':256}
           open('/tmp/roundtrip-request.json','w').write(json.dumps(body))
           PY
-
-          delays=(0 5 15 30 60)
+          delays=(5 15 30 60 90)
           HTTP=''
           for i in "${!delays[@]}"; do
-            delay="${delays[$i]}"
-            if (( delay > 0 )); then
-              echo "Transient Z.ai response; retrying after ${delay}s (attempt $((i+1))/${#delays[@]})"
-              sleep "$delay"
-            fi
-            HTTP=$(curl -sS -D /tmp/roundtrip-headers -o /tmp/roundtrip-result.json -w '%{http_code}' \
-              -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' \
-              --data @/tmp/roundtrip-request.json https://api.z.ai/api/paas/v4/chat/completions)
-            echo "HTTP=$HTTP attempt=$((i+1))"
-            cat /tmp/roundtrip-result.json
-            if [[ "$HTTP" =~ ^2 ]]; then
-              break
-            fi
-            if [[ "$HTTP" == 429 || "$HTTP" == 502 || "$HTTP" == 503 || "$HTTP" == 504 ]] || grep -Eq '"code"[[:space:]]*:[[:space:]]*"?1305"?' /tmp/roundtrip-result.json; then
-              continue
-            fi
-            echo "Non-transient Z.ai failure; not retrying" >&2
+            delay="${delays[$i]}"; echo "spacing/retry delay ${delay}s"; sleep "$delay"
+            HTTP=$(curl -sS -D /tmp/roundtrip-headers -o /tmp/roundtrip-result.json -w '%{http_code}' -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' --data @/tmp/roundtrip-request.json https://api.z.ai/api/paas/v4/chat/completions)
+            echo "roundtrip HTTP=$HTTP attempt=$((i+1))"; cat /tmp/roundtrip-result.json
+            [[ "$HTTP" =~ ^2 ]] && break
+            if [[ "$HTTP" == 429 || "$HTTP" == 502 || "$HTTP" == 503 || "$HTTP" == 504 ]] || grep -Eq '"code"[[:space:]]*:[[:space:]]*"?1305"?' /tmp/roundtrip-result.json; then continue; fi
             exit 1
           done
-          [[ "$HTTP" =~ ^2 ]] || { echo "Z.ai remained unavailable after retries" >&2; exit 1; }
+          [[ "$HTTP" =~ ^2 ]] || { echo 'Z.ai remained unavailable after roundtrip retries' >&2; exit 1; }
           python - <<'PY'
           import json
-          d=json.load(open('/tmp/roundtrip-result.json'))
-          m=d['choices'][0]['message']
+          d=json.load(open('/tmp/roundtrip-result.json')); m=d['choices'][0]['message']
           assert m.get('content') or m.get('tool_calls'), d
           print('tool_round_trip=PASS')
-          print('roundtrip_usage=', json.dumps(d.get('usage',{}), sort_keys=True))
           PY
 
       - name: Upload evidence
