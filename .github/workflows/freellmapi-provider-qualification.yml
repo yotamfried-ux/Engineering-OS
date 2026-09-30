@@ -10,81 +10,26 @@ permissions:
   contents: read
 
 jobs:
-  qualify:
+  qualify-zai:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Start FreeLLMAPI
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker run -d --name freellmapi -p 127.0.0.1:3001:3001 -e ENCRYPTION_KEY="$(openssl rand -hex 32)" ghcr.io/tashfeenahmed/freellmapi:latest
-          for i in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:3001/api/ping >/dev/null 2>&1; then
-              docker logs freellmapi > /tmp/freellmapi.log 2>&1 || true
-              exit 0
-            fi
-            sleep 2
-          done
-          docker logs freellmapi | tee /tmp/freellmapi.log
-          exit 1
-
-      - name: Bootstrap anonymous provider
-        id: bootstrap
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE=http://127.0.0.1:3001
-          docker logs freellmapi > /tmp/freellmapi.log 2>&1 || true
-          # The container sees the host-side request through Docker networking,
-          # so current FreeLLMAPI requires its one-time first-run setup code.
-          SETUP_CODE=$(python - <<'PY'
-          import re
-          text=open('/tmp/freellmapi.log', errors='ignore').read()
-          patterns=[
-            r'(?:setup|first[- ]run)[^\n]*?code[^A-Za-z0-9]+([A-Z0-9-]{6,})',
-            r'code[^A-Za-z0-9]+([A-Z0-9-]{6,})',
-          ]
-          for p in patterns:
-              m=re.search(p,text,re.I)
-              if m:
-                  print(m.group(1)); break
-          else:
-              raise SystemExit('setup code not found in container logs')
-          PY
-          )
-          AUTH_BODY=$(python - "$SETUP_CODE" <<'PY'
-          import json,sys
-          print(json.dumps({
-            'email':'qualification@example.invalid',
-            'password':'qualification-only-strong-password-2026',
-            'setupCode':sys.argv[1],
-          }))
-          PY
-          )
-          HTTP=$(curl -sS -o /tmp/setup-response.json -w '%{http_code}' -X POST "$BASE/api/auth/setup" -H 'Content-Type: application/json' --data "$AUTH_BODY")
-          if [[ "$HTTP" != 201 ]]; then
-            echo "setup failed with HTTP $HTTP" >&2
-            cat /tmp/setup-response.json >&2
-            exit 1
-          fi
-          TOKEN=$(python -c 'import json; print(json.load(open("/tmp/setup-response.json"))["token"])')
-          curl -fsS -X POST "$BASE/api/keys" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"platform":"kilo","key":"","label":"qualification-keyless"}' >/dev/null
-          KEY_JSON=$(curl -fsS "$BASE/api/settings/api-key" -H "Authorization: Bearer $TOKEN")
-          UNIFIED=$(python -c 'import json,sys; print(json.load(sys.stdin)["apiKey"])' <<<"$KEY_JSON")
-          echo "unified=$UNIFIED" >> "$GITHUB_OUTPUT"
-
-      - name: Verify completion and structured tool call
+      - name: Verify Z.ai GLM completion and native tool call
         env:
-          API_KEY: ${{ steps.bootstrap.outputs.unified }}
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         shell: bash
         run: |
           set -euo pipefail
+          test -n "${ZAI_API_KEY:-}" || { echo 'ZAI_API_KEY is missing'; exit 2; }
           cat > /tmp/request.json <<'JSON'
-          {"model":"nvidia/nemotron-3-super-120b-a12b:free","messages":[{"role":"user","content":"Use inspect_file to inspect app.py before answering."}],"tools":[{"type":"function","function":{"name":"inspect_file","description":"Inspect a source file","parameters":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
+          {"model":"glm-4.7-flash","messages":[{"role":"user","content":"Use inspect_file to inspect app.py before answering."}],"tools":[{"type":"function","function":{"name":"inspect_file","description":"Inspect a source file","parameters":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
           JSON
-          curl -fsS -D /tmp/headers -o /tmp/result.json -H "Authorization: Bearer $API_KEY" -H 'Content-Type: application/json' --data @/tmp/request.json http://127.0.0.1:3001/v1/chat/completions
+          HTTP=$(curl -sS -D /tmp/headers -o /tmp/result.json -w '%{http_code}' \
+            -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' \
+            --data @/tmp/request.json https://api.z.ai/api/paas/v4/chat/completions)
+          echo "HTTP=$HTTP"
           cat /tmp/result.json
+          [[ "$HTTP" =~ ^2 ]] || exit 1
           python - <<'PY'
           import json
           d=json.load(open('/tmp/result.json'))
@@ -93,18 +38,58 @@ jobs:
           assert calls[0]['function']['name']=='inspect_file', calls
           args=json.loads(calls[0]['function']['arguments'])
           assert args.get('path')=='app.py', args
+          print('native_tool_call=PASS')
+          print('usage=', json.dumps(d.get('usage',{}), sort_keys=True))
           PY
-          grep -i '^x-routed-via:' /tmp/headers || true
+
+      - name: Verify tool-result round trip
+        if: success()
+        env:
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          first=json.load(open('/tmp/result.json'))
+          msg=first['choices'][0]['message']
+          call=msg['tool_calls'][0]
+          body={
+            'model':'glm-4.7-flash',
+            'messages':[
+              {'role':'user','content':'Use inspect_file to inspect app.py before answering.'},
+              msg,
+              {'role':'tool','tool_call_id':call['id'],'content':'app.py contains: def health(): return "ok"'},
+            ],
+            'tools':[{'type':'function','function':{'name':'inspect_file','description':'Inspect a source file','parameters':{'type':'object','properties':{'path':{'type':'string'}},'required':['path'],'additionalProperties':False}}}],
+            'temperature':0,
+            'max_tokens':256,
+          }
+          open('/tmp/roundtrip-request.json','w').write(json.dumps(body))
+          PY
+          HTTP=$(curl -sS -D /tmp/roundtrip-headers -o /tmp/roundtrip-result.json -w '%{http_code}' \
+            -H "Authorization: Bearer $ZAI_API_KEY" -H 'Content-Type: application/json' \
+            --data @/tmp/roundtrip-request.json https://api.z.ai/api/paas/v4/chat/completions)
+          echo "HTTP=$HTTP"
+          cat /tmp/roundtrip-result.json
+          [[ "$HTTP" =~ ^2 ]] || exit 1
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/roundtrip-result.json'))
+          m=d['choices'][0]['message']
+          assert m.get('content') or m.get('tool_calls'), d
+          print('tool_round_trip=PASS')
+          PY
 
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: freellmapi-provider-qualification-${{ github.run_id }}
+          name: zai-glm-qualification-${{ github.run_id }}
           path: |
             /tmp/result.json
             /tmp/headers
-            /tmp/setup-response.json
-            /tmp/freellmapi.log
+            /tmp/roundtrip-result.json
+            /tmp/roundtrip-headers
           if-no-files-found: warn
           retention-days: 7
