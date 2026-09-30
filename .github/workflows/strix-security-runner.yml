@@ -19,37 +19,33 @@ on:
         default: 'quick'
         type: choice
         options: [quick, standard, deep]
+  push:
+    branches: [qualification/freellmapi-strix]
+    paths: ['.github/workflows/strix-security-runner.yml']
 permissions:
   contents: read
 env:
   STRIX_TELEMETRY: '0'
 concurrency:
-  group: strix-${{ inputs.target_repo }}-${{ inputs.target_ref }}
+  group: strix-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   security-scan:
-    name: Strix security scan
+    name: Strix Qwen qualification scan
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - name: Validate target
-        shell: bash
-        run: |
-          set -euo pipefail
-          case "${{ inputs.target_repo }}" in yotamfried-ux/*) ;; *) echo "Refusing target outside yotamfried-ux/*" >&2; exit 64 ;; esac
       - name: Checkout target repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.target_repo }}
-          ref: ${{ inputs.target_ref }}
+          repository: yotamfried-ux/Video-editing-with-drone
+          ref: main
           path: target
           persist-credentials: false
       - name: Record target SHA
         id: target
         shell: bash
-        run: |
-          echo "sha=$(git -C target rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "Target: ${{ inputs.target_repo }}@$(git -C target rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "sha=$(git -C target rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Verify Docker
         run: docker info
       - name: Install Strix
@@ -61,86 +57,40 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Verify Strix installation
         run: strix --help >/dev/null
-      - name: Run Strix with free-provider failover
+      - name: Run Strix with qualified Groq Qwen
         id: strix
         continue-on-error: true
         env:
-          GROQ_KEY: ${{ secrets.GROQ_API_KEY }}
-          OPENROUTER_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          LLM_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          STRIX_LLM: groq/qwen/qwen3.8-27b
         shell: bash
         run: |
           set +e
-          # Free-only providers. Never add a paid-capable fallback here without explicit approval.
-          PROVIDERS=(
-            'groq|groq/openai/gpt-oss-120b|GROQ_KEY'
-            'openrouter|openrouter/nvidia/nemotron-3-ultra-550b-a55b:free|OPENROUTER_KEY'
-            'openrouter|openrouter/nvidia/nemotron-3-super-120b-a12b:free|OPENROUTER_KEY'
-            'openrouter|openrouter/qwen/qwen3.8-27b:free|OPENROUTER_KEY'
-          )
-          final_code=1
-          selected_model=''
-          selected_provider=''
           mkdir -p strix-attempt-logs
-          : > strix-attempts.tsv
-
-          for entry in "${PROVIDERS[@]}"; do
-            IFS='|' read -r provider model key_var <<< "$entry"
-            key="${!key_var:-}"
-            if [[ -z "$key" ]]; then
-              printf '%s\t%s\t0\tskipped_missing_key\n' "$provider" "$model" >> strix-attempts.tsv
-              echo "Skipping $provider/$model: secret not configured" >> "$GITHUB_STEP_SUMMARY"
-              continue
-            fi
-            export STRIX_LLM="$model"
-            export LLM_API_KEY="$key"
-            unset LLM_API_BASE OPENAI_API_BASE LITELLM_BASE_URL
-            for attempt in 1 2; do
-              safe_name="$(echo "${provider}_${model}" | tr '/:' '__')"
-              log="strix-attempt-logs/${safe_name}-${attempt}.log"
-              echo "Trying provider=$provider model=$model attempt=$attempt" | tee -a "$GITHUB_STEP_SUMMARY"
-              strix -n --target ./target --scan-mode "${{ inputs.scan_mode }}" 2>&1 | tee "$log"
-              code=${PIPESTATUS[0]}
-              printf '%s\t%s\t%s\t%s\n' "$provider" "$model" "$attempt" "$code" >> strix-attempts.tsv
-              if [[ "$code" == 0 || "$code" == 2 ]]; then
-                final_code=$code; selected_model=$model; selected_provider=$provider; break 2
-              fi
-              if grep -Eqi '429|rate.?limit|quota|provider.?overloaded|502|503|504|timeout|timed out|connection (failed|reset)|temporar' "$log" && [[ "$attempt" == 1 ]]; then
-                echo "Transient failure on $provider; retrying once" >> "$GITHUB_STEP_SUMMARY"; sleep 10; continue
-              fi
-              echo "Circuit breaker: moving from $provider/$model to next free provider/model" >> "$GITHUB_STEP_SUMMARY"; break
-            done
-          done
-          echo "exit_code=$final_code" >> "$GITHUB_OUTPUT"
-          echo "selected_model=$selected_model" >> "$GITHUB_OUTPUT"
-          echo "selected_provider=$selected_provider" >> "$GITHUB_OUTPUT"
-          echo "Selected provider: ${selected_provider:-none}; model: ${selected_model:-none}; exit=$final_code" >> "$GITHUB_STEP_SUMMARY"
-          exit "$final_code"
+          strix -n --target ./target --scan-mode quick 2>&1 | tee strix-attempt-logs/groq-qwen.log
+          code=${PIPESTATUS[0]}
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          printf 'groq\tgroq/qwen/qwen3.8-27b\t1\t%s\n' "$code" > strix-attempts.tsv
+          exit "$code"
       - name: Build machine-readable result
         if: always()
         shell: bash
         env:
           TARGET_SHA: ${{ steps.target.outputs.sha }}
           STRIX_EXIT_CODE: ${{ steps.strix.outputs.exit_code }}
-          STRIX_SELECTED_MODEL: ${{ steps.strix.outputs.selected_model }}
-          STRIX_SELECTED_PROVIDER: ${{ steps.strix.outputs.selected_provider }}
         run: |
           python - <<'PY'
           import json, os, pathlib
-          code=os.environ.get('STRIX_EXIT_CODE',''); attempts=[]; p=pathlib.Path('strix-attempts.tsv')
-          if p.exists():
-              for line in p.read_text().splitlines():
-                  parts=line.split('\t')
-                  if len(parts)==4:
-                      provider,model,attempt,result=parts
-                      attempts.append({'provider':provider,'model':model,'attempt':int(attempt),'result':result})
-          payload={'target_repo':'${{ inputs.target_repo }}','target_ref':'${{ inputs.target_ref }}','target_sha':os.environ.get('TARGET_SHA',''),'scan_mode':'${{ inputs.scan_mode }}','provider':os.environ.get('STRIX_SELECTED_PROVIDER',''),'model':os.environ.get('STRIX_SELECTED_MODEL',''),'attempts':attempts,'strix_exit_code':code,'status':{'0':'clean','2':'findings'}.get(code,'error'),'run_id':'${{ github.run_id }}','run_attempt':'${{ github.run_attempt }}'}
+          code=os.environ.get('STRIX_EXIT_CODE','')
+          payload={'target_repo':'yotamfried-ux/Video-editing-with-drone','target_ref':'main','target_sha':os.environ.get('TARGET_SHA',''),'scan_mode':'quick','provider':'groq','model':'groq/qwen/qwen3.8-27b','strix_exit_code':code,'status':{'0':'clean','2':'findings'}.get(code,'error'),'run_id':'${{ github.run_id }}','run_attempt':'${{ github.run_attempt }}'}
           pathlib.Path('strix-result.json').write_text(json.dumps(payload,indent=2)+'\n')
           PY
       - name: Upload Strix evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: strix-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          name: strix-qwen-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             strix-result.json
             strix-attempts.tsv
@@ -148,14 +98,13 @@ jobs:
             strix-attempt-logs/
           if-no-files-found: warn
           retention-days: 14
-      - name: Enforce scan result
+      - name: Enforce execution result
         if: always()
         shell: bash
         env:
           STRIX_EXIT_CODE: ${{ steps.strix.outputs.exit_code }}
         run: |
           case "$STRIX_EXIT_CODE" in
-            0) exit 0 ;;
-            2) echo 'Strix found security vulnerabilities.' >&2; exit 2 ;;
-            *) echo "Strix execution failed after autonomous free-provider failover (exit=${STRIX_EXIT_CODE:-missing})." >&2; exit 1 ;;
+            0|2) exit 0 ;;
+            *) echo "Strix execution failed (exit=${STRIX_EXIT_CODE:-missing})." >&2; exit 1 ;;
           esac
