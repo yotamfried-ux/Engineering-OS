@@ -68,10 +68,23 @@ jobs:
         run: |
           set +e
           mkdir -p strix-attempt-logs
-          strix -n --target ./target --scan-mode quick 2>&1 | tee strix-attempt-logs/groq-qwen.log
+          log=strix-attempt-logs/groq-qwen.log
+          strix -n --target ./target --scan-mode quick 2>&1 | tee "$log"
           code=${PIPESTATUS[0]}
+          execution_failed=0
+          if grep -Eqi 'agent run failed|RateLimitError|rate_limit_exceeded|Request Entity Too Large|Requested [0-9]+.*Limit [0-9]+|Waiting for the first model response' "$log"; then
+            execution_failed=1
+          fi
+          if grep -Eq 'Cost \$0\.0000 · Tokens 0' "$log" && grep -Eq 'SESSION ENDED' "$log"; then
+            execution_failed=1
+          fi
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          printf 'groq\tgroq/qwen/qwen3.8-27b\t1\t%s\n' "$code" > strix-attempts.tsv
+          echo "execution_failed=$execution_failed" >> "$GITHUB_OUTPUT"
+          printf 'groq\tgroq/qwen/qwen3.8-27b\t1\t%s\t%s\n' "$code" "$execution_failed" > strix-attempts.tsv
+          if [[ "$execution_failed" == 1 ]]; then
+            echo 'Strix reported a nominal success but the agent/model execution failed.' >&2
+            exit 70
+          fi
           exit "$code"
       - name: Build machine-readable result
         if: always()
@@ -79,11 +92,14 @@ jobs:
         env:
           TARGET_SHA: ${{ steps.target.outputs.sha }}
           STRIX_EXIT_CODE: ${{ steps.strix.outputs.exit_code }}
+          STRIX_EXECUTION_FAILED: ${{ steps.strix.outputs.execution_failed }}
         run: |
           python - <<'PY'
           import json, os, pathlib
           code=os.environ.get('STRIX_EXIT_CODE','')
-          payload={'target_repo':'yotamfried-ux/Video-editing-with-drone','target_ref':'main','target_sha':os.environ.get('TARGET_SHA',''),'scan_mode':'quick','provider':'groq','model':'groq/qwen/qwen3.8-27b','strix_exit_code':code,'status':{'0':'clean','2':'findings'}.get(code,'error'),'run_id':'${{ github.run_id }}','run_attempt':'${{ github.run_attempt }}'}
+          failed=os.environ.get('STRIX_EXECUTION_FAILED','') == '1'
+          status='error' if failed else {'0':'clean','2':'findings'}.get(code,'error')
+          payload={'target_repo':'yotamfried-ux/Video-editing-with-drone','target_ref':'main','target_sha':os.environ.get('TARGET_SHA',''),'scan_mode':'quick','provider':'groq','model':'groq/qwen/qwen3.8-27b','strix_exit_code':code,'execution_failed':failed,'status':status,'run_id':'${{ github.run_id }}','run_attempt':'${{ github.run_attempt }}'}
           pathlib.Path('strix-result.json').write_text(json.dumps(payload,indent=2)+'\n')
           PY
       - name: Upload Strix evidence
@@ -103,7 +119,12 @@ jobs:
         shell: bash
         env:
           STRIX_EXIT_CODE: ${{ steps.strix.outputs.exit_code }}
+          STRIX_EXECUTION_FAILED: ${{ steps.strix.outputs.execution_failed }}
         run: |
+          if [[ "$STRIX_EXECUTION_FAILED" == 1 ]]; then
+            echo 'Strix agent/model execution failed; refusing false-positive success.' >&2
+            exit 1
+          fi
           case "$STRIX_EXIT_CODE" in
             0|2) exit 0 ;;
             *) echo "Strix execution failed (exit=${STRIX_EXIT_CODE:-missing})." >&2; exit 1 ;;
