@@ -1,0 +1,99 @@
+name: Strix Agent Contract Simulation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/strix-agent-contract-simulation.yml'
+      - 'capability-registry/security/strix.md'
+
+permissions:
+  contents: read
+
+jobs:
+  simulate-bidirectional-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate agent to chat Strix request
+        shell: bash
+        run: |
+          cat > request.json <<'JSON'
+          {
+            "security_tool":"strix",
+            "action":"run",
+            "target_repo":"yotamfried-ux/Video-editing-with-drone",
+            "target_ref":"main",
+            "scan_mode":"quick",
+            "reason":"auth/API change requires dynamic validation",
+            "focus":["authentication","authorization","API exposure"]
+          }
+          JSON
+          python - <<'PY'
+          import json
+          d=json.load(open('request.json'))
+          assert d['security_tool']=='strix' and d['action']=='run'
+          assert d['target_repo'].startswith('yotamfried-ux/')
+          assert d['scan_mode'] in {'quick','standard','deep'}
+          assert d['reason'].strip() and isinstance(d['focus'],list)
+          print('agent_to_chat=PASS')
+          PY
+
+      - name: Simulate verified result back to agent
+        shell: bash
+        run: |
+          cat > result.json <<'JSON'
+          {
+            "security_tool":"strix",
+            "status":"findings",
+            "target_repo":"yotamfried-ux/Video-editing-with-drone",
+            "target_ref":"main",
+            "target_sha":"0123456789abcdef0123456789abcdef01234567",
+            "scan_mode":"quick",
+            "run_url":"https://github.com/yotamfried-ux/Engineering-OS/actions/runs/123",
+            "findings":[{"id":"SIM-1","severity":"medium","title":"simulation finding"}],
+            "execution_verified":true,
+            "next_action":"remediate_and_retest"
+          }
+          JSON
+          python - <<'PY'
+          import json
+          d=json.load(open('result.json'))
+          assert d['security_tool']=='strix'
+          assert d['status'] in {'clean','findings','error','not_run'}
+          assert len(d['target_sha'])==40
+          assert d['run_url'].startswith('https://github.com/')
+          assert d['execution_verified'] is True
+          assert d['next_action']=='remediate_and_retest'
+          print('chat_to_agent=PASS')
+          PY
+
+      - name: Reject false clean result
+        shell: bash
+        run: |
+          python - <<'PY'
+          bad={"status":"clean","execution_verified":False,"tokens":0,"log":"agent run failed: rate limit"}
+          invalid = bad['status']=='clean' and (not bad['execution_verified'] or bad['tokens']==0 or 'agent run failed' in bad['log'].lower())
+          assert invalid
+          print('false_positive_guard=PASS')
+          PY
+
+      - name: Simulate unavailable hosted capacity
+        shell: bash
+        run: |
+          python - <<'PY'
+          result={"security_tool":"strix","status":"not_run","execution_verified":False,"next_action":"manual_strix","reason":"hosted free-model capacity unavailable"}
+          assert result['status']=='not_run'
+          assert result['next_action']=='manual_strix'
+          assert result['execution_verified'] is False
+          print('manual_fallback=PASS')
+          PY
+
+      - name: Publish simulation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: strix-agent-contract-simulation-${{ github.run_id }}
+          path: |
+            request.json
+            result.json
+          retention-days: 14
