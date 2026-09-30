@@ -20,10 +20,13 @@ jobs:
           set -euo pipefail
           docker run -d --name freellmapi -p 127.0.0.1:3001:3001 -e ENCRYPTION_KEY="$(openssl rand -hex 32)" ghcr.io/tashfeenahmed/freellmapi:latest
           for i in $(seq 1 60); do
-            curl -fsS http://127.0.0.1:3001/api/ping >/dev/null && exit 0
+            if curl -fsS http://127.0.0.1:3001/api/ping >/dev/null 2>&1; then
+              docker logs freellmapi > /tmp/freellmapi.log 2>&1 || true
+              exit 0
+            fi
             sleep 2
           done
-          docker logs freellmapi
+          docker logs freellmapi | tee /tmp/freellmapi.log
           exit 1
 
       - name: Bootstrap anonymous provider
@@ -32,8 +35,40 @@ jobs:
         run: |
           set -euo pipefail
           BASE=http://127.0.0.1:3001
-          AUTH_JSON=$(curl -fsS -X POST "$BASE/api/auth/setup" -H 'Content-Type: application/json' -d '{"email":"qualification@example.invalid","password":"qualification-only-strong-password-2026"}')
-          TOKEN=$(python -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$AUTH_JSON")
+          docker logs freellmapi > /tmp/freellmapi.log 2>&1 || true
+          # The container sees the host-side request through Docker networking,
+          # so current FreeLLMAPI requires its one-time first-run setup code.
+          SETUP_CODE=$(python - <<'PY'
+          import re
+          text=open('/tmp/freellmapi.log', errors='ignore').read()
+          patterns=[
+            r'(?:setup|first[- ]run)[^\n]*?code[^A-Za-z0-9]+([A-Z0-9-]{6,})',
+            r'code[^A-Za-z0-9]+([A-Z0-9-]{6,})',
+          ]
+          for p in patterns:
+              m=re.search(p,text,re.I)
+              if m:
+                  print(m.group(1)); break
+          else:
+              raise SystemExit('setup code not found in container logs')
+          PY
+          )
+          AUTH_BODY=$(python - "$SETUP_CODE" <<'PY'
+          import json,sys
+          print(json.dumps({
+            'email':'qualification@example.invalid',
+            'password':'qualification-only-strong-password-2026',
+            'setupCode':sys.argv[1],
+          }))
+          PY
+          )
+          HTTP=$(curl -sS -o /tmp/setup-response.json -w '%{http_code}' -X POST "$BASE/api/auth/setup" -H 'Content-Type: application/json' --data "$AUTH_BODY")
+          if [[ "$HTTP" != 201 ]]; then
+            echo "setup failed with HTTP $HTTP" >&2
+            cat /tmp/setup-response.json >&2
+            exit 1
+          fi
+          TOKEN=$(python -c 'import json; print(json.load(open("/tmp/setup-response.json"))["token"])')
           curl -fsS -X POST "$BASE/api/keys" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"platform":"kilo","key":"","label":"qualification-keyless"}' >/dev/null
           KEY_JSON=$(curl -fsS "$BASE/api/settings/api-key" -H "Authorization: Bearer $TOKEN")
           UNIFIED=$(python -c 'import json,sys; print(json.load(sys.stdin)["apiKey"])' <<<"$KEY_JSON")
@@ -69,5 +104,7 @@ jobs:
           path: |
             /tmp/result.json
             /tmp/headers
+            /tmp/setup-response.json
+            /tmp/freellmapi.log
           if-no-files-found: warn
           retention-days: 7
