@@ -1,0 +1,73 @@
+name: FreeLLMAPI Provider Qualification
+
+on:
+  push:
+    branches: [qualification/freellmapi-strix]
+    paths: ['.github/workflows/freellmapi-provider-qualification.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Start FreeLLMAPI
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name freellmapi -p 127.0.0.1:3001:3001 -e ENCRYPTION_KEY="$(openssl rand -hex 32)" ghcr.io/tashfeenahmed/freellmapi:latest
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:3001/api/ping >/dev/null && exit 0
+            sleep 2
+          done
+          docker logs freellmapi
+          exit 1
+
+      - name: Bootstrap anonymous provider
+        id: bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=http://127.0.0.1:3001
+          AUTH_JSON=$(curl -fsS -X POST "$BASE/api/auth/setup" -H 'Content-Type: application/json' -d '{"email":"qualification@example.invalid","password":"qualification-only-strong-password-2026"}')
+          TOKEN=$(python -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$AUTH_JSON")
+          curl -fsS -X POST "$BASE/api/keys" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"platform":"kilo","key":"","label":"qualification-keyless"}' >/dev/null
+          KEY_JSON=$(curl -fsS "$BASE/api/settings/api-key" -H "Authorization: Bearer $TOKEN")
+          UNIFIED=$(python -c 'import json,sys; print(json.load(sys.stdin)["apiKey"])' <<<"$KEY_JSON")
+          echo "unified=$UNIFIED" >> "$GITHUB_OUTPUT"
+
+      - name: Verify completion and structured tool call
+        env:
+          API_KEY: ${{ steps.bootstrap.outputs.unified }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/request.json <<'JSON'
+          {"model":"nvidia/nemotron-3-super-120b-a12b:free","messages":[{"role":"user","content":"Use inspect_file to inspect app.py before answering."}],"tools":[{"type":"function","function":{"name":"inspect_file","description":"Inspect a source file","parameters":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
+          JSON
+          curl -fsS -D /tmp/headers -o /tmp/result.json -H "Authorization: Bearer $API_KEY" -H 'Content-Type: application/json' --data @/tmp/request.json http://127.0.0.1:3001/v1/chat/completions
+          cat /tmp/result.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/result.json'))
+          calls=d['choices'][0]['message'].get('tool_calls') or []
+          assert calls, d
+          assert calls[0]['function']['name']=='inspect_file', calls
+          args=json.loads(calls[0]['function']['arguments'])
+          assert args.get('path')=='app.py', args
+          PY
+          grep -i '^x-routed-via:' /tmp/headers || true
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: freellmapi-provider-qualification-${{ github.run_id }}
+          path: |
+            /tmp/result.json
+            /tmp/headers
+          if-no-files-found: warn
+          retention-days: 7
