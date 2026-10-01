@@ -1,88 +1,54 @@
-# Event-Driven CI Continuation
+# CI Continuation Options
 
-Use this when an agent starts CI and should continue automatically when the run
-finishes. Prefer an event subscription over timers or manual polling.
+Reference notes for cases where an AI/agent starts CI and later needs the result.
+This document describes available mechanisms and trade-offs; it does not require
+a particular continuation strategy.
 
-## Priority order
+## Common options
 
-1. **Same-session host subscription first.** If the current agent host can
-   subscribe to PR/check-suite/workflow completion notifications and resume the
-   same session, subscribe before yielding. Persist the current SHA, acceptance
-   criteria and next action in the PR/audit. While that subscription is live,
-   do **not** add a timer, sleep-loop or status-poll fallback.
-2. **GitHub `workflow_run` fallback.** If the host cannot resume from a completion
-   subscription, start a new automated agent run after the upstream workflow
-   completes. The repository must carry enough durable state for the new run to
-   continue without reconstructing the chat.
-3. **Polling only as a last resort.** Use a single bounded status read only when
-   neither event path exists; record the missing capability as friction.
+| Option | Useful property | Limitation |
+|---|---|---|
+| Same-session host subscription | can resume the same session when a PR/check suite/workflow completes | depends on host support |
+| GitHub `workflow_run` | event-driven continuation inside GitHub Actions | starts a new automated run rather than waking an existing chat |
+| Bounded status read/polling | works when no event surface is available | adds latency/API work and needs explicit scheduling |
 
-A job-specific event is not required when a check-suite/PR completion event
-already proves that all required jobs reached terminal state. Do not add timers
-merely to wake earlier for one long-running job.
+A same-session subscription can avoid timer loops when the host exposes that
+capability. `workflow_run` is useful when continuation should live entirely in
+GitHub. Polling remains a technical option when event-driven mechanisms are not
+available.
 
-## GitHub workflow_run fallback
+## GitHub `workflow_run`
 
-Use GitHub Actions `workflow_run` to start a downstream agent workflow after the
-upstream workflow completes. Claude Code Action supports `workflow_run` events
-and automation mode with a direct prompt.
-
-Minimum shape:
+GitHub Actions can trigger a downstream workflow after an upstream workflow
+completes:
 
 ```yaml
 on:
   workflow_run:
     workflows: ["<upstream workflow name>"]
     types: [completed]
-
-permissions:
-  contents: write
-  pull-requests: write
-  actions: read
 ```
 
-The downstream workflow should:
+Claude Code Action and other automation can be used from such a workflow when
+the repository has the required authentication and permissions.
 
-1. inspect `github.event.workflow_run.conclusion`, head SHA/ref and run ID;
-2. check out the exact trusted revision intended for repair/verification;
-3. run the agent in automation mode with a bounded continuation prompt;
-4. grant `actions: read` so the agent can inspect CI status/job logs;
-5. repair only reversible in-scope failures;
-6. rerun the smallest relevant checks and leave durable evidence in the PR/repo.
+## Authentication and security notes
 
-## Authentication
+Claude Code Action requires a supported Anthropic authentication path when it is
+used. `workflow_run` may execute with base-repository secrets, so upstream actor
+and checked-out code are part of the trust boundary.
 
-Claude Code Action requires a supported Anthropic authentication path, such as a
-repository secret containing an Anthropic API key or Claude Code OAuth token.
-Do not assume one exists. Verify availability without exposing secret values.
-
-## Security
-
-`workflow_run` can execute with base-repository secrets. Treat upstream actor
-and checked-out code as a trust boundary. Use the official Claude Code Action
-rather than the lower-level base action when processing potentially untrusted
-workflow inputs, because the supported action performs actor permission checks.
-
-## Important boundary
-
-The `workflow_run` fallback starts a **new automated agent run in GitHub
-Actions**. It does not wake an existing chat UI session. A host-native
-subscription is preferred when it can resume the same session.
-
-Continuation state must therefore be durable: encode the task, current SHA,
-acceptance criteria, prior findings and next action in the repository, PR/issue,
-artifact or another authoritative project surface.
-
-If the target platform exposes another explicit completion webhook/subscription,
-use it; do not invent or simulate one.
+The downstream workflow is a new process. State needed by a new process can be
+stored in a PR, issue, repository file, artifact, or another durable project
+surface.
 
 ## Official references
 
 - GitHub workflow_run event:
   https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run
-- Claude Code Action security and workflow_run behavior:
+- Claude Code Action security:
   https://github.com/anthropics/claude-code-action/blob/main/docs/security.md
-- Claude Code Action CI permissions:
+- Claude Code Action configuration:
   https://github.com/anthropics/claude-code-action/blob/main/docs/configuration.md
 - Claude Code Action custom automations:
   https://github.com/anthropics/claude-code-action/blob/main/docs/custom-automations.md

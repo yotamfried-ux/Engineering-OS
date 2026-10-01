@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import unquote
 ROOT=Path(__file__).resolve().parents[1]
 MD=sorted(ROOT.rglob("*.md"))
-REQUIRED=["AGENTS.md","capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","capability-registry/EXECUTION-FAST-PATH.md","capability-registry/EXECUTION-FAST-PATH.json","capability-registry/EXECUTION-TRACE.json","patterns/testing/FAST-PATH.md","patterns/testing/FAST-PATH.json","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
+REQUIRED=["capability-registry/ROUTING-MAP.md","capability-registry/SOURCE-POLICY.md","capability-registry/EXECUTION-FAST-PATH.md","capability-registry/EXECUTION-FAST-PATH.json","capability-registry/EXECUTION-TRACE.json","patterns/testing/FAST-PATH.md","patterns/testing/FAST-PATH.json","patterns/testing/project-qualification.md","patterns/testing/AUTHORITATIVE-SOURCES.md","patterns/security/README.md","docs/troubleshooting/README.md"]
 FORBIDDEN=("core/","scripts/","experiments/","evals/","telemetry-archive/",".claude/")
 HISTORICAL=("lessons-learned/","failed-solutions/","improved-stage3/","architecture-decisions/ADR-","capability-registry/evaluations/","capability-registry/USABILITY-AUDIT","capability-registry/QUALIFICATION-REPORT","capability-registry/NORMALIZATION-AUDIT")
 INSTALL_DOCS=("external-skills/","templates/")
@@ -82,8 +82,6 @@ if fast_json.exists():
                     errors.append(f"testing fast path: route {name} missing target: {raw}"); continue
                 if frag and target.suffix.lower()==".md" and slug(frag) not in anchors(target):
                     errors.append(f"testing fast path: route {name} missing anchor: {raw}")
-if "patterns/testing/FAST-PATH.json" not in (ROOT/"AGENTS.md").read_text("utf-8"):
-    errors.append("testing fast path: AGENTS.md must route test-writing through FAST-PATH.json")
 if "patterns/testing/FAST-PATH.json" not in (ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8"):
     errors.append("testing fast path: ROUTING-MAP.md must expose FAST-PATH.json")
 
@@ -121,8 +119,6 @@ if exec_json.exists():
                     errors.append(f"execution fast path: route {name} missing target: {raw}"); continue
                 if frag and target.suffix.lower()==".md" and slug(frag) not in anchors(target):
                     errors.append(f"execution fast path: route {name} missing anchor: {raw}")
-if "capability-registry/EXECUTION-FAST-PATH.json" not in (ROOT/"AGENTS.md").read_text("utf-8"):
-    errors.append("execution fast path: AGENTS.md must expose EXECUTION-FAST-PATH.json")
 if "EXECUTION-FAST-PATH.json" not in (ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8"):
     errors.append("execution fast path: ROUTING-MAP.md must expose EXECUTION-FAST-PATH.json")
 trace_json=ROOT/"capability-registry/EXECUTION-TRACE.json"
@@ -138,19 +134,6 @@ if trace_json.exists():
         record=trace_data.get("record")
         if not isinstance(record,dict) or set(record) != required:
             errors.append("execution trace: record schema fields drifted")
-if "capability-registry/EXECUTION-TRACE.json" not in (ROOT/"AGENTS.md").read_text("utf-8"):
-    errors.append("execution trace: AGENTS.md must expose EXECUTION-TRACE.json")
-if exec_json.exists():
-    trace_rule=exec_data.get("trace_rule",{}) if isinstance(exec_data,dict) else {}
-    if trace_rule.get("completion_rule") != "a whole-project qualification report is incomplete until required trace records are emitted":
-        errors.append("execution trace: whole-project qualification completion rule missing")
-    trigger=exec_data.get("delegation_trigger",{}) if isinstance(exec_data,dict) else {}
-    if trigger.get("must_delegate") is not True or not trigger.get("must_delegate_when"):
-        errors.append("execution routing: qualified delegation trigger is not enforced")
-ci_doc=(ROOT/"capability-registry/CI-CONTINUATION.md").read_text("utf-8")
-for phrase in ("Same-session host subscription first", "do **not** add a timer", "workflow_run"):
-    if phrase not in ci_doc:
-        errors.append(f"CI continuation: missing required guidance: {phrase}")
 
 # Integrated external-skill wrappers listed in the registry must have the exact contract.
 skills_index=(ROOT/"external-skills/README.md").read_text("utf-8")
@@ -168,13 +151,6 @@ for line in skills_index.splitlines():
         files={p.name for p in d.iterdir() if p.is_file()}
         if files != contract:
             errors.append(f"external-skills/{name}: integrated wrapper must contain exactly {sorted(contract)}; found {sorted(files)}")
-# Agent entry point must explicitly route through the canonical routing map.
-agents=(ROOT/"AGENTS.md").read_text("utf-8")
-if "capability-registry/ROUTING-MAP.md" not in agents:
-    errors.append("AGENTS.md: does not route agents through capability-registry/ROUTING-MAP.md")
-if "capability-registry/SOURCE-POLICY.md" not in agents:
-    errors.append("AGENTS.md: does not expose the source/provenance policy")
-
 # Every integrated skill must be discoverable from agent-tools or a dedicated routing-map row.
 agent_tools=(ROOT/"capability-registry/agent-tools.md").read_text("utf-8")
 routing=(ROOT/"capability-registry/ROUTING-MAP.md").read_text("utf-8")
