@@ -139,6 +139,87 @@ def unique_event_race():
     print(f"PASS: {contenders} concurrent duplicate ACK attempts, exactly one event persisted")
 
 
+
+def atomic_ack_completion_and_wrong_claim_rollback():
+    task_id = "pilot-atomic-001"
+    invalid_task = "pilot-wrong-claim-001"
+    with connect() as db:
+        seed_task(db, task_id, "DISPATCHING", "atomic-claim-ci")
+        seed_task(db, invalid_task, "DISPATCHING", "expected-claim-ci")
+
+    contenders = 16
+    barrier = Barrier(contenders)
+
+    def attempt(_):
+        with connect() as db:
+            barrier.wait(timeout=25)
+            inserted = db.execute(
+                "INSERT INTO native_pilot.events(event_id,task_id,run_id,claim_id,kind,evidence_ref) "
+                "VALUES (%s,%s,%s,%s,%s,%s::jsonb) "
+                "ON CONFLICT(event_id) DO NOTHING RETURNING event_id",
+                ("ack-atomic-ci-001", task_id, "pilot-ci-run-20261011", "atomic-claim-ci",
+                 "ACK", '{"source":"atomic-ci"}'),
+            ).fetchone()
+            if not inserted:
+                return False
+            completed = db.execute(
+                "UPDATE native_pilot.tasks SET status='COMPLETED',evidence_ref=%s::jsonb "
+                "WHERE task_id=%s AND run_id=%s AND status='DISPATCHING' "
+                "AND claim_id=%s RETURNING task_id",
+                ('{"event_id":"ack-atomic-ci-001"}', task_id, "pilot-ci-run-20261011",
+                 "atomic-claim-ci"),
+            ).fetchone()
+            if not completed:
+                raise RuntimeError("ACK insert must roll back if terminal CAS fails")
+            return True
+
+    with ThreadPoolExecutor(max_workers=contenders) as pool:
+        results = list(pool.map(attempt, range(contenders)))
+    assert_one(sum(results) == 1, "atomic duplicate ACK+completion had multiple winners")
+
+    with connect() as db:
+        saved = db.execute(
+            "SELECT status FROM native_pilot.tasks WHERE task_id=%s", (task_id,)
+        ).fetchone()[0]
+        count = db.execute(
+            "SELECT count(*) FROM native_pilot.events WHERE event_id='ack-atomic-ci-001'"
+        ).fetchone()[0]
+        assert_one(saved == "COMPLETED" and count == 1,
+                   "atomic ACK + task transition not persisted together")
+
+    try:
+        with connect() as db:
+            db.execute(
+                "INSERT INTO native_pilot.events(event_id,task_id,run_id,claim_id,kind,evidence_ref) "
+                "VALUES (%s,%s,%s,%s,%s,%s::jsonb)",
+                ("ack-invalid-claim", invalid_task, "pilot-ci-run-20261011",
+                 "wrong-claim-ci", "ACK", '{"invalid":true}'),
+            )
+            row = db.execute(
+                "UPDATE native_pilot.tasks SET status='COMPLETED' "
+                "WHERE task_id=%s AND status='DISPATCHING' AND claim_id=%s RETURNING task_id",
+                (invalid_task, "wrong-claim-ci"),
+            ).fetchone()
+            if not row:
+                raise RuntimeError("EXPECTED_WRONG_CLAIM")
+            raise AssertionError("wrong claim unexpectedly obtained completion CAS")
+    except RuntimeError as exc:
+        assert_one(str(exc) == "EXPECTED_WRONG_CLAIM",
+                   f"unexpected transactional error: {exc}")
+
+    with connect() as db:
+        saved = db.execute(
+            "SELECT status FROM native_pilot.tasks WHERE task_id=%s", (invalid_task,)
+        ).fetchone()[0]
+        count = db.execute(
+            "SELECT count(*) FROM native_pilot.events WHERE event_id='ack-invalid-claim'"
+        ).fetchone()[0]
+        assert_one(saved == "DISPATCHING" and count == 0,
+                   "wrong-claim ACK insertion was not rolled back atomically")
+    print(f"PASS: {contenders} transactional ACK+completion races, one winner; wrong-claim commit rolled back")
+
+
+
 def child_crash_before_commit():
     db = connect()
     db.execute(
@@ -222,9 +303,10 @@ def prepare():
     init_schema()
     claim_race()
     unique_event_race()
+    atomic_ack_completion_and_wrong_claim_rollback()
     crash_and_reconcile()
     baseline = ledger_snapshot()
-    assert_one(baseline["tasks"] == 4 and baseline["events"] == 2, f"unexpected ledger: {baseline}")
+    assert_one(baseline["tasks"] == 6 and baseline["events"] == 3, f"unexpected ledger: {baseline}")
     PROOF.write_text(json.dumps(baseline, sort_keys=True))
     print("PRE_RESTART_LEDGER", json.dumps(baseline, sort_keys=True))
 
@@ -243,6 +325,8 @@ def after_restart():
         assert_one(statuses[TASK] == "DISPATCHING", "claim gate changed unexpectedly")
         assert_one(statuses[BEFORE_TASK] == "NEEDS_REVIEW", "safe dead-letter state lost")
         assert_one(statuses[AFTER_TASK] == "COMPLETED", "orphan reconciliation lost")
+        assert_one(statuses["pilot-atomic-001"] == "COMPLETED", "atomic ACK finish lost")
+        assert_one(statuses["pilot-wrong-claim-001"] == "DISPATCHING", "wrong-claim quarantine guard lost")
     print("POST_RESTART_DURABILITY_PASS", json.dumps(actual, sort_keys=True))
 
 
