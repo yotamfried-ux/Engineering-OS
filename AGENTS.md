@@ -23,6 +23,7 @@ This repository is a **knowledge library, not a runtime**. Use this file as a ma
 
 ## Main knowledge domains
 
+- User-facing product experience (ALL channels, not just frontend code): `docs/ui-ux/EXPERIENCE-ROUTING.md` first; load only matching content/source/motion/quality/booking docs; add audience, copy, interaction and evidence deliverables. Existing `patterns/ui/` and `external-skills/ui-ux-pro-max/` remain complementary.
 - Build/architecture: `templates/`, `patterns/`, `docs/architecture-guides/`, `docs/frameworks/`
 - Agent capabilities/execution: `capability-registry/EXECUTION-FAST-PATH.json` first; then `capability-registry/`, `external-skills/` only as needed
 - External services: `external-systems/`
