@@ -15,6 +15,10 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Test web app | `application-testing/README.md` | Playwright, Chrome DevTools, testing knowledge map | capability matrix with evidence |
 | Test mobile app | `application-testing/README.md` | Maestro/Appium/Mobile Next + platform docs | build/install/launch + user journey + authoritative side effects |
 | Qualify whole project | `patterns/testing/project-qualification.md` | authoritative testing sources + templates | PASS/FAIL/PARTIAL/BLOCKED/NOT TESTED matrix |
+| User-facing legal terms, privacy policy, customer disclosures | `docs/legal-compliance/APPLICABILITY-AND-ROUTING.md` | official-source atlas, public documents/microcopy, actual data map | project-scoped DRAFT notices + source-backed scope + human legal review; no unapproved publication |
+| Personal data, user rights, tracking or marketing | `docs/legal-compliance/DATA-INVENTORY-AND-RIGHTS.md` | cookie/marketing, processors & transfers, platform policy | verified processing map, consent/rights behavior and tests |
+| Legal exposure from security incidents or new vendor | `docs/legal-compliance/SECURITY-AND-INCIDENT-LAW.md` | existing security qualification, vendors/licenses, quality gate | incident classification and factual legal/technical evidence, not blanket 'secure' |
+| Commerce, subscriptions, mobile store or accessibility law | `docs/legal-compliance/COMMERCE-ACCESSIBILITY-AND-PLATFORMS.md` | customer-facing terms, official territory/platform guidance, legal gate | priced/cancellation/rights flows and qualified reviewer decision |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |

@@ -3,6 +3,10 @@
 ## Overview
 Use this template for reservation and scheduling platforms — appointment booking, room/resource reservations, class registrations, or any system where a finite resource is claimed for a time slot. The central challenge is preventing double-booking under concurrent load while keeping availability queries fast. Secondary concerns are calendar sync, automated reminders, and graceful cancellation/refund handling.
 
+## Legal/privacy and user-consumer duties
+
+Before using this template with real users, read the [booking legal worked example](../../docs/legal-compliance/EXAMPLE-BOOKING-APP.md), [legal applicability routing](../../docs/legal-compliance/APPLICABILITY-AND-ROUTING.md) and [public notice drafting controls](../../docs/legal-compliance/PUBLIC-DOCUMENTS-AND-MICROCOPY.md). Check actual provider/controller roles, required collection notices, truthful availability and pricing, reminders vs marketing, cancellation/refunds, payments, account deletion, data access boundaries and customer-facing legal approval. A reservation attempt is **not** a confirmed booking until authoritative backend success.
+
 ## Recommended Architecture Options
 - **PostgreSQL advisory locks or SELECT FOR UPDATE** — Simple, no extra infrastructure; sufficient for moderate load (< 1,000 concurrent bookings/s); locks held for the duration of the write transaction.
 - **Optimistic concurrency with version column** — Lower contention; booking fails if slot was claimed between read and write; client retries; good when conflicts are rare.

@@ -28,6 +28,7 @@ This repository is a **knowledge library, not a runtime**. Use this file as a ma
 - External services: `external-systems/`
 - Testing/qualification: `patterns/testing/FAST-PATH.json` first; then `patterns/testing/`, `templates/testing/` only as needed
 - Security: `patterns/security/`, `capability-registry/security/`, `templates/security/`
+- **Legal/privacy/consumer/compliance on EVERY audience-facing product:** start with `docs/legal-compliance/APPLICABILITY-AND-ROUTING.md` before drafting policies, activating trackers, shipping payments, handling personal data, adding new processors, AI-generated content or publishing a product. Read only applicable domain documents; never treat templates as approved legal advice. Legal owner review is required for binding public text.
 - Troubleshooting: `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`
 - Reference implementations: `docs/reference-repositories/`
 - Official docs: `docs/official-docs/`
