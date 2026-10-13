@@ -1,5 +1,16 @@
 # UI/UX Library
 
+## Product experience expansion (read first for audience-facing work)
+
+- [Experience routing — AI agent fast path](EXPERIENCE-ROUTING.md): when to activate, smallest relevant knowledge, expected evidence.
+- [Authoritative docs + real-world UI/flow example atlas](SOURCE-ATLAS.md): official guidance, research, visual inspiration, animation APIs and access/provenance limits.
+- [Screen content & conversion copy playbook](SCREEN-CONTENT-PLAYBOOK.md): actual words, decisions, states and features for 25+ surfaces including web, mobile, desktop, kiosk, chat, voice, email, SMS and push.
+- [Motion & interaction playbook](MOTION-AND-INTERACTIONS.md): purpose-driven microinteractions, demos, code, performance and reduced-motion requirements.
+- [Worked example: booking experience](EXAMPLE-BOOKING-EXPERIENCE.md): Hebrew copy, full flow, exceptional cases, creative directions.
+- [Product experience quality gate](PRODUCT-EXPERIENCE-QUALITY-GATE.md): observable tests, weighted review rubric, evidence rules and task outcomes.
+
+**Scope and caution:** This existing README contains useful heuristics, but numeric advice (such as click counts, navigation counts, 'above the fold', and simple A/B significance thresholds) must not be treated as universal compliance or proven conversion rules. Ground decisions in the user's task, platform guidance and evidence. Treat the newer experience playbooks as the detailed guidance for messaging, originality, cross-channel behavior and review.
+
 ## Overview
 
 This library is the authoritative reference for UX patterns and UI implementation decisions in this engineering system. It covers both the *thinking layer* (user flows, information architecture, accessibility requirements, conversion principles) and the *building layer* (component libraries, forms, data grids, navigation, responsive patterns). Consult it before designing any user-facing surface — whether a web app, mobile screen, dashboard, or onboarding sequence.
