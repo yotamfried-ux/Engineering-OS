@@ -1,5 +1,9 @@
 # Software Security Verification
 
+## Legal/compliance boundary
+
+For Israel, EU, UK and other applicable data-protection duties, third-party contracts and incident reporting, consult [legal & compliance](../../docs/legal-compliance/README.md) and [legal security & incident workflow](../../docs/legal-compliance/SECURITY-AND-INCIDENT-LAW.md). Technical tests are **not** automatic legal clearance. Confirm the actual security-classification and regulatory notification triggers separately.
+
 ## Principle
 
 No finite test suite proves that software is absolutely secure. Engineering-OS therefore reports **security verification coverage and residual gaps**, never the unconditional claim "secure".
