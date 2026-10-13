@@ -65,6 +65,7 @@ High-value entry points:
 
 Search this repository by **the job you need to accomplish**. The physical paths below are retained for provenance and precise GitHub search, while this catalog supplies the use-oriented mental model.
 
+- Designing **any** customer-facing experience (web, mobile, desktop, kiosk, chat, service, email, SMS/push) → start with [experience routing](./docs/ui-ux/EXPERIENCE-ROUTING.md) and its [source/example atlas](./docs/ui-ux/SOURCE-ATLAS.md); write real copy, flows, exceptional states, motion intent and prove usability. This complements—not replaces—the existing UI skill and UI patterns.
 - Building something new → start with `templates/`, `patterns/`, `docs/frameworks/`, `docs/reference-repositories/`, and `docs/official-docs/`.
 - Delegating work / choosing an agent or model → start with `capability-registry/EXECUTION-FAST-PATH.json`; prefer no-LLM/local execution when it can be independently verified.
 - Giving an AI agent a capability → search `external-skills/` and relevant AI patterns.
