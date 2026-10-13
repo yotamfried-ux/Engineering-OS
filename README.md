@@ -65,6 +65,7 @@ High-value entry points:
 
 Search this repository by **the job you need to accomplish**. The physical paths below are retained for provenance and precise GitHub search, while this catalog supplies the use-oriented mental model.
 
+- Preparing any audience-facing product for legal/privacy/consumer/contractual risk → use [Legal & Compliance knowledge](./docs/legal-compliance/README.md) and [jurisdiction applicability routing](./docs/legal-compliance/APPLICABILITY-AND-ROUTING.md). This is source-backed **REFERENCE ONLY**, not a lawyer's approval or guarantee against litigation.
 - Building something new → start with `templates/`, `patterns/`, `docs/frameworks/`, `docs/reference-repositories/`, and `docs/official-docs/`.
 - Delegating work / choosing an agent or model → start with `capability-registry/EXECUTION-FAST-PATH.json`; prefer no-LLM/local execution when it can be independently verified.
 - Giving an AI agent a capability → search `external-skills/` and relevant AI patterns.
