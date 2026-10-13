@@ -4,6 +4,7 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 
 | Need | First stop | Then inspect | Evidence/exit condition |
 |---|---|---|---|
+| Design or improve any audience-facing experience (UI, customer messages, flows, marketing) | `docs/ui-ux/EXPERIENCE-ROUTING.md` | relevant source atlas, screen content, motion, booking example and quality gate; reuse existing UI skill/patterns | original user-centered copy + real interaction states + observed UX/accessibility evidence |
 | Build a new application/system | `templates/` | `patterns/`, architecture guides, framework docs, reference repos | chosen architecture + implementation-specific tests |
 | Choose architecture | `docs/architecture-guides/` | `architecture-decisions/`, relevant reference repos | explicit trade-offs and target constraints |
 | Delegate/parallelize work or choose model cost | `EXECUTION-FAST-PATH.json` | `EXECUTION-FAST-PATH.md` only if explanation is needed | bounded workers + explicit cost class + deterministic verification |
