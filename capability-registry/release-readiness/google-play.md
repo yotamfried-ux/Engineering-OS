@@ -2,6 +2,8 @@
 
 Google Play requirements and Play Console are authoritative vendor gates; this is a workflow wrapper, not a substitute for current Google documentation.
 
+For a concrete 2026 Play Console account/test track/targetSDK/Data safety/permissions/billing/store-review checklist, begin with [Google Play submission playbook](GOOGLE-PLAY-SUBMISSION.md), [official sources](OFFICIAL-LAUNCH-SOURCES.md), [store review pack](STORE-LISTING-AND-REVIEW-PACK.md), and [release evidence gate](RELEASE-EVIDENCE-AND-GATES.md). This short file remains a high-level wrapper; vendor requirements always supersede its snapshot.
+
 ## Before submission
 Use current Android/Google Play documentation to verify package/app-bundle requirements, target API and policy requirements, signing, versioning, permissions, privacy/data declarations, store listing assets and testing eligibility applicable at submission time.
 
