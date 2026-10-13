@@ -53,7 +53,7 @@ This is a **curated link index, not a copy of third-party documentation or scree
 | [Really Good Emails](https://www.reallygoodemails.com/) (C) | Transactional/lifecycle email inspiration | Structure, subject/preheader ideas, confirmations, renewals, reactivation; don't reuse brands/copy. |
 | [Hover.dev](https://www.hover.dev/) (C) | Animated React component demos | Hover/press/hover-card ideas and concrete implementations; check licensing, keyboard and reduced motion. |
 | [React Bits](https://reactbits.dev/) (C) | Open-visual animated components | Text/entry/decoration patterns; review dependencies, responsiveness and accessibility. |
-| [Motion for React](https://motion.dev/docs/react) (A vendor API)](https://motion.dev/docs/react) | Animation library API + examples | Gestures, layout, presence, scroll, transitions; read current docs before coding. |
+| [Motion for React](https://motion.dev/docs/react) (A vendor API) | Animation library API + examples | Gestures, layout, presence, scroll, transitions; read current docs before coding. |
 | [GSAP documentation](https://gsap.com/docs/v3/) (A vendor API) | Timelines and custom motion | Complex choreography; inspect bundle/runtime/license. |
 | [Rive documentation](https://rive.app/docs/) (A vendor API) | Interactive vector animations | State machines, interaction, runtime compatibility, motion alternatives. |
 | [Adobe Spectrum motion](https://spectrum.adobe.com/page/motion/) (A) | Product motion guidelines | Function-first motion in creative tools and enterprise contexts. |
