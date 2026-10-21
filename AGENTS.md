@@ -21,6 +21,10 @@ This repository is a **knowledge library, not a runtime**. Use this file as a ma
 - Do not install the knowledge catalog itself. Code examples, reference repositories, docs and patterns are knowledge, not setup dependencies.
 - On disposable cloud hosts the filesystem may vanish, so downloads can recur; the installer still prevents repeated discovery and only restores missing/mismatched tools.
 
+## Launch and compliance routing
+
+For any user-facing app/site/API or production release, consult `docs/launch-readiness/README.md` and `docs/launch-readiness/twenty-checks.md`. For Israel-operated products, privacy, consumer terms, marketing, payments, UGC or AI claims, consult `docs/legal-compliance/README.md`. Classify applicability before implementation; do not claim compliance without legal review or PASS without revision-specific test evidence.
+
 ## Main knowledge domains
 
 - Build/architecture: `templates/`, `patterns/`, `docs/architecture-guides/`, `docs/frameworks/`
