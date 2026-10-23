@@ -38,7 +38,7 @@ For any user-facing app/site/API or production release, consult `docs/launch-rea
 - Security: `patterns/security/`, `capability-registry/security/`, `templates/security/`
 - Troubleshooting: `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`
 - Reference implementations: `docs/reference-repositories/`
-- Product design, premium UI/motion, UX, behavioral design, CRO, analytics and growth: `docs/product-experience/README.md` (when a user-facing experience or business outcome is involved)
+- Product design, premium UI/motion, UX writing/content design, behavioral design, CRO, analytics and growth: `docs/product-experience/README.md` (when a user-facing experience or business outcome is involved)
 - Official docs: `docs/official-docs/`
 - Historical imported Stage 3 knowledge: `improved-stage3/`
 
