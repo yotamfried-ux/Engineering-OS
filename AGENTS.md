@@ -6,11 +6,15 @@ This repository is a **knowledge library, not a runtime**. Use this file as a ma
 
 0. **Do not spend the session rediscovering setup.** On a persistent host, reuse the existing Engineering-OS clone and update it with `git pull --ff-only`; do not re-clone it. For a project using the live-qualified tool profiles, check `tools/eos_capabilities.py status --json` first. If it says READY, do not reread activation guides or reinstall tools.
 1. Identify the job to be done.
-2. Open [capability-registry/ROUTING-MAP.md](capability-registry/ROUTING-MAP.md).
+2. Open [capability-registry/ROUTING-MAP.md](capability-registry/ROUTING-MAP.md) for task-based knowledge discovery. It is the existing Knowledge Index + advisory Knowledge Router; it is not a hook or enforcement engine.
 3. Read only the branch of knowledge relevant to the task. Before spawning agents or choosing an LLM-backed workflow, read `capability-registry/EXECUTION-FAST-PATH.json`. If the task has 3+ independent bounded workstreams, decompose them first. When at least 2 remain independent and a qualified worker route is already available, delegate at least one bounded workstream unless an allowed skip reason applies. Shared project context alone is not enough to skip delegation. Record the decision with `capability-registry/EXECUTION-TRACE.json`; a whole-project qualification is incomplete without its required trace records. For test-writing/selection, read `patterns/testing/FAST-PATH.json` first; open longer docs only if needed.
 4. Prefer authoritative/current sources according to [SOURCE-POLICY.md](capability-registry/SOURCE-POLICY.md).
 5. For installable capabilities, use the [60-second start](docs/GETTING-STARTED.md) and the qualified installer profile when supported; open a tool's `activation.md` only when it is outside the automatic profile, missing, broken, or needs troubleshooting.
 6. For testing/security/release claims, produce evidence on the exact revision/environment; never turn NOT TESTED, BLOCKED or PARTIAL into PASS.
+
+## Advisory knowledge discovery (not an execution gate)
+
+For a task that crosses disciplines, use the routing map to consider adjacent knowledge domains (e.g. a booking UI may involve UX, accessibility, privacy, analytics and testing). Read only the relevant guides, follow their links selectively, and make trade-offs according to the user's scope. No additional mandatory hook, tool install, report, audit trace, or approval is created by knowledge discovery. If a specialized guide uses the word “mandatory”, treat its workflow as a suggested checklist unless another existing project rule independently requires it. Existing security, qualification and release rules remain unchanged.
 
 ## Install-once rule
 
@@ -34,6 +38,7 @@ For any user-facing app/site/API or production release, consult `docs/launch-rea
 - Security: `patterns/security/`, `capability-registry/security/`, `templates/security/`
 - Troubleshooting: `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`
 - Reference implementations: `docs/reference-repositories/`
+- Product design, premium UI/motion, UX, behavioral design, CRO, analytics and growth: `docs/product-experience/README.md` (when a user-facing experience or business outcome is involved)
 - Official docs: `docs/official-docs/`
 - Historical imported Stage 3 knowledge: `improved-stage3/`
 

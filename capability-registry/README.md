@@ -2,7 +2,7 @@
 
 Purpose: answer **what capability can I use for this task, where is its source of truth, and what must I verify before depending on it?**
 
-Start with [ROUTING-MAP.md](./ROUTING-MAP.md). It routes by job and keeps context small. Use [SOURCE-POLICY.md](./SOURCE-POLICY.md) to distinguish official/canonical evidence from maintained references, community tools and historical material.
+Start with [ROUTING-MAP.md](./ROUTING-MAP.md), the existing human/agent-readable **Knowledge Index and advisory Knowledge Router**. It includes cross-domain product experience routes; see [Product Experience](../docs/product-experience/README.md). This map recommends relevant sources but does not enforce actions or install tools. It routes by job and keeps context small. Use [SOURCE-POLICY.md](./SOURCE-POLICY.md) to distinguish official/canonical evidence from maintained references, community tools and historical material.
 
 ## Decision order
 
