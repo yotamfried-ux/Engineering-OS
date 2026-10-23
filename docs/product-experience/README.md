@@ -12,7 +12,9 @@
 | Make UI accessible and fast | Premium motion + measurement guides | WCAG, reduced-motion, Web Vitals checks |
 | Product launch strategy | UX and growth guides | Positioning, messaging, acquisition/activation metrics |
 
-## Mandatory agent workflow
+## Suggested agent workflow (advisory, adapt to task scope)
+
+Use judgment: these steps are a menu for substantial user-facing product work, not a compulsory checklist for every small change. No hooks or enforcement are implied.
 
 1. Define audience, user problem, value proposition, primary conversion, constraints and brand direction.
 2. Inspect existing design system and user flows before introducing new dependencies.
