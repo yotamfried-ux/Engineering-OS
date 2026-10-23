@@ -6,6 +6,7 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 |---|---|---|---|
 | Build a customer-facing app or website | `docs/product-experience/README.md` | `templates/`, `patterns/`, architecture, accessibility, privacy and testing routes as relevant | design rationale + representative UX/technical evidence |
 | Design premium UI, motion or 3D experiences | `docs/product-experience/premium-motion-and-design-systems.md` | platform design systems, performance and accessibility guidance | responsive prototype + reduced-motion and performance review |
+| Write or improve human customer-facing text | `docs/product-experience/human-centered-ux-writing.md` | product voice, content design and UX research as relevant | clear, accurate, accessible copy matched to context |
 | Improve onboarding, forms, conversion or usability | `docs/product-experience/ux-research-conversion.md` | product analytics guide + research and accessibility references | user journey + hypothesis + usability evidence |
 | Measure growth, retention or experiment on conversion | `docs/product-experience/analytics-experimentation-growth.md` | UX research + privacy/compliance + instrumentation | event taxonomy, baseline and experiment interpretation |
 | Build a new application/system | `templates/` | `patterns/`, architecture guides, framework docs, reference repos | chosen architecture + implementation-specific tests |
