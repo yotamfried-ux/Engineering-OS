@@ -4,6 +4,10 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 
 | Need | First stop | Then inspect | Evidence/exit condition |
 |---|---|---|---|
+| Build a customer-facing app or website | `docs/product-experience/README.md` | `templates/`, `patterns/`, architecture, accessibility, privacy and testing routes as relevant | design rationale + representative UX/technical evidence |
+| Design premium UI, motion or 3D experiences | `docs/product-experience/premium-motion-and-design-systems.md` | platform design systems, performance and accessibility guidance | responsive prototype + reduced-motion and performance review |
+| Improve onboarding, forms, conversion or usability | `docs/product-experience/ux-research-conversion.md` | product analytics guide + research and accessibility references | user journey + hypothesis + usability evidence |
+| Measure growth, retention or experiment on conversion | `docs/product-experience/analytics-experimentation-growth.md` | UX research + privacy/compliance + instrumentation | event taxonomy, baseline and experiment interpretation |
 | Build a new application/system | `templates/` | `patterns/`, architecture guides, framework docs, reference repos | chosen architecture + implementation-specific tests |
 | Choose architecture | `docs/architecture-guides/` | `architecture-decisions/`, relevant reference repos | explicit trade-offs and target constraints |
 | Delegate/parallelize work or choose model cost | `EXECUTION-FAST-PATH.json` | `EXECUTION-FAST-PATH.md` only if explanation is needed | bounded workers + explicit cost class + deterministic verification |
@@ -29,6 +33,15 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | WhatsApp automation | `external-systems/open-wa/` | official WhatsApp/Meta route when appropriate | authorized account + representative safe action |
 | Debug known failure | `docs/troubleshooting/` | lessons + failed-solutions | reproduced cause + regression evidence |
 | Scientific/research workflow | `external-skills/scientific-agent-skills/` | authoritative domain sources | citations/data provenance + domain validation |
+
+## Cross-domain routing examples (advisory)
+
+- “Build a booking app”: combine application architecture, UX flows, accessible forms, privacy, security, instrumentation and testing as the actual scope warrants.
+- “Create a startup-quality landing page”: prioritize brand/art direction, typography, purposeful motion, mobile performance, accessibility and conversion clarity; do not assume animation improves sales.
+- “Increase checkout conversion”: prioritize user research, analytics validity, checkout friction, pricing transparency and experiment design; do not start with arbitrary color changes.
+- “Fix a backend API timeout”: prioritize troubleshooting, architecture and regression testing; skip marketing and motion docs unless relevant.
+
+This is an **index and decision aid**, not a runtime router. No hooks, automated triggers, forced tool execution or universal requirement to open every branch. Existing independent policies still apply.
 
 ## Selection rules
 
