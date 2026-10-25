@@ -14,3 +14,11 @@ Status: curated references; not installed tools. Last reviewed: 2026-10-25.
 | Qualify or publish | [Master guide](GAME-DEVELOPMENT-MASTER-GUIDE.md) | Existing `patterns/testing/`, `patterns/security/`, `docs/launch-readiness/` |
 
 Source hierarchy: official Roblox Creator Hub and Roblox GitHub > maintained upstream repositories > community examples (discovery only). Verify URLs, version, license, policy and host prerequisites before adoption. No blanket tool installs; no implicit production publishing.
+
+## Complete catalog and professional quality standards
+
+- [Full tool/source inventory and MCP classifications](TOOL-CATALOG.md)
+- [High-quality principles for every game development discipline](DOMAIN-EXCELLENCE-PLAYBOOK.md)
+- [Testing, security, policy, performance and LiveOps](QUALITY-SECURITY-LIVEOPS.md)
+
+Every suggested tool is cataloged in the inventory. Being cataloged does **not** mean installed, qualified or approved for production.
