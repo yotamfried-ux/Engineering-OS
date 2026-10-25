@@ -15,6 +15,10 @@ Status: curated references; not installed tools. Last reviewed: 2026-10-25.
 
 Source hierarchy: official Roblox Creator Hub and Roblox GitHub > maintained upstream repositories > community examples (discovery only). Verify URLs, version, license, policy and host prerequisites before adoption. No blanket tool installs; no implicit production publishing.
 
+## Player notifications and in-game system messages
+
+For HUD feedback, game announcements, purchases, moderation, safety and social messages consult [game messaging](../user-messaging/GAMES-AND-ROBLOX.md).
+
 ## Complete catalog and professional quality standards
 
 - [Full tool/source inventory and MCP classifications](TOOL-CATALOG.md)
