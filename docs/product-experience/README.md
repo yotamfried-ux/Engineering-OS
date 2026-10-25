@@ -10,6 +10,7 @@
 | Onboarding, navigation, forms, booking | [UX, research and conversion](ux-research-conversion.md) | Journey, evidence-backed flow, usability test |
 | Improve purchases, signup, retention | [Measurement and growth](analytics-experimentation-growth.md) | Event taxonomy, funnel, experiment plan |
 | Make UI accessible and fast | Premium motion + measurement guides | WCAG, reduced-motion, Web Vitals checks |
+| User notifications, system alerts, transactional email/push and reminders | [User messaging knowledge](../user-messaging/README.md) | scenario matrix, message content and delivery rules |
 | Human, natural customer-facing copy and UX writing | [Human-centered UX writing](human-centered-ux-writing.md) | Voice principles, clear interface copy, error and onboarding language |
 | Product launch strategy | UX and growth guides | Positioning, messaging, acquisition/activation metrics |
 
