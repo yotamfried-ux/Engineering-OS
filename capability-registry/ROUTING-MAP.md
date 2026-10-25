@@ -4,6 +4,7 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 
 | Need | First stop | Then inspect | Evidence/exit condition |
 |---|---|---|---|
+| Build, test, launch or grow a Roblox game | `docs/roblox/README.md` | `docs/roblox/GAME-DEVELOPMENT-MASTER-GUIDE.md`; task-specific engineering, art, monetization, MCP/skills guides | prototype, authoritative source checks, device/multiplayer tests, safety and launch evidence |
 | Build a customer-facing app or website | `docs/product-experience/README.md` | `templates/`, `patterns/`, architecture, accessibility, privacy and testing routes as relevant | design rationale + representative UX/technical evidence |
 | Design premium UI, motion or 3D experiences | `docs/product-experience/premium-motion-and-design-systems.md` | platform design systems, performance and accessibility guidance | responsive prototype + reduced-motion and performance review |
 | Write or improve human customer-facing text | `docs/product-experience/human-centered-ux-writing.md` | product voice, content design and UX research as relevant | clear, accurate, accessible copy matched to context |
