@@ -65,6 +65,7 @@ High-value entry points:
 
 Search this repository by **the job you need to accomplish**. The physical paths below are retained for provenance and precise GitHub search, while this catalog supplies the use-oriented mental model.
 
+- Releasing/publishing a web app, SaaS, Android/iOS app or other public-facing product → use [pre-launch and app store publication](./capability-registry/release-readiness/README.md), with current Google/Apple official requirements, test-account eligibility, metadata, privacy, launch and rollback evidence. This expands the existing Google Play wrapper rather than replacing it.
 - Building something new → start with `templates/`, `patterns/`, `docs/frameworks/`, `docs/reference-repositories/`, and `docs/official-docs/`.
 - Delegating work / choosing an agent or model → start with `capability-registry/EXECUTION-FAST-PATH.json`; prefer no-LLM/local execution when it can be independently verified.
 - Giving an AI agent a capability → search `external-skills/` and relevant AI patterns.

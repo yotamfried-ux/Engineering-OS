@@ -35,6 +35,7 @@ For any user-facing app/site/API or production release, consult `docs/launch-rea
 - Agent capabilities/execution: `capability-registry/EXECUTION-FAST-PATH.json` first; then `capability-registry/`, `external-skills/` only as needed
 - External services: `external-systems/`
 - Testing/qualification: `patterns/testing/FAST-PATH.json` first; then `patterns/testing/`, `templates/testing/` only as needed
+- Pre-launch and store publication (any user-facing software): `capability-registry/release-readiness/README.md` first, then universal gate + Google Play / Apple App Store / website + reviewer pack and evidence as applicable. Check official current sources for dynamic SDK/testing/declarations and do not claim platform approval before official status.
 - Security: `patterns/security/`, `capability-registry/security/`, `templates/security/`
 - Troubleshooting: `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`
 - Reference implementations: `docs/reference-repositories/`
