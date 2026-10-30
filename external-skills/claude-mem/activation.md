@@ -1,188 +1,52 @@
-# claude-mem — Activation
+# claude-mem — Claude Code activation
 
-## Prerequisites
+claude-mem supplies optional **cross-session memory**. Installing it is not inherently a token saving: context injection, storage/retention, indexing and optional model providers carry overhead and privacy implications. Use it when repeated reconstruction demonstrably outweighs those costs.
 
-| Requirement | Notes |
-|---|---|
-| **Node.js >= 20** | Required by the npm CLI and worker |
-| **Bun** | Runtime for the worker service; auto-installed by claude-mem on first run if absent |
-| **uv** | Python package manager used internally; auto-installed by claude-mem on first run if absent |
-| **SQLite3** | Storage backend; typically pre-installed on macOS and most Linux distros |
-| **Claude Code CLI** | Authenticated and working |
-| **ANTHROPIC_API_KEY** | Required for the Stop-hook summarization step; can be overridden with `CLAUDE_MEM_ANTHROPIC_API_KEY` |
-| **Port 37777 available** | The background worker binds to this port on localhost |
+## One-time install (persistent Claude Code host)
 
-> If Bun or uv auto-installation is restricted in your environment, install them manually
-> before running `npx claude-mem install`:
-> - Bun: https://bun.sh/docs/installation
-> - uv: https://docs.astral.sh/uv/getting-started/installation/
+Check the current [upstream installation guide](https://github.com/thedotmack/claude-mem/blob/main/docs/public/installation.mdx) and [releases](https://github.com/thedotmack/claude-mem/releases) before making changes. These steps are **not** carried out by cloning Engineering-OS.
 
----
+Inside Claude Code:
 
-## Install
-
-### Option A — Plugin marketplace (recommended)
-
-Run both commands **inside Claude Code** (the chat interface):
-
-```
+```text
 /plugin marketplace add thedotmack/claude-mem
 /plugin install claude-mem
 ```
 
-Then **restart Claude Code**. On next start, the plugin registers:
-- All lifecycle hooks (`plugin/hooks/hooks.json`)
-- The `mcp-search` MCP server (`plugin/.mcp.json`)
-- All 16 skills under `plugin/skills/`
-- The background worker (auto-started by the Setup/SessionStart hooks)
-
-No manual edits to `settings.json` or `.mcp.json` are required.
-
-### Option B — npx (outside Claude Code, e.g., from a terminal)
+Or from a terminal, to run the upstream installer and ensure a working hook launcher:
 
 ```bash
-npx claude-mem install
+npx claude-mem@latest install
 ```
 
-Optional flags:
+Use **one** installation route for a working setup. If marketplace-only setup is missing runtime dependencies or launcher, the upstream installer/repair command may be needed; do not blindly duplicate registration. Restart Claude Code after installation or changing PATH. Do **not** use `npm install -g claude-mem` as a substitute: that installs the SDK/library, not the plugin hooks.
+
+Recent upstream versions implement native launcher / exec-form hooks. They require a compatible Claude Code; when the host is older, upgrade Claude Code rather than assuming memory is active. On Windows the launcher is placed in the user-local `claude-mem\bin` directory; on Linux/macOS normally `~/.local/bin`. Do not write machine-specific paths into a shared repository.
+
+## Verify actual activation
 
 ```bash
-npx claude-mem install --ide gemini-cli    # for Gemini CLI instead of Claude Code
-npx claude-mem install --ide opencode      # for OpenCode
+claude --version
+claude plugin list
+npx claude-mem doctor
 ```
 
-This performs the same registration as Option A but from a shell prompt.
+Confirm that the plugin is enabled, hook launcher resolves correctly on PATH, and the worker is healthy. Open **a fresh session**, then verify retrieval of one known **non-sensitive** prior observation. Do not interpret successful installation alone as proof of recall. The worker's port may be configured/dynamic; consult its actual state/logs rather than always assuming 37777.
 
-### What NOT to do
+## Privacy, cost, and scope
 
-```bash
-# DO NOT use this — installs the SDK library only, NOT the plugin or hooks:
-npm install -g claude-mem
-```
+- Review what the `PostToolUse`, `SessionStart`, prompt and session-summary hooks capture; exclude secrets, credentials and sensitive tool outputs.
+- The local data directory is normally `~/.claude-mem/`, but configured providers, sync or summarization can send data outside the machine or incur API cost. Confirm the **actual provider**; do not assert that all processing is local or that an API key is always required.
+- Limit context injection to relevant observations and verify source-of-truth from current code/test results.
+- Check project separation and memory reset/export controls before relying on cross-project recall.
+- On disposable cloud containers, cross-session memory may not persist; document this as a host limitation rather than reinstalling every session.
 
----
+## Updates / repair
 
-## Verify Presence
+A marketplace update or `npx claude-mem update` is an intentional maintenance action, **not a per-session startup task**. After changes, run `npx claude-mem doctor` and re-test on a fresh session. Consult upstream diagnostics for incompatible hooks, launcher shadowing or missing dependencies.
 
-After install and restart, confirm all components are active:
+## Disable
 
-### 1. Plugin and hooks registered
+Disable or uninstall using the supported `/plugin` commands or `npx claude-mem uninstall`. Stored memory may remain in `~/.claude-mem/`; check and export data before any deletion. Do not delete the memory directory automatically.
 
-In a Claude Code session, run:
-
-```
-/plugin list
-```
-
-`claude-mem` should appear in the installed plugins list.
-
-### 2. Worker reachable
-
-From a terminal:
-
-```bash
-curl -s http://localhost:37777/health
-```
-
-Expected response: a JSON object with `{ "status": "ok" }` or similar. If the port is
-not responding, the worker may not have started. Trigger it by opening a Claude Code
-session (the SessionStart hook starts the worker) or run:
-
-```bash
-npx claude-mem start
-```
-
-### 3. MCP server available
-
-Inside a Claude Code session, the `mcp-search` server should be listed when you check
-available MCP tools. Confirm by asking Claude:
-
-> "What MCP tools are available?" — `search`, `timeline`, and `get_observations` from
-> `mcp-search` should appear.
-
-### 4. Memory web viewer (optional)
-
-Open `http://localhost:37777` in a browser. The worker serves a web UI for browsing
-captured observations and summaries.
-
----
-
-## Config / Secrets
-
-### Core environment variables
-
-| Variable | Purpose | Default |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | Used for session summarization (Stop hook) | Must be set |
-| `CLAUDE_MEM_ANTHROPIC_API_KEY` | Override for a separate key dedicated to claude-mem | Falls back to `ANTHROPIC_API_KEY` |
-| `CLAUDE_MEM_AUTH_MODE` | Authentication mode for the worker HTTP API | `none` (localhost only) |
-| `CLAUDE_MEM_MODE` | Storage mode: `sqlite` (default) or `chroma` | `sqlite` |
-
-### Context injection tuning
-
-| Variable | Purpose |
-|---|---|
-| `CLAUDE_MEM_CONTEXT_MAX_TOKENS` | Maximum tokens injected at SessionStart |
-| `CLAUDE_MEM_CONTEXT_MAX_OBSERVATIONS` | Maximum number of observations to inject |
-| `CLAUDE_MEM_CONTEXT_RECENCY_WEIGHT` | Weight given to recency vs. relevance in ranking |
-
-### Chroma vector DB (optional)
-
-| Variable | Purpose |
-|---|---|
-| `CLAUDE_MEM_CHROMA_HOST` | Chroma server host |
-| `CLAUDE_MEM_CHROMA_PORT` | Chroma server port |
-| `CLAUDE_MEM_CHROMA_COLLECTION` | Collection name to use |
-| `CLAUDE_MEM_CHROMA_AUTH_TOKEN` | Auth token if Chroma requires authentication |
-
-### Settings file
-
-Auto-created at first run:
-
-```
-~/.claude-mem/settings.json
-```
-
-Manual edits to this file are supported. The file controls the same options as the
-environment variables above and takes lower precedence than env vars.
-
----
-
-## Disable / Uninstall
-
-### Stop the worker (without uninstalling)
-
-```bash
-npx claude-mem stop
-```
-
-The worker will not restart until a new Claude Code session is opened (SessionStart hook).
-
-### Uninstall via plugin command
-
-Inside Claude Code:
-
-```
-/plugin uninstall claude-mem
-```
-
-Then restart Claude Code. This removes the plugin registration, hooks, MCP server config,
-and skills. It does NOT delete `~/.claude-mem/` or its stored data.
-
-### Uninstall via npx
-
-```bash
-npx claude-mem uninstall
-```
-
-### Delete stored memory
-
-To wipe all captured observations, summaries, and the SQLite database:
-
-```bash
-rm -rf ~/.claude-mem/
-```
-
-This is irreversible. There is no export-before-delete step built in; if you want to
-preserve data, copy the directory first.
-
+Also see [the host-wide token efficiency guide](../../docs/CLAUDE-TOKEN-EFFICIENCY.md).
