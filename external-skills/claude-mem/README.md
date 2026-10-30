@@ -7,7 +7,7 @@ generates semantic summaries, and injects prior context into future sessions.
 
 - **Repo:** https://github.com/thedotmack/claude-mem
 - **License:** Apache-2.0
-- **Version verified against:** v13.6.1
+- **Upstream stable release checked 2026-10-30:** v15.6.0 (the historical host qualification is separate; no new local host test is implied)
 
 ## What it ships
 
@@ -32,8 +32,7 @@ SessionStart hook  → injects prior context into the new session
 UserPromptSubmit   → enriches prompt with relevant memories
 ```
 
-Storage is **local disk only** (`~/.claude-mem/`). Nothing is sent to a remote service
-unless Chroma is explicitly configured.
+Observations and summaries have a local data directory (`~/.claude-mem/`), **but processing and optional memory providers can use remote APIs or hosted sync** depending on configuration. Review the current provider selection, data policy and cost before enabling automatic capture.
 
 ## Status
 
@@ -57,7 +56,7 @@ unless Chroma is explicitly configured.
 **Alternative (npx):**
 
 ```bash
-npx claude-mem install
+npx claude-mem@latest install
 # Optional: npx claude-mem install --ide gemini-cli
 ```
 
@@ -69,12 +68,9 @@ Full prerequisites, verification, and config: [activation.md](./activation.md).
 
 ## Privacy
 
-All observations and summaries are persisted to **`~/.claude-mem/`** on local disk.
-The background worker exposes a web viewer at `http://localhost:37777`.
+A local data directory is normally used at **`~/.claude-mem/`**, but external processing/sync depends on configured provider. The worker usually exposes a localhost web UI; discover its actual port from the current runtime rather than assuming that `37777` is always configured.
 
-To exclude sensitive content from capture, wrap it in `<private>` tags in your prompts.
-Sensitive file paths, credentials, or personal data should never appear outside `<private>`
-blocks if you do not want them recorded.
+Do not assume that wrapping text in `<private>` tags alone protects every file, tool output or provider path. Check the current redaction and capture settings and keep credentials and sensitive data out of prompts/tool output whenever possible. Use `npx claude-mem doctor` after an install/upgrade to verify hooks and launcher.
 
 ---
 
