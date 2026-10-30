@@ -3,8 +3,8 @@
 **מה זה:** CLI proxy חד-קובץ (Rust binary, zero dependencies) שמיירט פלטי Bash
 ומכווץ אותם לפני שנכנסים ל-LLM context. חיסכון מצוי: **60–90%** על פלטי dev tools.
 
-**מקור:** https://github.com/rtk-ai/rtk (MIT)
-**גרסה נוכחית:** `rtk 0.42.2`
+**מקור:** https://github.com/rtk-ai/rtk (upstream licensing uses Apache-2.0 / BUSL-1.1 editions; review before adoption)
+**גרסה יציבה עדכנית ב-upstream שנבדקה ב-2026-10-30:** `rtk 1.1.0` — גרסת ה-install-once manager המאומתת בנפרד היא `0.49.0` (אין לבלבל בין latest ל-qualified).
 
 ---
 
@@ -34,10 +34,11 @@ Claude Code built-in tools — **Read**, **Grep**, **Glob** — לא עוברי�
 ```bash
 # macOS
 brew install rtk
-# Linux / WSL / כל מקום עם cargo
+# Linux / WSL / Windows / כל מקום עם cargo
 cargo install --git https://github.com/rtk-ai/rtk
 # רישום hook גלובלי (חד-פעמי)
-rtk init -g
+rtk init -g --dry-run    # inspect changes first
+rtk init -g              # one-time: approve global hook registration
 ```
 
 לפרטים מלאים: [`activation.md`](./activation.md).
