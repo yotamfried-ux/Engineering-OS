@@ -6,8 +6,8 @@
 
 ## Source
 
-- **Repository:** https://github.com/Graphify-Labs/graphify (canonical; the former `safishamsi/graphify` identity resolves to the same HEAD, and PyPI `graphifyy` 0.9.66 declares this repository — verified 2026-09-23)
-- **License:** MIT (Safi Shamsi)
+- **Repository:** https://github.com/Graphify-Labs/graphify (canonical; the former `safishamsi/graphify` identity resolves to the same HEAD, and PyPI `graphifyy` 0.9.66 declared this repository — historical verification 2026-09-23; upstream stable release 0.9.96 checked 2026-10-30, not host-qualified here)
+- **License:** confirm the current upstream repository license before packaging or redistribution; do not rely on the old MIT claim
 - **PyPI package name:** `graphifyy`
 
 ---
@@ -36,7 +36,7 @@ Graphify is a combination of four things in one package:
 |---|---|
 | **Wrapper status** | Active |
 | **Type tags** | `context-optimization`, `code-intelligence` |
-| **Execution Level** | **Level 1 — Recommended default-on** for non-trivial and large repos |
+| **Execution Level** | **Level 1 — Use when beneficial** for non-trivial and large repos; no per-session rebuild mandate |
 
 **Cost-saving purpose:** Instead of passing entire files into context, Graphify returns a selective subgraph of only the nodes and edges relevant to a query. On large or multi-language repositories this meaningfully reduces token usage per turn.
 

@@ -33,7 +33,7 @@ The architectural statement in the project's own ARCHITECTURE.md: *"graphify is 
 
 Graphify is a **context-optimization layer** that runs **first and cross-cutting**:
 
-1. **Build or refresh the graph** at the start of a work session or after a gap (run `graphify extract .` or `/graphify .`).
+1. **Use Graphify only when the repository-navigation task merits it.** Query an existing fresh graph, or build/refresh on demand if missing or stale. Do not rebuild automatically at every session start.
 2. **Query the subgraph** throughout the session — before opening files, before writing code, before reviewing a PR.
 3. **Read files selectively** based on what the subgraph surfaces, rather than reading broadly.
 4. The post-commit hook (`graphify hook install`) keeps the graph incrementally fresh so graph queries remain trustworthy across commits.
@@ -95,7 +95,7 @@ The net effect: Claude spends fewer tokens on exploration and more tokens on the
 
 Graphify occupies the **context-optimization** role in the skill composition stack:
 
-- **Runs first** — build or verify the graph before starting planning, coding, or review.
+- **Runs when helpful** — use a fresh graph early for complex codebase navigation, not for trivial tasks or every session.
 - **Cross-cutting** — informs every subsequent phase; not limited to a single stage.
 - **Feeds planning** — use `query_graph` and `god_nodes` to understand the landscape before writing a plan.
 - **Feeds coding** — use `get_neighbors` and `shortest_path` to locate the right insertion points.

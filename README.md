@@ -47,6 +47,8 @@ Total catalogued knowledge assets: **323** (plus this catalog).
 
 ### Cross-cutting goal: reduce context and token cost
 
+For **Claude Code setup that survives new sessions across projects**, see [the one-time host setup and verification guide](docs/CLAUDE-TOKEN-EFFICIENCY.md). GitHub instructions alone do not register global hooks or verify local tools.
+
 This is not a separate technical asset type. The whole library is intended to avoid rediscovery: search for an existing pattern, example, integration guide, lesson, or reference before researching or generating the same knowledge again. Especially useful starting points are `external-skills/`, `external-systems/`, `patterns/`, `templates/`, and `docs/reference-repositories/`.
 
 
