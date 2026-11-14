@@ -28,22 +28,49 @@ model license and quality constraints still apply. Never label a provider/model
 
 ## When to delegate
 
-**Mandatory delegation trigger:** when a task contains at least three bounded
-workstreams, decompose them before continuing serially. If at least two remain
-independent/read-only and a qualified worker route is already available, delegate
-at least one bounded workstream. Prefer `none`/`local` workers; use an included
-host-native worker only when it materially improves wall-clock/context cost.
+**Decompose first, but do not force hosted delegation.**
 
-Skip delegation only for an explicit allowed reason from
-`EXECUTION-FAST-PATH.json`. "The review needs shared project context" is not a
-sufficient reason by itself: first carve out bounded read-only slices such as
-independent module review, log triage, candidate-test generation, or docs drift.
+When a task contains at least three bounded workstreams, identify independent
+read-only slices. Delegation is mandatory only when a ready `none`/local route can
+run a slice with deterministic verification and without disproportionate setup.
 
-Record every material routing/delegation decision using the compact schema in
-`capability-registry/EXECUTION-TRACE.json`. Include the exact `entry_point`,
-`route_key`, trigger, candidates, cost class, delegation decision and verification
-gate. A whole-project qualification report is incomplete until its required
-records are present.
+A hosted subagent is **never required merely to satisfy delegation**. Before
+using an included/paid hosted worker, all conditions in
+`hosted_delegation_roi_gate` from `EXECUTION-FAST-PATH.json` must hold:
+
+1. deterministic/static tooling cannot answer the residual question;
+2. no qualified local worker is ready, or it failed a task-specific quality gate;
+3. the worker receives a narrow immutable packet and explicit output contract;
+4. expected hosted token/context cost is materially lower than coordinator work;
+5. the result will be independently verified.
+
+### Hosted worker context budget
+
+Default worker packet:
+
+- the exact question;
+- only the relevant diff/hunks;
+- at most five directly relevant files;
+- no broad repository history or project recap unless an ROI rationale is recorded.
+
+Keep the default text packet at or below 32 KiB and request at most about 1,200
+output tokens. If broader context is needed, split the task, retrieve only the
+missing evidence, use a qualified local worker, or keep the work in the
+coordinator.
+
+### Documentation consistency
+
+Treat documentation consistency/drift as a deterministic task first: exact
+search, schema/contract tests, static assertions, and diff-based checks. A hosted
+worker is justified only for a residual semantic question that survives those
+checks and passes the hosted ROI gate.
+
+If a hosted worker returns low-confidence or unverified findings, verify them in
+the coordinator and do not launch another hosted worker for the same slice.
+
+Record every material routing/delegation decision using
+`capability-registry/EXECUTION-TRACE.json`. A whole-project qualification report
+is incomplete until its required records are present.
 
 Delegate only if the subtask has a clear input, output and acceptance check.
 
