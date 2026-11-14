@@ -44,19 +44,19 @@ claude mcp add --transport stdio graphify -- graphify-mcp "$PWD/graphify-out/gra
 
 `python -m graphify.serve` only works inside the tool's own environment; after `uv tool install` use the installed `graphify-mcp` entry point with an absolute graph path. Headless `graphify extract .` needs an LLM API key for non-code files — use `graphify extract . --code-only` for a keyless, local-only code graph. `graphify hook install` also writes `.gitattributes` and a `merge.graphify` git config; in repositories that do not commit `graphify-out/`, remove both and add `graphify-out/` to `.git/info/exclude`. Live evidence: [2026-09-23 host qualification](../../capability-registry/evaluations/2026-09-23-claude-code-cloud-host-qualification.md).
 
-### Step 4 — Install the post-commit hook (strongly recommended)
+### Step 4 — Optional: install a post-commit hook if compatible with the target repository
 
 ```bash
 graphify hook install
 ```
 
-This keeps the graph incrementally updated after each commit so graph queries stay fresh.
+This can keep the graph incrementally updated, but it modifies repository Git configuration and may write files. Use it only when appropriate; otherwise refresh the graph on demand when the source changed.
 
 ### Step 5 — Build the initial graph
 
 ```bash
-# From the repo root
-graphify extract .
+# From the target code repository, only when a graph is useful
+graphify extract . --code-only    # no provider key; omit --code-only only when semantic extraction is intentionally enabled
 
 # Or via the Claude Code skill
 /graphify .
@@ -66,11 +66,11 @@ graphify extract .
 
 ## Verify Presence
 
-Run these checks after installation to confirm everything is wired correctly:
+Run the applicable checks after installation; MCP is optional, so its absence is not a failure when only the CLI+skill is adopted:
 
 | Check | Command | Expected outcome |
 |---|---|---|
-| CLI on PATH | `graphify --version` | Prints version (e.g. `0.8.40`) |
+| CLI on PATH | `graphify --version` | Prints installed version; compare with upstream as needed |
 | Graph built | `ls graphify-out/graph.json` | File exists and is non-empty |
 | MCP server connected | In Claude Code: check MCP server list | `graphify` appears as connected |
 | Skill available | In Claude Code chat: type `/graphify` | Autocomplete shows the command |
