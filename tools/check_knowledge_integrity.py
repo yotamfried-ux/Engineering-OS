@@ -147,6 +147,25 @@ if exec_json.exists():
     trigger=exec_data.get("delegation_trigger",{}) if isinstance(exec_data,dict) else {}
     if trigger.get("must_delegate") is not True or not trigger.get("must_delegate_when"):
         errors.append("execution routing: qualified delegation trigger is not enforced")
+    if trigger.get("hosted_delegation_mandatory") is not False:
+        errors.append("execution routing: hosted delegation must never be mandatory")
+    if "Never spawn a hosted subagent" not in trigger.get("decision_rule",""):
+        errors.append("execution routing: hosted delegation compliance guard missing")
+    roi=exec_data.get("hosted_delegation_roi_gate",{}) if isinstance(exec_data,dict) else {}
+    if roi.get("default") != "deny":
+        errors.append("execution routing: hosted delegation ROI gate must default deny")
+    requirements=roi.get("all_required")
+    if not isinstance(requirements,list) or len(requirements) < 5:
+        errors.append("execution routing: hosted delegation ROI gate is incomplete")
+    context_budget=roi.get("worker_context_budget",{})
+    if context_budget.get("max_text_bytes_default",0) > 32768:
+        errors.append("execution routing: hosted worker default context budget exceeds 32 KiB")
+    output_budget=roi.get("worker_output_budget",{})
+    if output_budget.get("default_max_tokens",0) > 1200:
+        errors.append("execution routing: hosted worker default output budget exceeds 1200 tokens")
+    docs_route=(exec_data.get("routes") or {}).get("documentation_consistency",{})
+    if docs_route.get("cost") != "none":
+        errors.append("execution routing: documentation consistency must default to deterministic/no-model")
 ci_doc=(ROOT/"capability-registry/CI-CONTINUATION.md").read_text("utf-8")
 for phrase in ("Same-session host subscription first", "do **not** add a timer", "workflow_run"):
     if phrase not in ci_doc:
