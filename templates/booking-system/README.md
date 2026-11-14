@@ -3,6 +3,10 @@
 ## Overview
 Use this template for reservation and scheduling platforms — appointment booking, room/resource reservations, class registrations, or any system where a finite resource is claimed for a time slot. The central challenge is preventing double-booking under concurrent load while keeping availability queries fast. Secondary concerns are calendar sync, automated reminders, and graceful cancellation/refund handling.
 
+## Customer experience and content
+
+This template covers booking infrastructure. For audience-aware design, real Hebrew or localized microcopy, conversion without dark patterns, full screen state coverage and accessible interaction, follow [the booking experience worked example](../../docs/ui-ux/EXAMPLE-BOOKING-EXPERIENCE.md) and [experience routing](../../docs/ui-ux/EXPERIENCE-ROUTING.md). Backend-confirmed booking status must control user-visible success; do not imply a selected slot has been booked before the server commits it.
+
 ## Recommended Architecture Options
 - **PostgreSQL advisory locks or SELECT FOR UPDATE** — Simple, no extra infrastructure; sufficient for moderate load (< 1,000 concurrent bookings/s); locks held for the duration of the write transaction.
 - **Optimistic concurrency with version column** — Lower contention; booking fails if slot was claimed between read and write; client retries; good when conflicts are rare.
