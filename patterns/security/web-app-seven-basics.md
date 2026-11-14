@@ -1,0 +1,5 @@
+# Seven web application security failure modes — official verification route
+
+Canonical references: https://owasp.org/www-project-application-security-verification-standard/ ; https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html ; https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html ; https://supabase.com/docs/guides/database/postgres/row-level-security ; https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security
+
+Review: (1) secrets embedded in browser bundles; (2) accidentally served .env files; (3) client-only login checks; (4) object-level authorization/IDOR by changing IDs; (5) missing or permissive RLS where applicable; (6) hidden but unprotected admin endpoints; (7) missing/incorrect HTTPS and transport security. Verify each with server-side tests and actual authorization decisions. RLS is a database-specific defense, not a universal requirement for every database architecture; HTTPS does not replace application authorization. Never scan unauthorized targets. Report evidence and residual gaps rather than blanket security certification.
