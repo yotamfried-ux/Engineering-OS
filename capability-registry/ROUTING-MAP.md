@@ -37,6 +37,13 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Choose React UI motion/component libraries | `docs/product-experience/ui-library-candidates-2026.md` | premium-motion-and-design-systems guide | upstream identity, license, accessibility and reduced motion verified |
 | Review GDPR, cookies and personal-data consent | `docs/product-experience/gdpr-official-guidance.md` | legal/privacy docs and official EDPB/EUR-Lex | processing map, jurisdiction review and actual tracker tests |
 | Evaluate autonomous penetration testing | `patterns/security/pentagi-candidate.md` | OWASP ASVS/WSTG + existing security qualification route | authorization, isolated target, sandbox and version attestation |
+| Evaluate multi-agent company control planes | `capability-registry/discoveries/paperclip-agent-management.md` | existing Engineering-OS orchestration and governance | independent cost/security/functionality comparison |
+| Untangle codebase dependencies | `capability-registry/discoveries/untangle-codebase-skill.md` | current code navigation and architecture tools | upstream verified and tests pass |
+| Learn robotics fundamentals | `docs/robotics/learning-roadmap.md` | ROS, MuJoCo, Arduino and LeRobot | safe reproducible simulation |
+| Learn DNS, TCP, TLS and HTTP packet flow | `docs/networking/protocol-explorer-reference.md` | RFC specifications | protocol behavior verified against specifications |
+| Evaluate relational predictive foundation models | `docs/ai/kumo-relational-prediction.md` | NVIDIA SDGM docs and baseline models | time-split validation and licensing |
+| Find buyer-intent discussions | `capability-registry/discoveries/leadsrun-buying-intent.md` | lead generation workflows | vendor/API verification, human-approved outreach |
+| Research open-source product concepts | `docs/product-experience/open-source-product-ideas.md` | upstream repos and licensing | source and market validation |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
