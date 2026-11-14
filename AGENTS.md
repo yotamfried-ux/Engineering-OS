@@ -29,12 +29,15 @@ For a task that crosses disciplines, use the routing map to consider adjacent kn
 
 For any user-facing app/site/API or production release, consult `docs/launch-readiness/README.md` and `docs/launch-readiness/twenty-checks.md`. For Israel-operated products, privacy, consumer terms, marketing, payments, UGC or AI claims, consult `docs/legal-compliance/README.md`. Classify applicability before implementation; do not claim compliance without legal review or PASS without revision-specific test evidence.
 
+- **Legal/privacy/consumer/compliance on EVERY audience-facing product:** start with `docs/legal-compliance/APPLICABILITY-AND-ROUTING.md` before drafting policies, activating trackers, shipping payments, handling personal data, adding new processors, AI-generated content or publishing a product. Read only applicable domain documents; never treat templates as approved legal advice. Legal owner review is required for binding public text.
 ## Main knowledge domains
 
+- User-facing product experience (ALL channels, not just frontend code): `docs/ui-ux/EXPERIENCE-ROUTING.md` first; load only matching content/source/motion/quality/booking docs; add audience, copy, interaction and evidence deliverables. Existing `patterns/ui/` and `external-skills/ui-ux-pro-max/` remain complementary.
 - Build/architecture: `templates/`, `patterns/`, `docs/architecture-guides/`, `docs/frameworks/`
 - Agent capabilities/execution: `capability-registry/EXECUTION-FAST-PATH.json` first; then `capability-registry/`, `external-skills/` only as needed
 - External services: `external-systems/`
 - Testing/qualification: `patterns/testing/FAST-PATH.json` first; then `patterns/testing/`, `templates/testing/` only as needed
+- Pre-launch and store publication (any user-facing software): `capability-registry/release-readiness/README.md` first, then universal gate + Google Play / Apple App Store / website + reviewer pack and evidence as applicable. Check official current sources for dynamic SDK/testing/declarations and do not claim platform approval before official status.
 - Security: `patterns/security/`, `capability-registry/security/`, `templates/security/`
 - Troubleshooting: `docs/troubleshooting/`, `lessons-learned/`, `failed-solutions/`
 - Reference implementations: `docs/reference-repositories/`
