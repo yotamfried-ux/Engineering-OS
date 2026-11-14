@@ -3,43 +3,25 @@
 ## Classification
 
 ```yaml
-type:
-  - context-optimization
-execution_level: LEVEL_2   # mandatory — default on every project
-default_profile: default   # installed in every standard project
+type: [context-optimization]
+execution_level: LEVEL_2 # transparently on, where a compatible Claude Code hook is installed
+activation_scope: host-global-once
 ```
 
-## נימוק LEVEL 2
+RTK reduces token cost for supported shell output when its **PreToolUse hook is actually active**. The 60–90% figure is an upstream estimate, not a verified saving for every project or command.
 
-RTK חוסך 60–90% טוקנים על פלטי Bash. אין עלות לשימוש בו (רץ שקוף).
-העלות של **אי-שימוש** — עלות טוקנים גבוהה בלי ערך מוסף.
-לכן: mandatory ב-**כל פרויקט**, ללא יוצא מן הכלל.
+## Use and safeguards
 
-## Composition (מיקום ב-pipeline)
+- On a persistent host, install and configure the Claude Code native hook **once** with `rtk init -g`. Verify with `rtk init --show` and a real harmless Bash execution.
+- The hook rewrites supported Bash commands; **Read**, **Grep**, **Glob** and other non-Bash tools are outside its scope.
+- Do not reinstall, reinitialize or upgrade on every session start. Existing global hook registration carries across projects.
+- When precision matters, use unfiltered output (e.g. `rtk proxy <command>` where supported, or the direct command) and preserve full evidence for logs, security reviews, failures, and tests.
+- If the tool is missing, incompatible, or the hook is disabled, report this and continue safely; never claim a reduction without measured evidence.
+- Review RTK edition and license for your use case. Newer upstream releases include Apache-2.0 and BUSL-1.1 editions; do not repeat the previous blanket MIT claim.
 
-```
-context-optimization layer (graphify + RTK)  ← RTK כאן
-  └── graphify: שולף subgraph במקום grep
-  └── RTK:     מכווץ פלטי Bash
-      ↓
-memory layer (claude-mem)
-      ↓
-planning → coding → SECURITY GATE → review
-```
+RTK provides output compression; it never replaces required testing, security, or review steps.
 
-RTK ו-graphify הם **שכבת context-optimization**: רצים מתחת לכל ה-pipeline,
-לא בשלב ספציפי אחד.
+## Upstream
 
-## Override Rule
-
-RTK הוא utility layer — אינו יכול לעקוף סקילים אחרים ואינו יכול להיעקף.
-אם RTK מסנן פלט חיוני: `rtk proxy <cmd>` לעקיפה מבוקרת.
-
-## Hook registration
-
-RTK מתווסף כ-PreToolUse hook ב-`.claude/settings.json` (project level):
-```json
-{"matcher": "Bash", "hooks": [{"type": "command", "command": "rtk hook claude"}]}
-```
-
-`rtk init -g` מוסיף גם ל-~/.claude/settings.json (global, עבור כל פרויקט).
+- https://github.com/rtk-ai/rtk
+- https://github.com/rtk-ai/rtk/blob/develop/INSTALL.md

@@ -24,8 +24,8 @@ At next session start:
   UserPromptSubmit     → enriches each user prompt with memories matching the request
 ```
 
-The worker service (`worker-service.cjs`, port 37777) handles all storage operations.
-The MCP server (`mcp-search`) makes the stored context queryable during a session.
+The worker handles storage and any configured processing/sync; inspect its actual port and provider rather than relying on a hardcoded port.
+A configured MCP search interface makes stored context queryable; actual server/tool names and retrieval modes should be checked against the installed version.
 
 ## When to use
 
@@ -67,9 +67,8 @@ or how Claude reasons through a task. Its effects are:
    as part of the system prompt. Claude appears to "remember" past sessions without any
    explicit tool call by the user.
 2. **During a session:** Every tool call is silently observed and recorded. The
-   `PreToolUse(Read)` hook may prepend related prior context before file reads.
-3. **At session end:** The Stop hook triggers a summarization pass (using the configured
-   Anthropic model). This consumes API tokens and takes a few seconds.
+   Additional hooks may enrich context depending on installed plugin version.
+3. **At session end:** A summarization pass may use the configured provider or runtime. Verify local vs remote processing, data handling, and token/credit usage before enabling capture.
 4. **Between sessions:** No effect — the worker runs in the background, holding the
    SQLite store open.
 
@@ -115,9 +114,6 @@ Invoked through the Claude Code `Skill` tool when available:
 - **Relationship to superpowers:** superpowers provides planning discipline for individual
   tasks; claude-mem provides continuity across tasks and sessions. They are complementary
   and non-conflicting.
-- **Relationship to security skills:** claude-mem does not override security-review or
-  any security gate. `<private>` exclusions in prompts are the mechanism to keep
-  security-sensitive content out of the memory store.
+- **Relationship to security skills:** claude-mem does not override any security gate. Do not assume prompt-level private tags cover tool outputs or every provider path; evaluate actual capture/redaction settings.
 - **Relationship to quality gates:** claude-mem supplies context only. It does not certify correctness or replace the target project's own tests, review rules, or CI gates.
-- **Storage ownership:** all data is owned by the local user at `~/.claude-mem/`. The
-  system does not phone home. Chroma integration is opt-in.
+- **Storage and providers:** local data is commonly stored at `~/.claude-mem/`, but optional remote processing, sync and other providers must be explicitly reviewed. Do not claim every configuration is local-only.

@@ -4,11 +4,11 @@
 
 | דרישה | פרטים |
 |---|---|
-| מערכת הפעלה | macOS, Linux, Windows (WSL) |
+| מערכת הפעלה | macOS, Linux, native Windows, WSL |
 | אחד מ: Homebrew / Cargo / curl | לשיטת ההתקנה המועדפת |
 | Claude Code | לרישום PreToolUse hook |
 
-אין API keys, אין secrets, אין שירותים חיצוניים.
+לא דרוש מפתח API להפעלת פילטר הפלט. בדוק את רישיון המהדורה ואת הגדרות הטלמטריה לפי upstream לפני שימוש.
 
 ---
 
@@ -34,12 +34,13 @@ cargo install --git https://github.com/rtk-ai/rtk
 ### רישום hook (חובה אחרי התקנה)
 
 ```bash
-rtk init -g
+rtk init -g --dry-run    # review intended changes
+rtk init -g              # one-time global hook setup
 ```
 
 פקודה זו:
 1. מוסיפה PreToolUse hook ל-`~/.claude/settings.json` (גלובלי)
-2. יוצרת `~/.claude/RTK.md` ומוסיפה `@RTK.md` ל-CLAUDE.md של הפרויקט
+2. במצב ברירת מחדל יוצרת קובץ מודעות קצר ומפנה אליו מתוך `~/.claude/CLAUDE.md` הגלובלי (לא מכל פרויקט). אפשר להשתמש ב-`--hook-only` אם רוצים אפס טוקנים של הנחיות RTK.
 
 
 ---
@@ -53,7 +54,7 @@ rtk gain               # shows token savings summary
 
 בדיקה שה-hook פעיל:
 ```bash
-grep -q "rtk hook" ~/.claude/settings.json && echo "hook registered" || echo "hook missing"
+rtk init --show  # inspect current hook configuration (works cross-platform)
 ```
 
 ---

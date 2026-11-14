@@ -1,5 +1,7 @@
 # Project Qualification — Proving What Actually Works
 
+For projects being published to the public or app stores, pair this engineering evidence with the [release readiness map](../../capability-registry/release-readiness/README.md) and [go/no-go evidence gate](../../capability-registry/release-readiness/RELEASE-EVIDENCE-AND-GATES.md). Store app review status, policy approval and operational rollback are additional gates; passing unit tests alone is insufficient.
+
 ## Goal
 A test run should produce an evidence-backed map of the project, not a binary "tests passed" claim. The question is: which user-visible and system capabilities were exercised on this exact revision, at which layer, with which real dependencies, and what remains untested?
 

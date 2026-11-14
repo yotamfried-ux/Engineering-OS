@@ -1,6 +1,8 @@
 # Deployment Patterns
 > Lifecycle note: use current evidence/status rules; legacy pattern scoring is historical metadata.
 
+Before any **public** release, validate applicable [universal prelaunch requirements](../../capability-registry/release-readiness/UNIVERSAL-PRELAUNCH.md) and [release evidence gate](../../capability-registry/release-readiness/RELEASE-EVIDENCE-AND-GATES.md). For Play/App Store, the store's approval and submission workflow are separate from your deployment/rollout status; for websites, Google Search indexing is not guaranteed.
+
 ## Overview
 Apply these patterns when planning how a change moves from a passing CI build into production. Choose the pattern based on risk tolerance and rollback speed requirements: blue-green for instant rollback, canary for metric-gated confidence, feature flags for decoupling deploy from release, and expand-contract for schema changes that must stay backward-compatible.
 
