@@ -54,3 +54,31 @@ Apply applicable Israeli privacy law and any relevant foreign rules before enabl
 - Experiment has pre-registered metrics and stopping rule.
 - Dashboard differentiates observed results from causal conclusions.
 - Instrumentation and experiments have rollback and privacy review.
+
+
+## Organic social content strategy: official platform documentation
+
+This section documents **official platform guidance and measurement interfaces**, not advice from social-media creators. Content strategy claims are hypotheses until measured on the target account.
+
+### Primary sources
+
+| Official source | Documented use |
+| --- | --- |
+| [YouTube Help: new, casual and regular viewers](https://support.google.com/youtube/answer/10246996/understand-returning-amp-new-viewers-data) | Audience segmentation; familiar topics, formats and branding for returning viewers |
+| [YouTube Help: audience development tips](https://support.google.com/youtube/answer/13615784) | Experimenting with topics for discovery, series for loyalty, community engagement |
+| [YouTube Help: audience analytics](https://support.google.com/youtube/answer/9314416) | Audience interests, formats watched, new and returning viewers |
+| [YouTube Help: key moments for audience retention](https://support.google.com/youtube/answer/9314415) | Retention, intros, spikes, dips and segment-level improvement |
+| [Meta Instagram Graph API: IG User Insights](https://developers.facebook.com/docs/graph-api/reference/shadow-ig-user/insights/) | Official documented metrics include reach, follows/unfollows, views, shares and saves; access, availability and metric definitions depend on account and API context |
+
+### Reusable agent workflow
+
+1. Define a target audience, topic pillars and 2-3 repeatable formats; create a content calendar with sustainable cadence. Consistency is a **strategy to test**, not a guaranteed ranking signal.
+2. Build a backlog of candidate ideas from documented audience interests, customer questions, and prior high-performing content. Track topic, angle, audience need and intended action.
+3. For each published item, record platform, format, publish time, content pillar, hook, reach/views, shares, saves, follows attributable where supported, and retention metrics where available.
+4. Compare performance within similar formats and distribution windows. Use rates with explicitly stated denominators (e.g. shares/reach, saves/reach); never conflate views, accounts reached, followers or unique viewers.
+5. Test the hypotheses that consistent series improve returning viewers, shareable ideas increase distribution, and save-worthy content correlates with future engagement. Do not assert platform algorithm causality without suitable evidence.
+6. Review weekly; keep privacy-safe aggregated data, document confounders, and avoid fabricated metrics or unapproved account access.
+
+### Evidence boundaries
+
+Official documentation supports **measurement and platform-specific creator guidance**, not a universal formula such as `shares = views` or `saves = followers`. The Instagram discovery clip is deliberately **not cited as a knowledge source**. No claims about Instagram ranking internals are made here.
