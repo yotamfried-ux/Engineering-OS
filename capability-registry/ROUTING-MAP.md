@@ -37,6 +37,13 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Choose React UI motion/component libraries | `docs/product-experience/ui-library-candidates-2026.md` | premium-motion-and-design-systems guide | upstream identity, license, accessibility and reduced motion verified |
 | Review GDPR, cookies and personal-data consent | `docs/product-experience/gdpr-official-guidance.md` | legal/privacy docs and official EDPB/EUR-Lex | processing map, jurisdiction review and actual tracker tests |
 | Evaluate autonomous penetration testing | `patterns/security/pentagi-candidate.md` | OWASP ASVS/WSTG + existing security qualification route | authorization, isolated target, sandbox and version attestation |
+| Segment and track objects in sports videos | `capability-registry/discoveries/sam3-sports-vision.md` | Meta SAM 3 upstream; ground truth validation | accuracy, identity, latency, licensing and cost verified |
+| Learn reinforcement learning with LunarLander | `docs/ai/reinforcement-learning-lunarlander.md` | Gymnasium and Stable-Baselines3 official docs | reproducible reward and held-out evaluation |
+| Evaluate repository knowledge graphs for token reduction | `capability-registry/discoveries/graphify-code-knowledge.md` | verified upstream pending; existing code navigation | full-cost benchmark and source identity verified |
+| Audit seven basic web security failure modes | `patterns/security/web-app-seven-basics.md` | OWASP, Supabase and MDN | server-side authorization and transport evidence |
+| Research open robot imitation learning and simulation | `capability-registry/discoveries/open-robotics-sourccey.md` | MuJoCo, LeRobot, Raspberry Pi | maker repo/license and simulation validation |
+| Optimize App Store and Play Store listings | `docs/product-experience/app-store-listing-optimization.md` | Apple/Google developer docs | compliant store assets and measured conversion |
+| Learn circuit-board and PCB design | `docs/hardware/pcb-design-primary-sources.md` | KiCad official docs | ERC/DRC and manufacturing/safety review |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
