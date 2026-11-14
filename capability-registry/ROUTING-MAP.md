@@ -23,6 +23,13 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Test web app | `application-testing/README.md` | Playwright, Chrome DevTools, testing knowledge map | capability matrix with evidence |
 | Test mobile app | `application-testing/README.md` | Maestro/Appium/Mobile Next + platform docs | build/install/launch + user journey + authoritative side effects |
 | Qualify whole project | `patterns/testing/project-qualification.md` | authoritative testing sources + templates | PASS/FAIL/PARTIAL/BLOCKED/NOT TESTED matrix |
+| Stress-test a business idea with simulated buyer personas | `external-skills/founder-skill/README.md` (catalog only) | real customer discovery + product analytics guide | hypotheses only; validate with actual customers |
+| Prevent double booking, overselling or concurrent state corruption | `patterns/security/race-conditions-and-atomic-booking.md` | PostgreSQL and OWASP | enforce database invariants and test concurrent requests |
+| Coordinate a specialized AI game-development team | `capability-registry/discoveries/game-studios-and-agent-reach.md` | game-development and orchestration guides | compare roles, costs and tests before adoption |
+| Read social platforms or video links with an agent | `capability-registry/discoveries/game-studios-and-agent-reach.md` | existing video URL analyzer and browser tooling | verify supported access; no auto-install |
+| Choose React UI motion/component libraries | `docs/product-experience/ui-library-candidates-2026.md` | premium motion guide | verify identity, licensing and accessibility |
+| Review GDPR, cookies and personal-data consent | `docs/product-experience/gdpr-official-guidance.md` | legal/privacy docs, EDPB and EUR-Lex | lawful-basis and jurisdiction review, actual tracker tests |
+| Evaluate autonomous penetration testing | `patterns/security/pentagi-candidate.md` | OWASP ASVS/WSTG and security qualification | authorized isolated test, sandbox and version verification |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
