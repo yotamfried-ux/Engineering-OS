@@ -22,6 +22,11 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Test web app | `application-testing/README.md` | Playwright, Chrome DevTools, testing knowledge map | capability matrix with evidence |
 | Test mobile app | `application-testing/README.md` | Maestro/Appium/Mobile Next + platform docs | build/install/launch + user journey + authoritative side effects |
 | Qualify whole project | `patterns/testing/project-qualification.md` | authoritative testing sources + templates | PASS/FAIL/PARTIAL/BLOCKED/NOT TESTED matrix |
+| Coordinate a specialized AI game-development team | `capability-registry/discoveries/game-studios-and-agent-reach.md` | existing Roblox/game-development and orchestration guides | compare roles, costs and engine tests before adoption |
+| Read social platforms or video links with an agent | `capability-registry/discoveries/game-studios-and-agent-reach.md` | existing video URL analyzer and browser tooling | supported authenticated access verified; no automatic installation |
+| Choose React UI motion/component libraries | `docs/product-experience/ui-library-candidates-2026.md` | premium-motion-and-design-systems guide | upstream identity, license, accessibility and reduced motion verified |
+| Review GDPR, cookies and personal-data consent | `docs/product-experience/gdpr-official-guidance.md` | legal/privacy docs and official EDPB/EUR-Lex | processing map, jurisdiction review and actual tracker tests |
+| Evaluate autonomous penetration testing | `patterns/security/pentagi-candidate.md` | OWASP ASVS/WSTG + existing security qualification route | authorization, isolated target, sandbox and version attestation |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
