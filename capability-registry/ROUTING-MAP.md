@@ -37,6 +37,11 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Choose React UI motion/component libraries | `docs/product-experience/ui-library-candidates-2026.md` | premium-motion-and-design-systems guide | upstream identity, license, accessibility and reduced motion verified |
 | Review GDPR, cookies and personal-data consent | `docs/product-experience/gdpr-official-guidance.md` | legal/privacy docs and official EDPB/EUR-Lex | processing map, jurisdiction review and actual tracker tests |
 | Evaluate autonomous penetration testing | `patterns/security/pentagi-candidate.md` | OWASP ASVS/WSTG + existing security qualification route | authorization, isolated target, sandbox and version attestation |
+| Decide when to split a frontend and backend | `patterns/architecture/when-to-split-backend.md` | official Next.js/Nuxt server documentation | ADR based on actual load, isolation and operations, not user count |
+| Improve short-video openings and retention | `docs/product-experience/video-hooks-and-retention-research.md` | official YouTube Analytics documentation | measured retention and ethical experiment |
+| Create 3D scenes with an AI-controlled Blender | `capability-registry/discoveries/blender-mcp-candidate.md` | Blender MCP upstream, Roblox asset/export requirements | audited isolated Python execution and licensed assets |
+| Draft Instagram creator content | `external-skills/instagram-agent-skill/README.md` | existing analytics/growth and retention references | human-reviewed copy; no auto-posting |
+| Evaluate Cloudflare multi-agent security auditing | `capability-registry/security/cloudflare-audit-skill-candidate.md` | OWASP ASVS/WSTG and existing security registry | source-backed findings and independent validation |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
