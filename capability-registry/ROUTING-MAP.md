@@ -22,6 +22,7 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Test web app | `application-testing/README.md` | Playwright, Chrome DevTools, testing knowledge map | capability matrix with evidence |
 | Test mobile app | `application-testing/README.md` | Maestro/Appium/Mobile Next + platform docs | build/install/launch + user journey + authoritative side effects |
 | Qualify whole project | `patterns/testing/project-qualification.md` | authoritative testing sources + templates | PASS/FAIL/PARTIAL/BLOCKED/NOT TESTED matrix |
+| Prevent double booking, overselling or concurrent state corruption | `patterns/security/race-conditions-and-atomic-booking.md` | PostgreSQL transaction/locking documentation; OWASP business logic testing | database invariant enforced + adversarial simultaneous requests pass on real DB |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
