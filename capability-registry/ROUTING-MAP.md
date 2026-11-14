@@ -42,6 +42,20 @@ Use this map for progressive disclosure: route by **job**, then open only the re
 | Create 3D scenes with an AI-controlled Blender | `capability-registry/discoveries/blender-mcp-candidate.md` | Blender MCP upstream, Roblox asset/export requirements | audited isolated Python execution and licensed assets |
 | Draft Instagram creator content | `external-skills/instagram-agent-skill/README.md` | existing analytics/growth and retention references | human-reviewed copy; no auto-posting |
 | Evaluate Cloudflare multi-agent security auditing | `capability-registry/security/cloudflare-audit-skill-candidate.md` | OWASP ASVS/WSTG and existing security registry | source-backed findings and independent validation |
+| Segment and track objects in sports videos | `capability-registry/discoveries/sam3-sports-vision.md` | Meta SAM 3 upstream; ground truth validation | accuracy, identity, latency, licensing and cost verified |
+| Learn reinforcement learning with LunarLander | `docs/ai/reinforcement-learning-lunarlander.md` | Gymnasium and Stable-Baselines3 official docs | reproducible reward and held-out evaluation |
+| Evaluate repository knowledge graphs for token reduction | `capability-registry/discoveries/graphify-code-knowledge.md` | verified upstream pending; existing code navigation | full-cost benchmark and source identity verified |
+| Audit seven basic web security failure modes | `patterns/security/web-app-seven-basics.md` | OWASP, Supabase and MDN | server-side authorization and transport evidence |
+| Research open robot imitation learning and simulation | `capability-registry/discoveries/open-robotics-sourccey.md` | MuJoCo, LeRobot, Raspberry Pi | maker repo/license and simulation validation |
+| Optimize App Store and Play Store listings | `docs/product-experience/app-store-listing-optimization.md` | Apple/Google developer docs | compliant store assets and measured conversion |
+| Learn circuit-board and PCB design | `docs/hardware/pcb-design-primary-sources.md` | KiCad official docs | ERC/DRC and manufacturing/safety review |
+| Evaluate multi-agent company control planes | `capability-registry/discoveries/paperclip-agent-management.md` | existing Engineering-OS orchestration and governance | independent cost/security/functionality comparison |
+| Untangle codebase dependencies | `capability-registry/discoveries/untangle-codebase-skill.md` | current code navigation and architecture tools | upstream verified and tests pass |
+| Learn robotics fundamentals | `docs/robotics/learning-roadmap.md` | ROS, MuJoCo, Arduino and LeRobot | safe reproducible simulation |
+| Learn DNS, TCP, TLS and HTTP packet flow | `docs/networking/protocol-explorer-reference.md` | RFC specifications | protocol behavior verified against specifications |
+| Evaluate relational predictive foundation models | `docs/ai/kumo-relational-prediction.md` | NVIDIA SDGM docs and baseline models | time-split validation and licensing |
+| Find buyer-intent discussions | `capability-registry/discoveries/leadsrun-buying-intent.md` | lead generation workflows | vendor/API verification, human-approved outreach |
+| Research open-source product concepts | `docs/product-experience/open-source-product-ideas.md` | upstream repos and licensing | source and market validation |
 | Security qualification | `patterns/security/README.md` | OWASP + CodeQL/SCA/secrets/config/DAST/mobile tools | scoped security evidence + residual gaps |
 | Android/Google Play readiness | `release-readiness/google-play.md` | Android reference repos + mobile/security testing | exact build/release evidence + current Play requirements |
 | Inspect generated/pipeline video output | `video-analysis/mcp-video-analyzer.md` | focused moment/frame/burst analysis; then pipeline logs/code/tests | visual defect + timestamp/frame evidence + rerun comparison |
