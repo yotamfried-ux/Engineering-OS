@@ -54,6 +54,10 @@ This is not a separate technical asset type. The whole library is intended to av
 
 - Preparing any audience-facing product for legal/privacy/consumer/contractual risk → use [Legal & Compliance knowledge](./docs/legal-compliance/README.md) and [jurisdiction applicability routing](./docs/legal-compliance/APPLICABILITY-AND-ROUTING.md). This is source-backed **REFERENCE ONLY**, not a lawyer's approval or guarantee against litigation.
 - Releasing/publishing a web app, SaaS, Android/iOS app or other public-facing product → use [pre-launch and app store publication](./capability-registry/release-readiness/README.md), with current Google/Apple official requirements, test-account eligibility, metadata, privacy, launch and rollback evidence. This expands the existing Google Play wrapper rather than replacing it.
+## n8n Project Factory — proposed V7 specification
+
+For the separate live n8n Engineering OS runtime, see the [Dynamic Development Environments & Autonomous Capability Manager specification](docs/specifications/n8n-dynamic-development-environments-and-capability-manager-v7.md). This is a **proposed implementation specification**, not evidence that the host or agent runtime has been upgraded. This repository remains a knowledge library, not the n8n runtime.
+
 ## AI capability registry
 
 Before doing expensive manual work, check [`capability-registry/`](./capability-registry/README.md). It tells an AI worker what tools/connectors may already solve the task, how to route to ChatGPT/Codex vs Claude/Claude Code capabilities, and when to install token/context-saving tools.
