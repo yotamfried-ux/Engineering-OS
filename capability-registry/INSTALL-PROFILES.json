@@ -369,6 +369,35 @@
         "@ui-sdk/react"
       ],
       "activation": "external-systems/vercel-ui-sdk/activation.md"
+    },
+    "agency-agents": {
+      "qualified_version": null,
+      "scope": "host+claude-agents",
+      "automation": "assisted",
+      "installer": "git-agents",
+      "repository": "msitarzewski/agency-agents",
+      "agent_divisions": [
+        "academic",
+        "design",
+        "engineering",
+        "finance",
+        "game-development",
+        "gis",
+        "healthcare",
+        "marketing",
+        "paid-media",
+        "product",
+        "project-management",
+        "research",
+        "sales",
+        "security",
+        "spatial-computing",
+        "specialized",
+        "strategy",
+        "support",
+        "testing"
+      ],
+      "activation": "external-skills/agency-agents/activation.md"
     }
   },
   "profiles": {
@@ -460,7 +489,8 @@
         "mattpocock-skills",
         "minimalist-entrepreneur",
         "openverse-audio",
-        "react-bits"
+        "react-bits",
+        "agency-agents"
       ]
     },
     "reels-services": {
