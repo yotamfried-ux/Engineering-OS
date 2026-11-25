@@ -4,7 +4,7 @@
 **Input:** 19 distinct Instagram Reel URLs (including 3 added on 2026-11-25); one originally duplicated URL omitted.
 
 ## Evidence tiers
-- **WATCHED:** vidIQ visual+spoken short-form breakdown, or browser-provided full video transcript. This verifies what the creator said/shown, **not that the claimed product result is true**.
+- **WATCHED:** vidIQ visual+spoken short-form breakdown. **FULL TRANSCRIPT:** browser-obtained complete spoken content (not frame analysis). This verifies what the creator said/shown, **not that the claimed product result is true**.
 - **CAPTION:** full public caption and page metadata only. Do not infer unnamed tools, visual demo steps, or exact private implementation.
 - **UPSTREAM:** matched a developer's official GitHub project/docs independent of the Reel.
 - **HOST INSTALL:** evaluated separately. The local Engine OS registry can install curated skills on demand, but user VM/Claude login and app deployments have **not** been verified in this chat.
@@ -16,11 +16,11 @@
 | [De7a_Gqk-sY](https://www.instagram.com/reel/De7a_Gqk-sY/) | WATCHED + transcript | Illustrative SaaS growth, activation, tests, retention, operating-cost gates | `docs/product-experience/saas-conversion-and-retention-reel.md` |
 | [DgEveYmpH9H](https://www.instagram.com/reel/DgEveYmpH9H/) | CAPTION + upstream | Thinking Machines Inkling 2 Mini, local coding model; vendor benchmark unverified | `external-systems/inkling-2-mini/` (model/hardware conditional) |
 | [DgHCSOKuchM](https://www.instagram.com/reel/DgHCSOKuchM/) | WATCHED + upstream | Lemomo `lemo-opuscar`, 99 code-rendered film styles | `lemo-opuscar` registered as real Claude plugin installer |
-| [DgG3rhkNUzU](https://www.instagram.com/reel/DgG3rhkNUzU/) | CAPTION + official Anthropic sources | Scheduled/background Claude Code routines; precise four methods not recovered | `docs/official-docs/claude-code-routines.md` |
-| [DgI9usSyEJG](https://www.instagram.com/reel/DgI9usSyEJG/) | CAPTION | Less cluttered, clearer sign-in design; exact demo unavailable | `docs/ui-ux/accessible-sign-in-and-interactions.md` |
-| [DgJcVOdzDCB](https://www.instagram.com/reel/DgJcVOdzDCB/) | CAPTION + upstream | `msitarzewski/agency-agents` | Existing `external-skills/agency-agents/` asset; no new runtime installation verified |
+| [DgG3rhkNUzU](https://www.instagram.com/reel/DgG3rhkNUzU/) | FULL TRANSCRIPT + official docs | Turn-based, goal-based, time-based and proactive workflows (creator terms, not official modes) | `docs/official-docs/claude-code-routines.md` |
+| [DgI9usSyEJG](https://www.instagram.com/reel/DgI9usSyEJG/) | FULL TRANSCRIPT | Reduce login tabs, favor Apple/Google, retain alternative email access and TOS/privacy, show last-used provider; balance accessibility | `docs/ui-ux/accessible-sign-in-and-interactions.md` |
+| [DgJcVOdzDCB](https://www.instagram.com/reel/DgJcVOdzDCB/) | FULL TRANSCRIPT + upstream | The Agency desktop app and hundreds of Claude agent definitions | `agency-agents` real Git/Claude Agent definitions installer, opt-in |
 | [DgJpifrheez](https://www.instagram.com/reel/DgJpifrheez/) | CAPTION + upstream | Corey Haines Marketing Skills | `marketing-skills` git-skills auto-installer |
-| [DgJC0A4SF7B](https://www.instagram.com/reel/DgJC0A4SF7B/) | CAPTION/metadata | 21st.dev, React Bits and other design sources whose exact names are uncertain | `external-systems/21st-dev/`; executable `react-bits` project CLI |
+| [DgJC0A4SF7B](https://www.instagram.com/reel/DgJC0A4SF7B/) | FULL TRANSCRIPT | shadcn MCP, 21st.dev, React Bits, Impeccable, Pinterest for visual references | `shadcn-mcp` and executable `react-bits`; `impeccable` skill; 21st MCP conditional on API key |
 | [DgJdC03AcSe](https://www.instagram.com/reel/DgJdC03AcSe/) | CAPTION + upstream | `sybil-solutions/skill-distill` | `skill-distill` git-skills installer; tmux + real student harness required |
 | [DgJoi_Rh4av](https://www.instagram.com/reel/DgJoi_Rh4av/) | WATCHED + transcript | Nine open-source SaaS alternatives (OpenWhispr, Open-Generative-AI, Cal.diy, Chatwoot, AppFlowy, Cap, OpenSEO, VoiceStudio, OpenProject) | `external-systems/instagram-reel-service-candidates.md`, all 9 in registry as conditional/not deployed |
 | [DgHepn5nDzl](https://www.instagram.com/reel/DgHepn5nDzl/) | CAPTION + partial forks | Harvey sales prospecting; canonical source identity not independently qualified | `external-systems/harvey/`, `patterns/ai/sales-marketing-agent-workflow.md` |
@@ -29,9 +29,9 @@
 | [De90ttNOJbo](https://www.instagram.com/reel/De90ttNOJbo/) | WATCHED + Hebrew transcript | `preferences.md`, reference video, EyeCandy, Prompt Motion, React Bits, audio search, editable multi-track Studio | `docs/ui-ux/ai-video-editing-with-context-and-motion.md`, executable Openverse audio and React Bits helpers |
 | [DgJncKIBPpN](https://www.instagram.com/reel/DgJncKIBPpN/) | WATCHED + transcript | Hallmark, Anatomy, ECC, Impeccable, Ponytail, Matt Pocock Skills, Cloudflare Security Audit | 7 executable installation entries, official upstream checked |
 | [Df3YLvFCyDA](https://www.instagram.com/reel/Df3YLvFCyDA/) | Full transcript | One creator's LinkedIn 50-day content-format experiment; avoid outlier-driven causal conclusion | `docs/product-experience/linkedin-content-format-experiment.md` |
-| [DgCYbIeAt69](https://www.instagram.com/reel/DgCYbIeAt69/) | CAPTION only | Creator's private 0-employee sales and marketing system; no public installable code identified | `patterns/ai/sales-marketing-agent-workflow.md`; do NOT invent an upstream |
+| [DgCYbIeAt69](https://www.instagram.com/reel/DgCYbIeAt69/) | FULL TRANSCRIPT | Google Trends, Semrush, SparkToro, Claude Code, Higgsfield, Remotion, Metricool, ManyChat, CallRail, HubSpot, Calendly, Twilio, Looker Studio + MCP | `external-systems/sales-marketing-agent-loop.md`; executable `remotion-agent-skills` and project `remotion-project`; remaining providers conditional |
 | [DgKB_kXODn-](https://www.instagram.com/reel/DgKB_kXODn-/) | Detailed caption + upstream | Sahil Lavingia `slavingia/skills`, 10 Minimalist Entrepreneur skills | Existing `external-skills/minimalist-entrepreneur/` plus Claude plugin installer |
-| [Dfpm8EmTjKx](https://www.instagram.com/reel/Dfpm8EmTjKx/) | Detailed caption | Private `/lead finder` workflow combining scraping, qualification, email discovery and outreach; no canonical source identified | `patterns/ai/sales-marketing-agent-workflow.md` only; never auto-send or scrape restricted data |
+| [Dfpm8EmTjKx](https://www.instagram.com/reel/Dfpm8EmTjKx/) | FULL TRANSCRIPT | Private `/lead finder` with scraper, profile builder, email finder, sender; no public skill source or licence | `external-systems/sales-marketing-agent-loop.md` and `patterns/ai/sales-marketing-agent-workflow.md`; no bulk sending or unauthorized scraping |
 
 ## Genuine install surfaces
 
