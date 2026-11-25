@@ -8,6 +8,8 @@ on:
       - "tests/test_eos_reel_install.py"
       - "tests/test_openverse_audio_search.py"
       - "tools/openverse_audio_search.py"
+      - "tools/reactbits_component.py"
+      - "tests/test_eos_project_tools.py"
       - ".github/workflows/eos-reel-capabilities.yml"
   pull_request:
     paths:
@@ -17,6 +19,8 @@ on:
       - "tests/test_eos_reel_install.py"
       - "tests/test_openverse_audio_search.py"
       - "tools/openverse_audio_search.py"
+      - "tools/reactbits_component.py"
+      - "tests/test_eos_project_tools.py"
   workflow_dispatch:
 
 permissions:
@@ -32,11 +36,12 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile both install managers
-        run: python3 -m compileall -q tools/eos_capabilities.py tools/eos_reel_install.py tools/openverse_audio_search.py
+        run: python3 -m compileall -q tools/eos_capabilities.py tools/eos_reel_install.py tools/openverse_audio_search.py tools/reactbits_component.py
       - name: Verify safe and idempotent actual skill linking in isolated fixtures
         run: |
           python3 -m unittest discover -s tests -p test_eos_reel_install.py -v
           python3 -m unittest discover -s tests -p test_openverse_audio_search.py -v
+          python3 -m unittest discover -s tests -p test_eos_project_tools.py -v
       - name: Validate central registry and dry-run install route
         run: |
           python3 tools/eos_capabilities.py catalog --json > /tmp/eos-catalog.json
@@ -45,6 +50,7 @@ jobs:
           python3 tools/eos_capabilities.py ensure --tool lemo-opuscar --dry-run
           python3 tools/eos_capabilities.py ensure --tool openverse-audio
           python3 tools/openverse_audio_search.py --help
+          python3 tools/eos_capabilities.py ensure --tool react-bits
   upstream-path-check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
