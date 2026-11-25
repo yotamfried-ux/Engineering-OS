@@ -398,6 +398,47 @@
         "testing"
       ],
       "activation": "external-skills/agency-agents/activation.md"
+    },
+    "remotion-agent-skills": {
+      "qualified_version": null,
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "remotion-dev/skills",
+      "skill_globs": [
+        "skills/**/SKILL.md"
+      ],
+      "activation": "external-skills/remotion-agent-skills/activation.md"
+    },
+    "remotion-project": {
+      "qualified_version": null,
+      "scope": "project",
+      "automation": "assisted",
+      "installer": "project-npm",
+      "packages": [
+        "remotion",
+        "@remotion/cli"
+      ],
+      "activation": "external-systems/remotion/activation.md"
+    },
+    "shadcn-mcp": {
+      "qualified_version": null,
+      "scope": "project-mcp",
+      "automation": "assisted",
+      "installer": "project-mcp-npx",
+      "package": "shadcn@latest",
+      "package_args": [
+        "mcp"
+      ],
+      "mcp_name": "shadcn",
+      "activation": "external-systems/shadcn-mcp/activation.md"
+    },
+    "21st-mcp": {
+      "qualified_version": null,
+      "scope": "project-mcp+api-key",
+      "automation": "conditional",
+      "installer": "manual",
+      "activation": "external-systems/21st-mcp/activation.md"
     }
   },
   "profiles": {
@@ -445,7 +486,8 @@
         "anatomy",
         "ui-sdk-agent",
         "impeccable",
-        "react-bits"
+        "react-bits",
+        "shadcn-mcp"
       ]
     },
     "reels-marketing": {
@@ -469,7 +511,8 @@
       "tools": [
         "lemo-opuscar",
         "gamedev-agent-skills",
-        "openverse-audio"
+        "openverse-audio",
+        "remotion-agent-skills"
       ]
     },
     "reels-all": {
@@ -490,7 +533,9 @@
         "minimalist-entrepreneur",
         "openverse-audio",
         "react-bits",
-        "agency-agents"
+        "agency-agents",
+        "remotion-agent-skills",
+        "shadcn-mcp"
       ]
     },
     "reels-services": {
@@ -511,6 +556,12 @@
       "description": "Project-specific npm install of UI SDK React libraries; explicit project path required.",
       "tools": [
         "ui-sdk-react"
+      ]
+    },
+    "reels-react-video": {
+      "description": "Explicit project-local Remotion video framework and CLI installation; source API & rendering checked separately.",
+      "tools": [
+        "remotion-project"
       ]
     }
   },
