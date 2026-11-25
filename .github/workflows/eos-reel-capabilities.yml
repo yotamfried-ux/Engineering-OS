@@ -6,6 +6,8 @@ on:
       - "tools/eos_reel_install.py"
       - "capability-registry/INSTALL-PROFILES.json"
       - "tests/test_eos_reel_install.py"
+      - "tests/test_openverse_audio_search.py"
+      - "tools/openverse_audio_search.py"
       - ".github/workflows/eos-reel-capabilities.yml"
   pull_request:
     paths:
@@ -13,6 +15,8 @@ on:
       - "tools/eos_reel_install.py"
       - "capability-registry/INSTALL-PROFILES.json"
       - "tests/test_eos_reel_install.py"
+      - "tests/test_openverse_audio_search.py"
+      - "tools/openverse_audio_search.py"
   workflow_dispatch:
 
 permissions:
@@ -28,15 +32,19 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile both install managers
-        run: python3 -m compileall -q tools/eos_capabilities.py tools/eos_reel_install.py
+        run: python3 -m compileall -q tools/eos_capabilities.py tools/eos_reel_install.py tools/openverse_audio_search.py
       - name: Verify safe and idempotent actual skill linking in isolated fixtures
-        run: python3 -m unittest discover -s tests -p test_eos_reel_install.py -v
+        run: |
+          python3 -m unittest discover -s tests -p test_eos_reel_install.py -v
+          python3 -m unittest discover -s tests -p test_openverse_audio_search.py -v
       - name: Validate central registry and dry-run install route
         run: |
           python3 tools/eos_capabilities.py catalog --json > /tmp/eos-catalog.json
           python3 -c 'import json; a=json.load(open("/tmp/eos-catalog.json")); assert "hallmark" in a and "lemo-opuscar" in a'
           python3 tools/eos_capabilities.py ensure --tool hallmark --dry-run
           python3 tools/eos_capabilities.py ensure --tool lemo-opuscar --dry-run
+          python3 tools/eos_capabilities.py ensure --tool openverse-audio
+          python3 tools/openverse_audio_search.py --help
   upstream-path-check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
