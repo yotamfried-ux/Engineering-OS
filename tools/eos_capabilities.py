@@ -183,7 +183,7 @@ def tool_status(name: str, tool: dict, project: Path) -> dict:
             "detail": f"cli={'yes' if cli else 'no'}, mcp={'yes' if mcp else 'no'}",
         }
 
-    if installer == "git-skills":
+    if installer in {"git-skills", "git-agents"}:
         return eos_reel_install.status(name, tool)
 
     if installer == "project-npm":
@@ -461,7 +461,7 @@ def ensure_tool(name: str, tool: dict, project: Path, dry_run: bool) -> bool:
         else:
             install_maestro(version, dry_run)
         ensure_maestro_project(project, dry_run)
-    elif installer == "git-skills":
+    elif installer in {"git-skills", "git-agents"}:
         eos_reel_install.ensure(name, tool, dry_run)
     elif installer == "project-npm":
         if not (project / "package.json").is_file():
@@ -489,7 +489,7 @@ def ensure_tool(name: str, tool: dict, project: Path, dry_run: bool) -> bool:
     else:
         print(f"MANUAL {name}: unsupported installer '{installer}'")
         return False
-    if installer in {"git-skills", "claude-plugin", "bundled-cli", "project-npm"} and not dry_run:
+    if installer in {"git-skills", "git-agents", "claude-plugin", "bundled-cli", "project-npm"} and not dry_run:
         verified = tool_status(name, tool, project)
         if not verified["ready"]:
             print(f"VERIFY {name}: {verified['detail']}")
