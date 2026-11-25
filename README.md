@@ -59,7 +59,7 @@ python3 tools/reactbits_component.py --examples
 
 ## Catalog by purpose
 
-| Purpose | What to search here | Assets |
+| Purpose | What to search here | Previous snapshot* |
 |---|---|---:|
 | **Build projects & implementations** | project starters, code/templates, implementation patterns, framework/API references, example repositories, UI guidance | 101 |
 | **Extend agent capabilities** | reusable skills, agent workflows, memory/context helpers, security/design/research capabilities | 42 |
@@ -68,7 +68,7 @@ python3 tools/reactbits_component.py --examples
 | **Architecture & decisions** | system architecture choices, AI/API/CV/ML/mobile/web architecture and reusable ADR knowledge | 50 |
 | **Testing, quality & reliability** | quality gates, contract/regression testing, logging and reliability guidance | 8 |
 
-Total catalogued knowledge assets: **323** (plus this catalog).
+*The counts above are a historical inventory snapshot (**323 items**) from before the November 2026 Reel intake. They are **not** a live count. New tools, activation files and source-backed guides have been added without rewriting the historical snapshot.
 
 ### Cross-cutting goal: reduce context and token cost
 
