@@ -278,6 +278,14 @@
       "installer": "bundled-cli",
       "entrypoint": "tools/openverse_audio_search.py",
       "activation": "external-systems/openverse-audio/activation.md"
+    },
+    "react-bits": {
+      "qualified_version": null,
+      "scope": "library+project",
+      "automation": "bundled-cli-with-project-opt-in",
+      "installer": "bundled-cli",
+      "entrypoint": "tools/reactbits_component.py",
+      "activation": "external-systems/react-bits/activation.md"
     }
   },
   "profiles": {
@@ -324,7 +332,8 @@
         "hallmark",
         "anatomy",
         "ui-sdk-agent",
-        "impeccable"
+        "impeccable",
+        "react-bits"
       ]
     },
     "reels-marketing": {
@@ -367,7 +376,8 @@
         "ecc",
         "mattpocock-skills",
         "minimalist-entrepreneur",
-        "openverse-audio"
+        "openverse-audio",
+        "react-bits"
       ]
     }
   },
