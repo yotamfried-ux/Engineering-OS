@@ -52,9 +52,13 @@ Design: [21st.dev](https://21st.dev), [Pinterest](https://pinterest.com). Market
 - EyeCandy: https://eyecannndy.com — visual technique reference; respect asset rights.
 - Prompt Motion: https://promptmotion.org — motion examples and prompts; review reuse permissions.
 
-## Unresolved source identity / conditional
+## Source verification closeout
 
-TypeFX, Studio, private lead-finder and Restructure AI blueprint: no verified exact downloadable original yet. Inkling 2 Mini: model access/hardware conditional, see existing external-systems entry. Do not substitute unrelated repositories.
+- ReStructure AI: original public architecture blueprint https://restructure-europe.vercel.app/en/newsletter/sales-marketing-team/ ; reference only, no downloadable implementation verified.
+- Studio: likely Remotion Studio, official docs https://www.remotion.dev/docs/studio ; existing Remotion source above. In a Remotion project install matching @remotion/cli and run `npx remotion studio`. Exact reel identity not proven.
+- TypeFX: exact original unresolved. Once UI TypeFx https://docs.once-ui.com/effects/typeFx is a similarly named typewriter component, not confirmed as the reel tool.
+- Champ McCorkle lead-finder: original distributed via creator CTA; no public source verified. Independently published alternative https://github.com/anthropics/knowledge-work-plugins (lead-finder skill); do not label as original. Review terms, use authorized data and draft-only outreach.
+- Inkling 2 Mini: model access/hardware conditional, see existing external-systems entry.
 
 ## Principles
 
