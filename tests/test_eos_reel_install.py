@@ -41,6 +41,7 @@ class ReelSkillsInstallerTests(unittest.TestCase):
                 return "/bin/true"
             return original_which(command)
 
+        self.real_repo_url = installer._repo_url
         self.patches = [
             patch.object(installer, "CHECKOUTS", self.base / "checkouts"),
             patch.object(installer, "CLAUDE_SKILLS", self.base / "claude-skills"),
@@ -85,7 +86,7 @@ class ReelSkillsInstallerTests(unittest.TestCase):
 
     def test_rejects_unsafe_paths(self):
         with self.assertRaisesRegex(RuntimeError, "Invalid canonical"):
-            installer._repo_url({"repository": "../../unsafe"})
+            self.real_repo_url({"repository": "../../unsafe"})
         with self.assertRaisesRegex(RuntimeError, "Unsafe skill glob"):
             installer._sources(self.upstream, {"skill_globs": ["../foo/SKILL.md"]})
 
@@ -96,7 +97,7 @@ class ReelSkillsInstallerTests(unittest.TestCase):
         self.assertIn("reels-all", manifest["profiles"])
         for name in manifest["profiles"]["reels-all"]["tools"]:
             tool = manifest["tools"][name]
-            self.assertIn(tool["installer"], {"git-skills", "claude-plugin"})
+            self.assertIn(tool["installer"], {"git-skills", "claude-plugin", "bundled-cli"})
             self.assertTrue((ROOT / tool["activation"]).is_file(), name)
 
 
