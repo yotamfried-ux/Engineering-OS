@@ -123,24 +123,65 @@
       "automation": "deprecated",
       "installer": "deprecated",
       "activation": "external-skills/frontend-design/activation.md"
+    },
+    "minimalist-entrepreneur": {
+      "qualified_version": null,
+      "scope": "host",
+      "automation": "assisted",
+      "installer": "claude-plugin",
+      "marketplace": "slavingia/skills",
+      "plugin": "minimalist-entrepreneur",
+      "plugin_match": "minimalist-entrepreneur",
+      "activation": "external-skills/minimalist-entrepreneur/README.md"
+    },
+    "marketing-skills": {
+      "qualified_version": null,
+      "scope": "host",
+      "automation": "assisted",
+      "installer": "claude-plugin",
+      "marketplace": "coreyhaines31/marketingskills",
+      "plugin": "marketing-skills",
+      "plugin_match": "marketing-skills",
+      "activation": "external-skills/marketing-skills/README.md"
     }
   },
   "profiles": {
     "core": {
       "description": "Default live-qualified Claude Code engineering helpers.",
-      "tools": ["superpowers", "rtk", "graphify"]
+      "tools": [
+        "superpowers",
+        "rtk",
+        "graphify"
+      ]
     },
     "mobile": {
       "description": "Core profile plus Maestro for mobile application work.",
-      "tools": ["superpowers", "rtk", "graphify", "maestro"]
+      "tools": [
+        "superpowers",
+        "rtk",
+        "graphify",
+        "maestro"
+      ]
     },
     "web": {
       "description": "Core profile plus Playwright MCP for web application exploration/testing.",
-      "tools": ["superpowers", "rtk", "graphify", "playwright-mcp"]
+      "tools": [
+        "superpowers",
+        "rtk",
+        "graphify",
+        "playwright-mcp"
+      ]
     },
     "mobile-deep": {
       "description": "Mobile profile plus Appium and Mobile Next escalation capabilities.",
-      "tools": ["superpowers", "rtk", "graphify", "maestro", "appium-mcp", "mobile-next-mcp"]
+      "tools": [
+        "superpowers",
+        "rtk",
+        "graphify",
+        "maestro",
+        "appium-mcp",
+        "mobile-next-mcp"
+      ]
     }
   },
   "project_manifest": ".engineering-os-tools.json"
