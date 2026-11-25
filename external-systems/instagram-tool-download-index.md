@@ -49,8 +49,17 @@ Design: [21st.dev](https://21st.dev), [Pinterest](https://pinterest.com). Market
 
 ## Unresolved source identity / conditional
 
-Hallmark, Anatomy, Open Generative AI, OpenSEO, Voice Studio, EyeCandy, PromptMotion, TypeFX, Studio, Cal.diy (video shows calcom/cal.com but README retrieval failed), Harvey (fork documented separately), private lead-finder and Restructure AI blueprint: no verified exact downloadable original yet. Inkling 2 Mini: model access/hardware conditional, see existing external-systems entry. Do not substitute unrelated repositories.
+EyeCandy, PromptMotion, TypeFX, Studio, Harvey (fork documented separately), private lead-finder and Restructure AI blueprint: no verified exact downloadable original yet. Inkling 2 Mini: model access/hardware conditional, see existing external-systems entry. Do not substitute unrelated repositories.
 
 ## Principles
 
 Goal-based, turn-based, scheduled and event-driven loops: https://code.claude.com/docs/en/routines and https://code.claude.com/docs/en/scheduled-tasks. Use measurable stop conditions, budgets and independent evaluation. SaaS growth: measure onboarding time-to-value, churn reasons, tests, operating costs and support. LinkedIn content experiment: compare formats by median impressions and conversions, separate outliers; anecdotal not universal. Media: persistent brand context, modular timelines, licensed assets. Sales: closed-loop attribution, human approval, data minimization and consent.
+
+## Resolved follow-up sources
+
+- **Hallmark** (Agent skills): [local entry](../external-skills/hallmark/README.md), [upstream](https://github.com/Nutlope/hallmark), `git clone https://github.com/Nutlope/hallmark.git` (Open Generative AI requires recursive submodules).
+- **Anatomy** (Agent skills): [local entry](../external-skills/anatomy/README.md), [upstream](https://github.com/wheresryan22/anatomy), `git clone https://github.com/wheresryan22/anatomy.git` (Open Generative AI requires recursive submodules).
+- **OpenSEO** (Marketing): [local entry](open-seo/README.md), [upstream](https://github.com/every-app/open-seo), `git clone https://github.com/every-app/open-seo.git` (Open Generative AI requires recursive submodules).
+- **VoiceStudio** (Media): [local entry](voice-studio/README.md), [upstream](https://github.com/debpalash/VoiceStudio), `git clone https://github.com/debpalash/VoiceStudio.git` (Open Generative AI requires recursive submodules).
+- **Cal.diy** (Personal scheduling): [local entry](cal-diy/README.md), [upstream](https://github.com/calcom/cal.diy), `git clone https://github.com/calcom/cal.diy.git` (Open Generative AI requires recursive submodules).
+- **Open Generative AI** (Media): [local entry](open-generative-ai/README.md), [upstream](https://github.com/Anil-matcha/Open-Generative-AI), `git clone https://github.com/Anil-matcha/Open-Generative-AI.git` (Open Generative AI requires recursive submodules).
