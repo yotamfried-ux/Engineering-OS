@@ -416,7 +416,7 @@ def ensure_project_mcp(name: str, tool: dict, project: Path, dry_run: bool) -> N
         print(f"SKIP   {name}: project MCP already registered")
         return
     if dry_run:
-        print(f"CHANGE {name}: register project MCP via npx {tool['package']}")
+        print(f"CHANGE {name}: register project MCP via npx {tool['package']} {' '.join(tool.get('package_args', []))}")
         return
     if not command_exists("claude"):
         raise RuntimeError(f"Claude Code CLI is required to register {name}")
@@ -424,7 +424,7 @@ def ensure_project_mcp(name: str, tool: dict, project: Path, dry_run: bool) -> N
         raise RuntimeError(f"Node/npm/npx is required for {name}")
     run([
         "claude", "mcp", "add", "-s", "local", mcp_name, "--",
-        "npx", "-y", tool["package"],
+        "npx", "-y", tool["package"], *tool.get("package_args", []),
     ], cwd=project)
 
 
