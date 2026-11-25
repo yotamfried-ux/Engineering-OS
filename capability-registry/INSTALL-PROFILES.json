@@ -358,6 +358,17 @@
       "installer": "manual",
       "upstream": "https://github.com/opf/openproject",
       "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "ui-sdk-react": {
+      "qualified_version": null,
+      "scope": "project",
+      "automation": "assisted",
+      "installer": "project-npm",
+      "packages": [
+        "@ui-sdk/core",
+        "@ui-sdk/react"
+      ],
+      "activation": "external-systems/vercel-ui-sdk/activation.md"
     }
   },
   "profiles": {
@@ -464,6 +475,12 @@
         "open-seo",
         "voice-studio",
         "openproject"
+      ]
+    },
+    "reels-react": {
+      "description": "Project-specific npm install of UI SDK React libraries; explicit project path required.",
+      "tools": [
+        "ui-sdk-react"
       ]
     }
   },
