@@ -286,6 +286,78 @@
       "installer": "bundled-cli",
       "entrypoint": "tools/reactbits_component.py",
       "activation": "external-systems/react-bits/activation.md"
+    },
+    "openwhispr": {
+      "qualified_version": null,
+      "scope": "desktop",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/OpenWhispr/openwhispr",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "open-generative-ai": {
+      "qualified_version": null,
+      "scope": "web+api-key",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/Anil-matcha/Open-Generative-AI",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "cal-diy": {
+      "qualified_version": null,
+      "scope": "docker-service",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/calcom/cal.diy",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "chatwoot": {
+      "qualified_version": null,
+      "scope": "docker-service",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/chatwoot/chatwoot",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "appflowy": {
+      "qualified_version": null,
+      "scope": "desktop-or-cloud",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/AppFlowy-IO/AppFlowy",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "cap-recording": {
+      "qualified_version": null,
+      "scope": "desktop",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/CapSoftware/Cap",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "open-seo": {
+      "qualified_version": null,
+      "scope": "web+api-key",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/every-app/open-seo",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "voice-studio": {
+      "qualified_version": null,
+      "scope": "desktop-or-model-service",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/debpalash/VoiceStudio",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
+    },
+    "openproject": {
+      "qualified_version": null,
+      "scope": "docker-service",
+      "automation": "conditional",
+      "installer": "manual",
+      "upstream": "https://github.com/opf/openproject",
+      "activation": "external-systems/instagram-reel-service-candidates.md"
     }
   },
   "profiles": {
@@ -378,6 +450,20 @@
         "minimalist-entrepreneur",
         "openverse-audio",
         "react-bits"
+      ]
+    },
+    "reels-services": {
+      "description": "Nine full app alternatives from Instagram; no automatic deployment without isolated host, secrets and qualification.",
+      "tools": [
+        "openwhispr",
+        "open-generative-ai",
+        "cal-diy",
+        "chatwoot",
+        "appflowy",
+        "cap-recording",
+        "open-seo",
+        "voice-studio",
+        "openproject"
       ]
     }
   },
