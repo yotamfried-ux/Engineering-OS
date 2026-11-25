@@ -54,7 +54,7 @@ Design: [21st.dev](https://21st.dev), [Pinterest](https://pinterest.com). Market
 
 ## Unresolved source identity / conditional
 
-TypeFX, Studio, Harvey (fork documented separately), private lead-finder and Restructure AI blueprint: no verified exact downloadable original yet. Inkling 2 Mini: model access/hardware conditional, see existing external-systems entry. Do not substitute unrelated repositories.
+TypeFX, Studio, private lead-finder and Restructure AI blueprint: no verified exact downloadable original yet. Inkling 2 Mini: model access/hardware conditional, see existing external-systems entry. Do not substitute unrelated repositories.
 
 ## Principles
 
@@ -68,3 +68,5 @@ Goal-based, turn-based, scheduled and event-driven loops: https://code.claude.co
 - **VoiceStudio** (Media): [local entry](voice-studio/README.md), [upstream](https://github.com/debpalash/VoiceStudio), `git clone https://github.com/debpalash/VoiceStudio.git`.
 - **Cal.diy** (Personal scheduling): [local entry](cal-diy/README.md), [upstream](https://github.com/calcom/cal.diy), `git clone https://github.com/calcom/cal.diy.git`.
 - **Open Generative AI** (Media): [local entry](open-generative-ai/README.md), [upstream](https://github.com/Anil-matcha/Open-Generative-AI), `git clone --recurse-submodules https://github.com/Anil-matcha/Open-Generative-AI.git`.
+ 
+- **Sellbird (formerly Harvey)** — sales automation: [local entry](harvey/README.md), [canonical source](https://github.com/ethanplusai/sellbird), `git clone https://github.com/ethanplusai/sellbird.git`. AGPL-3.0 from v0.4.0.
