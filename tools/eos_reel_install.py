@@ -89,7 +89,7 @@ def _agent_sources(root: Path, tool: dict) -> list[tuple[str, Path]]:
 
 
 def _targets(root: Path, tool: dict) -> tuple[list[tuple[str, Path]], Path, bool]:
-    if tool["installer"] == "git-agents":
+    if tool.get("installer") == "git-agents":
         return _agent_sources(root, tool), CLAUDE_AGENTS, False
     return _sources(root, tool), CLAUDE_SKILLS, True
 
