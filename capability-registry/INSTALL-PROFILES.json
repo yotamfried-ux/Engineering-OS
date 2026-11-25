@@ -126,23 +126,150 @@
     },
     "minimalist-entrepreneur": {
       "qualified_version": null,
-      "scope": "host",
+      "scope": "host+claude-plugin",
       "automation": "assisted",
       "installer": "claude-plugin",
       "marketplace": "slavingia/skills",
       "plugin": "minimalist-entrepreneur",
       "plugin_match": "minimalist-entrepreneur",
-      "activation": "external-skills/minimalist-entrepreneur/README.md"
+      "activation": "external-skills/minimalist-entrepreneur/activation.md"
     },
     "marketing-skills": {
       "qualified_version": null,
-      "scope": "host",
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "coreyhaines31/marketingskills",
+      "skill_globs": [
+        "skills/**/SKILL.md"
+      ],
+      "activation": "external-skills/marketing-skills/activation.md"
+    },
+    "hallmark": {
+      "qualified_version": null,
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "Nutlope/hallmark",
+      "skill_globs": [
+        "skills/hallmark/SKILL.md"
+      ],
+      "activation": "external-skills/hallmark/activation.md"
+    },
+    "anatomy": {
+      "qualified_version": null,
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "wheresryan22/anatomy",
+      "skill_globs": [
+        "SKILL.md"
+      ],
+      "activation": "external-skills/anatomy/activation.md",
+      "primary_skill_name": "anatomy"
+    },
+    "skill-distill": {
+      "qualified_version": null,
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "sybil-solutions/skill-distill",
+      "skill_globs": [
+        "skills/skill-distill/SKILL.md"
+      ],
+      "activation": "external-skills/skill-distill/activation.md",
+      "runtime_commands": [
+        "tmux",
+        "python3"
+      ]
+    },
+    "gamedev-agent-skills": {
+      "qualified_version": null,
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "gamedev-skills/awesome-gamedev-agent-skills",
+      "skill_globs": [
+        "router/SKILL.md",
+        "skills/**/SKILL.md"
+      ],
+      "activation": "external-skills/gamedev-agent-skills/activation.md"
+    },
+    "cloudflare-security-audit": {
+      "qualified_version": null,
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "cloudflare/security-audit-skill",
+      "skill_globs": [
+        "skills/security-audit/SKILL.md"
+      ],
+      "activation": "external-skills/cloudflare-security-audit/activation.md",
+      "runtime_commands": [
+        "node"
+      ]
+    },
+    "ui-sdk-agent": {
+      "qualified_version": null,
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "vercel-labs/ui",
+      "skill_globs": [
+        "packages/core/skills/ui-sdk/SKILL.md"
+      ],
+      "activation": "external-skills/ui-sdk-agent/activation.md"
+    },
+    "impeccable": {
+      "qualified_version": null,
+      "scope": "host+claude-skills",
+      "automation": "assisted",
+      "installer": "git-skills",
+      "repository": "pbakaus/impeccable",
+      "skill_globs": [
+        "plugin/skills/impeccable/SKILL.md"
+      ],
+      "activation": "external-skills/impeccable/activation.md"
+    },
+    "lemo-opuscar": {
+      "qualified_version": null,
+      "scope": "host+claude-plugin",
       "automation": "assisted",
       "installer": "claude-plugin",
-      "marketplace": "coreyhaines31/marketingskills",
-      "plugin": "marketing-skills",
-      "plugin_match": "marketing-skills",
-      "activation": "external-skills/marketing-skills/README.md"
+      "marketplace": "lemomo-ai/lemo-opuscar",
+      "plugin": "lemo-opuscar@lemolab",
+      "plugin_match": "lemo-opuscar@lemolab",
+      "activation": "external-skills/lemo-opuscar/activation.md"
+    },
+    "ponytail": {
+      "qualified_version": null,
+      "scope": "host+claude-plugin",
+      "automation": "assisted",
+      "installer": "claude-plugin",
+      "marketplace": "DietrichGebert/ponytail",
+      "plugin": "ponytail@ponytail",
+      "plugin_match": "ponytail@ponytail",
+      "activation": "external-skills/ponytail/activation.md"
+    },
+    "ecc": {
+      "qualified_version": null,
+      "scope": "host+claude-plugin",
+      "automation": "assisted",
+      "installer": "claude-plugin",
+      "marketplace": "affaan-m/ECC",
+      "plugin": "ecc@ecc",
+      "plugin_match": "ecc@ecc",
+      "activation": "external-skills/ecc/activation.md"
+    },
+    "mattpocock-skills": {
+      "qualified_version": null,
+      "scope": "host+claude-plugin",
+      "automation": "assisted",
+      "installer": "claude-plugin",
+      "marketplace": "mattpocock/skills",
+      "plugin": "mattpocock-skills@mattpocock",
+      "plugin_match": "mattpocock-skills@mattpocock",
+      "activation": "external-skills/mattpocock-skills/activation.md"
     }
   },
   "profiles": {
@@ -181,6 +308,56 @@
         "maestro",
         "appium-mcp",
         "mobile-next-mcp"
+      ]
+    },
+    "reels-design": {
+      "description": "Opt-in design skills; installs real code and Claude agent hooks, not documentation only.",
+      "tools": [
+        "hallmark",
+        "anatomy",
+        "ui-sdk-agent",
+        "impeccable"
+      ]
+    },
+    "reels-marketing": {
+      "description": "Opt-in founder and marketing skills; install only when host can run Claude Code.",
+      "tools": [
+        "marketing-skills",
+        "minimalist-entrepreneur"
+      ]
+    },
+    "reels-engineering": {
+      "description": "Opt-in engineering quality, simplicity and security tools.",
+      "tools": [
+        "skill-distill",
+        "cloudflare-security-audit",
+        "ponytail",
+        "mattpocock-skills"
+      ]
+    },
+    "reels-media": {
+      "description": "Opt-in Claude video style skills and game development skills.",
+      "tools": [
+        "lemo-opuscar",
+        "gamedev-agent-skills"
+      ]
+    },
+    "reels-all": {
+      "description": "All opt-in reel agent capabilities; may conflict with pre-existing skills and requires owner review.",
+      "tools": [
+        "hallmark",
+        "anatomy",
+        "marketing-skills",
+        "skill-distill",
+        "gamedev-agent-skills",
+        "cloudflare-security-audit",
+        "ui-sdk-agent",
+        "impeccable",
+        "lemo-opuscar",
+        "ponytail",
+        "ecc",
+        "mattpocock-skills",
+        "minimalist-entrepreneur"
       ]
     }
   },
