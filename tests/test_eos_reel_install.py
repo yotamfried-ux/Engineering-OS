@@ -75,7 +75,7 @@ class ReelSkillsInstallerTests(unittest.TestCase):
         division = self.upstream / "product"
         division.mkdir()
         agent = division / "product-manager.md"
-        agent.write_text("---\\nname: Product Manager\\ndescription: Product work\\n---\\n# Agent\\n",
+        agent.write_text("---\nname: Product Manager\ndescription: Product work\n---\n# Agent\n",
                          encoding="utf-8")
         subprocess.run(["git", "-C", str(self.upstream), "add", "."], check=True)
         subprocess.run(
