@@ -270,6 +270,14 @@
       "plugin": "mattpocock-skills@mattpocock",
       "plugin_match": "mattpocock-skills@mattpocock",
       "activation": "external-skills/mattpocock-skills/activation.md"
+    },
+    "openverse-audio": {
+      "qualified_version": null,
+      "scope": "library",
+      "automation": "bundled-smoke-tested",
+      "installer": "bundled-cli",
+      "entrypoint": "tools/openverse_audio_search.py",
+      "activation": "external-systems/openverse-audio/activation.md"
     }
   },
   "profiles": {
@@ -339,7 +347,8 @@
       "description": "Opt-in Claude video style skills and game development skills.",
       "tools": [
         "lemo-opuscar",
-        "gamedev-agent-skills"
+        "gamedev-agent-skills",
+        "openverse-audio"
       ]
     },
     "reels-all": {
@@ -357,7 +366,8 @@
         "ponytail",
         "ecc",
         "mattpocock-skills",
-        "minimalist-entrepreneur"
+        "minimalist-entrepreneur",
+        "openverse-audio"
       ]
     }
   },
