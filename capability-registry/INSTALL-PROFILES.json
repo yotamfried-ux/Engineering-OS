@@ -130,8 +130,8 @@
       "automation": "assisted",
       "installer": "claude-plugin",
       "marketplace": "slavingia/skills",
-      "plugin": "minimalist-entrepreneur",
-      "plugin_match": "minimalist-entrepreneur",
+      "plugin": "minimalist-entrepreneur@minimalist-entrepreneur",
+      "plugin_match": "minimalist-entrepreneur@minimalist-entrepreneur",
       "activation": "external-skills/minimalist-entrepreneur/activation.md"
     },
     "marketing-skills": {
