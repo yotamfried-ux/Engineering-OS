@@ -82,3 +82,56 @@ jobs:
                   sources = _sources(dest, entry)
                   print(name, len(sources), "valid skill directories")
           PY
+
+  live-install-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install actual Claude Code CLI, no login or paid API calls
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude --version
+      - name: Install auxiliary CLI prerequisites only if missing
+        run: |
+          if ! command -v tmux >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq tmux
+          fi
+      - name: Real external code install and idempotence on isolated Linux homes
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          manifest = json.loads(Path("capability-registry/INSTALL-PROFILES.json").read_text())
+          tools = [
+              n for n in manifest["profiles"]["reels-all"]["tools"]
+              if manifest["tools"][n]["installer"] == "git-skills"
+          ]
+          with tempfile.TemporaryDirectory(prefix="eos-live-skills-") as top:
+              for name in tools:
+                  home = Path(top) / name
+                  home.mkdir(parents=True)
+                  env = os.environ.copy()
+                  env["HOME"] = str(home)
+                  cmd = ["python3", "tools/eos_capabilities.py", "ensure", "--tool", name]
+                  first = subprocess.run(cmd, env=env, text=True, capture_output=True)
+                  print(name, "install:", first.returncode, first.stdout[-800:])
+                  if first.returncode:
+                      raise RuntimeError(f"{name}: {first.stderr[-1500:]}")
+                  second = subprocess.run(cmd, env=env, text=True, capture_output=True)
+                  print(name, "repeat:", second.returncode, second.stdout[-400:])
+                  if second.returncode or "SKIP" not in second.stdout:
+                      raise RuntimeError(f"{name}: not idempotent")
+          print("PASS: all curated GitHub skills physically installed and detected inside isolated homes")
+          PY
