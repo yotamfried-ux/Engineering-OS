@@ -32,6 +32,31 @@ not dependencies.
 
 See [Engineering-OS — 60-second start](docs/GETTING-STARTED.md).
 
+## Installable capabilities extracted from 19 Instagram Reels (Nov 2026)
+
+The [video intake and evidence matrix](docs/instagram-intake-2026-11-25.md) records the original 19 unique Reels, exact upstreams, uncertainty and deployment status. This is **executable installation support**, not merely documentation.
+
+- **Real upstream Claude Skills and agents:** opt-in `reels-design`, `reels-engineering`, `reels-marketing`, `reels-media` and `reels-all` profiles in [INSTALL-PROFILES.json](capability-registry/INSTALL-PROFILES.json). Installer checks canonical origin, does an actual Git clone, links `SKILL.md` / native Agent definitions to Claude Code, detects conflicts, and verifies reuse. Official Claude plugins install through the existing Claude CLI route.
+- **Built-in executable tools:** `tools/openverse_audio_search.py` (read-only audio discovery and license metadata) and `tools/reactbits_component.py` (install an actual React Bits component into a selected project). No arbitrary package installation is performed by default.
+- **Project React dependencies:** `ui-sdk-react` installs `@ui-sdk/core` and `@ui-sdk/react` with `npm --ignore-scripts --save-exact` into the target project, then checks `package.json` and `node_modules`.
+- **Full desktop/server apps** (Chatwoot, OpenProject, AppFlowy, etc.) are registered as **conditional** and not deployed automatically. They require deliberate host, secrets, storage, networking and resource decisions.
+
+From a persistent Linux/macOS host with Claude Code and Git installed:
+
+```bash
+python3 tools/eos_capabilities.py catalog
+python3 tools/eos_capabilities.py ensure --tool hallmark
+python3 tools/eos_capabilities.py ensure --tool agency-agents
+python3 tools/eos_capabilities.py setup --project /your/project --profile reels-design
+python3 tools/eos_capabilities.py status --project /your/project --profile reels-design --json
+
+# Bundled CLI (no installation other than checking out this repository):
+python3 tools/openverse_audio_search.py "ui click" --limit 5
+python3 tools/reactbits_component.py --examples
+```
+
+**Verification boundary:** [independent CI](https://github.com/yotamfried-ux/Engineering-OS/actions/workflows/eos-reel-capabilities.yml) performs compile/unit/upstream checks and installs actual third-party Skills in disposable Linux homes. This proves installation logic on the test host, **not** that any specific user's persistent machine has been provisioned, that paid APIs are configured, or that every generated output passes quality gates.
+
 ## Catalog by purpose
 
 | Purpose | What to search here | Assets |
