@@ -135,3 +135,44 @@ jobs:
                       raise RuntimeError(f"{name}: not idempotent")
           print("PASS: all curated GitHub skills physically installed and detected inside isolated homes")
           PY
+
+  claude-plugin-install-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Exercise real Claude marketplace plugin installs in isolated homes
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          manifest = json.loads(Path("capability-registry/INSTALL-PROFILES.json").read_text())
+          plugins = [
+              n for n in manifest["profiles"]["reels-all"]["tools"]
+              if manifest["tools"][n]["installer"] == "claude-plugin"
+          ]
+          with tempfile.TemporaryDirectory(prefix="eos-plugin-smoke-") as top:
+              for name in plugins:
+                  home = Path(top) / name
+                  home.mkdir(parents=True)
+                  env = os.environ.copy()
+                  env["HOME"] = str(home)
+                  cmd = ["python3", "tools/eos_capabilities.py", "ensure", "--tool", name]
+                  proc = subprocess.run(cmd, env=env, text=True, capture_output=True)
+                  print(name, "exit=", proc.returncode, proc.stdout[-500:], proc.stderr[-500:])
+                  if proc.returncode:
+                      raise RuntimeError(f"Plugin {name} was NOT installed/qualified")
+          print("PASS: all registered Claude plugins installed in isolated CI homes")
+          PY
