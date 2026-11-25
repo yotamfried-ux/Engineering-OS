@@ -20,6 +20,8 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+import eos_reel_install
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "capability-registry" / "INSTALL-PROFILES.json"
 
@@ -180,6 +182,9 @@ def tool_status(name: str, tool: dict, project: Path) -> dict:
             "ready": cli and mcp,
             "detail": f"cli={'yes' if cli else 'no'}, mcp={'yes' if mcp else 'no'}",
         }
+
+    if installer == "git-skills":
+        return eos_reel_install.status(name, tool)
 
     if installer == "claude-plugin":
         match = tool.get("plugin_match", name).lower()
@@ -430,6 +435,8 @@ def ensure_tool(name: str, tool: dict, project: Path, dry_run: bool) -> bool:
         else:
             install_maestro(version, dry_run)
         ensure_maestro_project(project, dry_run)
+    elif installer == "git-skills":
+        eos_reel_install.ensure(name, tool, dry_run)
     elif installer == "claude-plugin":
         ensure_claude_plugin(name, tool, dry_run)
     elif installer == "gstack":
