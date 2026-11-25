@@ -1,0 +1,70 @@
+name: Engineering OS Reel Capabilities
+on:
+  push:
+    paths:
+      - "tools/eos_capabilities.py"
+      - "tools/eos_reel_install.py"
+      - "capability-registry/INSTALL-PROFILES.json"
+      - "tests/test_eos_reel_install.py"
+      - ".github/workflows/eos-reel-capabilities.yml"
+  pull_request:
+    paths:
+      - "tools/eos_capabilities.py"
+      - "tools/eos_reel_install.py"
+      - "capability-registry/INSTALL-PROFILES.json"
+      - "tests/test_eos_reel_install.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile both install managers
+        run: python3 -m compileall -q tools/eos_capabilities.py tools/eos_reel_install.py
+      - name: Verify safe and idempotent actual skill linking in isolated fixtures
+        run: python3 -m unittest discover -s tests -p test_eos_reel_install.py -v
+      - name: Validate central registry and dry-run install route
+        run: |
+          python3 tools/eos_capabilities.py catalog --json > /tmp/eos-catalog.json
+          python3 -c 'import json; a=json.load(open("/tmp/eos-catalog.json")); assert "hallmark" in a and "lemo-opuscar" in a'
+          python3 tools/eos_capabilities.py ensure --tool hallmark --dry-run
+          python3 tools/eos_capabilities.py ensure --tool lemo-opuscar --dry-run
+  upstream-path-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify canonical GitHub sources and installed SKILL.md paths
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          import sys
+          import tempfile
+          from pathlib import Path
+          sys.path.insert(0, str(Path.cwd() / "tools"))
+          from eos_reel_install import _sources
+          manifest = json.loads(Path("capability-registry/INSTALL-PROFILES.json").read_text())
+          names = manifest["profiles"]["reels-all"]["tools"]
+          with tempfile.TemporaryDirectory() as temp:
+              for name in names:
+                  entry = manifest["tools"][name]
+                  if entry["installer"] != "git-skills":
+                      continue
+                  dest = Path(temp) / name
+                  repo = "https://github.com/" + entry["repository"] + ".git"
+                  subprocess.run(["git", "clone", "--depth", "1", "--", repo, str(dest)], check=True, capture_output=True)
+                  sources = _sources(dest, entry)
+                  print(name, len(sources), "valid skill directories")
+          PY
