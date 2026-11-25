@@ -68,18 +68,18 @@ jobs:
           import tempfile
           from pathlib import Path
           sys.path.insert(0, str(Path.cwd() / "tools"))
-          from eos_reel_install import _sources
+          from eos_reel_install import _sources, _agent_sources
           manifest = json.loads(Path("capability-registry/INSTALL-PROFILES.json").read_text())
           names = manifest["profiles"]["reels-all"]["tools"]
           with tempfile.TemporaryDirectory() as temp:
               for name in names:
                   entry = manifest["tools"][name]
-                  if entry["installer"] != "git-skills":
+                  if entry["installer"] not in {"git-skills", "git-agents"}:
                       continue
                   dest = Path(temp) / name
                   repo = "https://github.com/" + entry["repository"] + ".git"
                   subprocess.run(["git", "clone", "--depth", "1", "--", repo, str(dest)], check=True, capture_output=True)
-                  sources = _sources(dest, entry)
+                  sources = (_agent_sources(dest, entry) if entry["installer"] == "git-agents" else _sources(dest, entry))
                   print(name, len(sources), "valid skill directories")
           PY
 
@@ -116,7 +116,7 @@ jobs:
           manifest = json.loads(Path("capability-registry/INSTALL-PROFILES.json").read_text())
           tools = [
               n for n in manifest["profiles"]["reels-all"]["tools"]
-              if manifest["tools"][n]["installer"] == "git-skills"
+              if manifest["tools"][n]["installer"] in {"git-skills", "git-agents"}
           ]
           with tempfile.TemporaryDirectory(prefix="eos-live-skills-") as top:
               for name in tools:
