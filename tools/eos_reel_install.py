@@ -16,6 +16,7 @@ from pathlib import Path
 HOME = Path.home()
 CHECKOUTS = HOME / ".local" / "share" / "engineering-os" / "reel-skills"
 CLAUDE_SKILLS = HOME / ".claude" / "skills"
+CLAUDE_AGENTS = HOME / ".claude" / "agents"
 
 
 def _repo_url(tool: dict) -> str:
@@ -65,6 +66,34 @@ def _sources(root: Path, tool: dict) -> list[tuple[str, Path]]:
     return sorted(seen.items())
 
 
+def _agent_sources(root: Path, tool: dict) -> list[tuple[str, Path]]:
+    """Use only upstream division agent definitions, never random docs/README files."""
+    entries: dict[str, Path] = {}
+    for division in tool.get("agent_divisions", []):
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", division):
+            raise RuntimeError("Invalid agent division")
+        folder = root / division
+        if not folder.is_dir():
+            continue
+        for source in sorted(folder.glob("*.md")):
+            frontmatter = source.read_text(encoding="utf-8", errors="replace")[:3000]
+            if not frontmatter.startswith("---\n") or "description:" not in frontmatter:
+                continue
+            slug = f"{division}-{source.stem}".lower()
+            if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", slug):
+                raise RuntimeError(f"Invalid agent definition filename: {source}")
+            entries[slug] = source
+    if not entries:
+        raise RuntimeError("No valid Claude agent definitions found in canonical source")
+    return sorted(entries.items())
+
+
+def _targets(root: Path, tool: dict) -> tuple[list[tuple[str, Path]], Path, bool]:
+    if tool["installer"] == "git-agents":
+        return _agent_sources(root, tool), CLAUDE_AGENTS, False
+    return _sources(root, tool), CLAUDE_SKILLS, True
+
+
 def _links_ready(name: str, tool: dict) -> tuple[bool, str]:
     if not shutil.which("claude"):
         return False, "Claude Code CLI not found on this host"
@@ -77,16 +106,19 @@ def _links_ready(name: str, tool: dict) -> tuple[bool, str]:
     if not root.is_dir() or not _origin_ok(root, tool):
         return False, "canonical source checkout absent or origin mismatch"
     try:
-        sources = _sources(root, tool)
+        sources, target_root, is_skill = _targets(root, tool)
     except RuntimeError as exc:
         return False, str(exc)
-    for skill, source in sources:
-        dest = CLAUDE_SKILLS / skill
+    for item, source in sources:
+        dest = target_root / (item if is_skill else item + ".md")
         if not dest.is_symlink() or dest.resolve() != source.resolve():
-            return False, f"skill link missing or points elsewhere: {skill}"
-        if not (dest / "SKILL.md").is_file():
-            return False, f"skill file missing: {skill}"
-    return True, f"{len(sources)} skill(s) linked to Claude Code; task-level qualification not proven"
+            return False, f"agent asset link missing or points elsewhere: {item}"
+        if is_skill and not (dest / "SKILL.md").is_file():
+            return False, f"skill file missing: {item}"
+        if not is_skill and not dest.is_file():
+            return False, f"agent definition missing: {item}"
+    kind = "skill(s)" if is_skill else "agent definition(s)"
+    return True, f"{len(sources)} {kind} linked to Claude Code; task-level qualification not proven"
 
 
 def status(name: str, tool: dict) -> dict:
@@ -124,17 +156,17 @@ def ensure(name: str, tool: dict, dry_run: bool = False) -> None:
             if partial.exists():
                 shutil.rmtree(partial)
             raise
-    sources = _sources(root, tool)
-    for skill, source in sources:
-        dest = CLAUDE_SKILLS / skill
+    sources, target_root, is_skill = _targets(root, tool)
+    for item, source in sources:
+        dest = target_root / (item if is_skill else item + ".md")
         if dest.exists() or dest.is_symlink():
             if not dest.is_symlink() or dest.resolve() != source.resolve():
-                raise RuntimeError(f"Refusing to overwrite pre-existing Claude skill: {dest}")
-    CLAUDE_SKILLS.mkdir(parents=True, exist_ok=True)
-    for skill, source in sources:
-        dest = CLAUDE_SKILLS / skill
+                raise RuntimeError(f"Refusing to overwrite pre-existing Claude asset: {dest}")
+    target_root.mkdir(parents=True, exist_ok=True)
+    for item, source in sources:
+        dest = target_root / (item if is_skill else item + ".md")
         if not dest.is_symlink():
-            dest.symlink_to(source, target_is_directory=True)
+            dest.symlink_to(source, target_is_directory=is_skill)
     ready, detail = _links_ready(name, tool)
     if not ready:
         raise RuntimeError(f"Post-install verification failed: {detail}")
