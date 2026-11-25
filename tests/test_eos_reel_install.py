@@ -118,7 +118,7 @@ class ReelSkillsInstallerTests(unittest.TestCase):
         self.assertIn("reels-all", manifest["profiles"])
         for name in manifest["profiles"]["reels-all"]["tools"]:
             tool = manifest["tools"][name]
-            self.assertIn(tool["installer"], {"git-skills", "git-agents", "claude-plugin", "bundled-cli"})
+            self.assertIn(tool["installer"], {"git-skills", "git-agents", "claude-plugin", "bundled-cli", "project-mcp-npx"})
             self.assertTrue((ROOT / tool["activation"]).is_file(), name)
 
 
