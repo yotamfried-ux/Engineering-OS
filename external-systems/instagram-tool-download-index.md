@@ -47,9 +47,14 @@ Source: 19 reels, November 2026 intake; ten previously incomplete reels analyzed
 
 Design: [21st.dev](https://21st.dev), [Pinterest](https://pinterest.com). Marketing and sales: Google Trends, Semrush, SparkToro, Higgsfield, Metricool, ManyChat, CallRail, HubSpot, Calendly, Twilio, Looker Studio, Stripe, Pipedrive; communication: Slack, Telegram, WhatsApp; social: Instagram, TikTok, LinkedIn, YouTube, Facebook, X. Use official provider APIs and authorized accounts; no automatic outreach or publication. Openverse public API: https://api.openverse.org/v1/.
 
+## Media reference galleries (web access, not installable packages)
+
+- EyeCandy: https://eyecannndy.com — visual technique reference; respect asset rights.
+- Prompt Motion: https://promptmotion.org — motion examples and prompts; review reuse permissions.
+
 ## Unresolved source identity / conditional
 
-EyeCandy, PromptMotion, TypeFX, Studio, Harvey (fork documented separately), private lead-finder and Restructure AI blueprint: no verified exact downloadable original yet. Inkling 2 Mini: model access/hardware conditional, see existing external-systems entry. Do not substitute unrelated repositories.
+TypeFX, Studio, Harvey (fork documented separately), private lead-finder and Restructure AI blueprint: no verified exact downloadable original yet. Inkling 2 Mini: model access/hardware conditional, see existing external-systems entry. Do not substitute unrelated repositories.
 
 ## Principles
 
@@ -57,9 +62,9 @@ Goal-based, turn-based, scheduled and event-driven loops: https://code.claude.co
 
 ## Resolved follow-up sources
 
-- **Hallmark** (Agent skills): [local entry](../external-skills/hallmark/README.md), [upstream](https://github.com/Nutlope/hallmark), `git clone https://github.com/Nutlope/hallmark.git` (Open Generative AI requires recursive submodules).
-- **Anatomy** (Agent skills): [local entry](../external-skills/anatomy/README.md), [upstream](https://github.com/wheresryan22/anatomy), `git clone https://github.com/wheresryan22/anatomy.git` (Open Generative AI requires recursive submodules).
-- **OpenSEO** (Marketing): [local entry](open-seo/README.md), [upstream](https://github.com/every-app/open-seo), `git clone https://github.com/every-app/open-seo.git` (Open Generative AI requires recursive submodules).
-- **VoiceStudio** (Media): [local entry](voice-studio/README.md), [upstream](https://github.com/debpalash/VoiceStudio), `git clone https://github.com/debpalash/VoiceStudio.git` (Open Generative AI requires recursive submodules).
-- **Cal.diy** (Personal scheduling): [local entry](cal-diy/README.md), [upstream](https://github.com/calcom/cal.diy), `git clone https://github.com/calcom/cal.diy.git` (Open Generative AI requires recursive submodules).
-- **Open Generative AI** (Media): [local entry](open-generative-ai/README.md), [upstream](https://github.com/Anil-matcha/Open-Generative-AI), `git clone https://github.com/Anil-matcha/Open-Generative-AI.git` (Open Generative AI requires recursive submodules).
+- **Hallmark** (Agent skills): [local entry](../external-skills/hallmark/README.md), [upstream](https://github.com/Nutlope/hallmark), `git clone https://github.com/Nutlope/hallmark.git`.
+- **Anatomy** (Agent skills): [local entry](../external-skills/anatomy/README.md), [upstream](https://github.com/wheresryan22/anatomy), `git clone https://github.com/wheresryan22/anatomy.git`.
+- **OpenSEO** (Marketing): [local entry](open-seo/README.md), [upstream](https://github.com/every-app/open-seo), `git clone https://github.com/every-app/open-seo.git`.
+- **VoiceStudio** (Media): [local entry](voice-studio/README.md), [upstream](https://github.com/debpalash/VoiceStudio), `git clone https://github.com/debpalash/VoiceStudio.git`.
+- **Cal.diy** (Personal scheduling): [local entry](cal-diy/README.md), [upstream](https://github.com/calcom/cal.diy), `git clone https://github.com/calcom/cal.diy.git`.
+- **Open Generative AI** (Media): [local entry](open-generative-ai/README.md), [upstream](https://github.com/Anil-matcha/Open-Generative-AI), `git clone --recurse-submodules https://github.com/Anil-matcha/Open-Generative-AI.git`.
