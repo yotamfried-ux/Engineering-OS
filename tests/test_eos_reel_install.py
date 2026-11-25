@@ -45,6 +45,7 @@ class ReelSkillsInstallerTests(unittest.TestCase):
         self.patches = [
             patch.object(installer, "CHECKOUTS", self.base / "checkouts"),
             patch.object(installer, "CLAUDE_SKILLS", self.base / "claude-skills"),
+            patch.object(installer, "CLAUDE_AGENTS", self.base / "claude-agents"),
             patch.object(installer, "_repo_url", return_value=str(self.upstream)),
             patch.object(installer.shutil, "which", side_effect=which),
         ]
@@ -69,6 +70,26 @@ class ReelSkillsInstallerTests(unittest.TestCase):
             text=True
         ).strip()
         self.assertEqual(head, head_after)
+
+    def test_agency_agent_definitions_are_real_and_idempotent(self):
+        division = self.upstream / "product"
+        division.mkdir()
+        agent = division / "product-manager.md"
+        agent.write_text("---\\nname: Product Manager\\ndescription: Product work\\n---\\n# Agent\\n",
+                         encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.upstream), "add", "."], check=True)
+        subprocess.run(
+            ["git", "-C", str(self.upstream), "-c", "user.name=Test",
+             "-c", "user.email=test@example.com", "commit", "-q", "-m", "agent"], check=True)
+        tool = {"repository": "example/hallmark", "installer": "git-agents",
+                "agent_divisions": ["product"]}
+        installer.ensure("agency-agents", tool)
+        result = installer.status("agency-agents", tool)
+        self.assertTrue(result["ready"], result)
+        file = installer.CLAUDE_AGENTS / "product-product-manager.md"
+        self.assertTrue(file.is_symlink())
+        self.assertTrue(file.is_file())
+        installer.ensure("agency-agents", tool)
 
     def test_refuses_overwriting_other_skill(self):
         installer.CLAUDE_SKILLS.mkdir(parents=True)
@@ -97,7 +118,7 @@ class ReelSkillsInstallerTests(unittest.TestCase):
         self.assertIn("reels-all", manifest["profiles"])
         for name in manifest["profiles"]["reels-all"]["tools"]:
             tool = manifest["tools"][name]
-            self.assertIn(tool["installer"], {"git-skills", "claude-plugin", "bundled-cli"})
+            self.assertIn(tool["installer"], {"git-skills", "git-agents", "claude-plugin", "bundled-cli"})
             self.assertTrue((ROOT / tool["activation"]).is_file(), name)
 
 
