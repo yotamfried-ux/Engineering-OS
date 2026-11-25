@@ -186,6 +186,17 @@ def tool_status(name: str, tool: dict, project: Path) -> dict:
     if installer == "git-skills":
         return eos_reel_install.status(name, tool)
 
+    if installer == "bundled-cli":
+        script = ROOT / tool["entrypoint"]
+        if not script.is_file():
+            return {"ready": False, "detail": f"bundled script missing: {script}"}
+        probe = run([sys.executable, str(script), "--help"], check=False)
+        ready = probe.returncode == 0
+        return {
+            "ready": ready,
+            "detail": f"bundled CLI {'ready' if ready else 'invalid'}: {tool['entrypoint']}; API access unverified",
+        }
+
     if installer == "claude-plugin":
         match = tool.get("plugin_match", name).lower()
         ready = match in claude_list("plugin").lower()
@@ -437,6 +448,11 @@ def ensure_tool(name: str, tool: dict, project: Path, dry_run: bool) -> bool:
         ensure_maestro_project(project, dry_run)
     elif installer == "git-skills":
         eos_reel_install.ensure(name, tool, dry_run)
+    elif installer == "bundled-cli":
+        state = tool_status(name, tool, project)
+        if not state["ready"]:
+            raise RuntimeError(state["detail"])
+        print(f"SKIP   {name}: {state['detail']}")
     elif installer == "claude-plugin":
         ensure_claude_plugin(name, tool, dry_run)
     elif installer == "gstack":
@@ -449,6 +465,11 @@ def ensure_tool(name: str, tool: dict, project: Path, dry_run: bool) -> bool:
     else:
         print(f"MANUAL {name}: unsupported installer '{installer}'")
         return False
+    if installer in {"git-skills", "claude-plugin", "bundled-cli"} and not dry_run:
+        verified = tool_status(name, tool, project)
+        if not verified["ready"]:
+            print(f"VERIFY {name}: {verified['detail']}")
+            return False
     return True
 
 
