@@ -41,8 +41,10 @@ class OpenverseAudioTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 audio.search_audio(query, limit, response={"results": []})
 
-    def test_no_network_for_help(self):
-        self.assertEqual(audio.main(["--help"]) if False else 0, 0)
+    def test_help_exits_successfully_without_network(self):
+        with self.assertRaises(SystemExit) as context:
+            audio.main(["--help"])
+        self.assertEqual(context.exception.code, 0)
 
 
 if __name__ == "__main__":
