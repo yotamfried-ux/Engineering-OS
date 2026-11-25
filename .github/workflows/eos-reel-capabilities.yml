@@ -176,3 +176,29 @@ jobs:
                       raise RuntimeError(f"Plugin {name} was NOT installed/qualified")
           print("PASS: all registered Claude plugins installed in isolated CI homes")
           PY
+
+  project-dependency-install-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install real project-local npm dependencies
+        run: |
+          mkdir -p /tmp/eos-test-ui /tmp/eos-test-video
+          (cd /tmp/eos-test-ui && npm init -y)
+          (cd /tmp/eos-test-video && npm init -y)
+          python3 tools/eos_capabilities.py ensure --tool ui-sdk-react --project /tmp/eos-test-ui
+          python3 tools/eos_capabilities.py status --profile reels-react --project /tmp/eos-test-ui --json
+          python3 tools/eos_capabilities.py ensure --tool remotion-project --project /tmp/eos-test-video
+          python3 tools/eos_capabilities.py status --profile reels-react-video --project /tmp/eos-test-video --json
+      - name: Register actual shadcn/ui MCP with Claude Code
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          python3 tools/eos_capabilities.py ensure --tool shadcn-mcp --project /tmp/eos-test-ui
+          claude mcp list
