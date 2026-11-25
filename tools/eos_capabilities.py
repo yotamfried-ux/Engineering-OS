@@ -186,6 +186,21 @@ def tool_status(name: str, tool: dict, project: Path) -> dict:
     if installer == "git-skills":
         return eos_reel_install.status(name, tool)
 
+    if installer == "project-npm":
+        pkgfile = project / "package.json"
+        if not pkgfile.is_file():
+            return {"ready": False, "detail": "project package.json not found"}
+        pkgmeta = json.loads(pkgfile.read_text(encoding="utf-8"))
+        declared = {**pkgmeta.get("dependencies", {}), **pkgmeta.get("devDependencies", {})}
+        missing = [
+            p for p in tool["packages"]
+            if p not in declared or not (project / "node_modules" / p / "package.json").is_file()
+        ]
+        return {
+            "ready": not missing,
+            "detail": "project dependencies installed" if not missing else "missing project packages: " + ", ".join(missing),
+        }
+
     if installer == "bundled-cli":
         script = ROOT / tool["entrypoint"]
         if not script.is_file():
@@ -448,6 +463,15 @@ def ensure_tool(name: str, tool: dict, project: Path, dry_run: bool) -> bool:
         ensure_maestro_project(project, dry_run)
     elif installer == "git-skills":
         eos_reel_install.ensure(name, tool, dry_run)
+    elif installer == "project-npm":
+        if not (project / "package.json").is_file():
+            raise RuntimeError(f"Project package.json required: {project}")
+        if dry_run:
+            print(f"CHANGE {name}: npm install --save-exact {' '.join(tool['packages'])} in {project}")
+        else:
+            if not command_exists("npm"):
+                raise RuntimeError("npm CLI required for project-scoped library installation")
+            run(["npm", "install", "--save-exact", *tool["packages"]], cwd=project)
     elif installer == "bundled-cli":
         state = tool_status(name, tool, project)
         if not state["ready"]:
@@ -465,7 +489,7 @@ def ensure_tool(name: str, tool: dict, project: Path, dry_run: bool) -> bool:
     else:
         print(f"MANUAL {name}: unsupported installer '{installer}'")
         return False
-    if installer in {"git-skills", "claude-plugin", "bundled-cli"} and not dry_run:
+    if installer in {"git-skills", "claude-plugin", "bundled-cli", "project-npm"} and not dry_run:
         verified = tool_status(name, tool, project)
         if not verified["ready"]:
             print(f"VERIFY {name}: {verified['detail']}")
