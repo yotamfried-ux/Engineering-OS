@@ -471,7 +471,7 @@ def ensure_tool(name: str, tool: dict, project: Path, dry_run: bool) -> bool:
         else:
             if not command_exists("npm"):
                 raise RuntimeError("npm CLI required for project-scoped library installation")
-            run(["npm", "install", "--save-exact", *tool["packages"]], cwd=project)
+            run(["npm", "install", "--ignore-scripts", "--save-exact", *tool["packages"]], cwd=project)
     elif installer == "bundled-cli":
         state = tool_status(name, tool, project)
         if not state["ready"]:
