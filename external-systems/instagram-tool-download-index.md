@@ -74,3 +74,18 @@ Goal-based, turn-based, scheduled and event-driven loops: https://code.claude.co
 - **Open Generative AI** (Media): [local entry](open-generative-ai/README.md), [upstream](https://github.com/Anil-matcha/Open-Generative-AI), `git clone --recurse-submodules https://github.com/Anil-matcha/Open-Generative-AI.git`.
  
 - **Sellbird (formerly Harvey)** — sales automation: [local entry](harvey/README.md), [canonical source](https://github.com/ethanplusai/sellbird), `git clone https://github.com/ethanplusai/sellbird.git`. AGPL-3.0 from v0.4.0.
+
+## Video production carousel — 2026-11-27
+
+Source: https://www.instagram.com/p/DgNd6ydkU1I/ ; all ten numbered entries matched to upstream READMEs. On-demand download and setup; no runtime qualification. Awesome Claude Video Skills is a reference catalog, not an executable.
+
+- [hyperframes](../external-systems/hyperframes/README.md) — external system
+- [ffmpeg-skill](../external-skills/ffmpeg-skill/README.md) — skills / reference
+- [whisper](../external-systems/whisper/README.md) — external system
+- [yt-dlp](../external-systems/yt-dlp/README.md) — external system
+- [claude-shorts](../external-skills/claude-shorts/README.md) — skills / reference
+- [ghost-editor](../external-skills/ghost-editor/README.md) — skills / reference
+- [motion-skills](../external-skills/motion-skills/README.md) — skills / reference
+- [awesome-claude-video-skills](../external-skills/awesome-claude-video-skills/README.md) — skills / reference
+- [threejs-skills](../external-skills/threejs-skills/README.md) — skills / reference
+- [motionclone](../external-systems/motionclone/README.md) — external system
