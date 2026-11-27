@@ -72,7 +72,7 @@ Nothing was installed or vendored from outside. Reasons are stated so the decisi
 
 | Candidate | Decision | Reason |
 |---|---|---|
-| Practices 1-9 above | **ADOPTED in Director** | Implemented as `business/social/rules.md`, `scripts/social-assets.mjs` (asset ledger), `scripts/social-debrief.mjs` (weekly candidates with denominators), `business/social/hooks.template.md`, updated `social-manager` skill and marketing charter; covered by `tests/social.test.mjs` |
+| Practices 1-9 above | **ADOPTED in Director** | Implemented as `business/social/rules.md`, `Director's asset-ledger script` (asset ledger), `Director's debrief script` (weekly candidates with denominators), `business/social/hooks.template.md`, updated `social-manager` skill and marketing charter; covered by `tests/social.test.mjs` |
 | `sergebulaev/instagram-skills` (MIT, 9 skills) | **ADOPTED: two skills, trimmed** (2026-11-27, Yotam approved) | Hook Extractor and Humanizer vendored into Director (`ig-hook-extractor`, `ig-humanizer`, commit 823c681) after a file-by-file review. Removed: Apify read layer, Python `lib/` (Publora/Pixfaro/Apify), illustration and voice-profile sub-skills. No network, posting or token use remains. Humanizer wording lists are English-only (Hebrew uses the structural checks only); the corpus statistics are the upstream author's and unverified. Other skills overlap the existing `ig-*` set and stay unvendored |
 | `charlie947/social-media-skills` (MIT, 17 skills) | **REFERENCE ONLY** | LinkedIn-centred; `reels-scripting` needs Apify and Gemini keys; overlaps existing skills. Ideas (post-scorer against own history, content-matrix) are already covered by the debrief and rules file |
 | `coreyhaines31/marketingskills` | Already vendored (`mkt-*`) | No change |
