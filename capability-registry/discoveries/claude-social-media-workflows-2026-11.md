@@ -66,6 +66,23 @@ Skill packs are untrusted third-party instructions: review the text, do not auto
 - Already matched: human approval gate, real photos/real claims rule, weekly review (`ig-audit`), Remotion renderer.
 - Gaps worth considering: (a) an asset inbox with a used/unused ledger for photos and clips; (b) an explicit weekly "cut / double down" debrief file fed by Meta insights; (c) reference-post analysis (format, pace, on-screen text) using the video analyzer once it is qualified on a host that can reach the source; (d) reference vs. adapted hook table; (e) optional read-only Metricool analytics only if Meta insights prove insufficient.
 
+## Decisions (2026-11-27, for Director)
+
+Nothing was installed or vendored from outside. Reasons are stated so the decision can be revisited.
+
+| Candidate | Decision | Reason |
+|---|---|---|
+| Practices 1-9 above | **ADOPTED in Director** | Implemented as `business/social/rules.md`, `scripts/social-assets.mjs` (asset ledger), `scripts/social-debrief.mjs` (weekly candidates with denominators), `business/social/hooks.template.md`, updated `social-manager` skill and marketing charter; covered by `tests/social.test.mjs` |
+| `sergebulaev/instagram-skills` (MIT, 9 skills) | **EVALUATE two skills only** | Caption, carousel, planner, repurposer and profile skills overlap the `ig-*` skills already vendored. Possible additions: Hook Extractor and Humanizer (pre-publish audit). Bundle needs `.env` keys for Publora, Apify, Pixfaro and runs Python helpers, so review each skill file before copying; do not take the publishing or Apify parts. Not reviewed yet |
+| `charlie947/social-media-skills` (MIT, 17 skills) | **REFERENCE ONLY** | LinkedIn-centred; `reels-scripting` needs Apify and Gemini keys; overlaps existing skills. Ideas (post-scorer against own history, content-matrix) are already covered by the debrief and rules file |
+| `coreyhaines31/marketingskills` | Already vendored (`mkt-*`) | No change |
+| Metricool MCP | **NOT NOW** | Adds a third-party scheduler; Director publishes through Meta Graph in n8n with an approval gate and reads Insights directly. Revisit only if Meta Insights lacks best-time or competitor data |
+| Buffer, SocialPilot, Planoly, Blotato, Post for Me, PostMCP, SocialClaw, Socialync, Atlas Social | **REJECTED for now** | Each puts a hosted third party (and its API key) between Director and the networks, with no gap in what Meta Graph already gives |
+| `pendpost` | **REFERENCE ONLY** | Useful design (human approval gate) but a very small project |
+| Self-hosted Instagram/Facebook MCP on Meta Graph | **REJECTED for now** | Same API Director already uses through n8n; its "autopilot" queueing conflicts with per-post approval |
+| Poppy AI | **REJECTED** | Paid; the video analyzer route covers reference analysis once it runs on a host that reaches the source |
+| Video transcript services (e.g. via Composio) | **NOT CONNECTED** | Paid third-party account needs Yotam's explicit approval |
+
 ## Sources
 
 - https://www.youtube.com/watch?v=pu72TSWJp4g
