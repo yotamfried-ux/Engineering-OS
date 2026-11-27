@@ -73,7 +73,7 @@ Nothing was installed or vendored from outside. Reasons are stated so the decisi
 | Candidate | Decision | Reason |
 |---|---|---|
 | Practices 1-9 above | **ADOPTED in Director** | Implemented as `business/social/rules.md`, `scripts/social-assets.mjs` (asset ledger), `scripts/social-debrief.mjs` (weekly candidates with denominators), `business/social/hooks.template.md`, updated `social-manager` skill and marketing charter; covered by `tests/social.test.mjs` |
-| `sergebulaev/instagram-skills` (MIT, 9 skills) | **EVALUATE two skills only** | Caption, carousel, planner, repurposer and profile skills overlap the `ig-*` skills already vendored. Possible additions: Hook Extractor and Humanizer (pre-publish audit). Bundle needs `.env` keys for Publora, Apify, Pixfaro and runs Python helpers, so review each skill file before copying; do not take the publishing or Apify parts. Not reviewed yet |
+| `sergebulaev/instagram-skills` (MIT, 9 skills) | **ADOPTED: two skills, trimmed** (2026-11-27, Yotam approved) | Hook Extractor and Humanizer vendored into Director (`ig-hook-extractor`, `ig-humanizer`, commit 823c681) after a file-by-file review. Removed: Apify read layer, Python `lib/` (Publora/Pixfaro/Apify), illustration and voice-profile sub-skills. No network, posting or token use remains. Humanizer wording lists are English-only (Hebrew uses the structural checks only); the corpus statistics are the upstream author's and unverified. Other skills overlap the existing `ig-*` set and stay unvendored |
 | `charlie947/social-media-skills` (MIT, 17 skills) | **REFERENCE ONLY** | LinkedIn-centred; `reels-scripting` needs Apify and Gemini keys; overlaps existing skills. Ideas (post-scorer against own history, content-matrix) are already covered by the debrief and rules file |
 | `coreyhaines31/marketingskills` | Already vendored (`mkt-*`) | No change |
 | Metricool MCP | **NOT NOW** | Adds a third-party scheduler; Director publishes through Meta Graph in n8n with an approval gate and reads Insights directly. Revisit only if Meta Insights lacks best-time or competitor data |
@@ -96,3 +96,7 @@ Nothing was installed or vendored from outside. Reasons are stated so the decisi
 - https://github.com/charlie947/social-media-skills
 - https://claudemarketplaces.com/plugins/sergebulaev-instagram-skills/instagram-skills
 - https://claude-plugins.dev/skills/@coreyhaines31/marketingskills/social
+
+
+## Follow-up (2026-11-27)
+Yotam set 3 posts per day with one daily batch approval and staggered publishing slots to test posting times. Director added slot rotation and a slot-aware debrief (confounded with content, 'no signal' below 10 posts per slot) and a scheduled n8n queue publisher that only publishes rows Yotam approved. Status: READY pending activation; real publish through it NOT TESTED.
